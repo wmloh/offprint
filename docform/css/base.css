@@ -1,0 +1,224 @@
+/* DocForm base typography and page layout. Needs tokens.css first.
+   Layout: <body> holds an optional <nav class="df-sidebar"> and a <main class="df-page">. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--df-bg);
+  color: var(--df-text);
+  font-family: var(--df-font);
+  font-size: var(--df-font-size);
+  line-height: var(--df-line-height);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--df-selection);
+}
+
+:focus-visible {
+  outline: 2px solid var(--df-focus);
+  outline-offset: 2px;
+  border-radius: var(--df-radius-sm);
+}
+
+body:has(> .df-sidebar) {
+  display: grid;
+  grid-template-columns: var(--df-sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.df-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: var(--df-space-4) var(--df-space-3);
+  background: var(--df-bg-sidebar);
+  border-right: 1px solid var(--df-border);
+  font-size: 14px;
+  color: var(--df-text-muted);
+}
+
+.df-page {
+  width: 100%;
+  max-width: calc(var(--df-content-width) + 2 * var(--df-space-7));
+  margin-inline: auto;
+  padding: var(--df-space-8) var(--df-space-7) 30vh;
+  min-width: 0;
+}
+
+@media (max-width: 860px) {
+  body:has(> .df-sidebar) {
+    display: block;
+  }
+
+  .df-sidebar {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--df-border);
+  }
+
+  .df-page {
+    padding: var(--df-space-6) var(--df-space-4) 20vh;
+  }
+}
+
+/* Headings */
+.df-page :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1.6em 0 0.25em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--df-text);
+}
+
+.df-page h1 { font-size: 1.875em; margin-top: 2em; }
+.df-page h2 { font-size: 1.5em; margin-top: 1.4em; }
+.df-page h3 { font-size: 1.25em; margin-top: 1.2em; }
+.df-page :is(h4, h5, h6) { font-size: 1em; }
+
+.df-page > h1:first-child {
+  margin: 0 0 0.5em;
+  font-size: 2.5em;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.df-page :is(h1, h2, h3, h4, h5, h6) + * {
+  margin-top: 0.25em;
+}
+
+/* Text blocks */
+.df-page :is(p, ul, ol, blockquote, table, pre, figure) {
+  margin: 0.5em 0;
+}
+
+.df-page :is(ul, ol) {
+  padding-left: 1.6em;
+}
+
+.df-page li {
+  padding-left: 0.15em;
+  margin: 0.15em 0;
+}
+
+.df-page li > :is(ul, ol) {
+  margin: 0.15em 0;
+}
+
+.df-page ul { list-style-type: disc; }
+.df-page ul ul { list-style-type: circle; }
+.df-page ul ul ul { list-style-type: square; }
+.df-page ol { list-style-type: decimal; }
+.df-page ol ol { list-style-type: lower-alpha; }
+.df-page ol ol ol { list-style-type: lower-roman; }
+
+.df-page li::marker {
+  color: var(--df-text-muted);
+}
+
+.df-page a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--df-border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color 0.15s, color 0.15s;
+}
+
+.df-page a:hover {
+  text-decoration-color: currentColor;
+}
+
+.df-page blockquote {
+  padding: 0.1em 0 0.1em 0.9em;
+  border-left: 3px solid currentColor;
+  font-size: 1.1em;
+}
+
+.df-page blockquote > :first-child { margin-top: 0; }
+.df-page blockquote > :last-child { margin-bottom: 0; }
+
+.df-page hr {
+  margin: 1.25em 0;
+  border: 0;
+  border-top: 1px solid var(--df-border-strong);
+}
+
+.df-page :is(img, svg, video) {
+  max-width: 100%;
+  height: auto;
+}
+
+.df-page :is(strong, b) { font-weight: 600; }
+
+/* Code */
+.df-page :not(pre) > code {
+  padding: 0.2em 0.4em;
+  border-radius: var(--df-radius);
+  background: var(--df-code-bg);
+  color: var(--df-code-text);
+  font-family: var(--df-font-mono);
+  font-size: 0.85em;
+  overflow-wrap: break-word;
+}
+
+.df-page pre {
+  padding: var(--df-space-4) var(--df-space-5);
+  overflow-x: auto;
+  border-radius: var(--df-radius);
+  background: var(--df-bg-subtle);
+  box-shadow: inset 0 0 0 1px var(--df-border);
+  font-family: var(--df-font-mono);
+  font-size: 0.85em;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+/* Tables scroll sideways in narrow columns instead of overflowing the page. */
+.df-page table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.df-page :is(th, td) {
+  padding: 0.4em 0.6em;
+  border: 1px solid var(--df-border-strong);
+  text-align: left;
+  vertical-align: top;
+}
+
+.df-page th {
+  background: var(--df-bg-subtle);
+  font-weight: 600;
+  color: var(--df-text-muted);
+}
+
+/* Colour contract: [data-df-color] and [data-df-role] set --df-accent and --df-accent-bg.
+   Plain elements use the accent as text colour; modules opt into the background. */
+:where([data-df-role], [data-df-color]) {
+  color: var(--df-accent);
+}
+
+[data-df-color="gray" i] { --df-accent: var(--df-gray); --df-accent-bg: var(--df-gray-bg); }
+[data-df-color="brown" i] { --df-accent: var(--df-brown); --df-accent-bg: var(--df-brown-bg); }
+[data-df-color="orange" i] { --df-accent: var(--df-orange); --df-accent-bg: var(--df-orange-bg); }
+[data-df-color="yellow" i] { --df-accent: var(--df-yellow); --df-accent-bg: var(--df-yellow-bg); }
+[data-df-color="green" i] { --df-accent: var(--df-green); --df-accent-bg: var(--df-green-bg); }
+[data-df-color="blue" i] { --df-accent: var(--df-blue); --df-accent-bg: var(--df-blue-bg); }
+[data-df-color="purple" i] { --df-accent: var(--df-purple); --df-accent-bg: var(--df-purple-bg); }
+[data-df-color="pink" i] { --df-accent: var(--df-pink); --df-accent-bg: var(--df-pink-bg); }
+[data-df-color="red" i] { --df-accent: var(--df-red); --df-accent-bg: var(--df-red-bg); }

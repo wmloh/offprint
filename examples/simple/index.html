@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Pythagorean theorem</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/math.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../docform/css/anim.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Page outline">
+    <div data-df-nav></div>
+    <div data-df-theme-toggle></div>
+  </nav>
+
+  <main class="df-page">
+    <h1>The Pythagorean theorem</h1>
+
+    <p>
+      Few results are as old or as useful as this one. It links the three sides of every
+      <span data-df-tip="A triangle with one angle of exactly $90^\circ$.">right triangle</span>,
+      and it is the reason distance on a map is computed with a square root.
+    </p>
+
+    <h2>Statement <span class="df-tag" data-df-color="purple">Theorem</span></h2>
+
+    <p>
+      Let a right triangle have legs <span class="df-math">a</span> and <span class="df-math">b</span>, and let
+      <span class="df-math">c</span> be the
+      <span data-df-tip="The side opposite the right angle. It is always the longest side.">hypotenuse</span>.
+      Then
+    </p>
+
+    <div class="df-math" data-df-display>a^2 + b^2 = c^2.</div>
+
+    <div class="df-callout" data-df-color="yellow" data-df-icon="💡">
+      <span class="df-callout-title">Reading the squares</span>
+      Each term is the area of a square built on one side. The theorem says the two small squares together
+      cover exactly as much area as the large one.
+    </div>
+
+    <h2>See it with areas</h2>
+
+    <p>
+      Step through the figure. The legs measure <span class="df-math">a = 3</span> and
+      <span class="df-math">b = 4</span>, so the hypotenuse is <span class="df-math">c = 5</span>.
+    </p>
+
+    <figure id="pythagoras">
+      <svg viewBox="40 0 360 360" role="img" aria-label="A 3-4-5 right triangle with a square on each side">
+        <g id="sq-a" data-df-color="blue">
+          <path class="df-fill-bg" d="M160 130 V220 H70 V130 Z"/>
+          <path class="df-stroke" stroke-width="2" d="M160 130 V220 H70 V130 Z"/>
+          <text x="115" y="180" text-anchor="middle">a² = 9</text>
+        </g>
+        <g id="sq-b" data-df-color="green">
+          <path class="df-fill-bg" d="M160 220 H280 V340 H160 Z"/>
+          <path class="df-stroke" stroke-width="2" d="M160 220 H280 V340 H160 Z"/>
+          <text x="220" y="285" text-anchor="middle">b² = 16</text>
+        </g>
+        <g id="sq-c" data-df-color="purple">
+          <path class="df-fill-bg" d="M160 130 L280 220 L370 100 L250 10 Z"/>
+          <path class="df-stroke" stroke-width="2" d="M160 130 L280 220 L370 100 L250 10 Z"/>
+          <text x="265" y="120" text-anchor="middle">c² = 25</text>
+        </g>
+        <path id="tri" class="df-stroke" stroke-width="2.5" stroke-linejoin="round" d="M160 130 L280 220 L160 220 Z"/>
+        <path id="corner" class="df-stroke" stroke-width="1.5" d="M160 206 H174 V220"/>
+        <g id="labels">
+          <text x="148" y="180" text-anchor="end" data-df-color="blue">a</text>
+          <text x="220" y="238" text-anchor="middle" data-df-color="green">b</text>
+          <text x="214" y="168" data-df-color="purple">c</text>
+        </g>
+      </svg>
+      <figcaption>The squares on the legs together match the square on the hypotenuse.</figcaption>
+    </figure>
+
+    <h2>Why it holds</h2>
+
+    <p>
+      Arrange four copies of the triangle inside a square of side <span class="df-math">a + b</span>. The space they
+      leave uncovered is a tilted square of side <span class="df-math">c</span>, so
+    </p>
+
+    <div class="df-math" data-df-display>(a + b)^2 = 4 \cdot \tfrac{1}{2}ab + c^2 \quad\Longrightarrow\quad a^2 + b^2 = c^2.</div>
+
+    <p>
+      Expanding the left side and cancelling <span class="df-math">2ab</span> leaves the theorem.
+    </p>
+
+    <h2>Using it</h2>
+
+    <p>
+      The distance between points <span class="df-math">(x_1, y_1)</span> and <span class="df-math">(x_2, y_2)</span>
+      is the hypotenuse of a triangle whose legs are the horizontal and vertical gaps:
+    </p>
+
+    <div class="df-math" data-df-display>d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}.</div>
+
+    <div class="df-callout" data-df-color="red" data-df-icon="⚠️">
+      The theorem needs a right angle. For other triangles, use the law of cosines,
+      <span class="df-math">c^2 = a^2 + b^2 - 2ab\cos\gamma</span>, which reduces to it when
+      <span class="df-math">\gamma = 90^\circ</span>.
+    </div>
+  </main>
+
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../docform/js/math.js"></script>
+  <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/anim.js"></script>
+  <script>
+    DocForm.anim('pythagoras', [
+      { caption: 'A right triangle with legs $a = 3$, $b = 4$ and hypotenuse $c = 5$.',
+        actions: [{ draw: '#tri', duration: 1200 }, { fade: '#labels, #corner', delay: 800, duration: 500 }] },
+      { caption: 'The square on $a$ has area $3^2 = 9$.',
+        actions: [{ fade: '#sq-a' }, { draw: '#sq-a .df-stroke' }] },
+      { caption: 'The square on $b$ has area $4^2 = 16$.',
+        actions: [{ fade: '#sq-b' }, { draw: '#sq-b .df-stroke' }] },
+      { caption: 'The square on $c$ has area $5^2 = 25 = 9 + 16$.',
+        actions: [{ fade: '#sq-c' }, { draw: '#sq-c .df-stroke' }] }
+    ], { caption: 'Press play or step through the construction.' });
+  </script>
+</body>
+</html>

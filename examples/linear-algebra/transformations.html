@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Linear transformations · Linear Algebra Notes</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/math.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../docform/css/anim.css">
+  <link rel="stylesheet" href="../../docform/css/params.css">
+  <script src="../../docform/js/theme.js"></script>
+  <style>
+    .warp line { vector-effect: non-scaling-stroke; }
+    .warp .df-stroke { vector-effect: non-scaling-stroke; }
+    .warp line.df-grid { stroke: var(--df-blue); opacity: 0.3; }
+    .warp line.df-axis { stroke: var(--df-blue); opacity: 0.6; }
+  </style>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+    <div data-df-theme-toggle></div>
+  </nav>
+
+  <main class="df-page">
+    <h1>Linear transformations</h1>
+
+    <div class="df-callout" data-df-role="definition" data-df-icon="📘">
+      <span class="df-callout-title">Definition</span>
+      A <span data-df-term>linear map</span> <span class="df-math">T : \R^2 \to \R^2</span> respects addition and
+      scaling. Every such map is multiplication by a matrix, whose columns are
+      <span class="df-math" data-df-role="u">T\vec e_1</span> and <span class="df-math" data-df-role="v">T\vec e_2</span>.
+    </div>
+
+    <h2>Watching a matrix act</h2>
+
+    <p>
+      A linear map moves the whole grid at once. Grid lines stay straight, parallel, and evenly spaced, and the
+      origin stays put. Watch the unit square and the images of the <span data-df-term>basis</span> vectors.
+    </p>
+
+    <figure id="warp-anim">
+      <svg viewBox="0 0 360 280" role="img" aria-label="The plane's grid transformed by a sequence of matrices">
+        <defs><clipPath id="warp-clip"><rect x="0" y="0" width="360" height="280"/></clipPath></defs>
+        <g clip-path="url(#warp-clip)">
+          <g id="warp" class="warp" transform="matrix(1 0 0 1 0 0)"></g>
+        </g>
+        <text id="warp-name" x="12" y="24" class="df-muted">Identity</text>
+      </svg>
+    </figure>
+
+    <h2>Build your own</h2>
+
+    <p>
+      Set the four entries of <span class="df-math">A</span>. The <span data-df-role="u">blue</span> arrow shows the
+      first column, the <span data-df-role="v">orange</span> arrow the second, and the shaded square has area
+      <span class="df-math">|\det A|</span>.
+    </p>
+
+    <div class="df-params">
+      <div data-df-param="a" data-df-label="$a$" data-df-min="-2" data-df-max="2" data-df-step="0.1" data-df-value="1" data-df-role="u"></div>
+      <div data-df-param="c" data-df-label="$c$" data-df-min="-2" data-df-max="2" data-df-step="0.1" data-df-value="0.5" data-df-role="u"></div>
+      <div data-df-param="b" data-df-label="$b$" data-df-min="-2" data-df-max="2" data-df-step="0.1" data-df-value="0.5" data-df-role="v"></div>
+      <div data-df-param="d" data-df-label="$d$" data-df-min="-2" data-df-max="2" data-df-step="0.1" data-df-value="1" data-df-role="v"></div>
+    </div>
+
+    <figure class="df-figure" id="playground">
+      <svg viewBox="0 0 360 280" role="img" aria-label="The grid transformed by the matrix from the sliders">
+        <defs><clipPath id="play-clip"><rect x="0" y="0" width="360" height="280"/></clipPath></defs>
+        <g clip-path="url(#play-clip)">
+          <g id="play" class="warp"></g>
+        </g>
+      </svg>
+    </figure>
+
+    <div class="df-math" data-df-display data-df-template="A = \begin{pmatrix} {{a|1}} & {{b|1}} \\ {{c|1}} & {{d|1}} \end{pmatrix}, \qquad \det A = ({{a|1}})({{d|1}}) - ({{b|1}})({{c|1}}) = {{a*d - b*c|2}}">A</div>
+
+    <p>
+      This matrix <strong data-df-template="{{ abs(a*d - b*c) < 0.005 ? 'squashes the plane onto a line or a point' : a*d - b*c < 0 ? 'flips orientation, like a mirror' : 'keeps orientation' }}">keeps orientation</strong>.
+    </p>
+
+    <h2>The determinant</h2>
+
+    <div class="df-callout" data-df-role="theorem" data-df-icon="◆">
+      <span class="df-callout-title">Area scaling</span>
+      A linear map multiplies every area by <span class="df-math">|\det A|</span>. When
+      <span class="df-math">\det A = 0</span>, the map flattens the plane, so it has no inverse.
+    </div>
+
+    <details>
+      <summary>Why <span class="df-math">ad - bc</span>?</summary>
+      <p>
+        The unit square maps to the parallelogram with sides <span class="df-math">(a, c)</span> and
+        <span class="df-math">(b, d)</span>. Its signed area is the 2D cross product of those sides,
+        <span class="df-math">ad - bc</span>.
+      </p>
+    </details>
+
+    <details>
+      <summary>Directions that only stretch</summary>
+      <p>
+        Some matrices leave certain directions unchanged and only stretch along them. Such a direction is an
+        <span data-df-term>eigenvector</span>, and the stretch factor <span class="df-math">\lambda</span> solves
+        <span class="df-math">\det(A - \lambda I) = 0</span>. In the shear above, the horizontal axis is one.
+      </p>
+    </details>
+  </main>
+
+  <script src="site.js" data-df-site></script>
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../docform/js/math.js"></script>
+  <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/anim.js"></script>
+  <script src="../../docform/js/params.js"></script>
+  <script src="figures.js"></script>
+  <script>
+    (function () {
+      // Fills a group with a model-space grid, the unit square, and the two basis arrows.
+      function scene(svg, group, ox, oy, unit) {
+        var P = LA.plane(svg, ox, oy, unit);
+        for (var i = -10; i <= 10; i++) {
+          LA.el(group, 'line', { class: i ? 'df-grid' : 'df-axis', 'stroke-width': i ? 1 : 1.5,
+            x1: ox + i * unit, x2: ox + i * unit, y1: oy - 10 * unit, y2: oy + 10 * unit });
+          LA.el(group, 'line', { class: i ? 'df-grid' : 'df-axis', 'stroke-width': i ? 1 : 1.5,
+            y1: oy - i * unit, y2: oy - i * unit, x1: ox - 10 * unit, x2: ox + 10 * unit });
+        }
+        var sq = P.pt([1, 1]);
+        LA.el(group, 'rect', { class: 'df-fill-bg', 'data-df-role': 'result', x: ox, y: sq[1], width: unit, height: unit, opacity: 0.9 });
+        LA.el(group, 'path', { class: 'df-stroke', 'data-df-role': 'u', 'stroke-width': 3, d: LA.arrow(P.pt([0, 0]), P.pt([1, 0])) });
+        LA.el(group, 'path', { class: 'df-stroke', 'data-df-role': 'v', 'stroke-width': 3, d: LA.arrow(P.pt([0, 0]), P.pt([0, 1])) });
+        return P;
+      }
+
+      var warpSvg = document.querySelector('#warp-anim svg');
+      var W = scene(warpSvg, document.getElementById('warp'), 180, 150, 40);
+      var steps = [
+        ['Shear', [1, 1, 0, 1], 'A shear $\\begin{pmatrix} 1 & 1 \\\\ 0 & 1 \\end{pmatrix}$ slides each row sideways. Area is unchanged.'],
+        ['Rotation', [0, -1, 1, 0], 'A quarter turn $\\begin{pmatrix} 0 & -1 \\\\ 1 & 0 \\end{pmatrix}$ keeps every length.'],
+        ['Scaling', [2, 0, 0, 0.5], 'Scaling by $2$ and $\\tfrac12$ keeps the area: $\\det = 1$.'],
+        ['Reflection', [-1, 0, 0, 1], 'A mirror flips orientation, so $\\det = -1$.'],
+        ['Identity', [1, 0, 0, 1], 'Back to the identity.']
+      ];
+      var name = document.getElementById('warp-name');
+      document.getElementById('warp-anim').addEventListener('df:animstep', function (event) {
+        name.textContent = event.detail.step ? steps[event.detail.step - 1][0] : 'Identity';
+      });
+      DocForm.anim('warp-anim', steps.map(function (s) {
+        return { caption: s[2], duration: 1200, actions: [{ attr: '#warp', name: 'transform', to: LA.matrix(s[1], W) }] };
+      }), { caption: 'Step through five matrices acting on the plane.' });
+
+      var play = document.getElementById('play');
+      var Pl = scene(document.querySelector('#playground svg'), play, 180, 150, 40);
+      DocForm.params.on(['a', 'b', 'c', 'd'], function (p) {
+        play.setAttribute('transform', LA.matrix([p.a, p.b, p.c, p.d], Pl));
+      });
+    })();
+  </script>
+</body>
+</html>

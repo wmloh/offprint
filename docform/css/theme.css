@@ -1,0 +1,26 @@
+/* Theme toggle rendered by theme.js into [data-df-theme-toggle]. */
+.df-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0;
+  padding: 0.2em 0.55em;
+  border: 0;
+  border-radius: var(--df-radius);
+  background: transparent;
+  color: var(--df-text-muted);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.df-theme-toggle:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-theme-toggle svg {
+  flex: none;
+}

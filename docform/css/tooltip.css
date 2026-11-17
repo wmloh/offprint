@@ -1,0 +1,62 @@
+/* Hover tooltips for data-df-tip and glossary terms from tooltip.js. */
+.df-tip,
+.df-term {
+  text-decoration: underline dotted;
+  text-decoration-color: var(--df-text-faint);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+
+.df-tip:hover,
+.df-term:hover {
+  text-decoration-color: currentColor;
+}
+
+.df-term-missing {
+  text-decoration-color: var(--df-red);
+  cursor: default;
+}
+
+.df-tooltip {
+  position: fixed;
+  z-index: 50;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: var(--df-space-2) var(--df-space-3);
+  border-radius: var(--df-radius-lg);
+  background: light-dark(#ffffff, #252525);
+  box-shadow: 0 0 0 1px var(--df-border-strong), 0 6px 20px light-dark(rgba(15, 15, 15, 0.12), rgba(0, 0, 0, 0.4));
+  color: var(--df-text);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.12s, transform 0.12s;
+  pointer-events: auto;
+}
+
+.df-tooltip[data-df-side="above"] {
+  transform: translateY(3px);
+}
+
+.df-tooltip.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.df-tooltip-title {
+  margin-bottom: 0.15em;
+  font-weight: 600;
+}
+
+.df-tooltip .katex {
+  font-size: 1.05em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .df-tooltip {
+    transition: none;
+  }
+}

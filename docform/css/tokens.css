@@ -1,0 +1,65 @@
+/* DocForm design tokens. Load before every other docform stylesheet. */
+:root {
+  color-scheme: light dark;
+
+  /* Named colours: text and background pairs, muted for light and dark. */
+  --df-gray: light-dark(#787774, #9b9b9b);
+  --df-gray-bg: light-dark(#f1f1ef, #2f2f2f);
+  --df-brown: light-dark(#9f6b53, #ba856f);
+  --df-brown-bg: light-dark(#f4eeee, #4a3228);
+  --df-orange: light-dark(#d9730d, #c77d48);
+  --df-orange-bg: light-dark(#fbecdd, #5c3b23);
+  --df-yellow: light-dark(#cb912f, #ca9849);
+  --df-yellow-bg: light-dark(#fbf3db, #564328);
+  --df-green: light-dark(#448361, #529e72);
+  --df-green-bg: light-dark(#edf3ec, #243d30);
+  --df-blue: light-dark(#337ea9, #379ad3);
+  --df-blue-bg: light-dark(#e7f3f8, #143a4e);
+  --df-purple: light-dark(#9065b0, #9d68d3);
+  --df-purple-bg: light-dark(#f6f3f9, #3c2d49);
+  --df-pink: light-dark(#c14c8a, #d15796);
+  --df-pink-bg: light-dark(#faf1f5, #4e2c3c);
+  --df-red: light-dark(#d44c47, #df5452);
+  --df-red-bg: light-dark(#fdebec, #522e2a);
+
+  /* Neutral surfaces and text. */
+  --df-bg: light-dark(#ffffff, #191919);
+  --df-bg-sidebar: light-dark(#f7f7f5, #202020);
+  --df-bg-hover: light-dark(rgba(55, 53, 47, 0.06), rgba(255, 255, 255, 0.055));
+  --df-bg-subtle: light-dark(rgba(55, 53, 47, 0.03), rgba(255, 255, 255, 0.03));
+  --df-text: light-dark(#37352f, rgba(255, 255, 255, 0.81));
+  --df-text-muted: light-dark(rgba(55, 53, 47, 0.65), rgba(255, 255, 255, 0.46));
+  --df-text-faint: light-dark(rgba(55, 53, 47, 0.45), rgba(255, 255, 255, 0.28));
+  --df-border: light-dark(rgba(55, 53, 47, 0.09), rgba(255, 255, 255, 0.094));
+  --df-border-strong: light-dark(rgba(55, 53, 47, 0.16), rgba(255, 255, 255, 0.16));
+  --df-code-text: light-dark(#eb5757, #ff7369);
+  --df-code-bg: light-dark(rgba(135, 131, 120, 0.15), rgba(135, 131, 120, 0.2));
+  --df-selection: light-dark(rgba(35, 131, 226, 0.28), rgba(35, 131, 226, 0.35));
+  --df-focus: var(--df-blue);
+
+  /* Type: system fonts only, no web fonts. */
+  --df-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --df-font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --df-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --df-font-size: 16px;
+  --df-line-height: 1.6;
+
+  /* Spacing scale (4px steps), radii, and layout widths. */
+  --df-space-1: 4px;
+  --df-space-2: 8px;
+  --df-space-3: 12px;
+  --df-space-4: 16px;
+  --df-space-5: 24px;
+  --df-space-6: 32px;
+  --df-space-7: 48px;
+  --df-space-8: 64px;
+  --df-radius-sm: 3px;
+  --df-radius: 4px;
+  --df-radius-lg: 8px;
+  --df-content-width: 720px;
+  --df-sidebar-width: 260px;
+}
+
+/* Forced themes set by theme.js; without the attribute, the system preference applies. */
+:root[data-df-theme="light"] { color-scheme: light; }
+:root[data-df-theme="dark"] { color-scheme: dark; }

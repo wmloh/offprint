@@ -1,0 +1,44 @@
+/* Parameter sliders from params.js. Colour a slider with data-df-role or data-df-color. */
+.df-param {
+  display: grid;
+  grid-template-columns: minmax(4em, max-content) minmax(80px, 1fr) minmax(3.5em, max-content);
+  align-items: center;
+  gap: var(--df-space-3);
+  margin: 0.4em 0;
+  color: var(--df-text);
+  font-size: 0.95em;
+}
+
+.df-param-label {
+  color: var(--df-accent, var(--df-text));
+}
+
+.df-param-input {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--df-accent, var(--df-text-muted));
+  cursor: pointer;
+}
+
+.df-param-value {
+  padding: 0.05em 0.45em;
+  border-radius: var(--df-radius-sm);
+  background: var(--df-accent-bg, var(--df-bg-hover));
+  color: var(--df-accent, var(--df-text));
+  font-family: var(--df-font-mono);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.df-params {
+  margin: var(--df-space-4) 0;
+  padding: var(--df-space-3) var(--df-space-4);
+  border-radius: var(--df-radius-lg);
+  background: var(--df-bg-subtle);
+  box-shadow: inset 0 0 0 1px var(--df-border);
+}
+
+[data-df-bind] {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,30 @@
+/* Roles legend rendered by roles.js into [data-df-legend]. */
+.df-legend .df-legend-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--df-space-2);
+  margin: 0.75em 0;
+  padding: 0;
+  list-style: none;
+}
+
+.df-legend .df-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  margin: 0;
+  padding: 0.1em 0.55em;
+  border-radius: var(--df-radius);
+  background: var(--df-accent-bg);
+  color: var(--df-accent);
+  font-size: 0.875em;
+  line-height: 1.6;
+  text-transform: capitalize;
+}
+
+.df-legend-swatch {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  background: var(--df-accent);
+}

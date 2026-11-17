@@ -1,0 +1,127 @@
+/* Inline tags, callouts, and toggle blocks. CSS only; colours come from data-df-role or data-df-color. */
+
+/* Tags: <span class="df-tag" data-df-role="theorem">Theorem</span>. Gray without a colour. */
+.df-tag {
+  display: inline-block;
+  padding: 0 0.4em;
+  border-radius: var(--df-radius-sm);
+  background: var(--df-accent-bg, var(--df-gray-bg));
+  color: var(--df-accent, var(--df-text));
+  font-size: 0.85em;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  vertical-align: 0.08em;
+}
+
+:is(h1, h2, h3, h4, h5, h6) .df-tag {
+  font-size: 0.6em;
+  vertical-align: 0.3em;
+}
+
+/* Callouts: <div class="df-callout" data-df-role="warning" data-df-icon="⚠️">…</div>. */
+.df-callout {
+  position: relative;
+  margin: 0.75em 0;
+  padding: var(--df-space-4) var(--df-space-4) var(--df-space-4) var(--df-space-5);
+  border-radius: var(--df-radius);
+  background: var(--df-accent-bg, var(--df-bg-subtle));
+  color: var(--df-text);
+}
+
+.df-callout:not([data-df-role], [data-df-color]) {
+  box-shadow: inset 0 0 0 1px var(--df-border);
+}
+
+.df-callout[data-df-icon] {
+  padding-left: calc(var(--df-space-4) + 1.6em);
+}
+
+.df-callout[data-df-icon]::before {
+  content: attr(data-df-icon);
+  position: absolute;
+  top: var(--df-space-4);
+  left: var(--df-space-4);
+  width: 1.3em;
+  color: var(--df-accent, var(--df-text));
+  line-height: inherit;
+  text-align: center;
+}
+
+.df-callout > :first-child { margin-top: 0; }
+.df-callout > :last-child { margin-bottom: 0; }
+
+.df-callout-title {
+  display: block;
+  margin-bottom: 0.15em;
+  color: var(--df-accent, var(--df-text));
+  font-weight: 600;
+}
+
+/* Toggles: native <details>/<summary> with a rotating triangle and an animated height. */
+.df-page details {
+  margin: 0.25em 0;
+  interpolate-size: allow-keywords;
+}
+
+.df-page summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  margin-left: -0.3em;
+  padding: 0.1em 0.3em;
+  border-radius: var(--df-radius);
+  list-style: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.df-page summary::-webkit-details-marker {
+  display: none;
+}
+
+.df-page summary:hover {
+  background: var(--df-bg-hover);
+}
+
+.df-page summary::before {
+  content: "";
+  flex: none;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0.32em 0 0.32em 0.52em;
+  border-color: transparent transparent transparent currentColor;
+  transform: translateY(-0.05em);
+  transition: transform 0.2s ease;
+}
+
+.df-page details[open] > summary::before {
+  transform: translateY(-0.05em) rotate(90deg);
+}
+
+.df-page summary > :is(h1, h2, h3, h4, h5, h6, p) {
+  display: inline;
+  margin: 0;
+}
+
+.df-page details::details-content {
+  height: 0;
+  overflow: clip;
+  transition: height 0.25s ease, content-visibility 0.25s allow-discrete;
+}
+
+.df-page details[open]::details-content {
+  height: auto;
+}
+
+.df-page details > :not(summary) {
+  margin-left: 1.15em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .df-page details::details-content,
+  .df-page summary::before {
+    transition: none;
+  }
+}

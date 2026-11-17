@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matrices · Linear Algebra Notes</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/math.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../docform/css/code.css">
+  <link rel="stylesheet" href="../../docform/css/tabs.css">
+  <link rel="stylesheet" href="../../docform/css/anim.css">
+  <link rel="stylesheet" href="../../docform/css/params.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+    <div data-df-theme-toggle></div>
+  </nav>
+
+  <main class="df-page">
+    <h1>Matrices</h1>
+
+    <div class="df-callout" data-df-role="definition" data-df-icon="📘">
+      <span class="df-callout-title">Definition</span>
+      A <span data-df-term>matrix</span> is a grid of numbers. A <span class="df-math">2 \times 2</span> matrix has
+      two columns, <span class="df-math" data-df-role="u">\vec a_1</span> and
+      <span class="df-math" data-df-role="v">\vec a_2</span>:
+      <div class="df-math" data-df-display>A = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix} = \begin{pmatrix} \vec a_1 & \vec a_2 \end{pmatrix}.</div>
+    </div>
+
+    <h2>A matrix times a vector</h2>
+
+    <p>
+      The product <span class="df-math">A\vec x</span> is the <span data-df-term>linear combination</span> of the
+      columns of <span class="df-math">A</span> with weights taken from <span class="df-math">\vec x</span>:
+    </p>
+
+    <div class="df-math" data-df-display>A\vec x = x_1 \vec a_1 + x_2 \vec a_2.</div>
+
+    <p>
+      Take <span class="df-math">A = \begin{pmatrix} 2 & -1 \\ 1 & 1 \end{pmatrix}</span> and
+      <span class="df-math">\vec x = (2, 1)</span>.
+    </p>
+
+    <figure id="columns">
+      <svg viewBox="0 0 360 240" role="img" aria-label="A x built as 2 a1 plus a2">
+        <path id="col-a1" class="df-stroke" data-df-role="u" stroke-width="3" stroke-linecap="round"/>
+        <path id="col-a2" class="df-stroke" data-df-role="v" stroke-width="3" stroke-linecap="round"/>
+        <path id="col-2a1" class="df-stroke" data-df-role="u" stroke-width="2" stroke-linecap="round"/>
+        <path id="col-a2b" class="df-stroke" data-df-role="v" stroke-width="2" stroke-linecap="round"/>
+        <path id="col-ax" class="df-stroke" data-df-role="result" stroke-width="3" stroke-linecap="round"/>
+        <text id="col-l1" x="166" y="198" data-df-role="u">a₁</text>
+        <text id="col-l2" x="74" y="150" text-anchor="end" data-df-role="v">a₂</text>
+        <text id="col-l3" x="232" y="176" data-df-role="u">2a₁</text>
+        <text id="col-l4" x="270" y="92" data-df-role="v">a₂</text>
+        <text id="col-l5" x="244" y="70" data-df-role="result">Ax = (3, 3)</text>
+      </svg>
+    </figure>
+
+    <p>Change the weights to reach other points. The figure above stays fixed; the formula follows the sliders.</p>
+
+    <div class="df-params">
+      <div data-df-param="x1" data-df-label="$x_1$" data-df-min="-2" data-df-max="3" data-df-step="0.5" data-df-value="2" data-df-role="u"></div>
+      <div data-df-param="x2" data-df-label="$x_2$" data-df-min="-2" data-df-max="3" data-df-step="0.5" data-df-value="1" data-df-role="v"></div>
+    </div>
+
+    <div class="df-math" data-df-display data-df-template="A\vec x = {{x1|1}} \begin{pmatrix} 2 \\ 1 \end{pmatrix} + {{x2|1}} \begin{pmatrix} -1 \\ 1 \end{pmatrix} = \begin{pmatrix} {{2*x1 - x2|1}} \\ {{x1 + x2|1}} \end{pmatrix}">A\vec x</div>
+
+    <h2>Multiplying matrices</h2>
+
+    <p>
+      The product <span class="df-math">AB</span> applies <span class="df-math">B</span> first, then
+      <span class="df-math">A</span>. Its entry in row <span class="df-math">i</span> and column
+      <span class="df-math">j</span> is the <span data-df-term>dot product</span> of row <span class="df-math">i</span>
+      of <span class="df-math">A</span> with column <span class="df-math">j</span> of <span class="df-math">B</span>:
+    </p>
+
+    <div class="df-math" data-df-display>(AB)_{ij} = \sum_k a_{ik} b_{kj}.</div>
+
+    <div class="df-callout" data-df-role="warning" data-df-icon="⚠️">
+      <span class="df-callout-title">Order matters</span>
+      In general <span class="df-math">AB \ne BA</span>. For example,
+      <div class="df-math" data-df-display>\begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix}\begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix} = \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix}, \qquad \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix}\begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix} = \begin{pmatrix} 0 & 0 \\ 0 & 1 \end{pmatrix}.</div>
+    </div>
+
+    <details>
+      <summary>Why row times column?</summary>
+      <p>
+        Column <span class="df-math">j</span> of <span class="df-math">AB</span> is where
+        <span class="df-math">AB</span> sends <span class="df-math">\vec e_j</span>. That is
+        <span class="df-math">A</span> applied to <span class="df-math">B\vec e_j = \vec b_j</span>, and each entry of
+        <span class="df-math">A\vec b_j</span> is a row of <span class="df-math">A</span> dotted with
+        <span class="df-math">\vec b_j</span>.
+      </p>
+    </details>
+
+    <h2>Matrices in code</h2>
+
+    <p>These tabs are synced with the ones on the introduction page.</p>
+
+    <div class="df-tabs" data-df-tab-group="lang">
+      <div data-df-tab="JavaScript">
+        <pre><code class="language-js">// Multiply two matrices stored as arrays of rows.
+function matmul(A, B) {
+  return A.map((row) =>
+    B[0].map((_, j) => row.reduce((sum, a, k) => sum + a * B[k][j], 0))
+  );
+}
+
+const A = [[0, 1], [0, 0]];
+const B = [[0, 0], [1, 0]];
+console.log(matmul(A, B), matmul(B, A)); // not equal</code></pre>
+      </div>
+      <div data-df-tab="Python">
+        <pre><code class="language-python">import numpy as np
+
+A = np.array([[0, 1], [0, 0]])
+B = np.array([[0, 0], [1, 0]])
+print(A @ B)  # [[1 0] [0 0]]
+print(B @ A)  # [[0 0] [0 1]]</code></pre>
+      </div>
+    </div>
+  </main>
+
+  <script src="site.js" data-df-site></script>
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../docform/js/math.js"></script>
+  <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/code.js"></script>
+  <script src="../../docform/js/tabs.js"></script>
+  <script src="../../docform/js/anim.js"></script>
+  <script src="../../docform/js/params.js"></script>
+  <script src="figures.js"></script>
+  <script>
+    (function () {
+      var P = LA.plane(document.querySelector('#columns svg'), 120, 200, 40);
+      var d = function (id, a, b) { document.getElementById(id).setAttribute('d', LA.arrow(P.pt(a), P.pt(b))); };
+      d('col-a1', [0, 0], [2, 1]);
+      d('col-a2', [0, 0], [-1, 1]);
+      d('col-2a1', [0, 0], [4, 2]);
+      d('col-a2b', [4, 2], [3, 3]);
+      d('col-ax', [0, 0], [3, 3]);
+
+      DocForm.anim('columns', [
+        { caption: 'The columns $\\vec a_1 = (2, 1)$ and $\\vec a_2 = (-1, 1)$.',
+          actions: [{ draw: '#col-a1, #col-a2' }, { fade: '#col-l1, #col-l2', delay: 400 }] },
+        { caption: 'Weight $\\vec a_1$ by $x_1 = 2$.', actions: [{ draw: '#col-2a1' }, { fade: '#col-l3', delay: 400 }] },
+        { caption: 'Add $\\vec a_2$ once, since $x_2 = 1$.', actions: [{ draw: '#col-a2b' }, { fade: '#col-l4', delay: 400 }] },
+        { caption: 'The result is $A\\vec x = (3, 3)$.', actions: [{ draw: '#col-ax' }, { fade: '#col-l5', delay: 400 }] }
+      ], { caption: 'Build $A\\vec x$ from the columns of $A$.' });
+    })();
+  </script>
+</body>
+</html>

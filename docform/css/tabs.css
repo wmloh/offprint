@@ -1,0 +1,59 @@
+/* Tabbed panels from tabs.js. Without JS, every panel shows under its own label. */
+.df-tabs {
+  margin: 0.75em 0;
+}
+
+.df-tabs:not(.df-tabs-ready) > [data-df-tab]::before {
+  content: attr(data-df-tab);
+  display: block;
+  margin-top: 0.5em;
+  color: var(--df-text-muted);
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.df-tab-list {
+  display: flex;
+  gap: 2px;
+  margin-bottom: var(--df-space-2);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--df-border-strong);
+  scrollbar-width: thin;
+}
+
+.df-tab {
+  flex: none;
+  margin: 0 0 -1px;
+  padding: 0.35em 0.75em;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--df-radius) var(--df-radius) 0 0;
+  background: transparent;
+  color: var(--df-text-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.df-tab:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-tab[aria-selected="true"] {
+  border-bottom-color: var(--df-text);
+  color: var(--df-text);
+  font-weight: 500;
+}
+
+.df-tab-panel {
+  border-radius: var(--df-radius);
+}
+
+.df-tab-panel:focus-visible {
+  outline-offset: 4px;
+}
+
+.df-tab-panel > :first-child { margin-top: 0; }
+.df-tab-panel > :last-child { margin-bottom: 0; }

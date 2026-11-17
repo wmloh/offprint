@@ -1,0 +1,32 @@
+docform/: Copyable offline library folder
+  site.template.js: Starter window.DocFormSite manifest to copy beside pages
+  css/: Design tokens, base typography, and per-module styles
+    tokens.css: Notion-style named colours, neutrals, spacing, radii, and fonts via light-dark()
+    base.css: Page layout with sidebar slot, reading-column typography, data-df-color accents
+    roles.css: Roles legend styles
+    nav.css: Sidebar tree, page outline, prev/next links, and narrow-screen drawer
+    theme.css: Theme toggle button styles
+    math.css: Display math layout and inline TeX error styles
+    blocks.css: Inline tags, callouts, and animated details/summary toggles (CSS only)
+    tooltip.css: Tooltip box and dotted term underlines
+    code.css: Code block bar, copy button, and token colours
+    tabs.css: Tab list and panels with a no-JS fallback
+    anim.css: Figure frames, animation controls, and SVG paint utilities
+    params.css: Parameter slider rows and bound values
+  js/: Per-module classic scripts on a shared DocForm namespace
+    core.js: DocForm namespace, module registry, data-df-* helpers, manifest normalization
+    roles.js: Manifest role colours as CSS variables and data-df-legend rendering
+    nav.js: Sidebar page tree with heading outline, scroll-spy, prev/next links, and drawer
+    theme.js: Head-loaded system, light, and dark theme switching with saved choice and toggles
+    math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
+    tooltip.js: data-df-tip tooltips and manifest glossary terms via data-df-term
+    code.js: Code block copy buttons and a dependency-free JS, Python, HTML, CSS, and shell highlighter
+    tabs.js: Accessible tabbed panels with keyboard navigation and synced groups
+    anim.js: DocForm.anim step-timeline SVG animations with playback controls
+    params.js: data-df-param sliders, data-df-bind/data-df-template outputs, and a subscription API
+  vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
+  docs/: Usage guide: getting started, include order, manifest and component references, style guide
+examples/: Example docs opened from file://
+  simple/: Single-page Pythagorean theorem example without a manifest
+  linear-algebra/: Four-page linear algebra notes with a manifest, figures.js plane and arrow helpers, sliders, and animations
+tests/: Built-in node:test checks of module logic

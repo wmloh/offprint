@@ -1,0 +1,112 @@
+/* Site glossary from glossary.js: a letter jump bar, letter groups, definitions, variants, and "used on" links. */
+.df-glossary {
+  margin-block: 1em;
+}
+
+.df-glossary-notice,
+.df-glossary-empty {
+  padding: var(--df-space-3) var(--df-space-4);
+  border-radius: var(--df-radius-lg);
+  background: var(--df-bg-subtle);
+  color: var(--df-text-muted);
+  font-size: 0.9em;
+}
+
+.df-glossary-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: var(--df-space-4) 0 var(--df-space-5);
+}
+
+.df-glossary-jump {
+  min-width: 1.9em;
+  padding: var(--df-space-1) 0;
+  border-radius: var(--df-radius);
+  font-size: 0.9em;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+a.df-glossary-jump:hover,
+a.df-glossary-jump:focus-visible {
+  background: var(--df-bg-hover);
+}
+
+.df-glossary-jump.is-empty {
+  color: var(--df-text-faint);
+  font-weight: 400;
+}
+
+.df-glossary-group + .df-glossary-group {
+  margin-top: var(--df-space-6);
+}
+
+.df-glossary-letter {
+  padding-bottom: var(--df-space-1);
+  border-bottom: 1px solid var(--df-border);
+  scroll-margin-top: var(--df-space-6);
+}
+
+.df-glossary-list {
+  margin: var(--df-space-3) 0 0;
+}
+
+.df-glossary-term {
+  margin-top: var(--df-space-4);
+  font-weight: 600;
+  scroll-margin-top: var(--df-space-6);
+}
+
+.df-glossary-term:target {
+  border-radius: var(--df-radius-sm);
+  background: var(--df-yellow-bg);
+}
+
+.df-glossary-entry {
+  margin: var(--df-space-1) 0 0;
+}
+
+.df-glossary-entry > * {
+  margin-block: var(--df-space-1);
+}
+
+.df-glossary-more,
+.df-glossary-variants,
+.df-glossary-uses {
+  font-size: 0.9em;
+}
+
+.df-glossary-more {
+  color: var(--df-text-muted);
+}
+
+.df-glossary-more > :first-child {
+  margin-top: 0;
+}
+
+.df-glossary-more > :last-child {
+  margin-bottom: 0;
+}
+
+.df-glossary-label {
+  color: var(--df-text-muted);
+  font-weight: 600;
+}
+
+.df-glossary-variants ul {
+  margin: var(--df-space-1) 0 0;
+}
+
+.df-glossary-variant {
+  font-style: italic;
+}
+
+.df-glossary-variant::before {
+  content: '\201C';
+}
+
+.df-glossary-variant::after {
+  content: '\201D';
+}

@@ -31,6 +31,9 @@ window.DocFormSite = {
     vector: 'A quantity with magnitude and direction.'
   },
 
+  // A page holding <div data-df-glossary></div>, listed last in the sidebar. Or { path, title }.
+  // glossaryPage: 'glossary.html',
+
   // Set autoLink to underline every glossary term in paragraphs and lists; hold is the press time in ms.
   terms: {
     autoLink: false,

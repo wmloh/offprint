@@ -1,5 +1,5 @@
 docform/: Copyable offline library folder
-  site.template.js: Starter window.DocFormSite manifest to copy beside pages
+  site.template.js: Starter window.DocFormSite manifest to copy beside pages, with an optional glossary page entry
   css/: Design tokens, base typography, and per-module styles
     tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, and reading-column and wide-block widths via light-dark()
     base.css: Page layout with sidebar slot, reading-column typography, blue links, row and column table hover, tinted list markers, hover-revealed scrollbars, data-df-color accents
@@ -17,11 +17,12 @@ docform/: Copyable offline library folder
     reveal.css: Scroll reveal offsets and split-view grid with side-gliding panes
     steps.css: Full-width figures with step details and optional title-only side cards
     zoom.css: Frosted full-screen figure zoom view
+    zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot and trail, ink, crosshair and ruler readouts
     bubble.css: Tinted peek bubbles and the frosted side panel, blurred except while hovered
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
     search.css: Frosted Ctrl+K search dialog with highlighted results
-    chart.css: Chart legend, grid, thin marks, dashed reference lines, selected points, hover readout, and table view
+    chart.css: Chart legend with series toggles, grid, thin marks, dashed reference lines, selected points, range brush and Reset, empty-state message, hover readout, and table view
     results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with a chip and row-count bar
     highlight.css: Outlines for selected items in linked views
     stepper.css: Worked-example step controls and linked view visibility
@@ -30,8 +31,9 @@ docform/: Copyable offline library folder
     data.css: Data-block parse errors, size notices, and show-more rows
     tree.css: Data-tree rows with disclosure arrows, typed values, and expand and collapse buttons
     dropzone.css: Dashed file drop area, status line with Reset, and the dropped file's view
+    glossary.css: Glossary page letter jumps, letter groups, definitions, variant definitions, and used-on links
   js/: Per-module classic scripts on a shared DocForm namespace
-    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, manifest normalization
+    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, glossary term keys, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
     nav.js: Sidebar page tree and heading outline (other pages via the search index) with animated groups that open on hover until the pointer leaves the sidebar, resizable sidebar width, heading copy links, scroll-spy, prev/next links, and drawer API
     theme.js: Head-loaded light and dark theme switching with saved choice and toggles
@@ -44,12 +46,13 @@ docform/: Copyable offline library folder
     params.js: data-df-param sliders, selects, and toggles, validated data-df-preset batch updates, data-df-bind/data-df-template outputs, and a subscription API
     reveal.js: One-time data-df-reveal fade-ins and .df-split side-by-side panes
     steps.js: Figure steps selected by hover, focus, tap, or other page controls
-    zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes
+    zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes; open and close events for add-ons
+    zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
     bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
-    search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor, ranking, and indexed page list
-    chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with UTC time x-axes, validated base-10 log axes, line gaps, labelled reference lines, keyed point selection through linked highlighting, hover readouts, a table view, and spec updates that can restore the source table
+    search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
+    chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with UTC time x-axes, validated base-10 log axes, line gaps, labelled reference lines, keyed point selection through linked highlighting, legend series toggles, opt-in x-range brushing with keyboard zoom and Reset, optional y rescaling, hover readouts, data coordinates under a viewport point, a table view of what is shown, and spec updates that can restore the source table
     results.js: Sortable results tables with heatmap shading on column or fixed ranges, best-in-column highlighting, labelled pass/fail thresholds, and opt-in value, number, and date column filters plus named filter chips that reshade over visible rows
     highlight.js: Group-scoped linked selection across prose, tables, figures, and code annotations
     stepper.js: Ordered worked examples with Previous, Next, Reset, keyed step selection, and linked step views
@@ -57,18 +60,20 @@ docform/: Copyable offline library folder
     data.js: Named CSV, JSON, and YAML data from wrapped files or inline blocks, with quoted-CSV and core-schema YAML parsing, size and row caps, inline parse errors, results-table, code, or tree views, and show/restore of other entries
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists
     dropzone.js: Reader file dropzones that check type and size, read files locally, and show them or feed a target chart, data block, or results table with Reset
+    glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
     wide.js: data-df-wide figures and table wrappers that grow beside the reading column, bounded by the sidebar and right-margin notes or panels
-  tools/search-index.html: Offline page that builds search-index.js from a chosen docs folder
+  tools/search-index.html: Offline page that builds search-index.js, including auto-linked and hand-marked glossary terms and inline tips, from a chosen docs folder
   tools/data-file.html: Offline page that wraps CSV, JSON, and YAML files as registering data scripts and flags files over the default caps
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
 examples/: Example docs opened from file://
   simple/: Pythagorean theorem with a proof, an animated construction, and prediction exercises
-  linear-algebra/: Five-page notes with a matrix-vector stepper, interactive SVG planes, and computing examples including solver tables against a time budget
+  linear-algebra/: Five-page notes with a matrix-vector stepper, interactive SVG planes, computing examples including solver tables against a time budget, inline tips, and a generated glossary page
   pca/: Three-chapter pump monitoring case study with projection steps, residual exercises, a wide trace and scores table, alert comparisons, and offline search
   transformers/: Three-chapter decoder-only Transformer guide with a linked attention trace, next-token probabilities, decoding-setup presets, a log-scale learning-rate sweep, and offline search
   experiment-results/: Model-sweep leaderboard, paged run table, YAML configuration, inline data, size notice, and parse error from wrapped data files, plus an inspect-your-own-run page with a config tree, dropzones, and sample output files
   benchmarks/: JSON parser comparison with filter chips for latency and memory budgets, plus every benchmark run from a data file with date, machine, and input-size filters
+  telemetry/: A week of synthetic server CPU readings with series toggles, range brushing, an outage gap, alert and deploy lines, and incident buttons that zoom to keyed readings, and zoom presentation tools
   sales-pipeline/: Retry trace linking steps, event rows on two clocks, and a keyed chart, a comparison of sales totals, SQL and C# deduplication snippets, and batch arrivals on a time axis
 tests/: Built-in node:test checks of module logic

@@ -71,5 +71,5 @@ test('indexed pages are listed with URLs resolved against the manifest base', ()
   context.DocFormSearch = { pages: [{ path: 'a/b.html', title: 'B', sections: [{ id: 'x', level: 2, title: 'X' }] }] };
   let result;
   search.pages((pages) => { result = pages; });
-  assert.deepEqual(json(result), [{ href: 'file:///notes/a/b.html', title: 'B', sections: [{ id: 'x', level: 2, title: 'X' }] }]);
+  assert.deepEqual(json(result), [{ href: 'file:///notes/a/b.html', title: 'B', sections: [{ id: 'x', level: 2, title: 'X' }], terms: null }]);
 });

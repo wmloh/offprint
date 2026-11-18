@@ -5,6 +5,8 @@
 // x: { type: 'time' } on line and scatter charts places zoned timestamps by elapsed time and shows them in UTC.
 // type: 'log' on either axis of a line or scatter chart plots positive values on a base-10 scale. A spec that fails
 // validation is not drawn: the element keeps its own content, and an update keeps the last valid chart.
+// Legend buttons hide and show series; brush: true narrows the x range of numeric and time axes by dragging or
+// with + and -, and rescale: true fits the y axis to what is shown. Readouts and the table follow the view.
 (function (root) {
   'use strict';
 
@@ -19,6 +21,11 @@
   var COLORS = 6;
   var CHAR = 7;
   var HIT = 24;
+  var DRAG = 5;
+  var MIN_SPAN = 1e-3;
+  var EMPTY_SERIES = 'Every series is hidden. Choose one in the legend to show it.';
+  var EMPTY_RANGE = 'No readings in this range.';
+  var clips = 0;
   var GROUP = 'data-df-highlight-group';
   var KEY = 'data-df-highlight-key';
   var charts = typeof WeakMap === 'function' ? new WeakMap() : null;
@@ -443,6 +450,9 @@
     if (series.length > COLORS) {
       DocForm.warnOnce('chart-series', 'Charts have ' + COLORS + ' series colours; later series are drawn gray.');
     }
+    if (spec.brush && categorical) {
+      DocForm.warnOnce('chart-brush', 'Range brushing needs a numeric or time x axis; this chart has text categories.');
+    }
     var xAxis = axisSpec(spec.x, time, xLog);
     if (time) {
       var instants = [xAxis.min, xAxis.max].filter(isNum);
@@ -463,6 +473,9 @@
       referenceLines: refs,
       highlight: typeof spec.highlight === 'string' && spec.highlight.trim() ? spec.highlight.trim() : null,
       table: spec.table !== false,
+      toggles: spec.toggles !== false && series.length > 1,
+      brush: !!spec.brush && !categorical,
+      rescale: !!spec.rescale,
       x: xAxis,
       y: axisSpec(spec.y, false, yLog),
       height: isNum(spec.height) && spec.height > 80 ? spec.height : 260
@@ -513,18 +526,22 @@
         s.points.forEach(function (p) { spots.push({ px: xAt(p.x), py: y(p.y), s: s, p: p, el: (markOf(p) || {}).el }); });
       });
     } else if (model.highlight) {
+      var byX = new Map();
+      model.series.forEach(function (s) {
+        s.points.forEach(function (p) {
+          var at = String(p.x);
+          if (!byX.has(at)) byX.set(at, []);
+          byX.get(at).push({ s: s, p: p });
+        });
+      });
       xs.forEach(function (x) {
         var cx = xAt(x);
-        var found = false;
-        model.series.forEach(function (s) {
-          s.points.forEach(function (p) {
-            if (String(p.x) !== String(x)) return;
-            found = true;
-            var mark = markOf(p) || {};
-            spots.push({ px: mark.px == null ? cx : mark.px, cx: cx, py: y(p.y), x: x, s: s, p: p, el: mark.el });
-          });
+        var found = byX.get(String(x)) || [];
+        found.forEach(function (f) {
+          var mark = markOf(f.p) || {};
+          spots.push({ px: mark.px == null ? cx : mark.px, cx: cx, py: y(f.p.y), x: x, s: f.s, p: f.p, el: mark.el });
         });
-        if (!found) spots.push({ px: cx, cx: cx, x: x });
+        if (!found.length) spots.push({ px: cx, cx: cx, x: x });
       });
     } else {
       xs.forEach(function (x) { spots.push({ px: xAt(x), cx: xAt(x), x: x }); });
@@ -581,7 +598,130 @@
     if (model.type === 'bar') { yLo = Math.min(yLo, 0); yHi = Math.max(yHi, 0); }
     if (model.y.min !== null) yLo = model.y.min;
     if (model.y.max !== null) yHi = model.y.max;
-    return { yLo: yLo, yHi: yHi, xs: xs };
+    return { yLo: yLo, yHi: yHi, xs: xs, count: ys.length };
+  }
+
+  // The x span of all the data, with fixed axis ends, or null on text axes and charts with a single x value.
+  function domain(model) {
+    if (model.categories) return null;
+    var xs = extent(model).xs;
+    var lo = model.x.min !== null ? model.x.min : xs.length ? Math.min.apply(null, xs) : null;
+    var hi = model.x.max !== null ? model.x.max : xs.length ? Math.max.apply(null, xs) : null;
+    return lo !== null && hi !== null && hi > lo ? [lo, hi] : null;
+  }
+
+  // Range arithmetic happens in axis position units, so log axes narrow and move by ratios.
+  function along(model) {
+    return model.x.log ?
+      { to: function (v) { return Math.log10(v); }, from: function (t) { return Math.pow(10, t); } } :
+      { to: function (v) { return v; }, from: function (t) { return t; } };
+  }
+
+  // [lo, hi] clamped to the domain: null when it covers the whole domain, false when it is unusable or narrower
+  // than a thousandth of the domain.
+  function clampRange(model, lo, hi) {
+    var dom = domain(model);
+    if (!dom || !isNum(lo) || !isNum(hi) || (model.x.log && !(lo > 0 && hi > 0))) return false;
+    var s = along(model);
+    var a = s.to(dom[0]);
+    var b = s.to(dom[1]);
+    var p = Math.max(a, s.to(Math.min(lo, hi)));
+    var q = Math.min(b, s.to(Math.max(lo, hi)));
+    if (!isNum(p) || !isNum(q) || q - p < (b - a) * MIN_SPAN) return false;
+    if (p <= a && q >= b) return null;
+    return [p <= a ? dom[0] : s.from(p), q >= b ? dom[1] : s.from(q)];
+  }
+
+  // Scales the range width by factor around center (an x value, kept at the same place), within the domain.
+  function zoomRange(model, range, center, factor) {
+    var dom = domain(model);
+    if (!dom) return null;
+    var s = along(model);
+    var a = s.to(dom[0]);
+    var b = s.to(dom[1]);
+    var r = range || dom;
+    var p = s.to(r[0]);
+    var q = s.to(r[1]);
+    var c = isNum(center) && center > (model.x.log ? 0 : -Infinity) ? Math.max(p, Math.min(q, s.to(center))) : (p + q) / 2;
+    var w = Math.max((q - p) * factor, (b - a) * MIN_SPAN * 1.5);
+    if (w >= b - a) return null;
+    var lo = Math.max(a, Math.min(c - (c - p) * w / (q - p), b - w));
+    var next = clampRange(model, s.from(lo), s.from(lo + w));
+    return next === false ? range : next;
+  }
+
+  // Moves the range by shift times its width, stopping at the domain ends.
+  function panRange(model, range, shift) {
+    var dom = domain(model);
+    if (!dom || !range) return range || null;
+    var s = along(model);
+    var a = s.to(dom[0]);
+    var b = s.to(dom[1]);
+    var p = s.to(range[0]);
+    var w = s.to(range[1]) - p;
+    var lo = Math.max(a, Math.min(p + w * shift, b - w));
+    var next = clampRange(model, s.from(lo), s.from(lo + w));
+    return next === false ? range : next;
+  }
+
+  function sameRange(a, b) {
+    return a === b || (!!a && !!b && a[0] === b[0] && a[1] === b[1]);
+  }
+
+  // The part of a chart being shown: series not hidden by name, and points inside an x range. Line series keep
+  // the nearest reading beyond each end in `line` so their paths run to the plot edge, and every missing value
+  // in `breaks` so those paths still break where the data does.
+  function viewOf(model, hidden, range) {
+    var off = hidden || {};
+    var inside = function (x) { return x >= range[0] && x <= range[1]; };
+    var series = model.series.filter(function (s) { return !off[s.name]; }).map(function (s) {
+      var points = range ? s.points.filter(function (p) { return inside(p.x); }) : s.points;
+      var line = points;
+      if (range && model.type === 'line') {
+        var before = null;
+        var after = null;
+        s.points.forEach(function (p) {
+          if (p.x < range[0]) before = p;
+          else if (p.x > range[1] && !after) after = p;
+        });
+        line = (before ? [before] : []).concat(points, after ? [after] : []);
+      }
+      return Object.assign({}, s, {
+        points: points,
+        missing: range ? s.missing.filter(inside) : s.missing,
+        line: line,
+        breaks: s.missing
+      });
+    });
+    return Object.assign({}, model, { series: series, range: range || null, hiddenCount: model.series.length - series.length });
+  }
+
+  // The data position under a point (px, py) of the drawn plot, or null outside the plot area. Continuous values are
+  // rounded to what one pixel can tell apart; categorical x gives the category of the band.
+  function readAt(model, geom, px, py) {
+    if (!geom || !geom.y || !(px >= geom.left && px <= geom.right && py >= geom.top && py <= geom.bottom)) return null;
+    var fine = function (scale, p, log) {
+      var v = scale.invert(p);
+      var step = Math.abs(scale.invert(p + 1) - v);
+      if (!(step > 0) || !isFinite(v)) return v;
+      if (log) return +v.toPrecision(Math.max(1, Math.min(15, Math.ceil(Math.log10(Math.abs(v) / step)) + 1)));
+      var d = Math.max(0, Math.min(12, -Math.floor(Math.log10(step))));
+      return +v.toFixed(d);
+    };
+    var x;
+    if (model.categories) {
+      var cats = model.categories;
+      var i = Math.floor((px - geom.left) / Math.max(1e-9, geom.band));
+      x = cats[Math.max(0, Math.min(cats.length - 1, i))];
+    } else {
+      x = geom.x ? (model.x.time ? Math.round(geom.x.invert(px)) : fine(geom.x, px, model.x.log)) : null;
+    }
+    var y = fine(geom.y, py, model.y.log);
+    return {
+      x: x, y: y,
+      xText: model.categories ? String(x) : format(x, model.x),
+      yText: format(y, model.y)
+    };
   }
 
   function refValue(model, r) {
@@ -635,8 +775,9 @@
     return chart.model.categories ? String(x) : format(x, chart.model.x);
   }
 
+  // Draws chart.view. The y axis covers every series unless the chart rescales to the series and range shown.
   function draw(chart) {
-    var model = chart.model;
+    var model = chart.view;
     var width = Math.round(chart.plot.clientWidth);
     if (!width) return;
     chart.width = width;
@@ -644,11 +785,13 @@
     var type = model.type;
     var series = model.series;
     var cats = model.categories;
+    var range = model.range;
 
     var span = extent(model);
     var xs = span.xs;
-    var yLo = span.yLo;
-    var yHi = span.yHi;
+    var fit = model.rescale && span.count ? span : extent(chart.model);
+    var yLo = fit.yLo;
+    var yHi = fit.yHi;
 
     var top = 10 + (model.y.label ? 20 : 0);
     var markerSpace = model.markedCategories ? 13 : 0;
@@ -676,6 +819,7 @@
     var plotW = Math.max(40, width - left - right);
 
     var xAt;
+    var xs0 = null;
     var band = 0;
     var xInfo = null;
     if (cats) {
@@ -688,16 +832,22 @@
       var xTicks = model.x.time ? timeTicks : model.x.log ? logTicks : ticks;
       if (model.x.min !== null) xLo = model.x.min;
       if (model.x.max !== null) xHi = model.x.max;
+      if (range) { xLo = range[0]; xHi = range[1]; }
       xInfo = xTicks(xLo, xHi, Math.max(2, Math.round(plotW / (model.x.time ? 110 : 90))),
-        exact || model.x.min !== null, exact || model.x.max !== null);
+        exact || !!range || model.x.min !== null, exact || !!range || model.x.max !== null);
       if (xInfo.min === xInfo.max) xInfo = xTicks(xLo, xHi, 4);
-      var xs0 = (model.x.log ? log : linear)(xInfo.min, xInfo.max, left, left + plotW);
+      xs0 = (model.x.log ? log : linear)(xInfo.min, xInfo.max, left, left + plotW);
       xAt = function (x) { return xs0(x); };
     }
 
     var frame = svg('svg', {
       viewBox: '0 0 ' + width + ' ' + height, width: width, height: height, 'aria-hidden': 'true', focusable: 'false'
     });
+    // A narrowed range clips line paths that run on to the readings just beyond each end.
+    if (range) {
+      var clip = svg('clipPath', { id: chart.clip }, svg('defs', {}, frame));
+      svg('rect', { x: left, y: top - 3, width: plotW, height: height - bottom - top + 6 }, clip);
+    }
 
     var grid = svg('g', { class: 'df-chart-grid' }, frame);
     yInfo.ticks.forEach(function (v) {
@@ -749,19 +899,23 @@
       markOf.set(p, { el: el, px: px });
       return tagKey(model, el, p);
     };
-    series.forEach(function (s) {
+    series.forEach(function (s, si) {
       var g = svg('g', { class: 'df-chart-series' }, marks);
       paint(g, s);
       if (type === 'line') {
-        var runs = model.gaps ? segments(s.points, s.missing, cats ? function (x) { return cats.indexOf(String(x)); } :
-          function (x) { return x; }) : [s.points];
+        var runs = model.gaps ? segments(s.line, s.breaks, cats ? function (x) { return cats.indexOf(String(x)); } :
+          function (x) { return x; }) : [s.line];
         var d = runs.map(function (run) {
           return run.length > 1 ? run.map(function (p, i) { return (i ? 'L' : 'M') + xAt(p.x) + ',' + y(p.y); }).join('') : '';
         }).join('');
-        if (d) svg('path', { d: d, class: 'df-chart-line' }, g);
+        if (d) {
+          var path = svg('path', { d: d, class: 'df-chart-line' }, g);
+          if (range) path.setAttribute('clip-path', 'url(#' + chart.clip + ')');
+        }
         // Isolated readings between gaps, and selectable points, keep a marker even on dense lines.
         runs.forEach(function (run) {
           run.forEach(function (p) {
+            if (range && (p.x < range[0] || p.x > range[1])) return;
             if (s.points.length > 16 && run.length > 1 && !(model.highlight && p.key)) return;
             place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4, class: 'df-chart-dot' }, g), xAt(p.x));
           });
@@ -770,7 +924,7 @@
         var groupW = series.length * thick + (series.length - 1) * gap;
         var y0 = y(Math.max(yInfo.min, Math.min(0, yInfo.max)));
         s.points.forEach(function (p) {
-          var x0 = xAt(p.x) - groupW / 2 + s.index * (thick + gap);
+          var x0 = xAt(p.x) - groupW / 2 + si * (thick + gap);
           var bar = svg('path', { d: barPath(x0, thick, y0, y(p.y), 4), class: 'df-chart-bar' }, g);
           bar.setAttribute('data-df-x', p.x);
           place(p, bar, x0 + thick / 2);
@@ -791,6 +945,7 @@
     var refLabels = svg('g', { class: 'df-chart-refs' }, frame);
     var plotR = left + plotW;
     var plotB = height - bottom;
+    var full = range ? domain(chart.model) : null;
     model.referenceLines.forEach(function (r, i) {
       var text = r.label || refValue(model, r);
       var on = false;
@@ -813,14 +968,23 @@
       var item = chart.refItems && chart.refItems[i];
       if (item) {
         item.classList.toggle('is-outside', !on);
-        item.lastChild.textContent = on ? '' : 'off scale';
+        var cut = full && r.axis === 'x' && r.value >= full[0] && r.value <= full[1];
+        item.lastChild.textContent = on ? '' : cut ? 'outside range' : 'off scale';
       }
     });
 
     chart.spots = spotsFor(model, xAt, y, function (p) { return markOf.get(p); });
-    chart.geom = { left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y };
+    chart.geom = { left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0 };
     chart.overlay = svg('g', { class: 'df-chart-hover' }, frame);
     chart.marks = marks;
+
+    var empty = !series.length ? EMPTY_SERIES : range && !chart.spots.length ? EMPTY_RANGE : '';
+    chart.empty.textContent = empty;
+    chart.empty.hidden = !empty;
+    chart.empty.style.left = left + 'px';
+    chart.empty.style.width = plotW + 'px';
+    chart.empty.style.top = top + 'px';
+    chart.empty.style.height = Math.max(0, height - bottom - top) + 'px';
 
     if (chart.svg) chart.plot.replaceChild(frame, chart.svg);
     else chart.plot.insertBefore(frame, chart.plot.firstChild);
@@ -851,7 +1015,7 @@
   function show(chart, index, pointerY) {
     var spot = chart.svg && chart.spots[index];
     if (!spot) return hide(chart);
-    var model = chart.model;
+    var model = chart.view;
     var g = chart.geom;
     chart.active = index;
     chart.pointerY = pointerY;
@@ -924,11 +1088,17 @@
     tip.style.top = Math.max(0, Math.min(anchorY - h / 2, chart.model.height - h)) + 'px';
   }
 
-  function pick(chart, event) {
+  // Pointer position in the chart's drawing units.
+  function local(chart, event) {
     var rect = chart.svg.getBoundingClientRect();
     var scale = rect.width ? chart.width / rect.width : 1;
-    var px = (event.clientX - rect.left) * scale;
-    var py = (event.clientY - rect.top) * scale;
+    return { x: (event.clientX - rect.left) * scale, y: (event.clientY - rect.top) * scale };
+  }
+
+  function pick(chart, event) {
+    var at = local(chart, event);
+    var px = at.x;
+    var py = at.y;
     var g = chart.geom;
     var spots = chart.spots;
     if (!spots.length || px < g.left - HIT || px > g.right + HIT || py < g.top - HIT || py > g.bottom + HIT) return hide(chart);
@@ -1008,17 +1178,24 @@
     model.series.forEach(function (s) { html('th', '', head, s.name || model.y.label || 'Value'); });
     var xs = model.categories || [];
     if (!model.categories) {
+      var seen = new Set();
       model.series.forEach(function (s) {
-        s.points.forEach(function (p) { if (xs.indexOf(p.x) < 0) xs.push(p.x); });
-        s.missing.forEach(function (x) { if (xs.indexOf(x) < 0) xs.push(x); });
+        s.points.forEach(function (p) { seen.add(p.x); });
+        s.missing.forEach(function (x) { seen.add(x); });
       });
+      seen.forEach(function (x) { xs.push(x); });
       xs.sort(function (a, b) { return a - b; });
     }
+    var lookup = model.series.map(function (s) {
+      var at = new Map();
+      s.points.forEach(function (p) { if (!at.has(String(p.x))) at.set(String(p.x), p); });
+      return at;
+    });
     xs.forEach(function (x) {
       var tr = html('tr', '', body);
       html('th', '', tr, model.categories ? x : format(x, model.x)).setAttribute('scope', 'row');
-      model.series.forEach(function (s) {
-        var p = s.points.filter(function (q) { return String(q.x) === String(x); })[0];
+      model.series.forEach(function (s, i) {
+        var p = lookup[i].get(String(x));
         tagKey(model, html('td', '', tr, p ? format(p.y, model.y) : ''), p);
       });
     });
@@ -1038,17 +1215,31 @@
       (refs.length ? ' Reference ' + (refs.length > 1 ? 'lines: ' : 'line: ') + refs.join(', ') + '.' : '') +
       (gaps ? ' Breaks in a line mark missing values.' : '') + ' Arrow keys read the values.' +
       (keyed ? ' Enter or Space selects the point being read.' : '') +
-      (model.table ? ' The Table button lists them.' : '');
+      (model.brush ? ' Drag across the plot, or press plus and minus, to narrow or widen the x range; Shift with ' +
+        'the left and right arrow keys moves it.' : '') +
+      (model.toggles ? ' The legend buttons hide and show series.' : '') +
+      (model.table ? ' The Table button lists the values shown.' : '');
+  }
+
+  function rangeText(model, range) {
+    return xName(model, 'x') + ' ' + format(range[0], model.x).replace(/ UTC$/, '') + ' – ' + format(range[1], model.x);
   }
 
   function renderHead(chart) {
     var model = chart.model;
     chart.legend.textContent = '';
+    chart.seriesItems = [];
     if (model.series.length > 1) {
       model.series.forEach(function (s) {
-        var item = html('span', 'df-chart-legend-item', chart.legend);
+        var item = html(model.toggles ? 'button' : 'span', 'df-chart-legend-item', chart.legend);
+        if (model.toggles) {
+          item.type = 'button';
+          item.classList.add('df-chart-series-toggle');
+          item.addEventListener('click', function () { setVisible(chart, s.name, !!chart.hidden[s.name]); });
+        }
         key(model.type === 'line' ? 'line' : model.type === 'bar' ? 'bar' : 'dot', s, item);
         html('span', '', item, s.name);
+        chart.seriesItems.push({ el: item, name: s.name });
       });
     }
     // Reference lines are also named in text, so their meaning survives the table view and off-scale values.
@@ -1059,10 +1250,131 @@
       html('span', 'df-chart-ref-note', item);
       return item;
     });
+    syncHead(chart);
+  }
+
+  // Pressed legend buttons, and the narrowed range with its Reset button.
+  function syncHead(chart) {
+    chart.seriesItems.forEach(function (item) {
+      var off = !!chart.hidden[item.name];
+      item.el.classList[off ? 'add' : 'remove']('is-off');
+      if (!chart.model.toggles) return;
+      item.el.setAttribute('aria-pressed', off ? 'false' : 'true');
+      item.el.title = (off ? 'Show ' : 'Hide ') + item.name;
+    });
+    chart.rangeText.textContent = chart.range ? rangeText(chart.model, chart.range) : '';
+    chart.rangeText.hidden = !chart.range;
+    chart.reset.hidden = !chart.range;
+    chart.box.classList[chart.model.brush ? 'add' : 'remove']('is-brushable');
+  }
+
+  function tableView(view) {
+    return view.series.length ? buildTable(view) : html('p', 'df-chart-empty-note', null, EMPTY_SERIES);
+  }
+
+  // The table view lists what the plot shows; a source table stands in while nothing is hidden or narrowed.
+  function fillTable(chart) {
+    chart.table.textContent = '';
+    if (chart.ownTable && !chart.range && !chart.view.hiddenCount) chart.table.appendChild(chart.sourceTable);
+    else if (chart.plot.hidden) chart.table.appendChild(tableView(chart.view));
+  }
+
+  function refresh(chart) {
+    chart.view = viewOf(chart.model, chart.hidden, chart.range);
+    hide(chart);
+    syncHead(chart);
+    fillTable(chart);
+    if (!chart.plot.hidden) draw(chart);
+    if (typeof CustomEvent === 'function') {
+      chart.box.dispatchEvent(new CustomEvent('df:chartview', {
+        bubbles: true,
+        detail: { hidden: Object.keys(chart.hidden), range: chart.range ? chart.range.slice() : null }
+      }));
+    }
+  }
+
+  function setVisible(chart, name, on) {
+    if (on) delete chart.hidden[name];
+    else chart.hidden[name] = true;
+    refresh(chart);
+  }
+
+  function setRange(chart, range) {
+    chart.range = range;
+    refresh(chart);
+  }
+
+  // A range survives an update when the x axis keeps its kind and the range still overlaps the new data.
+  function keepRange(range, before, after) {
+    if (!range || after.categories || before.x.time !== after.x.time || before.x.log !== after.x.log) return null;
+    return clampRange(after, range[0], range[1]) || null;
+  }
+
+  function brushable(chart) {
+    return chart.model.brush && !chart.plot.hidden && !!chart.svg && !!chart.geom.x && !!domain(chart.model);
+  }
+
+  function dragTo(chart, event) {
+    var d = chart.drag;
+    var g = chart.geom;
+    d.to = Math.max(g.left, Math.min(g.right, local(chart, event).x));
+    if (!d.moved && Math.abs(d.to - d.from) < DRAG) return;
+    if (!d.moved) {
+      d.moved = true;
+      hide(chart);
+      chart.box.classList.add('is-brushing');
+      try { chart.plot.setPointerCapture(d.id); } catch (e) { /* capture is optional */ }
+      d.rect = svg('rect', { y: g.top, height: g.bottom - g.top, class: 'df-chart-brush' }, chart.svg);
+    }
+    d.rect.setAttribute('x', Math.min(d.from, d.to));
+    d.rect.setAttribute('width', Math.abs(d.to - d.from));
+  }
+
+  function endDrag(chart, commit) {
+    var d = chart.drag;
+    chart.drag = null;
+    if (!d || !d.moved) return;
+    chart.box.classList.remove('is-brushing');
+    if (d.rect.parentNode) d.rect.parentNode.removeChild(d.rect);
+    // The click that ends a drag is not a selection, and must not open a zoomable figure.
+    chart.dragged = true;
+    if (!commit) return;
+    var next = clampRange(chart.model, chart.geom.x.invert(d.from), chart.geom.x.invert(d.to));
+    if (next !== false) setRange(chart, next);
+  }
+
+  // The x value being read, so keyboard zooming stays centred on it.
+  function readX(chart) {
+    var spot = chart.spots[chart.active];
+    if (!spot) return null;
+    return spot.x !== undefined ? spot.x : spot.p ? spot.p.x : null;
+  }
+
+  function readNear(chart, x) {
+    if (!chart.spots.length || !chart.geom || !chart.geom.x) return;
+    var px = isNum(x) ? chart.geom.x(x) : (chart.geom.left + chart.geom.right) / 2;
+    show(chart, closest(chart.spots, px, null), null);
+  }
+
+  // + and - narrow and widen the range around the reading; Shift with the left and right arrows moves it.
+  function keyRange(chart, event) {
+    if (!brushable(chart) || event.altKey || event.ctrlKey || event.metaKey) return false;
+    var at = readX(chart);
+    var next;
+    if (event.key === '+' || event.key === '=') next = zoomRange(chart.model, chart.range, at, 0.5);
+    else if (event.key === '-' || event.key === '_' || event.key === '−') next = zoomRange(chart.model, chart.range, at, 2);
+    else if (event.shiftKey && chart.range && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      next = panRange(chart.model, chart.range, event.key === 'ArrowLeft' ? -0.25 : 0.25);
+    } else return false;
+    event.preventDefault();
+    if (sameRange(next, chart.range)) return true;
+    setRange(chart, next);
+    readNear(chart, at);
+    return true;
   }
 
   function setTable(chart, on) {
-    if (on && !chart.table.firstChild) chart.table.appendChild(buildTable(chart.model));
+    if (on && !chart.table.firstChild) chart.table.appendChild(tableView(chart.view));
     chart.box.classList.toggle('is-table', on);
     chart.table.hidden = !on;
     chart.plot.hidden = on;
@@ -1072,13 +1384,21 @@
   }
 
   function build(host, model, sourceTable, spec) {
-    var chart = { box: host, model: model, spec: spec, active: -1, spots: [], svg: null, width: 0 };
+    var chart = {
+      box: host, model: model, spec: spec, active: -1, spots: [], svg: null, width: 0, geom: {},
+      hidden: Object.create(null), range: null, drag: null, dragged: false, clip: 'df-chart-clip-' + (++clips)
+    };
+    chart.view = viewOf(model, chart.hidden, null);
     host.classList.add('df-chart');
     host.classList.add('is-' + chart.model.type);
 
     var head = html('div', 'df-chart-head');
     chart.legend = html('div', 'df-chart-legend', head);
-    chart.toggle = html('button', 'df-chart-toggle', head, 'Table');
+    var tools = html('div', 'df-chart-tools', head);
+    chart.rangeText = html('span', 'df-chart-range', tools);
+    chart.reset = html('button', 'df-chart-reset', tools, 'Reset range');
+    chart.reset.type = 'button';
+    chart.toggle = html('button', 'df-chart-toggle', tools, 'Table');
     chart.toggle.type = 'button';
     chart.toggle.hidden = !chart.model.table;
     chart.toggle.setAttribute('aria-pressed', 'false');
@@ -1088,6 +1408,9 @@
     chart.tip = html('div', 'df-chart-tip', chart.plot);
     chart.tip.hidden = true;
     chart.tip.setAttribute('aria-live', 'polite');
+    chart.empty = html('div', 'df-chart-empty', chart.plot);
+    chart.empty.hidden = true;
+    chart.empty.setAttribute('role', 'status');
     chart.table = html('div', 'df-chart-table');
     chart.table.hidden = true;
     // A table the chart was read from is its table view until an update brings other data.
@@ -1102,19 +1425,42 @@
     chart.plot.setAttribute('aria-label', describe(chart.model));
 
     chart.toggle.addEventListener('click', function () { setTable(chart, !host.classList.contains('is-table')); });
-    chart.plot.addEventListener('pointermove', function (event) { if (chart.svg) pick(chart, event); });
-    chart.plot.addEventListener('pointerleave', function () { hide(chart); });
+    chart.reset.addEventListener('click', function () {
+      setRange(chart, null);
+      if (typeof chart.plot.focus === 'function') chart.plot.focus({ preventScroll: true });
+    });
+    chart.plot.addEventListener('pointerdown', function (event) {
+      chart.dragged = false;
+      if (event.button !== 0 || event.isPrimary === false || !brushable(chart)) return;
+      var at = local(chart, event);
+      var g = chart.geom;
+      if (at.x < g.left || at.x > g.right || at.y < g.top || at.y > g.bottom) return;
+      chart.drag = { from: at.x, to: at.x, id: event.pointerId, moved: false };
+    });
+    chart.plot.addEventListener('pointermove', function (event) {
+      if (chart.drag) dragTo(chart, event);
+      else if (chart.svg) pick(chart, event);
+    });
+    chart.plot.addEventListener('pointerup', function () { endDrag(chart, true); });
+    chart.plot.addEventListener('pointercancel', function () { endDrag(chart, false); });
+    chart.plot.addEventListener('pointerleave', function () { if (!chart.drag) hide(chart); });
     chart.plot.addEventListener('focus', function () {
       if (chart.plot.matches(':focus-visible')) show(chart, Math.max(0, chart.active), null);
     });
     chart.plot.addEventListener('blur', function () { hide(chart); });
     // A committed point click stops here, so a zoomable figure around the chart stays in place.
     chart.plot.addEventListener('click', function (event) {
+      if (chart.dragged) {
+        chart.dragged = false;
+        event.preventDefault();
+        return;
+      }
       if (event.button !== 0 || !chart.svg || !chart.model.highlight) return;
       pick(chart, event);
       if (activate(chart)) event.preventDefault();
     });
     chart.plot.addEventListener('keydown', function (event) {
+      if (keyRange(chart, event)) return;
       var n = chart.spots.length;
       if (!n) return;
       if (event.key === 'Enter' || event.key === ' ') {
@@ -1150,8 +1496,14 @@
       update: function (next) {
         var model = normalize(next);
         if (!report(model, host, true)) return false;
+        // Hidden series stay hidden by name, and a narrowed range stays while it still fits the data.
+        Object.keys(chart.hidden).forEach(function (name) {
+          if (model.series.length < 2 || !model.series.some(function (s) { return s.name === name; })) delete chart.hidden[name];
+        });
+        chart.range = keepRange(chart.range, chart.model, model);
         chart.model = model;
         chart.spec = next;
+        chart.view = viewOf(model, chart.hidden, chart.range);
         watch(chart);
         host.classList.remove('is-line', 'is-bar', 'is-scatter');
         host.classList.add('is-' + chart.model.type);
@@ -1160,20 +1512,53 @@
         chart.toggle.hidden = !chart.model.table;
         chart.plot.setAttribute('aria-label', describe(chart.model));
         chart.ownTable = !!chart.sourceTable && next === chart.sourceSpec;
-        chart.table.textContent = '';
-        if (chart.ownTable) chart.table.appendChild(chart.sourceTable);
         if (chart.plot.hidden && !chart.model.table) {
+          chart.table.textContent = '';
           setTable(chart, false);
-        } else if (chart.plot.hidden) {
-          if (!chart.table.firstChild) chart.table.appendChild(buildTable(chart.model));
         } else {
-          draw(chart);
+          fillTable(chart);
+          if (!chart.plot.hidden) draw(chart);
         }
         return true;
       },
       model: function () { return chart.model; },
+      // coords(clientX, clientY) reads the data position under a viewport point: { x, y, xText, yText, plot }, where
+      // plot is the plot area in viewport pixels, or null outside the plot area or while the table shows.
+      coords: function (cx, cy) {
+        if (!chart.svg || chart.plot.hidden) return null;
+        var box = chart.svg.getBoundingClientRect();
+        var k = box.width && chart.width ? chart.width / box.width : 1;
+        var hit = readAt(chart.view, chart.geom, (cx - box.left) * k, (cy - box.top) * k);
+        if (!hit) return null;
+        var g = chart.geom;
+        hit.plot = { left: box.left + g.left / k, right: box.left + g.right / k, top: box.top + g.top / k, bottom: box.top + g.bottom / k };
+        return hit;
+      },
       // The spec last drawn; passing the first one back to update restores a chart read from a table to that table.
-      spec: function () { return chart.spec; }
+      spec: function () { return chart.spec; },
+      // visible(name) says whether a series is shown; visible(name, on) shows or hides it.
+      visible: function (name, on) {
+        name = String(name);
+        if (on === undefined) return !chart.hidden[name];
+        if (!chart.model.series.some(function (s) { return s.name === name; })) return false;
+        if (!on !== !!chart.hidden[name]) setVisible(chart, name, !!on);
+        return true;
+      },
+      // range() is the narrowed [lo, hi] or null; range([lo, hi]) narrows the x axis and range(null) resets it.
+      // Time axes take timestamps. Returns false, changing nothing, for a range it cannot show.
+      range: function (next) {
+        if (!arguments.length) return chart.range ? chart.range.slice() : null;
+        var value = next;
+        if (next !== null) {
+          var read = chart.model.x.time ? toTime : toNumber;
+          value = Array.isArray(next) && next.length === 2 ? clampRange(chart.model, read(next[0]), read(next[1])) : false;
+          if (value === false) return false;
+        } else if (!domain(chart.model)) {
+          return false;
+        }
+        if (!sameRange(value, chart.range)) setRange(chart, value);
+        return true;
+      }
     };
     charts.set(host, chart);
     watch(chart);
@@ -1194,6 +1579,9 @@
     if (gaps !== null) spec.gaps = gaps;
     var group = DocForm.data(host, 'highlight-group', null);
     if (group !== null) spec.highlight = group;
+    ['brush', 'rescale', 'toggles'].forEach(function (name) {
+      if (DocForm.data(host, name, null) !== null) spec[name] = DocForm.flag(host, name);
+    });
     var refs = DocForm.data(host, 'reference-lines', null);
     if (refs !== null) {
       try {
@@ -1280,6 +1668,12 @@
   chart.spotsFor = spotsFor;
   chart.closest = closest;
   chart.extent = extent;
+  chart.domain = domain;
+  chart.clampRange = clampRange;
+  chart.zoomRange = zoomRange;
+  chart.panRange = panRange;
+  chart.view = viewOf;
+  chart.readAt = readAt;
   chart.format = format;
   chart.tickFormat = tickFormat;
   chart.barPath = barPath;

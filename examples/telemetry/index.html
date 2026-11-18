@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A week of server telemetry</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/highlight.css">
+  <link rel="stylesheet" href="../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/zoomtools.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Page outline">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <h1>A week of server telemetry</h1>
+    <p>Three made-up servers report CPU load every ten minutes, so a week is just over 3,000 readings. At this
+      length the two incidents and the maintenance window are hard to read. Hide the servers you don't need and
+      zoom in on the hours that matter.</p>
+
+    <h2 id="cpu">CPU load by server</h2>
+    <p>Things to try:</p>
+    <ul>
+      <li>Drag across the chart to zoom in on a stretch of time. <strong>Reset range</strong> zooms back out.</li>
+      <li>Click <strong>api-1</strong> and <strong>api-2</strong> in the legend to hide them. This chart rescales,
+        so the y axis fits <strong>worker-1</strong> on its own. The break on November 12 is the maintenance
+        window, when no readings were sent.</li>
+      <li>From the keyboard, focus the chart and press <kbd>+</kbd> to zoom in on the reading under the readout,
+        <kbd>-</kbd> to zoom out, and Shift with the arrow keys to move along. <strong>Table</strong> lists only the
+        readings in the range.</li>
+      <li>Click an empty part of the plot to show the chart full screen for a talk. Press <kbd>C</kbd> for a
+        crosshair that reads the time and load under the pointer, <kbd>M</kbd> for a magnifier (scroll to change
+        it), <kbd>L</kbd> for a laser pointer, or <kbd>P</kbd> and <kbd>H</kbd> to draw. <kbd>Esc</kbd> closes the
+        view and wipes the ink.</li>
+    </ul>
+    <div id="fleet-cpu" data-df-zoom></div>
+    <p>Jump to an incident. The chart zooms to the six hours either side and outlines the reading:</p>
+    <p>
+      <button type="button" data-df-highlight-group="incidents" data-df-highlight-key="spike">Load spike on api-2</button>
+      <button type="button" data-df-highlight-group="incidents" data-df-highlight-key="backlog">Queue backlog on worker-1</button>
+    </p>
+    <div class="df-callout" data-df-color="blue">
+      <p>The outlined reading stays selected if you zoom away from it or hide its server. It shows again when it
+        comes back into view.</p>
+    </div>
+
+    <h2 id="requests">Requests by region</h2>
+    <p>This chart has a fixed y axis, which is the default. Hiding the busiest region leaves the other bars at the
+      same height, so the weeks are still easy to compare.</p>
+    <div data-df-chart="bar" data-df-y-label="Requests (millions)" data-df-height="220">
+      <table>
+        <thead>
+          <tr><th>Week</th><th>Europe</th><th>Americas</th><th>Asia</th><th>Oceania</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Oct 19</td><td>41</td><td>63</td><td>28</td><td>6</td></tr>
+          <tr><td>Oct 26</td><td>44</td><td>61</td><td>31</td><td>7</td></tr>
+          <tr><td>Nov 2</td><td>47</td><td>66</td><td>35</td><td>7</td></tr>
+          <tr><td>Nov 9</td><td>45</td><td>70</td><td>38</td><td>8</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/highlight.js"></script>
+  <script src="../../docform/js/chart.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/zoomtools.js"></script>
+  <script>
+    // Synthetic readings: a daily cycle plus seeded noise, so every visit draws the same week.
+    (function () {
+      var HOUR = 36e5;
+      var start = Date.UTC(2026, 10, 9);
+      var seed = 7;
+      function noise() {
+        seed = (seed * 16807) % 2147483647;
+        return seed / 2147483647 - 0.5;
+      }
+      var hosts = [
+        { name: 'api-1', base: 38, swing: 18 },
+        { name: 'api-2', base: 44, swing: 20 },
+        { name: 'worker-1', base: 22, swing: 6 }
+      ];
+      var spike = start + 2 * 24 * HOUR + 14 * HOUR + 20 * 6e4;
+      var backlog = start + 4 * 24 * HOUR + 9 * HOUR;
+      var outage = [start + 3 * 24 * HOUR + 2 * HOUR, start + 3 * 24 * HOUR + 5 * HOUR];
+      var series = hosts.map(function (host) {
+        var data = [];
+        for (var t = start; t < start + 7 * 24 * HOUR; t += HOUR / 6) {
+          var day = Math.sin(((t - start) / (24 * HOUR) - 0.375) * 2 * Math.PI);
+          var y = host.base + host.swing * day + 6 * noise();
+          if (host.name === 'api-2') y += 50 * Math.exp(-Math.pow((t - spike) / (0.6 * HOUR), 2));
+          if (host.name === 'worker-1') y += 72 * Math.exp(-Math.pow((t - backlog) / (1.5 * HOUR), 2));
+          if (host.name === 'worker-1' && t >= outage[0] && t < outage[1]) {
+            data.push([t, null]);
+            continue;
+          }
+          y = Math.round(Math.max(1, Math.min(99, y)) * 10) / 10;
+          var key = host.name === 'api-2' && t === spike ? 'spike' : host.name === 'worker-1' && t === backlog ? 'backlog' : null;
+          data.push(key ? { x: t, y: y, key: key } : [t, y]);
+        }
+        return { name: host.name, data: data };
+      });
+      var chart = DocForm.chart('fleet-cpu', {
+        type: 'line',
+        title: 'CPU load',
+        brush: true,
+        rescale: true,
+        gaps: 'break',
+        highlight: 'incidents',
+        height: 300,
+        x: { type: 'time' },
+        y: { label: 'CPU (%)', min: 0, digits: 1, unit: '%' },
+        referenceLines: [
+          { axis: 'y', value: 85, label: 'Alert' },
+          { axis: 'x', value: start + 5 * 24 * HOUR + 10 * HOUR, label: 'Deploy 2.4' }
+        ],
+        series: series
+      });
+      var at = { spike: spike, backlog: backlog };
+      document.addEventListener('df:highlightchange', function (event) {
+        var t = event.detail.group === 'incidents' && at[event.detail.key];
+        if (chart && t) chart.range([t - 6 * HOUR, t + 6 * HOUR]);
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,4 +1,5 @@
-/* SVG charts from chart.js: legend row, recessive grid, thin marks, hover readout, and the table view. */
+/* SVG charts from chart.js: legend row with series toggles, recessive grid, thin marks, hover readout, range brush,
+   and the table view. */
 .df-chart {
   margin: 0.75em 0;
 }
@@ -7,6 +8,7 @@
   display: flex;
   align-items: center;
   gap: var(--df-space-3);
+  flex-wrap: wrap;
   min-height: 24px;
   margin-bottom: var(--df-space-1);
   color: var(--df-text-muted);
@@ -23,6 +25,59 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* Series toggles look like the plain legend until pointed at; a hidden series fades its key and name. */
+.df-chart-series-toggle {
+  margin: 0 -4px;
+  padding: 1px 4px;
+  border: 0;
+  border-radius: var(--df-radius);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.df-chart-series-toggle:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-chart-series-toggle:focus-visible,
+.df-chart-tools > button:focus-visible {
+  outline: 2px solid var(--df-focus);
+  outline-offset: 1px;
+  opacity: 1;
+}
+
+.df-chart-series-toggle.is-off {
+  color: var(--df-text-faint);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.df-chart-series-toggle.is-off .df-chart-key {
+  opacity: 0.3;
+}
+
+.df-chart-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--df-space-2);
+  margin-left: auto;
+}
+
+.df-chart-range {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.df-chart-range[hidden],
+.df-chart-tools > button[hidden] {
+  display: none;
 }
 
 /* Series keys mirror the mark: a short line, a rounded block, or a dot. */
@@ -47,8 +102,8 @@
   border-radius: 50%;
 }
 
-.df-chart-toggle {
-  margin-left: auto;
+.df-chart-toggle,
+.df-chart-reset {
   padding: 2px 8px;
   border: 0;
   border-radius: var(--df-radius);
@@ -72,7 +127,12 @@
   .df-chart-toggle { opacity: 1; }
 }
 
-.df-chart-toggle:hover {
+.df-chart-reset {
+  opacity: 1;
+}
+
+.df-chart-toggle:hover,
+.df-chart-reset:hover {
   background: var(--df-bg-hover);
   color: var(--df-text);
 }
@@ -249,4 +309,46 @@
 
 .df-chart-ref-note:empty {
   display: none;
+}
+
+/* Range brushing: a crosshair cursor over brushable plots and a tinted band while dragging. */
+.df-chart.is-brushable .df-chart-plot > svg {
+  cursor: crosshair;
+}
+
+.df-chart.is-brushing .df-chart-plot {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.df-chart-brush {
+  fill: var(--df-focus);
+  fill-opacity: 0.12;
+  stroke: var(--df-focus);
+  stroke-opacity: 0.6;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+/* Shown over the plot area when every series is hidden or a narrowed range holds no readings. */
+.df-chart-empty {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--df-space-4);
+  color: var(--df-text-muted);
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.df-chart-empty[hidden] {
+  display: none;
+}
+
+.df-chart-empty-note {
+  margin: var(--df-space-3) 0;
+  color: var(--df-text-muted);
+  font-size: 13px;
 }

@@ -1,6 +1,6 @@
 # Manifest reference
 
-A manifest describes a site: its pages, colour roles, glossary, term options, math macros, bibliography, numbering options, and search index. It is an ordinary script that sets `window.DocFormSite`. Start from `docform/site.template.js`, save it beside your pages as `site.js`, and load it before `core.js`:
+A manifest describes a site: its pages, colour roles, glossary and glossary page, term options, math macros, bibliography, numbering options, and search index. It is an ordinary script that sets `window.DocFormSite`. Start from `docform/site.template.js`, save it beside your pages as `site.js`, and load it before `core.js`:
 
 ```html
 <script src="site.js" data-df-site></script>
@@ -15,6 +15,7 @@ window.DocFormSite = {
   pages: [ /* ... */ ],
   roles: { /* ... */ },
   glossary: { /* ... */ },
+  glossaryPage: 'glossary.html',
   terms: { /* ... */ },
   macros: { /* ... */ },
   bibliography: { /* ... */ },
@@ -83,6 +84,14 @@ glossary: {
 `more` is a longer explanation written as HTML, with `$…$` math allowed. Terms that have it show a small ring in their tooltip; pressing and holding the term fills the ring and grows the tooltip into a larger card.
 
 Keys ignore case, and spaces, hyphens, and underscores count as the same, so `Dot-Product` finds `dot product`. A missing term is marked on the page and reported in the console.
+
+## glossaryPage
+
+The page holding the site glossary (`<div data-df-glossary></div>`, see the Glossary page section of [components.md](components.md)), relative to the manifest. It is added as the last entry of the sidebar, titled "Glossary", unless `pages` already lists it. Give it another title with an object:
+
+```js
+glossaryPage: { path: 'glossary.html', title: 'Terms' }
+```
 
 ## terms
 

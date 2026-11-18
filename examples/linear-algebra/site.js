@@ -14,6 +14,10 @@ window.DocFormSite = {
     { title: 'Computing', path: 'computing.html' }
   ],
 
+  // Lists glossary.html last in the sidebar. It merges this glossary with data-df-tip definitions from the pages,
+  // which it reads from the search index below.
+  glossaryPage: 'glossary.html',
+
   roles: {
     definition: 'blue',
     theorem: 'purple',

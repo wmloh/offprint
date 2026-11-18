@@ -28,10 +28,7 @@
   var count = 0;
   var hasOwn = Object.prototype.hasOwnProperty;
 
-  // "Linear map", "linear-map", and "linear_map" all name the same term.
-  function termKey(text) {
-    return String(text).trim().toLowerCase().replace(/[\s_-]+/g, ' ');
-  }
+  var termKey = DocForm.termKey;
 
   // Normalizes manifest glossary entries to { key: { title, text, more } }. Entries are strings or { title, text, more }.
   function glossary(raw) {
@@ -136,7 +133,9 @@
       return roots.indexOf(el) === i && !roots.some(function (other) { return other !== el && other.contains(el); });
     });
     roots.forEach(function (rootEl) {
-      var walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT);
+      // The owner document, so the search-index builder can link terms in pages it parsed.
+      var doc = rootEl.ownerDocument;
+      var walker = doc.createTreeWalker(rootEl, 4);
       var nodes = [];
       while (walker.nextNode()) nodes.push(walker.currentNode);
       nodes.forEach(function (node) {
@@ -144,11 +143,11 @@
         var text = node.nodeValue;
         var hits = findTerms(text, re);
         if (!hits.length) return;
-        var frag = document.createDocumentFragment();
+        var frag = doc.createDocumentFragment();
         var at = 0;
         hits.forEach(function (hit) {
-          if (hit.start > at) frag.appendChild(document.createTextNode(text.slice(at, hit.start)));
-          var span = document.createElement('span');
+          if (hit.start > at) frag.appendChild(doc.createTextNode(text.slice(at, hit.start)));
+          var span = doc.createElement('span');
           span.className = 'df-term df-term-auto';
           span.setAttribute('data-df-term', hit.key);
           span.textContent = text.slice(hit.start, hit.end);
@@ -156,7 +155,7 @@
           made.push(span);
           at = hit.end;
         });
-        if (at < text.length) frag.appendChild(document.createTextNode(text.slice(at)));
+        if (at < text.length) frag.appendChild(doc.createTextNode(text.slice(at)));
         node.parentNode.replaceChild(frag, node);
       });
     });
@@ -417,6 +416,8 @@
     linkable: linkable,
     autoLink: autoLink,
     place: place,
+    mixed: setMixed,
+    rich: rich,
     attach: attach,
     hide: function () { hide(true); }
   };

@@ -109,6 +109,7 @@
   </main>
 
   <script src="../js/core.js"></script>
+  <script src="../js/tooltip.js"></script>
   <script src="../js/search.js"></script>
   <script>
     (function () {
@@ -192,6 +193,18 @@
         return pages;
       }
 
+      // Wraps glossary terms the way tooltip.js would on the live page, so the index records auto-linked uses.
+      function linkTerms(doc, manifest) {
+        var tooltip = DocForm.tooltip;
+        if (!manifest || !tooltip) return;
+        var site = DocForm.normalizeSite(manifest.site, ROOT + manifest.path);
+        var re = tooltip.matcher(Object.keys(tooltip.glossary(site.glossary)));
+        if (!re) return;
+        var roots = Array.prototype.slice.call(doc.querySelectorAll('[data-df-autolink]:not([data-df-autolink="false"])'));
+        if (site.terms.autoLink === true) roots = Array.prototype.slice.call(doc.querySelectorAll('.df-page')).concat(roots);
+        tooltip.autoLink(roots, re);
+      }
+
       function build() {
         log.textContent = '';
         out.hidden = true;
@@ -201,6 +214,7 @@
           files[rel] = file;
         });
         if (!Object.keys(files).length) return;
+        var terms = 0;
         readManifest(files).then(function (manifest) {
           if (manifest) note('Using the manifest ' + manifest.path + '.');
           else note('No manifest found; indexing every HTML page. Index links then work only for pages in the top folder.', 'warn');
@@ -214,14 +228,16 @@
             }
             return file.text().then(function (source) {
               var doc = parser.parseFromString(source, 'text/html');
+              linkTerms(doc, manifest);
               var data = DocForm.search.extract(doc, page.title);
-              return { path: page.path, title: data.title || page.path, sections: data.sections };
+              terms += data.terms.length;
+              return { path: page.path, title: data.title || page.path, sections: data.sections, terms: data.terms };
             });
           }));
         }).then(function (pages) {
           pages = pages.filter(Boolean);
           var sections = pages.reduce(function (n, page) { return n + page.sections.length; }, 0);
-          note('Indexed ' + pages.length + ' pages and ' + sections + ' sections.');
+          note('Indexed ' + pages.length + ' pages, ' + sections + ' sections, and ' + terms + ' glossary-term and tip uses.');
           var index = { generated: new Date().toISOString(), pages: pages };
           text.value = '// DocForm search index, made with docform/tools/search-index.html. Rebuild it after editing pages.\n' +
             'window.DocFormSearch = ' + JSON.stringify(index, null, 1) + ';\n';

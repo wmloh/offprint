@@ -26,8 +26,30 @@
     return doc.querySelector('.df-page') || doc.querySelector('main') || doc.body;
   }
 
-  // Splits a page into its intro and h2/h3 sections of plain text. Headings without ids get the ids nav.js would
-  // give them, so index links match the live page.
+  var TERMS = '[data-df-tip], [data-df-term]';
+
+  // One inline tip or glossary-term use: { text, tip, section } or { text, term, section }, keyed by the underlined
+  // text (or data-df-term). Repeats on a page are recorded once.
+  function noteTerm(el, section, list, seen) {
+    var text = clean(el.textContent);
+    var record = null;
+    if (el.hasAttribute('data-df-tip')) {
+      var tip = clean(el.getAttribute('data-df-tip'));
+      if (text && tip) record = { text: text, tip: tip, section: section };
+    } else {
+      var name = el.getAttribute('data-df-term');
+      var key = DocForm.termKey(name && name.trim() ? name : text);
+      if (text && key) record = { text: text, term: key, section: section };
+    }
+    if (!record) return;
+    var id = JSON.stringify([record.text, record.tip || '', record.term || '', section]);
+    if (seen[id]) return;
+    seen[id] = true;
+    list.push(record);
+  }
+
+  // Splits a page into its intro and h2/h3 sections of plain text, plus the inline tips and glossary terms used in
+  // them. Headings without ids get the ids nav.js would give them, so index links match the live page.
   function extract(doc, title) {
     var main = pageRoot(doc);
     var used = new Set(Array.prototype.map.call(doc.querySelectorAll('[id]'), function (el) { return el.id; }));
@@ -39,6 +61,8 @@
     var pageTitle = clean(title || (h1 && h1.textContent) || (titleEl && titleEl.textContent) || '');
     var sections = [{ id: '', title: pageTitle, level: 1, text: '' }];
     var parts = [[]];
+    var terms = [];
+    var seen = {};
     var walker = doc.createTreeWalker(main, 5, {
       acceptNode: function (node) {
         if (node.nodeType === 1) {
@@ -48,6 +72,7 @@
             parts.push([]);
             return 2;
           }
+          if (node.matches(TERMS)) noteTerm(node, sections[sections.length - 1].id, terms, seen);
           if (BLOCK.test(node.tagName)) parts[parts.length - 1].push(' ');
           return 3;
         }
@@ -62,7 +87,7 @@
       var text = clean(parts[i].join(''));
       section.text = text.length > TEXT_CAP ? text.slice(0, TEXT_CAP).replace(/\s+\S*$/, '') : text;
     });
-    return { title: pageTitle, sections: sections.filter(function (s, i) { return i === 0 || s.title; }) };
+    return { title: pageTitle, sections: sections.filter(function (s, i) { return i === 0 || s.title; }), terms: terms };
   }
 
   function tokens(query) {
@@ -441,12 +466,18 @@
       typeof event.key === 'string' && event.key.toLowerCase() === 'k';
   }
 
-  // Indexed pages with resolved URLs, for other modules such as the sidebar: callback([{ href, title, sections }]|null).
+  // Indexed pages with resolved URLs, for other modules such as the sidebar and glossary:
+  // callback([{ href, title, sections, terms }]|null). `terms` is null for an index built before terms were recorded.
   function pages(callback) {
     load(function (data) {
       if (!data) return callback(null);
       callback(data.pages.map(function (page) {
-        return { href: DocForm.resolvePath(page.path, base()), title: page.title, sections: page.sections || [] };
+        return {
+          href: DocForm.resolvePath(page.path, base()),
+          title: page.title,
+          sections: page.sections || [],
+          terms: Array.isArray(page.terms) ? page.terms : null
+        };
       }).filter(function (page) { return page.href; }));
     });
   }

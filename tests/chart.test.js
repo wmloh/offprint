@@ -229,3 +229,79 @@ test('log axes reject nonpositive values and bounds, and other charts ignore the
   const bars = chart.normalize({ type: 'bar', y: { type: 'log' }, series: [{ data: [['a', 0]] }] });
   assert.deepEqual([bars.y.log, bars.errors.length, warnings.length], [false, 0, 1]);
 });
+
+test('views hide series by name and keep line readings just beyond a narrowed range', () => {
+  const model = chart.normalize({
+    gaps: 'break',
+    series: [{ name: 'A', data: [[1, 1], [2, 2], [3, null], [4, 4], [5, 5], [6, 6]] }, { name: 'B', data: [[1, 9], [6, 9]] }]
+  });
+  assert.equal(model.toggles, true);
+  const view = chart.view(model, { B: true }, [2.5, 4.5]);
+  assert.deepEqual(plain(view.series.map((s) => s.name)), ['A']);
+  assert.equal(view.hiddenCount, 1);
+  const a = view.series[0];
+  assert.deepEqual(plain(a.points.map((p) => p.x)), [4]);
+  assert.deepEqual(plain(a.line.map((p) => p.x)), [2, 4, 5], 'paths reach the readings beyond each end');
+  assert.deepEqual(plain(a.missing), [3]);
+  assert.deepEqual(plain(chart.segments(a.line, a.breaks, (x) => x).map((run) => run.map((p) => p.x))), [[2], [4, 5]]);
+  assert.equal(chart.view(model, {}, null).series[1].points.length, 2);
+  assert.equal(chart.normalize({ series: [{ data: [1, 2] }] }).toggles, false);
+  assert.equal(chart.normalize({ toggles: false, series: [{ data: [1] }, { data: [2] }] }).toggles, false);
+});
+
+test('ranges clamp to the data, zoom around a value, and pan to the ends on linear, time, and log axes', () => {
+  const linear = chart.normalize({ brush: true, series: [{ data: [[0, 1], [100, 2]] }] });
+  assert.deepEqual(plain(chart.domain(linear)), [0, 100]);
+  assert.deepEqual(plain(chart.clampRange(linear, 80, -20)), [0, 80]);
+  assert.equal(chart.clampRange(linear, -5, 120), null, 'the whole domain is no range at all');
+  assert.equal(chart.clampRange(linear, 10, 10.01), false, 'too narrow to read');
+  assert.deepEqual(plain(chart.zoomRange(linear, null, 20, 0.5)), [10, 60], 'the centre keeps its place');
+  assert.deepEqual(plain(chart.zoomRange(linear, [10, 60], null, 0.5)), [22.5, 47.5]);
+  assert.equal(chart.zoomRange(linear, [10, 60], null, 2), null, 'widening past the data resets');
+  assert.deepEqual(plain(chart.panRange(linear, [70, 90], 0.25)), [75, 95]);
+  assert.deepEqual(plain(chart.panRange(linear, [70, 90], 1)), [80, 100], 'stops at the end');
+
+  const start = Date.UTC(2026, 10, 1);
+  const hour = 36e5;
+  const time = chart.normalize({ x: { type: 'time' }, series: [{ data: [[start, 1], [start + 24 * hour, 2]] }] });
+  assert.deepEqual(plain(chart.zoomRange(time, null, null, 0.5)), [start + 6 * hour, start + 18 * hour]);
+  assert.deepEqual(plain(chart.panRange(time, [start, start + 6 * hour], -1)), [start, start + 6 * hour]);
+
+  const logModel = chart.normalize({ x: { type: 'log' }, series: [{ data: [[1e-5, 1], [1e-1, 2]] }] });
+  const zoomed = chart.zoomRange(logModel, null, 1e-3, 0.5);
+  assert.deepEqual(plain(zoomed.map((v) => +Math.log10(v).toFixed(9))), [-4, -2], 'log ranges narrow by ratios');
+  const moved = chart.panRange(logModel, zoomed, 0.5);
+  assert.deepEqual(plain(moved.map((v) => +Math.log10(v).toFixed(9))), [-3, -1]);
+  assert.equal(chart.clampRange(logModel, 0, 1e-3), false, 'a log range needs positive ends');
+
+  warnings.length = 0;
+  const bars = chart.normalize({ type: 'bar', brush: true, series: [{ data: [['a', 1], ['b', 2]] }] });
+  assert.equal(bars.brush, false);
+  assert.equal(chart.domain(bars), null);
+  assert.match(warnings.join(' '), /Range brushing needs a numeric or time x axis/);
+});
+
+test('readAt turns plot pixels into data values rounded to a pixel, bands into categories, and misses into null', () => {
+  const geom = (x, y) => ({ left: 40, right: 440, top: 10, bottom: 210, band: 0, x, y });
+  const lines = chart.normalize({ series: [{ data: [[0, 0], [10, 100]] }] });
+  const g = geom(chart.linear(0, 10, 40, 440), chart.linear(0, 100, 210, 10));
+  assert.deepEqual(plain(chart.readAt(lines, g, 140, 110)), { x: 2.5, y: 50, xText: '2.5', yText: '50' });
+  // 0.025 x units and 0.5 y units per pixel: two decimals for x, one for y.
+  assert.deepEqual(plain(chart.readAt(lines, g, 142, 109)), { x: 2.55, y: 50.5, xText: '2.55', yText: '50.5' });
+  assert.equal(chart.readAt(lines, g, 39, 110), null);
+  assert.equal(chart.readAt(lines, g, 140, 211), null);
+
+  const bars = chart.normalize({ type: 'bar', series: [{ data: [['a', 1], ['b', 2]] }] });
+  const bg = Object.assign(geom(null, chart.linear(0, 2, 210, 10)), { band: 200 });
+  assert.equal(chart.readAt(bars, bg, 239, 110).x, 'a');
+  assert.equal(chart.readAt(bars, bg, 241, 110).xText, 'b');
+
+  const start = Date.UTC(2026, 10, 1);
+  const time = chart.normalize({ x: { type: 'time' }, series: [{ data: [[start, 1], [start + 4e5, 2]] }] });
+  const tg = geom(chart.linear(start, start + 4e5 * 6, 40, 440), chart.linear(1, 1000, 210, 10));
+  assert.equal(chart.readAt(time, tg, 240, 110).xText, '2026-11-01 00:20:00 UTC', 'readings to the second read to the second');
+
+  const logs = chart.normalize({ y: { type: 'log' }, series: [{ data: [[0, 1], [1, 1000]] }] });
+  const lg = geom(chart.linear(0, 1, 40, 440), chart.log(1, 1000, 210, 10));
+  assert.equal(chart.readAt(logs, lg, 40, 110).y, 31.6, 'log values keep the digits a pixel can show');
+});

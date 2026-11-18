@@ -116,17 +116,38 @@
     return roles;
   }
 
+  // glossaryPage: a path or { path, title } listed last in the page tree, unless the tree already has that page.
+  function addGlossaryPage(value, pages, base, order) {
+    if (value == null) return null;
+    var item = typeof value === 'string' ? { path: value } : value;
+    if (!isObject(item) || typeof item.path !== 'string' || !item.path) {
+      warnOnce('glossary-page', 'Manifest "glossaryPage" must be a path or { path, title }; ignoring it.');
+      return null;
+    }
+    var href = resolvePath(item.path, base);
+    if (!href) return null;
+    var key = href.split('#')[0];
+    var listed = order.some(function (page) { return page.href.split('#')[0] === key; });
+    if (!listed) {
+      var title = typeof item.title === 'string' && item.title ? item.title : 'Glossary';
+      pages.push.apply(pages, normalizePages([{ title: title, path: item.path }], base, order, 'glossaryPage'));
+    }
+    return href;
+  }
+
   function normalizeSite(raw, base) {
     var provided = isObject(raw);
     if (raw != null && !provided) warnOnce('site', 'window.DocFormSite must be an object; ignoring it.');
     var source = provided ? raw : {};
     var order = [];
+    var pages = normalizePages(source.pages, base, order, 'pages');
     return {
       provided: provided,
       base: base,
       title: typeof source.title === 'string' ? source.title : '',
-      pages: normalizePages(source.pages, base, order, 'pages'),
+      pages: pages,
       order: order,
+      glossaryPage: addGlossaryPage(source.glossaryPage, pages, base, order),
       roles: normalizeRoles(source.roles),
       glossary: plainObject(source.glossary, 'glossary'),
       terms: plainObject(source.terms, 'terms'),
@@ -135,6 +156,11 @@
       refs: plainObject(source.refs, 'refs'),
       search: typeof source.search === 'string' && source.search ? resolvePath(source.search, base) : null
     };
+  }
+
+  // Glossary keys: "Linear map", "linear-map", and "linear_map" all name the same term.
+  function termKey(text) {
+    return String(text).trim().toLowerCase().replace(/[\s_-]+/g, ' ');
   }
 
   // Heading anchors: shared by nav.js, which assigns them, and the search index, which must predict them.
@@ -232,6 +258,7 @@
     normalizeSite: normalizeSite,
     slug: slug,
     uniqueSlug: uniqueSlug,
+    termKey: termKey,
     copyText: copyText,
     warnOnce: warnOnce
   };

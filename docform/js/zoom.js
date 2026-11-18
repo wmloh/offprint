@@ -42,6 +42,7 @@
     open = null;
     state.overlay.classList.remove('is-open');
     document.documentElement.classList.remove('df-zoom-open');
+    emit('df:zoomclose', state);
     document.removeEventListener('keydown', state.onKey, true);
     var done = false;
     function finish() {
@@ -56,6 +57,18 @@
       if (event.target === state.overlay) finish();
     });
     setTimeout(finish, CLOSE_MS + 80);
+  }
+
+  // Tells add-ons such as zoomtools.js that a view opened or started closing.
+  function emit(type, state) {
+    var event;
+    var detail = { target: state.target, overlay: state.overlay, stage: state.stage };
+    if (typeof root.CustomEvent === 'function') event = new root.CustomEvent(type, { detail: detail });
+    else {
+      event = document.createEvent('CustomEvent');
+      event.initCustomEvent(type, false, false, detail);
+    }
+    document.dispatchEvent(event);
   }
 
   function show(target, opener) {
@@ -107,7 +120,7 @@
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }
     };
-    open = { target: target, placeholder: placeholder, overlay: overlay, opener: opener, onKey: onKey };
+    open = { target: target, placeholder: placeholder, overlay: overlay, stage: stage, opener: opener, onKey: onKey };
     document.addEventListener('keydown', onKey, true);
     overlay.addEventListener('click', function (event) {
       if (event.target === overlay || event.target === stage) close();
@@ -118,6 +131,7 @@
       root.requestAnimationFrame(function () { overlay.classList.add('is-open'); });
     });
     closeButton.focus({ preventScroll: true });
+    emit('df:zoomopen', open);
   }
 
   // The zoom trigger around a clicked node, unless the click landed on a control or link inside it.
@@ -159,6 +173,8 @@
       if (target) show(target, document.activeElement);
     },
     close: close,
-    isOpen: function () { return !!open; }
+    isOpen: function () { return !!open; },
+    // The open view's { target, overlay, stage }, or null.
+    current: function () { return open ? { target: open.target, overlay: open.overlay, stage: open.stage } : null; }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

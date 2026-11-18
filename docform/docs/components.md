@@ -14,12 +14,14 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Tags and callouts | `blocks.css` | none |
 | Peek bubbles | `blocks.css`, `bubble.css` | `bubble.js` |
 | Tooltips and glossary | `tooltip.css` | `tooltip.js` |
+| Glossary page | `glossary.css` | `glossary.js`, with `tooltip.js`; `search.js` for page definitions and links |
 | Code blocks, annotations, diffs | `code.css` | `code.js` |
 | Tabs | `tabs.css` | `tabs.js` |
 | Animated figures | `anim.css` | `anim.js` |
 | Figure steps | `steps.css` | `steps.js` |
 | Reveals and split views | `reveal.css` | `reveal.js` |
 | Figure zoom | `zoom.css` | `zoom.js` |
+| Zoom presentation tools | `zoomtools.css` | `zoomtools.js`, with `zoom.js` |
 | Parameters and presets | `params.css` | `params.js` |
 | Numbering, cross-references, citations | `refs.css` | `refs.js` |
 | Sidenotes | `notes.css` | `notes.js` |
@@ -189,6 +191,18 @@ An empty `data-df-more` turns the card off for that term, and `data-df-hold="900
 
 With `terms: { autoLink: true }` in the manifest, every glossary term in paragraphs and list items becomes a tooltip term automatically. These get a fainter underline than hand-marked terms and are not added to the Tab order. To link terms on one page or block only, put `data-df-autolink` on it; to keep a block out, use `data-df-no-autolink`.
 
+### Glossary page
+
+Put an empty block on a page to list every term of the site:
+
+```html
+<div data-df-glossary></div>
+```
+
+It shows the manifest glossary and every `data-df-tip` definition, in alphabetical order with a bar of letters to jump to. A tip's underlined text is its term name, ignoring case, so `<span data-df-tip="…">Norm</span>` and `<span data-df-tip="…">norm</span>` are one entry. When a word is defined more than once, the manifest definition comes first (otherwise the first one found), and the others are listed under "Also defined as" with the pages that give them. Each entry ends with "Used on" links to the pages and sections where the term or tip appears, including automatically linked terms.
+
+The list of tips and uses comes from the search index (see [Search](#search)), so build the index again after adding or changing tips. Without an index, the block shows the manifest glossary only, with a short notice. To list the page in the sidebar, set `glossaryPage` in the manifest (see [manifest.md](manifest.md)).
+
 ## Code blocks
 
 ```html
@@ -357,6 +371,22 @@ With `zoom.js`, clicking an image or a figure in the page opens it full screen o
 - Clicks on links, buttons, sliders, tooltip terms, and animation controls inside a figure do not open it. Clicks on a chart's plot do.
 - Add `data-df-no-zoom` to a figure or image to leave it out, or `data-df-zoom` to make another block zoomable.
 
+### Presentation tools
+
+Add `zoomtools.css` and `zoomtools.js` (after `zoom.js`) to give the zoom view a tool pill at the top of the screen for presenting a figure. Each view opens with the cursor, and closing it throws the ink away.
+
+| Tool | Key | What it does |
+| --- | --- | --- |
+| Cursor | <kbd>V</kbd> | Normal pointer: the figure's own controls work as usual. |
+| Magnifier | <kbd>M</kbd> | A round lens that follows the pointer and enlarges the live figure. Scroll, or press <kbd>[</kbd> and <kbd>]</kbd>, to change it between 1.5× and 6×. Clicks go through to the figure. |
+| Laser pointer | <kbd>L</kbd> | Swaps the pointer for a glowing red dot with a short fading trail. |
+| Pen | <kbd>P</kbd> | Draws thin lines over the figure. |
+| Highlighter | <kbd>H</kbd> | Draws wide see-through strokes. |
+| Crosshair or ruler | <kbd>C</kbd> | On a chart, a crosshair that reads the x and y values under the pointer. On other figures, drag to measure a distance in the SVG's own units or the image's pixels; hold <kbd>Shift</kbd> to keep it straight. |
+
+- With the pen or highlighter, the pill also shows colour swatches, **Undo** (<kbd>Ctrl</kbd>+<kbd>Z</kbd>), and **Clear**. Each tool remembers its colour.
+- The keys do nothing while you type in a field inside the figure.
+
 ## Parameters and presets
 
 ```html
@@ -471,7 +501,7 @@ Pages opened from disk cannot read each other, so searching the whole site needs
 2. Choose the folder that holds your manifest and pages. The index is built in the page; nothing is uploaded.
 3. Download `search-index.js`, save it beside your manifest, and add `search: 'search-index.js'` to the manifest.
 
-Build the index again after editing pages. Without an index, the palette searches the current page only. Add `data-df-no-search` to leave a block out of the index.
+Build the index again after editing pages. The index also records the tips and glossary terms on each page for the [glossary page](#glossary-page). Without an index, the palette searches the current page only. Add `data-df-no-search` to leave a block out of the index.
 
 ## Charts
 
@@ -538,6 +568,25 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 - Pointing at the chart, or focusing it and pressing the arrow keys, shows the values at that spot. Charts with two or more series get a legend; line ends are labelled when they don't crowd. The Table button lists the data.
 - Selectable points: give the chart a linked-highlighting group with `"highlight": "trace"` (or `data-df-highlight-group="trace"` on the element), and give points a key: `{ "x": 22.3, "y": 12, "key": "retry" }`, or `data-df-highlight-key="retry"` on a table cell. Pointing or the arrow keys only read a point; a click, Enter, or Space selects its key, and doing it again clears it. Rows, buttons, and other items with the same group and key are outlined with it, and selecting one of those outlines the point. The selection is kept by key when the chart redraws or shows its table, and needs `highlight.js`.
 - From a script: `DocForm.chart(element, spec)` draws a chart and returns `{ update(spec) }`, or `null` if the data is invalid. `DocForm.chart.validate(spec)` lists the problems without drawing.
+
+### Series toggles and range brushing
+
+Long or crowded charts let the reader hide series and zoom into a stretch of the x axis:
+
+```html
+<div data-df-chart="line" data-df-x-type="time" data-df-brush data-df-rescale>
+  <script type="application/json">{ "series": [ … ] }</script>
+</div>
+```
+
+- On charts with two or more series, each legend entry is a button. Click it, or Tab to it and press Enter or Space, to hide or show that series. Series keep their colours. When every series is hidden, the plot says so. Add `"toggles": false` (or `data-df-toggles="false"`) to keep a plain legend.
+- `"brush": true` (or `data-df-brush`) lets the reader drag across the plot to narrow the x range of a line or scatter chart with a number, time, or log x axis. Keyboard users focus the chart and press `+` to narrow around the value being read, `-` to widen, and Shift with the left and right arrow keys to move along. The range is shown above the plot with a Reset range button. A short drag still counts as a click, so selectable points keep working.
+- By default the y axis stays the same as you hide series or narrow the range, which keeps heights comparable. Add `"rescale": true` (or `data-df-rescale`) to fit the y axis to what is shown instead. Fixed `min` and `max` values always apply.
+- Readouts, the Table view, line breaks at missing values, and reference lines all follow what is shown. A reference line outside the range is marked "outside range" in the legend. Selected points stay selected while they are hidden or out of range, and show again with the outline when they come back.
+- Hidden series and the range are kept when the chart updates with new data, as long as the series names and the x axis type stay the same.
+- From a script: `api.visible(name, on)` hides or shows a series, and `api.range([from, to])` narrows the range (timestamps on time axes); `api.range(null)` resets it. The chart fires `df:chartview` with `{ hidden, range }` whenever the reader changes either.
+
+The `examples/telemetry/` page plots a week of server readings with an outage gap, an alert line, and incidents you can jump to.
 
 ## Results tables
 

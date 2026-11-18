@@ -123,7 +123,7 @@ test('selecting and resetting variants keeps baseline geometry and highlights th
   assert.deepEqual(metricCells(3), [data.rows[0], data.rows[2], data.rows[3]]);
   assert.equal(markerCount(alerts), 1);
   assert.ok(visible().every((indices) => indices.join() === '0,1,2,3'));
-  assert.ok([alerts, seconds].every((host) => host.firstChild.children[1].hidden));
+  assert.ok([alerts, seconds].every((host) => host.firstChild.children[1].children.at(-1).hidden), 'the Table toggle is hidden');
 
   selectVariant(1);
   assert.equal(body(alerts).series[1].name, 'Longer window');

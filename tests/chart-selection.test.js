@@ -246,3 +246,181 @@ test('log axes draw decade ticks and original readouts; invalid data is not draw
   assert.equal(host.classList.contains('df-chart'), false);
   assert.match(env.warnings.pop(), /^Chart not drawn.*min must be a positive number/);
 });
+
+const byClass = (c, cls) => c.host.all().filter((el) => el.classList.contains(cls));
+const legendButton = (c, name) => byClass(c, 'df-chart-series-toggle').find((el) => el.textContent === name);
+const dotsOf = (c) => byClass(c, 'df-chart-dot');
+const click = (el) => el.dispatchEvent(new Event('click'));
+
+test('legend buttons hide series from the plot, readout, and table; rescale is opt-in; all hidden shows a message', () => {
+  const spec = {
+    type: 'line',
+    series: [{ name: 'Low', data: [[1, 1], [2, 2]] }, { name: 'High', data: [[1, 50], [2, 90]] }, { name: 'Mid', data: [[1, 5]] }]
+  };
+  const c = draw(spec);
+  const views = [];
+  c.host.addEventListener('df:chartview', (event) => views.push(event.detail));
+  const low = () => dotsOf(c)[0].getAttribute('cy');
+  const before = low();
+  click(legendButton(c, 'High'));
+  assert.equal(legendButton(c, 'High').getAttribute('aria-pressed'), 'false');
+  assert.ok(legendButton(c, 'High').classList.contains('is-off'));
+  assert.equal(dotsOf(c).length, 3, 'only Low and Mid are drawn');
+  assert.equal(low(), before, 'the y axis stays put without rescale');
+  c.fire('keydown', { key: 'Home' });
+  assert.doesNotMatch(c.tip().textContent, /High/);
+  assert.deepEqual(JSON.parse(JSON.stringify(views)), [{ hidden: ['High'], range: null }]);
+  assert.equal(c.api.visible('High'), false);
+
+  click(byClass(c, 'df-chart-toggle')[0]);
+  assert.deepEqual(c.host.all().filter((el) => el.tag === 'th').map((el) => el.textContent).slice(0, 3), ['', 'Low', 'Mid']);
+  click(byClass(c, 'df-chart-toggle')[0]);
+
+  const fitted = draw(Object.assign({ rescale: true }, spec));
+  const fittedLow = () => dotsOf(fitted)[0].getAttribute('cy');
+  const wide = fittedLow();
+  fitted.api.visible('High', false);
+  assert.notEqual(fittedLow(), wide, 'rescale fits the y axis to the series shown');
+
+  c.api.visible('Low', false);
+  c.api.visible('Mid', false);
+  const empty = byClass(c, 'df-chart-empty')[0];
+  assert.equal(empty.hidden, false);
+  assert.match(empty.textContent, /Every series is hidden/);
+  assert.equal(c.fire('keydown', { key: 'Home' }).defaultPrevented, false, 'nothing to read');
+  click(legendButton(c, 'Mid'));
+  assert.equal(empty.hidden, true);
+  assert.equal(dotsOf(c).length, 1);
+  assert.equal(c.api.visible('Nope', false), false);
+});
+
+const hour = 36e5;
+const t0 = Date.UTC(2026, 10, 10);
+const telemetry = {
+  type: 'line',
+  brush: true,
+  gaps: 'break',
+  highlight: 'ops',
+  x: { type: 'time' },
+  referenceLines: [{ axis: 'x', value: t0 + 5 * hour, label: 'Deploy' }],
+  series: [
+    { name: 'A', data: [[t0, 1], [t0 + hour, 2], [t0 + 2 * hour, null], [t0 + 3 * hour, 4], { x: t0 + 4 * hour, y: 3, key: 'spike' }, [t0 + 5 * hour, 2]] },
+    { name: 'B', data: [[t0, 5], [t0 + 5 * hour, 6]] }
+  ]
+};
+
+function brush(c, fromEl, toEl) {
+  const at = (el, type) => c.fire(type, { button: 0, pointerId: 1, clientX: +el.getAttribute('cx'), clientY: +el.getAttribute('cy') });
+  at(fromEl, 'pointerdown');
+  at(toEl, 'pointermove');
+  at(toEl, 'pointerup');
+  return at(toEl, 'click');
+}
+
+test('dragging narrows a time axis, readouts and the table follow, and Reset restores the full range', () => {
+  const c = draw(telemetry);
+  const dots = dotsOf(c);
+  assert.equal(brush(c, dots[1], dots[3]).defaultPrevented, true, 'the click ending a drag is swallowed');
+  const range = c.api.range();
+  assert.ok(Math.abs(range[0] - (t0 + hour)) < 1 && Math.abs(range[1] - (t0 + 4 * hour)) < 1);
+  assert.equal(c.highlight.get('ops'), null, 'a drag selects nothing');
+  assert.equal(byClass(c, 'df-chart-reset')[0].hidden, false);
+  assert.match(byClass(c, 'df-chart-range')[0].textContent, /^Time 2026-11-10 01:00 – 2026-11-10 04:00 UTC$/);
+  assert.equal(byClass(c, 'df-chart-ref-note')[0].textContent, 'outside range');
+  assert.ok(c.host.all().some((el) => el.tag === 'clipPath'));
+
+  c.fire('keydown', { key: 'Home' });
+  assert.match(c.tip().textContent, /01:00 UTC2A/, 'B has no reading inside the range');
+  c.fire('keydown', { key: 'ArrowRight' });
+  assert.match(c.tip().textContent, /02:00 UTCNo data/);
+
+  click(byClass(c, 'df-chart-toggle')[0]);
+  const rows = c.host.all().filter((el) => el.tag === 'th' && el.getAttribute('scope') === 'row').map((el) => el.textContent);
+  assert.deepEqual(rows, ['2026-11-10 01:00 UTC', '2026-11-10 02:00 UTC', '2026-11-10 03:00 UTC', '2026-11-10 04:00 UTC']);
+  click(byClass(c, 'df-chart-toggle')[0]);
+
+  click(byClass(c, 'df-chart-reset')[0]);
+  assert.equal(c.api.range(), null);
+  assert.equal(byClass(c, 'df-chart-reset')[0].hidden, true);
+  assert.equal(byClass(c, 'df-chart-ref-note')[0].textContent, '');
+
+  const tiny = dotsOf(c)[0];
+  c.fire('pointerdown', { button: 0, clientX: +tiny.getAttribute('cx') + 10, clientY: +tiny.getAttribute('cy') });
+  c.fire('pointermove', { clientX: +tiny.getAttribute('cx') + 12, clientY: 0 });
+  c.fire('pointerup', {});
+  assert.equal(c.api.range(), null, 'a short movement is a click, not a brush');
+});
+
+test('plus, minus, and Shift with the arrows narrow, widen, and move the range from the keyboard', () => {
+  const c = draw(telemetry);
+  const key = (k, extra) => c.fire('keydown', Object.assign({ key: k }, extra));
+  key('Home');
+  assert.equal(key('+').defaultPrevented, true);
+  assert.deepEqual([...c.api.range()], [t0, t0 + 2.5 * hour], 'narrowed around the reading at the start');
+  assert.match(c.tip().textContent, /00:00 UTC/, 'the readout stays on the same time');
+  key('ArrowRight', { shiftKey: true });
+  const moved = c.api.range();
+  assert.ok(Math.abs(moved[0] - (t0 + 0.625 * hour)) < 1 && Math.abs(moved[1] - (t0 + 3.125 * hour)) < 1);
+  key('-');
+  key('-');
+  assert.equal(c.api.range(), null, 'widening past the data resets');
+  assert.equal(key('ArrowRight', { shiftKey: true }).defaultPrevented, true, 'without a range Shift+arrow just reads on');
+
+  const plain = draw(Object.assign({}, telemetry, { brush: false }));
+  plain.fire('keydown', { key: 'Home' });
+  assert.equal(plain.fire('keydown', { key: '+' }).defaultPrevented, false);
+  assert.equal(plain.api.range(), null);
+  assert.equal(plain.api.range([t0, t0 + hour]), true, 'scripts can narrow a chart without the brush');
+  assert.equal(plain.api.range(['2026-11-10T00:00:00Z', '2026-11-10T00:00:01Z']), false, 'too narrow');
+});
+
+test('a log x axis brushes by position and keyed selections persist while points are hidden or out of range', () => {
+  const sweep = draw({
+    type: 'scatter',
+    brush: true,
+    x: { type: 'log' },
+    series: [{ data: [[1e-5, 1], [1e-4, 2], [1e-3, 3], [1e-2, 4]] }]
+  });
+  const dots = dotsOf(sweep);
+  brush(sweep, dots[1], dots[2]);
+  const range = sweep.api.range();
+  assert.ok(Math.abs(Math.log10(range[0]) + 4) < 1e-6 && Math.abs(Math.log10(range[1]) + 3) < 1e-6);
+  assert.equal(dotsOf(sweep).length, 2);
+
+  const c = draw(telemetry);
+  c.highlight.set('ops', 'spike');
+  c.api.range([t0, t0 + 2 * hour]);
+  assert.equal(c.mark('spike'), undefined);
+  assert.equal(c.highlight.get('ops'), 'spike', 'the selection is kept while its point is out of range');
+  c.api.visible('A', false);
+  c.api.range(null);
+  assert.equal(c.mark('spike'), undefined);
+  c.api.visible('A', true);
+  assert.equal(c.mark('spike').getAttribute(GROUP), 'ops');
+  assert.equal(c.highlight.get('ops'), 'spike');
+
+  c.api.visible('B', false);
+  c.api.range([t0 + hour, t0 + 4 * hour]);
+  const next = JSON.parse(JSON.stringify(telemetry));
+  next.series[0].data.push([t0 + 6 * hour, 1]);
+  c.api.update(next);
+  assert.equal(c.api.visible('B'), false, 'hidden series stay hidden across updates');
+  assert.deepEqual([...c.api.range()], [t0 + hour, t0 + 4 * hour], 'and the range stays while it fits');
+  c.api.update(Object.assign({}, next, { x: {} }));
+  assert.equal(c.api.range(), null, 'a different axis kind drops the range');
+});
+
+test('coords reads the data under a viewport point of the drawn plot, following a narrowed range', () => {
+  const c = draw(telemetry);
+  const spike = c.mark('spike');
+  const hit = c.api.coords(+spike.getAttribute('cx'), +spike.getAttribute('cy'));
+  assert.equal(hit.xText, '2026-11-10 04:00 UTC');
+  assert.equal(hit.yText, '3');
+  assert.ok(hit.plot.left < hit.plot.right && hit.plot.top < hit.plot.bottom);
+  assert.equal(c.api.coords(hit.plot.left - 1, +spike.getAttribute('cy')), null);
+  c.api.range([t0 + 3 * hour, t0 + 5 * hour]);
+  const narrowed = c.mark('spike');
+  assert.equal(c.api.coords(+narrowed.getAttribute('cx'), +narrowed.getAttribute('cy')).xText, '2026-11-10 04:00 UTC');
+  click(byClass(c, 'df-chart-toggle')[0]);
+  assert.equal(c.api.coords(hit.plot.left + 1, hit.plot.top + 1), null, 'nothing to read while the table shows');
+});

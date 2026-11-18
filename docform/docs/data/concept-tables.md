@@ -1,0 +1,16 @@
+# Concept tables
+
+Use `table[data-df-concept]` inside `.df-page` for text comparisons. Load `css/tokens.css` and `css/base.css`. Add `css/blocks.css` for labelled [tags](../reading/tags.md). No script required.
+
+```html
+<table data-df-concept>
+  <caption>Signal representations</caption>
+  <thead><tr><th scope="col">What to represent</th><th scope="col">Encoding</th></tr></thead>
+  <tbody><tr><th scope="row">Sample origin</th><td><span class="df-tag" data-df-color="blue">Timestamp</span></td></tr></tbody>
+</table>
+```
+
+- Horizontal rules, subdued headings, and extra room for first-column labels. The first header cell targets 34% width with a minimum of `min(16ch, 28vw)`. Tags can wrap. Base table hover tints rows and columns.
+- Use semantic captions and scoped headers. For additional horizontal room place the table in a [wide wrapper](../layout/wide.md). Use [results tables](results-tables.md) for sorting, numeric heat, verdicts, and filters.
+
+[Base tables](../layout/base.md) · [Transformer input example](../../../examples/transformers/index.html#input-representations) · [Styles](../../css/base.css)

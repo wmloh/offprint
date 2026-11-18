@@ -66,7 +66,8 @@ docform/: Copyable offline library folder
   tools/data-file.html: Offline page that wraps CSV, JSON, and YAML files as registering data scripts and flags files over the default caps
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
-  docs/: Reserved for agent-facing library documentation
+  docs/: Agent-facing setup, layout, reading, interaction, and data references grouped by purpose
+    LIB_MAP.tsv: Index of agent references by component, description, and relative path
 docs/: Human-facing getting started guide, include order, manifest and component references, and style guide
 examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
   pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and search

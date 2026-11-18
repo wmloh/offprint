@@ -1,0 +1,41 @@
+Offline setup	Copy the library and initialize classic scripts	setup/setup.md
+Include order	Load shared assets and cooperating modules	setup/include-order.md
+Site manifest	Configure page paths, roles, glossary, macros, citations, and search	setup/manifest.md
+Base layout	Style the reading column, typography, lists, and tables	layout/base.md
+Wide blocks	Extend figures and tables into available side space	layout/wide.md
+Design tokens	Override colours, fonts, spacing, and widths	layout/tokens.md
+Colour roles	Assign semantic accents and render a legend	layout/roles.md
+Theme	Switch and persist light and dark modes	layout/theme.md
+Navigation	Build the sidebar tree, heading outline, pager, and drawer	layout/navigation.md
+Reading controls	Show progress, focus mode, and sidebar controls	layout/controls.md
+Tags	Label short phrases with inline accents	reading/tags.md
+Callouts	Emphasize blocks with optional icons and scroll slides	reading/callouts.md
+Peek bubbles	Expand native disclosures into reading-gutter panels	reading/peek-bubbles.md
+TeX math	Render offline KaTeX formulas with shared macros	reading/math.md
+Tooltips	Attach inline tips, glossary terms, and hold-to-expand cards	reading/tooltips.md
+Glossary	Collect definitions, variants, and links to term uses	reading/glossary.md
+Code	Highlight, annotate, copy, and compare code blocks	reading/code.md
+Cross-references	Number figures, tables, and equations and preview links	reading/references.md
+Citations	Number sources and generate a bibliography per page	reading/citations.md
+Sidenotes	Show inline notes in the margin or at their markers	reading/sidenotes.md
+Search	Search live page text and an offline site index	reading/search.md
+Search index builder	Generate the offline page and glossary index	reading/search-index.md
+Tabs	Switch panels and synchronize choices by group	interact/tabs.md
+SVG animations	Play, scrub, and control a step timeline	interact/animations.md
+Card panels	Select details from standalone cards and groups	interact/card-panels.md
+Figure steps	Select figure states and their accompanying details	interact/figure-steps.md
+Scroll reveals	Reveal marked blocks once as they enter view	interact/reveals.md
+Split views	Lay out responsive panes with staggered reveals	interact/split-views.md
+Figure zoom	Move a live figure into a full-screen dialog	interact/figure-zoom.md
+Zoom tools	Magnify, point, draw, and measure in the zoom dialog	interact/zoom-tools.md
+Parameters	Bind sliders, choices, switches, and presets to page content	interact/parameters.md
+Linked highlighting	Synchronize a selected key across views	interact/linked-highlighting.md
+Worked-example steppers	Step through an ordered example and its linked views	interact/worked-examples.md
+Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
+SVG charts	Draw line, bar, and scatter charts with interactive views	data/charts.md
+Concept tables	Style semantic tables for text comparisons	data/concept-tables.md
+Results tables	Sort, shade, classify, and filter result rows	data/results-tables.md
+Data blocks	Render named CSV, JSON, and YAML as tables, code, or trees	data/data-blocks.md
+Data file wrapper	Convert local data files into offline registration scripts	data/file-wrapper.md
+Data trees	Explore nested records and lists with collapsible branches	data/data-trees.md
+File dropzones	Read local files and replace data, charts, or results tables	data/dropzones.md

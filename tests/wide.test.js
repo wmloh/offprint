@@ -45,6 +45,37 @@ test('wide blocks can use the room left by a hidden sidebar or a nearly full win
   assert.deepEqual(json(wide.span(page(800, 0))), { left: 0, right: 0 });
 });
 
+test('wide layout uses the desktop grid gutters when the page end margin reads as zero', () => {
+  const margins = new Map();
+  const block = {
+    classList: { toggle() {} },
+    style: { setProperty: margins.set.bind(margins), removeProperty: margins.delete.bind(margins) }
+  };
+  let sidebarRight = 0;
+  const sidebar = { getBoundingClientRect: () => ({ right: sidebarRight }) };
+  const body = { querySelector: () => sidebar, getBoundingClientRect: () => ({ left: 0, right: 1560 }) };
+  const pageLeft = () => Math.max(196, sidebarRight);
+  const gridPage = {
+    parentElement: body,
+    getBoundingClientRect: () => ({ left: pageLeft(), right: pageLeft() + 1168 })
+  };
+  const document = { body, documentElement: { clientWidth: 1560 }, querySelector: () => gridPage, addEventListener() {} };
+  const DocForm = { all: () => [block], register: (_name, init) => init() };
+  vm.runInNewContext(read('wide.js'), {
+    DocForm, document, addEventListener() {}, requestAnimationFrame() {},
+    getComputedStyle(el) {
+      if (el === sidebar) return { position: 'sticky' };
+      if (el === gridPage) return { paddingLeft: '24px', paddingRight: '24px', marginLeft: `${pageLeft()}px`, marginRight: '0px' };
+      return { getPropertyValue: () => '' };
+    }
+  });
+
+  assert.deepEqual(Object.fromEntries(margins), { '--df-wide-left': '60px', '--df-wide-right': '60px' });
+  sidebarRight = 260;
+  DocForm.wide.layout();
+  assert.deepEqual(Object.fromEntries(margins), { '--df-wide-left': '0px', '--df-wide-right': '120px' });
+});
+
 test('the cap is the whole block width, and a cap at or below the column turns growth off', () => {
   assert.deepEqual(json(wide.span(page(1920, 260, { max: 1200 }))), { left: 40, right: 40 });
   assert.deepEqual(json(wide.span(page(1920, 260, { max: 1120 }))), { left: 0, right: 0 });

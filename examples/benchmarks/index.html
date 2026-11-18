@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSON parser benchmarks with filters</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/results.css">
+  <link rel="stylesheet" href="../../docform/css/data.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Page outline">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <h1>Choosing a JSON parser for the ingest service</h1>
+    <p>We benchmarked six JSON parsers (made-up names) on a laptop and a server, with small and large inputs. The
+      ingest service has two limits: a p99 latency of 5 ms per document and workers with 64 MB of memory. Use the
+      chips and the header filters to see which parsers fit, and how they compare once the others are hidden.</p>
+
+    <h2 id="summary">Compare the parsers</h2>
+    <p>Averages of the server runs on large inputs. Turn on <strong>Within latency budget</strong> and
+      <strong>Fits a 64 MB worker</strong> together: the fastest parser left is no longer the fastest overall, and
+      its throughput cell moves to the top of the shading. Latency keeps its fixed scale, so its shades do not
+      change.</p>
+    <table data-df-results data-df-filters
+           data-df-chips="Within latency budget: p99 (ms) <= 5; Fits a 64 MB worker: Memory (MB) < 64; Streaming: Mode = streaming">
+      <thead>
+        <tr>
+          <th>Parser</th>
+          <th>Mode</th>
+          <th data-df-best="max" data-df-heat>Throughput (MB/s)</th>
+          <th data-df-best="min" data-df-heat-range="0, 10" data-df-threshold="<= 5" data-df-threshold-label="Budget">p99 (ms)</th>
+          <th data-df-best="min" data-df-heat>Memory (MB)</th>
+          <th data-df-no-filter>Last run</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>quickjson</td><td>tree</td><td>835</td><td>2.8</td><td>119</td><td>2026-03-09</td></tr>
+        <tr><td>tinyparse</td><td>streaming</td><td>306</td><td>2.5</td><td>9</td><td>2026-03-09</td></tr>
+        <tr><td>bulkread</td><td>tree</td><td>992</td><td>7.8</td><td>208</td><td>2026-03-10</td></tr>
+        <tr><td>streamline</td><td>streaming</td><td>534</td><td>1.9</td><td>18</td><td>2026-03-10</td></tr>
+        <tr><td>saferead</td><td>streaming</td><td>390</td><td>2.9</td><td>24</td><td>2026-03-11</td></tr>
+        <tr><td>treeweaver</td><td>tree</td><td>604</td><td>4.2</td><td>94</td><td>2026-03-11</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="runs">Every run</h2>
+    <p>All 49 runs from <code>runs.csv</code>, 25 at a time. Filter by date, machine, or input size from the
+      headers. Filters stay on when you show more rows. The failed run has no numbers, so it is hidden once you set
+      any bound on a number column.</p>
+    <div data-df-data="runs" data-df-max-rows="25">
+      <table data-df-results data-df-filters
+             data-df-chips="Server, large inputs: machine = server &amp; dataset = large; Laptop: machine = laptop; Over budget: p99 (ms) > 5">
+        <thead>
+          <tr>
+            <th data-df-column="run_date">Date</th>
+            <th>parser</th>
+            <th>machine</th>
+            <th>dataset</th>
+            <th data-df-column="throughput_mbs" data-df-best="max" data-df-heat data-df-heat-range="0, 1200">Throughput (MB/s)</th>
+            <th data-df-column="p99_ms" data-df-best="min" data-df-threshold="<= 5">p99 (ms)</th>
+            <th data-df-column="memory_mb">Memory (MB)</th>
+            <th data-df-no-filter>notes</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  </main>
+
+  <script src="runs.csv.js"></script>
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/js/data.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/results.js"></script>
+</body>
+</html>

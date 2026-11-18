@@ -98,6 +98,8 @@ test('views pick tables for CSV and flat records and code otherwise, with overri
   assert.equal(data.table(data.parse('{"a": 1}', 'json')), null);
   assert.deepEqual([data.view(csv), data.view(records), data.view(nested)], ['table', 'table', 'code']);
   assert.deepEqual([data.view(csv, 'code'), data.view(nested, 'table'), data.view(records, 'table')], ['code', 'code', 'table']);
+  assert.deepEqual([data.view(csv, 'tree'), data.view(nested, 'tree')], ['tree', 'tree']);
+  assert.deepEqual(plain(data.valueOf(data.parse('a,b\n1,x', 'csv'))), [{ a: 1, b: 'x' }]);
 });
 
 test('inline blocks lose their shared indentation and edge blank lines', () => {

@@ -1,0 +1,74 @@
+/* Reader file dropzones from dropzone.js: a dashed drop area, a status line with Reset, and the file's view. */
+.df-dropzone {
+  margin-block: 0.75em;
+}
+
+.df-dropzone-area {
+  padding: var(--df-space-4) var(--df-space-5);
+  border: 1.5px dashed var(--df-border-strong);
+  border-radius: var(--df-radius-lg);
+  background: var(--df-bg-subtle);
+  text-align: center;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.df-dropzone.is-dragging .df-dropzone-area {
+  border-color: var(--df-blue);
+  background: var(--df-blue-bg);
+}
+
+.df-dropzone-area > :first-child {
+  margin-top: 0;
+}
+
+.df-dropzone-area > :last-child,
+.df-dropzone-hint {
+  margin-bottom: 0;
+}
+
+.df-dropzone-hint {
+  color: var(--df-text-muted);
+  font-size: 0.9em;
+}
+
+.df-dropzone button {
+  padding: var(--df-space-1) var(--df-space-3);
+  border: 1px solid var(--df-border-strong);
+  border-radius: var(--df-radius);
+  background: var(--df-bg);
+  color: var(--df-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.df-dropzone button:hover {
+  background: var(--df-bg-hover);
+}
+
+.df-dropzone button:focus-visible {
+  outline: 2px solid var(--df-focus);
+  outline-offset: 2px;
+}
+
+.df-dropzone-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--df-space-2);
+  margin-block: var(--df-space-2) 0;
+  color: var(--df-text-muted);
+  font-size: 0.9em;
+}
+
+.df-dropzone-status[hidden],
+.df-dropzone-status button[hidden] {
+  display: none;
+}
+
+.df-dropzone-status.is-error {
+  color: var(--df-red);
+}
+
+.df-dropzone-output {
+  margin-block: var(--df-space-3) 0;
+}

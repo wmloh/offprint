@@ -27,6 +27,8 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Charts | `chart.css` | `chart.js` |
 | Results tables | `results.css` | `results.js` |
 | Data files | `data.css`, plus `code.css` and `results.css` | `data.js`, plus `code.js` and `results.js`; YAML also needs `vendor/js-yaml/js-yaml.min.js` |
+| Data trees | `tree.css` | `tree.js`, with `data.js` |
+| File dropzones | `dropzone.css` | `dropzone.js`, with `data.js` |
 | Linked highlighting | `highlight.css` | `highlight.js` |
 | Worked-example steppers | `stepper.css` | `stepper.js` |
 | Scenario comparisons | `chart.css`, `scenarios.css` | `chart.js`, `scenarios.js` |
@@ -580,6 +582,30 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 - `data-df-threshold` on a number column's header marks each value Pass or Fail. Write `<`, `<=`, `>`, or `>=` and a number, such as `"<= 16.7"`. The rule uses the same number the column sorts by, including `data-df-value`. Cells keep their text and gain the word Pass or Fail; missing values get neither.
 - `data-df-threshold-label` names the rule shown under the header, such as "Frame budget: ≤ 16.7". Without it the rule reads "Pass: ≤ 16.7".
 
+### Column filters and filter chips
+
+```html
+<table data-df-results data-df-filters
+       data-df-chips="Within budget: Latency (ms) <= 25; Small and fast: Params (M) < 5 & Latency (ms) < 15">
+  <thead>
+    <tr>
+      <th>Model</th><th>Params (M)</th><th data-df-best="max" data-df-heat>Accuracy (%)</th>
+      <th data-df-threshold="<= 25">Latency (ms)</th><th data-df-no-filter>Notes</th>
+    </tr>
+  </thead>
+  <tbody>…</tbody>
+</table>
+```
+
+- `data-df-filters` on the table adds a filter button to every header. To filter only some columns, put `data-df-filter` on those headers instead. `data-df-no-filter` leaves a column out.
+- Text columns list their values with counts; untick values to hide their rows. Number columns take a Min and a Max, and date columns (such as `2026-03-01` or `2026-03-01T14:05Z`) take From and To. Leave a box empty to leave that side open. Once a bound is set, rows without a value are hidden. `data-df-filter="values"` gives a number column a value list instead, which suits columns with a few repeated values such as seeds.
+- `data-df-chips` names one-click filters for the reader. Write `Label: Column op value`, with `<`, `<=`, `>`, `>=`, `=`, or `!=`. Join conditions with `&`, list alternatives with `|` (`Optimizer = adam | sgd`), and separate chips with `;`. Columns are matched by header text or `data-df-column`, ignoring case. Text matches whole cells, ignoring case.
+- A row shows when it passes every column filter and every chip that is turned on. The bar above the table shows how many rows match. Clear turns every filter and chip off.
+- Heat shading and best values are worked out again over the rows that are showing. Fixed heat ranges, Pass and Fail words, and the sort order stay as they are; sorting works while rows are filtered.
+- On data-file tables, filters check the rows that are loaded, and they stay on after Show more.
+
+The `examples/benchmarks/` page compares JSON parsers against a latency budget and a memory limit with chips, and filters every benchmark run from a data file by date, machine, and input size.
+
 ## Data files
 
 Show CSV, JSON, or YAML files as results tables or highlighted code. Pages opened from disk cannot read other files, so each data file is first wrapped as a script:
@@ -593,7 +619,7 @@ Show CSV, JSON, or YAML files as results tables or highlighted code. Pages opene
 ```
 
 - CSV and lists of flat records (JSON or YAML lists of objects whose values are text, numbers, true, false, or null) become sortable [results tables](#results-tables). Other data shows as highlighted code.
-- `data-df-view="code"` shows tabular data as its original text; `data-df-view="table"` asks for a table and falls back to code when the data has no table shape.
+- `data-df-view="code"` shows tabular data as its original text; `data-df-view="table"` asks for a table and falls back to code when the data has no table shape; `data-df-view="tree"` shows a [tree](#data-trees).
 - To choose, rename, and style columns, put a table header inside the placeholder. Each header cell picks the column named by its text or by `data-df-column`, and keeps its results-table options:
 
   ```html
@@ -625,6 +651,46 @@ Show CSV, JSON, or YAML files as results tables or highlighted code. Pages opene
 - `data-df-type="csv"`, `"json"`, or `"yaml"` overrides the type from the file. From a script, `DocForm.dataset.add(name, text, type)` registers data and `DocForm.dataset.render(element)` redraws a block.
 
 The `examples/experiment-results/` page shows a leaderboard, every run of a sweep with Show more, a YAML configuration, an inline table, a size notice, and a parse error.
+
+### Data trees
+
+Add `data-df-view="tree"` to a data block to browse nested JSON or YAML as a collapsible tree. Include `tree.css` and `tree.js`.
+
+```html
+<div data-df-data="config" data-df-view="tree" data-df-tree-depth="2"></div>
+```
+
+- The top level starts open. `data-df-tree-depth` sets how many levels start open; `0` closes them all.
+- Click a row to open or close it, or use the buttons for Expand all and Collapse all.
+- Keyboard: Up and Down move between rows, Right opens a row or moves into it, Left closes it or moves to its parent, Home and End jump to the first and last rows, Enter or Space opens or closes a row, and `*` opens a row and the rows beside it.
+- Each row lists up to the block's row limit (5,000 by default). A Show more row lists the rest.
+- CSV rows show as records keyed by column name.
+
+### File dropzones
+
+A dropzone lets readers open a CSV, JSON, or YAML file from their own computer. The browser reads the file on the reader's computer; nothing is uploaded. Include `dropzone.css` and `dropzone.js`.
+
+```html
+<div data-df-dropzone data-df-accept="json yaml" data-df-view="tree" data-df-max-size="2 MB">
+  <p>Drop a metrics file from your run.</p>
+</div>
+```
+
+- The dropzone has a Choose a file button. Its own content becomes the prompt; without content it says which types it takes.
+- `data-df-accept` lists the types it takes, such as `"csv json"`. It takes all three by default. Files are matched by extension. Other files, and files over `data-df-max-size` (1 MB by default), are turned away with a message.
+- The file shows below the dropzone with the [data views](#data-files). `data-df-view`, `data-df-max-rows`, and `data-df-tree-depth` work as they do on data blocks.
+- To show the file in place of other data on the page, set `data-df-target` to the id of a chart, a data block, or a results table, or of an element that holds one:
+
+  ```html
+  <div data-df-chart="line" id="curve"> … </div>
+  <div data-df-dropzone data-df-accept="csv" data-df-target="curve"></div>
+  ```
+
+  - A chart plots the first column as x and each other column as a series. It keeps its type, axis labels and types, reference lines, and the colours of series with the same names. Fixed axis bounds are dropped so the new data shows in full. A JSON or YAML file with a `series` list replaces those parts of the chart.
+  - A data block or results table keeps its header, so the file's columns get the same names, best values, heat shading, and pass/fail rules. Columns are matched by name.
+- Reset puts back the page's own data, or clears the file shown below the dropzone.
+
+The `examples/experiment-results/inspect.html` page compares a dropped training history with a reference curve, checks a rerun leaderboard against a latency budget, and opens any metrics file as a tree. Try it with the files in `sample-output/`.
 
 ## Interactive explanations
 

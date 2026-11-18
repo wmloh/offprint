@@ -1,0 +1,134 @@
+/* Data trees from tree.js: nested rows with disclosure arrows, typed values, and Expand all / Collapse all. */
+.df-tree {
+  padding: var(--df-space-2) var(--df-space-3);
+  border: 1px solid var(--df-border);
+  border-radius: var(--df-radius);
+  background: var(--df-code-bg);
+  font-family: var(--df-font-mono);
+  font-size: 0.86em;
+  line-height: 1.6;
+}
+
+.df-tree-bar {
+  display: flex;
+  gap: var(--df-space-2);
+  margin-bottom: var(--df-space-2);
+  font-family: var(--df-font);
+}
+
+.df-tree-bar[hidden] {
+  display: none;
+}
+
+.df-tree-bar button {
+  padding: 0 var(--df-space-2);
+  border: 1px solid var(--df-border-strong);
+  border-radius: var(--df-radius-sm);
+  background: var(--df-bg);
+  color: var(--df-text-muted);
+  font: inherit;
+  font-size: 0.92em;
+  cursor: pointer;
+}
+
+.df-tree-bar button:focus-visible {
+  outline: 2px solid var(--df-focus);
+  outline-offset: 2px;
+}
+
+.df-tree-bar button:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-tree-list,
+.df-tree-group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.df-tree-group {
+  margin-left: 0.55em;
+  padding-left: 0.85em;
+  border-left: 1px solid var(--df-border);
+}
+
+.df-tree-group[hidden] {
+  display: none;
+}
+
+.df-tree-item {
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+
+.df-tree-item::marker {
+  content: none;
+}
+
+.df-tree-row {
+  display: flex;
+  align-items: baseline;
+  padding: 0 var(--df-space-1);
+  border-radius: var(--df-radius-sm);
+  color: var(--df-code-text);
+  overflow-wrap: anywhere;
+}
+
+.df-tree-item[aria-expanded] > .df-tree-row,
+.df-tree-more > .df-tree-row {
+  cursor: pointer;
+}
+
+.df-tree-row:hover {
+  background: var(--df-bg-hover);
+}
+
+.df-tree-item:focus-visible > .df-tree-row {
+  outline: 2px solid var(--df-focus);
+  outline-offset: -2px;
+}
+
+.df-tree-twisty {
+  flex: none;
+  width: 1.1em;
+  color: var(--df-text-faint);
+}
+
+.df-tree-item[aria-expanded] > .df-tree-row > .df-tree-twisty::before {
+  content: "";
+  display: inline-block;
+  width: 0.4em;
+  height: 0.4em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-0.1em) rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.df-tree-item[aria-expanded="true"] > .df-tree-row > .df-tree-twisty::before {
+  transform: translateY(-0.2em) rotate(45deg);
+}
+
+.df-tree-key {
+  color: var(--df-blue);
+}
+
+.df-tree-index {
+  color: var(--df-text-faint);
+}
+
+.df-tree-sep,
+.df-tree-summary {
+  flex: none;
+  color: var(--df-text-muted);
+  white-space: pre;
+}
+
+.df-tree-more > .df-tree-row {
+  padding-left: calc(1.1em + var(--df-space-1));
+  color: var(--df-link);
+  font-family: var(--df-font);
+}

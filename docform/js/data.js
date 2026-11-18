@@ -1,4 +1,5 @@
-// Data files: CSV, JSON, and YAML text registered under a name and shown as results tables or highlighted code.
+// Data files: CSV, JSON, and YAML text registered under a name and shown as results tables, highlighted code, or a
+// tree (data-df-view="tree", drawn by tree.js).
 // Sources are wrapped .js files that set window.DocFormData[name] = { type, text } (made by
 // docform/tools/data-file.html), <script type="text/csv" data-df-data="name"> blocks, and <pre data-df-data> blocks
 // that also render in place. Any other element with data-df-data="name" is a placeholder for that data.
@@ -12,7 +13,7 @@
   }
 
   var TYPES = ['csv', 'json', 'yaml'];
-  var VIEWS = ['auto', 'table', 'code'];
+  var VIEWS = ['auto', 'table', 'code', 'tree'];
   var NAMES = { csv: 'CSV', json: 'JSON', yaml: 'YAML' };
   var MIME = {
     'text/csv': 'csv', 'application/json': 'json', 'text/json': 'json',
@@ -307,11 +308,21 @@
     };
   }
 
-  // The view to draw: "table" or "code". A requested table falls back to code when the data is not tabular.
+  // The parsed value, with CSV rows as objects keyed by column name.
+  function valueOf(parsed) {
+    if (!parsed || parsed.type !== 'csv') return parsed ? parsed.value : null;
+    return parsed.rows.map(function (row) {
+      var item = {};
+      parsed.columns.forEach(function (c, k) { item[c] = row[k]; });
+      return item;
+    });
+  }
+
+  // The view to draw: "table", "code", or "tree". A requested table falls back to code when the data is not tabular.
   function view(parsed, requested) {
     var want = String(requested || 'auto').trim().toLowerCase();
     var tabular = !!table(parsed);
-    if (want === 'code') return 'code';
+    if (want === 'code' || want === 'tree') return want;
     if (want === 'table' && !tabular) {
       DocForm.warnOnce('data-view-table', 'This data is not a flat list of records, so it is shown as code instead of a table.');
     }
@@ -476,7 +487,14 @@
       return;
     }
     var shown = view(parsed, state.view);
-    if (shown === 'table') {
+    if (shown === 'tree' && !DocForm.tree) {
+      DocForm.warnOnce('data-tree', 'data-df-view="tree" needs docform/js/tree.js; showing code instead.', el);
+      shown = 'code';
+    }
+    if (shown === 'tree') {
+      el.appendChild(DocForm.tree.build(valueOf(parsed), { label: 'Data ' + label, open: state.open, maxItems: state.limits.maxRows }));
+      emit(state, { view: 'tree' });
+    } else if (shown === 'table') {
       var data = table(parsed);
       el.appendChild(buildTable(state, data, limit));
       if (data.cells.length > limit) el.appendChild(moreControl(state, limit, data.cells.length, 'rows'));
@@ -494,11 +512,14 @@
     return type(DocForm.data(el, 'type', null)) || type(el.getAttribute('type'));
   }
 
-  function setup(el) {
-    var name = DocForm.data(el, 'data', '').trim();
+  // given and template, from DocForm.dataset.show, draw an entry that is not registered into any element.
+  function setup(el, given, template) {
+    var name = given ? given.name : DocForm.data(el, 'data', '').trim();
     var entry;
     var host = el;
-    if (el.tagName === 'PRE') {
+    if (given) {
+      entry = given;
+    } else if (el.tagName === 'PRE') {
       // An inline block renders its own text and also registers it when the name is free.
       var text = dedent(el.textContent);
       var kind = scriptType(el) || sniff(text, name);
@@ -514,10 +535,10 @@
     }
     var requested = DocForm.data(host, 'view', 'auto').trim().toLowerCase();
     if (VIEWS.indexOf(requested) < 0) {
-      DocForm.warnOnce('data-view:' + requested, 'Unknown data-df-view "' + requested + '"; use auto, table, or code.', host);
+      DocForm.warnOnce('data-view:' + requested, 'Unknown data-df-view "' + requested + '"; use auto, table, code, or tree.', host);
       requested = 'auto';
     }
-    var template = host.querySelector('table');
+    template = template || host.querySelector('table');
     var state = {
       el: host,
       name: name,
@@ -525,6 +546,7 @@
       view: requested,
       template: template && template.tHead ? template.cloneNode(true) : null,
       limits: limits(host),
+      open: DocForm.num(host, 'tree-depth', 1),
       shown: 0,
       force: false,
       parsed: null
@@ -544,6 +566,36 @@
     draw(state);
   }
 
+  // Draws another entry ({ name, type, text }) in a block, such as a file a reader dropped. The block keeps its view,
+  // limits, and table header, and restore() brings back what it showed first. An element that is not yet a data
+  // block becomes one, using template (a table with a thead) for its columns when given.
+  function show(el, entry, template) {
+    var state = STATE && STATE.get(el);
+    if (!state) return setup(el, entry, template ? template.cloneNode(true) : null);
+    if (!hasOwn.call(state, 'saved')) state.saved = state.entry;
+    state.entry = entry;
+    state.parsed = null;
+    state.shown = 0;
+    state.force = false;
+    draw(state);
+  }
+
+  function restore(el) {
+    var state = STATE && STATE.get(el);
+    if (!state || !hasOwn.call(state, 'saved')) return false;
+    state.entry = state.saved;
+    delete state.saved;
+    state.parsed = null;
+    state.shown = 0;
+    state.force = false;
+    draw(state);
+    return true;
+  }
+
+  function isBlock(el) {
+    return !!(STATE && el && STATE.get(el));
+  }
+
   DocForm.dataset = {
     defaults: defaults,
     add: add,
@@ -560,9 +612,13 @@
     parseJson: parseJson,
     parseYaml: parseYaml,
     table: table,
+    valueOf: valueOf,
     view: view,
     limits: limits,
-    render: render
+    render: render,
+    show: show,
+    restore: restore,
+    isBlock: isBlock
   };
 
   DocForm.register('data', function () {

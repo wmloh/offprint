@@ -1071,8 +1071,8 @@
     if (!on) draw(chart);
   }
 
-  function build(host, model, sourceTable) {
-    var chart = { box: host, model: model, active: -1, spots: [], svg: null, width: 0 };
+  function build(host, model, sourceTable, spec) {
+    var chart = { box: host, model: model, spec: spec, active: -1, spots: [], svg: null, width: 0 };
     host.classList.add('df-chart');
     host.classList.add('is-' + chart.model.type);
 
@@ -1090,6 +1090,9 @@
     chart.tip.setAttribute('aria-live', 'polite');
     chart.table = html('div', 'df-chart-table');
     chart.table.hidden = true;
+    // A table the chart was read from is its table view until an update brings other data.
+    chart.sourceTable = sourceTable || null;
+    chart.sourceSpec = spec;
     chart.ownTable = !!sourceTable;
     if (sourceTable) chart.table.appendChild(sourceTable);
     host.insertBefore(chart.table, host.firstChild);
@@ -1148,6 +1151,7 @@
         var model = normalize(next);
         if (!report(model, host, true)) return false;
         chart.model = model;
+        chart.spec = next;
         watch(chart);
         host.classList.remove('is-line', 'is-bar', 'is-scatter');
         host.classList.add('is-' + chart.model.type);
@@ -1155,7 +1159,9 @@
         renderHead(chart);
         chart.toggle.hidden = !chart.model.table;
         chart.plot.setAttribute('aria-label', describe(chart.model));
-        if (!chart.ownTable) chart.table.textContent = '';
+        chart.ownTable = !!chart.sourceTable && next === chart.sourceSpec;
+        chart.table.textContent = '';
+        if (chart.ownTable) chart.table.appendChild(chart.sourceTable);
         if (chart.plot.hidden && !chart.model.table) {
           setTable(chart, false);
         } else if (chart.plot.hidden) {
@@ -1165,7 +1171,9 @@
         }
         return true;
       },
-      model: function () { return chart.model; }
+      model: function () { return chart.model; },
+      // The spec last drawn; passing the first one back to update restores a chart read from a table to that table.
+      spec: function () { return chart.spec; }
     };
     charts.set(host, chart);
     watch(chart);
@@ -1241,7 +1249,7 @@
     if (table && !script && model.highlight) {
       DocForm.all('[' + KEY + ']', table).forEach(function (cell) { cell.setAttribute(GROUP, model.highlight); });
     }
-    return build(host, model, script ? null : table);
+    return build(host, model, script ? null : table, spec);
   }
 
   function chart(target, spec) {
@@ -1256,7 +1264,7 @@
       return existing.api;
     }
     var model = normalize(spec || {});
-    return report(model, host) ? build(host, model, null) : null;
+    return report(model, host) ? build(host, model, null, spec || {}) : null;
   }
 
   chart.ticks = ticks;

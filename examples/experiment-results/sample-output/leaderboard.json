@@ -1,0 +1,7 @@
+[
+  { "model": "mlp-small", "params_m": 0.4, "accuracy": 0.861, "latency_ms": 4.4, "best_run": "r05b" },
+  { "model": "mlp-wide", "params_m": 2.1, "accuracy": 0.891, "latency_ms": 10.2, "best_run": "r12b" },
+  { "model": "cnn-base", "params_m": 1.2, "accuracy": 0.917, "latency_ms": 23.8, "best_run": "r17b" },
+  { "model": "cnn-deep", "params_m": 4.8, "accuracy": 0.934, "latency_ms": 27.5, "best_run": "r22b" },
+  { "model": "cnn-pruned", "params_m": 0.9, "accuracy": 0.912, "latency_ms": 14.1, "best_run": "r25" }
+]

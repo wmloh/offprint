@@ -1,6 +1,6 @@
 // Offline DocForm search index. Rebuild with docform/tools/search-index.html after editing these pages.
 window.DocFormSearch = {
- "generated": "2026-11-18T02:37:09.273Z",
+ "generated": "2026-11-18T04:10:30.333Z",
  "pages": [
   {
    "path": "index.html",
@@ -28,7 +28,7 @@ window.DocFormSearch = {
      "id": "plan",
      "title": "Analysis plan",
      "level": 2,
-     "text": "Fit and interpret the PCA basis. Reconstruct held-out windows and measure the residual. Compare ranks against the alerting objective."
+     "text": "Fit and interpret the PCA basis. Reconstruct held-out windows and measure the residual. Compare ranks against the alerting objective. Compare alert thresholds on the same six windows."
     }
    ]
   },
@@ -101,6 +101,12 @@ window.DocFormSearch = {
      "title": "Compare rank trade-offs",
      "level": 2,
      "text": "Cumulative explained variance on the baseline. Rank Faults flagged Healthy windows flagged 1 PC 2 2 2 PCs 2 0 3 PCs 0 0 4 PCs 0 0 Alerts at the same 0.80 threshold for all ranks. Rank comparison on three healthy and three fault windows Rank Variance retained False alerts Faults flagged Outcome 1 62% 2 2 Flags routine variation 2 91% 0 2 Meets the exercise target 3 98% 0 0 Absorbs both pressure faults 4 100% 0 0 Reconstructs every window exactly Keep two components for this exercise Two retain 91% of baseline variance and catch both pressure scenarios without flagging the healthy windows. The common-mode offset is a blind spot for the residual rule. How could an operator catch the common-mode offset? Watch retained scores as well as residuals. One option is a score-space statistic such as . Set and assess the thresholds on separate operating periods that include the healthy load range.The six scenarios illustrate mechanisms. A production alert rate needs a larger, representative validation period."
+    },
+    {
+     "id": "alert-thresholds",
+     "title": "Compare pump-alert thresholds",
+     "level": 2,
+     "text": "Keep two components and use the same six held-out windows for every threshold. The residual is the sum of the squared PC3 and PC4 scores. Alert only when the residual is above the threshold. In the comparison, 1 means alert and 0 means pass. Rank-two alert decisions by threshold Window Unit Exercise baseline More sensitive Less sensitive Residual threshold squared standardized units 0.80 0.06 1.30 Higher demand Alert (0 or 1) 0 0 0 Demand drops Alert (0 or 1) 0 0 0 Steady load Alert (0 or 1) 0 1 0 Pressure low Alert (0 or 1) 1 1 1 Pressure high Alert (0 or 1) 1 1 0 Common-mode offset Alert (0 or 1) 0 0 0 At 0.06, the steady-load residual of 0.0725 causes a new false alert. At 1.30, the high-pressure residual of 1.25 now passes, so that fault is missed. The low-pressure residual of 1.45 still triggers an alert at every threshold."
     },
     {
      "id": "implementation",

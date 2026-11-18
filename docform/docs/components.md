@@ -26,6 +26,9 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Search | `search.css` | `search.js` |
 | Charts | `chart.css` | `chart.js` |
 | Results tables | `results.css` | `results.js` |
+| Linked highlighting | `highlight.css` | `highlight.js` |
+| Worked-example steppers | `stepper.css` | `stepper.js` |
+| Scenario comparisons | `chart.css`, `scenarios.css` | `chart.js`, `scenarios.js` |
 
 ## Page layout
 
@@ -446,3 +449,153 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 - `data-df-heat` on the table shades every number column except the first, stronger toward the best end; put it on a header instead to shade one column, with `"min"` or `"max"` to choose the direction. `data-df-heat-color="green"` changes the tint (blue by default).
 - Cells such as `92.1 ± 0.3`, `1,204 ms`, or `12%` count as numbers; `—` and blanks are skipped and sort last. `data-df-value` on a cell gives the number to use.
 - The table needs a `thead` and a `tbody`.
+
+## Interactive explanations
+
+These snippets assume your HTML file sits beside the `docform/` folder. Put the shared setup in `<head>` and add the includes for each pattern you use. Put the example markup inside `<main class="df-page">`. You can open the file directly from disk. [Include order](include-order.md)
+
+```html
+<link rel="stylesheet" href="docform/css/tokens.css">
+<link rel="stylesheet" href="docform/css/base.css">
+<script defer src="docform/js/core.js"></script>
+```
+
+### Linked highlighting
+
+```html
+<link rel="stylesheet" href="docform/css/highlight.css">
+<script defer src="docform/js/highlight.js"></script>
+```
+
+Give a button and its matching items the same `data-df-highlight-group` and `data-df-highlight-key`. Selecting the button outlines every match. Activate it again to clear the selection. Each group has its own selection.
+
+To trace an output, tag the output and each input row, including excluded inputs. Write each row's contribution and reason in the table so readers can follow the calculation with scripts off.
+
+```html
+<p><button type="button" data-df-highlight-group="sales" data-df-highlight-key="total">
+  Trace the $12 sales total
+</button></p>
+<table>
+  <caption>Inputs to the sales total</caption>
+  <thead>
+    <tr><th scope="col">Arrival</th><th scope="col">Sale ID</th><th scope="col">Amount</th><th scope="col">Contribution and reason</th></tr>
+  </thead>
+  <tbody>
+    <tr data-df-highlight-group="sales" data-df-highlight-key="total">
+      <th scope="row">First</th><td>S41</td><td>$12</td><td>Included (+$12). First arrival for S41.</td>
+    </tr>
+    <tr data-df-highlight-group="sales" data-df-highlight-key="total">
+      <th scope="row">Second</th><td>S41</td><td>$12</td><td>Excluded (+$0). S41 has already been counted.</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+### Worked-example steppers
+
+```html
+<link rel="stylesheet" href="docform/css/stepper.css">
+<script defer src="docform/js/stepper.js"></script>
+```
+
+Give the ordered list an `id` and `data-df-stepper`. Each direct list item needs a unique `data-df-step-key` and a direct child marked `data-df-step-name`. Follow the name with the rule and what it produces. DocForm adds Previous, Next, and Reset and starts on the first step.
+
+```html
+<ol id="invoice" data-df-stepper>
+  <li data-df-step-key="items">
+    <strong data-df-step-name>Price the items</strong>
+    Multiply 3 items by $4 each to get a $12 subtotal.
+  </li>
+  <li data-df-step-key="shipping">
+    <strong data-df-step-name>Add shipping</strong>
+    Add $2 to the $12 subtotal to get a $14 total.
+  </li>
+</ol>
+```
+
+#### Parallel event timeline
+
+Use one table column per lane. Label each column with its time unit and clock origin. Each row shows the events at one walkthrough step. For a companion row, set `data-df-stepper-view` to the list ID and `data-df-step-key` to the matching step key. The current row follows the controls. With scripts off, the full sequence and table stay visible.
+
+```html
+<ol id="delivery" data-df-stepper>
+  <li data-df-step-key="send">
+    <strong data-df-step-name>Send</strong>
+    The sender starts the timeout when it sends S41.
+  </li>
+  <li data-df-step-key="retry">
+    <strong data-df-step-name>Retry</strong>
+    The timeout expires. The sender retries with the same sale ID, and the retry arrives first.
+  </li>
+  <li data-df-step-key="late">
+    <strong data-df-step-name>Handle the late arrival</strong>
+    The original message arrives. The receiver sees S41 again and skips it.
+  </li>
+</ol>
+<table>
+  <caption>Delivery of sale S41</caption>
+  <thead>
+    <tr><th scope="col">Step</th><th scope="col">Sender (seconds since first send)</th><th scope="col">Receiver (seconds since startup)</th></tr>
+  </thead>
+  <tbody>
+    <tr data-df-stepper-view="delivery" data-df-step-key="send">
+      <th scope="row">Send</th><td>0 s. Send S41.</td><td>No arrival yet.</td>
+    </tr>
+    <tr data-df-stepper-view="delivery" data-df-step-key="retry">
+      <th scope="row">Retry</th><td>2 s. Resend S41.</td><td>22 s. Receive the retry and count S41.</td>
+    </tr>
+    <tr data-df-stepper-view="delivery" data-df-step-key="late">
+      <th scope="row">Late arrival</th><td>No new send.</td><td>23 s. Receive the original and skip S41.</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+### Scenario comparisons
+
+```html
+<link rel="stylesheet" href="docform/css/chart.css">
+<link rel="stylesheet" href="docform/css/scenarios.css">
+<script defer src="docform/js/chart.js"></script>
+<script defer src="docform/js/scenarios.js"></script>
+```
+
+Use one header row and put the measure, unit, baseline, and named variants in that order. Mark each condition row with `data-df-condition`. Each variant must change exactly one marked condition from the baseline. Write outcome values as plain numbers and put their units in the unit column. Leave that column's cell empty for unitless values.
+
+```html
+<p>Apply each threshold to the same readings (7, 9, 11, and 13 kPa).
+  Alert when a reading meets or exceeds the threshold.</p>
+<table data-df-scenarios>
+  <caption>Effect of changing the alert threshold</caption>
+  <thead>
+    <tr><th scope="col">Measure</th><th scope="col">Unit</th><th scope="col">Baseline</th><th scope="col">Lower threshold</th><th scope="col">Higher threshold</th></tr>
+  </thead>
+  <tbody>
+    <tr data-df-condition>
+      <th scope="row">Alert threshold</th><td>kPa</td><td>10</td><td>8</td><td>12</td>
+    </tr>
+    <tr><th scope="row">Alerts</th><td>readings</td><td>2</td><td>3</td><td>1</td></tr>
+  </tbody>
+</table>
+```
+
+The comparison keeps the baseline fixed and uses the same scale and row order for outcomes with the same unit. It names changes in text and marks changed outcomes on the chart. Reset selects the first variant again. With scripts off, all columns remain visible.
+
+### Prediction and explanation
+
+Ask for a prediction before revealing the reasoning. Put the worked answer in a `details` element, then give a second case with new inputs and the same rule. Use `data-df-no-bubble` to keep each answer expandable in place on pages that load `bubble.js`. Native `details` works without scripts.
+
+```html
+<p>A right triangle has legs of 6 cm and 8 cm. Predict the hypotenuse length.</p>
+<details data-df-no-bubble>
+  <summary>Show the calculation</summary>
+  <p>Square the leg lengths and add them. 6² + 8² = 100, so the
+    hypotenuse is √100 = 10 cm.</p>
+</details>
+
+<p>Try the same rule with legs of 5 cm and 12 cm. What length do you get?</p>
+<details data-df-no-bubble>
+  <summary>Check the second case</summary>
+  <p>5² + 12² = 169, so the hypotenuse is √169 = 13 cm.</p>
+</details>
+```

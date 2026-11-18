@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  document.getElementById('query-picker').hidden = false;
+
   DocForm.anim('mask-story', [
     { actions: [
       { fade: '#raw-scores' }

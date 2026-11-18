@@ -1,0 +1,43 @@
+.df-scenarios-controls,
+.df-scenarios-controls label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--df-space-2);
+}
+
+.df-scenarios-controls :is(select, button) {
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--df-space-1) var(--df-space-2);
+  border: 1px solid var(--df-border-strong);
+  border-radius: var(--df-radius);
+  background: var(--df-bg);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.df-scenarios-controls button[aria-disabled="true"] {
+  color: var(--df-text-muted);
+  cursor: default;
+}
+
+.df-scenarios-controls button[aria-disabled="false"]:hover {
+  background: var(--df-bg-hover);
+}
+
+.df-scenarios-key {
+  color: var(--df-text-muted);
+  font-size: 0.85em;
+}
+
+[data-df-scenarios] :is(th, td)[data-df-scenario-difference] {
+  background: var(--df-bg-hover);
+  font-weight: 700;
+}
+
+.df-scenarios-key[hidden],
+[data-df-scenarios] :is(th, td)[hidden] {
+  display: none;
+}

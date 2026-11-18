@@ -25,6 +25,7 @@ docform/: Copyable offline library folder
     results.css: Sortable results-table headers, heatmap shading, and best-in-column values
     highlight.css: Outlines for selected items in linked views
     stepper.css: Worked-example step controls and linked view visibility
+    scenarios.css: Variant controls and changed comparison cells
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, manifest normalization
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
@@ -48,12 +49,14 @@ docform/: Copyable offline library folder
     results.js: Sortable results tables with heatmap shading and best-in-column highlighting
     highlight.js: Group-scoped linked selection across prose, tables, figures, and code annotations
     stepper.js: Ordered worked examples with Previous, Next, Reset, and linked step views
+    scenarios.js: Table-backed comparisons with fixed baselines, shared chart scales by unit, and Reset
   tools/search-index.html: Offline page that builds search-index.js from a chosen docs folder
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
 examples/: Example docs opened from file://
-  simple/: Single-page Pythagorean theorem example without a manifest, with reveals, a split view, a tinted numbered list, numbered references, sidenotes, and page search
-  linear-algebra/: Five-page notes with SVG planes, sliders, animations, numbered figure steps with details, split views, glossary terms, references, code, charts, and tables
-  pca/: Three-chapter pump monitoring case study with compact projection steps, residual exercises, rank comparisons, and offline search
-  transformers/: Three-chapter decoder-only Transformer guide with a worked forward pass, attention steps with details, next-token probabilities, and offline search
+  simple/: Pythagorean theorem with a proof, an animated construction, and prediction exercises
+  linear-algebra/: Five-page notes with a matrix-vector stepper, interactive SVG planes, and computing examples
+  pca/: Three-chapter pump monitoring case study with projection steps, residual exercises, alert comparisons, and offline search
+  transformers/: Three-chapter decoder-only Transformer guide with a linked attention trace, next-token probabilities, and offline search
+  sales-pipeline/: Retry timeline with sender and receiver clocks, linked source rows, and a comparison of sales totals
 tests/: Built-in node:test checks of module logic

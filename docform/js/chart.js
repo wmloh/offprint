@@ -169,6 +169,8 @@
       title: spec.title ? String(spec.title) : '',
       series: series,
       categories: categorical ? categories : null,
+      markedCategories: categorical && Array.isArray(spec.markedCategories) ? new Set(spec.markedCategories.map(String)) : null,
+      table: spec.table !== false,
       x: axisSpec(spec.x),
       y: axisSpec(spec.y),
       height: isNum(spec.height) && spec.height > 80 ? spec.height : 260
@@ -255,7 +257,8 @@
     if (model.y.max !== null) yHi = model.y.max;
 
     var top = 10 + (model.y.label ? 20 : 0);
-    var bottom = 26 + (model.x.label ? 20 : 0);
+    var markerSpace = model.markedCategories ? 13 : 0;
+    var bottom = 26 + markerSpace + (model.x.label ? 20 : 0);
     var yInfo = ticks(yLo, yHi, Math.max(2, Math.round((height - top - bottom) / 48)), model.y.min !== null, model.y.max !== null);
     var yFmt = tickFormat(yInfo);
     var left = 12 + CHAR * Math.max.apply(null, yInfo.ticks.map(function (v) { return yFmt(v).length; }).concat([1]));
@@ -307,11 +310,15 @@
     var baseY = Math.round(type === 'bar' ? y(Math.max(yInfo.min, Math.min(0, yInfo.max))) : height - bottom) + 0.5;
     svg('line', { x1: left, x2: left + plotW, y1: baseY, y2: baseY, class: 'df-chart-base' }, frame);
 
-    var tickY = height - bottom + 16;
+    var tickY = height - bottom + 16 + markerSpace;
     if (cats) {
       var widest = Math.max.apply(null, cats.map(function (c) { return c.length; }).concat([1])) * CHAR + 12;
       var every = Math.max(1, Math.ceil(widest / Math.max(1, band)));
       cats.forEach(function (c, i) {
+        if (model.markedCategories && model.markedCategories.has(c)) {
+          svg('text', { x: xAt(c), y: tickY - markerSpace, 'text-anchor': 'middle', class: 'df-chart-label' }, frame)
+            .textContent = '*';
+        }
         if (i % every) return;
         svg('text', { x: xAt(c), y: tickY, 'text-anchor': 'middle', class: 'df-chart-tick' }, frame).textContent = c;
       });
@@ -533,7 +540,8 @@
   function describe(model) {
     var names = model.series.map(function (s) { return s.name; }).filter(Boolean);
     return (model.title ? model.title + '. ' : '') + model.type.charAt(0).toUpperCase() + model.type.slice(1) + ' chart' +
-      (names.length ? ' of ' + names.join(', ') : '') + '. Arrow keys read the values; the Table button lists them.';
+      (names.length ? ' of ' + names.join(', ') : '') + '. Arrow keys read the values.' +
+      (model.table ? ' The Table button lists them.' : '');
   }
 
   function renderHead(chart) {
@@ -566,6 +574,7 @@
     chart.legend = html('div', 'df-chart-legend', head);
     chart.toggle = html('button', 'df-chart-toggle', head, 'Table');
     chart.toggle.type = 'button';
+    chart.toggle.hidden = !chart.model.table;
     chart.toggle.setAttribute('aria-pressed', 'false');
     chart.plot = html('div', 'df-chart-plot');
     chart.plot.tabIndex = 0;
@@ -622,9 +631,12 @@
         host.classList.add('is-' + chart.model.type);
         hide(chart);
         renderHead(chart);
+        chart.toggle.hidden = !chart.model.table;
         chart.plot.setAttribute('aria-label', describe(chart.model));
         if (!chart.ownTable) chart.table.textContent = '';
-        if (chart.plot.hidden) {
+        if (chart.plot.hidden && !chart.model.table) {
+          setTable(chart, false);
+        } else if (chart.plot.hidden) {
           if (!chart.table.firstChild) chart.table.appendChild(buildTable(chart.model));
         } else {
           draw(chart);

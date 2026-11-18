@@ -1,6 +1,6 @@
 // Offline DocForm search index. Rebuild with docform/tools/search-index.html after editing these pages.
 window.DocFormSearch = {
- "generated": "2026-11-18T02:37:09.280Z",
+ "generated": "2026-11-18T04:10:30.335Z",
  "pages": [
   {
    "path": "index.html",
@@ -10,7 +10,7 @@ window.DocFormSearch = {
      "id": "",
      "title": "From text to vectors",
      "level": 1,
-     "text": "Start with the train is. Follow three token IDs through an attention head and a feed-forward layer, then turn the last position's state into a distribution over the next token. The worked model Six vocabulary entries, two coordinates per token, one causal attention head, and one feed-forward layer. The parameters are chosen by hand so that the entire forward pass can be checked."
+     "text": "Start with the train is. Follow three token IDs through an attention head and a feed-forward layer, then turn the last position's state into a distribution over the next token. The worked model Six vocabulary entries, two coordinates per token, one causal attention head, and one feed-forward layer. The parameters are chosen by hand so that the entire forward pass can be checked. Trace a token to its attention weights and output."
     },
     {
      "id": "token-ids",
@@ -46,7 +46,13 @@ window.DocFormSearch = {
      "id": "causal-mask",
      "title": "Score, mask, normalize",
      "level": 2,
-     "text": "Queries and keys determine the weights. Values carry the information combined with those weights. This head uses identity projections, so . The causal mask sets the upper triangle to negative infinity before softmax. Scaled scores, the causal mask, and row-wise weights. Score. Take each query–key dot product and divide by , since a key has two coordinates. Mask. The first query can use one key. The second can use two. The third can use all three. The upper triangle is excluded. Normalize. Softmax turns allowed scores into weights that sum to one per row. Use each row to mix the value vectors. The drawn weights are rounded."
+     "text": "Queries and keys determine the weights. Values carry the information combined with those weights. This head uses identity projections, so . The causal mask sets the upper triangle to negative infinity before softmax. Scaled scores, the causal mask, and row-wise weights. Score Mask Normalize Scaled dot products Take each query–key dot product and divide by , since a key has two coordinates. Block keys beyond the query The first query can use one key. The second can use two. The third can use all three. The upper triangle is excluded. Normalize each row Softmax turns allowed scores into weights that sum to one per row. Use each row to mix the value vectors. The drawn weights are rounded."
+    },
+    {
+     "id": "trace-query",
+     "title": "Trace a token through attention",
+     "level": 2,
+     "text": "Each prompt position supplies one query row. At temperature 1, the weights for that row mix the value vectors for the (1, 0), train (0, 1.5), and is (1.5, 1). The output is the resulting weighted sum. Future keys are masked and contribute zero. Query vectors, attention weights, and outputs at temperature 1 (rounded) Query row Weight on the Weight on train Weight on is Attention output 1 · the (1, 0) 1.000 0 (masked) 0 (masked) (1.000, 0.000) 2 · train (0, 1.5) 0.169 0.831 0 (masked) (0.169, 1.246) 3 · is (1.5, 1) 0.184 0.184 0.633 (1.133, 0.908) For train, multiply the first value by about 0.169 and the second by about 0.831. Adding those contributions gives (0.169, 1.246). Both output coordinates are rounded after the calculation."
     },
     {
      "id": "attention-lab",

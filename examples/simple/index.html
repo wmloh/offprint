@@ -12,6 +12,17 @@
   <link rel="stylesheet" href="../../docform/css/controls.css">
   <link rel="stylesheet" href="../../docform/css/math.css">
   <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <style>
+    .df-page details:not([open]) > :not(summary) {
+      display: none;
+    }
+
+    .df-page summary {
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
+    }
+  </style>
   <link rel="stylesheet" href="../../docform/css/tooltip.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/reveal.css">
@@ -36,6 +47,7 @@
       Pythagoras's name, but Babylonian scribes were using it more than a thousand years before him.</span>
       The <a href="#why-it-holds">proof below</a> needs nothing more than the areas of squares and triangles.
     </p>
+    <p><a href="#predict-the-length">Predict a missing side and check your calculation.</a></p>
 
     <h2>Statement <span class="df-tag" data-df-color="purple">Theorem</span></h2>
 
@@ -122,6 +134,20 @@
       <span class="df-math">c^2 = a^2 + b^2 - 2ab\cos\gamma</span>, which reduces to it when
       <span class="df-math">\gamma = 90^\circ</span>.
     </div>
+    <h2 id="predict-the-length">Predict the hypotenuse</h2>
+    <p>A right triangle has legs of 6 cm and 8 cm. How long is the hypotenuse?</p>
+    <details>
+      <summary>Show the calculation</summary>
+      <p>Square the leg lengths and add them to get 6² + 8² = 36 + 64 = 100 cm².
+        The hypotenuse is the positive square root of 100 cm², so its length is 10 cm.</p>
+    </details>
+
+    <p>Apply the same rule to legs of 5 cm and 12 cm. What length do you get?</p>
+    <details>
+      <summary>Check the second case</summary>
+      <p>The sum of the squares is 5² + 12² = 25 + 144 = 169 cm². Its positive square root
+        gives a hypotenuse of 13 cm.</p>
+    </details>
   </main>
 
   <script src="../../docform/js/core.js"></script>

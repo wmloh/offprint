@@ -43,6 +43,8 @@
       The parameters are chosen by hand so that the entire forward pass can be checked.
     </div>
 
+    <p><a href="attention.html#trace-query">Trace a token to its attention weights and output.</a></p>
+
     <h2 id="token-ids">Split the prompt into token IDs</h2>
     <p>Our miniature tokenizer lowercases the text, treats the period as its own token, and looks up each piece
       in a six-entry vocabulary.<span class="df-note">The vocabulary order fixes both the input row lookup and

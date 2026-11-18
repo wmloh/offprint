@@ -17,6 +17,8 @@
   <link rel="stylesheet" href="../../docform/css/code.css">
   <link rel="stylesheet" href="../../docform/css/tabs.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
+  <link rel="stylesheet" href="../../docform/css/steps.css">
+  <link rel="stylesheet" href="../../docform/css/stepper.css">
   <link rel="stylesheet" href="../../docform/css/params.css">
   <link rel="stylesheet" href="../../docform/css/reveal.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
@@ -51,31 +53,53 @@
 
     <div class="df-math" id="column-picture" data-df-display>A\vec x = x_1 \vec a_1 + x_2 \vec a_2.</div>
 
-    <h3>A worked example</h3>
+    <h3 id="a-worked-example">Work through a matrix-vector product</h3>
 
     <p>
       Take <span class="df-math">A = \begin{pmatrix} 2 & -1 \\ 1 & 1 \end{pmatrix}</span> and
       <span class="df-math">\vec x = (2, 1)</span>.
     </p>
 
-    <figure id="columns">
-      <svg viewBox="0 0 360 240" role="img" aria-label="A x built as 2 a1 plus a2">
-        <path id="col-a1" class="df-stroke" data-df-role="u" stroke-width="3" stroke-linecap="round"/>
-        <path id="col-a2" class="df-stroke" data-df-role="v" stroke-width="3" stroke-linecap="round"/>
-        <path id="col-2a1" class="df-stroke" data-df-role="u" stroke-width="2" stroke-linecap="round"/>
-        <path id="col-a2b" class="df-stroke" data-df-role="v" stroke-width="2" stroke-linecap="round"/>
-        <path id="col-ax" class="df-stroke" data-df-role="result" stroke-width="3" stroke-linecap="round"/>
-        <text id="col-l1" x="166" y="198" data-df-role="u">a₁</text>
-        <text id="col-l2" x="74" y="150" text-anchor="end" data-df-role="v">a₂</text>
-        <text id="col-l3" x="232" y="176" data-df-role="u">2a₁</text>
-        <text id="col-l4" x="270" y="92" data-df-role="v">a₂</text>
-        <text id="col-l5" x="244" y="70" data-df-role="result">Ax = (3, 3)</text>
-      </svg>
-    </figure>
+    <ol id="column-product" data-df-stepper>
+      <li data-df-step-key="inputs">
+        <strong data-df-step-name>Read the inputs.</strong>
+        The columns of A are (2, 1) and (−1, 1). The entries of x give them weights 2 and 1.
+      </li>
+      <li data-df-step-key="scale">
+        <strong data-df-step-name>Scale the first column.</strong>
+        Multiply both coordinates by 2 to get (4, 2). The second column keeps its original coordinates because its weight is 1.
+      </li>
+      <li data-df-step-key="add">
+        <strong data-df-step-name>Add the second contribution.</strong>
+        Start at (4, 2) and move by (−1, 1). The endpoint is (4 − 1, 2 + 1) = (3, 3).
+      </li>
+      <li data-df-step-key="result">
+        <strong data-df-step-name>Read the product.</strong>
+        The sum starts at the origin and ends at (3, 3), so Ax = (3, 3).
+      </li>
+    </ol>
+
+    <div class="df-figure-steps">
+      <figure id="columns" class="df-step-figure" hidden>
+        <svg viewBox="0 0 360 240" role="img" aria-label="A x built as 2 a1 plus a2">
+          <path id="col-a1" class="df-stroke" data-df-role="u" stroke-width="3" stroke-linecap="round"/>
+          <path id="col-a2" class="df-stroke" data-df-role="v" stroke-width="3" stroke-linecap="round"/>
+          <path id="col-2a1" class="df-stroke" data-df-role="u" stroke-width="2" stroke-linecap="round"/>
+          <path id="col-a2b" class="df-stroke" data-df-role="v" stroke-width="2" stroke-linecap="round"/>
+          <path id="col-ax" class="df-stroke" data-df-role="result" stroke-width="3" stroke-linecap="round"/>
+          <text id="col-l1" x="166" y="198" data-df-role="u">a₁</text>
+          <text id="col-l2" x="74" y="150" text-anchor="end" data-df-role="v">a₂</text>
+          <text id="col-l3" x="232" y="176" data-df-role="u">2a₁</text>
+          <text id="col-l4" x="270" y="92" data-df-role="v">a₂</text>
+          <text id="col-l5" x="244" y="70" data-df-role="result">Ax = (3, 3)</text>
+        </svg>
+        <figcaption>The arrows follow the current product step.</figcaption>
+      </figure>
+    </div>
 
     <h3>Other weights</h3>
 
-    <p>Change the weights to reach other points. The figure above stays fixed; the formula follows the sliders.</p>
+    <p>Change the weights in the formula below to reach other points using the same columns.</p>
 
     <div class="df-params">
       <div data-df-param="x1" data-df-label="$x_1$" data-df-min="-2" data-df-max="3" data-df-step="0.5" data-df-value="2" data-df-role="u"></div>
@@ -179,11 +203,13 @@ print(B @ A)  # [[0 0] [0 1]]</code></pre>
   <script src="../../docform/js/code.js"></script>
   <script src="../../docform/js/tabs.js"></script>
   <script src="../../docform/js/anim.js"></script>
+  <script src="../../docform/js/stepper.js"></script>
   <script src="../../docform/js/params.js"></script>
   <script src="figures.js"></script>
   <script>
     (function () {
-      var P = LA.plane(document.querySelector('#columns svg'), 120, 200, 40);
+      var figure = document.getElementById('columns');
+      var P = LA.plane(figure.querySelector('svg'), 120, 200, 40);
       var d = function (id, a, b) { document.getElementById(id).setAttribute('d', LA.arrow(P.pt(a), P.pt(b))); };
       d('col-a1', [0, 0], [2, 1]);
       d('col-a2', [0, 0], [-1, 1]);
@@ -191,13 +217,16 @@ print(B @ A)  # [[0 0] [0 1]]</code></pre>
       d('col-a2b', [4, 2], [3, 3]);
       d('col-ax', [0, 0], [3, 3]);
 
-      DocForm.anim('columns', [
-        { caption: 'The columns $\\vec a_1 = (2, 1)$ and $\\vec a_2 = (-1, 1)$.',
-          actions: [{ draw: '#col-a1, #col-a2' }, { fade: '#col-l1, #col-l2', delay: 400 }] },
-        { caption: 'Weight $\\vec a_1$ by $x_1 = 2$.', actions: [{ draw: '#col-2a1' }, { fade: '#col-l3', delay: 400 }] },
-        { caption: 'Add $\\vec a_2$ once, since $x_2 = 1$.', actions: [{ draw: '#col-a2b' }, { fade: '#col-l4', delay: 400 }] },
-        { caption: 'The result is $A\\vec x = (3, 3)$.', actions: [{ draw: '#col-ax' }, { fade: '#col-l5', delay: 400 }] }
-      ], { caption: 'Build $A\\vec x$ from the columns of $A$.' });
+      var arrows = DocForm.anim(figure, [
+        { actions: [{ draw: '#col-a1, #col-a2' }, { fade: '#col-l1, #col-l2' }] },
+        { actions: [{ draw: '#col-2a1' }, { fade: '#col-l3' }] },
+        { actions: [{ draw: '#col-a2b' }, { fade: '#col-l4' }] },
+        { actions: [{ draw: '#col-ax' }, { fade: '#col-l5' }] }
+      ]);
+      document.getElementById('column-product').addEventListener('df:stepperchange', function (event) {
+        arrows.go(event.detail.index + 1);
+        figure.hidden = false;
+      });
     })();
   </script>
 </body>

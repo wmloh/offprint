@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="../../docform/css/bubble.css">
   <link rel="stylesheet" href="../../docform/css/reveal.css">
   <link rel="stylesheet" href="../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../docform/css/scenarios.css">
   <link rel="stylesheet" href="../../docform/css/results.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
   <link rel="stylesheet" href="../../docform/css/tabs.css">
@@ -176,6 +177,32 @@
         mechanisms. A production alert rate needs a larger, representative validation period.</span></p>
     </details>
 
+    <h2 id="alert-thresholds">Compare pump-alert thresholds</h2>
+    <p>Keep two components and use the same six <a href="#evaluation">held-out windows</a> for every
+      threshold. The residual is the sum of the squared PC3 and PC4 scores. Alert only when the residual
+      is above the threshold. In the comparison, 1 means alert and 0 means pass.</p>
+    <table data-df-scenarios>
+      <caption>Rank-two alert decisions by threshold</caption>
+      <thead>
+        <tr><th scope="col">Window</th><th scope="col">Unit</th><th scope="col">Exercise baseline</th>
+          <th scope="col">More sensitive</th><th scope="col">Less sensitive</th></tr>
+      </thead>
+      <tbody>
+        <tr data-df-condition>
+          <th scope="row">Residual threshold</th><td>squared standardized units</td><td>0.80</td><td>0.06</td><td>1.30</td>
+        </tr>
+        <tr><th scope="row">Higher demand</th><td>Alert (0 or 1)</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><th scope="row">Demand drops</th><td>Alert (0 or 1)</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><th scope="row">Steady load</th><td>Alert (0 or 1)</td><td>0</td><td>1</td><td>0</td></tr>
+        <tr><th scope="row">Pressure low</th><td>Alert (0 or 1)</td><td>1</td><td>1</td><td>1</td></tr>
+        <tr><th scope="row">Pressure high</th><td>Alert (0 or 1)</td><td>1</td><td>1</td><td>0</td></tr>
+        <tr><th scope="row">Common-mode offset</th><td>Alert (0 or 1)</td><td>0</td><td>0</td><td>0</td></tr>
+      </tbody>
+    </table>
+    <p>At 0.06, the steady-load residual of 0.0725 causes a new false alert. At 1.30, the high-pressure
+      residual of 1.25 now passes, so that fault is missed. The low-pressure residual of 1.45 still triggers
+      an alert at every threshold.</p>
+
     <h2 id="implementation">Implement the residual rule</h2>
     <p>Use the same post-fit score convention in both languages. The change below replaces a rule that monitors
       all score energy with one that isolates energy outside the retained subspace.</p>
@@ -233,6 +260,7 @@ console.assert(residualScore(lowPressure, 3) &lt;= 0.80);</code></pre>
   <script src="../../docform/js/bubble.js"></script>
   <script src="../../docform/js/reveal.js"></script>
   <script src="../../docform/js/chart.js"></script>
+  <script src="../../docform/js/scenarios.js"></script>
   <script src="../../docform/js/results.js"></script>
   <script src="../../docform/js/zoom.js"></script>
   <script src="../../docform/js/tabs.js"></script>

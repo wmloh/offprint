@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sales pipeline retries</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
+  <link rel="stylesheet" href="../../docform/css/stepper.css">
+  <link rel="stylesheet" href="../../docform/css/highlight.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Page outline">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <h1>When a sale arrives twice</h1>
+    <p>A checkout sends a $12 sale to a reporting service. Follow
+      <a href="#retry-timeline">the timeout and retry</a>, then
+      <a href="#sales-total">trace the sales total to its source rows</a>.</p>
+
+    <h2 id="retry-timeline">Follow the retry on two clocks</h2>
+    <p>The receiver started 20 seconds before the first send. Sender time 0 s and receiver time
+      20 s describe the same instant. Each message carries the sale ID <code>S41</code>.</p>
+    <ol id="sale-delivery" data-df-stepper>
+      <li data-df-step-key="send">
+        <strong data-df-step-name>Send the sale.</strong>
+        Checkout sends <code>S41</code> for $12 and waits up to two seconds for confirmation.
+        The message is delayed in transit, so the receiver has yet to record a sale.
+      </li>
+      <li data-df-step-key="retry">
+        <strong data-df-step-name>Retry after the timeout.</strong>
+        Checkout resends the same ID. The retry takes a faster path and arrives first.
+        The receiver records <code>S41</code> once, adding $12.
+      </li>
+      <li data-df-step-key="late">
+        <strong data-df-step-name>Handle the delayed original.</strong>
+        The original send arrives after the retry. Its sale ID is already in the report, so the receiver
+        skips this arrival and the total stays $12.
+      </li>
+    </ol>
+    <table>
+      <caption>Sender and receiver events for sale S41</caption>
+      <thead>
+        <tr><th scope="col">Event</th><th scope="col">Sender (seconds since first send)</th>
+          <th scope="col">Receiver (seconds since startup)</th></tr>
+      </thead>
+      <tbody>
+        <tr data-df-stepper-view="sale-delivery" data-df-step-key="send">
+          <th scope="row">First send</th><td>0 s — send S41.</td><td>20 s — no arrival yet.</td>
+        </tr>
+        <tr data-df-stepper-view="sale-delivery" data-df-step-key="retry">
+          <th scope="row">Retry</th><td>2 s — timeout; resend S41.</td><td>22.3 s — receive the retry and count S41.</td>
+        </tr>
+        <tr data-df-stepper-view="sale-delivery" data-df-step-key="late">
+          <th scope="row">Late arrival</th><td>No new send.</td><td>23.2 s — receive the original and skip S41.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="sales-total">Trace the sales total</h2>
+    <p>The report counts the first arrival of each sale ID. Both cases below have two arrivals for $12 each.
+      In the second case the later row is a separate sale, <code>S42</code>.</p>
+    <p>Repeated ID: <strong>$12</strong>.
+      <button type="button" hidden data-df-highlight-group="sales-total" data-df-highlight-key="repeat">Trace the repeated-ID total</button>
+      Two distinct IDs: <strong>$24</strong>.
+      <button type="button" hidden data-df-highlight-group="sales-total" data-df-highlight-key="distinct">Trace the two-ID total</button>
+    </p>
+    <table>
+      <caption>Source rows in arrival order within each case</caption>
+      <thead>
+        <tr><th scope="col">Case</th><th scope="col">Receiver time</th><th scope="col">Sale ID</th>
+          <th scope="col">Row amount</th><th scope="col">Counted</th><th scope="col">Reason</th></tr>
+      </thead>
+      <tbody>
+        <tr data-df-highlight-group="sales-total" data-df-highlight-key="repeat">
+          <th scope="row">Repeated ID</th><td>22.3 s</td><td>S41</td><td>$12</td><td>$12</td><td>First arrival of S41.</td>
+        </tr>
+        <tr>
+          <th scope="row">Repeated ID</th><td>23.2 s</td><td>S41</td><td>$12</td><td>$0</td><td>S41 is already counted.</td>
+        </tr>
+        <tr data-df-highlight-group="sales-total" data-df-highlight-key="distinct">
+          <th scope="row">Two IDs</th><td>22.3 s</td><td>S41</td><td>$12</td><td>$12</td><td>First arrival of S41.</td>
+        </tr>
+        <tr data-df-highlight-group="sales-total" data-df-highlight-key="distinct">
+          <th scope="row">Two IDs</th><td>23.2 s</td><td>S42</td><td>$12</td><td>$12</td><td>First arrival of S42.</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/search.js"></script>
+  <script src="../../docform/js/stepper.js"></script>
+  <script src="../../docform/js/highlight.js"></script>
+  <script>
+    DocForm.all('button[data-df-highlight-group="sales-total"]').forEach(function (button) {
+      button.hidden = false;
+    });
+  </script>
+</body>
+</html>

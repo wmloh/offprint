@@ -129,6 +129,27 @@
       <code>here</code> or another token. Append the selected token and use the extended prefix to predict again.
     </div>
 
+    <h3 id="decoding-setup">Choose a decoding setup</h3>
+    <p>A decoding setup combines a temperature, a rule for choosing the next token, and optional token blocking.
+      Pick a named setup or adjust each control. Both temperature sliders share one value.</p>
+
+    <div class="df-params">
+      <div class="df-presets" role="group" aria-label="Decoding setups">
+        <button data-df-preset='{"temperature": 1, "rule": "greedy", "block_period": false}'>Deterministic</button>
+        <button data-df-preset='{"temperature": 0.7, "rule": "top2", "block_period": true}'>Focused</button>
+        <button data-df-preset='{"temperature": 1.5, "rule": "sample", "block_period": false}'>Exploratory</button>
+      </div>
+      <div data-df-param="temperature" data-df-label="Output temperature" data-df-min="0.5" data-df-max="2" data-df-step="0.1" data-df-value="1" data-df-digits="1" data-df-role="output"></div>
+      <div data-df-param="rule" data-df-type="select" data-df-label="Selection rule" data-df-value="greedy" data-df-role="output">
+        <option value="greedy">Greedy</option>
+        <option value="top2">Top-2 sampling</option>
+        <option value="sample">Full sampling</option>
+      </div>
+      <div data-df-param="block_period" data-df-type="toggle" data-df-label="Block the period" data-df-value="false" data-df-role="input"></div>
+    </div>
+    <p>With the period <strong data-df-template="{{block_period ? 'blocked' : 'allowed'}}">allowed</strong>,
+      <output id="decode-result" aria-live="polite">greedy decoding always appends late</output>.</p>
+
     <details data-df-role="context">
       <summary>How would this work during training?</summary>
       <p>Shift the target sequence by one token. For <strong>the train is late</strong>, the first three target

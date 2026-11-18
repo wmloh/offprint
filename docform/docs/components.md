@@ -20,7 +20,7 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Figure steps | `steps.css` | `steps.js` |
 | Reveals and split views | `reveal.css` | `reveal.js` |
 | Figure zoom | `zoom.css` | `zoom.js` |
-| Sliders | `params.css` | `params.js` |
+| Parameters and presets | `params.css` | `params.js` |
 | Numbering, cross-references, citations | `refs.css` | `refs.js` |
 | Sidenotes | `notes.css` | `notes.js` |
 | Search | `search.css` | `search.js` |
@@ -312,28 +312,62 @@ With `zoom.js`, clicking an image or a figure in the page opens it full screen o
 - Clicks on links, buttons, sliders, tooltip terms, and animation controls inside a figure do not open it. Clicks on a chart's plot do.
 - Add `data-df-no-zoom` to a figure or image to leave it out, or `data-df-zoom` to make another block zoomable.
 
-## Sliders
+## Parameters and presets
 
 ```html
 <div class="df-params">
   <div data-df-param="k" data-df-label="$k$" data-df-min="0" data-df-max="5" data-df-step="0.1" data-df-value="2"></div>
+  <div data-df-param="method" data-df-type="select" data-df-label="Method" data-df-value="exact">
+    <option value="exact">Exact</option>
+    <option value="approx">Approximate</option>
+  </div>
+  <div data-df-param="trace" data-df-type="toggle" data-df-label="Show trace" data-df-value="true"></div>
 </div>
 
-<p>Twice <span class="df-math">k</span> is <span data-df-bind="2 * k" data-df-digits="1"></span>.</p>
-<div class="df-math" data-df-display data-df-template="k^2 = {{k * k|2}}">k^2</div>
+<p>Twice <span class="df-math">k</span> is <span data-df-bind="2 * k" data-df-digits="1">4.0</span>.</p>
+<div class="df-math" data-df-display data-df-template="k^2 = {{k * k|2}}">k^2 = 4.00</div>
 ```
 
-- `data-df-param` names a slider; `min`, `max`, `step`, `value`, `label`, and `digits` are optional.
+- `data-df-param` names a control. Without `data-df-type` it is a slider; `min`, `max`, `step`, `value`, `label`, and `digits` are optional.
+- `data-df-type="select"` lists its choices as `<option>` children with distinct `value`s. Its value is a string.
+- `data-df-type="toggle"` is an on/off switch. Its value is `true` or `false`, set initially with `data-df-value`.
+- Controls that share a name share one value and move together.
 - `data-df-bind` shows the value of an expression.
 - `data-df-template` fills each `{{expression|decimals}}` and re-renders math.
+- Write the starting result inside each bound element so the page reads correctly without scripts.
 
-Expressions may use any slider name and maths functions such as `sin`, `sqrt`, and `PI`. To drive a figure from sliders:
+Expressions may use any parameter name and maths functions such as `sin`, `sqrt`, and `PI`, for example `{{trace ? "shown" : "hidden"}}`.
+
+### Presets
+
+A preset button sets several parameters at once:
+
+```html
+<div class="df-presets" role="group" aria-label="Setups">
+  <button data-df-preset='{"k": 1, "method": "exact", "trace": false}'>Baseline</button>
+  <button data-df-preset='{"k": 4.5, "method": "approx"}'>Stress test</button>
+</div>
+```
+
+- Every value is checked first: a known parameter, the right type, a listed choice, and within the slider range. A preset that fails is disabled and a warning explains why.
+- The button whose values match the current state is marked as current.
+- `DocForm.params.apply({ k: 2, trace: true })` does the same from a script and returns `false` without changing anything if a value is rejected. `DocForm.params.set(name, value)` changes one value under the same checks.
+
+The prediction page of the `examples/transformers/` guide combines a shared temperature slider, a selection-rule choice, a blocking toggle, and three named decoding setups.
+
+### Subscriptions
+
+To drive a figure from parameters:
 
 ```js
-DocForm.params.on('k', function (values) {
+DocForm.params.on(['k', 'method'], function (values, name, changed) {
   document.getElementById('dot').setAttribute('r', values.k * 3);
 });
 ```
+
+- The callback runs once when all listed parameters exist, then after each change that touches one of them.
+- `values` is a copy of every parameter. `name` is the one parameter that changed, or `null` on the first call and when a preset changes several. `changed` lists every changed name.
+- A preset calls each affected callback once, after all controls show the new values.
 
 ## Numbered figures and cross-references
 
@@ -427,8 +461,11 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 - Types are `line`, `bar`, and `scatter`. Points are `[x, y]`, `[x, y, "label"]`, `{ "x": …, "y": …, "label": … }`, or plain numbers with `"categories": ["a", "b", …]`. Text x values give one slot per value; bar charts always do.
 - A table's first column is x and every other column is a series named by its header. Without scripts the table shows instead of the chart.
 - Axis options: `label`, `min`, `max`, `digits` (decimals in the readout), and `unit` (added to readout values, such as `" ms"`). `height` sets the plot height in pixels (default 260); `data-df-height`, `data-df-x-label`, and `data-df-y-label` on the element override the data.
+- Missing readings: by default a line joins the points on either side of a missing value. Add `"gaps": "break"` (or `data-df-gaps="break"`) to a line chart to break it at each `null` y or blank table cell instead. The x position stays on the axis and in the table, the readout says "No data" there, and a lone reading between two gaps keeps its dot. Leave out an x value entirely to keep the old joined line.
+- Reference lines: `"referenceLines": [{ "axis": "y", "value": 0.8, "label": "Alert threshold" }]` draws a dashed line with its label inside the plot. Use `"axis": "x"` for a vertical line, with a category name on text axes. Lines never stretch the axes: set the axis `min` or `max` to include one that falls off the scale. The legend names each line and its value, and marks lines that are off scale. On a table chart, put the same JSON list in `data-df-reference-lines`.
 - Series get six fixed colours in order. Give a series `"role"` or `"color"` (or a table header `data-df-role` or `data-df-color`) to use a manifest role or a named colour instead.
 - Pointing at the chart, or focusing it and pressing the arrow keys, shows the values at that spot. Charts with two or more series get a legend; line ends are labelled when they don't crowd. The Table button lists the data.
+- Selectable points: give the chart a linked-highlighting group with `"highlight": "trace"` (or `data-df-highlight-group="trace"` on the element), and give points a key: `{ "x": 22.3, "y": 12, "key": "retry" }`, or `data-df-highlight-key="retry"` on a table cell. Pointing or the arrow keys only read a point; a click, Enter, or Space selects its key, and doing it again clears it. Rows, buttons, and other items with the same group and key are outlined with it, and selecting one of those outlines the point. The selection is kept by key when the chart redraws or shows its table, and needs `highlight.js`.
 - From a script: `DocForm.chart(element, spec)` draws a chart and returns `{ update(spec) }`.
 
 ## Results tables
@@ -514,6 +551,8 @@ Give the ordered list an `id` and `data-df-stepper`. Each direct list item needs
 </ol>
 ```
 
+To open a step from a script, call `DocForm.stepper.select("invoice", "shipping")`. It behaves like Previous and Next, and returns `false` for an unknown list or key. Each change sends a `df:stepperchange` event from the list, with the step's `key` in `event.detail`.
+
 #### Parallel event timeline
 
 Use one table column per lane. Label each column with its time unit and clock origin. Each row shows the events at one walkthrough step. For a companion row, set `data-df-stepper-view` to the list ID and `data-df-step-key` to the matching step key. The current row follows the controls. With scripts off, the full sequence and table stay visible.
@@ -551,6 +590,23 @@ Use one table column per lane. Label each column with its time unit and clock or
   </tbody>
 </table>
 ```
+
+#### Linked trace
+
+Give steps, source rows, and chart points the same keys to follow one event across all three. In the timeline above, swap each row's stepper attributes for `data-df-highlight-group="delivery"` and its `data-df-highlight-key`, so every row stays visible and the current one is outlined. Put a chart with the same group and point keys beside it, and connect the group to the stepper with a short script:
+
+```html
+<script>
+  document.addEventListener('df:stepperchange', function (event) {
+    if (event.target.id === 'delivery') DocForm.highlight.set('delivery', event.detail.key);
+  });
+  document.addEventListener('df:highlightchange', function (event) {
+    if (event.detail.group === 'delivery' && event.detail.key) DocForm.stepper.select('delivery', event.detail.key);
+  });
+</script>
+```
+
+The sales-pipeline example traces a retried sale this way.
 
 ### Scenario comparisons
 

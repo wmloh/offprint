@@ -9,6 +9,7 @@
   }
 
   var states = new WeakMap();
+  var selectors = new WeakMap();
 
   function button(controls, id, label, activate) {
     var control = document.createElement('button');
@@ -76,16 +77,37 @@
       list.dispatchEvent(new root.CustomEvent('df:stepperchange', { bubbles: true, detail: state }));
     }
 
+    selectors.set(list, function (key) {
+      for (var i = 0; i < entries.length; i++) {
+        if (entries[i].key === key) { show(i); return true; }
+      }
+      return false;
+    });
+
     list.before(controls);
     list.classList.add('df-stepper-ready');
     list.setAttribute('role', 'list');
     show(0);
   }
 
+  function listFor(target) {
+    return typeof target === 'string' ? document.getElementById(target) : target;
+  }
+
   DocForm.stepper = {
     get: function (target) {
-      var list = typeof target === 'string' ? document.getElementById(target) : target;
-      return states.get(list) || null;
+      return states.get(listFor(target)) || null;
+    },
+    // Shows the step with this key exactly as Previous and Next would; false for an unknown list or key.
+    select: function (target, key) {
+      var select = selectors.get(listFor(target));
+      if (!select) {
+        DocForm.warnOnce('stepper:select', 'DocForm.stepper.select needs the id or element of a stepper list that is set up.');
+        return false;
+      }
+      if (select(key)) return true;
+      DocForm.warnOnce('stepper:select:' + key, 'This stepper has no step with the key "' + key + '".');
+      return false;
     }
   };
 

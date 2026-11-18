@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="../../docform/css/search.css">
   <link rel="stylesheet" href="../../docform/css/stepper.css">
   <link rel="stylesheet" href="../../docform/css/highlight.css">
+  <link rel="stylesheet" href="../../docform/css/chart.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
@@ -27,7 +28,9 @@
 
     <h2 id="retry-timeline">Follow the retry on two clocks</h2>
     <p>The receiver started 20 seconds before the first send. Sender time 0 s and receiver time
-      20 s describe the same instant. Each message carries the sale ID <code>S41</code>.</p>
+      20 s describe the same instant. Each message carries the sale ID <code>S41</code>.
+      The steps, the event rows, and the points on the chart share one key per event:
+      moving through the steps outlines the matching row and point, and selecting a point opens its step.</p>
     <ol id="sale-delivery" data-df-stepper>
       <li data-df-step-key="send">
         <strong data-df-step-name>Send the sale.</strong>
@@ -52,17 +55,28 @@
           <th scope="col">Receiver (seconds since startup)</th></tr>
       </thead>
       <tbody>
-        <tr data-df-stepper-view="sale-delivery" data-df-step-key="send">
+        <tr data-df-highlight-group="delivery" data-df-highlight-key="send">
           <th scope="row">First send</th><td>0 s — send S41.</td><td>20 s — no arrival yet.</td>
         </tr>
-        <tr data-df-stepper-view="sale-delivery" data-df-step-key="retry">
+        <tr data-df-highlight-group="delivery" data-df-highlight-key="retry">
           <th scope="row">Retry</th><td>2 s — timeout; resend S41.</td><td>22.3 s — receive the retry and count S41.</td>
         </tr>
-        <tr data-df-stepper-view="sale-delivery" data-df-step-key="late">
+        <tr data-df-highlight-group="delivery" data-df-highlight-key="late">
           <th scope="row">Late arrival</th><td>No new send.</td><td>23.2 s — receive the original and skip S41.</td>
         </tr>
       </tbody>
     </table>
+    <figure>
+      <div data-df-chart="scatter" data-df-highlight-group="delivery" data-df-height="200" data-df-y-label="Reported total ($)">
+        <table>
+          <tr><th>Receiver time (s)</th><th>Reported total ($)</th></tr>
+          <tr><td>20</td><td data-df-highlight-key="send">0</td></tr>
+          <tr><td>22.3</td><td data-df-highlight-key="retry">12</td></tr>
+          <tr><td>23.2</td><td data-df-highlight-key="late">12</td></tr>
+        </table>
+      </div>
+      <figcaption>Reported total after each event on the receiver clock. The late original leaves the total at $12.</figcaption>
+    </figure>
 
     <h2 id="sales-total">Trace the sales total</h2>
     <p>The report counts the first arrival of each sale ID. Both cases below have two arrivals for $12 each.
@@ -101,7 +115,15 @@
   <script src="../../docform/js/search.js"></script>
   <script src="../../docform/js/stepper.js"></script>
   <script src="../../docform/js/highlight.js"></script>
+  <script src="../../docform/js/chart.js"></script>
   <script>
+    // Each step selects its event's key; a selected row or point opens the matching step.
+    document.addEventListener('df:stepperchange', function (event) {
+      if (event.target.id === 'sale-delivery') DocForm.highlight.set('delivery', event.detail.key);
+    });
+    document.addEventListener('df:highlightchange', function (event) {
+      if (event.detail.group === 'delivery' && event.detail.key) DocForm.stepper.select('sale-delivery', event.detail.key);
+    });
     DocForm.all('button[data-df-highlight-group="sales-total"]').forEach(function (button) {
       button.hidden = false;
     });

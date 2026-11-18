@@ -1,5 +1,7 @@
 // SVG line, bar, and scatter charts from inline data: a JSON script or a table inside a [data-df-chart] element, or
 // DocForm.chart(el, spec). Hovering or the arrow keys show a readout; the Table button swaps the plot for its data.
+// Line charts with gaps: 'break' end a segment at explicit missing values; referenceLines mark labelled values.
+// With a highlight group, a click, Enter, or Space on a keyed point selects that key in DocForm.highlight.
 (function (root) {
   'use strict';
 
@@ -14,6 +16,8 @@
   var COLORS = 6;
   var CHAR = 7;
   var HIT = 24;
+  var GROUP = 'data-df-highlight-group';
+  var KEY = 'data-df-highlight-key';
   var charts = typeof WeakMap === 'function' ? new WeakMap() : null;
 
   function isNum(v) {
@@ -121,27 +125,31 @@
 
   // Spec -> model. Data points are [x, y, label], {x, y, label}, or bare y values (x = category or index).
   // Bar charts and string x values give a categorical x axis in order of first appearance.
+  // With gaps: 'break' on a line chart, a null or blank y keeps its x as a missing value instead of being dropped.
   function normalize(spec) {
     spec = spec || {};
     var type = TYPES[spec.type] ? spec.type : 'line';
+    var breaks = type === 'line' && spec.gaps === 'break';
     var categories = Array.isArray(spec.categories) ? spec.categories.map(String) : null;
     var list = Array.isArray(spec.series) ? spec.series : Array.isArray(spec.data) ? [{ name: spec.name, data: spec.data }] : [];
     var series = list.map(function (s, si) {
       s = s || {};
-      var points = [];
+      var entries = [];
       (Array.isArray(s.data) ? s.data : []).forEach(function (d, i) {
-        var x, y, label;
+        var x, y, label, key;
         if (Array.isArray(d)) { x = d[0]; y = d[1]; label = d[2]; }
-        else if (d && typeof d === 'object') { x = d.x; y = d.y; label = d.label; }
+        else if (d && typeof d === 'object') { x = d.x; y = d.y; label = d.label; key = d.key; }
         else { x = categories ? categories[i] : i; y = d; }
+        var blank = y === null || (typeof y === 'string' && !y.trim());
         y = toNumber(y);
-        if (y === null || x == null) return;
+        if (x == null || (y === null && !(breaks && blank))) return;
         if (typeof x === 'string' && !categories && type !== 'bar' && toNumber(x) !== null) x = toNumber(x);
-        points.push({ x: x, y: y, label: label == null ? '' : String(label) });
+        key = key == null ? '' : String(key).trim();
+        entries.push({ x: x, y: y, label: label == null ? '' : String(label), key: key || null });
       });
       return {
         name: s.name == null || s.name === '' ? (list.length > 1 ? 'Series ' + (si + 1) : '') : String(s.name),
-        points: points,
+        points: entries,
         role: s.role ? String(s.role) : null,
         color: s.color ? String(s.color) : null,
         index: si
@@ -158,9 +166,31 @@
           if (categories.indexOf(p.x) < 0) categories.push(p.x);
         });
       });
-    } else {
-      series.forEach(function (s) { s.points.sort(function (a, b) { return a.x - b.x; }); });
     }
+    // Missing values sit apart from the points; a reading at the same x wins over a missing one.
+    series.forEach(function (s) {
+      var points = s.points.filter(function (p) { return p.y !== null; });
+      var seen = points.map(function (p) { return String(p.x); });
+      s.missing = s.points.filter(function (p) { return p.y === null && seen.indexOf(String(p.x)) < 0; })
+        .map(function (p) { return p.x; })
+        .filter(function (x, i, all) { return all.indexOf(x) === i; });
+      s.points = points;
+      if (!categorical) {
+        s.points.sort(function (a, b) { return a.x - b.x; });
+        s.missing.sort(function (a, b) { return a - b; });
+      }
+    });
+    var refs = [];
+    (Array.isArray(spec.referenceLines) ? spec.referenceLines : []).forEach(function (r) {
+      r = r || {};
+      var axis = r.axis === 'x' || r.axis === 'y' ? r.axis : null;
+      var value = axis === 'x' && categorical ? (r.value == null ? null : String(r.value)) : toNumber(r.value);
+      if (!axis || value === null) {
+        DocForm.warnOnce('chart-ref', 'Chart reference lines need an axis of "x" or "y" and a value on that axis.');
+        return;
+      }
+      refs.push({ axis: axis, value: value, label: r.label == null ? '' : String(r.label) });
+    });
     if (series.length > COLORS) {
       DocForm.warnOnce('chart-series', 'Charts have ' + COLORS + ' series colours; later series are drawn gray.');
     }
@@ -170,6 +200,9 @@
       series: series,
       categories: categorical ? categories : null,
       markedCategories: categorical && Array.isArray(spec.markedCategories) ? new Set(spec.markedCategories.map(String)) : null,
+      gaps: breaks,
+      referenceLines: refs,
+      highlight: typeof spec.highlight === 'string' && spec.highlight.trim() ? spec.highlight.trim() : null,
       table: spec.table !== false,
       x: axisSpec(spec.x),
       y: axisSpec(spec.y),
@@ -178,16 +211,116 @@
   }
 
   // Header row plus body rows of cell text -> spec: the first column is x, every other column a series.
-  function fromTable(rows, type) {
+  // keys, when given, holds a point key (or null) for each cell in the same layout.
+  function fromTable(rows, type, keys) {
     var head = rows[0] || [];
     var body = rows.slice(1);
     return {
       type: type,
       x: { label: head[0] || '' },
       series: head.slice(1).map(function (name, c) {
-        return { name: name, data: body.map(function (r) { return [r[0], r[c + 1]]; }) };
+        return {
+          name: name,
+          data: body.map(function (r, i) {
+            var key = keys && keys[i + 1] && keys[i + 1][c + 1];
+            return key ? { x: r[0], y: r[c + 1], key: key } : [r[0], r[c + 1]];
+          })
+        };
       })
     };
+  }
+
+  // Readout positions after the marks are drawn. Scatter charts, and line or bar charts with a highlight group,
+  // get one spot per point so marks that share an x can each be read and selected; other charts get one per x.
+  // markOf maps a point to its drawn mark as { el, px }, if any.
+  function spotsFor(model, xAt, y, markOf) {
+    var spots = [];
+    var cats = model.categories;
+    var xs = cats ? cats : extent(model).xs.slice().sort(function (a, b) { return a - b; })
+      .filter(function (x, i, list) { return !i || x !== list[i - 1]; });
+    if (model.type === 'scatter') {
+      model.series.forEach(function (s) {
+        s.points.forEach(function (p) { spots.push({ px: xAt(p.x), py: y(p.y), s: s, p: p, el: (markOf(p) || {}).el }); });
+      });
+    } else if (model.highlight) {
+      xs.forEach(function (x) {
+        var cx = xAt(x);
+        var found = false;
+        model.series.forEach(function (s) {
+          s.points.forEach(function (p) {
+            if (String(p.x) !== String(x)) return;
+            found = true;
+            var mark = markOf(p) || {};
+            spots.push({ px: mark.px == null ? cx : mark.px, cx: cx, py: y(p.y), x: x, s: s, p: p, el: mark.el });
+          });
+        });
+        if (!found) spots.push({ px: cx, cx: cx, x: x });
+      });
+    } else {
+      xs.forEach(function (x) { spots.push({ px: xAt(x), cx: xAt(x), x: x }); });
+    }
+    spots.sort(function (a, b) { return a.px - b.px || (a.py || 0) - (b.py || 0); });
+    return spots;
+  }
+
+  // The spot nearest the pointer: closest x first, then the closest y among spots that share it.
+  function closest(spots, px, py) {
+    var i = nearest(spots.map(function (s) { return s.px; }), px);
+    if (i < 0 || py == null) return i;
+    var best = i;
+    for (var j = i - 1; j >= 0 && spots[j].px === spots[i].px; j--) if (Math.abs(spots[j].py - py) < Math.abs(spots[best].py - py)) best = j;
+    for (j = i + 1; j < spots.length && spots[j].px === spots[i].px; j++) if (Math.abs(spots[j].py - py) < Math.abs(spots[best].py - py)) best = j;
+    return best;
+  }
+
+  // Runs of consecutive points with no missing value between them. pos maps an x value to its axis position.
+  function segments(points, missing, pos) {
+    var gaps = (missing || []).map(pos);
+    var out = [];
+    var run = [];
+    points.forEach(function (p, i) {
+      if (run.length) {
+        var a = pos(points[i - 1].x);
+        var b = pos(p.x);
+        var lo = Math.min(a, b);
+        var hi = Math.max(a, b);
+        if (gaps.some(function (g) { return g > lo && g < hi; })) {
+          out.push(run);
+          run = [];
+        }
+      }
+      run.push(p);
+    });
+    if (run.length) out.push(run);
+    return out;
+  }
+
+  // Data extent before tick rounding: reference lines never widen it, and missing x values keep their place.
+  function extent(model) {
+    var ys = [];
+    var xs = [];
+    model.series.forEach(function (s) {
+      s.points.forEach(function (p) {
+        ys.push(p.y);
+        if (!model.categories) xs.push(p.x);
+      });
+      if (!model.categories && s.missing) xs.push.apply(xs, s.missing);
+    });
+    var yLo = ys.length ? Math.min.apply(null, ys) : 0;
+    var yHi = ys.length ? Math.max.apply(null, ys) : 1;
+    if (model.type === 'bar') { yLo = Math.min(yLo, 0); yHi = Math.max(yHi, 0); }
+    if (model.y.min !== null) yLo = model.y.min;
+    if (model.y.max !== null) yHi = model.y.max;
+    return { yLo: yLo, yHi: yHi, xs: xs };
+  }
+
+  function refValue(model, r) {
+    return r.axis === 'x' && model.categories ? r.value : format(r.value, model[r.axis]);
+  }
+
+  function refText(model, r) {
+    var value = refValue(model, r);
+    return r.label ? r.label + ' (' + value + ')' : value;
   }
 
   // A bar from baseline y0 to y1 with rounded corners only at the data end.
@@ -242,19 +375,10 @@
     var series = model.series;
     var cats = model.categories;
 
-    var ys = [];
-    var xs = [];
-    series.forEach(function (s) {
-      s.points.forEach(function (p) {
-        ys.push(p.y);
-        if (!cats) xs.push(p.x);
-      });
-    });
-    var yLo = ys.length ? Math.min.apply(null, ys) : 0;
-    var yHi = ys.length ? Math.max.apply(null, ys) : 1;
-    if (type === 'bar') { yLo = Math.min(yLo, 0); yHi = Math.max(yHi, 0); }
-    if (model.y.min !== null) yLo = model.y.min;
-    if (model.y.max !== null) yHi = model.y.max;
+    var span = extent(model);
+    var xs = span.xs;
+    var yLo = span.yLo;
+    var yHi = span.yHi;
 
     var top = 10 + (model.y.label ? 20 : 0);
     var markerSpace = model.markedCategories ? 13 : 0;
@@ -336,6 +460,7 @@
       svg('text', { x: 0, y: 12, class: 'df-chart-label' }, frame).textContent = model.y.label;
     }
 
+    var refLines = svg('g', { class: 'df-chart-refs' }, frame);
     var marks = svg('g', {}, frame);
     var thick = 0;
     var gap = 2;
@@ -343,16 +468,29 @@
       var m = Math.max(1, series.length);
       thick = Math.max(2, Math.min(24, (band * 0.72 - gap * (m - 1)) / m));
     }
+    var markOf = new Map();
+    // Keyed marks join the chart's highlight group, so outside selections reach them after every redraw.
+    var place = function (p, el, px) {
+      markOf.set(p, { el: el, px: px });
+      return tagKey(model, el, p);
+    };
     series.forEach(function (s) {
       var g = svg('g', { class: 'df-chart-series' }, marks);
       paint(g, s);
-      s.els = [];
       if (type === 'line') {
-        var d = s.points.map(function (p, i) { return (i ? 'L' : 'M') + xAt(p.x) + ',' + y(p.y); }).join('');
-        if (s.points.length > 1) svg('path', { d: d, class: 'df-chart-line' }, g);
-        if (s.points.length <= 16) {
-          s.points.forEach(function (p) { svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4, class: 'df-chart-dot' }, g); });
-        }
+        var runs = model.gaps ? segments(s.points, s.missing, cats ? function (x) { return cats.indexOf(String(x)); } :
+          function (x) { return x; }) : [s.points];
+        var d = runs.map(function (run) {
+          return run.length > 1 ? run.map(function (p, i) { return (i ? 'L' : 'M') + xAt(p.x) + ',' + y(p.y); }).join('') : '';
+        }).join('');
+        if (d) svg('path', { d: d, class: 'df-chart-line' }, g);
+        // Isolated readings between gaps, and selectable points, keep a marker even on dense lines.
+        runs.forEach(function (run) {
+          run.forEach(function (p) {
+            if (s.points.length > 16 && run.length > 1 && !(model.highlight && p.key)) return;
+            place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4, class: 'df-chart-dot' }, g), xAt(p.x));
+          });
+        });
       } else if (type === 'bar') {
         var groupW = series.length * thick + (series.length - 1) * gap;
         var y0 = y(Math.max(yInfo.min, Math.min(0, yInfo.max)));
@@ -360,10 +498,11 @@
           var x0 = xAt(p.x) - groupW / 2 + s.index * (thick + gap);
           var bar = svg('path', { d: barPath(x0, thick, y0, y(p.y), 4), class: 'df-chart-bar' }, g);
           bar.setAttribute('data-df-x', p.x);
+          place(p, bar, x0 + thick / 2);
         });
       } else {
         s.points.forEach(function (p) {
-          s.els.push(svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4.5, class: 'df-chart-dot' }, g));
+          place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4.5, class: 'df-chart-dot' }, g), xAt(p.x));
         });
       }
     });
@@ -373,21 +512,37 @@
         .textContent = e.s.name;
     });
 
-    // Hover positions: one per x (line, bar) or one per point (scatter), in left-to-right order.
-    var spots = [];
-    if (type === 'scatter') {
-      series.forEach(function (s) {
-        s.points.forEach(function (p, i) { spots.push({ px: xAt(p.x), py: y(p.y), s: s, p: p, el: s.els[i] }); });
-      });
-    } else if (cats) {
-      cats.forEach(function (c) { spots.push({ px: xAt(c), x: c }); });
-    } else {
-      xs.slice().sort(function (a, b) { return a - b; }).forEach(function (x, i, list) {
-        if (!i || x !== list[i - 1]) spots.push({ px: xAt(x), x: x });
-      });
-    }
-    spots.sort(function (a, b) { return a.px - b.px || (a.py || 0) - (b.py || 0); });
-    chart.spots = spots;
+    // Reference lines use the data scales and are skipped, not clamped, when their value lies off the plot.
+    var refLabels = svg('g', { class: 'df-chart-refs' }, frame);
+    var plotR = left + plotW;
+    var plotB = height - bottom;
+    model.referenceLines.forEach(function (r, i) {
+      var text = r.label || refValue(model, r);
+      var on = false;
+      if (r.axis === 'y') {
+        if (r.value >= yInfo.min && r.value <= yInfo.max) {
+          on = true;
+          var py = Math.round(y(r.value)) + 0.5;
+          svg('line', { x1: left, x2: plotR, y1: py, y2: py, class: 'df-chart-ref' }, refLines);
+          svg('text', { x: plotR - 4, y: py - 5 < top + 10 ? py + 13 : py - 5, 'text-anchor': 'end', class: 'df-chart-ref-label' },
+            refLabels).textContent = text;
+        }
+      } else if (cats ? cats.indexOf(r.value) >= 0 : r.value >= xInfo.min && r.value <= xInfo.max) {
+        on = true;
+        var px = Math.round(xAt(r.value)) + 0.5;
+        var fits = px + 5 + text.length * 6.5 <= plotR;
+        svg('line', { x1: px, x2: px, y1: top, y2: plotB, class: 'df-chart-ref' }, refLines);
+        svg('text', { x: fits ? px + 5 : px - 5, y: top + 10, 'text-anchor': fits ? 'start' : 'end', class: 'df-chart-ref-label' },
+          refLabels).textContent = text;
+      }
+      var item = chart.refItems && chart.refItems[i];
+      if (item) {
+        item.classList.toggle('is-outside', !on);
+        item.lastChild.textContent = on ? '' : 'off scale';
+      }
+    });
+
+    chart.spots = spotsFor(model, xAt, y, function (p) { return markOf.get(p); });
     chart.geom = { left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y };
     chart.overlay = svg('g', { class: 'df-chart-hover' }, frame);
     chart.marks = marks;
@@ -395,7 +550,7 @@
     if (chart.svg) chart.plot.replaceChild(frame, chart.svg);
     else chart.plot.insertBefore(frame, chart.plot.firstChild);
     chart.svg = frame;
-    if (chart.active >= 0) show(chart, Math.min(chart.active, spots.length - 1), null);
+    if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
   }
 
   function hide(chart) {
@@ -411,6 +566,11 @@
     key(type === 'line' ? 'line' : type === 'bar' ? 'bar' : 'dot', s, r);
     html('b', '', r, value);
     if (s.name) html('span', '', r, s.name);
+    return r;
+  }
+
+  function selectedKey(model) {
+    return model.highlight && DocForm.highlight ? DocForm.highlight.get(model.highlight) : null;
   }
 
   function show(chart, index, pointerY) {
@@ -419,6 +579,7 @@
     var model = chart.model;
     var g = chart.geom;
     chart.active = index;
+    chart.pointerY = pointerY;
     chart.overlay.textContent = '';
     DocForm.all('.is-active', chart.marks).forEach(function (el) { el.classList.remove('is-active'); });
     chart.box.classList.add('is-hovering');
@@ -448,28 +609,36 @@
       html('div', 'df-chart-tip-head', tip, (model.x.label && !model.categories ? model.x.label + ' ' : '') + xText(chart, spot.x));
       if (model.type === 'bar') {
         svg('rect', {
-          x: spot.px - g.band / 2, y: g.top, width: g.band, height: g.bottom - g.top, class: 'df-chart-band'
+          x: spot.cx - g.band / 2, y: g.top, width: g.band, height: g.bottom - g.top, class: 'df-chart-band'
         }, chart.overlay);
         chart.marks.parentNode.insertBefore(chart.overlay, chart.marks);
-        DocForm.all('.df-chart-bar', chart.marks).forEach(function (el) {
+        if (spot.el) spot.el.classList.add('is-active');
+        else DocForm.all('.df-chart-bar', chart.marks).forEach(function (el) {
           if (el.getAttribute('data-df-x') === String(spot.x)) el.classList.add('is-active');
         });
       } else {
-        svg('line', { x1: spot.px, x2: spot.px, y1: g.top, y2: g.bottom, class: 'df-chart-cross' }, chart.overlay);
+        svg('line', { x1: spot.cx, x2: spot.cx, y1: g.top, y2: g.bottom, class: 'df-chart-cross' }, chart.overlay);
         chart.marks.parentNode.appendChild(chart.overlay);
+        // Per-point spots mark which of the readings at this x a click or Enter would select.
+        if (spot.p) paint(svg('circle', { cx: spot.cx, cy: spot.py, r: 7, class: 'df-chart-ring' }, chart.overlay), spot.s);
       }
       model.series.forEach(function (s) {
         var p = null;
         for (var i = 0; i < s.points.length; i++) if (String(s.points[i].x) === String(spot.x)) { p = s.points[i]; break; }
-        if (!p) return;
+        if (!p) {
+          if (model.gaps && s.missing.map(String).indexOf(String(spot.x)) >= 0) row(tip, s, 'No data', model.type);
+          return;
+        }
         if (model.type === 'line') {
-          var dot = svg('circle', { cx: spot.px, cy: g.y(p.y), r: 4.5, class: 'df-chart-ring' }, chart.overlay);
+          var dot = svg('circle', { cx: spot.cx, cy: g.y(p.y), r: 4.5, class: 'df-chart-ring' }, chart.overlay);
           paint(dot, s);
         }
-        row(tip, s, format(p.y, model.y), model.type);
+        var r = row(tip, s, format(p.y, model.y), model.type);
+        if (spot.p && spot.s === s && model.series.length > 1) r.classList.add('is-current');
       });
       anchorY = pointerY == null ? g.top : pointerY;
     }
+    if (spot.p && spot.p.key && spot.p.key === selectedKey(model)) html('div', 'df-chart-tip-note', tip, 'Selected');
 
     tip.hidden = false;
     var w = tip.offsetWidth;
@@ -497,7 +666,48 @@
       });
       return best < 0 ? hide(chart) : show(chart, best, null);
     }
-    show(chart, nearest(spots.map(function (s) { return s.px; }), px), py);
+    show(chart, closest(spots, px, py), py);
+  }
+
+  // Commits the point under the readout: its key becomes the group's selection, or clears it when already selected.
+  function keyedSpot(chart) {
+    var spot = chart.spots[chart.active];
+    return chart.model.highlight && spot && spot.p && spot.p.key ? spot : null;
+  }
+
+  // Selections made elsewhere refresh an open readout without moving focus. One listener serves every chart
+  // that has had a highlight group.
+  var selectable = [];
+  function watch(chart) {
+    if (!chart.model.highlight || selectable.indexOf(chart) >= 0) return;
+    if (!selectable.length) {
+      document.addEventListener('df:highlightchange', function (event) {
+        selectable.forEach(function (c) {
+          if (event.detail && event.detail.group === c.model.highlight && c.active >= 0) show(c, c.active, c.pointerY);
+        });
+      });
+    }
+    selectable.push(chart);
+  }
+
+  function activate(chart) {
+    var spot = keyedSpot(chart);
+    var group = chart.model.highlight;
+    if (!spot) return false;
+    if (!DocForm.highlight) {
+      DocForm.warnOnce('chart-highlight', 'Charts with a highlight group need highlight.js.');
+      return false;
+    }
+    DocForm.highlight.set(group, DocForm.highlight.get(group) === spot.p.key ? null : spot.p.key);
+    return true;
+  }
+
+  function tagKey(model, el, p) {
+    if (model.highlight && p && p.key) {
+      el.setAttribute(GROUP, model.highlight);
+      el.setAttribute(KEY, p.key);
+    }
+    return el;
   }
 
   function buildTable(model) {
@@ -510,7 +720,7 @@
         .forEach(function (t) { if (t !== null) html('th', '', head, t); });
       model.series.forEach(function (s) {
         s.points.forEach(function (p) {
-          var tr = html('tr', '', body);
+          var tr = tagKey(model, html('tr', '', body), p);
           if (model.series.length > 1) html('td', '', tr, s.name);
           if (labels) html('td', '', tr, p.label);
           html('td', '', tr, format(p.x, model.x));
@@ -523,7 +733,10 @@
     model.series.forEach(function (s) { html('th', '', head, s.name || model.y.label || 'Value'); });
     var xs = model.categories || [];
     if (!model.categories) {
-      model.series.forEach(function (s) { s.points.forEach(function (p) { if (xs.indexOf(p.x) < 0) xs.push(p.x); }); });
+      model.series.forEach(function (s) {
+        s.points.forEach(function (p) { if (xs.indexOf(p.x) < 0) xs.push(p.x); });
+        s.missing.forEach(function (x) { if (xs.indexOf(x) < 0) xs.push(x); });
+      });
       xs.sort(function (a, b) { return a - b; });
     }
     xs.forEach(function (x) {
@@ -531,7 +744,7 @@
       html('th', '', tr, model.categories ? x : format(x, model.x)).setAttribute('scope', 'row');
       model.series.forEach(function (s) {
         var p = s.points.filter(function (q) { return String(q.x) === String(x); })[0];
-        html('td', '', tr, p ? format(p.y, model.y) : '');
+        tagKey(model, html('td', '', tr, p ? format(p.y, model.y) : ''), p);
       });
     });
     return table;
@@ -539,19 +752,34 @@
 
   function describe(model) {
     var names = model.series.map(function (s) { return s.name; }).filter(Boolean);
+    var gaps = model.gaps && model.series.some(function (s) { return s.missing.length; });
+    var refs = model.referenceLines.map(function (r) { return refText(model, r); });
+    var keyed = model.highlight && model.series.some(function (s) { return s.points.some(function (p) { return p.key; }); });
     return (model.title ? model.title + '. ' : '') + model.type.charAt(0).toUpperCase() + model.type.slice(1) + ' chart' +
-      (names.length ? ' of ' + names.join(', ') : '') + '. Arrow keys read the values.' +
+      (names.length ? ' of ' + names.join(', ') : '') + '.' +
+      (refs.length ? ' Reference ' + (refs.length > 1 ? 'lines: ' : 'line: ') + refs.join(', ') + '.' : '') +
+      (gaps ? ' Breaks in a line mark missing values.' : '') + ' Arrow keys read the values.' +
+      (keyed ? ' Enter or Space selects the point being read.' : '') +
       (model.table ? ' The Table button lists them.' : '');
   }
 
   function renderHead(chart) {
     var model = chart.model;
     chart.legend.textContent = '';
-    if (model.series.length < 2) return;
-    model.series.forEach(function (s) {
+    if (model.series.length > 1) {
+      model.series.forEach(function (s) {
+        var item = html('span', 'df-chart-legend-item', chart.legend);
+        key(model.type === 'line' ? 'line' : model.type === 'bar' ? 'bar' : 'dot', s, item);
+        html('span', '', item, s.name);
+      });
+    }
+    // Reference lines are also named in text, so their meaning survives the table view and off-scale values.
+    chart.refItems = model.referenceLines.map(function (r) {
       var item = html('span', 'df-chart-legend-item', chart.legend);
-      key(model.type === 'line' ? 'line' : model.type === 'bar' ? 'bar' : 'dot', s, item);
-      html('span', '', item, s.name);
+      html('span', 'df-chart-key is-ref', item);
+      html('span', '', item, refText(model, r));
+      html('span', 'df-chart-ref-note', item);
+      return item;
     });
   }
 
@@ -599,9 +827,21 @@
       if (chart.plot.matches(':focus-visible')) show(chart, Math.max(0, chart.active), null);
     });
     chart.plot.addEventListener('blur', function () { hide(chart); });
+    // A committed point click stops here, so a zoomable figure around the chart stays in place.
+    chart.plot.addEventListener('click', function (event) {
+      if (event.button !== 0 || !chart.svg || !chart.model.highlight) return;
+      pick(chart, event);
+      if (activate(chart)) event.preventDefault();
+    });
     chart.plot.addEventListener('keydown', function (event) {
       var n = chart.spots.length;
       if (!n) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        if (!keyedSpot(chart)) return;
+        event.preventDefault();
+        if (!event.repeat) activate(chart);
+        return;
+      }
       var i = chart.active < 0 ? 0 : chart.active;
       if (event.key === 'ArrowRight' || event.key === 'ArrowDown') i = Math.min(n - 1, i + 1);
       else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') i = Math.max(0, i - 1);
@@ -627,6 +867,7 @@
       element: host,
       update: function (next) {
         chart.model = normalize(next);
+        watch(chart);
         host.classList.remove('is-line', 'is-bar', 'is-scatter');
         host.classList.add('is-' + chart.model.type);
         hide(chart);
@@ -645,6 +886,7 @@
       model: function () { return chart.model; }
     };
     charts.set(host, chart);
+    watch(chart);
     draw(chart);
     return chart.api;
   }
@@ -658,6 +900,18 @@
     if (TYPES[type]) spec.type = type;
     var h = DocForm.num(host, 'height', null);
     if (h !== null) spec.height = h;
+    var gaps = DocForm.data(host, 'gaps', null);
+    if (gaps !== null) spec.gaps = gaps;
+    var group = DocForm.data(host, 'highlight-group', null);
+    if (group !== null) spec.highlight = group;
+    var refs = DocForm.data(host, 'reference-lines', null);
+    if (refs !== null) {
+      try {
+        spec.referenceLines = JSON.parse(refs);
+      } catch (e) {
+        DocForm.warnOnce('chart-refs:' + e.message, 'Chart reference lines are not valid JSON: ' + e.message, host);
+      }
+    }
     ['x', 'y'].forEach(function (axis) {
       var label = DocForm.data(host, axis + '-label', null);
       if (label === null) return;
@@ -680,8 +934,9 @@
         return null;
       }
     } else if (table) {
-      var rows = DocForm.all('tr', table).map(function (tr) { return DocForm.all('th, td', tr).map(cellText); });
-      spec = fromTable(rows, null);
+      var cells = DocForm.all('tr', table).map(function (tr) { return DocForm.all('th, td', tr); });
+      var keys = cells.map(function (r) { return r.map(function (cell) { return DocForm.data(cell, 'highlight-key', '').trim() || null; }); });
+      spec = fromTable(cells.map(function (r) { return r.map(cellText); }), null, keys);
       var heads = DocForm.all('tr', table)[0];
       DocForm.all('th, td', heads).slice(1).forEach(function (cell, i) {
         var s = spec.series[i];
@@ -692,7 +947,12 @@
     } else {
       return null;
     }
-    return build(host, overrides(host, spec || {}), script ? null : table);
+    spec = overrides(host, spec || {});
+    // Keyed source cells join the group too, so the table view shows the same selection.
+    if (table && !script && typeof spec.highlight === 'string' && spec.highlight.trim()) {
+      DocForm.all('[' + KEY + ']', table).forEach(function (cell) { cell.setAttribute(GROUP, spec.highlight.trim()); });
+    }
+    return build(host, spec, script ? null : table);
   }
 
   function chart(target, spec) {
@@ -714,6 +974,10 @@
   chart.nearest = nearest;
   chart.normalize = normalize;
   chart.fromTable = fromTable;
+  chart.segments = segments;
+  chart.spotsFor = spotsFor;
+  chart.closest = closest;
+  chart.extent = extent;
   chart.format = format;
   chart.tickFormat = tickFormat;
   chart.barPath = barPath;

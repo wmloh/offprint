@@ -161,3 +161,25 @@ test('a single step stays visible and an ambiguous sequence stays readable', () 
   assert.ok(invalid.children.every((step) => !step.hidden));
   assert.equal(warnings.length, 1);
 });
+
+test('select jumps to a named step through the same update as the controls', () => {
+  const list = sequence('trace', 'send', 'retry', 'late');
+  const row = view('tr', 'trace', 'late');
+  const { start, stepper, warnings } = setup([list], [row]);
+  assert.equal(stepper.select('trace', 'late'), false, 'nothing to select before setup');
+  start();
+  const changes = [];
+  list.addEventListener('df:stepperchange', (event) => changes.push(event.detail.key));
+  const [, previous, next, reset] = list.controls.children;
+
+  assert.equal(stepper.select('trace', 'late'), true);
+  assert.equal(stepper.select(list, 'late'), true);
+  assert.deepEqual(list.children.map((step) => step.hidden), [true, true, false]);
+  assert.equal(row.getAttribute('hidden'), null);
+  assert.deepEqual([previous, next, reset].map((b) => b.getAttribute('aria-disabled')), ['false', 'true', 'false']);
+  assert.equal(stepper.select('trace', 'missing'), false);
+  assert.equal(stepper.get('trace').key, 'late');
+  previous.click();
+  assert.deepEqual(changes, ['late', 'retry'], 'reselecting the current step sends no change');
+  assert.equal(warnings.length, 2);
+});

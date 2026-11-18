@@ -61,3 +61,44 @@ test('bars round only their data end', () => {
   assert.equal(chart.barPath(0, 10, 100, 40, 4), 'M0,100V44Q0,40 4,40H6Q10,40 10,44V100Z');
   assert.equal(chart.barPath(0, 10, 100, 102, 4), 'M0,100V100Q0,102 2,102H8Q10,102 10,100V100Z');
 });
+
+test('gap mode keeps explicit missing values and breaks lines at interior gaps', () => {
+  const data = [[1, 2], [2, null], [3, 4], [4, 5], [5, ''], [6, 'n/a'], [7, 6], [9, 3], [8, null], [8, 1]];
+  const model = chart.normalize({ gaps: 'break', series: [{ data }] });
+  const s = model.series[0];
+  assert.deepEqual(plain(s.points.map((p) => p.x)), [1, 3, 4, 7, 8, 9]);
+  assert.deepEqual(plain(s.missing), [2, 5]);
+  const runs = chart.segments(s.points, s.missing, (x) => x);
+  assert.deepEqual(plain(runs.map((run) => run.map((p) => p.x))), [[1], [3, 4], [7, 8, 9]]);
+  assert.deepEqual(plain(chart.extent(chart.normalize({ gaps: 'break', series: [{ data: [[0, 1], [10, null]] }] })).xs), [0, 10]);
+
+  const table = chart.normalize(Object.assign(chart.fromTable([['t', 'q'], ['a', '1'], ['b', ''], ['c', '3']], 'line'), { gaps: 'break' }));
+  assert.deepEqual(plain(table.categories), ['a', 'b', 'c']);
+  const cats = table.categories;
+  assert.equal(chart.segments(table.series[0].points, table.series[0].missing, (x) => cats.indexOf(x)).length, 2);
+});
+
+test('legacy charts drop missing values and ignore gap mode outside line charts', () => {
+  const data = [[1, 2], [2, null], [3, 4]];
+  const plainLine = chart.normalize({ series: [{ data }] });
+  assert.deepEqual(plain(plainLine.series[0].missing), []);
+  assert.equal(plainLine.gaps, false);
+  assert.equal(chart.segments(plainLine.series[0].points, plainLine.series[0].missing, (x) => x).length, 1);
+  assert.deepEqual(plain(chart.extent(plainLine).xs), [1, 3]);
+  const bars = chart.normalize({ type: 'bar', gaps: 'break', series: [{ data: [['a', 1], ['b', null]] }] });
+  assert.deepEqual(plain(bars.categories), ['a']);
+});
+
+test('reference lines normalize per axis without widening the data domain', () => {
+  const spec = { y: { unit: ' ms' }, series: [{ data: [[0, 10], [5, 14]] }] };
+  const base = plain(chart.extent(chart.normalize(spec)));
+  const model = chart.normalize(Object.assign({}, spec, {
+    referenceLines: [{ axis: 'y', value: 16.7, label: 'Frame budget' }, { axis: 'x', value: '12' }, { axis: 'z', value: 1 }, { axis: 'y' }]
+  }));
+  assert.deepEqual(plain(model.referenceLines), [{ axis: 'y', value: 16.7, label: 'Frame budget' }, { axis: 'x', value: 12, label: '' }]);
+  assert.deepEqual(plain(chart.extent(model)), base);
+  const info = chart.ticks(base.yLo, base.yHi, 4);
+  assert.ok(16.7 > info.max, 'an out-of-range line stays off the plotted scale');
+  const cats = chart.normalize({ type: 'bar', series: [{ data: [['v1', 1]] }], referenceLines: [{ axis: 'x', value: 'v1', label: 'Release' }] });
+  assert.equal(cats.referenceLines[0].value, 'v1');
+});

@@ -73,6 +73,33 @@
       </div>
     </div>
 
+    <figure id="residual-trace">
+      <div data-df-chart="line" data-df-gaps="break" data-df-height="220" data-df-x-label="Five-minute window" data-df-y-label="Residual Q₂"
+        data-df-reference-lines='[{"axis": "y", "value": 0.8, "label": "Alert threshold"}]'>
+        <table>
+          <thead><tr><th>Window</th><th data-df-role="projection">Q₂</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>0.21</td></tr>
+            <tr><td>2</td><td>0.18</td></tr>
+            <tr><td>3</td><td>0.30</td></tr>
+            <tr><td>4</td><td>0.26</td></tr>
+            <tr><td>5</td><td>0.24</td></tr>
+            <tr><td>6</td><td></td></tr>
+            <tr><td>7</td><td></td></tr>
+            <tr><td>8</td><td>0.33</td></tr>
+            <tr><td>9</td><td>0.28</td></tr>
+            <tr><td>10</td><td>1.45</td></tr>
+            <tr><td>11</td><td>1.38</td></tr>
+            <tr><td>12</td><td>0.31</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Rank-2 residuals for an illustrative hour of live windows. Telemetry dropped out in windows 6 and 7,
+        so they have no score.</figcaption>
+    </figure>
+    <p>The trace in <a href="#residual-trace"></a> breaks where readings are missing rather than drawing a line
+      across the dropout. Windows 10 and 11 cross the alert threshold, the pattern of the low-pressure fault.</p>
+
     <h2 id="evaluation">Held-out pump windows</h2>
     <p>The six scenarios are specified in score space. To reproduce their raw sensor readings, multiply
       each row by <span class="df-math">W^\top</span>, then multiply by the sensor scales and add the means from
@@ -128,9 +155,9 @@
             "x": {"label": "Retained components", "min": 1, "max": 4, "digits": 0},
             "y": {"label": "Baseline variance retained (%)", "min": 50, "max": 105, "unit": "%"},
             "series": [
-              {"name": "Retained", "role": "projection", "data": [[1, 62], [2, 91], [3, 98], [4, 100]]},
-              {"name": "Target", "color": "gray", "data": [[1, 90], [2, 90], [3, 90], [4, 90]]}
-            ]
+              {"name": "Retained", "role": "projection", "data": [[1, 62], [2, 91], [3, 98], [4, 100]]}
+            ],
+            "referenceLines": [{"axis": "y", "value": 90, "label": "Target"}]
           }
         </script>
       </div>

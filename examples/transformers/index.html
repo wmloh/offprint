@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/reveal.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/zoomtools.css">
   <link rel="stylesheet" href="../../docform/css/bubble.css">
   <link rel="stylesheet" href="../../docform/css/tabs.css">
   <link rel="stylesheet" href="../../docform/css/code.css">
@@ -43,7 +44,7 @@
       The parameters are chosen by hand so that the entire forward pass can be checked.
     </div>
 
-    <p><a href="attention.html#trace-query">Trace a token to its attention weights and output.</a></p>
+    <p><a href="pages/attention.html#trace-query">Trace a token to its attention weights and output.</a></p>
 
     <h2 id="token-ids">Split the prompt into token IDs</h2>
     <p>Our miniature tokenizer lowercases the text, treats the period as its own token, and looks up each piece
@@ -136,11 +137,11 @@ const ids = pieces.map(piece => {
         vector gives <span class="df-math">(1.5,1)</span>.</p>
     </details>
 
-    <p>Take <a href="#input-matrix"></a> into the <a href="attention.html#causal-mask">causal attention layer</a>.</p>
+    <p>Take <a href="#input-matrix"></a> into the <a href="pages/attention.html#causal-mask">causal attention layer</a>.</p>
     <div data-df-legend></div>
   </main>
 
-  <script src="site.js" data-df-site></script>
+  <script src="assets/site.js" data-df-site></script>
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/roles.js"></script>
@@ -154,9 +155,10 @@ const ids = pieces.map(piece => {
   <script src="../../docform/js/anim.js"></script>
   <script src="../../docform/js/reveal.js"></script>
   <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/zoomtools.js"></script>
   <script src="../../docform/js/bubble.js"></script>
   <script src="../../docform/js/tabs.js"></script>
   <script src="../../docform/js/code.js"></script>
-  <script src="tokens.js"></script>
+  <script src="assets/tokens.js"></script>
 </body>
 </html>

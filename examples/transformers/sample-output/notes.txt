@@ -1,0 +1,1 @@
+The rerun meets the 25 ms budget. This text file exercises the file-type rejection message.

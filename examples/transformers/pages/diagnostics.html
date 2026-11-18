@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inspect training runs · A Decoder-Only Transformer</title>
+  <link rel="stylesheet" href="../../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../../docform/css/base.css">
+  <link rel="stylesheet" href="../../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../../docform/css/search.css">
+  <link rel="stylesheet" href="../../../docform/css/code.css">
+  <link rel="stylesheet" href="../../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../../docform/css/scenarios.css">
+  <link rel="stylesheet" href="../../../docform/css/results.css">
+  <link rel="stylesheet" href="../../../docform/css/data.css">
+  <link rel="stylesheet" href="../../../docform/css/tree.css">
+  <link rel="stylesheet" href="../../../docform/css/dropzone.css">
+  <link rel="stylesheet" href="../../../docform/css/wide.css">
+  <script src="../../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <h1>Inspect training runs</h1>
+      <p>Compare synthetic follow-up runs for the <a href="prediction.html#learning-rate-sweep">learning-rate
+        sweep</a>. Look for low validation loss within a 25 ms decoding budget. The fixtures also exercise file
+        replacement, parsing errors, and view limits in an offline document.</p>
+    </header>
+
+    <h2 id="run-filters">Filter the run log</h2>
+    <p>Try the Under budget or Laptop candidates chips, a date range in the Started column, or a maximum in
+      Validation loss. Seed uses a value list. Select Show more to load the rest of the runs with your filters
+      still on. Run r04 has the lowest loss among the recorded runs that meet the latency budget.</p>
+    <div id="run-log" data-df-data="runs" data-df-max-rows="4" data-df-wide>
+      <table data-df-results data-df-filters data-df-heat
+        data-df-chips="Under budget: latency_ms &lt;= 25; Laptop candidates: device = Laptop &amp; validation_loss &lt; 0.70">
+        <caption>Follow-up runs for the six-token decoder</caption>
+        <thead>
+          <tr><th>Run</th><th data-df-column="started">Started</th><th>Device</th><th data-df-filter="values">Seed</th>
+            <th data-df-column="lr">Learning rate</th><th>Batch</th>
+            <th data-df-column="validation_loss" data-df-best="min" data-df-heat-range="0.50, 0.90">Validation loss</th>
+            <th data-df-column="latency_ms" data-df-best="min" data-df-heat-color="orange"
+              data-df-threshold="&lt;= 25" data-df-threshold-label="Decoding budget">Latency (ms)</th>
+            <th data-df-no-filter data-df-no-sort>Notes</th></tr>
+        </thead>
+        <tbody><tr><td colspan="9"><a href="../assets/runs.csv">Open the source run log (CSV)</a>.</td></tr></tbody>
+      </table>
+    </div>
+    <div data-df-dropzone data-df-accept="csv json yaml" data-df-target="run-log">
+      <p>Replace the run log with <a href="../sample-output/rerun.csv">rerun.csv</a>. Reset restores the original runs.</p>
+    </div>
+
+    <h2 id="configurations">Compare complete training setups</h2>
+    <p>Run r01 is the baseline. Both candidates change the learning rate and batch size. Each difference in
+      loss or latency describes the whole setup, including the machine it ran on.</p>
+    <table data-df-scenarios="configurations">
+      <caption>Baseline and two candidate training runs</caption>
+      <thead><tr><th>Measure</th><th>Unit</th><th>Baseline r01</th><th>Lowest loss r03</th><th>Under budget r04</th></tr></thead>
+      <tbody>
+        <tr data-df-condition><th scope="row">Learning rate</th><td></td><td>0.0001</td><td>0.0003</td><td>0.0003</td></tr>
+        <tr data-df-condition><th scope="row">Batch size</th><td>sequences</td><td>8</td><td>32</td><td>16</td></tr>
+        <tr data-df-condition><th scope="row">Device</th><td></td><td>Laptop</td><td>Lab GPU</td><td>Laptop</td></tr>
+        <tr><th scope="row">Validation loss</th><td>nats</td><td>0.72</td><td>0.55</td><td>0.57</td></tr>
+        <tr><th scope="row">Latency</th><td>ms</td><td>20</td><td>29</td><td>22</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="training-history">Replace the training curve</h2>
+    <p>The reference curve is for r04. Drop <a href="../sample-output/history.csv">history.csv</a> to plot a rerun
+      on the same axes. The first column is the epoch and the other columns are loss series. Reset brings back
+      the reference data, including its original Table view.</p>
+    <figure id="training-figure">
+      <div id="training-chart" data-df-chart="line" data-df-y-label="Loss (nats)" data-df-brush
+        data-df-reference-lines='[{"axis":"y","value":0.60,"label":"Validation target"}]'>
+        <table>
+          <thead><tr><th>Epoch</th><th data-df-role="context">Train</th><th data-df-role="output">Validation</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>1.55</td><td>1.61</td></tr>
+            <tr><td>2</td><td>1.14</td><td>1.24</td></tr>
+            <tr><td>3</td><td>0.82</td><td>0.94</td></tr>
+            <tr><td>4</td><td>0.65</td><td>0.77</td></tr>
+            <tr><td>5</td><td>0.51</td><td>0.64</td></tr>
+            <tr><td>6</td><td>0.43</td><td>0.57</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Training and validation losses for r04 or a local rerun.</figcaption>
+    </figure>
+    <div data-df-dropzone data-df-accept="csv" data-df-target="training-chart" data-df-max-size="64 KB">
+      <p>Drop a training history (CSV).</p>
+    </div>
+
+    <h2 id="latency-summary">Replace a static results table</h2>
+    <p>The summary below is written directly in HTML. Drop <a href="../sample-output/rerun.csv">rerun.csv</a> here
+      to reuse the same columns and budget rule, then Reset to restore the authored rows.</p>
+    <table id="latency-summary-table" data-df-results data-df-filters>
+      <caption>Latency check for the baseline and the selected run</caption>
+      <thead><tr><th>Run</th><th data-df-column="validation_loss" data-df-best="min" data-df-heat>Validation loss</th>
+        <th data-df-column="latency_ms" data-df-best="min" data-df-threshold="&lt;= 25"
+          data-df-threshold-label="Decoding budget">Latency (ms)</th></tr></thead>
+      <tbody>
+        <tr><td>r01</td><td>0.72</td><td>20</td></tr>
+        <tr><td>r04</td><td>0.57</td><td data-df-value="22">22 (selected)</td></tr>
+      </tbody>
+    </table>
+    <div data-df-dropzone data-df-accept="csv" data-df-target="latency-summary-table">
+      <p>Drop a latency summary (CSV).</p>
+    </div>
+
+    <h2 id="config-tree">Browse the configuration and metrics</h2>
+    <p>Expand branches or use the arrow keys to inspect the training configuration. The short list under Seeds
+      has its own Show more row. Open the <a href="../assets/sweep.yaml">source YAML</a> to view the whole file.</p>
+    <div data-df-data="sweep" data-df-view="tree" data-df-tree-depth="2" data-df-max-rows="4"></div>
+    <p>Load <a href="../sample-output/metrics.json">metrics.json</a> to open a separate metrics tree. Try
+      <a href="../sample-output/notes.txt">notes.txt</a> to check the unsupported-file message. Files stay on this computer.</p>
+    <div data-df-dropzone data-df-accept="json yaml" data-df-view="tree" data-df-tree-depth="2" data-df-max-size="64 KB">
+      <p>Drop decoder metrics (JSON or YAML).</p>
+    </div>
+
+    <h2 id="data-views">Read data as a table or code</h2>
+    <p>The checkpoint table is stored as CSV inside the page. The run summary beneath it is registered with an
+      inline JSON script and displayed as source code.</p>
+    <pre data-df-data="checkpoints" data-df-type="csv">checkpoint,epoch,retained
+"r04, early",3,false
+"r04, final",6,true</pre>
+    <script type="application/json" data-df-data="selected-run">
+      { "run": "r04", "learning_rate": 0.0003, "batch": 16, "validation_loss": 0.57 }
+    </script>
+    <div data-df-data="selected-run" data-df-view="code"></div>
+    <p>The configuration can also render as highlighted YAML.</p>
+    <div data-df-data="sweep" data-df-view="code"></div>
+
+    <h2 id="limits-errors">Check file limits and parse errors</h2>
+    <p>This second view of the run log has a 256-byte limit. Select Show anyway to display the CSV as code.
+      The draft metrics underneath intentionally omit a comma so you can see the parser's error and the source.</p>
+    <div data-df-data="runs" data-df-view="code" data-df-max-size="256 B" data-df-max-rows="4"></div>
+    <pre data-df-data="draft-metrics" data-df-type="json">{
+  "run": "r04"
+  "validation_loss": 0.57
+}</pre>
+
+    <h2 id="package-results">Package results for offline viewing</h2>
+    <p>To swap the built-in run log, keep its column names and wrap the edited CSV with the
+      <a href="../../../docform/tools/data-file.html">offline data file converter</a>. Load the resulting script
+      before DocForm core. The shell command checks the first few lines, and the HTML and CSS show the markup
+      for a wide data view and a limit on its width.</p>
+    <pre><code class="language-shell">head -n 5 runs.csv</code></pre>
+    <pre><code class="language-html">&lt;div class="run-log" data-df-data="runs" data-df-wide&gt;&lt;/div&gt;</code></pre>
+    <pre><code class="language-css">.run-log {
+  --df-wide-width: 1120px;
+}</code></pre>
+  </main>
+
+  <script src="../assets/site.js" data-df-site></script>
+  <script src="../../../docform/vendor/js-yaml/js-yaml.min.js"></script>
+  <script src="../assets/runs.csv.js"></script>
+  <script src="../assets/sweep.yaml.js"></script>
+  <script src="../../../docform/js/core.js"></script>
+  <script src="../../../docform/js/data.js"></script>
+  <script src="../../../docform/js/tree.js"></script>
+  <script src="../../../docform/js/dropzone.js"></script>
+  <script src="../../../docform/js/roles.js"></script>
+  <script src="../../../docform/js/refs.js"></script>
+  <script src="../../../docform/js/nav.js"></script>
+  <script src="../../../docform/js/controls.js"></script>
+  <script src="../../../docform/js/tooltip.js"></script>
+  <script src="../../../docform/js/search.js"></script>
+  <script src="../../../docform/js/chart.js"></script>
+  <script src="../../../docform/js/scenarios.js"></script>
+  <script src="../../../docform/js/code.js"></script>
+  <script src="../../../docform/js/results.js"></script>
+  <script src="../../../docform/js/wide.js"></script>
+</body>
+</html>

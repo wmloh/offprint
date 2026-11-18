@@ -67,13 +67,7 @@ docform/: Copyable offline library folder
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
-examples/: Example docs opened from file://
-  simple/: Pythagorean theorem with a proof, an animated construction, and prediction exercises
-  linear-algebra/: Five-page notes with a matrix-vector stepper, interactive SVG planes, computing examples including solver tables against a time budget, inline tips, and a generated glossary page
-  pca/: Three-chapter pump monitoring case study with projection steps, residual exercises, a wide trace and scores table, alert comparisons, and offline search
-  transformers/: Three-chapter decoder-only Transformer guide with a linked attention trace, next-token probabilities, decoding-setup presets, a log-scale learning-rate sweep, and offline search
-  experiment-results/: Model-sweep leaderboard, paged run table, YAML configuration, inline data, size notice, and parse error from wrapped data files, plus an inspect-your-own-run page with a config tree, dropzones, and sample output files
-  benchmarks/: JSON parser comparison with filter chips for latency and memory budgets, plus every benchmark run from a data file with date, machine, and input-size filters
-  telemetry/: A week of synthetic server CPU readings with series toggles, range brushing, an outage gap, alert and deploy lines, and incident buttons that zoom to keyed readings, and zoom presentation tools
-  sales-pipeline/: Retry trace linking steps, event rows on two clocks, and a keyed chart, a comparison of sales totals, SQL and C# deduplication snippets, and batch arrivals on a time axis
+examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
+  pca/: Pump monitoring case study with projection animations, residual exercises, threshold comparisons, a linked telemetry timeline, figure zoom with presentation tools, and an offline glossary and search
+  transformers/: Decoder-only guide with a linked attention trace, decoding presets, log-scale sweep, figure zoom with presentation tools, and training diagnostics with filterable runs, data trees, file dropzones, and offline search
 tests/: Built-in node:test checks of module logic

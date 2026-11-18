@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="../../docform/css/reveal.css">
   <link rel="stylesheet" href="../../docform/css/chart.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/zoomtools.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
@@ -93,7 +94,7 @@
       <summary>How the synthetic run was designed</summary>
       <p>Four smooth, orthogonal operating traces drive the baseline. The first moves all sensors together. The
         second pairs flow and pressure against vibration and temperature. The two smaller traces give the model
-        some baseline variation in the remaining directions. The <a href="fit.html#baseline-recipe">baseline
+        some baseline variation in the remaining directions. The <a href="pages/fit.html#baseline-recipe">baseline
         recipe</a> regenerates all 32 windows.</p>
     </details>
     <details data-df-no-bubble data-df-color="gray">
@@ -104,15 +105,17 @@
 
     <h2 id="plan">Analysis plan</h2>
     <ol data-df-role="baseline">
-      <li><a href="fit.html#fit">Fit and interpret the PCA basis.</a></li>
-      <li><a href="monitor.html#reconstruction">Reconstruct held-out windows and measure the residual.</a></li>
-      <li><a href="monitor.html#trade-offs">Compare ranks against the alerting objective.</a></li>
-      <li><a href="monitor.html#alert-thresholds">Compare alert thresholds on the same six windows.</a></li>
+      <li><a href="pages/fit.html#fit">Fit and interpret the PCA basis.</a></li>
+      <li><a href="pages/monitor.html#reconstruction">Reconstruct held-out windows and measure the residual.</a></li>
+      <li><a href="pages/monitor.html#trade-offs">Compare ranks against the alerting objective.</a></li>
+      <li><a href="pages/monitor.html#alert-thresholds">Compare alert thresholds on the same six windows.</a></li>
+      <li><a href="pages/telemetry.html">Investigate a telemetry incident.</a></li>
     </ol>
+    <p>Look up terms and their uses in the <a href="pages/glossary.html">glossary</a>.</p>
     <div data-df-legend></div>
   </main>
 
-  <script src="site.js" data-df-site></script>
+  <script src="assets/site.js" data-df-site></script>
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/roles.js"></script>
@@ -127,5 +130,6 @@
   <script src="../../docform/js/reveal.js"></script>
   <script src="../../docform/js/chart.js"></script>
   <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/zoomtools.js"></script>
 </body>
 </html>

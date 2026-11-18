@@ -1,0 +1,10 @@
+run,started,device,seed,lr,batch,validation_loss,latency_ms,notes
+r01,2026-11-14,Laptop,11,0.0001,8,0.72,20,Baseline
+r02,2026-11-14,Laptop,23,0.0001,8,0.74,19,Repeat baseline
+r03,2026-11-15,Lab GPU,11,0.0003,32,0.55,29,"Lowest loss, over budget"
+r04,2026-11-15,Laptop,11,0.0003,16,0.57,22,Selected run
+r05,2026-11-16,Lab GPU,23,0.0003,32,0.56,28,Repeat larger batch
+r06,2026-11-16,Laptop,11,0.001,8,0.64,17,Quick iteration
+r07,2026-11-17,Laptop,23,0.001,8,0.66,18,"Trainer marked ""ready"""
+r08,2026-11-17,Lab GPU,37,0.003,16,0.81,23,Higher learning rate
+r09,2026-11-17,Laptop,37,0.0003,16,0.61,21,Repeat selected setup

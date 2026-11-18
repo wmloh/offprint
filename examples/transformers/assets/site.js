@@ -1,13 +1,14 @@
 window.DocFormSite = {
   title: 'A Decoder-Only Transformer',
   pages: [
-    { title: 'From text to vectors', path: 'index.html' },
+    { title: 'From text to vectors', path: '../index.html' },
     {
       title: 'Inside the decoder',
       collapsed: true,
       pages: [
-        { title: 'Causal self-attention', path: 'attention.html' },
-        { title: 'Next-token prediction', path: 'prediction.html' }
+        { title: 'Causal self-attention', path: '../pages/attention.html' },
+        { title: 'Next-token prediction', path: '../pages/prediction.html' },
+        { title: 'Inspect training runs', path: '../pages/diagnostics.html' }
       ]
     }
   ],
@@ -51,5 +52,5 @@ window.DocFormSite = {
       'Language Models are Unsupervised Multitask Learners. 2019.'
   },
   refs: { equations: 'all' },
-  search: 'search-index.js'
+  search: 'site-search-index.js'
 };

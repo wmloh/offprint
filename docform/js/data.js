@@ -626,6 +626,8 @@
       var name = DocForm.data(el, 'data', '').trim();
       add(name, dedent(el.textContent), scriptType(el));
     });
-    DocForm.all('[data-df-data]:not(script):not(.df-data-ready)').forEach(setup);
+    DocForm.all('[data-df-data]:not(script):not(.df-data-ready)').forEach(function (el) {
+      setup(el);
+    });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

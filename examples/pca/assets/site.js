@@ -1,13 +1,14 @@
 window.DocFormSite = {
   title: 'Pump Monitoring with PCA',
   pages: [
-    { title: 'Set up the monitoring study', path: 'index.html' },
+    { title: 'Set up the monitoring study', path: '../index.html' },
     {
       title: 'Analysis',
       collapsed: true,
       pages: [
-        { title: 'Fit and interpret PCA', path: 'fit.html' },
-        { title: 'Choose a component count', path: 'monitor.html' }
+        { title: 'Fit and interpret PCA', path: '../pages/fit.html' },
+        { title: 'Choose a component count', path: '../pages/monitor.html' },
+        { title: 'Investigate a telemetry incident', path: '../pages/telemetry.html' }
       ]
     }
   ],
@@ -31,6 +32,7 @@ window.DocFormSite = {
     'common-mode shift': 'A change that moves several sensors in the same direction.'
   },
 
+  glossaryPage: '../pages/glossary.html',
   terms: { autoLink: true },
   macros: {
     '\\norm': '\\left\\lVert #1 \\right\\rVert'
@@ -50,5 +52,5 @@ window.DocFormSite = {
     }
   },
   refs: { equations: 'labeled' },
-  search: 'search-index.js'
+  search: 'site-search-index.js'
 };

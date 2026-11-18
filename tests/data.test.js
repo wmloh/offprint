@@ -105,3 +105,35 @@ test('views pick tables for CSV and flat records and code otherwise, with overri
 test('inline blocks lose their shared indentation and edge blank lines', () => {
   assert.equal(data.dedent('\n    a: 1\n    b:\n      - 2\n  \n'), 'a: 1\nb:\n  - 2');
 });
+
+test('page startup renders multiple data blocks with their own settings', () => {
+  const make = (attrs = {}) => ({
+    ...fakeEl(attrs),
+    children: [],
+    classList: { add() {} },
+    querySelector: () => null,
+    setAttribute() {},
+    addEventListener() {},
+    appendChild(child) { this.children.push(child); return child; }
+  });
+  const capped = make({ 'data-df-data': 'runs', 'data-df-max-size': '1 B' });
+  const code = make({ 'data-df-data': 'runs', 'data-df-view': 'code' });
+  let start;
+  const document = {
+    readyState: 'loading',
+    addEventListener: (event, listener) => { if (event === 'DOMContentLoaded') start = listener; },
+    createElement: () => make(),
+    querySelector: () => null,
+    querySelectorAll: (selector) => selector.startsWith('[data-df-data]') ? [capped, code] : []
+  };
+  const page = vm.createContext({ URL, TextEncoder, document, location: { href: 'file:///diagnostics.html' } });
+  page.DocFormData = context.DocFormData;
+  vm.runInContext(read('js/core.js'), page);
+  vm.runInContext(read('js/data.js'), page);
+
+  start();
+
+  assert.match(capped.children[0].textContent, /over this block's 1 byte limit/);
+  assert.equal(capped.children[0].children[0].textContent, 'Show anyway');
+  assert.equal(code.children[0].children[0].textContent, 'model,acc\nA,0.9');
+});

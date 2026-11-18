@@ -1,0 +1,6 @@
+{
+  "run": "r04-repeat",
+  "training": { "epochs": 6, "seed": 41, "converged": true },
+  "validation": { "loss_nats": 0.59, "previous_loss_nats": 0.57 },
+  "decoding": { "latency_ms": 23, "budget_ms": 25, "error": null }
+}

@@ -4,31 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Choose a component count · Pump Monitoring with PCA</title>
-  <link rel="stylesheet" href="../../docform/css/tokens.css">
-  <link rel="stylesheet" href="../../docform/css/base.css">
-  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="../../docform/css/roles.css">
-  <link rel="stylesheet" href="../../docform/css/nav.css">
-  <link rel="stylesheet" href="../../docform/css/theme.css">
-  <link rel="stylesheet" href="../../docform/css/controls.css">
-  <link rel="stylesheet" href="../../docform/css/math.css">
-  <link rel="stylesheet" href="../../docform/css/blocks.css">
-  <link rel="stylesheet" href="../../docform/css/tooltip.css">
-  <link rel="stylesheet" href="../../docform/css/refs.css">
-  <link rel="stylesheet" href="../../docform/css/notes.css">
-  <link rel="stylesheet" href="../../docform/css/search.css">
-  <link rel="stylesheet" href="../../docform/css/bubble.css">
-  <link rel="stylesheet" href="../../docform/css/reveal.css">
-  <link rel="stylesheet" href="../../docform/css/chart.css">
-  <link rel="stylesheet" href="../../docform/css/scenarios.css">
-  <link rel="stylesheet" href="../../docform/css/results.css">
-  <link rel="stylesheet" href="../../docform/css/zoom.css">
-  <link rel="stylesheet" href="../../docform/css/tabs.css">
-  <link rel="stylesheet" href="../../docform/css/params.css">
-  <link rel="stylesheet" href="../../docform/css/code.css">
-  <link rel="stylesheet" href="../../docform/css/anim.css">
-  <link rel="stylesheet" href="../../docform/css/wide.css">
-  <script src="../../docform/js/theme.js"></script>
+  <link rel="stylesheet" href="../../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../../docform/css/base.css">
+  <link rel="stylesheet" href="../../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../../docform/css/math.css">
+  <link rel="stylesheet" href="../../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../../docform/css/search.css">
+  <link rel="stylesheet" href="../../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../../docform/css/scenarios.css">
+  <link rel="stylesheet" href="../../../docform/css/results.css">
+  <link rel="stylesheet" href="../../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../../docform/css/zoomtools.css">
+  <link rel="stylesheet" href="../../../docform/css/tabs.css">
+  <link rel="stylesheet" href="../../../docform/css/params.css">
+  <link rel="stylesheet" href="../../../docform/css/code.css">
+  <link rel="stylesheet" href="../../../docform/css/anim.css">
+  <link rel="stylesheet" href="../../../docform/css/wide.css">
+  <script src="../../../docform/js/theme.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
@@ -74,37 +75,13 @@
       </div>
     </div>
 
-    <figure id="residual-trace" data-df-wide>
-      <div data-df-chart="line" data-df-gaps="break" data-df-height="220" data-df-x-label="Five-minute window" data-df-y-label="Residual Q₂"
-        data-df-reference-lines='[{"axis": "y", "value": 0.8, "label": "Alert threshold"}]'>
-        <table>
-          <thead><tr><th>Window</th><th data-df-role="projection">Q₂</th></tr></thead>
-          <tbody>
-            <tr><td>1</td><td>0.21</td></tr>
-            <tr><td>2</td><td>0.18</td></tr>
-            <tr><td>3</td><td>0.30</td></tr>
-            <tr><td>4</td><td>0.26</td></tr>
-            <tr><td>5</td><td>0.24</td></tr>
-            <tr><td>6</td><td></td></tr>
-            <tr><td>7</td><td></td></tr>
-            <tr><td>8</td><td>0.33</td></tr>
-            <tr><td>9</td><td>0.28</td></tr>
-            <tr><td>10</td><td>1.45</td></tr>
-            <tr><td>11</td><td>1.38</td></tr>
-            <tr><td>12</td><td>0.31</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <figcaption>Rank-2 residuals for an illustrative hour of live windows. Telemetry dropped out in windows 6 and 7,
-        so they have no score.</figcaption>
-    </figure>
-    <p>The trace in <a href="#residual-trace"></a> breaks where readings are missing rather than drawing a line
-      across the dropout. Windows 10 and 11 cross the alert threshold, the pattern of the low-pressure fault.</p>
+    <p id="residual-trace">See the <a href="telemetry.html#residual-trace">live residual trace</a> for an
+      illustrative hour with a dropout and two windows above the threshold.</p>
 
     <h2 id="evaluation">Held-out pump windows</h2>
     <p>The six scenarios are specified in score space. To reproduce their raw sensor readings, multiply
       each row by <span class="df-math">W^\top</span>, then multiply by the sensor scales and add the means from
-      <a href="index.html#baseline-scales">baseline units and scales</a>. Each residual
+      <a href="../index.html#baseline-scales">baseline units and scales</a>. Each residual
       <span class="df-math">Q_k</span> sums the squared scores beyond the first <span class="df-math">k</span>
       components.</p>
 
@@ -151,6 +128,16 @@
     </div>
     <p>Decision at the exercise threshold:
       <strong data-df-template="{{ rank &lt;= 2 ? 'flag this window' : 'this window passes' }}">flag this window</strong>.</p>
+    <p>Predict what happens to the low-pressure window when you move from rank two to rank three.</p>
+    <details data-df-no-bubble data-df-role="projection">
+      <summary>Check the low-pressure window</summary>
+      <p>Rank three retains PC3. The residual drops from 1.45 to 0.01, so the window passes.</p>
+    </details>
+    <p>Now try an unseen window with PC3 score 0.10 and PC4 score 1.00. Would rank three flag it?</p>
+    <details data-df-no-bubble data-df-role="alert">
+      <summary>Check the new window</summary>
+      <p>Rank three leaves PC4, so the squared residual is 1.00. The 0.80 threshold flags the window.</p>
+    </details>
 
     <h2 id="trade-offs">Compare rank trade-offs</h2>
     <figure id="variance-by-rank">
@@ -278,28 +265,29 @@ console.assert(residualScore(lowPressure, 3) &lt;= 0.80);</code></pre>
     <div data-df-bibliography></div>
   </main>
 
-  <script src="site.js" data-df-site></script>
-  <script src="../../docform/js/core.js"></script>
-  <script src="../../docform/vendor/katex/katex.min.js"></script>
-  <script src="../../docform/js/roles.js"></script>
-  <script src="../../docform/js/refs.js"></script>
-  <script src="../../docform/js/nav.js"></script>
-  <script src="../../docform/js/controls.js"></script>
-  <script src="../../docform/js/math.js"></script>
-  <script src="../../docform/js/tooltip.js"></script>
-  <script src="../../docform/js/notes.js"></script>
-  <script src="../../docform/js/search.js"></script>
-  <script src="../../docform/js/bubble.js"></script>
-  <script src="../../docform/js/reveal.js"></script>
-  <script src="../../docform/js/chart.js"></script>
-  <script src="../../docform/js/scenarios.js"></script>
-  <script src="../../docform/js/results.js"></script>
-  <script src="../../docform/js/zoom.js"></script>
-  <script src="../../docform/js/tabs.js"></script>
-  <script src="../../docform/js/params.js"></script>
-  <script src="../../docform/js/code.js"></script>
-  <script src="../../docform/js/anim.js"></script>
-  <script src="../../docform/js/wide.js"></script>
-  <script src="monitor.js"></script>
+  <script src="../assets/site.js" data-df-site></script>
+  <script src="../../../docform/js/core.js"></script>
+  <script src="../../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../../docform/js/roles.js"></script>
+  <script src="../../../docform/js/refs.js"></script>
+  <script src="../../../docform/js/nav.js"></script>
+  <script src="../../../docform/js/controls.js"></script>
+  <script src="../../../docform/js/math.js"></script>
+  <script src="../../../docform/js/tooltip.js"></script>
+  <script src="../../../docform/js/notes.js"></script>
+  <script src="../../../docform/js/search.js"></script>
+  <script src="../../../docform/js/bubble.js"></script>
+  <script src="../../../docform/js/reveal.js"></script>
+  <script src="../../../docform/js/chart.js"></script>
+  <script src="../../../docform/js/scenarios.js"></script>
+  <script src="../../../docform/js/results.js"></script>
+  <script src="../../../docform/js/zoom.js"></script>
+  <script src="../../../docform/js/zoomtools.js"></script>
+  <script src="../../../docform/js/tabs.js"></script>
+  <script src="../../../docform/js/params.js"></script>
+  <script src="../../../docform/js/code.js"></script>
+  <script src="../../../docform/js/anim.js"></script>
+  <script src="../../../docform/js/wide.js"></script>
+  <script src="../assets/monitor.js"></script>
 </body>
 </html>

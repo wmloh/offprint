@@ -76,7 +76,7 @@ A figure or table that needs more room than the reading column can grow into the
 
 The block grows evenly on both sides, up to 1240px in total (set `--df-wide-width` on the page or the block to change it). It always stays a page gutter away from the sidebar and follows it when the sidebar is resized or hidden. While the page shows sidenotes or peek panels in the right margin, the block grows toward the sidebar side only. Prose keeps the reading width.
 
-When there is no spare room, as on narrow screens, the block keeps the reading width and a wide table scrolls sideways inside it instead of widening the page. Without the script, wide blocks also keep the reading width. The component-count page of the `examples/pca/` case study shows a wide residual trace and a wide scores table.
+When there is no spare room, as on narrow screens, the block keeps the reading width and a wide table scrolls sideways inside it instead of widening the page. Without the script, wide blocks also keep the reading width. The PCA case study has a [wide residual trace](../../examples/pca/pages/telemetry.html#residual-trace) and a [wide scores table](../../examples/pca/pages/monitor.html#evaluation).
 
 ## Lists
 
@@ -586,7 +586,7 @@ Long or crowded charts let the reader hide series and zoom into a stretch of the
 - Hidden series and the range are kept when the chart updates with new data, as long as the series names and the x axis type stay the same.
 - From a script: `api.visible(name, on)` hides or shows a series, and `api.range([from, to])` narrows the range (timestamps on time axes); `api.range(null)` resets it. The chart fires `df:chartview` with `{ hidden, range }` whenever the reader changes either.
 
-The `examples/telemetry/` page plots a week of server readings with an outage gap, an alert line, and incidents you can jump to.
+The [PCA residual trace](../../examples/pca/pages/telemetry.html#residual-trace) compares two ranks on a UTC axis with a telemetry gap, alert reference lines, and keyed incident points.
 
 ## Results tables
 
@@ -653,7 +653,7 @@ The `examples/telemetry/` page plots a week of server readings with an outage ga
 - Heat shading and best values are worked out again over the rows that are showing. Fixed heat ranges, Pass and Fail words, and the sort order stay as they are; sorting works while rows are filtered.
 - On data-file tables, filters check the rows that are loaded, and they stay on after Show more.
 
-The `examples/benchmarks/` page compares JSON parsers against a latency budget and a memory limit with chips, and filters every benchmark run from a data file by date, machine, and input size.
+The [Transformer run log](../../examples/transformers/pages/diagnostics.html#run-filters) filters a training sweep by date, device, seed, loss, and latency budget.
 
 ## Data files
 
@@ -699,7 +699,7 @@ Show CSV, JSON, or YAML files as results tables or highlighted code. Pages opene
 - Data that does not parse shows the error with its line number and the raw text. CSV fields in double quotes may hold commas, line breaks, and doubled quotes (`""`); quoted fields stay text, and unquoted numbers, `true`, and `false` become values. YAML must be a single document without custom tags such as `!secret`.
 - `data-df-type="csv"`, `"json"`, or `"yaml"` overrides the type from the file. From a script, `DocForm.dataset.add(name, text, type)` registers data and `DocForm.dataset.render(element)` redraws a block.
 
-The `examples/experiment-results/` page shows a leaderboard, every run of a sweep with Show more, a YAML configuration, an inline table, a size notice, and a parse error.
+The [Transformer training diagnostics](../../examples/transformers/pages/diagnostics.html) show a run log with Show more, a YAML configuration, inline CSV and JSON, a size notice, and a parse error.
 
 ### Data trees
 
@@ -739,7 +739,7 @@ A dropzone lets readers open a CSV, JSON, or YAML file from their own computer. 
   - A data block or results table keeps its header, so the file's columns get the same names, best values, heat shading, and pass/fail rules. Columns are matched by name.
 - Reset puts back the page's own data, or clears the file shown below the dropzone.
 
-The `examples/experiment-results/inspect.html` page compares a dropped training history with a reference curve, checks a rerun leaderboard against a latency budget, and opens any metrics file as a tree. Try it with the files in `sample-output/`.
+The [Transformer training diagnostics](../../examples/transformers/pages/diagnostics.html#training-history) use sample files to replace the reference curve, run log, and static latency summary, and to open a standalone metrics tree.
 
 ## Interactive explanations
 
@@ -859,7 +859,7 @@ Give steps, source rows, and chart points the same keys to follow one event acro
 </script>
 ```
 
-The sales-pipeline example traces a retried sale this way.
+The [PCA incident timeline](../../examples/pca/pages/telemetry.html#incident-timeline) links acquisition and receipt events to points on the residual trace.
 
 ### Scenario comparisons
 

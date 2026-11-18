@@ -4,28 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Next-token prediction · A Decoder-Only Transformer</title>
-  <link rel="stylesheet" href="../../docform/css/tokens.css">
-  <link rel="stylesheet" href="../../docform/css/base.css">
-  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="../../docform/css/roles.css">
-  <link rel="stylesheet" href="../../docform/css/nav.css">
-  <link rel="stylesheet" href="../../docform/css/theme.css">
-  <link rel="stylesheet" href="../../docform/css/controls.css">
-  <link rel="stylesheet" href="../../docform/css/math.css">
-  <link rel="stylesheet" href="../../docform/css/blocks.css">
-  <link rel="stylesheet" href="../../docform/css/tooltip.css">
-  <link rel="stylesheet" href="../../docform/css/refs.css">
-  <link rel="stylesheet" href="../../docform/css/notes.css">
-  <link rel="stylesheet" href="../../docform/css/search.css">
-  <link rel="stylesheet" href="../../docform/css/chart.css">
-  <link rel="stylesheet" href="../../docform/css/results.css">
-  <link rel="stylesheet" href="../../docform/css/params.css">
-  <link rel="stylesheet" href="../../docform/css/tabs.css">
-  <link rel="stylesheet" href="../../docform/css/code.css">
-  <link rel="stylesheet" href="../../docform/css/bubble.css">
-  <link rel="stylesheet" href="../../docform/css/reveal.css">
-  <link rel="stylesheet" href="../../docform/css/zoom.css">
-  <script src="../../docform/js/theme.js"></script>
+  <link rel="stylesheet" href="../../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../../docform/css/base.css">
+  <link rel="stylesheet" href="../../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../../docform/css/math.css">
+  <link rel="stylesheet" href="../../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../../docform/css/search.css">
+  <link rel="stylesheet" href="../../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../../docform/css/results.css">
+  <link rel="stylesheet" href="../../../docform/css/params.css">
+  <link rel="stylesheet" href="../../../docform/css/tabs.css">
+  <link rel="stylesheet" href="../../../docform/css/code.css">
+  <link rel="stylesheet" href="../../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../../docform/css/zoomtools.css">
+  <script src="../../../docform/js/theme.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
@@ -81,7 +82,7 @@
 
     <h2 id="readout">Turn the last state into logits</h2>
     <p>Dot the last row with one output vector per vocabulary entry. These parameters are separate from
-      <a href="index.html#position">the input embeddings</a> in this model. Use softmax across vocabulary
+      <a href="../index.html#position">the input embeddings</a> in this model. Use softmax across vocabulary
       entries to convert the six logits into probabilities.</p>
 
     <table id="token-results" data-df-results>
@@ -241,32 +242,34 @@ def probabilities(logits, temperature=1):
 
     <p>Validation loss is lowest at 3e-4. At 1e-3 the training loss keeps falling while validation loss rises,
       and from 1e-2 the runs are worse than a uniform guess. Use 3e-4 for the longer run.
-      Every value on a log axis must be positive, so a run with no loss is left blank, not written as 0.</p>
+      Leave a missing loss blank because a log axis requires positive values. Next,
+      <a href="diagnostics.html">inspect the follow-up runs</a> and compare loss against a latency budget.</p>
 
     <h2 id="references" data-df-no-outline>References</h2>
     <div data-df-bibliography></div>
   </main>
 
-  <script src="site.js" data-df-site></script>
-  <script src="../../docform/js/core.js"></script>
-  <script src="../../docform/vendor/katex/katex.min.js"></script>
-  <script src="../../docform/js/roles.js"></script>
-  <script src="../../docform/js/refs.js"></script>
-  <script src="../../docform/js/nav.js"></script>
-  <script src="../../docform/js/controls.js"></script>
-  <script src="../../docform/js/math.js"></script>
-  <script src="../../docform/js/tooltip.js"></script>
-  <script src="../../docform/js/notes.js"></script>
-  <script src="../../docform/js/search.js"></script>
-  <script src="../../docform/js/chart.js"></script>
-  <script src="../../docform/js/results.js"></script>
-  <script src="../../docform/js/params.js"></script>
-  <script src="../../docform/js/tabs.js"></script>
-  <script src="../../docform/js/code.js"></script>
-  <script src="../../docform/js/bubble.js"></script>
-  <script src="../../docform/js/reveal.js"></script>
-  <script src="../../docform/js/zoom.js"></script>
-  <script src="model.js"></script>
-  <script src="prediction.js"></script>
+  <script src="../assets/site.js" data-df-site></script>
+  <script src="../../../docform/js/core.js"></script>
+  <script src="../../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../../docform/js/roles.js"></script>
+  <script src="../../../docform/js/refs.js"></script>
+  <script src="../../../docform/js/nav.js"></script>
+  <script src="../../../docform/js/controls.js"></script>
+  <script src="../../../docform/js/math.js"></script>
+  <script src="../../../docform/js/tooltip.js"></script>
+  <script src="../../../docform/js/notes.js"></script>
+  <script src="../../../docform/js/search.js"></script>
+  <script src="../../../docform/js/chart.js"></script>
+  <script src="../../../docform/js/results.js"></script>
+  <script src="../../../docform/js/params.js"></script>
+  <script src="../../../docform/js/tabs.js"></script>
+  <script src="../../../docform/js/code.js"></script>
+  <script src="../../../docform/js/bubble.js"></script>
+  <script src="../../../docform/js/reveal.js"></script>
+  <script src="../../../docform/js/zoom.js"></script>
+  <script src="../../../docform/js/zoomtools.js"></script>
+  <script src="../assets/model.js"></script>
+  <script src="../assets/prediction.js"></script>
 </body>
 </html>

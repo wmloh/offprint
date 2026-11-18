@@ -80,6 +80,6 @@ Open the file in Chrome. Without a manifest the sidebar shows the page outline; 
 - [components.md](components.md): markup for every feature, including how to build the search index.
 - [style-guide.md](style-guide.md): how to keep pages calm and colours meaningful.
 
-The repository has two offline examples to copy from. Open [Pump Monitoring with PCA](../../examples/pca/index.html)
-for animated projections, an incident timeline, and a glossary. Open [A Decoder-Only Transformer](../../examples/transformers/index.html)
+The repository has two offline examples to copy from. Open [Pump Monitoring with PCA](../examples/pca/index.html)
+for animated projections, an incident timeline, and a glossary. Open [A Decoder-Only Transformer](../examples/transformers/index.html)
 for an interactive attention trace, decoding presets, and a run log with file dropzones.

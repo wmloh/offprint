@@ -1,4 +1,4 @@
-// Scroll reveals: elements marked data-df-reveal and every .df-split fade in once on first entering the viewport.
+// One-time reveals for marked blocks and split views, and two-way slides for callouts.
 (function (root) {
   'use strict';
 
@@ -8,8 +8,9 @@
     return;
   }
 
-  var SELECTOR = '[data-df-reveal], .df-split:not([data-df-no-reveal])';
+  var SELECTOR = '[data-df-reveal]:not(.df-callout, [data-df-no-reveal]), .df-split:not([data-df-no-reveal])';
   var STAGGER = 140;
+  var CALLOUT_INSET = 24;
   var doc = root.document;
   var html = doc && doc.documentElement;
   var canObserve = typeof root.IntersectionObserver === 'function';
@@ -61,11 +62,56 @@
     el.classList.add('df-revealed');
   }
 
+  function calloutPosition(top, bottom, height) {
+    var inset = Math.min(CALLOUT_INSET, height / 4);
+    if (bottom <= inset) return 'above';
+    if (top >= height - inset) return 'below';
+    return 'inside';
+  }
+
+  function slideCallouts(callouts) {
+    if (!callouts.length) return;
+    var pending = false;
+    callouts.forEach(function (el) { el.classList.add('df-callout-slide'); });
+
+    function update() {
+      pending = false;
+      var height = root.innerHeight;
+      var positions = callouts.map(function (el) {
+        var rect = el.getBoundingClientRect();
+        // Measure against the layout position so the animated offset cannot move the trigger.
+        var translate = root.getComputedStyle(el).translate;
+        var offset = parseFloat(translate && translate.split(' ')[1]) || 0;
+        return calloutPosition(rect.top - offset, rect.bottom - offset, height);
+      });
+      callouts.forEach(function (el, i) {
+        el.classList.toggle('df-callout-above', positions[i] === 'above');
+        el.classList.toggle('df-callout-below', positions[i] === 'below');
+      });
+    }
+
+    function schedule() {
+      if (pending) return;
+      pending = true;
+      root.requestAnimationFrame(update);
+    }
+
+    update();
+    root.addEventListener('scroll', schedule, { capture: true, passive: true });
+    root.addEventListener('resize', schedule);
+    if (typeof root.ResizeObserver === 'function') {
+      var observer = new root.ResizeObserver(schedule);
+      observer.observe(document.querySelector('.df-page') || document.body);
+      callouts.forEach(function (el) { observer.observe(el); });
+    }
+  }
+
   // Hides reveal targets only once this script runs, so pages stay readable without it.
   if (html && html.classList && canObserve) html.classList.add('df-reveal-on');
 
   DocForm.register('reveal', function () {
     DocForm.all('.df-split').forEach(setupSplit);
+    slideCallouts(DocForm.all('.df-page .df-callout:not([data-df-no-reveal])'));
     var targets = DocForm.all(SELECTOR);
     if (!canObserve) {
       targets.forEach(show);
@@ -83,6 +129,7 @@
     shouldReveal: shouldReveal,
     revealer: revealer,
     splitColumns: splitColumns,
+    calloutPosition: calloutPosition,
     show: show
   };
 })(typeof window !== 'undefined' ? window : globalThis);

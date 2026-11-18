@@ -7,7 +7,7 @@
     return;
   }
 
-  var NARROW = '(max-width: 860px)';
+  var DRAWER = '(max-width: 860px), (any-hover: none)';
   var SPY_LINE = 0.3;
   var SVG = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" ' +
     'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
@@ -61,6 +61,14 @@
     var active = -1;
     for (var i = 0; i < tops.length && tops[i] <= line; i++) active = i;
     return active;
+  }
+
+  function sectionProgress(tops, index, line, end, atBottom) {
+    if (index < 0) return 0;
+    if (atBottom) return 1;
+    var start = tops[index];
+    var limit = index + 1 < tops.length ? tops[index + 1] : end;
+    return limit > start ? Math.min(1, Math.max(0, (line - start) / (limit - start))) : 0;
   }
 
   function outlineTree(items) {
@@ -264,23 +272,14 @@
       return { id: id, group: disclosure(entry.li, entry.caret, entry.list, false) };
     });
 
-    function apply(open) {
+    return function (id) {
+      if (id === active) return;
+      active = id;
       groups.forEach(function (g) {
-        g.group.base = open(g.id);
+        g.group.base = g.id === id;
         g.group.render(animate);
       });
       animate = true;
-    }
-
-    return {
-      activate: function (id) {
-        if (id === active) return;
-        active = id;
-        apply(function (gid) { return gid === id; });
-      },
-      openAll: function () {
-        apply(function () { return true; });
-      }
     };
   }
 
@@ -396,6 +395,54 @@
     main.appendChild(pager);
   }
 
+  function renderRail(headings) {
+    var rail = make('nav', 'df-section-rail');
+    rail.setAttribute('aria-label', 'Subsections on this page');
+    var list = rail.appendChild(make('ol', 'df-section-list'));
+    var entries = headings.map(function (heading, i) {
+      var item = list.appendChild(make('li'));
+      var link = item.appendChild(make('a', 'df-section-link'));
+      link.href = '#' + encodeURIComponent(heading.id);
+      link.setAttribute('aria-label', (i + 1) + '. ' + heading.text);
+      var ring = link.appendChild(make('span', 'df-section-ring'));
+      ring.setAttribute('aria-hidden', 'true');
+      ring.innerHTML = '<svg viewBox="0 0 32 32" width="32" height="32" focusable="false">' +
+        '<circle class="df-section-track" cx="16" cy="16" r="13.5"/>' +
+        '<circle class="df-section-progress" cx="16" cy="16" r="13.5" pathLength="100" ' +
+        'stroke-dasharray="100" stroke-dashoffset="100" transform="rotate(-90 16 16)"/></svg>';
+      ring.appendChild(make('span', 'df-section-number', String(i + 1)));
+      link.appendChild(make('span', 'df-section-name', heading.text));
+      return { link: link, arc: ring.querySelector('.df-section-progress'), pct: 0 };
+    });
+    document.body.appendChild(rail);
+    var active = -1;
+    var visible = false;
+    return {
+      list: list,
+      update: function (index, fraction) {
+        if (!list.clientHeight) {
+          visible = false;
+          return;
+        }
+        if (index !== active) {
+          if (active >= 0) entries[active].link.removeAttribute('aria-current');
+          if (index >= 0) entries[index].link.setAttribute('aria-current', 'location');
+        }
+        if (index >= 0 && (index !== active || !visible) && !rail.matches(':hover, :focus-within')) {
+          reveal(entries[index].link, list);
+        }
+        active = index;
+        visible = true;
+        entries.forEach(function (entry, i) {
+          var pct = i < index ? 100 : i === index ? Math.round(100 * fraction) : 0;
+          if (entry.pct === pct) return;
+          entry.pct = pct;
+          entry.arc.setAttribute('stroke-dashoffset', String(100 - pct));
+        });
+      }
+    };
+  }
+
   function reveal(link, box) {
     if (box.scrollHeight <= box.clientHeight) return;
     var r = link.getBoundingClientRect();
@@ -406,16 +453,25 @@
   }
 
   function spy(headings, links, sidebar, main, onActive) {
-    if (!headings.length || typeof root.IntersectionObserver !== 'function') return false;
+    if (!headings.length) return;
+    var rail = renderRail(headings);
+    var sentinel = main.appendChild(make('div', 'df-outline-sentinel'));
+    sentinel.setAttribute('aria-hidden', 'true');
     var active = null;
     var pending = false;
 
     function update() {
       pending = false;
-      var max = document.documentElement.scrollHeight - root.innerHeight;
-      var index = pickActive(headings.map(function (h) { return h.el.getBoundingClientRect().top; }),
-        root.innerHeight * SPY_LINE, max > 0 && root.scrollY >= max - 2);
+      var height = root.innerHeight;
+      var max = document.documentElement.scrollHeight - height;
+      var remaining = Math.max(0, max - root.scrollY);
+      var atBottom = max > 0 && remaining <= 2;
+      // Near the end, follow the visible text below the usual reading line.
+      var line = max > 0 ? Math.max(height * SPY_LINE, height - remaining) : height * SPY_LINE;
+      var tops = headings.map(function (h) { return h.el.getBoundingClientRect().top; });
+      var index = pickActive(tops, line, atBottom);
       var link = index >= 0 ? links[headings[index].id] : null;
+      rail.update(index, sectionProgress(tops, index, line, sentinel.getBoundingClientRect().top, atBottom));
       onActive(index >= 0 ? headings[index].id : null);
       if (link === active) return;
       if (active) {
@@ -436,24 +492,21 @@
       root.requestAnimationFrame(update);
     }
 
-    var margin = '0px 0px -' + Math.round((1 - SPY_LINE) * 100) + '% 0px';
-    var lineObserver = new IntersectionObserver(schedule, { rootMargin: margin });
-    headings.forEach(function (h) { lineObserver.observe(h.el); });
-
-    // Catches reaching the end of a page whose last headings never cross the spy line.
-    var sentinel = make('div', 'df-outline-sentinel');
-    sentinel.setAttribute('aria-hidden', 'true');
-    main.appendChild(sentinel);
-    new IntersectionObserver(schedule).observe(sentinel);
+    root.addEventListener('scroll', schedule, { passive: true });
+    root.addEventListener('resize', schedule);
+    if (typeof root.ResizeObserver === 'function') {
+      var observer = new root.ResizeObserver(schedule);
+      observer.observe(main);
+      observer.observe(rail.list);
+    }
     schedule();
-    return true;
   }
 
   function drawer(sidebar) {
     var html = document.documentElement;
     var button = make('button', 'df-nav-toggle');
     var backdrop = make('div', 'df-nav-backdrop');
-    var narrow = root.matchMedia ? root.matchMedia(NARROW) : null;
+    var narrow = root.matchMedia ? root.matchMedia(DRAWER) : null;
 
     if (!sidebar.id) sidebar.id = 'df-sidebar';
     if (!sidebar.hasAttribute('tabindex')) sidebar.tabIndex = -1;
@@ -630,6 +683,7 @@
     pageKey: pageKey,
     findCurrent: findCurrent,
     pickActive: pickActive,
+    sectionProgress: sectionProgress,
     outlineTree: outlineTree,
     groupOpen: groupOpen,
     caretChoice: caretChoice,
@@ -655,7 +709,7 @@
       node.children.forEach(function (child) { parents[child.item.id] = node.item.id; });
     });
     var outline = headings.length ? renderOutline(tree, links, groups) : null;
-    var collapse = collapser(groups);
+    var activateGroup = collapser(groups);
 
     if (!sidebar) {
       sidebar = make('nav', 'df-sidebar');
@@ -686,11 +740,10 @@
       host.appendChild(outline);
     }
 
-    renderPager(main, site.order, index);
-    var spying = spy(headings, links, sidebar, main, function (id) {
-      collapse.activate(id === null ? null : parents[id] || id);
+    spy(headings, links, sidebar, main, function (id) {
+      activateGroup(id === null ? null : parents[id] || id);
     });
-    if (!spying) collapse.openAll();
+    renderPager(main, site.order, index);
     DocForm.nav.drawer = drawer(sidebar);
     resizer(sidebar);
     sidebar.addEventListener('pointerleave', function (event) {

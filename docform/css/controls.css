@@ -45,6 +45,11 @@
   color: var(--df-blue);
 }
 
+.df-controls-nav[data-df-nav-mode="auto"] {
+  background: var(--df-blue-bg);
+  color: var(--df-blue);
+}
+
 .df-controls .df-theme-toggle-label {
   display: none;
 }
@@ -90,7 +95,7 @@
 }
 
 /* Hidden navigation panel on wide screens: the sidebar slides away and the page recentres. */
-@media (min-width: 861px) {
+@media (width > 860px) and (any-hover: hover) {
   body:has(> .df-sidebar) {
     transition: grid-template-columns 0.25s ease;
   }
@@ -120,12 +125,12 @@
   }
 }
 
-/* Narrow screens: the pill's navigation button replaces the drawer button from nav.js. */
+/* In drawer layouts, the pill's navigation button replaces the drawer button from nav.js. */
 html.df-has-controls .df-nav-toggle {
   display: none;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 860px), (any-hover: none) {
   .df-has-controls .df-page {
     padding-top: var(--df-space-8);
   }

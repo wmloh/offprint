@@ -6,6 +6,7 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | --- | --- | --- |
 | Layout and typography | `tokens.css`, `base.css` | `core.js` |
 | Lists | `base.css` | none |
+| Concept tables | `base.css`, plus `blocks.css` for tags | none |
 | Sidebar, outline, heading links | `nav.css` | `nav.js` |
 | Theme toggle | `theme.css` | `theme.js` (in `<head>`) |
 | Control pill, focus mode, shortcuts | `controls.css` | `controls.js` |
@@ -50,7 +51,7 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 </body>
 ```
 
-The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open. Collapsed pages and sections open when the pointer rests on them and stay open until it leaves the sidebar; with a search index, other pages also list their sections this way; clicking the arrow beside one keeps it open or closed until it is clicked again or the page reloads. Drag the sidebar's right edge to resize it (double-click to reset); the width is remembered across pages. On narrow screens the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
+The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open. Collapsed pages and sections open when the pointer rests on them and stay open until it leaves the sidebar. With a search index, other pages also list their sections this way. Clicking the arrow beside one keeps it open or closed until it is clicked again or the page reloads. Drag the sidebar's right edge to resize it and double-click to reset the width. The width is remembered across pages. On narrow screens and touch-only devices the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
 
 Each outlined heading shows a link icon on hover that copies the URL of its section. Scrollbars in the sidebar, code blocks, and tables stay hidden until the pointer is on them.
 
@@ -99,18 +100,20 @@ Lists in the page get numbers in small tinted circles and bullets as tinted dots
 Load `controls.css` and `controls.js` and a small frosted pill appears in the top-left corner of the page, beside the sidebar. It needs no markup. It holds:
 
 - a ring that fills as the reader scrolls through the page;
-- a sidebar button that slides the navigation away and recentres the page, or opens the drawer on narrow screens;
+- a sidebar button that cycles through shown, hidden, and auto-hide on desktop and opens the drawer on narrow screens and touch-only devices
 - a focus-mode button that keeps the section in the middle of the screen, everything in the central part of the screen, and the page title sharp, and blurs the rest; pointing at a blurred block sharpens it;
 - a search button, when `search.js` is loaded;
 - the theme toggle, when `theme.js` is loaded.
 
-The page scrollbar stays hidden until the pointer comes near the right edge. The sidebar and focus-mode choices are remembered across pages. Keyboard shortcuts work anywhere except while typing in a form field:
+In auto-hide, move the pointer to the far left edge to open the sidebar and shift the page. Moving the pointer away closes it again. With the desktop sidebar closed, numbered rings follow the page outline in reading order. The current ring glows and fills as you scroll, and earlier rings stay filled. Hover over the rings or focus a numbered link to see all subsection names. Select a number or name to jump to that heading.
+
+The page scrollbar stays hidden until the pointer comes near the right edge. The sidebar and focus-mode choices are remembered across pages. Keyboard shortcuts work anywhere except while typing in a form field.
 
 | Key | Action |
 | --- | --- |
 | `T` | Switch theme |
 | `F` | Focus mode |
-| `N` | Sidebar |
+| `N` | Cycle sidebar modes or toggle the drawer |
 | `J` / `K` | Next / previous section |
 | `Ctrl`+`K` (`⌘`+`K` on a Mac) | Search, with `search.js` |
 
@@ -157,7 +160,7 @@ Write TeX as-is, without dollar signs. Errors show in red with the message on ho
 </div>
 ```
 
-The icon and title are optional.
+The icon and title are optional. With `reveal.css` and `reveal.js`, callouts in `.df-page` slide in from the top or bottom edge they enter and slide back out as they leave. Add `data-df-no-reveal` to keep an individual callout still.
 
 ## Peek bubbles
 
@@ -385,11 +388,11 @@ A `.df-figure-steps` block shows a full-width figure above a selector. Add a `.d
 
 ## Reveals
 
-Add `data-df-reveal` to any block to fade it in the first time it scrolls into view. It plays once per page view.
+Add `data-df-reveal` to a block such as a figure or paragraph to fade it in the first time it scrolls into view. It plays once per page view. Callouts use their own two-way slide.
 
 ```html
-<div class="df-callout" data-df-color="blue" data-df-reveal>Rises into place.</div>
-<div class="df-callout" data-df-color="green" data-df-reveal="left">Slides in from the left.</div>
+<p data-df-reveal>Rises into place.</p>
+<figure data-df-reveal="left">…</figure>
 ```
 
 Values: empty (rise from below), `left`, `right`, or `fade`. `data-df-reveal-delay="200"` waits that many milliseconds first. Without the script, everything is simply visible.
@@ -634,6 +637,25 @@ Long or crowded charts let the reader hide series and zoom into a stretch of the
 - From a script: `api.visible(name, on)` hides or shows a series, and `api.range([from, to])` narrows the range (timestamps on time axes); `api.range(null)` resets it. The chart fires `df:chartview` with `{ hidden, range }` whenever the reader changes either.
 
 The [PCA residual trace](../../examples/pca/pages/telemetry.html#residual-trace) compares two ranks on a UTC axis with a telemetry gap, alert reference lines, and keyed incident points.
+
+## Concept tables
+
+Use `data-df-concept` on a table that compares definitions, roles, or other text. Concept tables have horizontal rules, muted headers, and space for longer labels in the first column. Hovering over a cell highlights its row and column. Use coloured tags with explicit labels for categories readers should spot quickly.
+
+```html
+<table data-df-concept>
+  <caption>What an embedding represents</caption>
+  <thead>
+    <tr><th scope="col">Information the model needs</th><th scope="col">Representation</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">The vector associated with a vocabulary entry</th>
+      <td><span class="df-tag" data-df-color="blue">Token embedding</span></td></tr>
+  </tbody>
+</table>
+```
+
+See the [Transformer input comparison](../../examples/transformers/index.html#input-representations) for a three-column example.
 
 ## Results tables
 

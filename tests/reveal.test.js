@@ -46,6 +46,13 @@ test('each element reveals once and is no longer watched', () => {
   assert.match(observer.options.rootMargin, /-12%/);
 });
 
+test('a callout enters and exits at both edges on repeated passes', () => {
+  const positions = [[776, 836], [775, 835], [-37, 23], [-35, 25], [777, 837]];
+  assert.deepEqual(positions.map(([top, bottom]) => reveal.calloutPosition(top, bottom, 800)),
+    ['below', 'inside', 'above', 'inside', 'below']);
+  assert.equal(reveal.calloutPosition(-300, 1100, 800), 'inside');
+});
+
 test('split column shares follow the spec and default to equal panes', () => {
   assert.equal(reveal.splitColumns('2:1', 2), 'minmax(0, 2fr) minmax(0, 1fr)');
   assert.equal(reveal.splitColumns('3 2', 3), 'minmax(0, 3fr) minmax(0, 2fr) minmax(0, 1fr)');

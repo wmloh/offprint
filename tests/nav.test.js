@@ -60,6 +60,14 @@ test('outline nests h3 under the preceding h2 and scroll-spy picks the last head
   assert.equal(nav.pickActive([-500, 400, 900], 200, true), 2);
 });
 
+test('subsection progress spans the next heading or end of the page and completes at the bottom', () => {
+  const { nav } = load();
+  assert.equal(nav.sectionProgress([400], -1, 300, 1000, false), 0);
+  assert.equal(nav.sectionProgress([100, 500], 0, 300, 800, false), 0.5);
+  assert.equal(nav.sectionProgress([-300, 200], 1, 300, 600, false), 0.25);
+  assert.equal(nav.sectionProgress([-300, 200], 1, 500, 600, true), 1);
+});
+
 test('groups open on their own or under the pointer until a caret click holds them open or closed', () => {
   const { nav } = load();
   assert.equal(nav.groupOpen(false, false, null), false);

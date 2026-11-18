@@ -58,7 +58,7 @@ body:has(> .df-sidebar) {
   min-width: 0;
 }
 
-@media (min-width: 861px) {
+@media (width > 860px) and (any-hover: hover) {
   body > .df-sidebar {
     grid-area: 1 / 1;
   }
@@ -72,7 +72,7 @@ body:has(> .df-sidebar) {
   }
 }
 
-@media (max-width: 860px) {
+@media (max-width: 860px), (any-hover: none) {
   body:has(> .df-sidebar) {
     display: block;
   }
@@ -332,6 +332,27 @@ body:has(> .df-sidebar) {
   background: var(--df-bg-subtle);
   font-weight: 600;
   color: var(--df-text-muted);
+}
+
+.df-page table[data-df-concept] > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+  border-inline: 0;
+  padding: 0.65rem 0.75rem;
+}
+
+.df-page table[data-df-concept] > :is(thead, tbody, tfoot) > tr > th {
+  background-color: transparent;
+  color: color-mix(in srgb, var(--df-gray) 85%, var(--df-text));
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.df-page table[data-df-concept] > thead > tr > th:first-child {
+  width: 34%;
+  min-width: min(16ch, 28vw);
+}
+
+.df-page table[data-df-concept] .df-tag {
+  white-space: normal;
 }
 
 /* Hovering any cell, header included, tints its row and its column; the crossing cell gets both tints.

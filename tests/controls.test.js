@@ -97,6 +97,23 @@ test('focus mode and the hidden sidebar persist, apply on load, and clear their 
   assert.equal(next.classes.has('df-nav-hidden') || next.classes.has('df-focus-mode'), false);
 });
 
+test('auto-hide persists with the sidebar initially closed and keeps the subsection rail outside its trigger', () => {
+  const fresh = load();
+  assert.equal(fresh.controls.setNavMode('auto'), 'auto');
+  assert.equal(fresh.store.get('docform-nav'), 'auto');
+  assert.ok(fresh.classes.has('df-nav-hidden'));
+
+  const next = load(Object.fromEntries(fresh.store));
+  assert.equal(next.controls.state().nav, false);
+  assert.ok(next.classes.has('df-nav-hidden'));
+  assert.equal(next.controls.nearNavEdge(8, 260, false), true);
+  assert.equal(next.controls.nearNavEdge(10, 260, false), false);
+  assert.equal(next.controls.nearNavEdge(264, 260, true), true);
+  assert.equal(next.controls.nearNavEdge(265, 260, true), false);
+  assert.equal(next.controls.setNavMode('shown'), 'shown');
+  assert.equal(next.store.has('docform-nav'), false);
+});
+
 test('shortcuts dispatch single keys and ignore modifiers, handled events, and form fields', () => {
   const { controls } = load();
   const field = { closest: (selector) => (selector.includes('input') ? {} : null) };

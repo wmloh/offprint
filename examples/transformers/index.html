@@ -38,7 +38,7 @@
         feed-forward layer, then turn the last position's state into a distribution over the next token.</p>
     </header>
 
-    <div class="df-callout" data-df-role="input" data-df-icon="◆" data-df-reveal>
+    <div class="df-callout" data-df-role="input" data-df-icon="◆">
       <span class="df-callout-title">The worked model</span>
       Six vocabulary entries, two coordinates per token, one causal attention head, and one feed-forward layer.
       The parameters are chosen by hand so that the entire forward pass can be checked.
@@ -124,6 +124,25 @@ const ids = pieces.map(piece => {
     <div class="df-math" data-df-display id="input-matrix">
       X=\begin{pmatrix}1&0\\0&1.5\\1.5&1\end{pmatrix}
     </div>
+
+    <table id="input-representations" data-df-concept>
+      <caption>Representing the token <code>is</code> in the worked model</caption>
+      <thead>
+        <tr><th scope="col">Information the model needs about the input</th><th scope="col">Representation</th>
+          <th scope="col">How it enters the model</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">Which vocabulary entry the token names</th>
+          <td><span class="df-tag" data-df-color="orange">Token ID</span></td>
+          <td>The integer <code>2</code> picks a row in the embedding table.</td></tr>
+        <tr><th scope="row">The vector associated with that vocabulary entry</th>
+          <td><span class="df-tag" data-df-role="input">Token embedding</span></td>
+          <td>The lookup returns the vector (1, 1) wherever <code>is</code> appears.</td></tr>
+        <tr><th scope="row">Where this occurrence sits in the sequence</th>
+          <td><span class="df-tag" data-df-role="context">Position vector</span></td>
+          <td>The third slot adds (0.5, 0), giving the attention layer (1.5, 1).</td></tr>
+      </tbody>
+    </table>
 
     <details data-df-role="input">
       <summary>Why add position information?</summary>

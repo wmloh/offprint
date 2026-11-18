@@ -59,3 +59,12 @@ test('outline nests h3 under the preceding h2 and scroll-spy picks the last head
   assert.equal(nav.pickActive([250, 400], 200, false), -1);
   assert.equal(nav.pickActive([-500, 400, 900], 200, true), 2);
 });
+
+test('outline subsections open for the section in view and for sections the reader opened, unless dismissed', () => {
+  const { nav } = load();
+  const ids = ['a', 'b', 'c'];
+  assert.deepEqual(plain(nav.outlineOpen(ids, 'b', new Set(), null)), ['b']);
+  assert.deepEqual(plain(nav.outlineOpen(ids, 'b', new Set(['a']), null)), ['a', 'b']);
+  assert.deepEqual(plain(nav.outlineOpen(ids, 'b', new Set(['a']), 'b')), ['a']);
+  assert.deepEqual(plain(nav.outlineOpen(ids, null, new Set(), null)), []);
+});

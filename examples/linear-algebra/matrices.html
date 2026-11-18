@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../../docform/css/roles.css">
   <link rel="stylesheet" href="../../docform/css/nav.css">
   <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
   <link rel="stylesheet" href="../../docform/css/math.css">
   <link rel="stylesheet" href="../../docform/css/blocks.css">
   <link rel="stylesheet" href="../../docform/css/tooltip.css">
@@ -17,12 +18,14 @@
   <link rel="stylesheet" href="../../docform/css/tabs.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/params.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
     <div data-df-nav></div>
-    <div data-df-theme-toggle></div>
   </nav>
 
   <main class="df-page">
@@ -45,6 +48,8 @@
 
     <div class="df-math" data-df-display>A\vec x = x_1 \vec a_1 + x_2 \vec a_2.</div>
 
+    <h3>A worked example</h3>
+
     <p>
       Take <span class="df-math">A = \begin{pmatrix} 2 & -1 \\ 1 & 1 \end{pmatrix}</span> and
       <span class="df-math">\vec x = (2, 1)</span>.
@@ -64,6 +69,8 @@
         <text id="col-l5" x="244" y="70" data-df-role="result">Ax = (3, 3)</text>
       </svg>
     </figure>
+
+    <h3>Other weights</h3>
 
     <p>Change the weights to reach other points. The figure above stays fixed; the formula follows the sliders.</p>
 
@@ -85,14 +92,18 @@
 
     <div class="df-math" data-df-display>(AB)_{ij} = \sum_k a_{ik} b_{kj}.</div>
 
-    <div class="df-callout" data-df-role="warning" data-df-icon="⚠️">
-      <span class="df-callout-title">Order matters</span>
+    <h3>Order matters</h3>
+
+    <div class="df-callout" data-df-role="warning" data-df-icon="⚠️" data-df-reveal="right">
+      <span class="df-callout-title">Not commutative</span>
       In general <span class="df-math">AB \ne BA</span>. For example,
       <div class="df-math" data-df-display>\begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix}\begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix} = \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix}, \qquad \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix}\begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix} = \begin{pmatrix} 0 & 0 \\ 0 & 1 \end{pmatrix}.</div>
     </div>
 
+    <h3>Why row times column</h3>
+
     <details>
-      <summary>Why row times column?</summary>
+      <summary>Show the reasoning</summary>
       <p>
         Column <span class="df-math">j</span> of <span class="df-math">AB</span> is where
         <span class="df-math">AB</span> sends <span class="df-math">\vec e_j</span>. That is
@@ -134,6 +145,10 @@ print(B @ A)  # [[0 0] [0 1]]</code></pre>
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/js/roles.js"></script>
   <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>

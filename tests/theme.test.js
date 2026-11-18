@@ -29,48 +29,39 @@ function load({ stored = null, dark = false, storage } = {}) {
   return { theme: window.DocFormTheme, store, attrs };
 }
 
-test('preference resolution follows the system only in system mode', () => {
+test('only light and dark exist; unknown values fall back to the OS preference', () => {
   const { theme } = load();
-  assert.equal(theme.normalize('bogus'), 'system');
-  assert.equal(theme.normalize(null), 'system');
-  assert.equal(theme.resolve('system', true), 'dark');
-  assert.equal(theme.resolve('system', false), 'light');
-  assert.equal(theme.resolve('light', true), 'light');
-  assert.equal(theme.resolve('dark', false), 'dark');
-  assert.equal(load({ dark: true }).theme.current(), 'dark');
-});
-
-test('toggle cycles system, light, dark, then back to system', () => {
-  const { theme } = load();
-  assert.equal(theme.next('system'), 'light');
+  assert.deepEqual([...theme.modes], ['light', 'dark']);
+  assert.equal(theme.normalize('system'), 'light');
+  assert.equal(theme.normalize('system', true), 'dark');
   assert.equal(theme.next('light'), 'dark');
-  assert.equal(theme.next('dark'), 'system');
-  assert.equal(theme.next('bogus'), 'light');
+  assert.equal(theme.next('dark'), 'light');
+  assert.equal(theme.next('bogus'), 'dark');
 });
 
-test('stored choice applies on load and invalid values fall back to system', () => {
-  const dark = load({ stored: 'dark' });
+test('the first visit follows the OS and always sets an explicit theme without saving it', () => {
+  const dark = load({ dark: true });
   assert.equal(dark.theme.get(), 'dark');
   assert.equal(dark.attrs['data-df-theme'], 'dark');
-  const bogus = load({ stored: 'sepia' });
-  assert.equal(bogus.theme.get(), 'system');
-  assert.equal('data-df-theme' in bogus.attrs, false);
+  assert.equal(dark.store.has('docform-theme'), false);
+  const light = load();
+  assert.equal(light.theme.current(), 'light');
+  assert.equal(light.attrs['data-df-theme'], 'light');
 });
 
-test('choices persist, and system mode clears the stored value', () => {
+test('a saved choice wins over the OS, and stale "system" values fall back to it', () => {
+  assert.equal(load({ stored: 'light', dark: true }).theme.get(), 'light');
+  assert.equal(load({ stored: 'system', dark: true }).theme.get(), 'dark');
   const { theme, store, attrs } = load();
-  theme.set('light');
-  assert.equal(store.get('docform-theme'), 'light');
-  assert.equal(attrs['data-df-theme'], 'light');
-  theme.set('system');
-  assert.equal(store.has('docform-theme'), false);
-  assert.equal('data-df-theme' in attrs, false);
+  theme.set('dark');
+  assert.equal(store.get('docform-theme'), 'dark');
+  assert.equal(attrs['data-df-theme'], 'dark');
 });
 
-test('blocked storage falls back to system without throwing', () => {
+test('blocked storage still switches themes without throwing', () => {
   const blocked = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); }, removeItem() { throw new Error('denied'); } };
-  const { theme, attrs } = load({ storage: blocked });
-  assert.equal(theme.get(), 'system');
-  assert.equal(theme.set('dark'), 'dark');
-  assert.equal(attrs['data-df-theme'], 'dark');
+  const { theme, attrs } = load({ storage: blocked, dark: true });
+  assert.equal(theme.get(), 'dark');
+  assert.equal(theme.set('light'), 'light');
+  assert.equal(attrs['data-df-theme'], 'light');
 });

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../../docform/css/roles.css">
   <link rel="stylesheet" href="../../docform/css/nav.css">
   <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
   <link rel="stylesheet" href="../../docform/css/math.css">
   <link rel="stylesheet" href="../../docform/css/blocks.css">
   <link rel="stylesheet" href="../../docform/css/tooltip.css">
@@ -17,12 +18,14 @@
   <link rel="stylesheet" href="../../docform/css/tabs.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/params.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
     <div data-df-nav></div>
-    <div data-df-theme-toggle></div>
   </nav>
 
   <main class="df-page">
@@ -40,7 +43,9 @@
     <div class="df-callout" data-df-role="definition" data-df-icon="📘">
       <span class="df-callout-title">How to read these notes</span>
       Underlined words have definitions: hover over them or focus them with <kbd>Tab</kbd>. Figures have step
-      controls, and sliders change the values in formulas as you drag.
+      controls and open full screen when clicked, and sliders change the values in formulas as you drag. The pill in
+      the top-left corner shows how far you have read and toggles the sidebar (<kbd>N</kbd>), focus mode (<kbd>F</kbd>), and the theme (<kbd>T</kbd>);
+      <kbd>J</kbd> and <kbd>K</kbd> jump to the next and previous section.
     </div>
 
     <h2>What you need</h2>
@@ -119,6 +124,10 @@ print(3 * e1 + 2 * e2)  # [3 2]</code></pre>
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/js/roles.js"></script>
   <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>

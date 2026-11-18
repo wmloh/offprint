@@ -7,7 +7,7 @@ DocForm follows Notion's look: calm pages where the writing comes first and ever
 - **Text first.** Most of a page should be plain paragraphs. Reach for callouts, tags, and figures only when they help a reader understand or find something.
 - **Quiet by default.** White space, one reading column, system fonts, thin borders, and muted colours. Avoid stacking several callouts or colouring whole paragraphs.
 - **Colour means something.** Use colour to say *what kind of thing* this is, never only to decorate. A reader should be able to learn the meaning of each colour from the legend.
-- **One idea per block.** A callout makes one point, a figure shows one process, a toggle hides one optional detail.
+- **One idea per block.** A callout makes one point, a figure shows one process, a peek bubble holds one optional detail.
 - **Works in both themes.** Every colour has a light and a dark version, so use the named colours and roles instead of your own hex codes.
 
 ## The palette
@@ -43,7 +43,7 @@ Use `data-df-color` directly only for one-off highlights that carry no recurring
 ## Small habits
 
 - Keep headings short; they become the sidebar outline.
-- Put long proofs and optional detail in toggles.
+- Put long proofs and optional detail in peek bubbles (`details`).
 - Give tooltips to the words a newcomer might not know, and put shared terms in the glossary so every page explains them the same way.
 - Caption every animation step in one short sentence.
 - Check each page in light and dark mode and at phone width.

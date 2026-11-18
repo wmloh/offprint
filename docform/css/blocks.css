@@ -58,46 +58,24 @@
   font-weight: 600;
 }
 
-/* Toggles: native <details>/<summary> with a rotating triangle and an animated height. */
+/* Without bubble.js, <details> shows as a tinted card with its content open; bubble.js turns each one into a
+   peek bubble (bubble.css). */
 .df-page details {
-  margin: 0.25em 0;
-  interpolate-size: allow-keywords;
+  margin: var(--df-space-4) 0;
+  padding: 0.8em 1.15em;
+  border-radius: var(--df-radius-lg);
+  background: var(--df-accent-bg, var(--df-purple-bg));
 }
 
 .df-page summary {
-  display: flex;
-  align-items: baseline;
-  gap: 0.35em;
-  margin-left: -0.3em;
-  padding: 0.1em 0.3em;
-  border-radius: var(--df-radius);
+  display: block;
   list-style: none;
-  cursor: pointer;
-  transition: background-color 0.15s;
+  color: var(--df-accent, var(--df-purple));
+  font-weight: 600;
 }
 
 .df-page summary::-webkit-details-marker {
   display: none;
-}
-
-.df-page summary:hover {
-  background: var(--df-bg-hover);
-}
-
-.df-page summary::before {
-  content: "";
-  flex: none;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0.32em 0 0.32em 0.52em;
-  border-color: transparent transparent transparent currentColor;
-  transform: translateY(-0.05em);
-  transition: transform 0.2s ease;
-}
-
-.df-page details[open] > summary::before {
-  transform: translateY(-0.05em) rotate(90deg);
 }
 
 .df-page summary > :is(h1, h2, h3, h4, h5, h6, p) {
@@ -106,22 +84,9 @@
 }
 
 .df-page details::details-content {
-  height: 0;
-  overflow: clip;
-  transition: height 0.25s ease, content-visibility 0.25s allow-discrete;
+  content-visibility: visible;
 }
 
-.df-page details[open]::details-content {
-  height: auto;
-}
-
-.df-page details > :not(summary) {
-  margin-left: 1.15em;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .df-page details::details-content,
-  .df-page summary::before {
-    transition: none;
-  }
+.df-page details > :last-child {
+  margin-bottom: 0;
 }

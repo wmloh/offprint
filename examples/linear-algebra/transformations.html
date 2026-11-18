@@ -10,11 +10,16 @@
   <link rel="stylesheet" href="../../docform/css/roles.css">
   <link rel="stylesheet" href="../../docform/css/nav.css">
   <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
   <link rel="stylesheet" href="../../docform/css/math.css">
   <link rel="stylesheet" href="../../docform/css/blocks.css">
   <link rel="stylesheet" href="../../docform/css/tooltip.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/params.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/scrolly.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
   <script src="../../docform/js/theme.js"></script>
   <style>
     .warp line { vector-effect: non-scaling-stroke; }
@@ -26,7 +31,6 @@
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
     <div data-df-nav></div>
-    <div data-df-theme-toggle></div>
   </nav>
 
   <main class="df-page">
@@ -43,18 +47,43 @@
 
     <p>
       A linear map moves the whole grid at once. Grid lines stay straight, parallel, and evenly spaced, and the
-      origin stays put. Watch the unit square and the images of the <span data-df-term>basis</span> vectors.
+      origin stays put. Scroll through the steps and watch the unit square and the images of the
+      <span data-df-term>basis</span> vectors.
     </p>
 
-    <figure id="warp-anim">
-      <svg viewBox="0 0 360 280" role="img" aria-label="The plane's grid transformed by a sequence of matrices">
-        <defs><clipPath id="warp-clip"><rect x="0" y="0" width="360" height="280"/></clipPath></defs>
-        <g clip-path="url(#warp-clip)">
-          <g id="warp" class="warp" transform="matrix(1 0 0 1 0 0)"></g>
-        </g>
-        <text id="warp-name" x="12" y="24" class="df-muted">Identity</text>
-      </svg>
-    </figure>
+    <div class="df-scrolly">
+      <figure id="warp-anim">
+        <svg viewBox="0 0 360 280" role="img" aria-label="The plane's grid transformed by a sequence of matrices">
+          <defs><clipPath id="warp-clip"><rect x="0" y="0" width="360" height="280"/></clipPath></defs>
+          <g clip-path="url(#warp-clip)">
+            <g id="warp" class="warp" transform="matrix(1 0 0 1 0 0)"></g>
+          </g>
+          <text id="warp-name" x="12" y="24" class="df-muted">Identity</text>
+        </svg>
+      </figure>
+
+      <div class="df-scrolly-steps">
+        <div data-df-step>
+          <p><strong>Shear.</strong> <span class="df-math">\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}</span> slides
+            each row sideways in proportion to its height. Area is unchanged.</p>
+        </div>
+        <div data-df-step>
+          <p><strong>Rotation.</strong> A quarter turn, <span class="df-math">\begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}</span>,
+            keeps every length and angle.</p>
+        </div>
+        <div data-df-step>
+          <p><strong>Scaling.</strong> Stretching by <span class="df-math">2</span> and squashing by
+            <span class="df-math">\tfrac12</span> keeps the area, since <span class="df-math">\det = 1</span>.</p>
+        </div>
+        <div data-df-step>
+          <p><strong>Reflection.</strong> A mirror flips orientation: the orange arrow now sits clockwise from the blue
+            one, and <span class="df-math">\det = -1</span>.</p>
+        </div>
+        <div data-df-step>
+          <p><strong>Identity.</strong> Back where we started. Scroll back up to replay the steps in reverse.</p>
+        </div>
+      </div>
+    </div>
 
     <h2>Build your own</h2>
 
@@ -117,6 +146,11 @@
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/js/roles.js"></script>
   <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/scrolly.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>
@@ -143,20 +177,21 @@
 
       var warpSvg = document.querySelector('#warp-anim svg');
       var W = scene(warpSvg, document.getElementById('warp'), 180, 150, 40);
+      // The prose steps beside the pinned figure drive this timeline as the reader scrolls.
       var steps = [
-        ['Shear', [1, 1, 0, 1], 'A shear $\\begin{pmatrix} 1 & 1 \\\\ 0 & 1 \\end{pmatrix}$ slides each row sideways. Area is unchanged.'],
-        ['Rotation', [0, -1, 1, 0], 'A quarter turn $\\begin{pmatrix} 0 & -1 \\\\ 1 & 0 \\end{pmatrix}$ keeps every length.'],
-        ['Scaling', [2, 0, 0, 0.5], 'Scaling by $2$ and $\\tfrac12$ keeps the area: $\\det = 1$.'],
-        ['Reflection', [-1, 0, 0, 1], 'A mirror flips orientation, so $\\det = -1$.'],
-        ['Identity', [1, 0, 0, 1], 'Back to the identity.']
+        ['Shear', [1, 1, 0, 1]],
+        ['Rotation', [0, -1, 1, 0]],
+        ['Scaling', [2, 0, 0, 0.5]],
+        ['Reflection', [-1, 0, 0, 1]],
+        ['Identity', [1, 0, 0, 1]]
       ];
       var name = document.getElementById('warp-name');
       document.getElementById('warp-anim').addEventListener('df:animstep', function (event) {
         name.textContent = event.detail.step ? steps[event.detail.step - 1][0] : 'Identity';
       });
       DocForm.anim('warp-anim', steps.map(function (s) {
-        return { caption: s[2], duration: 1200, actions: [{ attr: '#warp', name: 'transform', to: LA.matrix(s[1], W) }] };
-      }), { caption: 'Step through five matrices acting on the plane.' });
+        return { duration: 1200, actions: [{ attr: '#warp', name: 'transform', to: LA.matrix(s[1], W) }] };
+      }));
 
       var play = document.getElementById('play');
       var Pl = scene(document.querySelector('#playground svg'), play, 180, 150, 40);

@@ -299,7 +299,8 @@
   DocForm.code = { tokenize: tokenize, highlight: highlight, language: language, dedent: dedent };
 
   DocForm.register('code', function () {
-    var main = document.querySelector('.df-page') || document.body;
-    DocForm.all('pre', main).forEach(enhance);
+    // Every .df-page, including bubble panels that live outside the main page.
+    var pages = DocForm.all('.df-page');
+    (pages.length ? DocForm.all('.df-page pre') : DocForm.all('pre', document.body)).forEach(enhance);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

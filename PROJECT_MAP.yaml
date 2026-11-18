@@ -4,29 +4,39 @@ docform/: Copyable offline library folder
     tokens.css: Notion-style named colours, neutrals, spacing, radii, and fonts via light-dark()
     base.css: Page layout with sidebar slot, reading-column typography, data-df-color accents
     roles.css: Roles legend styles
-    nav.css: Sidebar tree, page outline, prev/next links, and narrow-screen drawer
+    nav.css: Sidebar tree, collapsible page outline, prev/next links, and narrow-screen drawer
     theme.css: Theme toggle button styles
+    controls.css: Top-left frosted control pill, progress ring, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
     math.css: Display math layout and inline TeX error styles
-    blocks.css: Inline tags, callouts, and animated details/summary toggles (CSS only)
+    blocks.css: Inline tags, callouts, and the no-script tinted card look of details
     tooltip.css: Tooltip box and dotted term underlines
     code.css: Code block bar, copy button, and token colours
     tabs.css: Tab list and panels with a no-JS fallback
     anim.css: Figure frames, animation controls, and SVG paint utilities
     params.css: Parameter slider rows and bound values
+    reveal.css: Scroll reveal offsets and split-view grid with side-gliding panes
+    scrolly.css: Sticky frosted figure and scrolling step cards for pinned figures
+    zoom.css: Frosted full-screen figure zoom view
+    bubble.css: Tinted peek bubbles and the frosted side panel, blurred except while hovered
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* helpers, manifest normalization
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
-    nav.js: Sidebar page tree with heading outline, scroll-spy, prev/next links, and drawer
-    theme.js: Head-loaded system, light, and dark theme switching with saved choice and toggles
+    nav.js: Sidebar page tree with collapsible heading outline, scroll-spy, prev/next links, and drawer API
+    theme.js: Head-loaded light and dark theme switching with saved choice and toggles
+    controls.js: Control pill with reading progress, saved focus mode and sidebar state, theme toggle, and keyboard shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
     tooltip.js: data-df-tip tooltips and manifest glossary terms via data-df-term
     code.js: Code block copy buttons and a dependency-free JS, Python, HTML, CSS, and shell highlighter
     tabs.js: Accessible tabbed panels with keyboard navigation and synced groups
-    anim.js: DocForm.anim step-timeline SVG animations with playback controls
+    anim.js: DocForm.anim step-timeline SVG animations with playback controls, hover-to-play, and animated step jumps
     params.js: data-df-param sliders, data-df-bind/data-df-template outputs, and a subscription API
+    reveal.js: One-time data-df-reveal fade-ins and .df-split side-by-side panes
+    scrolly.js: Pinned .df-scrolly figures whose data-df-step prose drives DocForm.anim steps
+    zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes
+    bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
 examples/: Example docs opened from file://
-  simple/: Single-page Pythagorean theorem example without a manifest
-  linear-algebra/: Four-page linear algebra notes with a manifest, figures.js plane and arrow helpers, sliders, and animations
+  simple/: Single-page Pythagorean theorem example without a manifest, with reveals and a split view
+  linear-algebra/: Four-page linear algebra notes with a manifest, figures.js plane and arrow helpers, sliders, animations, split views, peek bubbles, and a pinned scrolling figure
 tests/: Built-in node:test checks of module logic

@@ -73,3 +73,36 @@ test('tracks chain missing from values and hold values between actions', () => {
   const fadeOut = anim.chain([{ kind: 'fade', action: { to: 0 }, start: 0, end: 1, easing: anim.easings.linear }], 1);
   assert.deepEqual([fadeOut[0].from, fadeOut[0].to], [1, 0]);
 });
+
+test('animated step jumps play only the last step, forwards or backwards', () => {
+  const ends = [1000, 1400, 2000];
+  const route = (t, step) => json(anim.path(ends, t, step));
+  assert.deepEqual([0, 1, 2, 3, 7].map((s) => anim.stepTime(ends, s)), [0, 1000, 1400, 2000, 2000]);
+  assert.deepEqual(route(0, 1), { start: 0, goal: 1000 });
+  assert.deepEqual(route(0, 3), { start: 1400, goal: 2000 });
+  assert.deepEqual(route(1200, 2), { start: 1200, goal: 1400 });
+  assert.deepEqual(route(2000, 0), { start: 1000, goal: 0 });
+  assert.deepEqual(route(1200, 0), { start: 1000, goal: 0 });
+  assert.deepEqual(route(500, 0), { start: 500, goal: 0 });
+  assert.deepEqual(route(1400, 2), { start: 1400, goal: 1400 });
+});
+
+test('a mouse or pen crossing a stopped figure plays it, unless paused by hand, scroll-driven, or touch', () => {
+  const base = { playing: false, held: false, scrolly: false, pointer: 'mouse' };
+  assert.equal(anim.hoverPlays(base), true);
+  assert.equal(anim.hoverPlays({ ...base, pointer: 'pen' }), true);
+  assert.equal(anim.hoverPlays({ ...base, pointer: 'touch' }), false);
+  assert.equal(anim.hoverPlays({ ...base, playing: true }), false);
+  assert.equal(anim.hoverPlays({ ...base, held: true }), false);
+  assert.equal(anim.hoverPlays({ ...base, scrolly: true }), false);
+});
+
+test('motion always plays: no reduced-motion paths remain in shipped modules', () => {
+  const root = path.join(__dirname, '../docform');
+  for (const dir of ['js', 'css']) {
+    for (const file of fs.readdirSync(path.join(root, dir))) {
+      const source = fs.readFileSync(path.join(root, dir, file), 'utf8');
+      assert.doesNotMatch(source, /prefers-reduced-motion|reducedMotion/, `${dir}/${file}`);
+    }
+  }
+});

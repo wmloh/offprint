@@ -123,8 +123,15 @@ button.df-nav-label {
   border-left: 0;
 }
 
+.df-outline-row {
+  display: flex;
+  align-items: center;
+}
+
 .df-outline-link {
   display: block;
+  flex: 1;
+  min-width: 0;
   margin-left: -1px;
   padding: 2px var(--df-space-2) 2px 10px;
   border-left: 2px solid transparent;
@@ -145,6 +152,35 @@ button.df-nav-label {
 .df-outline-link.is-active {
   border-left-color: var(--df-blue);
   color: var(--df-text);
+}
+
+/* Subsection carets: only the section in view, and sections opened by hand, stay expanded. */
+.df-outline-caret {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--df-radius-sm);
+  background: transparent;
+  color: var(--df-text-faint);
+  cursor: pointer;
+}
+
+.df-outline-caret:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text-muted);
+}
+
+.df-outline-caret svg {
+  transition: transform 0.15s;
+}
+
+.df-outline-caret[aria-expanded="true"] svg {
+  transform: rotate(90deg);
 }
 
 /* Previous and next pages. */
@@ -256,12 +292,5 @@ button.df-nav-label {
 
   .df-has-drawer .df-page {
     padding-top: var(--df-space-8);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .df-sidebar,
-  .df-nav-caret svg {
-    transition: none !important;
   }
 }

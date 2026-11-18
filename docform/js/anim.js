@@ -207,10 +207,6 @@
     return b;
   }
 
-  function reducedMotion() {
-    return !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }
-
   function setup(figure, steps, options, ctl) {
     var tl = timeline(steps, options);
     var list = tracks(figure, tl);
@@ -285,22 +281,17 @@
       render();
     }
 
-    // Moves time to `goal` at normal speed, or instantly under reduced motion, then calls done.
+    // Moves time forwards or backwards to `goal` at normal speed, then calls done.
     function run(goal, done) {
       target = goal;
-      if (reducedMotion()) {
-        seek(goal);
-        target = null;
-        if (done) done();
-        return;
-      }
       var last = null;
       function tick(now) {
         if (last === null) last = now;
-        t = Math.min(goal, t + (now - last));
+        var dt = now - last;
+        t = goal >= t ? Math.min(goal, t + dt) : Math.max(goal, t - dt);
         last = now;
         render();
-        if (t < goal - EPS) frame = root.requestAnimationFrame(tick);
+        if (Math.abs(t - goal) > EPS) frame = root.requestAnimationFrame(tick);
         else {
           frame = 0;
           target = null;
@@ -330,7 +321,7 @@
       run(nextEnd(t), function () {
         if (!playing) return;
         if (t >= tl.total - EPS) playOn();
-        else timer = setTimeout(playOn, reducedMotion() ? Math.max(hold, 1200) : hold);
+        else timer = setTimeout(playOn, hold);
       });
     }
 
@@ -359,7 +350,15 @@
     };
     ctl.go = function (step) {
       stop();
-      seek(step <= 0 ? 0 : tl.ends[Math.min(step, tl.ends.length) - 1]);
+      seek(stepTime(tl.ends, step));
+    };
+    // Animates to the end of `step`, playing only the last step when it would cross several.
+    ctl.to = function (step) {
+      var route = path(tl.ends, t, step);
+      stop();
+      if (Math.abs(route.start - t) > EPS) seek(route.start);
+      run(route.goal);
+      render();
     };
     ctl.seek = function (time) {
       stop();
@@ -371,14 +370,27 @@
     Object.defineProperty(ctl, 'time', { get: function () { return t; } });
     Object.defineProperty(ctl, 'step', { get: function () { return locate(tl.ends, t).done; } });
 
-    play.addEventListener('click', function () { if (playing) ctl.pause(); else ctl.play(); });
+    // A mouse or pen crossing a stopped figure plays it; pressing Pause holds it until the pointer leaves.
+    var held = false;
+    figure.addEventListener('pointerenter', function (event) {
+      if (hoverPlays({ playing: playing, held: held, pointer: event.pointerType, scrolly: !!figure.closest('.df-scrolly') })) {
+        ctl.play();
+      }
+    });
+    figure.addEventListener('pointerleave', function () { held = false; });
+    play.addEventListener('click', function () {
+      if (playing) {
+        held = true;
+        ctl.pause();
+      } else ctl.play();
+    });
     next.addEventListener('click', ctl.next);
     prev.addEventListener('click', ctl.prev);
     scrub.addEventListener('input', function () { ctl.seek(parseFloat(scrub.value)); });
     render();
 
     var auto = options.autoplay != null ? options.autoplay : DocForm.flag(figure, 'autoplay');
-    if (auto && typeof root.IntersectionObserver === 'function' && !reducedMotion()) {
+    if (auto && typeof root.IntersectionObserver === 'function') {
       var seen = new IntersectionObserver(function (entries) {
         if (!entries.some(function (e) { return e.isIntersecting; })) return;
         seen.disconnect();
@@ -388,11 +400,30 @@
     }
   }
 
+  // Touch is left out: a tap on Play would otherwise start the figure on entry and pause it on click.
+  function hoverPlays(s) {
+    return !s.playing && !s.held && !s.scrolly && (s.pointer === 'mouse' || s.pointer === 'pen');
+  }
+
+  function stepTime(ends, step) {
+    return step <= 0 || !ends.length ? 0 : ends[Math.min(step, ends.length) - 1];
+  }
+
+  // Where an animated move to the end of `step` starts and stops: forwards from the end of the step before it,
+  // backwards from the end of the step after it, or from `t` when that is already closer.
+  function path(ends, t, step) {
+    var goal = stepTime(ends, step);
+    var start = t;
+    if (goal > t + EPS) start = Math.max(t, stepTime(ends, step - 1));
+    else if (goal < t - EPS) start = Math.min(t, stepTime(ends, step + 1));
+    return { start: start, goal: goal };
+  }
+
   // Builds a step-timeline animation on the figure with this id (or element). Safe to call before the DOM is ready.
   function anim(id, steps, options) {
     options = options || {};
     var ctl = {};
-    ['play', 'pause', 'next', 'prev', 'go', 'seek'].forEach(function (name) { ctl[name] = function () {}; });
+    ['play', 'pause', 'next', 'prev', 'go', 'to', 'seek'].forEach(function (name) { ctl[name] = function () {}; });
     function start() {
       var figure = typeof id === 'string' ? document.getElementById(id) : id;
       if (!figure) {
@@ -400,6 +431,7 @@
         return;
       }
       setup(figure, steps, options, ctl);
+      controllers.set(figure, ctl);
     }
     var ready = typeof id !== 'string' || document.getElementById(id);
     if (ready || document.readyState !== 'loading') start();
@@ -407,6 +439,9 @@
     return ctl;
   }
 
+  var controllers = new WeakMap();
+
+  anim.get = function (figure) { return controllers.get(figure) || null; };
   anim.easings = EASINGS;
   anim.easing = easing;
   anim.lerp = lerp;
@@ -414,5 +449,8 @@
   anim.locate = locate;
   anim.chain = chain;
   anim.value = value;
+  anim.stepTime = stepTime;
+  anim.path = path;
+  anim.hoverPlays = hoverPlays;
   DocForm.anim = anim;
 })(typeof window !== 'undefined' ? window : globalThis);

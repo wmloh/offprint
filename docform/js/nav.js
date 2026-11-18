@@ -12,6 +12,7 @@
   var SVG = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" ' +
     'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   var CARET = SVG + ' width="12" height="12"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
+  var CARET_SMALL = SVG + ' width="10" height="10"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
   var MENU = SVG + ' width="18" height="18"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg>';
 
   function slugify(text) {
@@ -77,6 +78,14 @@
     return tree;
   }
 
+  // An outline subsection list is open when the reader opened it by hand, or when its section is in view and the
+  // reader has not closed it since that section came into view.
+  function outlineOpen(ids, active, pinned, dismissed) {
+    return ids.filter(function (id) {
+      return pinned.has(id) || (id === active && id !== dismissed);
+    });
+  }
+
   function make(tag, className, text) {
     var el = document.createElement(tag);
     if (className) el.className = className;
@@ -94,15 +103,28 @@
     });
   }
 
-  function renderOutline(nodes, links) {
+  function renderOutline(nodes, links, groups) {
     var list = make('ul', 'df-outline');
     nodes.forEach(function (node) {
       var li = make('li', 'df-outline-item');
+      var row = make('div', 'df-outline-row');
       var link = make('a', 'df-outline-link', node.item.text);
       link.href = '#' + encodeURIComponent(node.item.id);
       links[node.item.id] = link;
-      li.appendChild(link);
-      if (node.children.length) li.appendChild(renderOutline(node.children, links));
+      row.appendChild(link);
+      li.appendChild(row);
+      if (node.children.length) {
+        var sub = renderOutline(node.children, links, groups);
+        var caret = make('button', 'df-outline-caret');
+        caret.type = 'button';
+        caret.innerHTML = CARET_SMALL;
+        caret.setAttribute('aria-label', 'Toggle ' + node.item.text);
+        sub.id = 'df-outline-' + node.item.id;
+        caret.setAttribute('aria-controls', sub.id);
+        row.appendChild(caret);
+        li.appendChild(sub);
+        groups[node.item.id] = { caret: caret, list: sub };
+      }
       list.appendChild(li);
     });
     return list;
@@ -111,6 +133,45 @@
   function setGroup(caret, list, open) {
     caret.setAttribute('aria-expanded', String(open));
     list.hidden = !open;
+  }
+
+  function collapser(groups) {
+    var ids = Object.keys(groups);
+    var pinned = new Set();
+    var dismissed = null;
+    var active = null;
+
+    function apply() {
+      var open = outlineOpen(ids, active, pinned, dismissed);
+      ids.forEach(function (id) { setGroup(groups[id].caret, groups[id].list, open.indexOf(id) >= 0); });
+    }
+
+    ids.forEach(function (id) {
+      groups[id].caret.addEventListener('click', function () {
+        if (groups[id].list.hidden) {
+          pinned.add(id);
+          if (dismissed === id) dismissed = null;
+        } else {
+          pinned.delete(id);
+          if (id === active) dismissed = id;
+        }
+        apply();
+      });
+    });
+    apply();
+
+    return {
+      activate: function (id) {
+        if (id === active) return;
+        active = id;
+        dismissed = null;
+        apply();
+      },
+      openAll: function () {
+        ids.forEach(function (id) { pinned.add(id); });
+        apply();
+      }
+    };
   }
 
   function renderPages(pages, ctx) {
@@ -187,8 +248,8 @@
     else if (r.bottom > b.bottom - pad) box.scrollTop += r.bottom - b.bottom + pad;
   }
 
-  function spy(headings, links, sidebar, main) {
-    if (!headings.length || typeof root.IntersectionObserver !== 'function') return;
+  function spy(headings, links, sidebar, main, onActive) {
+    if (!headings.length || typeof root.IntersectionObserver !== 'function') return false;
     var active = null;
     var pending = false;
 
@@ -198,6 +259,7 @@
       var index = pickActive(headings.map(function (h) { return h.el.getBoundingClientRect().top; }),
         root.innerHeight * SPY_LINE, max > 0 && root.scrollY >= max - 2);
       var link = index >= 0 ? links[headings[index].id] : null;
+      onActive(index >= 0 ? headings[index].id : null);
       if (link === active) return;
       if (active) {
         active.classList.remove('is-active');
@@ -227,6 +289,7 @@
     main.appendChild(sentinel);
     new IntersectionObserver(schedule).observe(sentinel);
     schedule();
+    return true;
   }
 
   function drawer(sidebar) {
@@ -244,22 +307,37 @@
     sidebar.parentNode.insertBefore(backdrop, sidebar.nextSibling);
     sidebar.parentNode.insertBefore(button, sidebar.nextSibling);
     html.classList.add('df-has-drawer');
+    var opener = button;
 
     function isOpen() {
       return html.classList.contains('df-nav-open');
     }
 
     function setOpen(open, moveFocus) {
+      var changed = open !== isOpen();
       html.classList.toggle('df-nav-open', open);
       button.setAttribute('aria-expanded', String(open));
       button.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+      if (changed && typeof root.CustomEvent === 'function') {
+        document.dispatchEvent(new root.CustomEvent('df:drawer', { detail: { open: open } }));
+      }
       if (!moveFocus) return;
       if (open) sidebar.focus({ preventScroll: true });
-      else button.focus();
+      else opener.focus();
+    }
+
+    // Another control, such as the control pill, can open the drawer and get focus back when it closes.
+    function toggle(from) {
+      if (isOpen()) {
+        setOpen(false, true);
+      } else {
+        opener = from || button;
+        setOpen(true, true);
+      }
     }
 
     setOpen(false, false);
-    button.addEventListener('click', function () { setOpen(!isOpen(), true); });
+    button.addEventListener('click', function () { toggle(button); });
     backdrop.addEventListener('click', function () { setOpen(false, true); });
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && isOpen()) setOpen(false, true);
@@ -272,6 +350,7 @@
         if (!narrow.matches && isOpen()) setOpen(false, false);
       });
     }
+    return { isOpen: isOpen, toggle: toggle, close: function () { setOpen(false, true); } };
   }
 
   DocForm.nav = {
@@ -280,7 +359,9 @@
     pageKey: pageKey,
     findCurrent: findCurrent,
     pickActive: pickActive,
-    outlineTree: outlineTree
+    outlineTree: outlineTree,
+    outlineOpen: outlineOpen,
+    drawer: null
   };
 
   DocForm.register('nav', function (site) {
@@ -292,7 +373,14 @@
 
     var index = findCurrent(site.order, DocForm.page);
     var links = {};
-    var outline = headings.length ? renderOutline(outlineTree(headings), links) : null;
+    var groups = {};
+    var parents = {};
+    var tree = outlineTree(headings);
+    tree.forEach(function (node) {
+      node.children.forEach(function (child) { parents[child.item.id] = node.item.id; });
+    });
+    var outline = headings.length ? renderOutline(tree, links, groups) : null;
+    var collapse = collapser(groups);
 
     if (!sidebar) {
       sidebar = make('nav', 'df-sidebar');
@@ -311,9 +399,9 @@
         if (first) title.href = first.href;
         host.appendChild(title);
       }
-      var tree = renderPages(site.pages, { current: site.order[index] || null, outline: outline, groups: 0 });
-      host.appendChild(tree.list);
-      if (tree.found) outline = null;
+      var pages = renderPages(site.pages, { current: site.order[index] || null, outline: outline, groups: 0 });
+      host.appendChild(pages.list);
+      if (pages.found) outline = null;
     }
     if (outline) {
       host.appendChild(make('div', 'df-nav-heading', 'On this page'));
@@ -321,7 +409,10 @@
     }
 
     renderPager(main, site.order, index);
-    spy(headings, links, sidebar, main);
-    drawer(sidebar);
+    var spying = spy(headings, links, sidebar, main, function (id) {
+      collapse.activate(id === null ? null : parents[id] || id);
+    });
+    if (!spying) collapse.openAll();
+    DocForm.nav.drawer = drawer(sidebar);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

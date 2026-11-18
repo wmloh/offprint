@@ -1,6 +1,6 @@
 # Getting started
 
-DocForm turns plain HTML pages into Notion-style notes with math, tooltips, code blocks, animated figures, and sliders. It needs no server, no build step, and no internet: open the pages straight from disk.
+DocForm turns plain HTML pages into Notion-style notes with math, tooltips, code blocks, animated and scroll-driven figures, split views, and sliders. It needs no server, no build step, and no internet: open the pages straight from disk.
 
 ## 1. Copy the folder
 
@@ -40,6 +40,7 @@ Stylesheets go in `<head>`, scripts at the end of `<body>`:
   <link rel="stylesheet" href="docform/css/base.css">
   <link rel="stylesheet" href="docform/css/nav.css">
   <link rel="stylesheet" href="docform/css/theme.css">
+  <link rel="stylesheet" href="docform/css/controls.css">
   <link rel="stylesheet" href="docform/css/blocks.css">
   <link rel="stylesheet" href="docform/vendor/katex/katex.min.css">
   <link rel="stylesheet" href="docform/css/math.css">
@@ -48,7 +49,6 @@ Stylesheets go in `<head>`, scripts at the end of `<body>`:
 <body>
   <nav class="df-sidebar">
     <div data-df-nav></div>
-    <div data-df-theme-toggle></div>
   </nav>
 
   <main class="df-page">
@@ -65,13 +65,14 @@ Stylesheets go in `<head>`, scripts at the end of `<body>`:
 
   <script src="docform/js/core.js"></script>
   <script src="docform/js/nav.js"></script>
+  <script src="docform/js/controls.js"></script>
   <script src="docform/vendor/katex/katex.min.js"></script>
   <script src="docform/js/math.js"></script>
 </body>
 </html>
 ```
 
-Open the file in Chrome. Without a manifest the sidebar shows the page outline; add one to list several pages.
+Open the file in Chrome. Without a manifest the sidebar shows the page outline; add one to list several pages. The pill in the top-left corner holds the theme, focus mode, and sidebar toggles.
 
 ## Where next
 

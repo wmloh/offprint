@@ -9,16 +9,18 @@
   <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
   <link rel="stylesheet" href="../../docform/css/nav.css">
   <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
   <link rel="stylesheet" href="../../docform/css/math.css">
   <link rel="stylesheet" href="../../docform/css/blocks.css">
   <link rel="stylesheet" href="../../docform/css/tooltip.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Page outline">
     <div data-df-nav></div>
-    <div data-df-theme-toggle></div>
   </nav>
 
   <main class="df-page">
@@ -41,7 +43,7 @@
 
     <div class="df-math" data-df-display>a^2 + b^2 = c^2.</div>
 
-    <div class="df-callout" data-df-color="yellow" data-df-icon="💡">
+    <div class="df-callout" data-df-color="yellow" data-df-icon="💡" data-df-reveal>
       <span class="df-callout-title">Reading the squares</span>
       Each term is the area of a square built on one side. The theorem says the two small squares together
       cover exactly as much area as the large one.
@@ -84,16 +86,21 @@
 
     <h2>Why it holds</h2>
 
-    <p>
-      Arrange four copies of the triangle inside a square of side <span class="df-math">a + b</span>. The space they
-      leave uncovered is a tilted square of side <span class="df-math">c</span>, so
-    </p>
-
-    <div class="df-math" data-df-display>(a + b)^2 = 4 \cdot \tfrac{1}{2}ab + c^2 \quad\Longrightarrow\quad a^2 + b^2 = c^2.</div>
-
-    <p>
-      Expanding the left side and cancelling <span class="df-math">2ab</span> leaves the theorem.
-    </p>
+    <div class="df-split" data-df-align="center">
+      <div>
+        <p>
+          Arrange four copies of the triangle inside a square of side <span class="df-math">a + b</span>. The space
+          they leave uncovered is a tilted square of side <span class="df-math">c</span>.
+        </p>
+        <p>
+          Expanding the left side below and cancelling <span class="df-math">2ab</span> leaves the theorem.
+        </p>
+      </div>
+      <div>
+        <div class="df-math" data-df-display>(a + b)^2 = 4 \cdot \tfrac{1}{2}ab + c^2</div>
+        <div class="df-math" data-df-display>\Longrightarrow\quad a^2 + b^2 = c^2.</div>
+      </div>
+    </div>
 
     <h2>Using it</h2>
 
@@ -104,7 +111,7 @@
 
     <div class="df-math" data-df-display>d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}.</div>
 
-    <div class="df-callout" data-df-color="red" data-df-icon="⚠️">
+    <div class="df-callout" data-df-color="red" data-df-icon="⚠️" data-df-reveal="left">
       The theorem needs a right angle. For other triangles, use the law of cosines,
       <span class="df-math">c^2 = a^2 + b^2 - 2ab\cos\gamma</span>, which reduces to it when
       <span class="df-math">\gamma = 90^\circ</span>.
@@ -113,6 +120,9 @@
 
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>

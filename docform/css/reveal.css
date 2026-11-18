@@ -1,0 +1,82 @@
+/* Scroll reveals and split views from reveal.js. Without the script, everything shows and splits still lay out. */
+
+/* Split view: panes side by side, stacked on narrow screens. data-df-split="2:1" sets column shares. */
+.df-split {
+  display: grid;
+  grid-template-columns: var(--df-split-cols, repeat(var(--df-split-count, 2), minmax(0, 1fr)));
+  gap: var(--df-space-5);
+  align-items: start;
+  margin: var(--df-space-5) 0;
+}
+
+.df-split[data-df-align="center"] {
+  align-items: center;
+}
+
+.df-split > * {
+  min-width: 0;
+  margin: 0;
+}
+
+.df-split > * > :first-child { margin-top: 0; }
+.df-split > * > :last-child { margin-bottom: 0; }
+
+.df-split > :is(figure, .df-figure, .df-anim) {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .df-split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--df-space-4);
+  }
+}
+
+/* Reveals. html.df-reveal-on is set by reveal.js; .df-revealed is added once per element. */
+[data-df-reveal]:not(.df-split),
+.df-split-pane {
+  transition:
+    opacity 0.7s ease,
+    translate 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--df-reveal-delay, 0ms);
+}
+
+.df-split-pane {
+  transition-delay: calc(var(--df-reveal-delay, 0ms) + var(--df-pane-delay, 0ms));
+}
+
+.df-reveal-on [data-df-reveal]:not(.df-split, .df-revealed) {
+  opacity: 0;
+  translate: 0 24px;
+}
+
+.df-reveal-on [data-df-reveal="left" i]:not(.df-split, .df-revealed) { translate: -40px 0; }
+.df-reveal-on [data-df-reveal="right" i]:not(.df-split, .df-revealed) { translate: 40px 0; }
+.df-reveal-on [data-df-reveal="fade" i]:not(.df-split, .df-revealed) { translate: none; }
+
+/* Split panes glide in from their own sides, one after another. */
+.df-reveal-on .df-split:not(.df-revealed, [data-df-no-reveal]) > .df-split-pane {
+  opacity: 0;
+  translate: 0 24px;
+}
+
+@media (min-width: 701px) {
+  .df-reveal-on .df-split:not(.df-revealed, [data-df-no-reveal]) > .df-split-start { translate: -48px 0; }
+  .df-reveal-on .df-split:not(.df-revealed, [data-df-no-reveal]) > .df-split-end { translate: 48px 0; }
+}
+
+/* Keep focus-mode blur transitions on revealed top-level blocks. */
+[data-df-reveal].df-focus-block:not(.df-split) {
+  transition:
+    filter 0.35s ease,
+    opacity 0.7s ease,
+    translate 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: 0ms, var(--df-reveal-delay, 0ms), var(--df-reveal-delay, 0ms);
+}
+
+@media print {
+  .df-reveal-on :is([data-df-reveal], .df-split-pane) {
+    opacity: 1 !important;
+    translate: none !important;
+  }
+}

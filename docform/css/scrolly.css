@@ -1,0 +1,63 @@
+/* Pinned scrolling figures from scrolly.js: the figure sticks near the top while step cards scroll beneath it.
+   Needs anim.css for figure frames. */
+.df-scrolly {
+  position: relative;
+  margin: var(--df-space-6) 0;
+}
+
+.df-scrolly > .df-scrolly-figure,
+.df-scrolly > figure {
+  position: sticky;
+  top: var(--df-space-4);
+  z-index: 2;
+  margin: 0;
+  border-radius: var(--df-radius-lg);
+  background: color-mix(in srgb, var(--df-bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow: inset 0 0 0 1px var(--df-border), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.df-scrolly > figure > svg {
+  max-height: min(420px, 48vh);
+}
+
+/* Scroll drives the steps, so the playback bar is hidden; captions stay. */
+.df-scrolly .df-anim-controls {
+  display: none;
+}
+
+.df-scrolly [data-df-step] {
+  position: relative;
+  z-index: 1;
+  margin: 45vh 0 0;
+  padding: var(--df-space-4) var(--df-space-5);
+  border-radius: var(--df-radius-lg);
+  background: var(--df-bg);
+  box-shadow: inset 0 0 0 1px var(--df-border), 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: opacity 0.3s ease, box-shadow 0.3s ease;
+}
+
+.df-scrolly [data-df-step]:first-of-type {
+  margin-top: 30vh;
+}
+
+.df-scrolly [data-df-step]:last-of-type {
+  margin-bottom: 35vh;
+}
+
+.df-scrolly [data-df-step] > :first-child { margin-top: 0; }
+.df-scrolly [data-df-step] > :last-child { margin-bottom: 0; }
+
+.df-scrolly-ready [data-df-step]:not(.is-active) {
+  opacity: 0.5;
+}
+
+.df-scrolly-ready [data-df-step].is-active {
+  box-shadow: inset 0 0 0 1px var(--df-border-strong), 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+@media print {
+  .df-scrolly > figure { position: static; }
+  .df-scrolly [data-df-step] { margin: var(--df-space-3) 0; opacity: 1 !important; }
+}

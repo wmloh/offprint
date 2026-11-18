@@ -1,0 +1,144 @@
+/* Floating control pill, focus mode, and the hideable navigation panel from controls.js. */
+/* The pill sits at the top-left of the content area: beside the sidebar, or at the screen edge without one. */
+.df-controls {
+  position: fixed;
+  top: var(--df-space-3);
+  left: var(--df-space-3);
+  z-index: 30;
+  transition: left 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--df-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--df-bg) 70%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+}
+
+.df-controls-btn,
+.df-controls .df-theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--df-text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.df-controls-btn:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-controls-btn[aria-pressed="true"] {
+  background: var(--df-blue-bg);
+  color: var(--df-blue);
+}
+
+.df-controls .df-theme-toggle-label {
+  display: none;
+}
+
+/* Reading progress ring. */
+.df-controls-progress {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--df-blue);
+}
+
+.df-controls-progress circle {
+  fill: none;
+  stroke-width: 2;
+}
+
+.df-progress-track {
+  stroke: var(--df-border-strong);
+}
+
+.df-progress-bar {
+  stroke: currentColor;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+/* Focus mode: sections away from the viewport centre sit behind frosted glass. */
+.df-focus-block {
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
+
+/* :not(:hover) keeps the block under the pointer sharp, so readers can glance at it without scrolling. */
+.df-focus-mode .df-focus-dim:not(:hover) {
+  filter: blur(3px);
+  opacity: 0.45;
+}
+
+/* Hidden navigation panel on wide screens: the sidebar slides away and the page recentres. */
+@media (min-width: 861px) {
+  body:has(> .df-sidebar) {
+    transition: grid-template-columns 0.25s ease;
+  }
+
+  .df-sidebar {
+    width: var(--df-sidebar-width);
+    transition: transform 0.25s ease, visibility 0s;
+  }
+
+  .df-nav-hidden body:has(> .df-sidebar) {
+    grid-template-columns: 0 minmax(0, 1fr);
+  }
+
+  html:has(body > .df-sidebar):not(.df-nav-hidden) .df-controls {
+    left: calc(var(--df-sidebar-width) + var(--df-space-3));
+  }
+
+  .df-nav-hidden .df-sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+  }
+}
+
+/* Narrow screens: the pill's navigation button replaces the drawer button from nav.js. */
+html.df-has-controls .df-nav-toggle {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .df-has-controls .df-page {
+    padding-top: var(--df-space-8);
+  }
+
+  /* Above the open drawer and its backdrop, beside the drawer's edge, so its button can close it. */
+  .df-nav-open .df-controls {
+    z-index: 45;
+    left: min(calc(min(calc(var(--df-sidebar-width) + 40px), 85vw) + var(--df-space-3)), calc(100vw - 160px));
+  }
+}
+
+.df-controls-init body,
+.df-controls-init .df-sidebar,
+.df-controls-init .df-controls,
+.df-controls-init .df-focus-block {
+  transition: none !important;
+}
+
+/* Page scrollbar: transparent until the pointer is near the right edge (df-scrollbar-near from controls.js). */
+html.df-scrollbar-auto {
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+html.df-scrollbar-auto.df-scrollbar-near {
+  scrollbar-color: var(--df-border-strong) transparent;
+}

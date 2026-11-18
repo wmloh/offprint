@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../../docform/css/roles.css">
   <link rel="stylesheet" href="../../docform/css/nav.css">
   <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
   <link rel="stylesheet" href="../../docform/css/math.css">
   <link rel="stylesheet" href="../../docform/css/blocks.css">
   <link rel="stylesheet" href="../../docform/css/tooltip.css">
@@ -17,12 +18,14 @@
   <link rel="stylesheet" href="../../docform/css/tabs.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/params.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
     <div data-df-nav></div>
-    <div data-df-theme-toggle></div>
   </nav>
 
   <main class="df-page">
@@ -70,20 +73,22 @@
       slider.
     </p>
 
-    <div class="df-params">
-      <div data-df-param="k" data-df-label="$k$" data-df-min="-2" data-df-max="2.5" data-df-step="0.1" data-df-value="1.5" data-df-role="result"></div>
+    <div class="df-split" data-df-split="3:2" data-df-align="center">
+      <figure class="df-figure" id="scaling">
+        <svg viewBox="0 0 360 220" role="img" aria-label="The vector v and its multiple k times v">
+          <path id="sc-v" class="df-stroke" data-df-role="v" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+          <path id="sc-kv" class="df-stroke" data-df-role="result" stroke-width="2.5" stroke-linecap="round"/>
+          <text id="sc-label" data-df-role="result">kv</text>
+        </svg>
+        <figcaption>The faint arrow is <span class="df-math">\vec v = (2, 1)</span>. Its multiple has length <span data-df-bind="hypot(2*k, k)" data-df-digits="2"></span>.</figcaption>
+      </figure>
+      <div>
+        <div class="df-params">
+          <div data-df-param="k" data-df-label="$k$" data-df-min="-2" data-df-max="2.5" data-df-step="0.1" data-df-value="1.5" data-df-role="result"></div>
+        </div>
+        <div class="df-math" data-df-display data-df-template="{{k|1}}\,\vec v = {{k|1}} \begin{pmatrix} 2 \\ 1 \end{pmatrix} = \begin{pmatrix} {{2*k|1}} \\ {{k|1}} \end{pmatrix}">k\vec v</div>
+      </div>
     </div>
-
-    <figure class="df-figure" id="scaling">
-      <svg viewBox="0 0 360 220" role="img" aria-label="The vector v and its multiple k times v">
-        <path id="sc-v" class="df-stroke" data-df-role="v" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
-        <path id="sc-kv" class="df-stroke" data-df-role="result" stroke-width="2.5" stroke-linecap="round"/>
-        <text id="sc-label" data-df-role="result">kv</text>
-      </svg>
-      <figcaption>The faint arrow is <span class="df-math">\vec v = (2, 1)</span>. Its multiple has length <span data-df-bind="hypot(2*k, k)" data-df-digits="2"></span>.</figcaption>
-    </figure>
-
-    <div class="df-math" data-df-display data-df-template="{{k|1}}\,\vec v = {{k|1}} \begin{pmatrix} 2 \\ 1 \end{pmatrix} = \begin{pmatrix} {{2*k|1}} \\ {{k|1}} \end{pmatrix}">k\vec v</div>
 
     <h2>Length and the dot product</h2>
 
@@ -112,7 +117,7 @@
       <strong data-df-template="{{ theta < 90 ? 'acute angle, so the dot product is positive' : theta > 90 ? 'obtuse angle, so the dot product is negative' : 'exact right angle, so the dot product is zero' }}">angle</strong>.
     </p>
 
-    <div class="df-callout" data-df-role="theorem" data-df-icon="◆">
+    <div class="df-callout" data-df-role="theorem" data-df-icon="◆" data-df-reveal>
       <span class="df-callout-title">Cauchy–Schwarz inequality</span>
       For all vectors, <span class="df-math">|\vec u \cdot \vec v| \le \norm{\vec u}\,\norm{\vec v}</span>, with
       equality exactly when one is a multiple of the other.
@@ -133,6 +138,10 @@
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/js/roles.js"></script>
   <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>

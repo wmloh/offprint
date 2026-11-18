@@ -54,9 +54,3 @@
 .df-tooltip .katex {
   font-size: 1.05em;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .df-tooltip {
-    transition: none;
-  }
-}

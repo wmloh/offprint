@@ -1,4 +1,4 @@
-/* Results tables from results.js: sort buttons in headers, heatmap shading, and best-in-column values. */
+/* Results tables from results.js: sort buttons in headers, heatmap shading, best-in-column values, and pass/fail rules. */
 .df-results {
   --df-heat-color: var(--df-blue);
 }
@@ -69,6 +69,37 @@
 /* One hue from faint to about a third strength, so text stays readable on the strongest cell. */
 .df-heat {
   background: color-mix(in srgb, var(--df-heat-color) calc(var(--df-heat, 0) * 34%), transparent);
+}
+
+/* Threshold rule under a header, and the Pass or Fail word after each classified value. */
+.df-rule {
+  display: block;
+  font-size: 0.78em;
+  font-weight: 400;
+  color: var(--df-text-muted);
+  white-space: nowrap;
+}
+
+.df-results th[aria-sort] > .df-rule {
+  margin-top: -0.25em;
+  padding: 0 0.6em 0.4em;
+}
+
+.df-verdict {
+  display: inline-block;
+  min-width: 2.4em;
+  margin-left: 0.2em;
+  font-size: 0.78em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.df-pass .df-verdict {
+  color: var(--df-green);
+}
+
+.df-fail .df-verdict {
+  color: var(--df-red);
 }
 
 .df-best {

@@ -1,7 +1,7 @@
 docform/: Copyable offline library folder
   site.template.js: Starter window.DocFormSite manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
-    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, and reading-column width via light-dark()
+    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, and reading-column and wide-block widths via light-dark()
     base.css: Page layout with sidebar slot, reading-column typography, blue links, row and column table hover, tinted list markers, hover-revealed scrollbars, data-df-color accents
     roles.css: Roles legend styles
     nav.css: Sidebar tree, collapsible page outline, resize handle, heading copy-link buttons, prev/next links, and narrow-screen drawer
@@ -22,10 +22,11 @@ docform/: Copyable offline library folder
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
     search.css: Frosted Ctrl+K search dialog with highlighted results
     chart.css: Chart legend, grid, thin marks, dashed reference lines, selected points, hover readout, and table view
-    results.css: Sortable results-table headers, heatmap shading, and best-in-column values
+    results.css: Sortable results-table headers, heatmap shading, best-in-column values, and threshold rules with pass/fail text
     highlight.css: Outlines for selected items in linked views
     stepper.css: Worked-example step controls and linked view visibility
     scenarios.css: Variant controls and changed comparison cells
+    wide.css: Wide-block margins and their glide when the sidebar moves
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, manifest normalization
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
@@ -46,17 +47,18 @@ docform/: Copyable offline library folder
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor, ranking, and indexed page list
     chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with line gaps, labelled reference lines, keyed point selection through linked highlighting, hover readouts, and a table view
-    results.js: Sortable results tables with heatmap shading and best-in-column highlighting
+    results.js: Sortable results tables with heatmap shading on column or fixed ranges, best-in-column highlighting, and labelled pass/fail thresholds
     highlight.js: Group-scoped linked selection across prose, tables, figures, and code annotations
     stepper.js: Ordered worked examples with Previous, Next, Reset, keyed step selection, and linked step views
-    scenarios.js: Table-backed comparisons with fixed baselines, shared chart scales by unit, and Reset
+    scenarios.js: Table-backed single-condition or multi-condition configuration comparisons with fixed baselines, shared chart scales by unit, and Reset
+    wide.js: data-df-wide figures and table wrappers that grow beside the reading column, bounded by the sidebar and right-margin notes or panels
   tools/search-index.html: Offline page that builds search-index.js from a chosen docs folder
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
 examples/: Example docs opened from file://
   simple/: Pythagorean theorem with a proof, an animated construction, and prediction exercises
-  linear-algebra/: Five-page notes with a matrix-vector stepper, interactive SVG planes, and computing examples
-  pca/: Three-chapter pump monitoring case study with projection steps, residual exercises, alert comparisons, and offline search
+  linear-algebra/: Five-page notes with a matrix-vector stepper, interactive SVG planes, and computing examples including solver tables against a time budget
+  pca/: Three-chapter pump monitoring case study with projection steps, residual exercises, a wide trace and scores table, alert comparisons, and offline search
   transformers/: Three-chapter decoder-only Transformer guide with a linked attention trace, next-token probabilities, decoding-setup presets, and offline search
   sales-pipeline/: Retry trace linking steps, event rows on two clocks, and a keyed chart, plus a comparison of sales totals
 tests/: Built-in node:test checks of module logic

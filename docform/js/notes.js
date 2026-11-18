@@ -139,7 +139,7 @@
     return { layout: layout };
   }
 
-  DocForm.notes = { fits: fits, width: WIDTH, gap: GAP };
+  DocForm.notes = { fits: fits, width: WIDTH, gap: GAP, edge: EDGE };
 
   DocForm.register('notes', function () {
     var main = document.querySelector('.df-page') || document.querySelector('main') || document.body;

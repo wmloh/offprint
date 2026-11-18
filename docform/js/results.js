@@ -1,5 +1,6 @@
 // Results tables: table[data-df-results] gets sortable headers, optional heatmap shading per numeric column
-// (data-df-heat), and bold best values (data-df-best="max" or "min" on a header cell).
+// (data-df-heat, with an optional fixed data-df-heat-range), bold best values (data-df-best="max" or "min" on a
+// header cell), and labelled pass/fail rules (data-df-threshold="<= 25", data-df-threshold-label).
 (function (root) {
   'use strict';
 
@@ -55,18 +56,44 @@
   }
 
   // Shading strength 0..1 per value, where 1 is the best end ("max" or "min"); a flat column shades nothing.
-  function heat(values, dir) {
+  // A fixed [lo, hi] range replaces the column's own extent and saturates values beyond it.
+  function heat(values, dir, range) {
     var nums = values.filter(function (v) { return v !== null; });
     if (!nums.length) return values.map(function () { return null; });
-    var lo = Math.min.apply(null, nums);
-    var hi = Math.max.apply(null, nums);
+    var lo = range ? range[0] : Math.min.apply(null, nums);
+    var hi = range ? range[1] : Math.max.apply(null, nums);
     return values.map(function (v) {
       if (v === null) return null;
       if (hi === lo) return 0;
-      var t = (v - lo) / (hi - lo);
+      var t = Math.min(1, Math.max(0, (v - lo) / (hi - lo)));
       return +(dir === 'min' ? 1 - t : t).toFixed(4);
     });
   }
+
+  // "0, 60" or "0 ms, 60 ms" -> [0, 60]; anything else, or a range that is not increasing, gives null.
+  function heatRange(text) {
+    var parts = String(text == null ? '' : text).split(',');
+    if (parts.length !== 2) return null;
+    var lo = parseCell(parts[0]);
+    var hi = parseCell(parts[1]);
+    return lo !== null && hi !== null && lo < hi ? [lo, hi] : null;
+  }
+
+  // "<= 25 ms" -> { op: '<=', value: 25, text: '25 ms' }; also accepts <, >, >=, ≤, and ≥.
+  function threshold(text) {
+    var m = String(text == null ? '' : text).trim().match(/^(<=|>=|<|>|≤|≥)\s*(.+)$/);
+    var value = m ? parseCell(m[2]) : null;
+    if (value === null) return null;
+    return { op: m[1] === '≤' ? '<=' : m[1] === '≥' ? '>=' : m[1], value: value, text: m[2].trim() };
+  }
+
+  // true (pass), false (fail), or null for a missing value.
+  function verdict(rule, v) {
+    if (v === null || v === undefined) return null;
+    return rule.op === '<' ? v < rule.value : rule.op === '<=' ? v <= rule.value : rule.op === '>' ? v > rule.value : v >= rule.value;
+  }
+
+  var SYMBOLS = { '<': '<', '<=': '≤', '>': '>', '>=': '≥' };
 
   function direction(value) {
     value = String(value || '').toLowerCase();
@@ -100,12 +127,22 @@
       var values = texts.map(function (t) { return numeric ? parseCell(t) : String(t).trim(); });
       var bestDir = direction(DocForm.data(th, 'best', null));
       var heatAttr = th.getAttribute('data-df-heat');
-      var heatOn = numeric && (heatAttr !== null ? heatAttr !== 'false' : heatAll !== null && heatAll !== 'false' && c > 0);
+      var rangeAttr = th.getAttribute('data-df-heat-range');
+      var range = rangeAttr !== null ? heatRange(rangeAttr) : null;
+      if (rangeAttr !== null && !range) DocForm.warnOnce('results-range:' + rangeAttr, 'Ignoring heat range "' + rangeAttr + '": use two increasing numbers such as "0, 60".', th);
+      var heatOn = numeric && (heatAttr !== null ? heatAttr !== 'false' : !!range || (heatAll !== null && heatAll !== 'false' && c > 0));
       var heatDir = direction(heatAttr) || bestDir || direction(heatAll) || 'max';
       var cellTint = DocForm.data(th, 'heat-color', null);
+      var ruleAttr = th.getAttribute('data-df-threshold');
+      var rule = ruleAttr !== null ? threshold(ruleAttr) : null;
+      if (ruleAttr !== null && !rule) DocForm.warnOnce('results-threshold:' + ruleAttr, 'Ignoring threshold "' + ruleAttr + '": use <, <=, >, or >= and a number, such as "<= 25".', th);
+      if (rule && !numeric) {
+        DocForm.warnOnce('results-threshold-text', 'A threshold needs a number column; ignoring it.', th);
+        rule = null;
+      }
 
       if (heatOn) {
-        heat(values, heatDir).forEach(function (t, r) {
+        heat(values, heatDir, range).forEach(function (t, r) {
           var cell = rows[r].cells[c];
           if (!cell || t === null) return;
           cell.classList.add('df-heat');
@@ -119,9 +156,23 @@
           if (cell) cell.classList.add('df-best');
         });
       }
+      if (rule) {
+        // Each classified cell keeps its text and gains a visible verdict; missing values get none.
+        values.forEach(function (v, r) {
+          var cell = rows[r].cells[c];
+          var pass = verdict(rule, v);
+          if (!cell || pass === null) return;
+          var tag = document.createElement('span');
+          tag.className = 'df-verdict';
+          tag.textContent = pass ? 'Pass' : 'Fail';
+          cell.classList.add(pass ? 'df-pass' : 'df-fail');
+          cell.appendChild(document.createTextNode(' '));
+          cell.appendChild(tag);
+        });
+      }
       if (numeric) th.classList.add('df-num');
       rows.forEach(function (tr) { if (numeric && tr.cells[c]) tr.cells[c].classList.add('df-num'); });
-      return { th: th, values: values, numeric: numeric, best: bestDir };
+      return { th: th, values: values, numeric: numeric, best: bestDir, rule: rule };
     });
 
     var state = { col: -1, dir: null };
@@ -160,6 +211,16 @@
         apply();
       });
     });
+
+    // The rule sits under the header text so readers can see what Pass means.
+    columns.forEach(function (col) {
+      if (!col.rule) return;
+      var label = DocForm.data(col.th, 'threshold-label', '').trim();
+      var note = document.createElement('span');
+      note.className = 'df-rule';
+      note.textContent = (label || 'Pass') + ': ' + SYMBOLS[col.rule.op] + ' ' + col.rule.text;
+      col.th.appendChild(note);
+    });
   }
 
   DocForm.results = {
@@ -167,7 +228,10 @@
     numericColumn: numericColumn,
     sortOrder: sortOrder,
     best: best,
-    heat: heat
+    heat: heat,
+    heatRange: heatRange,
+    threshold: threshold,
+    verdict: verdict
   };
 
   DocForm.register('results', function () {

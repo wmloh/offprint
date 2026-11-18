@@ -29,6 +29,7 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Linked highlighting | `highlight.css` | `highlight.js` |
 | Worked-example steppers | `stepper.css` | `stepper.js` |
 | Scenario comparisons | `chart.css`, `scenarios.css` | `chart.js`, `scenarios.js` |
+| Wide blocks | `wide.css` | `wide.js` |
 
 ## Page layout
 
@@ -49,6 +50,28 @@ The sidebar lists the manifest's pages and an outline of the current page's `h2`
 Each outlined heading shows a link icon on hover that copies the URL of its section. The reading column is 880px wide; change it with the `--df-content-width` token and the side padding with `--df-page-gutter`. Scrollbars in the sidebar, code blocks, and tables stay hidden until the pointer is on them.
 
 Standalone figures, tables, and their captions are centered in the reading column, with a little extra space above and below. Pointing at any table cell, headers included, lightly tints its row and column. Links are blue and underlined.
+
+### Wide blocks
+
+A figure or table that needs more room than the reading column can grow into the space beside it. Mark a figure, or a `div` around a table, that sits directly inside `main`:
+
+```html
+<figure id="trace" data-df-wide>
+  <div data-df-chart="line">…</div>
+  <figcaption>A long trace that reads better wide.</figcaption>
+</figure>
+
+<div data-df-wide>
+  <table>
+    <caption>Scores for every scenario</caption>
+    …
+  </table>
+</div>
+```
+
+The block grows evenly on both sides, up to 1240px in total (set `--df-wide-width` on the page or the block to change it). It always stays a page gutter away from the sidebar and follows it when the sidebar is resized or hidden. While the page shows sidenotes or peek panels in the right margin, the block grows toward the sidebar side only. Prose keeps the reading width.
+
+When there is no spare room, as on narrow screens, the block keeps the reading width and a wide table scrolls sideways inside it instead of widening the page. Without the script, wide blocks also keep the reading width. The component-count page of the `examples/pca/` case study shows a wide residual trace and a wide scores table.
 
 ## Lists
 
@@ -488,6 +511,29 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 - Cells such as `92.1 ± 0.3`, `1,204 ms`, or `12%` count as numbers; `—` and blanks are skipped and sort last. `data-df-value` on a cell gives the number to use.
 - The table needs a `thead` and a `tbody`.
 
+### Fixed ranges and pass/fail rules
+
+```html
+<table data-df-results>
+  <thead>
+    <tr>
+      <th>Scene</th>
+      <th data-df-best="min" data-df-heat-range="0, 40"
+          data-df-threshold="<= 16.7" data-df-threshold-label="Frame budget">Frame time (ms)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Menu</td><td>4.1</td></tr>
+    <tr><td>City</td><td>18.9</td></tr>
+    <tr><td>Loading</td><td>—</td></tr>
+  </tbody>
+</table>
+```
+
+- `data-df-heat-range="0, 40"` on a header shades that column against a fixed scale instead of its own smallest and largest values, so the same value gets the same shade in every table that uses the range. Values beyond either end get the end's shade. A range also turns shading on for its column.
+- `data-df-threshold` on a number column's header marks each value Pass or Fail. Write `<`, `<=`, `>`, or `>=` and a number, such as `"<= 16.7"`. The rule uses the same number the column sorts by, including `data-df-value`. Cells keep their text and gain the word Pass or Fail; missing values get neither.
+- `data-df-threshold-label` names the rule shown under the header, such as "Frame budget: ≤ 16.7". Without it the rule reads "Pass: ≤ 16.7".
+
 ## Interactive explanations
 
 These snippets assume your HTML file sits beside the `docform/` folder. Put the shared setup in `<head>` and add the includes for each pattern you use. Put the example markup inside `<main class="df-page">`. You can open the file directly from disk. [Include order](include-order.md)
@@ -617,7 +663,7 @@ The sales-pipeline example traces a retried sale this way.
 <script defer src="docform/js/scenarios.js"></script>
 ```
 
-Use one header row and put the measure, unit, baseline, and named variants in that order. Mark each condition row with `data-df-condition`. Each variant must change exactly one marked condition from the baseline. Write outcome values as plain numbers and put their units in the unit column. Leave that column's cell empty for unitless values.
+Use one header row and put the measure, unit, baseline, and named variants in that order. Mark each condition row with `data-df-condition`. By default, each variant must change exactly one marked condition from the baseline, so any outcome change can be attributed to that condition. Write outcome values as plain numbers and put their units in the unit column. Leave that column's cell empty for unitless values.
 
 ```html
 <p>Apply each threshold to the same readings (7, 9, 11, and 13 kPa).
@@ -637,6 +683,23 @@ Use one header row and put the measure, unit, baseline, and named variants in th
 ```
 
 The comparison keeps the baseline fixed and uses the same scale and row order for outcomes with the same unit. It names changes in text and marks changed outcomes on the chart. Reset selects the first variant again. With scripts off, all columns remain visible.
+
+To compare named configurations that change several conditions together, such as candidate release settings, set `data-df-scenarios="configurations"`. Each variant must change at least one condition. The comparison lists every changed condition with its baseline and variant values, in table order, and marks those cells. An outcome difference then reflects the combined effect of all listed changes, so it cannot be attributed to any one condition. Use the default mode to test one cause, and use configurations to choose between complete setups.
+
+```html
+<table data-df-scenarios="configurations">
+  <caption>Candidate alert setups</caption>
+  <thead>
+    <tr><th scope="col">Measure</th><th scope="col">Unit</th><th scope="col">Current</th><th scope="col">Quiet nights</th><th scope="col">Fast response</th></tr>
+  </thead>
+  <tbody>
+    <tr data-df-condition><th scope="row">Alert threshold</th><td>kPa</td><td>10</td><td>12</td><td>9</td></tr>
+    <tr data-df-condition><th scope="row">Averaging window</th><td>min</td><td>5</td><td>15</td><td>5</td></tr>
+    <tr><th scope="row">False alerts</th><td>per week</td><td>6</td><td>1</td><td>9</td></tr>
+    <tr><th scope="row">Detection delay</th><td>min</td><td>4</td><td>11</td><td>3</td></tr>
+  </tbody>
+</table>
+```
 
 ### Prediction and explanation
 

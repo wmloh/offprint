@@ -1,4 +1,5 @@
 // Compare the first scenario column with one variant from the same authored table.
+// Strict mode allows one changed condition per variant; "configurations" allows several.
 (function (root) {
   'use strict';
 
@@ -12,7 +13,11 @@
     return cell.textContent.trim().replace(/\s+/g, ' ');
   }
 
+  var MODES = { '': 'single', configurations: 'configurations' };
+
   function read(table) {
+    var mode = MODES[(table.getAttribute('data-df-scenarios') || '').trim()];
+    if (!mode) return null;
     var heads = DocForm.all(':scope > thead > tr', table);
     if (heads.length !== 1) return null;
     var columns = Array.from(heads[0].cells);
@@ -54,10 +59,13 @@
     var variants = names.slice(1).map(function (name, i) {
       var index = i + 1;
       var changed = conditions.filter(function (condition) { return condition.values[index] !== condition.values[0]; });
-      return { name: name, index: index, condition: changed.length === 1 ? changed[0] : null };
+      return { name: name, index: index, changes: changed };
     });
-    if (!groups.size || variants.some(function (variant) { return !variant.condition; })) return null;
-    return { columns: columns, rows: rows, baseline: names[0], groups: groups, variants: variants };
+    var valid = function (variant) {
+      return mode === 'configurations' ? variant.changes.length > 0 : variant.changes.length === 1;
+    };
+    if (!groups.size || !variants.every(valid)) return null;
+    return { mode: mode, columns: columns, rows: rows, baseline: names[0], groups: groups, variants: variants };
   }
 
   function element(tag, parent, content) {
@@ -67,15 +75,18 @@
     return node;
   }
 
+  function withUnit(measure, value) {
+    return value + (measure.unit === '%' ? '%' : measure.unit ? ' ' + measure.unit : '');
+  }
+
   function changeText(measure, index) {
-    var unit = measure.unit === '%' ? '%' : measure.unit ? ' ' + measure.unit : '';
-    return measure.name + ' changed from ' + measure.values[0] + unit + ' to ' + measure.values[index] + unit + '.';
+    return measure.name + ' changed from ' + withUnit(measure, measure.values[0]) + ' to ' + withUnit(measure, measure.values[index]) + '.';
   }
 
   function setup(table) {
     var model = read(table);
     if (!model) {
-      DocForm.warnOnce('scenarios:markup', 'A comparison needs a measure column, a unit column, a baseline, and named variants. Each variant must change one marked condition and provide numeric outcomes.', table);
+      DocForm.warnOnce('scenarios:markup', 'A comparison needs a measure column, a unit column, a baseline, and named variants with numeric outcomes. Each variant must change exactly one marked condition, or at least one with data-df-scenarios="configurations".', table);
       return;
     }
 
@@ -91,6 +102,12 @@
     var reset = element('button', controls, 'Reset');
     reset.type = 'button';
 
+    var conditionList = null;
+    if (model.mode === 'configurations') {
+      element('p', visual, 'Changed conditions').className = 'df-scenarios-heading';
+      conditionList = element('ul', visual);
+      conditionList.className = 'df-scenarios-conditions';
+    }
     var status = element('p', visual);
     status.setAttribute('role', 'status');
     var marker = element('p', visual, '* Changed outcome');
@@ -103,7 +120,7 @@
       var index = variant.index;
       select.value = index;
       reset.setAttribute('aria-disabled', String(index === 1));
-      var condition = changeText(variant.condition, index);
+      var conditionText = variant.changes.map(function (change) { return changeText(change, index); });
       var changedText = [];
       var selectedColumn = index + 2;
       for (var c = 3; c < model.columns.length; c++) {
@@ -113,7 +130,15 @@
           row.cells[c].removeAttribute('data-df-scenario-difference');
         });
       }
-      variant.condition.cells[selectedColumn].setAttribute('data-df-scenario-difference', '');
+      variant.changes.forEach(function (change) {
+        change.cells[selectedColumn].setAttribute('data-df-scenario-difference', '');
+      });
+      if (conditionList) {
+        conditionList.textContent = '';
+        variant.changes.forEach(function (change) {
+          element('li', conditionList, change.name + ': ' + withUnit(change, change.values[0]) + ' → ' + withUnit(change, change.values[index]));
+        });
+      }
 
       plots.forEach(function (plot) {
         var group = plot.group;
@@ -142,7 +167,8 @@
           ]
         });
       });
-      status.textContent = condition + ' ' + (changedText.join(' ') || 'No outcomes changed.');
+      var combined = variant.changes.length > 1 ? 'Combined effect of ' + variant.changes.length + ' changed conditions. ' : '';
+      status.textContent = combined + conditionText.join(' ') + ' ' + (changedText.join(' ') || 'No outcomes changed.');
       marker.hidden = !changedText.length;
     }
 

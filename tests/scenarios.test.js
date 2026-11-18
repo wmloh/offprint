@@ -159,3 +159,46 @@ test('tables remain intact when a variant changes two conditions or the chart sc
     assert.equal(warnings.length, 1);
   }
 });
+
+test('configuration mode lists and marks every changed condition and resets to the first variant', () => {
+  const data = fixture('25');
+  data.table.setAttribute('data-df-scenarios', 'configurations');
+  const { page, chart, start, warnings } = setup(data);
+  start();
+
+  const [controls, heading, list, status, , alerts] = page.firstChild.children;
+  const [label, reset] = controls.children;
+  const select = label.firstChild;
+  const items = () => list.children.map((li) => li.textContent);
+  const marked = (column) => data.rows.filter((tr) => tr.cells[column].hasAttribute('data-df-scenario-difference'));
+  assert.equal(heading.textContent, 'Changed conditions');
+  assert.deepEqual(items(), ['Threshold: 20% → 25%']);
+  assert.doesNotMatch(status.textContent, /Combined/);
+
+  select.value = select.children[1].value;
+  select.dispatchEvent(new Event('change'));
+  assert.deepEqual(items(), ['Threshold: 20% → 25%', 'Window: 5 s → 10 s']);
+  assert.match(status.textContent, /^Combined effect of 2 changed conditions\. Threshold changed from 20% to 25%\. Window changed from 5 s to 10 s\. False alarms changed/);
+  assert.deepEqual(marked(4), data.rows);
+  assert.deepEqual(chart.get(alerts).model().y.max, 9);
+
+  reset.click();
+  assert.equal(select.selectedIndex, 0);
+  assert.deepEqual(items(), ['Threshold: 20% → 25%']);
+  assert.deepEqual(marked(4), []);
+  assert.deepEqual(warnings, []);
+});
+
+test('configuration mode still rejects unchanged variants and unknown modes', () => {
+  const unchanged = fixture();
+  unchanged.rows[0].cells[5].textContent = '20';
+  unchanged.table.setAttribute('data-df-scenarios', 'configurations');
+  const unknown = fixture('25');
+  unknown.table.setAttribute('data-df-scenarios', 'bundles');
+  for (const data of [unchanged, unknown]) {
+    const { page, start, warnings } = setup(data);
+    start();
+    assert.deepEqual(page.children, [data.table]);
+    assert.equal(warnings.length, 1);
+  }
+});

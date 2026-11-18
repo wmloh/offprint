@@ -174,7 +174,8 @@
     <p>
       <a href="#tbl-solvers"></a> compares ways to solve <span class="df-math">A\vec x = \vec b</span> for a
       <span class="df-math">1000 \times 1000</span> matrix. Click a header to sort; shading and bold mark the best
-      values, lower being better in both number columns.
+      values, lower being better in both number columns. Suppose each solve must finish within a 25 ms time
+      budget: the time column marks every method Pass or Fail against it.
     </p>
 
     <figure id="tbl-solvers">
@@ -182,7 +183,8 @@
         <thead>
           <tr>
             <th>Method</th>
-            <th data-df-best="min">Time (ms)</th>
+            <th data-df-best="min" data-df-heat-range="0, 60" data-df-threshold="<= 25"
+                data-df-threshold-label="Time budget">Time (ms)</th>
             <th data-df-best="min">Residual (×10⁻¹³)</th>
             <th>Needs</th>
           </tr>
@@ -196,6 +198,32 @@
         </tbody>
       </table>
       <figcaption>Solvers for one dense system; the iterative method's time depends on its stopping rule.</figcaption>
+    </figure>
+
+    <p>
+      Dense solves grow with the cube of the size, so halving it cuts the time about eightfold.
+      <a href="#tbl-solvers-small"></a> repeats the comparison for a <span class="df-math">500 \times 500</span>
+      matrix. Both time columns shade against the same 0 to 60 ms scale, so a cell's shade means the same time in
+      either table: every method now fits the budget.
+    </p>
+
+    <figure id="tbl-solvers-small">
+      <table data-df-results>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th data-df-best="min" data-df-heat-range="0, 60" data-df-threshold="<= 25"
+                data-df-threshold-label="Time budget">Time (ms)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Inverse, then multiply</td><td>7.9 ± 0.4</td></tr>
+          <tr><td>LU with pivoting</td><td>2.8 ± 0.2</td></tr>
+          <tr><td>QR</td><td>6.3 ± 0.3</td></tr>
+          <tr><td>Cholesky</td><td>1.6 ± 0.1</td></tr>
+        </tbody>
+      </table>
+      <figcaption>The same solvers for a smaller system, shaded on the larger table's time scale.</figcaption>
     </figure>
   </main>
 

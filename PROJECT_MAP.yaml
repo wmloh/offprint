@@ -35,7 +35,7 @@ docform/: Copyable offline library folder
     controls.js: Control pill with reading progress, saved focus mode and sidebar state, search and theme buttons, and keyboard shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
     tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, opt-in automatic term linking, and lazy HTML cards for other modules
-    code.js: Code block copy buttons, a dependency-free JS, Python, HTML, CSS, and shell highlighter, line highlights, annotation markers linked to list items, and diffs
+    code.js: Code block copy buttons, a dependency-free JS, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     tabs.js: Accessible tabbed panels with keyboard navigation and synced groups
     anim.js: DocForm.anim step-timeline SVG animations with playback controls, hover-to-play, and animated step jumps
     params.js: data-df-param sliders, selects, and toggles, validated data-df-preset batch updates, data-df-bind/data-df-template outputs, and a subscription API
@@ -46,7 +46,7 @@ docform/: Copyable offline library folder
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor, ranking, and indexed page list
-    chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with line gaps, labelled reference lines, keyed point selection through linked highlighting, hover readouts, and a table view
+    chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with UTC time x-axes, validated base-10 log axes, line gaps, labelled reference lines, keyed point selection through linked highlighting, hover readouts, and a table view
     results.js: Sortable results tables with heatmap shading on column or fixed ranges, best-in-column highlighting, and labelled pass/fail thresholds
     highlight.js: Group-scoped linked selection across prose, tables, figures, and code annotations
     stepper.js: Ordered worked examples with Previous, Next, Reset, keyed step selection, and linked step views
@@ -59,6 +59,6 @@ examples/: Example docs opened from file://
   simple/: Pythagorean theorem with a proof, an animated construction, and prediction exercises
   linear-algebra/: Five-page notes with a matrix-vector stepper, interactive SVG planes, and computing examples including solver tables against a time budget
   pca/: Three-chapter pump monitoring case study with projection steps, residual exercises, a wide trace and scores table, alert comparisons, and offline search
-  transformers/: Three-chapter decoder-only Transformer guide with a linked attention trace, next-token probabilities, decoding-setup presets, and offline search
-  sales-pipeline/: Retry trace linking steps, event rows on two clocks, and a keyed chart, plus a comparison of sales totals
+  transformers/: Three-chapter decoder-only Transformer guide with a linked attention trace, next-token probabilities, decoding-setup presets, a log-scale learning-rate sweep, and offline search
+  sales-pipeline/: Retry trace linking steps, event rows on two clocks, and a keyed chart, a comparison of sales totals, SQL and C# deduplication snippets, and batch arrivals on a time axis
 tests/: Built-in node:test checks of module logic

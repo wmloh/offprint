@@ -5,7 +5,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
-const context = vm.createContext({ URL, console });
+const warnings = [];
+const context = vm.createContext({ URL, console: { warn: (message) => warnings.push(message) } });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('chart.js'), context);
@@ -101,4 +102,130 @@ test('reference lines normalize per axis without widening the data domain', () =
   assert.ok(16.7 > info.max, 'an out-of-range line stays off the plotted scale');
   const cats = chart.normalize({ type: 'bar', series: [{ data: [['v1', 1]] }], referenceLines: [{ axis: 'x', value: 'v1', label: 'Release' }] });
   assert.equal(cats.referenceLines[0].value, 'v1');
+});
+
+const MINUTE = 6e4;
+const HOUR = 36e5;
+const t0 = Date.UTC(2026, 10, 17);
+
+test('time axes read epoch milliseconds and zoned ISO timestamps and reject the rest', () => {
+  for (const v of ['2026-11-17T00:00:00Z', '2026-11-17 00:00z', '2026-11-16T19:00:00-05:00', '2026-11-17T09:00+09:00',
+    '2026-11-17T05:30:00+0530', '2026-11-17T01:00+01', t0, String(t0)]) {
+    assert.equal(chart.toTime(v), t0, String(v));
+  }
+  assert.equal(chart.toTime('2026-11-17T00:00:01.2509Z'), t0 + 1250);
+  for (const v of ['2026-11-17T00:00:00', '2026-11-17', '2026-13-01T00:00Z', '2026-02-29T00:00Z', '2026-11-17T24:00Z',
+    '2026-11-17T00:00:60Z', '2026-11-17T00:00+25:00', 'yesterday', '', null, true, 1e16]) {
+    assert.equal(chart.toTime(v), null, String(v));
+  }
+});
+
+test('time points are placed by elapsed time across offsets, keep missing readings, and skip invalid timestamps', () => {
+  warnings.length = 0;
+  const model = chart.normalize({ gaps: 'break', x: { type: 'time', label: 'Arrival' }, series: [{ data: [
+    ['2026-11-17T00:10:00Z', 4], ['2026-11-16T19:00:00-05:00', 2], ['2026-11-17T09:01:00+09:00', 3],
+    ['2026-11-17T00:40:00Z', null], ['2026-11-17T01:00:00Z', 6], ['2026-11-17T00:20:00', 9], ['soon', 1]
+  ] }] });
+  const s = model.series[0];
+  assert.equal(model.categories, null);
+  assert.deepEqual(plain(s.points.map((p) => (p.x - t0) / MINUTE)), [0, 1, 10, 60]);
+  assert.deepEqual(plain(s.missing.map((x) => (x - t0) / MINUTE)), [40]);
+  const x = chart.linear(t0, t0 + HOUR, 0, 600);
+  assert.deepEqual(plain(s.points.map((p) => x(p.x))), [0, 10, 100, 600], 'uneven intervals keep their spacing');
+  assert.deepEqual(plain(chart.segments(s.points, s.missing, (v) => v).map((run) => run.length)), [3, 1]);
+  assert.equal(warnings.length, 2);
+  assert.ok(warnings.every((w) => /offset/.test(w)));
+  assert.equal(chart.format(s.points[1].x, model.x), '2026-11-17 00:01 UTC');
+});
+
+test('time bounds, reference lines, and readouts share one UTC format; other charts keep text x values', () => {
+  const model = chart.normalize({
+    type: 'scatter',
+    x: { type: 'time', min: '2026-11-16T18:00:00-05:00', max: 'later' },
+    referenceLines: [{ axis: 'x', value: '2026-11-17T00:00:30Z', label: 'Cutoff' }, { axis: 'x', value: '2026-11-17T00:00' }],
+    series: [{ data: [[t0, 1], [t0 + 90e3, 2]] }]
+  });
+  assert.equal(model.x.min, t0 - HOUR);
+  assert.equal(model.x.max, null);
+  assert.deepEqual(plain(model.referenceLines), [{ axis: 'x', value: t0 + 30e3, label: 'Cutoff' }]);
+  assert.equal(chart.format(t0, model.x), '2026-11-17 00:00:00 UTC', 'seconds appear on every value once one needs them');
+  const fine = chart.normalize({ type: 'scatter', x: { type: 'time' }, series: [{ data: [[t0 + 5, 1]] }] });
+  assert.equal(chart.format(t0 + 5, fine.x), '2026-11-17 00:00:00.005 UTC');
+
+  warnings.length = 0;
+  const bars = chart.normalize({ type: 'bar', x: { type: 'time' }, series: [{ data: [['2026-11-17T00:00Z', 1]] }] });
+  assert.deepEqual(plain(bars.categories), ['2026-11-17T00:00Z']);
+  assert.equal(warnings.length, 1);
+  const text = chart.normalize({ series: [{ data: [['2026-11-17T00:00Z', 1], ['2026-11-17T01:00Z', 2]] }] });
+  assert.deepEqual(plain(text.categories), ['2026-11-17T00:00Z', '2026-11-17T01:00Z']);
+});
+
+test('time ticks fall on round UTC steps with labels sized to the step', () => {
+  const start = Date.UTC(2026, 10, 16, 22, 2);
+  const labels = (info) => plain(info.ticks.map(chart.timeTickFormat(info)));
+  const hours = chart.timeTicks(start, start + 4 * HOUR + 8 * MINUTE, 5, true, true);
+  assert.equal(hours.min, start, 'line charts keep their exact ends');
+  assert.deepEqual(labels(hours), ['23:00', 'Nov 17', '01:00', '02:00']);
+  assert.deepEqual(labels(chart.timeTicks(start, start + 50e3, 5)).slice(0, 2), ['22:02:00', '22:02:10']);
+  assert.equal(labels(chart.timeTicks(start, start + 400, 4))[1], '22:02:00.100');
+  const weeks = chart.timeTicks(Date.UTC(2026, 10, 1), Date.UTC(2026, 11, 20), 7);
+  assert.ok(weeks.min <= Date.UTC(2026, 10, 1) && weeks.ticks.every((v) => new Date(v).getUTCDay() === 1), 'weeks start on Monday');
+  assert.deepEqual(labels(chart.timeTicks(Date.UTC(2026, 0, 15), Date.UTC(2026, 9, 1), 4)), ['Jan 2026', 'Apr 2026', 'Jul 2026', 'Oct 2026']);
+  assert.deepEqual(labels(chart.timeTicks(Date.UTC(2020, 0, 1), Date.UTC(2040, 0, 1), 5)), ['2020', '2025', '2030', '2035', '2040']);
+});
+
+test('log scales give each decade equal length and tick by decades or 1-2-5 steps', () => {
+  const x = chart.log(1, 1000, 0, 300);
+  assert.deepEqual([1, 10, 100, 1000].map((v) => Math.round(x(v) * 1e9) / 1e9), [0, 100, 200, 300]);
+  assert.ok(Math.abs(x.invert(150) - Math.sqrt(1000)) < 1e-9);
+  const labels = (info) => plain(info.ticks.map(chart.logTickFormat()));
+  const wide = chart.logTicks(0.0003, 4200, 4);
+  assert.deepEqual([wide.min, wide.max], [1e-4, 1e4]);
+  assert.deepEqual(labels(wide), ['0.0001', '0.01', '1', '100', '10K'], 'many decades keep every other one');
+  assert.deepEqual(labels(chart.logTicks(0.3, 420, 4)), ['0.1', '1', '10', '100', '1,000']);
+  assert.deepEqual(labels(chart.logTicks(0.004, 0.03, 5)), ['0.002', '0.005', '0.01', '0.02', '0.05']);
+  assert.deepEqual(labels(chart.logTicks(1, 1e12, 5)), ['1', '1,000', '1M', '1B', '1T']);
+  const fixed = chart.logTicks(2e-5, 0.3, 8, true, true);
+  assert.deepEqual([fixed.min, fixed.max], [2e-5, 0.3], 'fixed bounds keep their exact values');
+  assert.deepEqual(labels(fixed), ['0.00003', '0.0001', '0.0003', '0.001', '0.003', '0.01', '0.03', '0.1', '0.3']);
+  assert.deepEqual(plain(chart.logTicks(2.1, 2.9, 4, true, true).ticks), [2.2, 2.4, 2.6, 2.8], 'narrow ranges fall back to linear ticks');
+});
+
+test('log axes keep original values for readouts and tables, and reference lines use the same scale', () => {
+  const model = chart.normalize({
+    type: 'scatter',
+    x: { type: 'log', label: 'Learning rate', min: '1e-5', max: 0.1 },
+    y: { type: 'log' },
+    referenceLines: [{ axis: 'y', value: 1.79, label: 'Uniform' }, { axis: 'x', value: 3e-4 }],
+    series: [{ data: [['0.00003', 1.46], [3e-4, 0.58]] }]
+  });
+  assert.deepEqual(plain(model.errors), []);
+  assert.deepEqual([model.x.log, model.y.log, model.x.min, model.x.max], [true, true, 1e-5, 0.1]);
+  assert.deepEqual(plain(model.series[0].points.map((p) => [p.x, p.y])), [[3e-5, 1.46], [3e-4, 0.58]]);
+  assert.equal(chart.format(3e-5, model.x), '0.00003');
+  assert.equal(chart.format(1e-7, model.x), '1e-7');
+  const info = chart.logTicks(0.58, 1.46, 4);
+  const y = chart.log(info.min, info.max, 200, 0);
+  assert.ok(1.79 >= info.min && 1.79 <= info.max);
+  assert.ok(Math.abs(y(1.79) - 200 * (1 - (Math.log10(1.79) - Math.log10(info.min)) / Math.log10(info.max / info.min))) < 1e-9);
+  assert.ok(chart.extent(model).yHi < 1.79, 'reference lines still leave the data domain alone');
+});
+
+test('log axes reject nonpositive values and bounds, and other charts ignore the option', () => {
+  const spec = (extra) => Object.assign({ x: { type: 'log' }, y: { type: 'log' }, series: [{ data: [[1, 2], [10, 3]] }] }, extra);
+  assert.deepEqual(plain(chart.validate(spec())), []);
+  const errors = (extra) => plain(chart.validate(spec(extra)));
+  assert.match(errors({ series: [{ data: [[1, 0], [10, -3], [100, 2]] }] })[0], /log y axis needs positive values; 2 are zero or negative, such as 0/);
+  assert.match(errors({ series: [{ data: [[0, 1], [10, 2]] }] })[0], /log x axis needs positive values/);
+  assert.match(errors({ gaps: 'break', series: [{ data: [[-1, null], [10, 2]] }] })[0], /log x axis/, 'missing x positions count');
+  assert.match(errors({ y: { type: 'log', min: 0 } })[0], /log y axis min must be a positive number, not 0/);
+  assert.match(errors({ y: { type: 'log', max: 'lots' } })[0], /max must be a positive number, not "lots"/);
+  assert.match(errors({ x: { type: 'log', min: 50, max: 5 } })[0], /min must be below its max/);
+  assert.match(errors({ referenceLines: [{ axis: 'y', value: 0, label: 'Zero' }] })[0], /reference line on the log y axis is at 0/);
+  assert.match(errors({ series: [{ data: [['a', 1]] }] })[0], /needs numeric x values/);
+  assert.deepEqual(plain(chart.validate({ y: { min: 'lots' }, series: [{ data: [[0, -1]] }] })), [], 'linear axes are unchanged');
+
+  warnings.length = 0;
+  const bars = chart.normalize({ type: 'bar', y: { type: 'log' }, series: [{ data: [['a', 0]] }] });
+  assert.deepEqual([bars.y.log, bars.errors.length, warnings.length], [false, 0, 1]);
 });

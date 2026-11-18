@@ -94,8 +94,64 @@
       [/<![^>]*>?/y, 'keyword'],
       [/<\/?[A-Za-z](?:"[^"]*"?|'[^']*'?|[^'">])*>?/y, function (m) { return lex(m[0], TAG); }],
       [/&(?:#\d+|#x[\da-fA-F]+|\w+);/y, 'literal']
+    ],
+    sql: [
+      [/--[^\n]*|\/\*[\s\S]*?(?:\*\/|$)/y, 'comment'],
+      [/[NnEeXxBb]?'(?:''|[^'])*'?|\$([A-Za-z_]\w*)?\$[\s\S]*?(?:\$\1\$|$)/y, 'string'],
+      // Quoted identifiers stay plain so words inside them are not read as keywords.
+      [/"(?:""|[^"\n])*"?|`[^`\n]*`?|\[[A-Za-z_][\w ]*\]/y, null],
+      [/[A-Za-z_][\w$]*/y, function (m, src, start) {
+        var word = m[0].toLowerCase();
+        if (SQL_KEYWORDS[word]) return 'keyword';
+        if (SQL_LITERALS[word]) return 'literal';
+        if (SQL_TYPES[word]) return 'builtin';
+        // A call needs "(" right after the name; a table name before a column list is not one.
+        if (src.charAt(start + word.length) === '(' &&
+          !/\b(?:into|table|references|on|join|from|update|view|index)\s+$/i.test(src.slice(Math.max(0, start - 16), start))) {
+          return 'function';
+        }
+        return null;
+      }],
+      [/(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y, 'number'],
+      [/::|(?:(?!--)[+\-*/%=<>!|&^~])+/y, 'operator'],
+      [/:[A-Za-z_]\w*|@@?[A-Za-z_]\w*|\$\d+|\?/y, 'variable']
+    ],
+    csharp: [
+      [/\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$)/y, 'comment'],
+      [/#[ \t]*(?:if|elif|else|endif|define|undef|region|endregion|pragma|nullable|warning|error|line)\b[^\n]*/y, 'keyword'],
+      [/\$*@\$*"(?:""|[^"])*"?/y, 'string'],
+      [/\$*(?:"""[\s\S]*?(?:"""|$)|"(?:\\.|[^\\"\n])*"?)|'(?:\\[^'\n]*|[^\\'\n])'?/y, 'string'],
+      // An attribute such as [SerializeField] or [Test] at the start of a line.
+      [/(?<=(?:^|\n)[ \t]*)\[([A-Za-z_][\w.]*)/y, function (m) {
+        return [{ type: null, text: '[' }, { type: 'builtin', text: m[1] }];
+      }],
+      [/[A-Za-z_]\w*/y, ident(
+        words('abstract and as async await base bool break byte case catch char checked class const continue ' +
+          'decimal default delegate do double else enum event explicit extern finally fixed float for foreach get ' +
+          'goto if implicit in init int interface internal is lock long nameof namespace new not object operator ' +
+          'or out override params partial private protected public readonly record ref required return sbyte ' +
+          'sealed set short sizeof stackalloc static string struct switch throw try typeof uint ulong unchecked ' +
+          'unsafe ushort using var virtual void volatile when where while with yield'),
+        words('true false null this'),
+        words('Action Console Debug Dictionary Exception Func GameObject HashSet IEnumerable IEnumerator Input ' +
+          'List Math Mathf MonoBehaviour Physics Quaternion Random String Task Time Transform Vector2 Vector3'),
+        /\b(?:class|struct|interface|enum|record)\s+$/)],
+      [/(?:0[xX][\da-fA-F_]+|0[bB][01_]+|(?:\d[\d_]*(?:\.\d[\d_]*)?|\.\d[\d_]*)(?:[eE][+-]?\d+)?)(?:[uU][lL]?|[lL][uU]?|[fFdDmM])?/y, 'number'],
+      [/=>|[+\-*/%=&|^!<>?~]+/y, 'operator']
     ]
   };
+
+  var SQL_KEYWORDS = words('add all alter and any as asc begin between by cascade case check column commit conflict ' +
+    'constraint create cross database declare default delete desc distinct do drop else end escape except exists ' +
+    'fetch filter first foreign from full function grant group having if ilike in index inner insert intersect into ' +
+    'is join key lateral left like limit materialized merge natural next not nothing nulls offset on only or order ' +
+    'outer over partition primary procedure recursive references replace returning returns revoke right rollback ' +
+    'row rows schema select set table then top transaction trigger union unique update using values view when where ' +
+    'window with within');
+  var SQL_LITERALS = words('true false null unknown');
+  var SQL_TYPES = words('bigint bigserial binary blob bool boolean bytea char character current_date current_time ' +
+    'current_timestamp date datetime datetime2 decimal double float int integer interval json jsonb money nvarchar ' +
+    'numeric precision real serial smallint text time timestamp timestamptz tinyint uuid varbinary varchar');
 
   var SH_KEYWORDS = words('if then else elif fi for while until do done case esac in function return export ' +
     'local readonly source');
@@ -112,10 +168,15 @@
     py: 'python', python: 'python',
     html: 'html', xml: 'html', svg: 'html',
     css: 'css',
-    sh: 'shell', bash: 'shell', shell: 'shell', zsh: 'shell', console: 'shell'
+    sh: 'shell', bash: 'shell', shell: 'shell', zsh: 'shell', console: 'shell',
+    sql: 'sql',
+    csharp: 'csharp', cs: 'csharp', 'c#': 'csharp'
   };
 
-  var NAMES = { js: 'JavaScript', python: 'Python', html: 'HTML', css: 'CSS', shell: 'Shell', json: 'JSON', xml: 'XML', svg: 'SVG' };
+  var NAMES = {
+    js: 'JavaScript', python: 'Python', html: 'HTML', css: 'CSS', shell: 'Shell', json: 'JSON', xml: 'XML', svg: 'SVG',
+    sql: 'SQL', csharp: 'C#'
+  };
 
   function push(out, type, text) {
     if (!text) return;
@@ -330,7 +391,7 @@
   function langOf(pre, code) {
     var attr = DocForm.data(pre, 'lang', null) || (code && DocForm.data(code, 'lang', null));
     if (attr) return attr;
-    var cls = ((code && code.className) + ' ' + pre.className).match(/\blang(?:uage)?-([\w+-]+)/);
+    var cls = ((code && code.className) + ' ' + pre.className).match(/\blang(?:uage)?-([\w+#-]+)/);
     return cls ? cls[1] : '';
   }
 

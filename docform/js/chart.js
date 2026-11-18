@@ -2,6 +2,9 @@
 // DocForm.chart(el, spec). Hovering or the arrow keys show a readout; the Table button swaps the plot for its data.
 // Line charts with gaps: 'break' end a segment at explicit missing values; referenceLines mark labelled values.
 // With a highlight group, a click, Enter, or Space on a keyed point selects that key in DocForm.highlight.
+// x: { type: 'time' } on line and scatter charts places zoned timestamps by elapsed time and shows them in UTC.
+// type: 'log' on either axis of a line or scatter chart plots positive values on a base-10 scale. A spec that fails
+// validation is not drawn: the element keeps its own content, and an update keeps the last valid chart.
 (function (root) {
   'use strict';
 
@@ -77,6 +80,47 @@
     return f;
   }
 
+  // Base-10 scale over positive values: each decade takes the same length.
+  function log(d0, d1, r0, r1) {
+    var base = linear(Math.log10(d0), Math.log10(d1), r0, r1);
+    var f = function (v) { return base(Math.log10(v)); };
+    f.invert = function (px) { return Math.pow(10, base.invert(px)); };
+    return f;
+  }
+
+  // Ticks for a log axis: 1-2-5 or 1-3 steps across a few decades, every decade (or every nth) across more.
+  // Ends round out to the nearest tick unless fixed; a range too narrow for two such ticks gets linear ones.
+  function logTicks(min, max, count, fixMin, fixMax) {
+    if (!(min > 0) || !(max > 0)) { min = 1; max = 10; }
+    if (min > max) { var t = min; min = max; max = t; }
+    if (min === max) { min /= 2; max *= 2; }
+    count = count || 5;
+    var lo10 = Math.floor(Math.log10(min) + 1e-9);
+    var hi10 = Math.ceil(Math.log10(max) - 1e-9);
+    var decades = Math.max(1, hi10 - lo10);
+    var room = count * 1.5;
+    var marks = decades * 3 + 1 <= room ? [1, 2, 5] : decades * 2 + 1 <= room ? [1, 3] : [1];
+    var every = marks.length > 1 ? 1 : Math.max(1, Math.ceil(decades / count));
+    var all = [];
+    for (var k = Math.floor(lo10 / every) * every; k <= hi10 + every; k += every) {
+      marks.forEach(function (m) { all.push(+(m + 'e' + k)); });
+    }
+    var lo = fixMin ? min : all.filter(function (v) { return v <= min * (1 + 1e-9); }).pop();
+    var hi = fixMax ? max : all.filter(function (v) { return v >= max * (1 - 1e-9); })[0];
+    var out = all.filter(function (v) { return v >= lo * (1 - 1e-9) && v <= hi * (1 + 1e-9); });
+    if (out.length < 2) out = ticks(lo, hi, count, true, true).ticks.filter(function (v) { return v > 0; });
+    return { min: lo, max: hi, log: true, ticks: out };
+  }
+
+  // Log tick labels: each value in its own compact unit (500, 1,000, 10K, 2M, 1T) or as a short decimal (0.002, 1e-7).
+  function logTickFormat() {
+    return function (v) {
+      var unit = v >= 1e12 ? [1e12, 'T'] : v >= 1e9 ? [1e9, 'B'] : v >= 1e6 ? [1e6, 'M'] : v >= 1e4 ? [1e3, 'K'] : null;
+      if (unit) return String(+(v / unit[0]).toPrecision(6)) + unit[1];
+      return v >= 1 ? v.toLocaleString('en-US', { maximumFractionDigits: 6 }) : String(+v.toPrecision(6));
+    };
+  }
+
   // Index of the entry in an ascending list closest to v; ties go to the lower index.
   function nearest(sorted, v) {
     var lo = 0;
@@ -104,32 +148,228 @@
   // Readout values: full precision up to six significant digits unless the axis gives digits.
   function format(v, axis) {
     if (!isNum(v)) return '';
+    if (axis && axis.time) return timeText(v, axis.precision);
     var digits = axis && isNum(axis.digits) ? axis.digits : null;
+    var tiny = axis && axis.log && v && Math.abs(v) < 1e-4;
     var text = digits === null ?
-      (+v.toPrecision(6)).toLocaleString('en-US', { maximumFractionDigits: 6 }) :
+      (tiny ? String(+v.toPrecision(6)) : (+v.toPrecision(6)).toLocaleString('en-US', { maximumFractionDigits: 6 })) :
       v.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
     return text + (axis && axis.unit ? axis.unit : '');
   }
 
-  function axisSpec(a) {
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var SECOND = 1e3;
+  var MINUTE = 6e4;
+  var HOUR = 36e5;
+  var DAY = 864e5;
+  var ISO = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?\s*(Z|[+-]\d{2}(?::?\d{2})?)$/i;
+  var TIME_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500, SECOND, 2 * SECOND, 5 * SECOND, 10 * SECOND, 15 * SECOND,
+    30 * SECOND, MINUTE, 2 * MINUTE, 5 * MINUTE, 10 * MINUTE, 15 * MINUTE, 30 * MINUTE, HOUR, 2 * HOUR, 3 * HOUR,
+    6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 7 * DAY];
+  var MONTH_STEPS = [1, 2, 3, 6];
+
+  function pad(n, width) {
+    n = String(n);
+    while (n.length < (width || 2)) n = '0' + n;
+    return n;
+  }
+
+  // Epoch milliseconds, or an ISO date and time ending in Z or an offset such as +09:00, become epoch milliseconds.
+  // Anything else is null, including timestamps without a zone, which would otherwise depend on the reader's clock.
+  function toTime(v) {
+    if (typeof v === 'string' && /^\s*[-+]?\d+(?:\.\d+)?\s*$/.test(v)) v = parseFloat(v);
+    if (isNum(v)) return Math.abs(v) <= 8.64e15 ? v : null;
+    if (typeof v !== 'string') return null;
+    var m = v.trim().match(ISO);
+    if (!m) return null;
+    var month = +m[2] - 1;
+    var day = +m[3];
+    var date = new Date(0);
+    date.setUTCFullYear(+m[1], month, day);
+    if (+m[4] > 23 || +m[5] > 59 || +(m[6] || 0) > 59 || date.getUTCMonth() !== month || date.getUTCDate() !== day) return null;
+    var zone = m[8].toUpperCase();
+    var offset = 0;
+    if (zone !== 'Z') {
+      var oh = +zone.slice(1, 3);
+      var om = zone.length > 3 ? +zone.slice(-2) : 0;
+      if (oh > 23 || om > 59) return null;
+      offset = (zone.charAt(0) === '-' ? -1 : 1) * (oh * HOUR + om * MINUTE);
+    }
+    var ms = m[7] ? +(m[7] + '00').slice(0, 3) : 0;
+    return date.getTime() + +m[4] * HOUR + +m[5] * MINUTE + +(m[6] || 0) * SECOND + ms - offset;
+  }
+
+  // The finest unit any instant needs, so every readout and table cell on one axis shares a format.
+  function timePrecision(values) {
+    if (values.some(function (v) { return v % SECOND; })) return 'ms';
+    return values.some(function (v) { return v % MINUTE; }) ? 'second' : 'minute';
+  }
+
+  function timeText(v, precision) {
+    var d = new Date(v);
+    var text = pad(d.getUTCFullYear(), 4) + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' ' +
+      pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes());
+    if (precision === 'second' || precision === 'ms') text += ':' + pad(d.getUTCSeconds());
+    if (precision === 'ms') text += '.' + pad(d.getUTCMilliseconds(), 3);
+    return text + ' UTC';
+  }
+
+  function monthStart(index) {
+    var d = new Date(0);
+    var year = Math.floor(index / 12);
+    d.setUTCFullYear(year, index - year * 12, 1);
+    return d.getTime();
+  }
+
+  // Ticks at round UTC steps (milliseconds through weeks, then calendar months and years) covering [min, max].
+  // Week ticks fall on Mondays. Fixed ends keep their exact values, as in ticks().
+  function timeTicks(min, max, count, fixMin, fixMax) {
+    if (!isNum(min) || !isNum(max)) { min = 0; max = DAY; }
+    if (min > max) { var t = min; min = max; max = t; }
+    if (min === max) { min -= 30 * MINUTE; max += 30 * MINUTE; }
+    var raw = (max - min) / Math.max(1, count || 5);
+    var step = 0;
+    var months = 0;
+    var i;
+    for (i = 0; i < TIME_STEPS.length && !step; i++) if (TIME_STEPS[i] >= raw) step = TIME_STEPS[i];
+    if (!step) {
+      var rawMonths = raw / (30.44 * DAY);
+      for (i = 0; i < MONTH_STEPS.length && !months; i++) if (MONTH_STEPS[i] >= rawMonths) months = MONTH_STEPS[i];
+      if (!months) months = 12 * Math.max(1, Math.round(niceStep(rawMonths / 12, 1)));
+    }
+    var out = [];
+    var lo;
+    var hi;
+    var k;
+    if (months) {
+      var at = function (v) { var d = new Date(v); return d.getUTCFullYear() * 12 + d.getUTCMonth(); };
+      var first = Math.floor(at(min) / months) * months;
+      var last = Math.floor(at(max) / months) * months;
+      if (monthStart(last) < max) last += months;
+      lo = fixMin ? min : monthStart(first);
+      hi = fixMax ? max : monthStart(last);
+      for (k = first; k <= last && out.length < 1000; k += months) {
+        if (monthStart(k) >= lo && monthStart(k) <= hi) out.push(monthStart(k));
+      }
+      step = months * 30.44 * DAY;
+    } else {
+      var origin = step === 7 * DAY ? 4 * DAY : 0;
+      lo = fixMin ? min : Math.floor((min - origin) / step) * step + origin;
+      hi = fixMax ? max : Math.ceil((max - origin) / step) * step + origin;
+      for (k = Math.ceil((lo - origin) / step) * step + origin; k <= hi && out.length < 1000; k += step) out.push(k);
+    }
+    return { min: lo, max: hi, step: step, months: months, ticks: out };
+  }
+
+  // Short UTC tick labels sized to the step; a tick at UTC midnight names its date instead of 00:00.
+  function timeTickFormat(info) {
+    return function (v) {
+      var d = new Date(v);
+      if (info.months >= 12) return String(d.getUTCFullYear());
+      if (info.months) return MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+      var date = MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate();
+      if (info.step >= DAY) return date;
+      var text = pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes());
+      if (info.step < MINUTE) text += ':' + pad(d.getUTCSeconds());
+      if (info.step < SECOND) text += '.' + pad(d.getUTCMilliseconds(), 3);
+      return v % DAY ? text : date;
+    };
+  }
+
+  function axisSpec(a, time, log) {
     if (typeof a === 'string') a = { label: a };
     a = a || {};
+    var bound = function (v) {
+      if (!time) return toNumber(v);
+      var at = v == null ? null : toTime(v);
+      if (v != null && at === null) {
+        DocForm.warnOnce('chart-time-bound:' + v, 'Chart time bound ' + JSON.stringify(v) + ' is not a timestamp; it is ignored.');
+      }
+      return at;
+    };
     return {
       label: a.label == null ? '' : String(a.label),
-      min: toNumber(a.min),
-      max: toNumber(a.max),
+      min: bound(a.min),
+      max: bound(a.max),
       digits: isNum(a.digits) ? a.digits : null,
-      unit: a.unit ? String(a.unit) : ''
+      unit: a.unit ? String(a.unit) : '',
+      time: !!time,
+      log: !!log,
+      precision: null
     };
+  }
+
+  function axisType(a) {
+    return !!a && typeof a === 'object' ? a.type : null;
+  }
+
+  // Problems that would make a log axis misleading. Each one stops the chart from drawing (see report).
+  function logErrors(model, spec) {
+    var errors = [];
+    var rejected = function (name, values) {
+      var bad = values.filter(function (v) { return !(v > 0); });
+      if (bad.length) {
+        errors.push('The log ' + name + ' axis needs positive values; ' + bad.length + (bad.length > 1 ? ' are' : ' is') +
+          ' zero or negative, such as ' + bad[0] + '.');
+      }
+    };
+    ['x', 'y'].forEach(function (name) {
+      var axis = model[name];
+      if (!axis.log) return;
+      var raw = spec[name] && typeof spec[name] === 'object' ? spec[name] : {};
+      ['min', 'max'].forEach(function (end) {
+        if (raw[end] != null && !(axis[end] > 0)) {
+          errors.push('The log ' + name + ' axis ' + end + ' must be a positive number, not ' + JSON.stringify(raw[end]) + '.');
+        }
+      });
+      if (axis.min > 0 && axis.max > 0 && axis.min >= axis.max) {
+        errors.push('The log ' + name + ' axis min must be below its max.');
+      }
+      if (name === 'x' && model.categories) {
+        errors.push('The log x axis needs numeric x values.');
+        return;
+      }
+      var values = [];
+      model.series.forEach(function (s) {
+        s.points.forEach(function (p) { values.push(p[name]); });
+        if (name === 'x') values.push.apply(values, s.missing);
+      });
+      rejected(name, values);
+      var refs = model.referenceLines.filter(function (r) { return r.axis === name; }).map(function (r) { return r.value; });
+      var bad = refs.filter(function (v) { return !(v > 0); });
+      if (bad.length) errors.push('A reference line on the log ' + name + ' axis is at ' + bad[0] + '; it needs a positive value.');
+    });
+    return errors;
+  }
+
+  // The x axis name in tables and readouts, and its title under the plot, which states the time zone.
+  function xName(model, fallback) {
+    return model.x.label || (model.x.time ? 'Time' : fallback);
+  }
+
+  function xTitle(model) {
+    return model.x.time ? xName(model) + ' (UTC)' : model.x.label;
   }
 
   // Spec -> model. Data points are [x, y, label], {x, y, label}, or bare y values (x = category or index).
   // Bar charts and string x values give a categorical x axis in order of first appearance.
   // With gaps: 'break' on a line chart, a null or blank y keeps its x as a missing value instead of being dropped.
+  // With x: { type: 'time' }, x values are timestamps (see toTime) and a point whose x is not one is skipped.
   function normalize(spec) {
     spec = spec || {};
     var type = TYPES[spec.type] ? spec.type : 'line';
     var breaks = type === 'line' && spec.gaps === 'break';
+    var time = axisType(spec.x) === 'time';
+    if (time && type === 'bar') {
+      DocForm.warnOnce('chart-time-bar', 'Time axes apply to line and scatter charts; this bar chart keeps text categories.');
+      time = false;
+    }
+    var xLog = axisType(spec.x) === 'log';
+    var yLog = axisType(spec.y) === 'log';
+    if ((xLog || yLog) && type === 'bar') {
+      DocForm.warnOnce('chart-log-bar', 'Log axes apply to line and scatter charts; this bar chart keeps linear axes.');
+      xLog = yLog = false;
+    }
     var categories = Array.isArray(spec.categories) ? spec.categories.map(String) : null;
     var list = Array.isArray(spec.series) ? spec.series : Array.isArray(spec.data) ? [{ name: spec.name, data: spec.data }] : [];
     var series = list.map(function (s, si) {
@@ -143,7 +383,15 @@
         var blank = y === null || (typeof y === 'string' && !y.trim());
         y = toNumber(y);
         if (x == null || (y === null && !(breaks && blank))) return;
-        if (typeof x === 'string' && !categories && type !== 'bar' && toNumber(x) !== null) x = toNumber(x);
+        if (time) {
+          var at = toTime(x);
+          if (at === null) {
+            DocForm.warnOnce('chart-time:' + x, 'Chart time ' + JSON.stringify(x) + ' needs epoch milliseconds or an ISO ' +
+              'timestamp with Z or an offset such as +09:00; the point is skipped.');
+            return;
+          }
+          x = at;
+        } else if (typeof x === 'string' && !categories && type !== 'bar' && toNumber(x) !== null) x = toNumber(x);
         key = key == null ? '' : String(key).trim();
         entries.push({ x: x, y: y, label: label == null ? '' : String(label), key: key || null });
       });
@@ -155,9 +403,9 @@
         index: si
       };
     });
-    var categorical = type === 'bar' || !!categories || series.some(function (s) {
+    var categorical = !time && (type === 'bar' || !!categories || series.some(function (s) {
       return s.points.some(function (p) { return typeof p.x !== 'number'; });
-    });
+    }));
     if (categorical) {
       categories = categories ? categories.slice() : [];
       series.forEach(function (s) {
@@ -184,7 +432,8 @@
     (Array.isArray(spec.referenceLines) ? spec.referenceLines : []).forEach(function (r) {
       r = r || {};
       var axis = r.axis === 'x' || r.axis === 'y' ? r.axis : null;
-      var value = axis === 'x' && categorical ? (r.value == null ? null : String(r.value)) : toNumber(r.value);
+      var value = axis === 'x' && categorical ? (r.value == null ? null : String(r.value)) :
+        axis === 'x' && time ? toTime(r.value) : toNumber(r.value);
       if (!axis || value === null) {
         DocForm.warnOnce('chart-ref', 'Chart reference lines need an axis of "x" or "y" and a value on that axis.');
         return;
@@ -194,7 +443,17 @@
     if (series.length > COLORS) {
       DocForm.warnOnce('chart-series', 'Charts have ' + COLORS + ' series colours; later series are drawn gray.');
     }
-    return {
+    var xAxis = axisSpec(spec.x, time, xLog);
+    if (time) {
+      var instants = [xAxis.min, xAxis.max].filter(isNum);
+      series.forEach(function (s) {
+        s.points.forEach(function (p) { instants.push(p.x); });
+        instants.push.apply(instants, s.missing);
+      });
+      refs.forEach(function (r) { if (r.axis === 'x') instants.push(r.value); });
+      xAxis.precision = timePrecision(instants);
+    }
+    var model = {
       type: type,
       title: spec.title ? String(spec.title) : '',
       series: series,
@@ -204,10 +463,21 @@
       referenceLines: refs,
       highlight: typeof spec.highlight === 'string' && spec.highlight.trim() ? spec.highlight.trim() : null,
       table: spec.table !== false,
-      x: axisSpec(spec.x),
-      y: axisSpec(spec.y),
+      x: xAxis,
+      y: axisSpec(spec.y, false, yLog),
       height: isNum(spec.height) && spec.height > 80 ? spec.height : 260
     };
+    model.errors = logErrors(model, spec);
+    return model;
+  }
+
+  // Warns about a model that cannot be drawn; true when it can.
+  function report(model, host, update) {
+    if (!model.errors.length) return true;
+    var text = model.errors.join(' ');
+    DocForm.warnOnce('chart-invalid:' + text, (update ? 'Chart update ignored; the last valid chart stays. ' :
+      'Chart not drawn; its own content stays. ') + text, host);
+    return false;
   }
 
   // Header row plus body rows of cell text -> spec: the first column is x, every other column a series.
@@ -382,11 +652,14 @@
 
     var top = 10 + (model.y.label ? 20 : 0);
     var markerSpace = model.markedCategories ? 13 : 0;
-    var bottom = 26 + markerSpace + (model.x.label ? 20 : 0);
-    var yInfo = ticks(yLo, yHi, Math.max(2, Math.round((height - top - bottom) / 48)), model.y.min !== null, model.y.max !== null);
-    var yFmt = tickFormat(yInfo);
+    var xLabel = xTitle(model);
+    var bottom = 26 + markerSpace + (xLabel ? 20 : 0);
+    var yLog = model.y.log;
+    var yInfo = (yLog ? logTicks : ticks)(yLo, yHi, Math.max(2, Math.round((height - top - bottom) / 48)),
+      model.y.min !== null, model.y.max !== null);
+    var yFmt = yLog ? logTickFormat() : tickFormat(yInfo);
     var left = 12 + CHAR * Math.max.apply(null, yInfo.ticks.map(function (v) { return yFmt(v).length; }).concat([1]));
-    var y = linear(yInfo.min, yInfo.max, height - bottom, top);
+    var y = (yLog ? log : linear)(yInfo.min, yInfo.max, height - bottom, top);
 
     // End labels name up to four line series when their ends sit at least 14px apart.
     var ends = [];
@@ -412,11 +685,13 @@
       var xLo = xs.length ? Math.min.apply(null, xs) : 0;
       var xHi = xs.length ? Math.max.apply(null, xs) : 1;
       var exact = type === 'line';
+      var xTicks = model.x.time ? timeTicks : model.x.log ? logTicks : ticks;
       if (model.x.min !== null) xLo = model.x.min;
       if (model.x.max !== null) xHi = model.x.max;
-      xInfo = ticks(xLo, xHi, Math.max(2, Math.round(plotW / 90)), exact || model.x.min !== null, exact || model.x.max !== null);
-      if (xInfo.min === xInfo.max) xInfo = ticks(xLo, xHi, 4);
-      var xs0 = linear(xInfo.min, xInfo.max, left, left + plotW);
+      xInfo = xTicks(xLo, xHi, Math.max(2, Math.round(plotW / (model.x.time ? 110 : 90))),
+        exact || model.x.min !== null, exact || model.x.max !== null);
+      if (xInfo.min === xInfo.max) xInfo = xTicks(xLo, xHi, 4);
+      var xs0 = (model.x.log ? log : linear)(xInfo.min, xInfo.max, left, left + plotW);
       xAt = function (x) { return xs0(x); };
     }
 
@@ -447,14 +722,14 @@
         svg('text', { x: xAt(c), y: tickY, 'text-anchor': 'middle', class: 'df-chart-tick' }, frame).textContent = c;
       });
     } else {
-      var xFmt = tickFormat(xInfo);
+      var xFmt = model.x.time ? timeTickFormat(xInfo) : model.x.log ? logTickFormat() : tickFormat(xInfo);
       xInfo.ticks.forEach(function (v) {
         svg('text', { x: xAt(v), y: tickY, 'text-anchor': 'middle', class: 'df-chart-tick' }, frame).textContent = xFmt(v);
       });
     }
-    if (model.x.label) {
+    if (xLabel) {
       svg('text', { x: left + plotW / 2, y: height - 6, 'text-anchor': 'middle', class: 'df-chart-label' }, frame)
-        .textContent = model.x.label;
+        .textContent = xLabel;
     }
     if (model.y.label) {
       svg('text', { x: 0, y: 12, class: 'df-chart-label' }, frame).textContent = model.y.label;
@@ -602,7 +877,7 @@
         key('dot', spot.s, r0);
         html('span', '', r0, spot.s.name);
       }
-      line(model.x.label || 'x', xText(chart, spot.p.x));
+      line(xName(model, 'x'), xText(chart, spot.p.x));
       line(model.y.label || 'y', format(spot.p.y, model.y));
       anchorY = spot.py;
     } else {
@@ -716,7 +991,7 @@
     var body = html('tbody', '', table);
     if (model.type === 'scatter') {
       var labels = model.series.some(function (s) { return s.points.some(function (p) { return p.label; }); });
-      [model.series.length > 1 ? 'Series' : null, labels ? 'Label' : null, model.x.label || 'x', model.y.label || 'y']
+      [model.series.length > 1 ? 'Series' : null, labels ? 'Label' : null, xName(model, 'x'), model.y.label || 'y']
         .forEach(function (t) { if (t !== null) html('th', '', head, t); });
       model.series.forEach(function (s) {
         s.points.forEach(function (p) {
@@ -729,7 +1004,7 @@
       });
       return table;
     }
-    html('th', '', head, model.x.label);
+    html('th', '', head, xName(model, ''));
     model.series.forEach(function (s) { html('th', '', head, s.name || model.y.label || 'Value'); });
     var xs = model.categories || [];
     if (!model.categories) {
@@ -757,6 +1032,9 @@
     var keyed = model.highlight && model.series.some(function (s) { return s.points.some(function (p) { return p.key; }); });
     return (model.title ? model.title + '. ' : '') + model.type.charAt(0).toUpperCase() + model.type.slice(1) + ' chart' +
       (names.length ? ' of ' + names.join(', ') : '') + '.' +
+      (model.x.time ? ' Times are in UTC.' : '') +
+      (model.x.log || model.y.log ? ' The ' + (model.x.log && model.y.log ? 'x and y axes use' : (model.x.log ? 'x' : 'y') +
+        ' axis uses') + ' a log scale.' : '') +
       (refs.length ? ' Reference ' + (refs.length > 1 ? 'lines: ' : 'line: ') + refs.join(', ') + '.' : '') +
       (gaps ? ' Breaks in a line mark missing values.' : '') + ' Arrow keys read the values.' +
       (keyed ? ' Enter or Space selects the point being read.' : '') +
@@ -793,8 +1071,8 @@
     if (!on) draw(chart);
   }
 
-  function build(host, spec, sourceTable) {
-    var chart = { box: host, model: normalize(spec), active: -1, spots: [], svg: null, width: 0 };
+  function build(host, model, sourceTable) {
+    var chart = { box: host, model: model, active: -1, spots: [], svg: null, width: 0 };
     host.classList.add('df-chart');
     host.classList.add('is-' + chart.model.type);
 
@@ -865,8 +1143,11 @@
 
     chart.api = {
       element: host,
+      // Returns false, keeping the current chart, when the new data fails validation.
       update: function (next) {
-        chart.model = normalize(next);
+        var model = normalize(next);
+        if (!report(model, host, true)) return false;
+        chart.model = model;
         watch(chart);
         host.classList.remove('is-line', 'is-bar', 'is-scatter');
         host.classList.add('is-' + chart.model.type);
@@ -882,6 +1163,7 @@
         } else {
           draw(chart);
         }
+        return true;
       },
       model: function () { return chart.model; }
     };
@@ -912,11 +1194,16 @@
         DocForm.warnOnce('chart-refs:' + e.message, 'Chart reference lines are not valid JSON: ' + e.message, host);
       }
     }
+    var axisOf = function (axis) {
+      if (typeof spec[axis] === 'string') spec[axis] = { label: spec[axis] };
+      else if (!spec[axis] || typeof spec[axis] !== 'object') spec[axis] = {};
+      return spec[axis];
+    };
     ['x', 'y'].forEach(function (axis) {
       var label = DocForm.data(host, axis + '-label', null);
-      if (label === null) return;
-      spec[axis] = typeof spec[axis] === 'object' && spec[axis] ? spec[axis] : {};
-      spec[axis].label = label;
+      if (label !== null) axisOf(axis).label = label;
+      var kind = DocForm.data(host, axis + '-type', null);
+      if (kind !== null) axisOf(axis).type = kind;
     });
     return spec;
   }
@@ -948,11 +1235,13 @@
       return null;
     }
     spec = overrides(host, spec || {});
+    var model = normalize(spec);
+    if (!report(model, host)) return null;
     // Keyed source cells join the group too, so the table view shows the same selection.
-    if (table && !script && typeof spec.highlight === 'string' && spec.highlight.trim()) {
-      DocForm.all('[' + KEY + ']', table).forEach(function (cell) { cell.setAttribute(GROUP, spec.highlight.trim()); });
+    if (table && !script && model.highlight) {
+      DocForm.all('[' + KEY + ']', table).forEach(function (cell) { cell.setAttribute(GROUP, model.highlight); });
     }
-    return build(host, spec, script ? null : table);
+    return build(host, model, script ? null : table);
   }
 
   function chart(target, spec) {
@@ -966,11 +1255,16 @@
       existing.api.update(spec);
       return existing.api;
     }
-    return build(host, spec || {}, null);
+    var model = normalize(spec || {});
+    return report(model, host) ? build(host, model, null) : null;
   }
 
   chart.ticks = ticks;
   chart.linear = linear;
+  chart.log = log;
+  chart.logTicks = logTicks;
+  chart.logTickFormat = logTickFormat;
+  chart.validate = function (spec) { return normalize(spec).errors.slice(); };
   chart.nearest = nearest;
   chart.normalize = normalize;
   chart.fromTable = fromTable;
@@ -982,6 +1276,9 @@
   chart.tickFormat = tickFormat;
   chart.barPath = barPath;
   chart.toNumber = toNumber;
+  chart.toTime = toTime;
+  chart.timeTicks = timeTicks;
+  chart.timeTickFormat = timeTickFormat;
   chart.get = function (el) { var c = charts && charts.get(el); return c ? c.api : null; };
   DocForm.chart = chart;
 

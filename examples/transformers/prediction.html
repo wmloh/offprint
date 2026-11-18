@@ -210,6 +210,39 @@ def probabilities(logits, temperature=1):
     <p>Apply the updated function to the logits from the preceding snippet and compare
       <code>probabilities(logits)[3]</code> with the <code>late</code> row in <a href="#token-results"></a>.</p>
 
+    <h2 id="learning-rate-sweep">Sweep the learning rate</h2>
+    <p>Before training on a larger corpus, run the same short training job at several learning rates and compare
+      the final cross-entropy losses. Learning rates are usually tried in steps of about 3×, so a log scale places
+      each step the same distance apart. Losses also span two orders of magnitude here, so both axes use log scales.
+      The numbers are illustrative.</p>
+
+    <figure id="learning-rate-plot">
+      <div data-df-chart="line" data-df-x-type="log" data-df-y-type="log" data-df-gaps="break" data-df-height="260"
+        data-df-y-label="Final loss (nats)"
+        data-df-reference-lines='[{"axis": "y", "value": 1.79, "label": "Uniform guess"}]'>
+        <table>
+          <thead><tr><th>Learning rate</th><th data-df-role="context">Train</th><th data-df-role="output">Validation</th></tr></thead>
+          <tbody>
+            <tr><td>1e-5</td><td>1.71</td><td>1.73</td></tr>
+            <tr><td>3e-5</td><td>1.42</td><td>1.46</td></tr>
+            <tr><td>1e-4</td><td>0.88</td><td>0.95</td></tr>
+            <tr><td>3e-4</td><td>0.41</td><td>0.58</td></tr>
+            <tr><td>1e-3</td><td>0.22</td><td>0.61</td></tr>
+            <tr><td>3e-3</td><td>0.35</td><td>0.97</td></tr>
+            <tr><td>1e-2</td><td>2.6</td><td>2.9</td></tr>
+            <tr><td>3e-2</td><td>14.8</td><td>16.2</td></tr>
+            <tr><td>1e-1</td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Final losses after the same number of steps. The dashed line is the loss of a uniform guess over
+        the six-token vocabulary, ln 6 ≈ 1.79 nats. The run at 0.1 diverged and has no loss.</figcaption>
+    </figure>
+
+    <p>Validation loss is lowest at 3e-4. At 1e-3 the training loss keeps falling while validation loss rises,
+      and from 1e-2 the runs are worse than a uniform guess. Use 3e-4 for the longer run.
+      Every value on a log axis must be positive, so a run with no loss is left blank, not written as 0.</p>
+
     <h2 id="references" data-df-no-outline>References</h2>
     <div data-df-bibliography></div>
   </main>

@@ -193,3 +193,56 @@ test('table keys become point keys and the nearest spot prefers the closest read
   assert.equal(chart.closest(spots, 2, 45), 1);
   assert.equal(chart.closest(spots, 25, 0), 2);
 });
+
+test('a time axis draws UTC ticks and a zoned title, and readouts and the table use the same timestamps', () => {
+  const c = draw({
+    type: 'line',
+    gaps: 'break',
+    x: { type: 'time', label: 'Arrival' },
+    series: [{ name: 'Rows', data: [['2026-11-16T17:02:00-05:00', 14], ['2026-11-17T00:40:00Z', null], ['2026-11-17T01:10:00Z', 9]] }]
+  });
+  const texts = (cls) => c.host.all().filter((el) => el.classList.contains(cls)).map((el) => el.textContent);
+  assert.ok(texts('df-chart-tick').includes('Nov 17'));
+  assert.ok(texts('df-chart-label').includes('Arrival (UTC)'));
+  assert.match(c.plot.getAttribute('aria-label'), /Times are in UTC/);
+  c.fire('keydown', { key: 'Home' });
+  assert.match(c.tip().textContent, /^Arrival 2026-11-16 22:02 UTC14/);
+  c.fire('keydown', { key: 'ArrowRight' });
+  assert.match(c.tip().textContent, /^Arrival 2026-11-17 00:40 UTCNo data/);
+  c.host.all().find((el) => el.classList.contains('df-chart-toggle')).dispatchEvent(new Event('click'));
+  const heads = c.host.all().filter((el) => el.tag === 'th').map((el) => el.textContent);
+  assert.deepEqual(heads, ['Arrival', 'Rows', '2026-11-16 22:02 UTC', '2026-11-17 00:40 UTC', '2026-11-17 01:10 UTC']);
+});
+
+test('log axes draw decade ticks and original readouts; invalid data is not drawn and an invalid update keeps the chart', () => {
+  const sweep = {
+    type: 'line',
+    x: { type: 'log', label: 'Learning rate' },
+    y: { type: 'log', label: 'Loss' },
+    referenceLines: [{ axis: 'y', value: 1.79, label: 'Uniform guess' }],
+    series: [{ name: 'Validation', data: [[1e-5, 1.73], [1e-4, 0.95], [1e-3, 0.61], [1e-2, 2.9]] }]
+  };
+  const c = draw(sweep);
+  const texts = (cls) => c.host.all().filter((el) => el.classList.contains(cls)).map((el) => el.textContent);
+  assert.deepEqual(texts('df-chart-tick').slice(-4), ['0.00001', '0.0001', '0.001', '0.01']);
+  const dots = c.host.all().filter((el) => el.classList.contains('df-chart-dot')).map((el) => +el.getAttribute('cx'));
+  assert.ok(Math.abs((dots[1] - dots[0]) - (dots[3] - dots[2])) < 1e-6, 'decades are evenly spaced');
+  assert.deepEqual(texts('df-chart-ref-label'), ['Uniform guess']);
+  assert.match(c.plot.getAttribute('aria-label'), /x and y axes use a log scale/);
+  c.fire('keydown', { key: 'Home' });
+  assert.match(c.tip().textContent, /^Learning rate 0\.000011\.73/);
+
+  const svgBefore = c.host.all().find((el) => el.tag === 'svg');
+  assert.equal(c.api.update(Object.assign({}, sweep, { series: [{ data: [[1e-5, 0]] }] })), false);
+  assert.equal(c.host.all().find((el) => el.tag === 'svg'), svgBefore, 'the last valid chart stays');
+  assert.equal(c.api.model().series[0].points.length, 4);
+  assert.match(c.warnings.pop(), /^Chart update ignored.*log y axis needs positive values/);
+
+  const env = setup();
+  const host = new Node('div');
+  const fallback = host.appendChild(new Node('table'));
+  assert.equal(env.chart(host, Object.assign({}, sweep, { y: { type: 'log', min: 0 } })), null);
+  assert.deepEqual(host.children, [fallback], 'the authored content stays as it was');
+  assert.equal(host.classList.contains('df-chart'), false);
+  assert.match(env.warnings.pop(), /^Chart not drawn.*min must be a positive number/);
+});

@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="../../docform/css/stepper.css">
   <link rel="stylesheet" href="../../docform/css/highlight.css">
   <link rel="stylesheet" href="../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../docform/css/code.css">
+  <link rel="stylesheet" href="../../docform/css/tabs.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
@@ -107,6 +109,85 @@
         </tr>
       </tbody>
     </table>
+
+    <h2 id="count-once">Count each sale once</h2>
+    <p>The report stores every arrival and keeps the earliest row for each sale ID. The same rule can run in the
+      database or in the receiving service.</p>
+    <div class="df-tabs" data-df-tab-group="dedupe">
+      <div data-df-tab="SQL">
+        <pre data-df-annotate="#sql-notes" data-df-lines="9-11"><code class="language-sql">
+CREATE TABLE arrivals (
+  sale_id     VARCHAR(8)    NOT NULL,
+  amount      NUMERIC(10,2) NOT NULL,
+  received_at NUMERIC(6,1)  NOT NULL  -- (1)
+);
+
+SELECT SUM(amount) AS total
+FROM (
+  SELECT amount,
+         ROW_NUMBER() OVER (PARTITION BY sale_id
+                            ORDER BY received_at) AS arrival  -- (2)
+  FROM arrivals
+) ranked
+WHERE arrival = 1;
+</code></pre>
+        <ol id="sql-notes">
+          <li>Seconds on the receiver clock, such as 22.3 and 23.2.</li>
+          <li>The earliest arrival of each sale ID gets number 1, so a repeated ID counts once.</li>
+        </ol>
+      </div>
+      <div data-df-tab="C#">
+        <pre data-df-annotate="#cs-notes"><code class="language-cs">
+public sealed class SalesTotal
+{
+    private readonly HashSet&lt;string&gt; seen = new();
+
+    public decimal Total { get; private set; }
+
+    public void Receive(string saleId, decimal amount)
+    {
+        if (!seen.Add(saleId)) return;  // (1)
+        Total += amount;
+    }
+}
+</code></pre>
+        <ol id="cs-notes">
+          <li><code>Add</code> returns <code>false</code> for an ID that is already counted, so the late original adds $0.</li>
+        </ol>
+      </div>
+    </div>
+    <p>Summing every row would count the repeated ID twice. The fix sums the ranked rows instead, keeping only
+      the first arrival:</p>
+    <div class="df-diff" data-df-lang="sql">
+      <pre data-df-diff="before">SELECT SUM(amount) AS total  -- $24 for the repeated ID
+FROM arrivals;</pre>
+      <pre data-df-diff="after">SELECT SUM(amount) AS total  -- $12 for the repeated ID
+FROM ranked
+WHERE arrival = 1;</pre>
+    </div>
+
+    <h2 id="batch-arrivals">Place batches on one clock</h2>
+    <p>The store sends its sales in batches through the evening, stamping each batch with its own clock, five hours
+      behind UTC. Batches arrive at uneven intervals, and the 19:05 batch failed to upload, so its row has no count.
+      The daily report closes at midnight UTC, which is 19:00 on the store clock. Sales in later batches count toward
+      the next day's report.</p>
+    <figure id="batch-arrival-chart">
+      <div data-df-chart="line" data-df-x-type="time" data-df-gaps="break" data-df-height="220"
+        data-df-y-label="Sales in batch" data-df-reference-lines='[{ "axis": "x", "value": "2026-11-17T00:00:00Z", "label": "Report cutoff" }]'>
+        <table>
+          <tr><th>Arrival</th><th>Sales in batch</th></tr>
+          <tr><td>2026-11-16T17:02:00-05:00</td><td>14</td></tr>
+          <tr><td>2026-11-16T17:31:00-05:00</td><td>9</td></tr>
+          <tr><td>2026-11-16T18:15:00-05:00</td><td>22</td></tr>
+          <tr><td>2026-11-16T18:20:00-05:00</td><td>3</td></tr>
+          <tr><td>2026-11-16T19:05:00-05:00</td><td></td></tr>
+          <tr><td>2026-11-16T19:48:00-05:00</td><td>31</td></tr>
+          <tr><td>2026-11-16T21:10:00-05:00</td><td>12</td></tr>
+        </table>
+      </div>
+      <figcaption>Sales in each batch by arrival time in UTC. The break marks the failed upload. Batches after the
+        cutoff count toward the next report.</figcaption>
+    </figure>
   </main>
 
   <script src="../../docform/js/core.js"></script>
@@ -116,6 +197,8 @@
   <script src="../../docform/js/stepper.js"></script>
   <script src="../../docform/js/highlight.js"></script>
   <script src="../../docform/js/chart.js"></script>
+  <script src="../../docform/js/code.js"></script>
+  <script src="../../docform/js/tabs.js"></script>
   <script>
     // Each step selects its event's key; a selected row or point opens the matching step.
     document.addEventListener('df:stepperchange', function (event) {

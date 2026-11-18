@@ -192,7 +192,26 @@ With `terms: { autoLink: true }` in the manifest, every glossary term in paragra
 <pre><code class="language-python">print("hello")</code></pre>
 ```
 
-Adds a language label and a copy button, and highlights JavaScript, JSON, Python, HTML, CSS, and shell. The language can also be given as `data-df-lang="js"`. Add `data-df-no-code` to a `pre` to leave it plain.
+Adds a language label and a copy button, and highlights JavaScript, JSON, Python, HTML, CSS, shell, SQL, and C#. The language can also be given as `data-df-lang="js"`. Add `data-df-no-code` to a `pre` to leave it plain.
+
+SQL (`sql`) suits queries and table definitions; keywords are recognized in any letter case, and `-- (1)` works as an annotation marker. C# accepts `csharp`, `cs`, or `c#`, and suits game scripts and tools:
+
+```html
+<pre><code class="language-sql">
+SELECT sale_id, MIN(received_at) AS first_seen
+FROM arrivals
+GROUP BY sale_id;
+</code></pre>
+
+<pre><code class="language-cs">
+public class Spinner : MonoBehaviour
+{
+    [SerializeField] private float speed = 90f;
+
+    void Update() => transform.Rotate(0f, speed * Time.deltaTime, 0f);
+}
+</code></pre>
+```
 
 ### Highlighted lines and annotations
 
@@ -486,10 +505,36 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 - Axis options: `label`, `min`, `max`, `digits` (decimals in the readout), and `unit` (added to readout values, such as `" ms"`). `height` sets the plot height in pixels (default 260); `data-df-height`, `data-df-x-label`, and `data-df-y-label` on the element override the data.
 - Missing readings: by default a line joins the points on either side of a missing value. Add `"gaps": "break"` (or `data-df-gaps="break"`) to a line chart to break it at each `null` y or blank table cell instead. The x position stays on the axis and in the table, the readout says "No data" there, and a lone reading between two gaps keeps its dot. Leave out an x value entirely to keep the old joined line.
 - Reference lines: `"referenceLines": [{ "axis": "y", "value": 0.8, "label": "Alert threshold" }]` draws a dashed line with its label inside the plot. Use `"axis": "x"` for a vertical line, with a category name on text axes. Lines never stretch the axes: set the axis `min` or `max` to include one that falls off the scale. The legend names each line and its value, and marks lines that are off scale. On a table chart, put the same JSON list in `data-df-reference-lines`.
+- Time axes: add `"type": "time"` to the x axis (or `data-df-x-type="time"` on the element) of a line or scatter chart. Write each x as epoch milliseconds or as an ISO timestamp with `Z` or an offset, such as `"2026-11-16T17:02:00-05:00"`. Points are spaced by the time between them, so uneven intervals look uneven. Ticks, readouts, and the table show every time in UTC, so mixed offsets line up on one clock. A timestamp without a zone is skipped with a console warning. The axis `min` and `max` and `"axis": "x"` reference lines take the same forms, and `"gaps": "break"` works as usual. Bar charts keep text categories.
+
+  ```html
+  <div data-df-chart="line" data-df-x-type="time" data-df-gaps="break">
+    <table>
+      <tr><th>Arrival</th><th>Sales in batch</th></tr>
+      <tr><td>2026-11-16T17:02:00-05:00</td><td>14</td></tr>
+      <tr><td>2026-11-16T22:31:00Z</td><td>9</td></tr>
+      <tr><td>2026-11-17T09:05:00+09:00</td><td></td></tr>
+    </table>
+  </div>
+  ```
+
+- Log axes: add `"type": "log"` to the x or y axis (or `data-df-x-type="log"` and `data-df-y-type="log"` on the element) of a line or scatter chart to space values by powers of ten, so 0.001, 0.01, and 0.1 sit evenly apart. Use it when values span several orders of magnitude, such as learning rates or losses. Every value on that axis must be a positive number, including `min`, `max`, missing x positions, and reference lines; write small numbers as `0.0003` or `3e-4`. Readouts and the table show the values as written. If any value is zero or negative, the chart is not drawn: the element keeps its own content, so a table chart still shows its table, and the console says which value is wrong. `update(spec)` with such data returns `false` and keeps the last chart. Bar charts keep linear axes.
+
+  ```html
+  <div data-df-chart="line" data-df-x-type="log" data-df-y-type="log">
+    <table>
+      <tr><th>Learning rate</th><th>Validation loss</th></tr>
+      <tr><td>1e-5</td><td>1.73</td></tr>
+      <tr><td>1e-4</td><td>0.95</td></tr>
+      <tr><td>1e-3</td><td>0.61</td></tr>
+    </table>
+  </div>
+  ```
+
 - Series get six fixed colours in order. Give a series `"role"` or `"color"` (or a table header `data-df-role` or `data-df-color`) to use a manifest role or a named colour instead.
 - Pointing at the chart, or focusing it and pressing the arrow keys, shows the values at that spot. Charts with two or more series get a legend; line ends are labelled when they don't crowd. The Table button lists the data.
 - Selectable points: give the chart a linked-highlighting group with `"highlight": "trace"` (or `data-df-highlight-group="trace"` on the element), and give points a key: `{ "x": 22.3, "y": 12, "key": "retry" }`, or `data-df-highlight-key="retry"` on a table cell. Pointing or the arrow keys only read a point; a click, Enter, or Space selects its key, and doing it again clears it. Rows, buttons, and other items with the same group and key are outlined with it, and selecting one of those outlines the point. The selection is kept by key when the chart redraws or shows its table, and needs `highlight.js`.
-- From a script: `DocForm.chart(element, spec)` draws a chart and returns `{ update(spec) }`.
+- From a script: `DocForm.chart(element, spec)` draws a chart and returns `{ update(spec) }`, or `null` if the data is invalid. `DocForm.chart.validate(spec)` lists the problems without drawing.
 
 ## Results tables
 

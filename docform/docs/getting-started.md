@@ -1,6 +1,6 @@
 # Getting started
 
-DocForm turns plain HTML pages into Notion-style notes with math, tooltips, code blocks, animated and scroll-driven figures, split views, and sliders. It needs no server, no build step, and no internet: open the pages straight from disk.
+DocForm turns plain HTML pages into Notion-style notes with math, tooltips, code blocks, animated figures, interactive figure steps, split views, and sliders. It runs straight from disk without a server or build step.
 
 ## 1. Copy the folder
 

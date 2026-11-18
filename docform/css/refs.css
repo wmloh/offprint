@@ -13,6 +13,9 @@
 .df-page caption {
   caption-side: top;
   padding-bottom: var(--df-space-2);
+}
+
+.df-page .df-split caption {
   text-align: left;
 }
 

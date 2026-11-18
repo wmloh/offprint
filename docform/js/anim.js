@@ -212,6 +212,7 @@
     var list = tracks(figure, tl);
     var hold = options.hold == null ? 700 : options.hold;
     var intro = options.caption || '';
+    var stepDriven = !!figure.closest('.df-figure-steps');
     var t = 0;
     var playing = false;
     var frame = 0;
@@ -373,7 +374,7 @@
     // A mouse or pen crossing a stopped figure plays it; pressing Pause holds it until the pointer leaves.
     var held = false;
     figure.addEventListener('pointerenter', function (event) {
-      if (hoverPlays({ playing: playing, held: held, pointer: event.pointerType, scrolly: !!figure.closest('.df-scrolly') })) {
+      if (hoverPlays({ playing: playing, held: held, pointer: event.pointerType, stepDriven: stepDriven })) {
         ctl.play();
       }
     });
@@ -390,7 +391,7 @@
     render();
 
     var auto = options.autoplay != null ? options.autoplay : DocForm.flag(figure, 'autoplay');
-    if (auto && typeof root.IntersectionObserver === 'function') {
+    if (auto && !stepDriven && typeof root.IntersectionObserver === 'function') {
       var seen = new IntersectionObserver(function (entries) {
         if (!entries.some(function (e) { return e.isIntersecting; })) return;
         seen.disconnect();
@@ -402,7 +403,7 @@
 
   // Touch is left out: a tap on Play would otherwise start the figure on entry and pause it on click.
   function hoverPlays(s) {
-    return !s.playing && !s.held && !s.scrolly && (s.pointer === 'mouse' || s.pointer === 'pen');
+    return !s.playing && !s.held && !s.stepDriven && (s.pointer === 'mouse' || s.pointer === 'pen');
   }
 
   function stepTime(ends, step) {

@@ -11,10 +11,11 @@
   var LIMIT = 30;
   var TEXT_CAP = 4000;
   var SNIPPET = 140;
-  var SKIP = 'script, style, template, noscript, nav, button, svg, canvas, select, textarea, [hidden], ' +
+  var SKIP = 'script, style, template, noscript, nav, button:not(.df-step-panel button[data-df-step]), ' +
+    'svg, canvas, select, textarea, [hidden], ' +
     '[aria-hidden="true"], .df-math, .katex, .df-sidebar, .df-controls, .df-tooltip, .df-note-ref, ' +
     '.df-sidenote-num, .df-heading-link, .df-code-bar, [data-df-no-search]';
-  var BLOCK = /^(P|LI|DIV|SECTION|ARTICLE|ASIDE|BLOCKQUOTE|PRE|TABLE|TR|TD|TH|CAPTION|FIGURE|FIGCAPTION|DL|DT|DD|UL|OL|H[1-6]|BR|HR|HEADER|FOOTER|MAIN|DETAILS|SUMMARY)$/;
+  var BLOCK = /^(P|LI|DIV|SECTION|ARTICLE|ASIDE|BLOCKQUOTE|PRE|TABLE|TR|TD|TH|CAPTION|FIGURE|FIGCAPTION|DL|DT|DD|UL|OL|H[1-6]|BR|HR|HEADER|FOOTER|MAIN|DETAILS|SUMMARY|BUTTON)$/;
   var hasOwn = Object.prototype.hasOwnProperty;
 
   function clean(text) {

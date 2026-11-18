@@ -87,14 +87,14 @@ test('animated step jumps play only the last step, forwards or backwards', () =>
   assert.deepEqual(route(1400, 2), { start: 1400, goal: 1400 });
 });
 
-test('a mouse or pen crossing a stopped figure plays it, unless paused by hand, scroll-driven, or touch', () => {
-  const base = { playing: false, held: false, scrolly: false, pointer: 'mouse' };
+test('a mouse or pen crossing a stopped figure plays it unless paused or controlled by a step panel', () => {
+  const base = { playing: false, held: false, stepDriven: false, pointer: 'mouse' };
   assert.equal(anim.hoverPlays(base), true);
   assert.equal(anim.hoverPlays({ ...base, pointer: 'pen' }), true);
   assert.equal(anim.hoverPlays({ ...base, pointer: 'touch' }), false);
   assert.equal(anim.hoverPlays({ ...base, playing: true }), false);
   assert.equal(anim.hoverPlays({ ...base, held: true }), false);
-  assert.equal(anim.hoverPlays({ ...base, scrolly: true }), false);
+  assert.equal(anim.hoverPlays({ ...base, stepDriven: true }), false);
 });
 
 test('motion always plays: no reduced-motion paths remain in shipped modules', () => {

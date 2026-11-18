@@ -15,7 +15,7 @@ docform/: Copyable offline library folder
     anim.css: Figure frames, animation controls, and SVG paint utilities
     params.css: Parameter slider rows and bound values
     reveal.css: Scroll reveal offsets and split-view grid with side-gliding panes
-    scrolly.css: Sticky frosted figure and scrolling step cards for pinned figures
+    steps.css: Full-width figures with step details and optional title-only side cards
     zoom.css: Frosted full-screen figure zoom view
     bubble.css: Tinted peek bubbles and the frosted side panel, blurred except while hovered
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
@@ -36,7 +36,7 @@ docform/: Copyable offline library folder
     anim.js: DocForm.anim step-timeline SVG animations with playback controls, hover-to-play, and animated step jumps
     params.js: data-df-param sliders, data-df-bind/data-df-template outputs, and a subscription API
     reveal.js: One-time data-df-reveal fade-ins and .df-split side-by-side panes
-    scrolly.js: Pinned .df-scrolly figures whose data-df-step prose drives DocForm.anim steps
+    steps.js: Figure steps selected by hover, focus, tap, or other page controls
     zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes
     bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
@@ -49,7 +49,7 @@ docform/: Copyable offline library folder
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
 examples/: Example docs opened from file://
   simple/: Single-page Pythagorean theorem example without a manifest, with reveals, a split view, a tinted numbered list, numbered references, sidenotes, and page search
-  linear-algebra/: Five-page linear algebra notes with a manifest, figures.js plane and arrow helpers, sliders, animations, split views, peek bubbles, a pinned scrolling figure, and auto-linked glossary terms with extended cards, cross-references, sidenotes, citations, search, annotated code, diffs, charts, and a results table
-  pca/: Three-chapter pump monitoring case study with reproducible sensor data, projection and residual exercises, rank comparisons, and offline site search
-  transformers/: Three-chapter decoder-only Transformer guide with a worked forward pass, live causal attention, next-token probabilities, and offline site search
+  linear-algebra/: Five-page notes with SVG planes, sliders, animations, numbered figure steps with details, split views, glossary terms, references, code, charts, and tables
+  pca/: Three-chapter pump monitoring case study with compact projection steps, residual exercises, rank comparisons, and offline search
+  transformers/: Three-chapter decoder-only Transformer guide with a worked forward pass, attention steps with details, next-token probabilities, and offline search
 tests/: Built-in node:test checks of module logic

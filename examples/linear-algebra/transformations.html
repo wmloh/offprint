@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/params.css">
   <link rel="stylesheet" href="../../docform/css/reveal.css">
-  <link rel="stylesheet" href="../../docform/css/scrolly.css">
+  <link rel="stylesheet" href="../../docform/css/steps.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
   <link rel="stylesheet" href="../../docform/css/bubble.css">
   <link rel="stylesheet" href="../../docform/css/refs.css">
@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="../../docform/css/search.css">
   <script src="../../docform/js/theme.js"></script>
   <style>
+    #warp { transition: transform 240ms ease-out; }
     .warp line { vector-effect: non-scaling-stroke; }
     .warp .df-stroke { vector-effect: non-scaling-stroke; }
     .warp line.df-grid { stroke: var(--df-blue); opacity: 0.3; }
@@ -50,11 +51,11 @@
 
     <p>
       A linear map moves the whole grid at once. Grid lines stay straight, parallel, and evenly spaced, and the
-      origin stays put. Scroll through the steps and watch the unit square and the images of the
+      origin stays put. Hover over a transformation or select it to see how it moves the unit square and the
       <span data-df-term>basis</span> vectors.
     </p>
 
-    <div class="df-scrolly">
+    <div class="df-figure-steps">
       <figure id="warp-anim">
         <svg viewBox="0 0 360 280" role="img" aria-label="The plane's grid transformed by a sequence of matrices">
           <defs><clipPath id="warp-clip"><rect x="0" y="0" width="360" height="280"/></clipPath></defs>
@@ -65,25 +66,38 @@
         </svg>
       </figure>
 
-      <div class="df-scrolly-steps">
-        <div data-df-step>
-          <p><strong>Shear.</strong> <span class="df-math">\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}</span> slides
-            each row sideways in proportion to its height. Area is unchanged.</p>
+      <ol class="df-step-panel" data-df-color="blue" aria-label="Transformations">
+        <li><button type="button" data-df-step="0" data-df-step-detail="warp-identity">Identity</button></li>
+        <li><button type="button" data-df-step="1" data-df-step-detail="warp-shear">Shear</button></li>
+        <li><button type="button" data-df-step="2" data-df-step-detail="warp-rotation">Rotation</button></li>
+        <li><button type="button" data-df-step="3" data-df-step-detail="warp-scaling">Scaling</button></li>
+        <li><button type="button" data-df-step="4" data-df-step-detail="warp-reflection">Reflection</button></li>
+      </ol>
+
+      <div class="df-step-details">
+        <div id="warp-identity">
+          <p><strong>The original grid</strong></p>
+          <p>The grid, unit square, and basis vectors stay in their original positions.</p>
         </div>
-        <div data-df-step>
-          <p><strong>Rotation.</strong> A quarter turn, <span class="df-math">\begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}</span>,
-            keeps every length and angle.</p>
+        <div id="warp-shear">
+          <p><strong>A sideways shift</strong></p>
+          <p>The matrix <span class="df-math">\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}</span> slides each row
+            sideways in proportion to its height. Area is unchanged.</p>
         </div>
-        <div data-df-step>
-          <p><strong>Scaling.</strong> Stretching by <span class="df-math">2</span> and squashing by
-            <span class="df-math">\tfrac12</span> keeps the area, since <span class="df-math">\det = 1</span>.</p>
+        <div id="warp-rotation">
+          <p><strong>A quarter turn</strong></p>
+          <p>The matrix <span class="df-math">\begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}</span> rotates the grid
+            counterclockwise and keeps every length and angle.</p>
         </div>
-        <div data-df-step>
-          <p><strong>Reflection.</strong> A mirror flips orientation: the orange arrow now sits clockwise from the blue
-            one, and <span class="df-math">\det = -1</span>.</p>
+        <div id="warp-scaling">
+          <p><strong>A stretch and a squeeze</strong></p>
+          <p>The grid stretches horizontally by <span class="df-math">2</span> and shrinks vertically by
+            <span class="df-math">\tfrac12</span>. Area is unchanged because <span class="df-math">\det A = 1</span>.</p>
         </div>
-        <div data-df-step>
-          <p><strong>Identity.</strong> Back where we started. Scroll back up to replay the steps in reverse.</p>
+        <div id="warp-reflection">
+          <p><strong>A mirror across the vertical axis</strong></p>
+          <p>The reflection flips orientation. The orange arrow now sits clockwise from the blue one, and
+            <span class="df-math">\det A = -1</span>.</p>
         </div>
       </div>
     </div>
@@ -157,7 +171,7 @@
   <script src="../../docform/js/nav.js"></script>
   <script src="../../docform/js/controls.js"></script>
   <script src="../../docform/js/reveal.js"></script>
-  <script src="../../docform/js/scrolly.js"></script>
+  <script src="../../docform/js/steps.js"></script>
   <script src="../../docform/js/zoom.js"></script>
   <script src="../../docform/js/bubble.js"></script>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
@@ -187,21 +201,22 @@
       }
 
       var warpSvg = document.querySelector('#warp-anim svg');
-      var W = scene(warpSvg, document.getElementById('warp'), 180, 150, 40);
-      // The prose steps beside the pinned figure drive this timeline as the reader scrolls.
+      var warp = document.getElementById('warp');
+      var W = scene(warpSvg, warp, 180, 150, 40);
+      // Keep the origin fixed while the CSS transition changes the matrix.
+      warp.style.transformOrigin = W.ox + 'px ' + W.oy + 'px';
       var steps = [
         ['Shear', [1, 1, 0, 1]],
         ['Rotation', [0, -1, 1, 0]],
         ['Scaling', [2, 0, 0, 0.5]],
-        ['Reflection', [-1, 0, 0, 1]],
-        ['Identity', [1, 0, 0, 1]]
+        ['Reflection', [-1, 0, 0, 1]]
       ];
       var name = document.getElementById('warp-name');
       document.getElementById('warp-anim').addEventListener('df:animstep', function (event) {
         name.textContent = event.detail.step ? steps[event.detail.step - 1][0] : 'Identity';
       });
       DocForm.anim('warp-anim', steps.map(function (s) {
-        return { duration: 1200, actions: [{ attr: '#warp', name: 'transform', to: LA.matrix(s[1], W) }] };
+        return { actions: [{ attr: '#warp', name: 'transform', to: LA.matrix(s[1], { ox: 0, oy: 0 }) }] };
       }));
 
       var play = document.getElementById('play');

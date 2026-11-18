@@ -2,13 +2,13 @@
   'use strict';
 
   DocForm.anim('mask-story', [
-    { caption: 'Scaled dot products before masking.', actions: [
+    { actions: [
       { fade: '#raw-scores' }
     ] },
-    { caption: 'Block positions beyond the query.', actions: [
+    { actions: [
       { fade: '#masked-cells' }
     ] },
-    { caption: 'Normalize the allowed scores within each row.', actions: [
+    { actions: [
       { fade: '#raw-scores', to: 0, duration: 240 },
       { fade: '#weight-cells', delay: 240 }
     ] }

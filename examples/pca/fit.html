@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="../../docform/css/search.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/params.css">
-  <link rel="stylesheet" href="../../docform/css/scrolly.css">
+  <link rel="stylesheet" href="../../docform/css/steps.css">
   <link rel="stylesheet" href="../../docform/css/reveal.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
   <link rel="stylesheet" href="../../docform/css/tabs.css">
@@ -39,10 +39,10 @@
     </header>
 
     <h2 id="fit">From units to component scores</h2>
-    <p>Let <span class="df-math">X</span> be the 32-by-4 baseline matrix. In the first two principal directions,
-      this scroll-through follows one window as it is projected onto PC1.</p>
+    <p>Let <span class="df-math">X</span> be the 32-by-4 baseline matrix. Choose a step to follow one window as it
+      is projected onto PC1.</p>
 
-    <div class="df-scrolly">
+    <div class="df-figure-steps" data-df-step-layout="side">
       <figure id="fit-story" data-df-no-zoom>
         <svg viewBox="0 0 560 220" role="img" aria-label="One pump window and its orthogonal projection onto the first principal direction">
           <path class="df-axis" d="M58 164H518 M138 188V25"/>
@@ -56,15 +56,17 @@
         </svg>
         <figcaption>The baseline's first window in a two-component view.</figcaption>
       </figure>
-      <div class="df-scrolly-steps">
-        <div data-df-step><p><strong>Standardize.</strong> Subtract each training mean and divide by its sample
-          standard deviation. This gives each sensor unit variance in the baseline.</p></div>
-        <div data-df-step><p><strong>Find the highest-variance direction.</strong> Diagonalize the covariance of the
-          standardized rows. Order the eigenvectors by descending eigenvalue.</p></div>
-        <div data-df-step><p><strong>Project.</strong> A component score is a dot product. Keeping only PC1 drops
-          the PC2 coordinate shown here, along with the two smaller coordinates outside the drawing.</p></div>
+      <div class="df-step-panel" role="group" aria-label="Projection steps" data-df-role="projection">
+        <button type="button" data-df-step>Standardize</button>
+        <button type="button" data-df-step>Find PC1</button>
+        <button type="button" data-df-step>Project</button>
       </div>
     </div>
+
+    <p>Subtract each sensor's training mean and divide by its sample standard deviation to give it unit variance
+      in the baseline. Diagonalize the covariance of the standardized data and order the eigenvectors by descending
+      eigenvalue. A component score is the dot product with one of those directions. Keeping only PC1 drops the PC2
+      coordinate shown here and the two smaller coordinates outside the drawing.</p>
 
     <div class="df-math" data-df-display id="covariance">
       Z_{ij} = \frac{X_{ij}-\mu_j}{s_j},
@@ -176,7 +178,7 @@ const baseline = Array.from({ length: 32 }, (_, t) => {
   <script src="../../docform/js/search.js"></script>
   <script src="../../docform/js/anim.js"></script>
   <script src="../../docform/js/params.js"></script>
-  <script src="../../docform/js/scrolly.js"></script>
+  <script src="../../docform/js/steps.js"></script>
   <script src="../../docform/js/reveal.js"></script>
   <script src="../../docform/js/zoom.js"></script>
   <script src="../../docform/js/tabs.js"></script>

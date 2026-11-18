@@ -192,13 +192,13 @@ body:has(> .df-sidebar) {
     box-shadow: none;
   }
 
-  /* Hovering an item (but not an item nested inside it) intensifies its marker. */
-  &:is(ol) > li:hover:not(:has(li:hover))::before {
+  /* Figure steps keep the same marker treatment for the step currently shown. */
+  &:is(ol) > li:is(:hover:not(:has(li:hover), .df-figure-steps-ready .df-step-panel > li), :has(> [aria-current="step"]))::before {
     background: var(--df-list-tint);
     color: var(--df-bg);
   }
 
-  &:is(ul) > li:hover:not(:has(li:hover))::before {
+  &:is(ul) > li:is(:hover:not(:has(li:hover), .df-figure-steps-ready .df-step-panel > li), :has(> [aria-current="step"]))::before {
     background: var(--df-list-tint);
     box-shadow: inset 0 0 0 1.5px var(--df-list-tint);
     transform: scale(1.35);
@@ -233,9 +233,25 @@ body:has(> .df-sidebar) {
   border-top: 1px solid var(--df-border-strong);
 }
 
-.df-page :is(img, svg, video) {
+.df-page :is(img, svg, video, canvas) {
   max-width: 100%;
   height: auto;
+}
+
+.df-page :is(figure, table):not(:where(.df-split *)) {
+  margin-inline: auto;
+}
+
+.df-page > :is(img, svg, video, canvas),
+.df-page > picture > img,
+.df-page figure:not(:where(.df-split *)) > :is(img, svg, video, canvas),
+.df-page figure:not(:where(.df-split *)) > :is(a, picture) > img {
+  display: block;
+  margin-inline: auto;
+}
+
+.df-page :is(figcaption, caption, .df-anim-caption):not(:where(.df-split *)) {
+  text-align: center;
 }
 
 .df-page :is(strong, b) { font-weight: 600; }
@@ -270,6 +286,10 @@ body:has(> .df-sidebar) {
   overflow-x: auto;
   border-collapse: collapse;
   font-size: 0.9em;
+}
+
+.df-page table:not(:where(.df-split *)) {
+  width: fit-content;
 }
 
 .df-page :is(th, td) {

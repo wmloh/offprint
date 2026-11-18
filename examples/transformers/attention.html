@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="../../docform/css/notes.css">
   <link rel="stylesheet" href="../../docform/css/search.css">
   <link rel="stylesheet" href="../../docform/css/anim.css">
-  <link rel="stylesheet" href="../../docform/css/scrolly.css">
+  <link rel="stylesheet" href="../../docform/css/steps.css">
   <link rel="stylesheet" href="../../docform/css/params.css">
   <link rel="stylesheet" href="../../docform/css/chart.css">
   <link rel="stylesheet" href="../../docform/css/reveal.css">
@@ -49,7 +49,7 @@
       M_{ij}=\begin{cases}0& j\le i\\-\infty&j>i\end{cases}
     </div>
 
-    <div class="df-scrolly">
+    <div class="df-figure-steps">
       <figure id="mask-story" data-df-no-zoom>
         <svg viewBox="0 0 550 270" role="img" aria-label="A three by three causal mask allows each query to use its own and earlier positions">
           <g text-anchor="middle">
@@ -85,13 +85,27 @@
         </svg>
         <figcaption>Scaled scores, the causal mask, and row-wise weights.</figcaption>
       </figure>
-      <div class="df-scrolly-steps">
-        <div data-df-step><p><strong>Score.</strong> Take each query–key dot product and divide by
-          <span class="df-math">\sqrt{2}</span>, since a key has two coordinates.</p></div>
-        <div data-df-step><p><strong>Mask.</strong> The first query can use one key. The second can use two.
-          The third can use all three. The upper triangle is excluded.</p></div>
-        <div data-df-step><p><strong>Normalize.</strong> Softmax turns allowed scores into weights that sum to
-          one per row. Use each row to mix the value vectors. The drawn weights are rounded.</p></div>
+      <div class="df-step-panel" role="group" aria-label="Attention steps" data-df-role="context">
+        <button type="button" data-df-step data-df-step-detail="attention-scores">Score</button>
+        <button type="button" data-df-step data-df-step-detail="attention-mask">Mask</button>
+        <button type="button" data-df-step data-df-step-detail="attention-normalize">Normalize</button>
+      </div>
+      <div class="df-step-details">
+        <div id="attention-scores">
+          <p><strong>Scaled dot products</strong></p>
+          <p>Take each query–key dot product and divide by <span class="df-math">\sqrt{2}</span>, since a key has two
+            coordinates.</p>
+        </div>
+        <div id="attention-mask">
+          <p><strong>Block keys beyond the query</strong></p>
+          <p>The first query can use one key. The second can use two. The third can use all three. The upper triangle
+            is excluded.</p>
+        </div>
+        <div id="attention-normalize">
+          <p><strong>Normalize each row</strong></p>
+          <p>Softmax turns allowed scores into weights that sum to one per row. Use each row to mix the value vectors.
+            The drawn weights are rounded.</p>
+        </div>
       </div>
     </div>
 
@@ -149,7 +163,7 @@
   <script src="../../docform/js/notes.js"></script>
   <script src="../../docform/js/search.js"></script>
   <script src="../../docform/js/anim.js"></script>
-  <script src="../../docform/js/scrolly.js"></script>
+  <script src="../../docform/js/steps.js"></script>
   <script src="../../docform/js/params.js"></script>
   <script src="../../docform/js/chart.js"></script>
   <script src="../../docform/js/reveal.js"></script>

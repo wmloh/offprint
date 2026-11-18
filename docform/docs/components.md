@@ -17,7 +17,7 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Code blocks, annotations, diffs | `code.css` | `code.js` |
 | Tabs | `tabs.css` | `tabs.js` |
 | Animated figures | `anim.css` | `anim.js` |
-| Pinned scrolling figures | `anim.css`, `scrolly.css` | `anim.js`, `scrolly.js` |
+| Figure steps | `steps.css` | `steps.js` |
 | Reveals and split views | `reveal.css` | `reveal.js` |
 | Figure zoom | `zoom.css` | `zoom.js` |
 | Sliders | `params.css` | `params.js` |
@@ -44,6 +44,8 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open; readers can open others with the arrow beside a heading, and they stay open until closed or the page reloads. On narrow screens the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
 
 Each outlined heading shows a link icon on hover that copies the URL of its section. The reading column is 880px wide; change it with the `--df-content-width` token and the side padding with `--df-page-gutter`. Scrollbars in the sidebar, code blocks, and tables stay hidden until the pointer is on them.
+
+Standalone figures, tables, and their captions are centered in the reading column.
 
 ## Lists
 
@@ -242,30 +244,35 @@ SVG shapes take colours with `data-df-color` or `data-df-role` plus a paint clas
 
 Page scripts can reach a figure's controller later with `DocForm.anim.get(figure)`; besides `play`, `pause`, `next`, `prev`, and `go(step)` (jump), it has `to(step)`, which animates forwards or backwards to a step.
 
-## Pinned scrolling figures
+## Figure steps
 
-A figure inside `.df-scrolly` stays pinned near the top of the window while the step cards below it scroll past. The card in view drives the figure's animation, forwards as the reader scrolls down and backwards as they scroll up.
+A `.df-figure-steps` block shows a full-width figure above an independently scrolling list of titles. Add a `.df-step-details` panel to show the selected step's subtitle and explanation beside the list. On narrow screens the explanation moves below the list. Hover, keyboard focus, and tap select a step. The selection stays visible when the reader moves away.
 
 ```html
-<div class="df-scrolly">
+<div class="df-figure-steps">
   <figure id="story">
     <svg viewBox="0 0 200 100">…</svg>
   </figure>
-  <div class="df-scrolly-steps">
-    <div data-df-step><p>First, draw the line.</p></div>
-    <div data-df-step><p>Then slide the dot.</p></div>
-    <div data-df-step="2"><p>A note that keeps step 2 on screen.</p></div>
+  <ol class="df-step-panel" data-df-color="blue" aria-label="Drawing steps">
+    <li><button type="button" data-df-step data-df-step-detail="draw-detail">Draw</button></li>
+    <li><button type="button" data-df-step data-df-step-detail="slide-detail">Slide</button></li>
+  </ol>
+  <div class="df-step-details">
+    <div id="draw-detail"><p>Draw the line between the two endpoints.</p></div>
+    <div id="slide-detail"><p>Slide the dot along the line to the far endpoint.</p></div>
   </div>
 </div>
 
 <script>
-  DocForm.anim('story', [ /* one step per card */ ]);
+  DocForm.anim('story', [ /* one step per entry */ ]);
 </script>
 ```
 
-- Each card shows the animation step with its own number: the first card is step 1, and so on. Give `data-df-step` a number to choose another step.
-- The playback bar is hidden because scrolling replaces it.
-- Without an animation, the figure still gets `data-df-active-step` and a `df:scrollystep` event (`detail.step`, `detail.index`), so page scripts can update it themselves.
+- Use an `ol` for numbered steps, a `ul` for bullets, or a `div` with direct button children for compact cards. List steps use the standard marker colours. The scrollbar appears when the pointer reaches its track.
+- For title-only cards beside a smaller figure, omit `.df-step-details` and set `data-df-step-layout="side"` on `.df-figure-steps`. The cards move below the figure when space is tight.
+- The figure starts at the first entry. A bare `data-df-step` uses the entry position starting at 1. Give it an explicit number to choose another step, or `0` to show the animation's starting state.
+- With `anim.js` and `anim.css`, each entry shows its animation step's end state and the panel takes over playback. For a chart, SVG, or other custom figure, listen for `df:figurestep` on the figure and read `event.detail.step`.
+- After the page initializes, a slider or other control can call `DocForm.steps.select('story', 2)` to update the selection and explanation. Pass a figure element or its ID. The call returns `false` if the figure or step is unavailable.
 
 ## Reveals
 

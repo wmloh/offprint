@@ -1,0 +1,135 @@
+/* Full-width figures with step details, or a figure beside title-only steps. */
+.df-figure-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--df-space-4);
+  margin: var(--df-space-5) 0;
+}
+
+.df-figure-steps > figure {
+  flex: 1 0 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.df-figure-steps[data-df-step-layout="side"]:not(:has(> .df-step-details)) > figure {
+  flex: 3 1 22rem;
+}
+
+.df-figure-steps > .df-step-panel {
+  flex: 1 1 11rem;
+  min-width: 0;
+  max-height: min(22rem, 38svh);
+  overflow: hidden auto;
+  margin: 0;
+  padding-block: var(--df-space-1);
+  padding-right: var(--df-space-1);
+  color: inherit;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .df-step-panel {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .df-step-panel.df-step-scrollbar-hover {
+    scrollbar-color: var(--df-border-strong) transparent;
+  }
+}
+
+/* Native scrollbar hover also catches direct entry onto the thumb. */
+@supports selector(::-webkit-scrollbar) {
+  .df-step-panel::-webkit-scrollbar { width: 8px; }
+  .df-step-panel::-webkit-scrollbar-track { background: transparent; }
+  .df-step-panel::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+
+  .df-step-panel.df-step-scrollbar-hover::-webkit-scrollbar-thumb,
+  .df-step-panel::-webkit-scrollbar-thumb:hover,
+  .df-step-panel::-webkit-scrollbar-thumb:active {
+    background: var(--df-border-strong);
+  }
+}
+
+.df-step-details {
+  flex: 3 1 21rem;
+  min-width: 0;
+  align-self: stretch;
+}
+
+@media screen {
+  .df-figure-steps-ready > .df-step-details {
+    display: grid;
+    align-items: start;
+  }
+
+  /* Share one grid cell so changing the visible detail leaves the layout stable. */
+  .df-figure-steps-ready > .df-step-details > * {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+
+  .df-figure-steps-ready > .df-step-details > [inert] { visibility: hidden; }
+}
+
+@media (max-width: 600px) {
+  .df-figure-steps > :is(.df-step-panel, .df-step-details) { flex-basis: 100%; }
+}
+
+.df-step-figure > .df-anim-controls {
+  display: none;
+}
+
+.df-figure-steps > figure > svg {
+  max-height: min(620px, 56svh);
+}
+
+.df-figure-steps[data-df-step-layout="side"]:not(:has(> .df-step-details)) > figure > svg {
+  max-height: min(420px, 38svh);
+}
+
+.df-step-panel:not(ol, ul) {
+  display: grid;
+  gap: var(--df-space-2);
+  padding-left: var(--df-space-1);
+}
+
+.df-step-panel button[data-df-step] {
+  display: block;
+  width: 100%;
+  padding: var(--df-space-1) var(--df-space-2);
+  border: 0;
+  border-radius: var(--df-radius-lg);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  overflow-wrap: anywhere;
+  text-align: start;
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+
+.df-figure-steps-ready .df-step-panel button[data-df-step] {
+  cursor: pointer;
+}
+
+.df-step-panel:not(ol, ul) button[data-df-step] {
+  padding: var(--df-space-2) var(--df-space-3);
+  box-shadow: inset 0 0 0 1px var(--df-border);
+}
+
+.df-step-panel button[aria-current="step"] {
+  background: var(--df-accent-bg, var(--df-gray-bg));
+  box-shadow: inset 0 0 0 1px var(--df-accent, var(--df-gray));
+}
+
+.df-step-panel button:focus-visible {
+  outline-offset: -2px;
+}
+
+@media print {
+  .df-figure-steps > .df-step-panel {
+    max-height: none;
+    overflow: visible;
+  }
+}

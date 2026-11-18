@@ -84,6 +84,10 @@ figure.df-zoomed img {
   margin: 0 auto;
 }
 
+.df-zoomed :is(figcaption, .df-anim-caption) {
+  text-align: center;
+}
+
 img.df-zoomed {
   width: auto;
   height: auto;

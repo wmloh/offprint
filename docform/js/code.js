@@ -520,11 +520,12 @@
       var group = groups[n] || (groups[n] = { li: li, els: [li] });
       group.els.push(mark, mark.closest('.df-code-line'));
       li.setAttribute('data-df-note', n);
-      var highlightGroup = li.getAttribute('data-df-highlight-group');
-      var highlightKey = li.getAttribute('data-df-highlight-key');
-      if (highlightGroup && highlightKey) {
-        mark.setAttribute('data-df-highlight-group', highlightGroup);
-        mark.setAttribute('data-df-highlight-key', highlightKey);
+      var selectionGroup = li.getAttribute('data-df-selection-group');
+      var selectionKey = li.getAttribute('data-df-key');
+      if (selectionGroup && selectionKey) {
+        mark.setAttribute('data-df-selection-group', selectionGroup);
+        mark.setAttribute('data-df-key', selectionKey);
+        if (DocForm._selection) DocForm._selection.sync(mark);
       }
       mark.addEventListener('click', function () {
         li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });

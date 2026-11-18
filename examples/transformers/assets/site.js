@@ -1,5 +1,6 @@
 window.DocFormSite = {
   title: 'A Decoder-Only Transformer',
+  selectionGroups: { "transformer-language": { persist: true } },
   pages: [
     { title: 'From text to vectors', path: '../index.html' },
     {

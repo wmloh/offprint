@@ -200,19 +200,19 @@
   transition: opacity 0.15s;
 }
 
-.df-chart.is-hovering .df-chart-bar:not(.is-active, [data-df-highlight-active]),
-.df-chart.is-hovering.is-scatter .df-chart-dot:not(.is-active, [data-df-highlight-active]) {
+.df-chart.is-hovering .df-chart-bar:not(.is-active, [data-df-selection-active]),
+.df-chart.is-hovering.is-scatter .df-chart-dot:not(.is-active, [data-df-selection-active]) {
   opacity: 0.45;
 }
 
 /* A selected keyed point keeps a text-coloured edge; outlines do not draw reliably around SVG shapes. */
-.df-chart-plot svg [data-df-highlight-active] {
+.df-chart-plot svg [data-df-selection-active] {
   outline: none;
   stroke: var(--df-text);
   stroke-width: 2.5;
 }
 
-.df-chart-plot svg circle[data-df-highlight-active] {
+.df-chart-plot svg circle[data-df-selection-active] {
   r: 6px;
 }
 

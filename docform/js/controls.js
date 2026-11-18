@@ -58,7 +58,14 @@
     return hasOwn.call(NAV_MODES, value) ? value : 'shown';
   }
 
-  var state = { focus: load(KEYS.focus) === 'on', navMode: navMode(load(KEYS.nav)), peeking: false };
+  var boot = DocForm._boot;
+  var defaults = boot && DocForm.site.options.controls || {};
+  var focus = load(KEYS.focus);
+  var state = {
+    focus: focus === null ? defaults.focus === true : focus === 'on',
+    navMode: navMode(load(KEYS.nav) || defaults.navMode),
+    peeking: false
+  };
 
   function navShown() {
     return state.navMode === 'shown' || state.peeking;
@@ -314,7 +321,7 @@
     var sidebar = document.querySelector('.df-sidebar');
     var headings = DocForm.all('h2, h3', main).filter(function (h) { return !h.closest('.df-sidebar'); });
     var drawerMode = root.matchMedia ? root.matchMedia(DRAWER) : null;
-    var theme = root.DocFormTheme;
+    var theme = boot ? DocForm.theme : root.DocFormTheme;
     var pill = make('div', 'df-controls');
     var progressRing = ring();
     var actions = {};
@@ -467,6 +474,10 @@
   applyClasses();
 
   DocForm.register('controls', function () {
+    if (boot) {
+      boot.after('controls', render);
+      return;
+    }
     // Waits for the other modules' synchronous setup, such as nav.js creating the sidebar.
     Promise.resolve().then(render).catch(function (e) {
       DocForm.warnOnce('init:controls', 'Module "controls" failed to initialise.', e);

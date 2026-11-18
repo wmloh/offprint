@@ -621,11 +621,17 @@
     isBlock: isBlock
   };
 
-  DocForm.register('data', function () {
+  function readInline() {
     DocForm.all('script[data-df-data]').forEach(function (el) {
       var name = DocForm.data(el, 'data', '').trim();
       add(name, dedent(el.textContent), scriptType(el));
     });
+  }
+
+  var boot = DocForm._boot;
+  if (boot) boot.readData = readInline;
+  DocForm.register(boot ? 'data-view' : 'data', function () {
+    if (!boot) readInline();
     DocForm.all('[data-df-data]:not(script):not(.df-data-ready)').forEach(function (el) {
       setup(el);
     });

@@ -3,18 +3,18 @@
 
   document.getElementById('query-picker').hidden = false;
 
-  DocForm.anim('mask-story', [
-    { actions: [
+  DocForm.animation.mount('mask-story', { steps: [
+    { key: 'scores', actions: [
       { fade: '#raw-scores' }
     ] },
-    { actions: [
+    { key: 'mask', actions: [
       { fade: '#masked-cells' }
     ] },
-    { actions: [
+    { key: 'normalize', actions: [
       { fade: '#raw-scores', to: 0, duration: 240 },
       { fade: '#weight-cells', delay: 240 }
     ] }
-  ], { duration: 600 });
+  ], duration: 600 });
 
   var output = document.getElementById('value-context');
   DocForm.params.on(['position', 'sharpness'], function (values) {

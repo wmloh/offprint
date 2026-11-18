@@ -8,7 +8,9 @@
     return;
   }
 
-  var selectors = new WeakMap();
+  var items = DocForm._items;
+  var figures = new WeakMap();
+  var cards = new WeakMap();
 
   function watchScrollbar(panel) {
     panel.classList.add('df-step-scrollport');
@@ -102,113 +104,128 @@
     });
   }
 
-  function setupFigure(box) {
+  function prepareFigure(box) {
     var figure = box.querySelector(':scope > figure');
     var panel = box.querySelector(':scope > .df-step-panel');
     if (!figure || !panel) {
-      DocForm.warnOnce('steps:layout', 'A .df-figure-steps block needs a figure and a .df-step-panel.');
-      return;
+      items.issue('figure-steps', box, 'A figure-step panel needs a figure and controls.', 'Add direct figure and .df-step-panel children.');
+      return null;
     }
     var list = panel.querySelector(':scope > .df-step-list') || panel;
-    var buttons = DocForm.all(':scope > button[data-df-step], :scope > li > button[data-df-step]', list);
-    if (!buttons.length) {
-      DocForm.warnOnce('steps:buttons', 'A .df-step-panel needs buttons with data-df-step.');
-      return;
-    }
+    var domain = items.domain('figure-steps', box, DocForm.all(':scope > button, :scope > li > button', list));
+    if (!domain) return null;
     var details = detailsIn(box);
-    var entries = buttons.map(function (button, index) {
-      var value = button.getAttribute('data-df-step').trim();
-      var number = Number(value);
-      var step = value && Number.isSafeInteger(number) && number >= 0 ? number : index + 1;
-      var detail = detailById(details, button.getAttribute('data-df-step-detail'));
-      return { button: button, index: index, step: step, detail: detail };
+    var targets = domain.items.map(function (button) {
+      return detailById(details, DocForm.data(button, 'detail', null));
     });
-    var shown;
+    if (domain.items.some(function (button, i) { return button.hasAttribute('data-df-detail') && !targets[i]; })) {
+      items.issue('figure-steps', box, 'A figure step links to a missing detail.', 'Use the ID of a direct child of .df-step-details.');
+      return null;
+    }
+    return { domain: domain, figure: figure, list: list, details: details, targets: targets };
+  }
+
+  function setupFigure(box) {
+    var prepared = prepareFigure(box);
+    if (!prepared) return;
+    var domain = prepared.domain;
+    var figure = prepared.figure;
+    var list = prepared.list;
+    var buttons = domain.items;
     var highlight = trackSelection(list, buttons);
 
-    function sync() {
-      var ctl = DocForm.anim && DocForm.anim.get(figure);
-      if (ctl) ctl.go(shown.step);
-      return ctl;
-    }
-
-    function select(entry) {
-      if (entry === shown) return;
-      if (shown) shown.button.removeAttribute('aria-current');
-      shown = entry;
-      entry.button.setAttribute('aria-current', 'step');
-      highlight(entry.button);
-      showDetail(details, entry.detail);
-      figure.setAttribute('data-df-active-step', String(entry.step));
-      var ctl = sync();
-      if (shown === entry) {
-        figure.dispatchEvent(new root.CustomEvent('df:figurestep', { detail: { index: entry.index, step: entry.step } }));
+    function sync(current) {
+      if (!current.animationKey) return true;
+      var ctl = DocForm.animation && DocForm.animation.get(figure);
+      if (!ctl) return false;
+      if (!ctl.go(current.animationKey)) {
+        items.issue('figure-steps', box, 'Unknown animation key "' + current.animationKey + '".', 'Use a key from the figure animation or start.');
       }
-      return ctl;
+      return true;
     }
 
-    selectors.set(figure, function (step) {
-      if (shown && shown.step === step) return true;
-      var entry = entries.find(function (item) { return item.step === step; });
-      if (!entry) return false;
-      select(entry);
-      return true;
+    var state = items.controller('figure-steps', box, domain, function (index, key) {
+      var detail = prepared.targets[index];
+      return { key: key, index: index, animationKey: items.key(DocForm.data(buttons[index], 'animation-key')),
+        detailId: detail ? detail.id : null };
+    }, function (current, previous) {
+      if (previous) buttons[previous.index].removeAttribute('aria-current');
+      var button = buttons[current.index];
+      button.setAttribute('aria-current', 'step');
+      highlight(button);
+      showDetail(prepared.details, prepared.targets[current.index]);
+      sync(current);
     });
 
-    entries.forEach(function (entry) {
-      var button = entry.button;
+    buttons.forEach(function (button, index) {
+      var detail = prepared.targets[index];
       if (figure.id) button.setAttribute('aria-controls', figure.id);
-      if (entry.detail) {
+      if (detail) {
         var describedBy = button.getAttribute('aria-describedby');
-        button.setAttribute('aria-describedby', describedBy ? describedBy + ' ' + entry.detail.id : entry.detail.id);
+        button.setAttribute('aria-describedby', describedBy ? describedBy + ' ' + detail.id : detail.id);
       }
       var row = button.parentElement === list ? button : button.parentElement;
+      function choose() { state.choose(index, 'user'); }
       // Scrolling can move a row under a stationary pointer and dispatch pointerenter.
       row.addEventListener('pointermove', function (event) {
-        if (event.pointerType === 'mouse' || event.pointerType === 'pen') select(entry);
+        if ((event.pointerType === 'mouse' || event.pointerType === 'pen') &&
+            state.controller.snapshot().index !== index) choose();
       });
-      button.addEventListener('focus', function () { select(entry); });
-      button.addEventListener('click', function () { select(entry); });
+      button.addEventListener('focus', choose);
+      button.addEventListener('click', choose);
     });
-    setupPanes(list, details);
+    setupPanes(list, prepared.details);
     box.classList.add('df-figure-steps-ready');
     figure.classList.add('df-step-figure');
-    if (!select(entries[0]) && document.readyState !== 'complete') {
-      root.addEventListener('load', sync, { once: true });
+    figures.set(box, state.controller);
+    state.start();
+    if (document.readyState !== 'complete' && !(DocForm.animation && DocForm.animation.get(figure))) {
+      root.addEventListener('load', function () { sync(state.controller.snapshot()); }, { once: true });
     }
   }
 
-  function setupCards(box) {
+  function prepareCards(box) {
     var panel = box.querySelector(':scope > .df-step-panel');
     var list = panel && panel.querySelector(':scope > .df-step-list');
     var details = detailsIn(box);
-    var buttons = list ? DocForm.all(':scope > button[data-df-card], :scope > .df-step-group > button[data-df-card]', list) : [];
+    var buttons = list ? DocForm.all(':scope > button, :scope > .df-step-group > button', list) : [];
     var targets = buttons.map(function (button) {
-      return detailById(details, button.getAttribute('data-df-card'));
+      return detailById(details, DocForm.data(button, 'detail', null));
     });
     if (!buttons.length || !list.getAttribute('aria-labelledby') || targets.length !== details.length ||
         !targets.every(Boolean) || new Set(targets).size !== details.length) {
-      DocForm.warnOnce('steps:cards', 'A .df-card-panel needs a labelled .df-step-list and one button per detail.');
-      return;
+      items.issue('cards', box, 'A card panel needs a labelled list and one button per detail.',
+        'Set aria-labelledby and set data-df-detail to its corresponding detail ID.');
+      return null;
     }
+    var domain = items.domain('cards', box, buttons);
+    return domain && { domain: domain, list: list, details: details, targets: targets };
+  }
 
-    var selected;
+  function setupCards(box) {
+    var prepared = prepareCards(box);
+    if (!prepared) return;
+    var domain = prepared.domain;
+    var list = prepared.list;
+    var buttons = domain.items;
+    var targets = prepared.targets;
     var highlight;
 
     function setTabStop(index) {
       buttons.forEach(function (button, i) { button.tabIndex = i === index ? 0 : -1; });
     }
 
-    function select(index) {
+    var state = items.controller('cards', box, domain, function (index, key) {
+      return { key: key, index: index, detailId: targets[index].id };
+    }, function (current) {
+      var index = current.index;
       setTabStop(index);
-      if (index === selected) return;
-      selected = index;
       buttons.forEach(function (button, i) {
         button.setAttribute('aria-selected', String(i === index));
       });
       highlight(buttons[index]);
-      showDetail(details, targets[index]);
-    }
+      showDetail(prepared.details, targets[index]);
+    });
 
     list.setAttribute('role', 'tablist');
     list.setAttribute('aria-orientation', 'vertical');
@@ -229,10 +246,12 @@
       button.setAttribute('aria-controls', detail.id);
       detail.setAttribute('role', 'tabpanel');
       detail.setAttribute('aria-labelledby', button.id);
-      button.addEventListener('click', function () { select(i); });
+      button.addEventListener('click', function () {
+        state.choose(i, 'user');
+      });
       button.addEventListener('focus', function () { setTabStop(i); });
       button.addEventListener('blur', function (event) {
-        if (!buttons.includes(event.relatedTarget)) setTabStop(selected);
+        if (!buttons.includes(event.relatedTarget)) setTabStop(state.controller.snapshot().index);
       });
       button.addEventListener('keydown', function (event) {
         var last = buttons.length - 1;
@@ -249,22 +268,28 @@
       });
     });
 
-    setupPanes(list, details);
+    setupPanes(list, prepared.details);
     highlight = trackSelection(list, buttons);
-    select(0);
     box.classList.add('df-card-panel-ready');
+    cards.set(box, state.controller);
+    state.start();
   }
 
-  DocForm.steps = {
-    select: function (target, step) {
-      var figure = typeof target === 'string' ? document.getElementById(target) : target;
-      var select = selectors.get(figure);
-      return select ? select(step) : false;
-    }
-  };
+  DocForm.figureSteps = { get: function (target) { return figures.get(items.target(target)) || null; } };
+  DocForm.cards = { get: function (target) { return cards.get(items.target(target)) || null; } };
 
-  DocForm.register('steps', function () {
-    DocForm.all('.df-figure-steps').forEach(setupFigure);
-    DocForm.all('.df-card-panel').forEach(setupCards);
+  items.scan('figure-steps', function () {
+    DocForm.all('.df-figure-steps').forEach(function (box) {
+      var prepared = prepareFigure(box);
+      items.collect('figure-steps', box, prepared && prepared.domain);
+    });
   });
+  items.scan('cards', function () {
+    DocForm.all('.df-card-panel').forEach(function (box) {
+      var prepared = prepareCards(box);
+      items.collect('cards', box, prepared && prepared.domain);
+    });
+  });
+  DocForm.register('figure-steps', function () { DocForm.all('.df-figure-steps').forEach(setupFigure); });
+  DocForm.register('cards', function () { DocForm.all('.df-card-panel').forEach(setupCards); });
 })(typeof window !== 'undefined' ? window : globalThis);

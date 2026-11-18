@@ -12,7 +12,7 @@
   var TEXT_CAP = 4000;
   var SNIPPET = 140;
   var SKIP = 'script, style, template, noscript, nav, ' +
-    'button:not(.df-step-panel button[data-df-step], .df-card-panel > .df-step-panel > .df-step-list > button[data-df-card]), ' +
+    'button:not(.df-step-panel button[data-df-key]), ' +
     'svg, canvas, select, textarea, [hidden], ' +
     '[aria-hidden="true"], .df-math, .katex, .df-sidebar, .df-controls, .df-tooltip, .df-note-ref, ' +
     '.df-sidenote-num, .df-heading-link, .df-code-bar, [data-df-no-search]';
@@ -212,17 +212,24 @@
     if (!src) return callback(null);
     if (waiting) return waiting.push(callback);
     waiting = [callback];
-    var script = document.createElement('script');
-    script.src = src;
     var done = function () {
       if (!index()) {
         failed = true;
-        DocForm.warnOnce('search-index', 'Search index "' + src + '" did not load or does not set window.DocFormSearch.');
+        if (DocForm._boot) DocForm._boot.report('search-index', 'search', src,
+          'The search index did not load or did not register its pages.',
+          'Regenerate the classic search index and check its path. Current-page search is still available.');
+        else DocForm.warnOnce('search-index', 'Search index "' + src + '" did not load or does not set window.DocFormSearch.');
       }
       var list = waiting;
       waiting = null;
       list.forEach(function (fn) { fn(index()); });
     };
+    if (DocForm._boot) {
+      DocForm._boot.load(src).then(done);
+      return;
+    }
+    var script = document.createElement('script');
+    script.src = src;
     script.onload = done;
     script.onerror = done;
     document.head.appendChild(script);
@@ -230,7 +237,7 @@
 
   function base() {
     var site = DocForm.site || {};
-    return site.provided ? site.base : root.location.href;
+    return site.searchBase || (site.provided ? site.base : root.location.href);
   }
 
   // Search entries: the live current page plus every other page in the index.

@@ -474,18 +474,26 @@
     citationText: citationText
   };
 
-  DocForm.register('refs', function (site) {
+  function pageRoots() {
     var pages = DocForm.all('.df-page');
-    if (!pages.length) pages = [document.querySelector('main') || document.body];
+    return pages.length ? pages : [document.querySelector('main') || document.body];
+  }
+
+  var boot = DocForm._boot;
+  DocForm.register('refs', function (site) {
+    var pages = pageRoots();
     numberPage(pages, site);
-    renderCitations(pages, site);
-    // Heading ids come from nav.js and late modules, so links resolve after every module has set up.
-    Promise.resolve().then(function () {
-      linkRefs(DocForm.all('.df-page').length ? DocForm.all('.df-page') : pages, site);
+    if (!boot) renderCitations(pages, site);
+    function link() {
+      linkRefs(pageRoots(), site);
       var target = targetOf(root.location.hash);
       if (target) flash(target);
-    }).catch(function (e) {
+    }
+    // Heading ids are assigned during navigation setup.
+    if (boot) boot.after('refs', link);
+    else Promise.resolve().then(link).catch(function (e) {
       DocForm.warnOnce('init:refs', 'Module "refs" failed to link references.', e);
     });
   });
+  if (boot) DocForm.register('citations', function (site) { renderCitations(pageRoots(), site); });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const core = fs.readFileSync(path.join(__dirname, '../docform/js/core.js'), 'utf8');
 const source = fs.readFileSync(path.join(__dirname, '../docform/js/steps.js'), 'utf8');
 
 function element(attrs = {}, parentElement = null) {
@@ -41,6 +42,16 @@ const fakeDocument = (ids = {}) => ({
   createElement: () => element()
 });
 
+function harness(document, all, report, globals = {}) {
+  const boot = { canInitialize: () => true, report: (_, feature, host, message) => report(message),
+    moduleFailed: (_, error) => { throw error; } };
+  const DocForm = { _boot: boot };
+  const context = vm.createContext({ DocForm, document, CustomEvent, ...globals });
+  vm.runInContext(core, context);
+  DocForm.all = all;
+  return { context, DocForm, boot };
+}
+
 function scrollport(attrs = {}) {
   return Object.assign(element(attrs), {
     clientWidth: 192, offsetWidth: 200, clientHeight: 80, scrollHeight: 120, clientLeft: 0,
@@ -54,42 +65,38 @@ function setup({ list = false, headed = false, late = false, descriptions = fals
   const cardList = headed ? scrollport() : panel;
   panel.querySelector = (selector) => selector === ':scope > .df-step-list' && headed ? cardList : null;
   const details = descriptions ? ['first', 'second', 'third'].map((id) => Object.assign(scrollport(), { id })) : [];
-  const buttons = ['0', '', '4'].map((value, index) => element({
-    'data-df-step': value, 'data-df-step-detail': details[index]?.id
+  const buttons = ['start', 'middle', 'end'].map((key, index) => element({
+    'data-df-key': key, 'data-df-animation-key': key,
+    ...(details[index] ? { 'data-df-detail': details[index].id } : {})
   }, list ? element() : cardList));
   const children = {
     ':scope > figure': figure,
     ':scope > .df-step-panel': panel,
     ':scope > .df-step-details': descriptions ? { children: details } : null
   };
-  const box = Object.assign(element(), { querySelector: (selector) => children[selector] });
+  const box = Object.assign(element(), { id: 'wrapper', querySelector: (selector) => children[selector] });
   const go = [];
   const visited = [];
-  let controller = late ? null : { go: (step) => go.push(step) };
-  figure.addEventListener('df:figurestep', (event) => visited.push([event.detail.index, event.detail.step]));
+  let controller = late ? null : { go: (step) => Boolean(go.push(step)) };
+  box.addEventListener('df:figure-steps:change', (event) => visited.push([event.detail.current.index, event.detail.current.key]));
 
   const view = new EventTarget();
-  const DocForm = {
-    all: (selector, scope) => scope === cardList ? buttons : selector === '.df-figure-steps' ? [box] : [],
-    warnOnce: assert.fail,
-    anim: { get: () => controller },
-    register: (_, init) => init()
-  };
-  const context = vm.createContext({
-    DocForm,
-    CustomEvent,
-    document: fakeDocument({ [figure.id]: figure }),
-    getComputedStyle: () => ({ direction: 'ltr' }),
-    addEventListener: view.addEventListener.bind(view)
-  });
+  const { context, DocForm, boot } = harness(
+    fakeDocument({ [box.id]: box }),
+    (selector, scope) => scope === cardList ? buttons : selector === '.df-figure-steps' ? [box] : [],
+    assert.fail,
+    { getComputedStyle: () => ({ direction: 'ltr' }), addEventListener: view.addEventListener.bind(view) }
+  );
+  DocForm.animation = { get: () => controller };
   vm.runInContext(source, context);
+  boot.initialize();
 
   function loadAnimation() {
-    controller = { go: (step) => go.push(step) };
+    controller = { go: (step) => Boolean(go.push(step)) };
     view.dispatchEvent(new Event('load'));
   }
 
-  return { figure, panel, cardList, buttons, details, go, visited, loadAnimation, select: DocForm.steps.select };
+  return { box, panel, cardList, buttons, details, go, visited, loadAnimation, get: DocForm.figureSteps.get };
 }
 
 function pointer(target, type, pointerType, clientX) {
@@ -97,22 +104,22 @@ function pointer(target, type, pointerType, clientX) {
 }
 
 test('hover selects a listed step and leaves the selected marker and figure in sync', () => {
-  const { figure, panel, buttons, go, visited } = setup({ list: true });
+  const { panel, buttons, go, visited, box, get } = setup({ list: true });
   assert.equal(buttons[0].getAttribute('aria-current'), 'step');
   assert.equal(buttons[2].getAttribute('aria-controls'), 'example');
 
   pointer(buttons[2].parentElement, 'pointerenter', 'mouse');
   panel.dispatchEvent(new Event('scroll'));
-  assert.deepEqual(go, [0]);
+  assert.deepEqual(go, ['start']);
 
   pointer(buttons[2].parentElement, 'pointermove', 'mouse');
   pointer(buttons[2].parentElement, 'pointermove', 'mouse');
   pointer(buttons[2].parentElement, 'pointerleave', 'mouse');
   assert.equal(buttons[0].getAttribute('aria-current'), null);
   assert.equal(buttons[2].getAttribute('aria-current'), 'step');
-  assert.equal(figure.getAttribute('data-df-active-step'), '4');
-  assert.deepEqual(go, [0, 4]);
-  assert.deepEqual(visited, [[0, 0], [2, 4]]);
+  assert.equal(get(box).snapshot().key, 'end');
+  assert.deepEqual(go, ['start', 'end']);
+  assert.deepEqual(visited, [[0, 'start'], [2, 'end']]);
 });
 
 test('keyboard focus and tap select cards while swiping leaves the current step alone', () => {
@@ -121,11 +128,11 @@ test('keyboard focus and tap select cards while swiping leaves the current step 
   buttons[1].dispatchEvent(new Event('blur'));
   pointer(buttons[2], 'pointermove', 'touch');
   assert.equal(buttons[1].getAttribute('aria-current'), 'step');
-  assert.deepEqual(go, [0, 2]);
+  assert.deepEqual(go, ['start', 'middle']);
 
   buttons[2].dispatchEvent(new Event('click'));
   pointer(buttons[0], 'pointermove', 'pen');
-  assert.deepEqual(go, [0, 2, 4, 0]);
+  assert.deepEqual(go, ['start', 'middle', 'end', 'start']);
 });
 
 test('an animation available only at page load shows the latest selection', () => {
@@ -133,28 +140,28 @@ test('an animation available only at page load shows the latest selection', () =
   buttons[2].dispatchEvent(new Event('click'));
   assert.deepEqual(go, []);
   loadAnimation();
-  assert.deepEqual(go, [4]);
-  assert.deepEqual(visited, [[0, 0], [2, 4]]);
+  assert.deepEqual(go, ['end']);
+  assert.deepEqual(visited, [[0, 'start'], [2, 'end']]);
 });
 
 test('a custom visualization can select a step by figure or id and share its selected detail', () => {
-  const { figure, buttons, details, go, visited, select } = setup({ descriptions: true });
+  const { box, buttons, details, go, visited, get } = setup({ descriptions: true });
   const inert = () => details.map((detail) => detail.inert);
   assert.deepEqual(inert(), [false, true, true]);
   assert.equal(buttons[2].getAttribute('aria-describedby'), 'third');
 
-  figure.addEventListener('df:figurestep', (event) => select(figure, event.detail.step));
-  assert.equal(select('example', 4), true);
+  box.addEventListener('df:figure-steps:change', (event) => get(box).select(event.detail.current.key));
+  assert.equal(get('wrapper').select('end'), true);
   assert.deepEqual(inert(), [true, true, false]);
   assert.equal(buttons[2].getAttribute('aria-current'), 'step');
-  assert.equal(figure.getAttribute('data-df-active-step'), '4');
-  assert.equal(select('missing', 2), false);
-  assert.equal(select(figure, 3), false);
-  assert.deepEqual(visited, [[0, 0], [2, 4]]);
+  assert.equal(get(box).snapshot().key, 'end');
+  assert.equal(get('missing'), null);
+  assert.equal(get(box).select('unknown'), false);
+  assert.deepEqual(visited, [[0, 'start'], [2, 'end']]);
 
   buttons[1].dispatchEvent(new Event('focus'));
   assert.deepEqual(inert(), [true, false, true]);
-  assert.deepEqual(go, [0, 4, 2]);
+  assert.deepEqual(go, ['start', 'end', 'middle']);
 });
 
 test('an overflowing panel reveals its scrollbar at the track and hides it outside that area', () => {
@@ -197,7 +204,7 @@ test('a headed selector and its active detail have separate scrollports', () => 
 function cardPanel(id) {
   const details = ['one', 'two', 'three'].map((name) => Object.assign(scrollport(), { id: `${id}-${name}` }));
   const list = scrollport({ 'aria-labelledby': `${id}-heading` });
-  const buttons = details.map((detail) => element({ 'data-df-card': detail.id }, list));
+  const buttons = details.map((detail) => element({ 'data-df-key': detail.id, 'data-df-detail': detail.id }, list));
   const panel = { querySelector: (selector) => selector === ':scope > .df-step-list' ? list : null };
   const children = {
     ':scope > .df-step-panel': panel,
@@ -218,30 +225,23 @@ function setupCards(panels, tabSets = []) {
 
   panels.flatMap((panel) => panel.buttons).forEach((button) => { button.focus = () => focus(button); });
   const warnings = [];
-  const DocForm = {
-    all: (selector, scope) => {
-      if (selector === '.df-card-panel') return panels.map((panel) => panel.box);
-      if (selector === '.df-tabs, [data-df-tabs]') return tabSets;
-      assert.ok(selector === '.df-figure-steps' ||
-        selector === ':scope > button[data-df-card], :scope > .df-step-group > button[data-df-card]');
-      return panels.find((panel) => panel.list === scope)?.buttons ?? [];
-    },
-    data: (el, name, fallback) => el.getAttribute(`data-df-${name}`) ?? fallback,
-    flag: (el, name) => el.hasAttribute(`data-df-${name}`),
-    warnOnce: (key) => warnings.push(key),
-    register: (_, init) => init()
-  };
   const document = Object.assign(fakeDocument(), {
     createElement: () => {
       const children = [];
       return Object.assign(element(), { children, appendChild: (child) => children.push(child) });
     }
   });
-  const context = vm.createContext({ DocForm, document });
+  const { context, boot } = harness(document, (selector, scope) => {
+    if (selector === '.df-card-panel') return panels.map((panel) => panel.box);
+    if (selector === '.df-tabs, [data-df-tabs]') return tabSets;
+    if (selector === ':scope > [data-df-tab]') return scope.children.slice();
+    return panels.find((panel) => panel.list === scope)?.buttons ?? [];
+  }, (message) => warnings.push(message));
   vm.runInContext(source, context);
   if (tabSets.length) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../docform/js/tabs.js'), 'utf8'), context);
   }
+  boot.initialize();
   return { focus, warnings, focused: () => focused };
 }
 
@@ -315,10 +315,10 @@ test('switching cards preserves nested selection and isolates other card panels'
 
 test('returning to a card retains the language chosen with the tabs module', () => {
   const panel = cardPanel('recipe');
-  const python = element({ 'data-df-tab': 'Python', 'data-df-selected': '' });
-  const javascript = element({ 'data-df-tab': 'JavaScript' });
+  const python = element({ 'data-df-tab': 'Python', 'data-df-key': 'python', 'data-df-initial': '' });
+  const javascript = element({ 'data-df-tab': 'JavaScript', 'data-df-key': 'js' });
   const children = [python, javascript];
-  const tabs = Object.assign(element(), { children, insertBefore: (list) => children.unshift(list) });
+  const tabs = Object.assign(element(), { children, insertBefore: (list) => children.unshift(list), getBoundingClientRect: () => ({ top: 0 }) });
   panel.details[0].children = [tabs];
   setupCards([panel], [tabs]);
 
@@ -337,9 +337,9 @@ test('a card that targets a nested or missing detail leaves every authored detai
   const outer = cardPanel('outer');
   const inner = cardPanel('inner');
   outer.details[1].children = [inner.box];
-  outer.buttons[1].setAttribute('data-df-card', inner.details[0].id);
+  outer.buttons[1].setAttribute('data-df-detail', inner.details[0].id);
   const { warnings } = setupCards([outer, inner]);
-  assert.deepEqual(warnings, ['steps:cards']);
+  assert.deepEqual(warnings, ['A card panel needs a labelled list and one button per detail.']);
   assert.equal(outer.box.classList.has('df-card-panel-ready'), false);
   assert.ok(outer.details.every((detail) => !detail.inert));
   assert.equal(inner.box.classList.has('df-card-panel-ready'), true);

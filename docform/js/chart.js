@@ -1,7 +1,7 @@
 // SVG line, bar, and scatter charts from inline data: a JSON script or a table inside a [data-df-chart] element, or
 // DocForm.chart(el, spec). Hovering or the arrow keys show a readout; the Table button swaps the plot for its data.
 // Line charts with gaps: 'break' end a segment at explicit missing values; referenceLines mark labelled values.
-// With a highlight group, a click, Enter, or Space on a keyed point selects that key in DocForm.highlight.
+// With a selection group, a click, Enter, or Space on a keyed point selects that key in DocForm.selection.
 // x: { type: 'time' } on line and scatter charts places zoned timestamps by elapsed time and shows them in UTC.
 // type: 'log' on either axis of a line or scatter chart plots positive values on a base-10 scale. A spec that fails
 // validation is not drawn: the element keeps its own content, and an update keeps the last valid chart.
@@ -26,8 +26,8 @@
   var EMPTY_SERIES = 'Every series is hidden. Choose one in the legend to show it.';
   var EMPTY_RANGE = 'No readings in this range.';
   var clips = 0;
-  var GROUP = 'data-df-highlight-group';
-  var KEY = 'data-df-highlight-key';
+  var GROUP = 'data-df-selection-group';
+  var KEY = 'data-df-key';
   var charts = typeof WeakMap === 'function' ? new WeakMap() : null;
 
   function isNum(v) {
@@ -399,7 +399,7 @@
           }
           x = at;
         } else if (typeof x === 'string' && !categories && type !== 'bar' && toNumber(x) !== null) x = toNumber(x);
-        key = key == null ? '' : String(key).trim();
+        key = typeof key === 'string' ? key.trim() : '';
         entries.push({ x: x, y: y, label: label == null ? '' : String(label), key: key || null });
       });
       return {
@@ -471,7 +471,8 @@
       markedCategories: categorical && Array.isArray(spec.markedCategories) ? new Set(spec.markedCategories.map(String)) : null,
       gaps: breaks,
       referenceLines: refs,
-      highlight: typeof spec.highlight === 'string' && spec.highlight.trim() ? spec.highlight.trim() : null,
+      selectionMode: 'both',
+      selectionGroup: typeof spec.selectionGroup === 'string' && spec.selectionGroup.trim() ? spec.selectionGroup.trim() : null,
       table: spec.table !== false,
       toggles: spec.toggles !== false && series.length > 1,
       brush: !!spec.brush && !categorical,
@@ -513,7 +514,7 @@
     };
   }
 
-  // Readout positions after the marks are drawn. Scatter charts, and line or bar charts with a highlight group,
+  // Readout positions after the marks are drawn. Scatter charts, and line or bar charts with a selection group,
   // get one spot per point so marks that share an x can each be read and selected; other charts get one per x.
   // markOf maps a point to its drawn mark as { el, px }, if any.
   function spotsFor(model, xAt, y, markOf) {
@@ -525,7 +526,7 @@
       model.series.forEach(function (s) {
         s.points.forEach(function (p) { spots.push({ px: xAt(p.x), py: y(p.y), s: s, p: p, el: (markOf(p) || {}).el }); });
       });
-    } else if (model.highlight) {
+    } else if (model.selectionGroup) {
       var byX = new Map();
       model.series.forEach(function (s) {
         s.points.forEach(function (p) {
@@ -894,7 +895,7 @@
       thick = Math.max(2, Math.min(24, (band * 0.72 - gap * (m - 1)) / m));
     }
     var markOf = new Map();
-    // Keyed marks join the chart's highlight group, so outside selections reach them after every redraw.
+    // Keyed marks follow the shared selection after every redraw.
     var place = function (p, el, px) {
       markOf.set(p, { el: el, px: px });
       return tagKey(model, el, p);
@@ -916,7 +917,7 @@
         runs.forEach(function (run) {
           run.forEach(function (p) {
             if (range && (p.x < range[0] || p.x > range[1])) return;
-            if (s.points.length > 16 && run.length > 1 && !(model.highlight && p.key)) return;
+            if (s.points.length > 16 && run.length > 1 && !(model.selectionGroup && p.key)) return;
             place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4, class: 'df-chart-dot' }, g), xAt(p.x));
           });
         });
@@ -1009,7 +1010,8 @@
   }
 
   function selectedKey(model) {
-    return model.highlight && DocForm.highlight ? DocForm.highlight.get(model.highlight) : null;
+    var group = model.selectionMode !== 'publish' && DocForm.selection && DocForm.selection.group(model.selectionGroup);
+    return group ? group.get() : null;
   }
 
   function show(chart, index, pointerY) {
@@ -1114,43 +1116,30 @@
     show(chart, closest(spots, px, py), py);
   }
 
-  // Commits the point under the readout: its key becomes the group's selection, or clears it when already selected.
+  // Commits the previewed point without changing the chart range or series.
   function keyedSpot(chart) {
     var spot = chart.spots[chart.active];
-    return chart.model.highlight && spot && spot.p && spot.p.key ? spot : null;
+    return chart.group && chart.model.selectionMode !== 'follow' && spot && spot.p && spot.p.key ? spot : null;
   }
 
-  // Selections made elsewhere refresh an open readout without moving focus. One listener serves every chart
-  // that has had a highlight group.
-  var selectable = [];
   function watch(chart) {
-    if (!chart.model.highlight || selectable.indexOf(chart) >= 0) return;
-    if (!selectable.length) {
-      document.addEventListener('df:highlightchange', function (event) {
-        selectable.forEach(function (c) {
-          if (event.detail && event.detail.group === c.model.highlight && c.active >= 0) show(c, c.active, c.pointerY);
-        });
-      });
-    }
-    selectable.push(chart);
+    if (chart.unfollow) chart.unfollow();
+    chart.group = DocForm._selection && DocForm._selection.ensure(chart.model.selectionGroup);
+    chart.unfollow = chart.group && chart.model.selectionMode !== 'publish' && chart.group.follow(function () {
+      if (chart.active >= 0) show(chart, chart.active, chart.pointerY);
+    });
   }
 
   function activate(chart) {
     var spot = keyedSpot(chart);
-    var group = chart.model.highlight;
-    if (!spot) return false;
-    if (!DocForm.highlight) {
-      DocForm.warnOnce('chart-highlight', 'Charts with a highlight group need highlight.js.');
-      return false;
-    }
-    DocForm.highlight.set(group, DocForm.highlight.get(group) === spot.p.key ? null : spot.p.key);
-    return true;
+    return spot ? chart.group.toggle(spot.p.key) : false;
   }
 
   function tagKey(model, el, p) {
-    if (model.highlight && p && p.key) {
-      el.setAttribute(GROUP, model.highlight);
+    if (model.selectionGroup && model.selectionMode !== 'publish' && p && p.key) {
+      el.setAttribute(GROUP, model.selectionGroup);
       el.setAttribute(KEY, p.key);
+      if (DocForm._selection) DocForm._selection.sync(el);
     }
     return el;
   }
@@ -1206,7 +1195,8 @@
     var names = model.series.map(function (s) { return s.name; }).filter(Boolean);
     var gaps = model.gaps && model.series.some(function (s) { return s.missing.length; });
     var refs = model.referenceLines.map(function (r) { return refText(model, r); });
-    var keyed = model.highlight && model.series.some(function (s) { return s.points.some(function (p) { return p.key; }); });
+    var keyed = DocForm.selection && model.selectionMode !== 'follow' && model.selectionGroup &&
+      model.series.some(function (s) { return s.points.some(function (p) { return p.key; }); });
     return (model.title ? model.title + '. ' : '') + model.type.charAt(0).toUpperCase() + model.type.slice(1) + ' chart' +
       (names.length ? ' of ' + names.join(', ') : '') + '.' +
       (model.x.time ? ' Times are in UTC.' : '') +
@@ -1455,7 +1445,7 @@
         event.preventDefault();
         return;
       }
-      if (event.button !== 0 || !chart.svg || !chart.model.highlight) return;
+      if (event.button !== 0 || !chart.svg || !chart.group || chart.model.selectionMode === 'follow') return;
       pick(chart, event);
       if (activate(chart)) event.preventDefault();
     });
@@ -1494,7 +1484,7 @@
       element: host,
       // Returns false, keeping the current chart, when the new data fails validation.
       update: function (next) {
-        var model = normalize(next);
+        var model = chartModel(host, next);
         if (!report(model, host, true)) return false;
         // Hidden series stay hidden by name, and a narrowed range stays while it still fits the data.
         Object.keys(chart.hidden).forEach(function (name) {
@@ -1573,21 +1563,32 @@
   function overrides(host, spec) {
     var type = DocForm.data(host, 'chart', '');
     if (TYPES[type]) spec.type = type;
-    var h = DocForm.num(host, 'height', null);
-    if (h !== null) spec.height = h;
+    var height = DocForm.data(host, 'height', null);
+    if (height !== null) {
+      if (DocForm._boot) {
+        var h = /^[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?$/i.test(height.trim()) ? Number(height) : NaN;
+        if (validHeight(h)) spec.height = h;
+        else invalidOption(host, 'height', 'Use a finite chart height greater than 80.', height);
+      } else if (isFinite(parseFloat(height))) {
+        spec.height = parseFloat(height);
+      }
+    }
     var gaps = DocForm.data(host, 'gaps', null);
     if (gaps !== null) spec.gaps = gaps;
-    var group = DocForm.data(host, 'highlight-group', null);
-    if (group !== null) spec.highlight = group;
+    var group = DocForm.data(host, 'selection-group', null);
+    if (group !== null) spec.selectionGroup = group;
     ['brush', 'rescale', 'toggles'].forEach(function (name) {
       if (DocForm.data(host, name, null) !== null) spec[name] = DocForm.flag(host, name);
     });
     var refs = DocForm.data(host, 'reference-lines', null);
     if (refs !== null) {
       try {
-        spec.referenceLines = JSON.parse(refs);
+        var lines = JSON.parse(refs);
+        if (DocForm._boot && lines !== null && !Array.isArray(lines)) throw new Error('Expected an array or null.');
+        spec.referenceLines = lines;
       } catch (e) {
-        DocForm.warnOnce('chart-refs:' + e.message, 'Chart reference lines are not valid JSON: ' + e.message, host);
+        if (DocForm._boot) invalidOption(host, 'referenceLines', 'Use a JSON array of reference lines or null.', refs);
+        else DocForm.warnOnce('chart-refs:' + e.message, 'Chart reference lines are not valid JSON: ' + e.message, host);
       }
     }
     var axisOf = function (axis) {
@@ -1604,8 +1605,46 @@
     return spec;
   }
 
-  // Reads the data inside a [data-df-chart] element and draws it.
-  function fromMarkup(host) {
+  function validHeight(value) {
+    return isNum(value) && value > 80;
+  }
+
+  function invalidOption(host, key, correction, input) {
+    DocForm._boot.report('chart-option', 'chart', host, 'Invalid chart option "' + key + '".', correction, [key, input]);
+  }
+
+  function configuredSpec(host, spec, options) {
+    var boot = DocForm._boot;
+    if (!boot) return spec || {};
+    var layers = boot.optionLayers('chart', host.id).concat([spec, options]);
+    var result = {};
+    layers.forEach(function (layer) {
+      if (!layer || typeof layer !== 'object' || Array.isArray(layer)) return;
+      var value = Object.assign({}, layer);
+      delete value.instances;
+      if ('height' in value && !validHeight(value.height)) {
+        invalidOption(host, 'height', 'Use a finite chart height greater than 80.', value.height);
+        delete value.height;
+      }
+      if ('referenceLines' in value && value.referenceLines !== null && !Array.isArray(value.referenceLines)) {
+        invalidOption(host, 'referenceLines', 'Use an array of reference lines or null.', value.referenceLines);
+        delete value.referenceLines;
+      }
+      ['x', 'y'].forEach(function (axis) {
+        if (typeof value[axis] === 'string') value[axis] = { label: value[axis] };
+      });
+      result = boot.merge(result, value);
+    });
+    return result;
+  }
+
+  function chartModel(host, spec) {
+    var model = normalize(spec);
+    if (DocForm._items) model.selectionMode = DocForm._items.mode(host, 'chart');
+    return model;
+  }
+
+  function readMarkup(host, options) {
     var script = host.querySelector(':scope > script[type="application/json"]');
     var table = host.querySelector(':scope > table');
     var spec = null;
@@ -1618,26 +1657,33 @@
       }
     } else if (table) {
       var cells = DocForm.all('tr', table).map(function (tr) { return DocForm.all('th, td', tr); });
-      var keys = cells.map(function (r) { return r.map(function (cell) { return DocForm.data(cell, 'highlight-key', '').trim() || null; }); });
+      var keys = cells.map(function (r) { return r.map(function (cell) { return DocForm.data(cell, 'key', '').trim() || null; }); });
       spec = fromTable(cells.map(function (r) { return r.map(cellText); }), null, keys);
       var heads = DocForm.all('tr', table)[0];
-      DocForm.all('th, td', heads).slice(1).forEach(function (cell, i) {
+      (heads ? DocForm.all('th, td', heads) : []).slice(1).forEach(function (cell, i) {
         var s = spec.series[i];
         if (!s) return;
         s.role = DocForm.data(cell, 'role', null);
         s.color = DocForm.data(cell, 'color', null);
       });
-    } else {
-      return null;
-    }
-    spec = overrides(host, spec || {});
-    var model = normalize(spec);
+    } else if (!options) return null;
+    spec = overrides(host, configuredSpec(host, spec, options));
+    return { spec: spec, table: script ? null : table };
+  }
+
+  function fromMarkup(host, options) {
+    var input = readMarkup(host, options);
+    if (!input) return null;
+    var model = chartModel(host, input.spec);
     if (!report(model, host)) return null;
+    var table = input.table;
     // Keyed source cells join the group too, so the table view shows the same selection.
-    if (table && !script && model.highlight) {
-      DocForm.all('[' + KEY + ']', table).forEach(function (cell) { cell.setAttribute(GROUP, model.highlight); });
+    if (table && model.selectionGroup && model.selectionMode !== 'publish') {
+      DocForm.all('[' + KEY + ']', table).forEach(function (cell) {
+        tagKey(model, cell, { key: DocForm.data(cell, 'key') });
+      });
     }
-    return build(host, model, script ? null : table, spec);
+    return build(host, model, table, input.spec);
   }
 
   function chart(target, spec) {
@@ -1651,7 +1697,7 @@
       existing.api.update(spec);
       return existing.api;
     }
-    var model = normalize(spec || {});
+    var model = chartModel(host, spec || {});
     return report(model, host) ? build(host, model, null, spec || {}) : null;
   }
 
@@ -1682,7 +1728,28 @@
   chart.timeTicks = timeTicks;
   chart.timeTickFormat = timeTickFormat;
   chart.get = function (el) { var c = charts && charts.get(el); return c ? c.api : null; };
+  chart.mount = function (target, options) {
+    var host = typeof target === 'string' ? document.getElementById(target) : target;
+    if (!host || !charts || !host.querySelector) return null;
+    return chart.get(host) || fromMarkup(host, options);
+  };
   DocForm.chart = chart;
+
+  if (DocForm._items) DocForm._items.scan('chart', function () {
+    DocForm.all('[data-df-chart]').forEach(function (host) {
+      DocForm._selection.ensure(DocForm.data(host, 'selection-group', null));
+      var mounted = charts.get(host);
+      var input = mounted ? null : readMarkup(host);
+      var model = mounted ? mounted.model : input && chartModel(host, input.spec);
+      if (!model || model.errors.length || !model.selectionGroup) return;
+      var keys = model.series.flatMap(function (series) {
+        return series.points.map(function (point) { return point.key; }).filter(Boolean);
+      });
+      var seeded = keys.length && model.selectionMode !== 'follow' &&
+        DocForm._items.flag(host, 'selection-seed', 'chart');
+      DocForm._selection.collect(model.selectionGroup, keys, seeded ? [[host, keys[0]]] : []);
+    });
+  });
 
   DocForm.register('chart', function () {
     DocForm.all('[data-df-chart]').forEach(function (host) {

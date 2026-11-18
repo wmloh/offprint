@@ -1,5 +1,5 @@
-Offline setup	Copy the library and initialize classic scripts	setup/setup.md
-Include order	Load shared assets and cooperating modules	setup/include-order.md
+Offline setup	Use the offline entry and author lifecycle hooks	setup/setup.md
+Include order	Choose features and load cooperating modules	setup/include-order.md
 Site manifest	Configure page paths, roles, glossary, macros, citations, and search	setup/manifest.md
 Base layout	Style the reading column, typography, lists, and tables	layout/base.md
 Wide blocks	Extend figures and tables into available side space	layout/wide.md
@@ -29,7 +29,7 @@ Split views	Lay out responsive panes with staggered reveals	interact/split-views
 Figure zoom	Move a live figure into a full-screen dialog	interact/figure-zoom.md
 Zoom tools	Magnify, point, draw, and measure in the zoom dialog	interact/zoom-tools.md
 Parameters	Bind sliders, choices, switches, and presets to page content	interact/parameters.md
-Linked highlighting	Synchronize a selected key across views	interact/linked-highlighting.md
+Linked selection	Synchronize keyed controls, charts, and passive views	interact/linked-highlighting.md
 Worked-example steppers	Step through an ordered example and its linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
 SVG charts	Draw line, bar, and scatter charts with interactive views	data/charts.md

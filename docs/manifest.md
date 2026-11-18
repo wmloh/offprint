@@ -1,28 +1,33 @@
 # Manifest reference
 
-A manifest describes a site: its pages, colour roles, glossary and glossary page, term options, math macros, bibliography, numbering options, and search index. It is an ordinary script that sets `window.DocFormSite`. Start from `docform/site.template.js`, save it beside your pages as `site.js`, and load it before `core.js`:
+A site manifest shares navigation and feature choices across pages. Copy `docform/site.template.js` to `site.js` and include it before the entry script.
 
 ```html
 <script src="site.js" data-df-site></script>
-<script src="docform/js/core.js"></script>
+<script src="docform/docform.js"></script>
 ```
 
-Every field is optional. A page without a manifest still gets everything except the page list, roles, and glossary.
+The script assigns a JSON object to `window.DocFormSite`. Every field is optional. The following example enables math throughout the site and sets a default theme.
 
 ```js
 window.DocFormSite = {
-  title: 'Linear Algebra Notes',
-  pages: [ /* ... */ ],
-  roles: { /* ... */ },
-  glossary: { /* ... */ },
-  glossaryPage: 'glossary.html',
-  terms: { /* ... */ },
-  macros: { /* ... */ },
-  bibliography: { /* ... */ },
-  refs: { /* ... */ },
-  search: 'search-index.js'
+  "title": "Linear Algebra Notes",
+  "pages": [{ "title": "Introduction", "path": "index.html" }],
+  "features": { "math": true },
+  "options": { "theme": { "mode": "light" } }
 };
 ```
+
+| Setting | Purpose |
+| --- | --- |
+| `profile` | Start with the standard `"reading"` profile or opt in feature by feature with `"none"`. |
+| `features` | Enable or disable named features with booleans. A page can override these choices in its `data-df-page` JSON block. |
+| `options` | Configure features by name, for example `options.tooltips.terms` for glossary entries or `options.citations.entries` for bibliography entries. |
+| `selectionGroups` | Named starting keys and optional persistence for [linked controls](components.md#linked-selection). A page can override each group’s settings. |
+| `assets.search.output` | Location of the generated search index, relative to the manifest. |
+| `assets.data` | Map of names to wrapped data descriptors, each with a relative `output` path and optional `source` and `type`. |
+
+The field descriptions below explain the data formats. Existing top-level fields also work with individual module includes.
 
 ## title
 

@@ -16,6 +16,7 @@
     dark: SVG + '<path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z"/></svg>'
   };
   var doc = root.document;
+  var boot = root.DocForm && root.DocForm._boot;
   var mode = 'light';
   var toggles = [];
 
@@ -43,7 +44,7 @@
     } catch (e) {
       // Blocked storage: start from the OS preference.
     }
-    return normalize(stored, prefersDark());
+    return normalize(MODES.indexOf(stored) >= 0 ? stored : boot && boot.themeDefault, prefersDark());
   }
 
   function write(value) {
@@ -121,7 +122,10 @@
 
   apply(read());
 
-  if (doc && doc.addEventListener) {
+  if (boot) {
+    root.DocForm.theme = api;
+    root.DocForm.register('theme', start);
+  } else if (doc && doc.addEventListener) {
     if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start);
     else start();
   }

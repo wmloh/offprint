@@ -4,6 +4,7 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const vm = require('node:vm');
 
+const core = readFileSync(join(__dirname, '../docform/js/core.js'), 'utf8');
 const source = readFileSync(join(__dirname, '../docform/js/stepper.js'), 'utf8');
 
 function element(tag, attrs = {}, children = []) {
@@ -20,8 +21,8 @@ function element(tag, attrs = {}, children = []) {
     toggleAttribute: (name, on) => on ? attributes.set(name, '') : attributes.delete(name),
     appendChild: (child) => children.push(child),
     querySelector(selector) {
-      assert.equal(selector, ':scope > [data-df-step-name]');
-      return children.find((child) => child.getAttribute('data-df-step-name') !== null);
+      assert.equal(selector, ':scope > [data-df-step-label]');
+      return children.find((child) => child.getAttribute('data-df-step-label') !== null);
     },
     before(sibling) { this.controls = sibling; },
     click() { this.dispatchEvent(new Event('click')); }
@@ -34,33 +35,30 @@ function element(tag, attrs = {}, children = []) {
 
 function sequence(id, ...keys) {
   return element('ol', { id }, keys.map((key) => {
-    const name = element('strong', { 'data-df-step-name': '' });
+    const name = element('strong', { 'data-df-step-label': '' });
     name.textContent = key;
-    return element('li', { 'data-df-step-key': key }, [name]);
+    return element('li', { 'data-df-key': key }, [name]);
   }));
 }
 
 function view(tag, id, key) {
-  return element(tag, { 'data-df-stepper-view': id, 'data-df-step-key': key });
+  return element(tag, { 'data-df-stepper-view': id, 'data-df-key': key });
 }
 
 function setup(lists, views = []) {
   const warnings = [];
-  let start;
-  const DocForm = {
-    all(selector, list) {
+  const boot = { canInitialize: () => true, report: (_, feature, host, message) => warnings.push(message),
+    moduleFailed: (_, error) => { throw error; } };
+  const DocForm = { _boot: boot };
+  const all = (selector, list) => {
       switch (selector) {
         case 'ol[data-df-stepper]': return lists;
-        case '[data-df-stepper-view][data-df-step-key]': return views;
+        case '[data-df-stepper-view][data-df-key]': return views;
         case ':scope > li': return list.children.filter((child) => child.tag === 'li');
         default: throw new Error(`Unexpected selector ${selector}`);
       }
-    },
-    data: (el, key, fallback) => el.getAttribute('data-df-' + key) ?? fallback,
-    warnOnce: (_, message) => warnings.push(message),
-    register: (_, init) => { start = init; }
   };
-  vm.runInNewContext(source, {
+  const context = vm.createContext({
     DocForm,
     CustomEvent,
     document: {
@@ -68,7 +66,10 @@ function setup(lists, views = []) {
       getElementById: (id) => lists.find((list) => list.id === id) ?? null
     }
   });
-  return { start, stepper: DocForm.stepper, warnings };
+  vm.runInContext(core, context);
+  DocForm.all = all;
+  vm.runInContext(source, context);
+  return { start: boot.initialize, stepper: DocForm.stepper, warnings };
 }
 
 test('controls stop at both boundaries and Reset restores the initial step and linked results', () => {
@@ -81,13 +82,13 @@ test('controls stop at both boundaries and Reset restores the initial step and l
   const { start, stepper } = setup([list], views);
   const changes = [];
   const viewVisibility = () => views.map((node) => node.getAttribute('hidden') === null);
-  list.addEventListener('df:stepperchange', (event) => {
-    const { index, key, name, total } = event.detail;
+  list.addEventListener('df:stepper:change', (event) => {
+    const { index, key, label, total } = event.detail.current;
     assert.equal(event.bubbles, true);
-    assert.equal(event.detail, stepper.get('sum'));
+    assert.equal(event.detail.current, stepper.get('sum').snapshot());
     assert.equal(list.children[index].getAttribute('aria-current'), 'step');
     assert.equal(list.controls.children[0].textContent, `Step ${index + 1} of ${total}`);
-    changes.push({ index, key, name, visible: viewVisibility() });
+    changes.push({ index, key, name: label, visible: viewVisibility() });
   });
 
   assert.deepEqual(viewVisibility(), [true, true, true, true]);
@@ -138,8 +139,8 @@ test('steppers with the same keys update only their own views', () => {
   start();
 
   first.controls.children[2].click();
-  assert.equal(stepper.get(first).key, 'Check');
-  assert.equal(stepper.get(second).key, 'Inputs');
+  assert.equal(stepper.get(first).snapshot().key, 'Check');
+  assert.equal(stepper.get(second).snapshot().key, 'Inputs');
   assert.equal(firstView.getAttribute('hidden'), null);
   assert.equal(secondView.getAttribute('hidden'), '');
 });
@@ -154,7 +155,7 @@ test('a single step stays visible and an ambiguous sequence stays readable', () 
     assert.equal(control.getAttribute('aria-disabled'), 'true');
     control.click();
   }
-  assert.equal(stepper.get(single).key, 'Start');
+  assert.equal(stepper.get(single).snapshot().key, 'Start');
   assert.equal(single.children[0].hidden, false);
   assert.equal(stepper.get(invalid), null);
   assert.equal(invalid.controls, undefined);
@@ -166,20 +167,20 @@ test('select jumps to a named step through the same update as the controls', () 
   const list = sequence('trace', 'send', 'retry', 'late');
   const row = view('tr', 'trace', 'late');
   const { start, stepper, warnings } = setup([list], [row]);
-  assert.equal(stepper.select('trace', 'late'), false, 'nothing to select before setup');
+  assert.equal(stepper.get('trace'), null, 'nothing to select before setup');
   start();
   const changes = [];
-  list.addEventListener('df:stepperchange', (event) => changes.push(event.detail.key));
+  list.addEventListener('df:stepper:change', (event) => changes.push(event.detail.current.key));
   const [, previous, next, reset] = list.controls.children;
 
-  assert.equal(stepper.select('trace', 'late'), true);
-  assert.equal(stepper.select(list, 'late'), true);
+  assert.equal(stepper.get('trace').select('late'), true);
+  assert.equal(stepper.get(list).select('late'), true);
   assert.deepEqual(list.children.map((step) => step.hidden), [true, true, false]);
   assert.equal(row.getAttribute('hidden'), null);
   assert.deepEqual([previous, next, reset].map((b) => b.getAttribute('aria-disabled')), ['false', 'true', 'false']);
-  assert.equal(stepper.select('trace', 'missing'), false);
-  assert.equal(stepper.get('trace').key, 'late');
+  assert.equal(stepper.get('trace').select('missing'), false);
+  assert.equal(stepper.get('trace').snapshot().key, 'late');
   previous.click();
   assert.deepEqual(changes, ['late', 'retry'], 'reselecting the current step sends no change');
-  assert.equal(warnings.length, 2);
+  assert.equal(warnings.length, 0);
 });

@@ -1,5 +1,6 @@
 window.DocFormSite = {
   title: 'Pump Monitoring with PCA',
+  selectionGroups: { "pca-language": { persist: true } },
   pages: [
     { title: 'Set up the monitoring study', path: '../index.html' },
     {

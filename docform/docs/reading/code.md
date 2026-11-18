@@ -14,7 +14,7 @@ count += 1
 ```
 
 - `data-df-lines` takes one-based line numbers and ranges separated by spaces or commas. `data-df-annotate` extracts trailing marker-only comments such as `# (1)` or `// (2) (3)` from code and copied text. Use the following sibling `ol` or point at one with `data-df-annotate="#id"`. Numbering respects `ol[start]`.
-- A marker and its list item highlight together on hover/focus. Clicking a marker scrolls to its note. Load `tooltip.js` and `tooltip.css` for marker previews. List item `data-df-highlight-group` and `data-df-highlight-key` are copied to its markers for linked views.
+- A marker and its list item highlight together on hover/focus. Clicking a marker scrolls to its note. Load `tooltip.js` and `tooltip.css` for marker previews. List item `data-df-selection-group` and `data-df-key` are copied to its markers for linked views.
 
 ```html
 <div class="df-diff" data-df-lang="python">

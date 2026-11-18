@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="../../docform/css/zoomtools.css">
   <link rel="stylesheet" href="../../docform/css/bubble.css">
   <link rel="stylesheet" href="../../docform/css/tabs.css">
+  <link rel="stylesheet" href="../../docform/css/highlight.css">
   <link rel="stylesheet" href="../../docform/css/code.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
@@ -93,8 +94,8 @@
     </figure>
 
     <h3 id="lookup-code">Run the lookup</h3>
-    <div class="df-tabs" data-df-tab-group="transformer-language">
-      <div data-df-tab="Python" data-df-selected>
+    <div class="df-tabs" data-df-selection-group="transformer-language">
+      <div data-df-tab="Python" data-df-key="python" data-df-initial>
         <pre data-df-annotate="#token-notes" data-df-lines="5-6"><code class="language-python">import re
 
 vocab = ["the", "train", "is", "late", "here", "."]
@@ -106,7 +107,7 @@ ids = [lookup[piece] for piece in pieces]  # (2)</code></pre>
           <li>Look up each piece. A piece outside the six entries raises a lookup error in this example.</li>
         </ol>
       </div>
-      <div data-df-tab="JavaScript">
+      <div data-df-tab="JavaScript" data-df-key="javascript">
         <pre><code class="language-js">const vocab = ["the", "train", "is", "late", "here", "."];
 const lookup = new Map(vocab.map((token, i) => [token, i]));
 const pieces = "the train is".toLowerCase().match(/\w+|[^\w\s]/g) || [];
@@ -176,6 +177,7 @@ const ids = pieces.map(piece => {
   <script src="../../docform/js/zoom.js"></script>
   <script src="../../docform/js/zoomtools.js"></script>
   <script src="../../docform/js/bubble.js"></script>
+  <script src="../../docform/js/highlight.js"></script>
   <script src="../../docform/js/tabs.js"></script>
   <script src="../../docform/js/code.js"></script>
   <script src="assets/tokens.js"></script>

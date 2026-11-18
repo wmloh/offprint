@@ -15,19 +15,9 @@ my-notes/
 
 Pages in subfolders work too; just adjust the relative paths (for example `../docform/...`).
 
-## 2. Include the files
+## 2. Add DocForm to a page
 
-Stylesheets go in `<head>`, scripts at the end of `<body>`:
-
-1. `tokens.css`, then `base.css`, then the stylesheets of the modules you use.
-2. `theme.js` in `<head>`, if you want the light and dark toggle.
-3. Your manifest, `site.js`, marked with `data-df-site` (optional).
-4. `core.js`.
-5. Module scripts, in any order. Page scripts that use `DocForm.anim` or `DocForm.params` come last.
-
-[include-order.md](include-order.md) has the full rules.
-
-## 3. A minimal page
+The entry script starts the reading features. Link the optional stylesheet to style the page while scripts load or when JavaScript is disabled. Opt into extras such as math in the page configuration.
 
 ```html
 <!doctype html>
@@ -36,43 +26,24 @@ Stylesheets go in `<head>`, scripts at the end of `<body>`:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My first page</title>
-  <link rel="stylesheet" href="docform/css/tokens.css">
-  <link rel="stylesheet" href="docform/css/base.css">
-  <link rel="stylesheet" href="docform/css/nav.css">
-  <link rel="stylesheet" href="docform/css/theme.css">
-  <link rel="stylesheet" href="docform/css/controls.css">
-  <link rel="stylesheet" href="docform/css/blocks.css">
-  <link rel="stylesheet" href="docform/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="docform/css/math.css">
-  <script src="docform/js/theme.js"></script>
+  <link rel="stylesheet" href="docform/docform.css">
+  <script type="application/json" data-df-page>
+    { "features": { "math": true } }
+  </script>
+  <script src="docform/docform.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar">
-    <div data-df-nav></div>
-  </nav>
-
   <main class="df-page">
     <h1>My first page</h1>
     <p>Euler's identity is <span class="df-math">e^{i\pi} + 1 = 0</span>.</p>
-
-    <div class="df-callout" data-df-color="blue" data-df-icon="💡">
-      Callouts highlight one idea.
-    </div>
-
     <h2>Next section</h2>
     <p>Headings appear in the sidebar outline.</p>
   </main>
-
-  <script src="docform/js/core.js"></script>
-  <script src="docform/js/nav.js"></script>
-  <script src="docform/js/controls.js"></script>
-  <script src="docform/vendor/katex/katex.min.js"></script>
-  <script src="docform/js/math.js"></script>
 </body>
 </html>
 ```
 
-Open the file in Chrome. Without a manifest the sidebar shows the page outline; add one to list several pages. The pill in the top-left corner holds the theme, focus mode, and sidebar toggles.
+Open the HTML file directly in a modern browser. Add a site manifest before the entry script to share navigation and feature choices across pages. For a page in a subfolder, adjust the paths to the entry script, stylesheet, and manifest.
 
 ## Where next
 

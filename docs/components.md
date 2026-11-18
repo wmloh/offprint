@@ -32,7 +32,7 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Data files | `data.css`, plus `code.css` and `results.css` | `data.js`, plus `code.js` and `results.js`; YAML also needs `vendor/js-yaml/js-yaml.min.js` |
 | Data trees | `tree.css` | `tree.js`, with `data.js` |
 | File dropzones | `dropzone.css` | `dropzone.js`, with `data.js` |
-| Linked highlighting | `highlight.css` | `highlight.js` |
+| Linked selection | `highlight.css` | `highlight.js` |
 | Worked-example steppers | `stepper.css` | `stepper.js` |
 | Scenario comparisons | `chart.css`, `scenarios.css` | `chart.js`, `scenarios.js` |
 | Wide blocks | `wide.css` | `wide.js` |
@@ -271,13 +271,13 @@ Or write the diff yourself on a `pre` with `data-df-diff`, starting lines with `
 ## Tabs
 
 ```html
-<div class="df-tabs" data-df-tab-group="lang">
-  <div data-df-tab="JavaScript"><pre><code class="language-js">…</code></pre></div>
-  <div data-df-tab="Python"><pre><code class="language-python">…</code></pre></div>
+<div class="df-tabs" data-df-selection-group="lang">
+  <div data-df-tab="JavaScript" data-df-key="js"><pre><code class="language-js">…</code></pre></div>
+  <div data-df-tab="Python" data-df-key="python"><pre><code class="language-python">…</code></pre></div>
 </div>
 ```
 
-Each panel is a wrapper element with a `data-df-tab` label. Tab sets sharing a `data-df-tab-group` switch together, across pages too. Add `data-df-selected` to a panel to open it first.
+Give each panel a `data-df-tab` label and a unique `data-df-key`. Tab sets sharing a selection group switch together by key. Set `persist: true` for that group in the site manifest to remember the choice across pages where the browser shares storage. Add `data-df-initial` to choose the panel’s local starting item.
 
 ## Animated figures
 
@@ -317,15 +317,15 @@ Include `steps.css` and `steps.js` for either layout. The selector and detail sh
 
 ### Standalone cards
 
-Use `.df-card-panel` for a selector beside authored HTML. Give each button a `data-df-card` value that matches the ID of one direct child of `.df-step-details`. Use distinct IDs across the page. The detail can contain any combination of prose, code, tabs, and figures.
+Use `.df-card-panel` for a selector beside authored HTML. Give each button a unique `data-df-key` and a `data-df-detail` value that matches the ID of one direct child of `.df-step-details`. Use distinct IDs across the page. The detail can contain any combination of prose, code, tabs, and figures.
 
 ```html
 <div class="df-card-panel">
   <div class="df-step-panel" data-df-color="blue">
     <p class="df-step-heading" id="setup-cards">Setup options</p>
     <div class="df-step-list" aria-labelledby="setup-cards">
-      <button type="button" data-df-card="setup-local">Local file</button>
-      <button type="button" data-df-card="setup-shared">Shared folder</button>
+      <button type="button" data-df-key="setup-local" data-df-detail="setup-local">Local file</button>
+      <button type="button" data-df-key="setup-shared" data-df-detail="setup-shared">Shared folder</button>
     </div>
   </div>
   <div class="df-step-details">
@@ -341,32 +341,35 @@ To organize a long list, wrap related buttons in a `.df-step-group` that starts 
 <div class="df-step-list" aria-labelledby="run-cards">
   <div class="df-step-group">
     <p class="df-step-group-heading">Data</p>
-    <button type="button" data-df-card="run-checkpoints">Checkpoints</button>
-    <button type="button" data-df-card="run-summary">Run summary</button>
+    <button type="button" data-df-key="run-checkpoints" data-df-detail="run-checkpoints">Checkpoints</button>
+    <button type="button" data-df-key="run-summary" data-df-detail="run-summary">Run summary</button>
   </div>
   <div class="df-step-group">
     <p class="df-step-group-heading">Settings</p>
-    <button type="button" data-df-card="run-config">Configuration</button>
+    <button type="button" data-df-key="run-config" data-df-detail="run-config">Configuration</button>
   </div>
 </div>
 ```
 
-The first card starts selected. Use Up, Down, Home, and End to move focus across every group. Click, tap, Enter, or Space selects a card. Tab moves from the selector to the selected detail. Controls inside a detail keep their state when you switch cards.
+Mark the starting card with `data-df-initial` or use the default first card. Use Up, Down, Home, and End to move focus across every group. Click, tap, Enter, or Space selects a card. Tab moves from the selector to the selected detail. Controls inside a detail keep their state when you switch cards.
 
 ### Figure steps
 
 A `.df-figure-steps` block shows a full-width figure above a selector. Add a `.df-step-details` pane to show the selected step's explanation. Hover, keyboard focus, and tap select a step. The selection stays visible when the reader moves away.
 
 ```html
-<div class="df-figure-steps">
+<div class="df-figure-steps" id="story-steps">
   <figure id="story">
-    <svg viewBox="0 0 200 100">…</svg>
+    <svg viewBox="0 0 200 100">
+      <path id="line" class="df-stroke" d="M10 50 H190"/>
+      <circle id="dot" class="df-fill" cx="10" cy="50" r="6"/>
+    </svg>
   </figure>
   <div class="df-step-panel" role="group" aria-labelledby="drawing-steps" data-df-color="blue">
     <p class="df-step-heading" id="drawing-steps">Drawing steps</p>
     <ol class="df-step-list">
-      <li><button type="button" data-df-step data-df-step-detail="draw-detail">Draw</button></li>
-      <li><button type="button" data-df-step data-df-step-detail="slide-detail">Slide</button></li>
+      <li><button type="button" data-df-key="draw" data-df-animation-key="draw" data-df-detail="draw-detail">Draw</button></li>
+      <li><button type="button" data-df-key="slide" data-df-animation-key="slide" data-df-detail="slide-detail">Slide</button></li>
     </ol>
   </div>
   <div class="df-step-details">
@@ -376,15 +379,17 @@ A `.df-figure-steps` block shows a full-width figure above a selector. Add a `.d
 </div>
 
 <script>
-  DocForm.anim('story', [ /* one step per entry */ ]);
+  DocForm.animation.mount('story', {steps: [
+    {key: 'draw', actions: [{draw: '#line'}]},
+    {key: 'slide', actions: [{move: '#dot', to: [180, 0]}]}
+  ]});
 </script>
 ```
 
 - Place the selector heading before `.df-step-list` and use its ID to label the group. Use an `ol` for numbered steps, a `ul` for bullets, or a `div` with direct button children for compact cards. List steps use the standard marker colours.
 - For title-only cards beside a smaller figure, omit `.df-step-details` and set `data-df-step-layout="side"` on `.df-figure-steps`. The cards move below the figure when space is tight.
-- The figure starts at the first entry. A bare `data-df-step` uses the entry position starting at 1. Give it an explicit number to choose another step, or `0` to show the animation's starting state.
-- With `anim.js` and `anim.css`, each entry shows its animation step's end state and the panel takes over playback. For a chart, SVG, or other custom figure, listen for `df:figurestep` on the figure and read `event.detail.step`.
-- After the page initializes, a slider or other control can call `DocForm.steps.select('story', 2)` to update the selection and explanation. Pass a figure element or its ID. The call returns `false` if the figure or step is unavailable.
+- Set `data-df-initial` on the local starting item, or use the default first item. The button's `data-df-animation-key` selects a named animation step. Use `start` for the animation's opening state.
+- After startup, `DocForm.figureSteps.get('story-steps').select('slide')` updates the figure and detail. For a custom figure, listen for `df:figure-steps:change` on the wrapper and read `event.detail.current.key`.
 
 ## Reveals
 
@@ -616,7 +621,7 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 
 - Series get six fixed colours in order. Give a series `"role"` or `"color"` (or a table header `data-df-role` or `data-df-color`) to use a manifest role or a named colour instead.
 - Pointing at the chart, or focusing it and pressing the arrow keys, shows the values at that spot. Charts with two or more series get a legend; line ends are labelled when they don't crowd. The Table button lists the data.
-- Selectable points: give the chart a linked-highlighting group with `"highlight": "trace"` (or `data-df-highlight-group="trace"` on the element), and give points a key: `{ "x": 22.3, "y": 12, "key": "retry" }`, or `data-df-highlight-key="retry"` on a table cell. Pointing or the arrow keys only read a point; a click, Enter, or Space selects its key, and doing it again clears it. Rows, buttons, and other items with the same group and key are outlined with it, and selecting one of those outlines the point. The selection is kept by key when the chart redraws or shows its table, and needs `highlight.js`.
+- Selectable points: give the chart a selection group with `"selectionGroup": "trace"` (or `data-df-selection-group="trace"` on the element), and give points a key: `{ "x": 22.3, "y": 12, "key": "retry" }`, or `data-df-key="retry"` on a table cell. Pointing or the arrow keys only read a point; a click, Enter, or Space selects its key, and doing it again clears it. Rows, buttons, and other items with the same group and key are outlined with it, and selecting one of those outlines the point. The selection is kept by key when the chart redraws or shows its table, and needs `highlight.js`.
 - From a script: `DocForm.chart(element, spec)` draws a chart and returns `{ update(spec) }`, or `null` if the data is invalid. `DocForm.chart.validate(spec)` lists the problems without drawing.
 
 ### Series toggles and range brushing
@@ -820,19 +825,21 @@ These snippets assume your HTML file sits beside the `docform/` folder. Put the 
 <script defer src="docform/js/core.js"></script>
 ```
 
-### Linked highlighting
+### Linked selection
 
 ```html
 <link rel="stylesheet" href="docform/css/highlight.css">
 <script defer src="docform/js/highlight.js"></script>
 ```
 
-Give a button and its matching items the same `data-df-highlight-group` and `data-df-highlight-key`. Selecting the button outlines every match. Activate it again to clear the selection. Each group has its own selection.
+Give a button and its matching items the same `data-df-selection-group` and `data-df-key`. Selecting the button outlines every match. Activate it again to clear the selection. Each group has its own selection.
+
+Enable the `selection` feature when using the offline entry. A page can set the start under `selectionGroups` in its configuration. For example, `{"selectionGroups":{"sales":{"initial":"total"}}}` opens the sales trace on its total.
 
 To trace an output, tag the output and each input row, including excluded inputs. Write each row's contribution and reason in the table so readers can follow the calculation with scripts off.
 
 ```html
-<p><button type="button" data-df-highlight-group="sales" data-df-highlight-key="total">
+<p><button type="button" data-df-selection-group="sales" data-df-key="total">
   Trace the $12 sales total
 </button></p>
 <table>
@@ -841,10 +848,10 @@ To trace an output, tag the output and each input row, including excluded inputs
     <tr><th scope="col">Arrival</th><th scope="col">Sale ID</th><th scope="col">Amount</th><th scope="col">Contribution and reason</th></tr>
   </thead>
   <tbody>
-    <tr data-df-highlight-group="sales" data-df-highlight-key="total">
+    <tr data-df-selection-group="sales" data-df-key="total">
       <th scope="row">First</th><td>S41</td><td>$12</td><td>Included (+$12). First arrival for S41.</td>
     </tr>
-    <tr data-df-highlight-group="sales" data-df-highlight-key="total">
+    <tr data-df-selection-group="sales" data-df-key="total">
       <th scope="row">Second</th><td>S41</td><td>$12</td><td>Excluded (+$0). S41 has already been counted.</td>
     </tr>
   </tbody>
@@ -858,39 +865,39 @@ To trace an output, tag the output and each input row, including excluded inputs
 <script defer src="docform/js/stepper.js"></script>
 ```
 
-Give the ordered list an `id` and `data-df-stepper`. Each direct list item needs a unique `data-df-step-key` and a direct child marked `data-df-step-name`. Follow the name with the rule and what it produces. DocForm adds Previous, Next, and Reset and starts on the first step.
+Give the ordered list an `id` and `data-df-stepper`. Each direct list item needs a unique `data-df-key` and a direct child marked `data-df-step-label`. Follow the name with the rule and what it produces. DocForm adds Previous, Next, and Reset. Mark the starting item with `data-df-initial` or use the default first step.
 
 ```html
 <ol id="invoice" data-df-stepper>
-  <li data-df-step-key="items">
-    <strong data-df-step-name>Price the items</strong>
+  <li data-df-key="items">
+    <strong data-df-step-label>Price the items</strong>
     Multiply 3 items by $4 each to get a $12 subtotal.
   </li>
-  <li data-df-step-key="shipping">
-    <strong data-df-step-name>Add shipping</strong>
+  <li data-df-key="shipping">
+    <strong data-df-step-label>Add shipping</strong>
     Add $2 to the $12 subtotal to get a $14 total.
   </li>
 </ol>
 ```
 
-To open a step from a script, call `DocForm.stepper.select("invoice", "shipping")`. It behaves like Previous and Next, and returns `false` for an unknown list or key. Each change sends a `df:stepperchange` event from the list, with the step's `key` in `event.detail`.
+To open a step from a script after startup, call `DocForm.stepper.get("invoice").select("shipping")`. It returns `false` for an unknown key. The list emits `df:stepper:change` with the key in `event.detail.current.key`.
 
 #### Parallel event timeline
 
-Use one table column per lane. Label each column with its time unit and clock origin. Each row shows the events at one walkthrough step. For a companion row, set `data-df-stepper-view` to the list ID and `data-df-step-key` to the matching step key. The current row follows the controls. With scripts off, the full sequence and table stay visible.
+Use one table column per lane. Label each column with its time unit and clock origin. Each row shows the events at one walkthrough step. For a companion row, set `data-df-stepper-view` to the list ID and `data-df-key` to the matching step key. The current row follows the controls. With scripts off, the full sequence and table stay visible.
 
 ```html
 <ol id="delivery" data-df-stepper>
-  <li data-df-step-key="send">
-    <strong data-df-step-name>Send</strong>
+  <li data-df-key="send">
+    <strong data-df-step-label>Send</strong>
     The sender starts the timeout when it sends S41.
   </li>
-  <li data-df-step-key="retry">
-    <strong data-df-step-name>Retry</strong>
+  <li data-df-key="retry">
+    <strong data-df-step-label>Retry</strong>
     The timeout expires. The sender retries with the same sale ID, and the retry arrives first.
   </li>
-  <li data-df-step-key="late">
-    <strong data-df-step-name>Handle the late arrival</strong>
+  <li data-df-key="late">
+    <strong data-df-step-label>Handle the late arrival</strong>
     The original message arrives. The receiver sees S41 again and skips it.
   </li>
 </ol>
@@ -900,13 +907,13 @@ Use one table column per lane. Label each column with its time unit and clock or
     <tr><th scope="col">Step</th><th scope="col">Sender (seconds since first send)</th><th scope="col">Receiver (seconds since startup)</th></tr>
   </thead>
   <tbody>
-    <tr data-df-stepper-view="delivery" data-df-step-key="send">
+    <tr data-df-stepper-view="delivery" data-df-key="send">
       <th scope="row">Send</th><td>0 s. Send S41.</td><td>No arrival yet.</td>
     </tr>
-    <tr data-df-stepper-view="delivery" data-df-step-key="retry">
+    <tr data-df-stepper-view="delivery" data-df-key="retry">
       <th scope="row">Retry</th><td>2 s. Resend S41.</td><td>22 s. Receive the retry and count S41.</td>
     </tr>
-    <tr data-df-stepper-view="delivery" data-df-step-key="late">
+    <tr data-df-stepper-view="delivery" data-df-key="late">
       <th scope="row">Late arrival</th><td>No new send.</td><td>23 s. Receive the original and skip S41.</td>
     </tr>
   </tbody>
@@ -915,18 +922,7 @@ Use one table column per lane. Label each column with its time unit and clock or
 
 #### Linked trace
 
-Give steps, source rows, and chart points the same keys to follow one event across all three. In the timeline above, swap each row's stepper attributes for `data-df-highlight-group="delivery"` and its `data-df-highlight-key`, so every row stays visible and the current one is outlined. Put a chart with the same group and point keys beside it, and connect the group to the stepper with a short script:
-
-```html
-<script>
-  document.addEventListener('df:stepperchange', function (event) {
-    if (event.target.id === 'delivery') DocForm.highlight.set('delivery', event.detail.key);
-  });
-  document.addEventListener('df:highlightchange', function (event) {
-    if (event.detail.group === 'delivery' && event.detail.key) DocForm.stepper.select('delivery', event.detail.key);
-  });
-</script>
-```
+Put `data-df-selection-group="delivery"` on the stepper, the chart, and the table rows. Use matching step and row keys, and set the chart point's `key` to the same value. Remove the rows' `data-df-stepper-view` so the full table stays visible and the selected row is outlined. Chart and stepper controls update the group automatically.
 
 The [PCA incident timeline](../examples/pca/pages/telemetry.html#incident-timeline) links acquisition and receipt events to points on the residual trace.
 

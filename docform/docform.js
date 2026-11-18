@@ -1,0 +1,470 @@
+// Synchronous entry for offline pages. Feature scripts are loaded after the author scripts have registered.
+(function (root, doc) {
+  'use strict';
+
+  if (root.DocForm) return;
+
+  var entry = doc.currentScript;
+  var pageURL = root.location.href;
+  var library = new URL('.', entry.src);
+  var siteScript = doc.querySelector('script[data-df-site]');
+  var siteURL = siteScript && siteScript.src || pageURL;
+  var authoredTheme = doc.documentElement.getAttribute('data-df-theme');
+  var appliedTheme;
+
+  // Declaration order is startup order. Shared files still load just once.
+  var catalog = {
+    tokens: { css: ['tokens'] },
+    base: { needs: ['tokens'], css: ['base'] },
+    tags: { needs: ['base'], css: ['blocks'] },
+    callouts: { needs: ['base'], css: ['blocks'] },
+    blocks: { needs: ['tags', 'callouts'] },
+    'concept-tables': { needs: ['base'] },
+    theme: { needs: ['tokens'], css: ['theme'], script: 'theme', api: 'theme' },
+    roles: { needs: ['base'], css: ['roles'], script: 'roles', api: 'roleCss' },
+    math: { needs: ['base'], css: ['vendor/katex/katex.min.css', 'math'],
+      vendor: ['vendor/katex/katex.min.js', 'katex'], script: 'math', api: 'math' },
+    tooltips: { needs: ['base'], css: ['tooltip'], script: 'tooltip', api: 'tooltip' },
+    selection: { needs: ['base'], css: ['highlight'], script: 'highlight', api: 'selection' },
+    animation: { needs: ['base'], css: ['anim'], script: 'anim', api: 'anim' },
+    parameters: { needs: ['base'], css: ['params'], script: 'params', api: 'params' },
+    code: { needs: ['base'], css: ['code'], script: 'code', api: 'code' },
+    tree: { needs: ['base'], css: ['tree'], script: 'tree', api: 'tree' },
+    data: { vendor: ['vendor/js-yaml/js-yaml.min.js', 'jsyaml'], script: 'data', api: 'dataset' },
+    'data-view': { needs: ['base', 'data'], css: ['data'] },
+    chart: { needs: ['base'], css: ['chart'], script: 'chart', api: 'chart' },
+    dropzone: { needs: ['base', 'data'], css: ['dropzone', 'data'], script: 'dropzone', api: 'dropzone' },
+    results: { needs: ['base'], css: ['results'], script: 'results', api: 'results' },
+    scenarios: { needs: ['chart'], css: ['scenarios'], script: 'scenarios' },
+    tabs: { needs: ['base'], css: ['tabs'], script: 'tabs', api: 'tabs' },
+    cards: { needs: ['base'], css: ['steps'], script: 'steps', api: 'cards' },
+    'figure-steps': { needs: ['base'], css: ['steps'], script: 'steps', api: 'figureSteps' },
+    stepper: { needs: ['base'], css: ['stepper'], script: 'stepper', api: 'stepper' },
+    'split-views': { needs: ['base'], css: ['reveal'], script: 'reveal', api: 'reveal' },
+    reveals: { needs: ['base'], css: ['reveal'], script: 'reveal', api: 'reveal' },
+    'peek-bubbles': { needs: ['base'], css: ['blocks', 'bubble'], script: 'bubble', api: 'bubble' },
+    search: { needs: ['base'], css: ['search'], script: 'search', api: 'search' },
+    glossary: { needs: ['tooltips'], css: ['glossary'], script: 'glossary', api: 'glossary' },
+    references: { needs: ['base'], css: ['refs'], script: 'refs', api: 'refs' },
+    citations: { needs: ['tooltips'], css: ['refs'], script: 'refs', api: 'refs' },
+    navigation: { needs: ['base'], css: ['nav'], script: 'nav', api: 'nav' },
+    sidenotes: { needs: ['base'], css: ['notes'], script: 'notes', api: 'notes' },
+    wide: { needs: ['base'], css: ['wide'], script: 'wide', api: 'wide' },
+    controls: { needs: ['base'], css: ['controls'], script: 'controls', api: 'controls' },
+    zoom: { needs: ['base'], css: ['zoom'], script: 'zoom', api: 'zoom' },
+    'zoom-tools': { needs: ['zoom'], css: ['zoomtools'], script: 'zoomtools', api: 'zoomtools' }
+  };
+  var reading = ['base', 'blocks', 'theme', 'roles', 'navigation', 'controls', 'tooltips',
+    'references', 'citations', 'sidenotes', 'search'];
+  var readingStyles = new Set(['tokens', 'base', 'blocks', 'theme', 'roles', 'tooltip', 'search',
+    'refs', 'nav', 'notes', 'controls']);
+  var moduleFeatures = {
+    tooltip: 'tooltips', params: 'parameters',
+    reveal: 'reveals', bubble: 'peek-bubbles', refs: 'references', nav: 'navigation', notes: 'sidenotes'
+  };
+  var setup = [];
+  var ready = [];
+  var diagnostics = [];
+  var reported = new Map();
+  var parsed = new WeakMap();
+  var assets = new Map();
+  var active = new Set();
+  var failed = new Set();
+  var after = [];
+  var setupClosed = false;
+  var readyComplete = false;
+  var readyScheduled = false;
+  var combinedStyles = false;
+
+  function object(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  function own(value, key) {
+    return Object.prototype.hasOwnProperty.call(value, key);
+  }
+
+  function merge() {
+    var out = Object.create(null);
+    Array.prototype.forEach.call(arguments, function (layer) {
+      if (!object(layer)) return;
+      Object.keys(layer).forEach(function (key) {
+        var value = layer[key];
+        out[key] = object(value) ? merge(out[key], value) : Array.isArray(value) ? value.map(copy) : value;
+      });
+    });
+    return out;
+  }
+
+  function copy(value) {
+    return Array.isArray(value) ? value.map(copy) : object(value) ? merge(value) : value;
+  }
+
+  function freeze(value) {
+    if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  }
+
+  function report(code, feature, target, message, correction, input) {
+    var key = JSON.stringify([code, feature, input]);
+    if (!reported.has(key)) reported.set(key, new Set());
+    var targets = reported.get(key);
+    if (targets.has(target)) return;
+    targets.add(target);
+    var detail = Object.freeze({ code: code, feature: feature, target: target, message: message, correction: correction });
+    diagnostics.push(detail);
+    root.console.warn('[docform] ' + message + ' ' + correction, target);
+    doc.dispatchEvent(new root.CustomEvent('df:diagnostic', { detail: detail }));
+  }
+
+  function run(name, fn) {
+    try {
+      fn(DF);
+    } catch (error) {
+      report(name + '-failed', null, null, 'DocForm.' + name + ' callback failed: ' + String(error),
+        'Fix the callback in the author script.', String(fn));
+    }
+  }
+
+  var DF = root.DocForm = {
+    page: pageURL,
+    site: null,
+    diagnostics: { list: function () { return diagnostics.slice(); } },
+    setup: function (fn) {
+      if (setupClosed || typeof fn !== 'function') {
+        report('setup-registration', null, null, 'DocForm.setup could not register the callback.',
+          'Pass a function before startup from an ordered classic script.');
+        return false;
+      }
+      setup.push(fn);
+      return true;
+    },
+    ready: function (fn) {
+      if (typeof fn !== 'function') {
+        report('ready-registration', null, null, 'DocForm.ready needs a callback.', 'Pass a function.');
+        return false;
+      }
+      ready.push(fn);
+      if (readyComplete && !readyScheduled) {
+        readyScheduled = true;
+        root.queueMicrotask(function () {
+          readyScheduled = false;
+          ready.splice(0).forEach(function (callback) { run('ready', callback); });
+        });
+      }
+      return true;
+    }
+  };
+
+  function pageConfig() {
+    var nodes = doc.querySelectorAll('script[data-df-page]');
+    if (nodes.length > 1) report('page-config-count', null, nodes[1], 'Multiple page configuration blocks.',
+      'Keep a single script[data-df-page].');
+    var node = nodes[0];
+    if (!node) return {};
+    if (!parsed.has(node)) {
+      var value = {};
+      try {
+        if (node.type !== 'application/json') throw new Error('Expected type="application/json".');
+        value = JSON.parse(node.textContent);
+        if (!object(value)) throw new Error('Expected a JSON object.');
+      } catch (error) {
+        report('page-config', null, node, 'Invalid page configuration: ' + error.message,
+          'Use a JSON object in script[type="application/json"][data-df-page].');
+        value = {};
+      }
+      parsed.set(node, value);
+    }
+    return parsed.get(node);
+  }
+
+  function profile(value, target) {
+    if (value === 'none' || value === 'reading') return value;
+    if (value !== undefined) report('profile', null, target, 'Unknown DocForm profile.',
+      'Choose "reading" or "none".', value);
+  }
+
+  function configuration() {
+    var site = siteScript && object(root.DocFormSite) ? root.DocFormSite : {};
+    var page = pageConfig();
+    var siteProfile = profile(site.profile, siteScript);
+    var entryProfile = profile(entry.getAttribute('data-df-profile') ?? undefined, entry);
+    var pageProfile = profile(page.profile, 'page');
+    var selected = new Map();
+    var wanted = new Map();
+    if ((pageProfile || entryProfile || siteProfile || 'reading') === 'reading') {
+      reading.forEach(function (id) { wanted.set(id, true); });
+    }
+    function applyFeatures(features, target) {
+      if (features === undefined) return;
+      if (!object(features)) {
+        report('features', null, target, 'Feature choices must be an object.', 'Map feature names to true or false.');
+        return;
+      }
+      Object.keys(features).forEach(function (id) {
+        if (!own(catalog, id) || typeof features[id] !== 'boolean') {
+          report('feature-choice', id, target, 'Invalid choice for feature "' + id + '".',
+            'Use a supported feature name and a boolean value.', features[id]);
+        } else {
+          wanted.set(id, features[id]);
+        }
+      });
+    }
+    if (pageProfile !== 'none') applyFeatures(site.features, siteScript);
+    applyFeatures(page.features, 'page');
+
+    function include(id) {
+      if (selected.has(id)) return selected.get(id);
+      if (wanted.get(id) === false) return false;
+      var missing = (catalog[id].needs || []).find(function (dep) { return !include(dep); });
+      if (missing) dependency(id, missing);
+      selected.set(id, !missing);
+      return !missing;
+    }
+    wanted.forEach(function (on, id) { if (on) include(id); });
+    // A failed root can have visited prerequisites. Keep only the closure of successful roots.
+    var enabled = new Set();
+    function add(id) {
+      if (enabled.has(id)) return;
+      enabled.add(id);
+      (catalog[id].needs || []).forEach(add);
+    }
+    wanted.forEach(function (on, id) { if (on && selected.get(id)) add(id); });
+    return { site: site, page: page, options: merge(site.options, page.options), enabled: enabled };
+  }
+
+  function dependency(id, missing) {
+    report('dependency', id, missing, 'Feature "' + id + '" requires "' + missing + '".',
+      'Enable "' + missing + '" and restore its assets if they are missing.');
+  }
+
+  function themeMode(config) {
+    for (var layer of [config.page, config.site]) {
+      var mode = layer.options && layer.options.theme && layer.options.theme.mode;
+      if (mode === undefined) continue;
+      if (mode === null || mode === 'light' || mode === 'dark') return mode;
+      report('theme-mode', 'theme', 'options.theme.mode', 'Unknown initial theme.',
+        'Choose "light", "dark", or null for the system preference.', mode);
+    }
+  }
+
+  function earlyTheme(config) {
+    if (!config.enabled.has('theme')) {
+      if (appliedTheme && doc.documentElement.getAttribute('data-df-theme') === appliedTheme) {
+        if (authoredTheme === null) doc.documentElement.removeAttribute('data-df-theme');
+        else doc.documentElement.setAttribute('data-df-theme', authoredTheme);
+      }
+      appliedTheme = undefined;
+      return;
+    }
+    var stored;
+    var dark = false;
+    try { stored = root.localStorage.getItem('docform-theme'); } catch (error) {}
+    try { dark = root.matchMedia('(prefers-color-scheme: dark)').matches; } catch (error) {}
+    var defaultMode = themeMode(config);
+    appliedTheme = stored === 'light' || stored === 'dark' ? stored : defaultMode || (dark ? 'dark' : 'light');
+    doc.documentElement.setAttribute('data-df-theme', appliedTheme);
+  }
+
+  function keyOf(href) {
+    var url = new URL(href);
+    url.hash = '';
+    return url.href;
+  }
+
+  function seedAssets() {
+    doc.querySelectorAll('link[rel~="stylesheet"][href]:not([disabled]), script[src]:not([type="module"])')
+      .forEach(function (node) {
+        var key = keyOf(node.href || node.src);
+        if (node.href && key === keyOf(new URL('docform.css', library).href)) combinedStyles = true;
+        assets.set(key, Promise.resolve(true));
+      });
+  }
+
+  function load(url, css) {
+    var key = keyOf(url);
+    if (!assets.has(key)) {
+      assets.set(key, new Promise(function (resolve) {
+        var el = doc.createElement(css ? 'link' : 'script');
+        el.onload = function () { resolve(true); };
+        el.onerror = function () { resolve(false); };
+        if (css) {
+          el.rel = 'stylesheet';
+          el.href = url;
+        } else {
+          el.async = false;
+          el.src = url;
+        }
+        doc.head.appendChild(el);
+      }));
+    }
+    return assets.get(key);
+  }
+
+  function assetFailure(feature, url) {
+    report('asset', feature, url, 'Could not load a required asset for "' + feature + '".',
+      'Restore the local file or correct its path.');
+  }
+
+  async function featureAssets(id) {
+    var item = catalog[id];
+    for (var style of item.css || []) {
+      if (combinedStyles && readingStyles.has(style)) continue;
+      var href = new URL(style.endsWith('.css') ? style : 'css/' + style + '.css', library).href;
+      if (!await load(href, true)) {
+        assetFailure(id, href);
+        return false;
+      }
+    }
+    if (item.vendor) {
+      var vendor = new URL(item.vendor[0], library).href;
+      if (!await load(vendor, false) || !root[item.vendor[1]]) {
+        assetFailure(id, vendor);
+        return false;
+      }
+    }
+    if (item.script) {
+      var script = new URL('js/' + item.script + '.js', library).href;
+      if (!await load(script, false) || (item.api ? !DF[item.api] : !boot.registered(item.script))) {
+        assetFailure(id, script);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function localPath(path, base, feature, target) {
+    if (path == null) return null;
+    if (typeof path === 'string' && path.trim()) {
+      try {
+        var url = new URL(path, base);
+        var origin = new URL(base);
+        if (url.protocol === origin.protocol && url.host === origin.host) return url.href;
+      } catch (error) {}
+    }
+    report('asset-path', feature, target, 'Invalid local asset path for "' + feature + '".',
+      'Use a path relative to the manifest or page.', path);
+    return null;
+  }
+
+  function siteConfig(config) {
+    var site = config.site;
+    var options = config.options;
+    var hasManifest = !!siteScript && object(root.DocFormSite);
+    var normalized = DF.normalizeSite(hasManifest ? copy(site) : undefined, siteURL, options);
+    var declared = object(site.assets) ? site.assets : {};
+    var pageSearch = config.page.options && config.page.options.search;
+    var localSearch = localPath(pageSearch && pageSearch.index, pageURL, 'search', 'options.search.index');
+    var search = pageSearch && pageSearch.index === null ? null : localSearch ||
+      localPath(declared.search && declared.search.output || site.search, siteURL, 'search', 'assets.search.output');
+    var data = Object.create(null);
+    if (object(declared.data)) Object.keys(declared.data).forEach(function (name) {
+      var item = declared.data[name];
+      var output = localPath(item && item.output, siteURL, 'data', name);
+      if (!output) return;
+      data[name] = {
+        source: localPath(item.source, siteURL, 'data', name),
+        output: output,
+        type: item.type || null
+      };
+    });
+    normalized.search = search;
+    normalized.searchBase = localSearch ? pageURL : siteURL;
+    normalized.assets = { search: { output: search }, data: data };
+    normalized.options = options;
+    normalized.selectionGroups = merge(site.selectionGroups, config.page.selectionGroups);
+    normalized.parameterScopes = merge(site.parameterScopes, config.page.parameterScopes);
+    return freeze(normalized);
+  }
+
+  function finish() {
+    readyComplete = true;
+    ready.splice(0).forEach(function (callback) { run('ready', callback); });
+  }
+
+  var boot = DF._boot = {
+    enabled: function (id) { return active.has(id) && !failed.has(id); },
+    canInitialize: function (name) {
+      var id = own(moduleFeatures, name) ? moduleFeatures[name] : name;
+      if (!own(catalog, id)) return true;
+      if (!active.has(id)) return false;
+      var missing = (catalog[id].needs || []).find(function (dep) { return failed.has(dep); });
+      if (!missing) return true;
+      failed.add(id);
+      dependency(id, missing);
+      return false;
+    },
+    after: function (name, fn) { after.push({ name: name, fn: fn }); },
+    load: function (url) { return load(url, false); },
+    report: report,
+    merge: merge,
+    optionLayers: function (feature, id) {
+      var layers = boot.configOptions.map(function (options) {
+        return object(options[feature]) ? options[feature] : {};
+      });
+      return layers.concat(id ? layers.map(function (layer) {
+        return object(layer.instances) && own(layer.instances, id) ? layer.instances[id] : {};
+      }) : []);
+    },
+    moduleFailed: function (name, error) {
+      var id = own(moduleFeatures, name) ? moduleFeatures[name] : name;
+      failed.add(id);
+      report('feature-init', id, null, 'Feature "' + id + '" failed to initialize: ' + String(error),
+        'Check the feature markup and configuration, then reload.');
+    }
+  };
+
+  async function start() {
+    var config = configuration();
+    earlyTheme(config);
+    seedAssets();
+    var core = new URL('js/core.js', library).href;
+    if (!await load(core, false) || !boot.initialize) {
+      assetFailure('core', core);
+      setupClosed = true;
+      finish();
+      return;
+    }
+    Object.defineProperty(DF, 'site', { value: siteConfig(config), writable: false });
+    boot.configOptions = [config.site, config.page].map(function (layer) { return freeze(merge(layer.options)); });
+    boot.themeDefault = config.enabled.has('theme') ? themeMode(config) : undefined;
+    for (var id of Object.keys(catalog)) {
+      if (!config.enabled.has(id)) continue;
+      var missing = (catalog[id].needs || []).find(function (dep) { return !active.has(dep); });
+      if (missing) dependency(id, missing);
+      else if (await featureAssets(id)) active.add(id);
+    }
+    if (!active.has('theme') && appliedTheme) earlyTheme({ enabled: active });
+    if (active.has('data')) {
+      for (var name of Object.keys(DF.site.assets.data)) {
+        var url = DF.site.assets.data[name].output;
+        if (!await load(url, false)) assetFailure('data', url);
+        else if (!DF.dataset.get(name)) report('data-wrapper', 'data', url,
+          'Data wrapper did not register "' + name + '".', 'Regenerate the classic data wrapper with that name.', name);
+      }
+      try { boot.readData(); } catch (error) { boot.moduleFailed('data', error); }
+    }
+    boot.prepareSelection();
+    setupClosed = true;
+    setup.splice(0).forEach(function (callback) { run('setup', callback); });
+    boot.initialize();
+    after.forEach(function (item) {
+      try { item.fn(); } catch (error) { boot.moduleFailed(item.name, error); }
+    });
+    finish();
+  }
+
+  earlyTheme(configuration());
+  function begin() {
+    start().catch(function (error) {
+      boot.moduleFailed('core', error);
+      setupClosed = true;
+      finish();
+    });
+  }
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', begin, { once: true });
+  else begin();
+})(window, document);

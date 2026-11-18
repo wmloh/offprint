@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="../../../docform/css/results.css">
   <link rel="stylesheet" href="../../../docform/css/params.css">
   <link rel="stylesheet" href="../../../docform/css/tabs.css">
+  <link rel="stylesheet" href="../../../docform/css/highlight.css">
   <link rel="stylesheet" href="../../../docform/css/code.css">
   <link rel="stylesheet" href="../../../docform/css/bubble.css">
   <link rel="stylesheet" href="../../../docform/css/reveal.css">
@@ -161,14 +162,14 @@
 
     <h2 id="readout-code">Implement the readout</h2>
     <p>Here is the dot product against every output row. Use the rounded hidden state for a quick check.</p>
-    <div class="df-tabs" data-df-tab-group="transformer-language" data-df-no-search>
-      <div data-df-tab="Python" data-df-selected>
+    <div class="df-tabs" data-df-selection-group="transformer-language" data-df-no-search>
+      <div data-df-tab="Python" data-df-key="python" data-df-initial>
         <pre><code class="language-python">h = (2.968551, 1.908202)
 output_rows = [(-0.25, 0.05), (-0.32, 0.10), (-0.10, -0.10),
                (0.65, 0.05), (0.42, 0.22), (0.05, 0.20)]
 logits = [sum(x * y for x, y in zip(h, row)) for row in output_rows]</code></pre>
       </div>
-      <div data-df-tab="JavaScript">
+      <div data-df-tab="JavaScript" data-df-key="javascript">
         <pre><code class="language-js">const h = [2.968551, 1.908202];
 const outputRows = [[-0.25, 0.05], [-0.32, 0.10], [-0.10, -0.10],
                     [0.65, 0.05], [0.42, 0.22], [0.05, 0.20]];
@@ -179,8 +180,8 @@ const logits = outputRows.map(([a, b]) => a * h[0] + b * h[1]);</code></pre>
     <h3 id="stable-softmax">Stabilize softmax</h3>
     <p>Subtract the largest logit before exponentiation. Each numerator and the denominator gain the same
       factor, so the probabilities stay the same. The largest exponential becomes 1, avoiding overflow.</p>
-    <div class="df-tabs" data-df-tab-group="transformer-language">
-      <div data-df-tab="Python">
+    <div class="df-tabs" data-df-selection-group="transformer-language">
+      <div data-df-tab="Python" data-df-key="python">
         <div class="df-diff" data-df-lang="python">
           <pre data-df-diff="before">from math import exp
 
@@ -197,7 +198,7 @@ def probabilities(logits, temperature=1):
     return [w / total for w in weights]</pre>
         </div>
       </div>
-      <div data-df-tab="JavaScript">
+      <div data-df-tab="JavaScript" data-df-key="javascript">
         <pre data-df-diff data-df-lang="js">@@ Normalize vocabulary logits
  function probabilities(logits, temperature = 1) {
 -  const weights = logits.map(x => Math.exp(x / temperature));
@@ -263,6 +264,7 @@ def probabilities(logits, temperature=1):
   <script src="../../../docform/js/chart.js"></script>
   <script src="../../../docform/js/results.js"></script>
   <script src="../../../docform/js/params.js"></script>
+  <script src="../../../docform/js/highlight.js"></script>
   <script src="../../../docform/js/tabs.js"></script>
   <script src="../../../docform/js/code.js"></script>
   <script src="../../../docform/js/bubble.js"></script>

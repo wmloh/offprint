@@ -4,9 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const source = fs.readFileSync(path.join(__dirname, '../docform/js/chart.js'), 'utf8');
-const GROUP = 'data-df-highlight-group';
-const KEY = 'data-df-highlight-key';
+const script = (name) => fs.readFileSync(path.join(__dirname, '../docform/js', name + '.js'), 'utf8');
+const GROUP = 'data-df-selection-group';
+const KEY = 'data-df-key';
 
 // Just enough DOM for chart.js to build, draw, and handle events.
 class Node extends EventTarget {
@@ -19,6 +19,7 @@ class Node extends EventTarget {
     this.style = { setProperty() {} };
     this.text = '';
     this.hidden = false;
+    this.nodeType = 1;
     this.clientWidth = 400;
     this.offsetWidth = 0;
     this.offsetHeight = 0;
@@ -50,44 +51,57 @@ class Node extends EventTarget {
   appendChild(child) { return this.insertBefore(child, null); }
   removeChild(child) { this.children.splice(this.children.indexOf(child), 1); child.parentNode = null; }
   replaceChild(child, old) { this.insertBefore(child, old); this.removeChild(old); }
-  matches() { return false; }
+  before(child) { this.parentNode.insertBefore(child, this); }
+  hasAttribute(name) { return this.attributes.has(name); }
+  toggleAttribute(name, on) { if (on) this.setAttribute(name, ''); else this.removeAttribute(name); }
+  matches(selector) { return selector === `[${GROUP}][${KEY}]` && this.hasAttribute(GROUP) && this.hasAttribute(KEY); }
+  querySelector(selector) { return this.querySelectorAll(selector)[0] ?? null; }
+  querySelectorAll(selector) {
+    const direct = selector.startsWith(':scope > ');
+    const simple = direct ? selector.slice(9) : selector;
+    return (direct ? this.children : this.all()).filter((node) => {
+      if (simple === `[${GROUP}][${KEY}]`) return node.matches(simple);
+      if (simple === `[data-df-stepper-view][${KEY}]`) return node.hasAttribute('data-df-stepper-view') && node.hasAttribute(KEY);
+      if (simple.startsWith('.')) return node.classList.contains(simple.slice(1));
+      const part = /^([a-z]+)?(?:\[([\w-]+)(?:="([^"]+)")?\])?$/.exec(simple);
+      if (!part) return false;
+      const [, tag, attr, value] = part;
+      return (!tag || node.tag === tag) && (!attr || node.hasAttribute(attr) &&
+        (value === undefined || node.getAttribute(attr) === value));
+    });
+  }
   getBoundingClientRect() { return { left: 0, top: 0, width: 400 }; }
   all() { return this.children.flatMap((c) => [c, ...c.all()]); }
 }
 
-function setup() {
+function setup({ groups, enhance } = {}) {
   const document = new EventTarget();
+  document.body = new Node('body');
   document.createElement = (tag) => new Node(tag);
   document.createElementNS = (_, tag) => new Node(tag);
-  let selection = new Map();
+  document.querySelectorAll = (selector) => document.body.querySelectorAll(selector);
+  document.getElementById = (id) => document.body.all().find((el) => el.id === id) ?? null;
   const sets = [];
   const warnings = [];
-  const DocForm = {
-    warnOnce: (_, message) => warnings.push(message),
-    register() {},
-    all(selector, scope) {
-      const cls = selector.match(/^\.([\w-]+)$/);
-      return scope.all().filter((el) => cls && el.classList.contains(cls[1]));
-    },
-    highlight: {
-      get: (group) => selection.get(group) ?? null,
-      set(group, key) {
-        sets.push([group, key]);
-        if (key === null) selection.delete(group);
-        else selection.set(group, key);
-        document.dispatchEvent(new CustomEvent('df:highlightchange', { detail: { group, key } }));
-      }
-    }
-  };
-  const context = vm.createContext({ DocForm, document, CustomEvent, Map, Set, WeakMap });
+  document.addEventListener('df:selection:change', ({ detail }) => {
+    if (detail.origin !== 'init') sets.push([detail.group, detail.current.key]);
+  });
+  const boot = { canInitialize: () => true, optionLayers: () => [], merge: Object.assign, report: (_, feature, host, message) => warnings.push(message),
+    moduleFailed: (_, error) => { throw error; } };
+  const DocForm = { _boot: boot, site: { base: 'file:///site.js', selectionGroups: groups } };
+  const context = vm.createContext({ DocForm, document, CustomEvent, console: { warn: (message) => warnings.push(message.replace(/^\[docform\] /, '')) },
+    MutationObserver: class { observe() {} } });
   context.window = context;
-  vm.runInContext(source, context);
-  return { chart: DocForm.chart, highlight: DocForm.highlight, sets, warnings };
+  for (const name of ['core', 'highlight', 'chart', 'stepper', 'tabs']) vm.runInContext(script(name), context);
+  if (enhance) enhance(DocForm, document, boot);
+  boot.initialize();
+  return { chart: DocForm.chart, selection: DocForm.selection, sets, warnings, document };
 }
 
 function draw(spec) {
   const env = setup();
   const host = new Node('div');
+  env.document.body.appendChild(host);
   const api = env.chart(host, spec);
   const plot = host.all().find((el) => el.classList.contains('df-chart-plot'));
   const marks = () => host.all().filter((el) => el.getAttribute(KEY) !== null && el.tag !== 'td' && el.tag !== 'tr');
@@ -104,7 +118,7 @@ function draw(spec) {
 
 const shared = {
   type: 'line',
-  highlight: 'trace',
+  selectionGroup: 'trace',
   series: [
     { name: 'A', data: [{ x: 1, y: 2, key: 'a1' }, { x: 2, y: 3, key: 'a2' }] },
     { name: 'B', data: [{ x: 1, y: 8, key: 'b1' }, { x: 2, y: 9, key: 'b2' }, [3, 7]] }
@@ -116,14 +130,14 @@ test('a click commits the keyed point nearest the pointer, even where series sha
   assert.deepEqual(c.marks().map((el) => [el.getAttribute(GROUP), el.getAttribute(KEY)]),
     [['trace', 'a1'], ['trace', 'a2'], ['trace', 'b1'], ['trace', 'b2']]);
   c.point(c.mark('b1'), 'pointermove');
-  assert.equal(c.highlight.get('trace'), null, 'hovering only previews');
+  assert.equal(c.selection.group('trace').get(), null, 'hovering only previews');
   assert.equal(c.point(c.mark('b1'), 'click').defaultPrevented, true, 'a handled click leaves a zoomable figure alone');
-  assert.equal(c.highlight.get('trace'), 'b1');
+  assert.equal(c.selection.group('trace').get(), 'b1');
   assert.match(c.tip().textContent, /Selected/);
   c.point(c.mark('a1'), 'click');
-  assert.equal(c.highlight.get('trace'), 'a1');
+  assert.equal(c.selection.group('trace').get(), 'a1');
   c.point(c.mark('a1'), 'click');
-  assert.equal(c.highlight.get('trace'), null);
+  assert.equal(c.selection.group('trace').get(), null);
   assert.doesNotMatch(c.tip().textContent, /Selected/);
 });
 
@@ -134,11 +148,11 @@ test('arrow keys visit each reading at a shared x and Enter or Space toggles its
   key('Home');
   key('ArrowRight');
   assert.equal(key('Enter').defaultPrevented, true);
-  assert.equal(c.highlight.get('trace'), 'a1', 'readings at x = 1 run from the top of the plot down');
+  assert.equal(c.selection.group('trace').get(), 'a1', 'readings at x = 1 run from the top of the plot down');
   key('Enter', { repeat: true });
-  assert.equal(c.highlight.get('trace'), 'a1');
+  assert.equal(c.selection.group('trace').get(), 'a1');
   key(' ');
-  assert.equal(c.highlight.get('trace'), null);
+  assert.equal(c.selection.group('trace').get(), null);
   key('End');
   assert.equal(key('Enter').defaultPrevented, false, 'an unkeyed point has nothing to select');
   assert.deepEqual(c.sets, [['trace', 'a1'], ['trace', null]]);
@@ -149,7 +163,7 @@ test('outside selections refresh the readout, and keys survive redraws, gaps in 
   c.fire('keydown', { key: 'End' });
   c.fire('keydown', { key: 'ArrowLeft' });
   c.fire('keydown', { key: 'ArrowLeft' });
-  c.highlight.set('trace', 'b2');
+  c.selection.group('trace').select('b2');
   assert.match(c.tip().textContent, /Selected/);
 
   const without = JSON.parse(JSON.stringify(shared));
@@ -157,7 +171,7 @@ test('outside selections refresh the readout, and keys survive redraws, gaps in 
   c.api.update(without);
   assert.equal(c.mark('b2'), undefined);
   c.api.update(shared);
-  assert.equal(c.highlight.get('trace'), 'b2', 'the selection is kept by key while its point is absent');
+  assert.equal(c.selection.group('trace').get(), 'b2', 'the selection is kept by key while its point is absent');
   assert.equal(c.mark('b2').getAttribute(GROUP), 'trace');
 
   c.host.all().find((el) => el.classList.contains('df-chart-toggle')).dispatchEvent(new Event('click'));
@@ -167,13 +181,13 @@ test('outside selections refresh the readout, and keys survive redraws, gaps in 
 });
 
 test('bars and scatter points are keyed, and charts without a group keep one readout per x and ignore clicks', () => {
-  const bars = draw({ type: 'bar', highlight: 'g', series: [{ data: [{ x: 'a', y: 1, key: 'k1' }] }, { data: [{ x: 'a', y: 2, key: 'k2' }] }] });
+  const bars = draw({ type: 'bar', selectionGroup: 'g', series: [{ data: [{ x: 'a', y: 1, key: 'k1' }] }, { data: [{ x: 'a', y: 2, key: 'k2' }] }] });
   assert.deepEqual(bars.marks().map((el) => el.tag + ':' + el.getAttribute(KEY)), ['path:k1', 'path:k2']);
-  const dots = draw({ type: 'scatter', highlight: 'g', series: [{ data: [{ x: 1, y: 1, key: 'p' }] }] });
+  const dots = draw({ type: 'scatter', selectionGroup: 'g', series: [{ data: [{ x: 1, y: 1, key: 'p' }] }] });
   dots.point(dots.mark('p'), 'click');
-  assert.equal(dots.highlight.get('g'), 'p');
+  assert.equal(dots.selection.group('g').get(), 'p');
 
-  const legacy = draw(Object.assign({}, shared, { highlight: undefined }));
+  const legacy = draw(Object.assign({}, shared, { selectionGroup: undefined }));
   assert.equal(legacy.marks().length, 0);
   const dot = legacy.host.all().find((el) => el.classList.contains('df-chart-dot'));
   assert.equal(legacy.point(dot, 'click').defaultPrevented, false);
@@ -187,7 +201,7 @@ test('table keys become point keys and the nearest spot prefers the closest read
   const { chart } = setup();
   const spec = chart.fromTable([['t', 'q', 'r'], ['1', '4', '5'], ['2', '6', '']], 'line', [[null, null, null], [null, 'q1', null], [null, null, 'r2']]);
   assert.deepEqual(JSON.parse(JSON.stringify(spec.series.map((s) => s.data))), [[{ x: '1', y: '4', key: 'q1' }, ['2', '6']], [['1', '5'], { x: '2', y: '', key: 'r2' }]]);
-  const model = chart.normalize(Object.assign(spec, { highlight: 'h' }));
+  const model = chart.normalize(Object.assign(spec, { selectionGroup: 'h' }));
   assert.deepEqual(JSON.parse(JSON.stringify(model.series.map((s) => s.points.map((p) => p.key)))), [['q1', null], [null]]);
   const spots = [{ px: 0, py: 10 }, { px: 0, py: 50 }, { px: 30, py: 20 }];
   assert.equal(chart.closest(spots, 2, 45), 1);
@@ -300,7 +314,7 @@ const telemetry = {
   type: 'line',
   brush: true,
   gaps: 'break',
-  highlight: 'ops',
+  selectionGroup: 'ops',
   x: { type: 'time' },
   referenceLines: [{ axis: 'x', value: t0 + 5 * hour, label: 'Deploy' }],
   series: [
@@ -323,7 +337,7 @@ test('dragging narrows a time axis, readouts and the table follow, and Reset res
   assert.equal(brush(c, dots[1], dots[3]).defaultPrevented, true, 'the click ending a drag is swallowed');
   const range = c.api.range();
   assert.ok(Math.abs(range[0] - (t0 + hour)) < 1 && Math.abs(range[1] - (t0 + 4 * hour)) < 1);
-  assert.equal(c.highlight.get('ops'), null, 'a drag selects nothing');
+  assert.equal(c.selection.group('ops').get(), null, 'a drag selects nothing');
   assert.equal(byClass(c, 'df-chart-reset')[0].hidden, false);
   assert.match(byClass(c, 'df-chart-range')[0].textContent, /^Time 2026-11-10 01:00 – 2026-11-10 04:00 UTC$/);
   assert.equal(byClass(c, 'df-chart-ref-note')[0].textContent, 'outside range');
@@ -388,16 +402,16 @@ test('a log x axis brushes by position and keyed selections persist while points
   assert.equal(dotsOf(sweep).length, 2);
 
   const c = draw(telemetry);
-  c.highlight.set('ops', 'spike');
+  c.selection.group('ops').select('spike');
   c.api.range([t0, t0 + 2 * hour]);
   assert.equal(c.mark('spike'), undefined);
-  assert.equal(c.highlight.get('ops'), 'spike', 'the selection is kept while its point is out of range');
+  assert.equal(c.selection.group('ops').get(), 'spike', 'the selection is kept while its point is out of range');
   c.api.visible('A', false);
   c.api.range(null);
   assert.equal(c.mark('spike'), undefined);
   c.api.visible('A', true);
   assert.equal(c.mark('spike').getAttribute(GROUP), 'ops');
-  assert.equal(c.highlight.get('ops'), 'spike');
+  assert.equal(c.selection.group('ops').get(), 'spike');
 
   c.api.visible('B', false);
   c.api.range([t0 + hour, t0 + 4 * hour]);
@@ -423,4 +437,103 @@ test('coords reads the data under a viewport point of the drawn plot, following 
   assert.equal(c.api.coords(+narrowed.getAttribute('cx'), +narrowed.getAttribute('cy')).xText, '2026-11-10 04:00 UTC');
   click(byClass(c, 'df-chart-toggle')[0]);
   assert.equal(c.api.coords(hit.plot.left + 1, hit.plot.top + 1), null, 'nothing to read while the table shows');
+});
+
+test('a chart, stepper and passive markup follow the same seeded group without bridges', () => {
+  let chartHost, list, row, companion;
+  const { selection } = setup({
+    groups: { trace: { initial: 'b1' } },
+    enhance(DF, document, boot) {
+      const add = (parent, tag, attrs = {}, value = '') => {
+        const el = parent.appendChild(new Node(tag));
+        for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
+        el.textContent = value;
+        return el;
+      };
+      chartHost = add(document.body, 'div', { 'data-df-chart': '' });
+      add(chartHost, 'script', { type: 'application/json' }, JSON.stringify(shared));
+      list = add(document.body, 'ol', { 'data-df-stepper': '', [GROUP]: 'trace' });
+      list.id = 'timeline';
+      for (const key of ['a1', 'b1', 'a2']) {
+        add(add(list, 'li', { [KEY]: key }), 'strong', { 'data-df-step-label': '' }, key);
+      }
+      row = add(document.body, 'p', { [GROUP]: 'trace', [KEY]: 'b1' });
+      companion = add(document.body, 'p', { 'data-df-stepper-view': 'timeline', [KEY]: 'a2' });
+      boot.prepareSelection();
+      const commits = [];
+      document.addEventListener('df:selection:change', ({ detail }) => {
+        const key = detail.current.key;
+        const step = DF.stepper.get(list).snapshot().key;
+        commits.push(key);
+        assert.equal(step, key === null || key === 'unmatched' ? 'a2' : key);
+        assert.equal(row.hasAttribute('data-df-selection-active'), key === 'b1');
+        const active = chartHost.all().filter(el => el.hasAttribute('data-df-selection-active'));
+        assert.equal(active.length > 0, key !== null && key !== 'unmatched');
+      });
+      list.commits = commits;
+    }
+  });
+  const group = selection.group('trace');
+  assert.deepEqual(list.commits, ['b1']);
+  assert.equal(list.children[1].getAttribute('aria-current'), 'step');
+  assert.equal(companion.hasAttribute('hidden'), true);
+  const plot = chartHost.all().find(el => el.classList.contains('df-chart-plot'));
+  const point = chartHost.all().find(el => el.tag === 'circle' && el.getAttribute(KEY) === 'a1');
+  const click = Object.assign(new Event('click', { cancelable: true }), {
+    button: 0, clientX: Number(point.getAttribute('cx')), clientY: Number(point.getAttribute('cy'))
+  });
+  plot.dispatchEvent(click);
+  assert.equal(click.defaultPrevented, true);
+  assert.equal(group.get(), 'a1');
+  assert.equal(list.children[0].getAttribute('aria-current'), 'step');
+  const next = list.parentNode.children.find(el => el.classList.contains('df-stepper-controls')).children[2];
+  next.dispatchEvent(new Event('click'));
+  next.dispatchEvent(new Event('click'));
+  assert.equal(group.get(), 'a2');
+  assert.equal(companion.hasAttribute('hidden'), false);
+  group.clear();
+  group.select('unmatched');
+  assert.deepEqual(list.commits, ['b1', 'a1', 'b1', 'a2', null, 'unmatched']);
+});
+
+test('tabs synchronize different labels and orders by key, with local follow-only Reset', () => {
+  let tabs, first, second;
+  const { selection } = setup({
+    groups: { languages: { initial: 'js' } },
+    enhance(DF, document) {
+      tabs = DF.tabs;
+      const tabSet = (labels, follow = false) => {
+        const host = document.body.appendChild(new Node('div'));
+        host.setAttribute('data-df-tabs', '');
+        host.setAttribute(GROUP, 'languages');
+        if (follow) host.setAttribute('data-df-selection-mode', 'follow');
+        labels.forEach(([key, label]) => {
+          const panel = host.appendChild(new Node('div'));
+          panel.setAttribute(KEY, key);
+          panel.setAttribute('data-df-tab', label);
+        });
+        return host;
+      };
+      first = tabSet([['python', 'Python'], ['js', 'JavaScript']]);
+      second = tabSet([['js', 'JS'], ['python', 'Python 3']], true);
+      DF.all = (selector, scope = document.body) => {
+        if (selector === '.df-tabs, [data-df-tabs]') return [first, second];
+        return scope.querySelectorAll(selector);
+      };
+    }
+  });
+  const group = selection.group('languages');
+  const left = tabs.get(first);
+  const right = tabs.get(second);
+  assert.equal(left.snapshot().index, 1);
+  assert.equal(right.snapshot().index, 0);
+  left.select('python');
+  assert.equal(group.get(), 'python');
+  assert.equal(right.snapshot().index, 1);
+  right.reset();
+  assert.equal(right.snapshot().key, 'js');
+  assert.equal(group.get(), 'python');
+  group.clear();
+  assert.equal(left.snapshot().key, 'python');
+  assert.equal(right.snapshot().key, 'js');
 });

@@ -1,5 +1,7 @@
 docform/: Copyable offline library folder
-  site.template.js: Starter window.DocFormSite manifest to copy beside pages, with an optional glossary page entry
+  docform.js: Offline entry with feature profiles, local asset loading, author lifecycle hooks, and diagnostics
+  docform.css: Optional static reading-profile styles
+  site.template.js: Starter JSON site manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
     tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, and reading-column and wide-block widths via light-dark()
     base.css: Centered reading column, typography, links, concept tables, table hover, list markers, scrollbars, and data-df-color accents
@@ -41,21 +43,21 @@ docform/: Copyable offline library folder
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
     tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, opt-in automatic term linking, and lazy HTML cards for other modules
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
-    tabs.js: Accessible tabbed panels with keyboard navigation and synced groups
-    anim.js: DocForm.anim step-timeline SVG animations with playback controls, hover-to-play, and animated step jumps
+    tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
+    anim.js: SVG timelines with playback controls, hover-to-play, and keyed jumps for figure steps
     params.js: data-df-param sliders, selects, and toggles, validated data-df-preset batch updates, data-df-bind/data-df-template outputs, and a subscription API
     reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
-    steps.js: Standalone HTML card panels with optional titled groups, keyboard focus, and manual selection, plus figure steps selected by hover, focus, tap, or page controls, both with a sliding selection highlight
+    steps.js: Standalone HTML card panels with optional titled groups, keyboard focus, and manual selection, plus figure steps selected by hover, focus, tap, or page controls, with keyed selection and inert details
     zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes; open and close events for add-ons
     zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
     bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
-    chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with UTC time x-axes, validated base-10 log axes, line gaps, labelled reference lines, keyed point selection through linked highlighting, legend series toggles, opt-in x-range brushing with keyboard zoom and Reset, optional y rescaling, hover readouts, data coordinates under a viewport point, a table view of what is shown, and spec updates that can restore the source table
+    chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with UTC time x-axes, validated base-10 log axes, line gaps, labelled reference lines, keyed point selection through shared groups, legend series toggles, opt-in x-range brushing with keyboard zoom and Reset, optional y rescaling, hover readouts, data coordinates under a viewport point, a table view of what is shown, and spec updates that can restore the source table
     results.js: Sortable results tables with heatmap shading on column or fixed ranges, best-in-column highlighting, labelled pass/fail thresholds, and opt-in value, number, and date column filters plus named filter chips that reshade over visible rows
-    highlight.js: Group-scoped linked selection across prose, tables, figures, and code annotations
-    stepper.js: Ordered worked examples with Previous, Next, Reset, keyed step selection, and linked step views
+    highlight.js: Shared keyed selection controller with startup seeds, persistence, and passive HTML and SVG participants
+    stepper.js: Ordered worked examples with Previous, Next, Reset, keyed selection groups, and linked step views
     scenarios.js: Table-backed single-condition or multi-condition configuration comparisons with fixed baselines, shared chart scales by unit, and Reset
     data.js: Named CSV, JSON, and YAML data from wrapped files or inline blocks, with quoted-CSV and core-schema YAML parsing, size and row caps, inline parse errors, results-table, code, or tree views, and show/restore of other entries
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists

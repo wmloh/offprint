@@ -8,7 +8,8 @@
     return;
   }
 
-  var SELECTOR = '[data-df-reveal]:not(.df-callout, [data-df-no-reveal]), .df-split:not([data-df-no-reveal])';
+  var SELECTOR = '[data-df-reveal]:not(.df-callout, .df-split, [data-df-no-reveal])';
+  var SPLIT = '.df-split:not([data-df-no-reveal])';
   var STAGGER = 140;
   var CALLOUT_INSET = 0.25;
   var doc = root.document;
@@ -105,13 +106,14 @@
     }
   }
 
-  // Hides reveal targets only once this script runs, so pages stay readable without it.
-  if (html && html.classList && canObserve) html.classList.add('df-reveal-on');
-
+  var boot = DocForm._boot;
+  function setupSplits() { DocForm.all('.df-split').forEach(setupSplit); }
+  if (boot) DocForm.register('split-views', setupSplits);
   DocForm.register('reveal', function () {
-    DocForm.all('.df-split').forEach(setupSplit);
-    slideCallouts(DocForm.all('.df-page .df-callout:not([data-df-no-reveal])'));
-    var targets = DocForm.all(SELECTOR);
+    var splits = !boot || boot.enabled('split-views');
+    if (!boot) setupSplits();
+    if (!boot || boot.enabled('callouts')) slideCallouts(DocForm.all('.df-page .df-callout:not([data-df-no-reveal])'));
+    var targets = DocForm.all(splits ? SELECTOR + ', ' + SPLIT : SELECTOR);
     if (!canObserve) {
       targets.forEach(show);
       return;
@@ -122,6 +124,7 @@
       if (isFinite(delay)) el.style.setProperty('--df-reveal-delay', delay + 'ms');
       observer.observe(el);
     });
+    if (html && html.classList) html.classList.add('df-reveal-on');
   });
 
   DocForm.reveal = {

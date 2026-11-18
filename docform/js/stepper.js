@@ -8,8 +8,9 @@
     return;
   }
 
-  var states = new WeakMap();
-  var selectors = new WeakMap();
+  var items = DocForm._items;
+  var controllers = new WeakMap();
+  var HOST = 'ol[data-df-stepper]';
 
   function button(controls, id, label, activate) {
     var control = document.createElement('button');
@@ -21,27 +22,30 @@
     return control;
   }
 
-  function setup(list, views) {
-    var steps = DocForm.all(':scope > li', list);
-    var keys = new Set();
-    var entries = steps.map(function (step, index) {
-      var key = DocForm.data(step, 'step-key', '').trim();
-      var title = step.querySelector(':scope > [data-df-step-name]');
-      var name = title ? title.textContent.trim() : '';
-      if (!key || !name || keys.has(key)) return null;
-      keys.add(key);
-      return Object.freeze({ index: index, key: key, name: name, total: steps.length });
+  function prepare(list) {
+    var domain = items.domain('stepper', list, DocForm.all(':scope > li', list));
+    if (!domain) return null;
+    domain.labels = domain.items.map(function (step) {
+      var title = step.querySelector(':scope > [data-df-step-label]');
+      return title ? title.textContent.trim() : '';
     });
-    if (!list.id || !entries.length || entries.includes(null)) {
-      DocForm.warnOnce('stepper:markup', 'A stepper needs an ordered list with an id, and a unique step key and short name on every step.');
-      return;
+    if (!list.id || domain.labels.includes('')) {
+      items.issue('stepper', list, 'A worked example needs a list ID and a short label on each step.',
+        'Set id on the list and data-df-step-label on a direct child of each item.');
+      return null;
     }
+    return domain;
+  }
 
+  function setup(list, views) {
+    var domain = prepare(list);
+    if (!domain) return;
+    var steps = domain.items;
     var bindings = [];
     views.forEach(function (view) {
       if (DocForm.data(view, 'stepper-view') !== list.id) return;
-      var key = DocForm.data(view, 'step-key').trim();
-      if (keys.has(key)) bindings.push({ view: view, key: key });
+      var key = items.key(DocForm.data(view, 'key'));
+      if (domain.keys.includes(key)) bindings.push({ view: view, key: key });
     });
 
     var controls = document.createElement('div');
@@ -51,68 +55,49 @@
     status.setAttribute('role', 'status');
     controls.appendChild(status);
 
-    var index = -1;
-    var previous = button(controls, list.id, 'Previous', function () { show(index - 1); });
-    var next = button(controls, list.id, 'Next', function () { show(index + 1); });
-    var reset = button(controls, list.id, 'Reset', function () { show(0); });
-
-    function show(position) {
-      if (position < 0 || position >= entries.length || position === index) return;
-      index = position;
-      var state = entries[index];
-      states.set(list, state);
+    var state = items.controller('stepper', list, domain, function (index, key) {
+      return { key: key, index: index, label: domain.labels[index], total: steps.length };
+    }, function (current) {
+      var index = current.index;
       steps.forEach(function (step, i) {
         step.hidden = i !== index;
         if (i === index) step.setAttribute('aria-current', 'step');
         else step.removeAttribute('aria-current');
       });
       bindings.forEach(function (binding) {
-        binding.view.toggleAttribute('hidden', binding.key !== state.key);
+        binding.view.toggleAttribute('hidden', binding.key !== current.key);
       });
       // Keep focus on the activated control when it reaches a boundary.
       previous.setAttribute('aria-disabled', String(index === 0));
-      next.setAttribute('aria-disabled', String(index === entries.length - 1));
-      reset.setAttribute('aria-disabled', String(index === 0));
-      status.textContent = 'Step ' + (index + 1) + ' of ' + entries.length;
-      list.dispatchEvent(new root.CustomEvent('df:stepperchange', { bubbles: true, detail: state }));
-    }
-
-    selectors.set(list, function (key) {
-      for (var i = 0; i < entries.length; i++) {
-        if (entries[i].key === key) { show(i); return true; }
-      }
-      return false;
+      next.setAttribute('aria-disabled', String(index === steps.length - 1));
+      reset.setAttribute('aria-disabled', String(index === domain.initial));
+      status.textContent = 'Step ' + (index + 1) + ' of ' + steps.length;
     });
+
+    var previous = button(controls, list.id, 'Previous', function () {
+      state.choose(state.controller.snapshot().index - 1, 'user');
+    });
+    var next = button(controls, list.id, 'Next', function () {
+      state.choose(state.controller.snapshot().index + 1, 'user');
+    });
+    var reset = button(controls, list.id, 'Reset', state.controller.reset);
 
     list.before(controls);
     list.classList.add('df-stepper-ready');
     list.setAttribute('role', 'list');
-    show(0);
-  }
-
-  function listFor(target) {
-    return typeof target === 'string' ? document.getElementById(target) : target;
+    controllers.set(list, state.controller);
+    state.start();
   }
 
   DocForm.stepper = {
-    get: function (target) {
-      return states.get(listFor(target)) || null;
-    },
-    // Shows the step with this key exactly as Previous and Next would; false for an unknown list or key.
-    select: function (target, key) {
-      var select = selectors.get(listFor(target));
-      if (!select) {
-        DocForm.warnOnce('stepper:select', 'DocForm.stepper.select needs the id or element of a stepper list that is set up.');
-        return false;
-      }
-      if (select(key)) return true;
-      DocForm.warnOnce('stepper:select:' + key, 'This stepper has no step with the key "' + key + '".');
-      return false;
-    }
+    get: function (target) { return controllers.get(items.target(target)) || null; }
   };
 
+  items.scan('stepper', function () {
+    DocForm.all(HOST).forEach(function (list) { items.collect('stepper', list, prepare(list)); });
+  });
   DocForm.register('stepper', function () {
-    var views = DocForm.all('[data-df-stepper-view][data-df-step-key]');
-    DocForm.all('ol[data-df-stepper]').forEach(function (list) { setup(list, views); });
+    var views = DocForm.all('[data-df-stepper-view][data-df-key]');
+    DocForm.all(HOST).forEach(function (list) { setup(list, views); });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

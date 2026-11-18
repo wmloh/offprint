@@ -454,4 +454,34 @@
   anim.path = path;
   anim.hoverPlays = hoverPlays;
   DocForm.anim = anim;
+
+  var keyed = new WeakMap();
+  DocForm.animation = {
+    get: function (target) { return keyed.get(DocForm._items.target(target)) || null; },
+    mount: function (target, options) {
+      var figure = DocForm._items.target(target);
+      if (!figure) return null;
+      if (keyed.has(figure)) return keyed.get(figure);
+      var keys = ['start'].concat(Array.isArray(options && options.steps) ? options.steps.map(function (step) {
+        return DocForm._items.key(step && step.key);
+      }) : [null]);
+      if (keys.includes(null) || new Set(keys).size !== keys.length) {
+        DocForm._items.issue('animation', figure, 'Animation steps need distinct keys.',
+          'Set a nonempty key for each step and reserve start for the starting state.');
+        return null;
+      }
+      var ctl = anim(figure, options.steps, options);
+      var api = Object.create(ctl);
+      ['go', 'to'].forEach(function (method) {
+        api[method] = function (key) {
+          var index = keys.indexOf(DocForm._items.key(key));
+          if (index < 0) return false;
+          ctl[method](index);
+          return true;
+        };
+      });
+      keyed.set(figure, api);
+      return api;
+    }
+  };
 })(typeof window !== 'undefined' ? window : globalThis);

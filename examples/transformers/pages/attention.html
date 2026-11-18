@@ -90,9 +90,9 @@
       <div class="df-step-panel" role="group" aria-labelledby="attention-steps" data-df-role="context">
         <p class="df-step-heading" id="attention-steps">Attention steps</p>
         <div class="df-step-list">
-          <button type="button" data-df-step data-df-step-detail="attention-scores">Score</button>
-          <button type="button" data-df-step data-df-step-detail="attention-mask">Mask</button>
-          <button type="button" data-df-step data-df-step-detail="attention-normalize">Normalize</button>
+          <button type="button" data-df-key="scores" data-df-animation-key="scores" data-df-detail="attention-scores">Score</button>
+          <button type="button" data-df-key="mask" data-df-animation-key="mask" data-df-detail="attention-mask">Mask</button>
+          <button type="button" data-df-key="normalize" data-df-animation-key="normalize" data-df-detail="attention-normalize">Normalize</button>
         </div>
       </div>
       <div class="df-step-details">
@@ -120,9 +120,9 @@
       The output is the resulting weighted sum. Future keys are masked and contribute zero.</p>
     <p id="query-picker" hidden>
       Select a query token to outline its row, weights, and output. Select it again to clear.
-      <button type="button" data-df-highlight-group="query" data-df-highlight-key="1">1 · the</button>
-      <button type="button" data-df-highlight-group="query" data-df-highlight-key="2">2 · train</button>
-      <button type="button" data-df-highlight-group="query" data-df-highlight-key="3">3 · is</button>
+      <button type="button" data-df-selection-group="query" data-df-key="1">1 · the</button>
+      <button type="button" data-df-selection-group="query" data-df-key="2">2 · train</button>
+      <button type="button" data-df-selection-group="query" data-df-key="3">3 · is</button>
     </p>
     <table>
       <caption>Query vectors, attention weights, and outputs at temperature 1 (rounded)</caption>
@@ -131,13 +131,13 @@
           <th scope="col">Weight on is</th><th scope="col">Attention output</th></tr>
       </thead>
       <tbody>
-        <tr data-df-highlight-group="query" data-df-highlight-key="1">
+        <tr data-df-selection-group="query" data-df-key="1">
           <th scope="row">1 · the (1, 0)</th><td>1.000</td><td>0 (masked)</td><td>0 (masked)</td><td>(1.000, 0.000)</td>
         </tr>
-        <tr data-df-highlight-group="query" data-df-highlight-key="2">
+        <tr data-df-selection-group="query" data-df-key="2">
           <th scope="row">2 · train (0, 1.5)</th><td>0.169</td><td>0.831</td><td>0 (masked)</td><td>(0.169, 1.246)</td>
         </tr>
-        <tr data-df-highlight-group="query" data-df-highlight-key="3">
+        <tr data-df-selection-group="query" data-df-key="3">
           <th scope="row">3 · is (1.5, 1)</th><td>0.184</td><td>0.184</td><td>0.633</td><td>(1.133, 0.908)</td>
         </tr>
       </tbody>

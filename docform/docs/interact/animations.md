@@ -16,3 +16,5 @@ const animation = DocForm.anim('trace', [
 - `df:animstep` fires on the figure when the displayed step changes with `{step, done}` for the displayed step and the count of completed steps. Attach directly to the figure. Paint SVG with `.df-stroke`, `.df-fill`, or `.df-fill-bg` and `data-df-color` or `data-df-role`. `.df-grid`, `.df-axis`, and `.df-muted` provide neutral paint.
 
 [Figure steps](figure-steps.md) · [Parameters](parameters.md) · [Zoom](figure-zoom.md) · [Source](../../js/anim.js)
+
+For [figure steps](figure-steps.md), use `DocForm.animation.mount(figureIdOrElement, {steps, ...options})` with a unique `key` on each step. `DocForm.animation.get(figureIdOrElement)` retrieves that controller. Its `go(key)` and `to(key)` accept a step key or `start` and return false for an unknown key.

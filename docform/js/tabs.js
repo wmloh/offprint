@@ -7,65 +7,43 @@
     return;
   }
 
-  var STORE = 'docform-tab:';
-  var groups = {};
+  var items = DocForm._items;
+  var controllers = new WeakMap();
+  var HOST = '.df-tabs, [data-df-tabs]';
   var count = 0;
 
-  function key(label) {
-    return String(label).trim().toLowerCase();
-  }
-
-  function remember(group, label) {
-    try {
-      root.localStorage.setItem(STORE + group, key(label));
-    } catch (e) {
-      // Storage can be blocked; synchronization then lasts only for this page view.
-    }
-  }
-
-  function recall(group) {
-    try {
-      return root.localStorage.getItem(STORE + group);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Selects the tab whose label matches; returns false when the set has no such tab.
-  function select(set, label, focus) {
-    var index = -1;
-    set.tabs.forEach(function (tab, i) { if (key(tab.textContent) === key(label)) index = i; });
-    if (index < 0) return false;
-    set.tabs.forEach(function (tab, i) {
-      var on = i === index;
-      tab.setAttribute('aria-selected', String(on));
-      tab.tabIndex = on ? 0 : -1;
-      set.panels[i].hidden = !on;
-    });
-    if (focus) set.tabs[index].focus();
-    return true;
-  }
-
-  function choose(set, label, focus) {
-    if (!set.group) {
-      select(set, label, focus);
-      return;
-    }
-    // Keep the chosen tab at the same screen position while synced groups above it change height.
-    var anchor = set.root.getBoundingClientRect().top;
-    groups[set.group].forEach(function (other) { select(other, label, focus && other === set); });
-    root.scrollBy(0, set.root.getBoundingClientRect().top - anchor);
-    remember(set.group, label);
+  function prepare(el) {
+    return items.domain('tabs', el, DocForm.all(':scope > [data-df-tab]', el));
   }
 
   function build(el) {
-    var panels = Array.prototype.filter.call(el.children, function (child) { return child.hasAttribute('data-df-tab'); });
-    if (!panels.length) return;
+    var domain = prepare(el);
+    if (!domain) return;
+    var panels = domain.items;
     var id = el.id || 'df-tabs-' + (++count);
     var list = document.createElement('div');
     list.className = 'df-tab-list';
     list.setAttribute('role', 'tablist');
-    var set = { root: el, tabs: [], panels: panels, group: DocForm.data(el, 'tab-group', null) };
+    var tabs = [];
+    var state = items.controller('tabs', el, domain, function (index, key) {
+      return { key: key, index: index };
+    }, function (current) {
+      tabs.forEach(function (tab, i) {
+        var on = i === current.index;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+        panels[i].hidden = !on;
+      });
+    });
+
+    function choose(index, focus) {
+      // Keep the activated tab at the same screen position when another tab set changes height.
+      var top = el.getBoundingClientRect().top;
+      state.choose(index, 'user');
+      if (focus) tabs[index].focus({ preventScroll: true });
+      var offset = el.getBoundingClientRect().top - top;
+      if (offset) root.scrollBy(0, offset);
+    }
 
     panels.forEach(function (panel, i) {
       var tab = document.createElement('button');
@@ -80,38 +58,32 @@
       panel.setAttribute('aria-labelledby', tab.id);
       panel.classList.add('df-tab-panel');
       if (!panel.hasAttribute('tabindex')) panel.tabIndex = 0;
-      tab.addEventListener('click', function () { choose(set, tab.textContent, false); });
-      set.tabs.push(tab);
+      tab.addEventListener('click', function () { choose(i, false); });
+      tabs.push(tab);
       list.appendChild(tab);
     });
 
     list.addEventListener('keydown', function (event) {
-      var i = set.tabs.indexOf(document.activeElement);
+      var i = tabs.indexOf(document.activeElement);
       if (i < 0) return;
-      var n = set.tabs.length;
+      var n = tabs.length;
       var to = { ArrowRight: i + 1, ArrowLeft: i - 1 + n, Home: 0, End: n - 1 }[event.key];
-      if (to === undefined) return;
+      if (typeof to !== 'number') return;
       event.preventDefault();
-      choose(set, set.tabs[to % n].textContent, true);
+      choose(to % n, true);
     });
 
     el.insertBefore(list, el.firstChild);
     el.classList.add('df-tabs', 'df-tabs-ready');
-    var initial = panels.find(function (p) { return DocForm.flag(p, 'selected'); });
-    select(set, set.tabs[initial ? panels.indexOf(initial) : 0].textContent, false);
-    if (set.group) {
-      (groups[set.group] = groups[set.group] || []).push(set);
-      var saved = recall(set.group);
-      if (saved) select(set, saved, false);
-    }
+    controllers.set(el, state.controller);
+    state.start();
   }
 
-  DocForm.tabs = { select: function (group, label) {
-    (groups[group] || []).forEach(function (set) { select(set, label, false); });
-    remember(group, label);
-  } };
-
-  DocForm.register('tabs', function () {
-    DocForm.all('.df-tabs, [data-df-tabs]').forEach(build);
+  DocForm.tabs = {
+    get: function (target) { return controllers.get(items.target(target)) || null; }
+  };
+  items.scan('tabs', function () {
+    DocForm.all(HOST).forEach(function (el) { items.collect('tabs', el, prepare(el)); });
   });
+  DocForm.register('tabs', function () { DocForm.all(HOST).forEach(build); });
 })(typeof window !== 'undefined' ? window : globalThis);

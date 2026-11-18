@@ -50,4 +50,6 @@ docform/: Copyable offline library folder
 examples/: Example docs opened from file://
   simple/: Single-page Pythagorean theorem example without a manifest, with reveals, a split view, a tinted numbered list, numbered references, sidenotes, and page search
   linear-algebra/: Five-page linear algebra notes with a manifest, figures.js plane and arrow helpers, sliders, animations, split views, peek bubbles, a pinned scrolling figure, and auto-linked glossary terms with extended cards, cross-references, sidenotes, citations, search, annotated code, diffs, charts, and a results table
+  pca/: Three-chapter pump monitoring case study with reproducible sensor data, projection and residual exercises, rank comparisons, and offline site search
+  transformers/: Three-chapter decoder-only Transformer guide with a worked forward pass, live causal attention, next-token probabilities, and offline site search
 tests/: Built-in node:test checks of module logic

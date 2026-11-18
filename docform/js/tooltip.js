@@ -258,6 +258,7 @@
     box.style.top = spot.top + 'px';
     box.style.left = spot.left + 'px';
     box.setAttribute('data-df-side', spot.side);
+    box.classList.toggle('is-clipped', box.scrollHeight > box.clientHeight + 1);
   }
 
   function fill(record) {

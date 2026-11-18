@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Next-token prediction · A Decoder-Only Transformer</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../docform/css/math.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
+  <link rel="stylesheet" href="../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../docform/css/results.css">
+  <link rel="stylesheet" href="../../docform/css/params.css">
+  <link rel="stylesheet" href="../../docform/css/tabs.css">
+  <link rel="stylesheet" href="../../docform/css/code.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <h1>Next-token prediction</h1>
+      <p>Carry the last position's attention output through the rest of the decoder. Then compare the possible
+        next tokens for <strong>the train is</strong>.</p>
+    </header>
+
+    <h2 id="decoder-block">Finish the decoder block</h2>
+    <p>The <a href="attention.html#attention-lab">attention exercise</a> gives the third position a context
+      vector of approximately <span class="df-math">(1.133,0.908)</span> at temperature 1. The attention output
+      projection in this example is the identity. A residual connection adds the result to the third input row,
+      giving <span class="df-math">u\approx(2.633,1.908)</span>.</p>
+
+    <p>Next apply the same feed-forward network independently at every position. For a row vector
+      <span class="df-math">u=(a,b)</span>, this example uses:</p>
+    <div class="df-math" data-df-display id="feed-forward">
+      h=u+\operatorname{ReLU}\left(u
+      \begin{pmatrix}0.5&-0.5\\-0.25&0.5\end{pmatrix}\right)
+      \begin{pmatrix}0.4&0\\0&-0.3\end{pmatrix}
+      \approx (2.969,1.908) \quad \text{at position 3}.
+    </div>
+
+    <div class="df-split" data-df-split="3:2" data-df-align="center">
+      <figure id="hidden-states">
+        <div data-df-chart="scatter" data-df-height="212">
+          <script type="application/json">
+            {
+              "x": {"label": "Coordinate 1", "min": 0, "max": 3.4},
+              "y": {"label": "Coordinate 2", "min": -0.4, "max": 2.8},
+              "series": [
+                {"name": "At input", "role": "input", "data": [[1, 0, "the"], [0, 1.5, "train"], [1.5, 1, "is"]]},
+                {"name": "After block", "role": "context", "data": [[2.4, 0, "the"], [0.169245, 2.359600, "train"], [2.968551, 1.908202, "is"]]}
+              ]
+            }
+          </script>
+        </div>
+        <figcaption>Two coordinates before and after the worked block.</figcaption>
+      </figure>
+      <div>
+        <p><a href="#hidden-states"></a> shows each position's state. Attention can mix positions. Once those
+          mixtures are computed, <a href="#feed-forward"></a> acts on each row separately.</p>
+        <p>Full-sized decoders stack many blocks, usually with multiple heads and a
+          <span data-df-tip="Rescales a position's hidden coordinates. Its placement varies by architecture.">normalization layer</span>
+          around each sublayer. <cite data-df-cite="vaswani radford"></cite></p>
+      </div>
+    </div>
+
+    <h2 id="readout">Turn the last state into logits</h2>
+    <p>Dot the last row with one output vector per vocabulary entry. These parameters are separate from
+      <a href="index.html#position">the input embeddings</a> in this model. Use softmax across vocabulary
+      entries to convert the six logits into probabilities.</p>
+
+    <table id="token-results" data-df-results>
+      <caption>Output scores and next-token probabilities at temperature 1</caption>
+      <thead><tr><th scope="col">Token</th><th scope="col" data-df-no-sort>Output vector</th><th scope="col" data-df-best="max">Logit</th><th scope="col" data-df-best="max" data-df-heat="max" data-df-heat-color="green">Probability</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><code>the</code></th><td>(−0.25, 0.05)</td><td>−0.647</td><td>3.24%</td></tr>
+        <tr><th scope="row"><code>train</code></th><td>(−0.32, 0.10)</td><td>−0.759</td><td>2.89%</td></tr>
+        <tr><th scope="row"><code>is</code></th><td>(−0.10, −0.10)</td><td>−0.488</td><td>3.80%</td></tr>
+        <tr><th scope="row"><code>late</code></th><td>(0.65, 0.05)</td><td>2.025</td><td>46.84%</td></tr>
+        <tr><th scope="row"><code>here</code></th><td>(0.42, 0.22)</td><td>1.667</td><td>32.73%</td></tr>
+        <tr><th scope="row"><code>.</code></th><td>(0.05, 0.20)</td><td>0.530</td><td>10.50%</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="decoding-temperature">Compare decoding temperatures</h3>
+    <p>Output temperature divides the <em>vocabulary logits</em> before softmax.
+      <span class="df-tag" data-df-role="output">Decoding only</span>
+      The attention weights and hidden state stay fixed during this comparison.</p>
+
+    <div class="df-params">
+      <div data-df-param="temperature" data-df-label="Output temperature" data-df-min="0.5" data-df-max="2" data-df-step="0.1" data-df-value="1" data-df-digits="1" data-df-role="output"></div>
+    </div>
+    <p>At temperature <strong data-df-bind="temperature">1.0</strong>, the probability of <code>late</code> is
+      <output id="late-probability" aria-live="polite">46.84%</output>.</p>
+
+    <figure id="temperature-plot">
+      <div data-df-chart="line" data-df-x-label="Output temperature" data-df-y-label="Probability (%)">
+        <table>
+          <thead><tr><th>Temperature</th><th data-df-role="output">late</th><th data-df-role="context">here</th><th data-df-role="input">. (period)</th></tr></thead>
+          <tbody>
+            <tr><td>0.5</td><td>64.36%</td><td>31.43%</td><td>3.24%</td></tr>
+            <tr><td>1.0</td><td>46.84%</td><td>32.73%</td><td>10.50%</td></tr>
+            <tr><td>1.5</td><td>37.47%</td><td>29.51%</td><td>13.83%</td></tr>
+            <tr><td>2.0</td><td>32.20%</td><td>26.92%</td><td>15.25%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Probabilities for three vocabulary items at four temperatures. All six logits enter softmax.</figcaption>
+    </figure>
+
+    <div class="df-callout" data-df-role="output" data-df-reveal="right">
+      <span class="df-callout-title">Generate one token</span>
+      Greedy decoding takes <code>late</code>, the highest-probability token. Sampling can also choose
+      <code>here</code> or another token. Append the selected token and use the extended prefix to predict again.
+    </div>
+
+    <details data-df-role="context">
+      <summary>How would this work during training?</summary>
+      <p>Shift the target sequence by one token. For <strong>the train is late</strong>, the first three target
+        tokens are <strong>train is late</strong>. Compute a cross-entropy loss for each position with a target,
+        using its causally masked prediction. <span class="df-note">For the worked last position, the loss for
+        target <code>late</code> is about 0.76 nats at temperature 1.</span></p>
+    </details>
+
+    <h2 id="readout-code">Implement the readout</h2>
+    <p>Here is the dot product against every output row. Use the rounded hidden state for a quick check.</p>
+    <div class="df-tabs" data-df-tab-group="transformer-language" data-df-no-search>
+      <div data-df-tab="Python" data-df-selected>
+        <pre><code class="language-python">h = (2.968551, 1.908202)
+output_rows = [(-0.25, 0.05), (-0.32, 0.10), (-0.10, -0.10),
+               (0.65, 0.05), (0.42, 0.22), (0.05, 0.20)]
+logits = [sum(x * y for x, y in zip(h, row)) for row in output_rows]</code></pre>
+      </div>
+      <div data-df-tab="JavaScript">
+        <pre><code class="language-js">const h = [2.968551, 1.908202];
+const outputRows = [[-0.25, 0.05], [-0.32, 0.10], [-0.10, -0.10],
+                    [0.65, 0.05], [0.42, 0.22], [0.05, 0.20]];
+const logits = outputRows.map(([a, b]) => a * h[0] + b * h[1]);</code></pre>
+      </div>
+    </div>
+
+    <h3 id="stable-softmax">Stabilize softmax</h3>
+    <p>Subtract the largest logit before exponentiation. Each numerator and the denominator gain the same
+      factor, so the probabilities stay the same. The largest exponential becomes 1, avoiding overflow.</p>
+    <div class="df-tabs" data-df-tab-group="transformer-language">
+      <div data-df-tab="Python">
+        <div class="df-diff" data-df-lang="python">
+          <pre data-df-diff="before">from math import exp
+
+def probabilities(logits, temperature=1):
+    weights = [exp(x / temperature) for x in logits]
+    total = sum(weights)
+    return [w / total for w in weights]</pre>
+          <pre data-df-diff="after">from math import exp
+
+def probabilities(logits, temperature=1):
+    peak = max(logits)
+    weights = [exp((x - peak) / temperature) for x in logits]
+    total = sum(weights)
+    return [w / total for w in weights]</pre>
+        </div>
+      </div>
+      <div data-df-tab="JavaScript">
+        <pre data-df-diff data-df-lang="js">@@ Normalize vocabulary logits
+ function probabilities(logits, temperature = 1) {
+-  const weights = logits.map(x => Math.exp(x / temperature));
++  const peak = Math.max(...logits);
++  const weights = logits.map(x => Math.exp((x - peak) / temperature));
+   const total = weights.reduce((sum, w) => sum + w, 0);
+   return weights.map(w => w / total);
+ }</pre>
+      </div>
+    </div>
+    <p>Apply the updated function to the logits from the preceding snippet and compare
+      <code>probabilities(logits)[3]</code> with the <code>late</code> row in <a href="#token-results"></a>.</p>
+
+    <h2 id="references" data-df-no-outline>References</h2>
+    <div data-df-bibliography></div>
+  </main>
+
+  <script src="site.js" data-df-site></script>
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/refs.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/math.js"></script>
+  <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
+  <script src="../../docform/js/chart.js"></script>
+  <script src="../../docform/js/results.js"></script>
+  <script src="../../docform/js/params.js"></script>
+  <script src="../../docform/js/tabs.js"></script>
+  <script src="../../docform/js/code.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="model.js"></script>
+  <script src="prediction.js"></script>
+</body>
+</html>

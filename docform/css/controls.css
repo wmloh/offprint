@@ -83,6 +83,12 @@
   opacity: 0.45;
 }
 
+/* Tooltips and previews may hold copies of dimmed blocks; their contents are always shown sharp. */
+.df-focus-mode .df-tooltip .df-focus-dim {
+  filter: none;
+  opacity: 1;
+}
+
 /* Hidden navigation panel on wide screens: the sidebar slides away and the page recentres. */
 @media (min-width: 861px) {
   body:has(> .df-sidebar) {

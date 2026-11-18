@@ -54,8 +54,20 @@
   max-width: min(440px, calc(100vw - 16px));
   max-height: min(360px, calc(100vh - 16px));
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  pointer-events: none;
+}
+
+/* Cut-off previews fade out at the bottom. An overlay rather than a mask keeps the card's outline and shadow,
+   so short previews stay opaque over busy backgrounds such as peek bubble panels. */
+.df-tooltip.df-peek.is-clipped::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 28px;
+  border-radius: 0 0 var(--df-radius-lg) var(--df-radius-lg);
+  background: linear-gradient(to bottom, transparent, var(--df-tooltip-bg));
   pointer-events: none;
 }
 

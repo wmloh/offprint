@@ -114,6 +114,10 @@
     DocForm.all('[id]', node).forEach(function (el) { el.removeAttribute('id'); });
     DocForm.all(STRIP, node).forEach(function (el) { el.remove(); });
     DocForm.all('[tabindex]', node).forEach(function (el) { el.removeAttribute('tabindex'); });
+    // Copies of focus-mode blocks must not inherit the page's dimming.
+    [node].concat(DocForm.all('.df-focus-block', node)).forEach(function (el) {
+      if (el.classList) el.classList.remove('df-focus-block', 'df-focus-dim');
+    });
     DocForm.all('.df-term, .df-tip', node).forEach(function (el) { el.removeAttribute('aria-describedby'); });
     return node;
   }

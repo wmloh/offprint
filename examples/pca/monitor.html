@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Choose a component count · Pump Monitoring with PCA</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../docform/css/math.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../docform/css/results.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/tabs.css">
+  <link rel="stylesheet" href="../../docform/css/params.css">
+  <link rel="stylesheet" href="../../docform/css/code.css">
+  <link rel="stylesheet" href="../../docform/css/anim.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <h1>Choose a component count</h1>
+      <p>Apply the frozen scaler and PCA basis to six new pump windows. Compare how much routine variation
+        each rank retains and which fault scenarios still produce a large residual.</p>
+    </header>
+
+    <h2 id="reconstruction">How a window becomes an alert</h2>
+    <p>Retain the first <span class="df-math">k</span> directions in <span class="df-math">W_k</span>.
+      Reconstruct the standardized row <span class="df-math">z</span> and sum the squared residuals.
+      <cite data-df-cite="jolliffe jackson"></cite></p>
+
+    <div class="df-math" data-df-display id="residual-equation">
+      \hat z=zW_k W_k^\top,\qquad Q_k=\norm{z-\hat z}^{2}=\sum_{j>k}a_j^2
+    </div>
+    <p>Because the four directions form an orthonormal basis, the right side of <a href="#residual-equation"></a>
+      gives the same score directly from the discarded components.</p>
+
+    <div class="df-split" data-df-align="center">
+      <figure id="residual-story" data-df-autoplay>
+        <svg viewBox="0 0 355 188" role="img" aria-label="A standardized window projected onto the retained subspace, leaving a perpendicular residual">
+          <path class="df-stroke" data-df-role="projection" d="M25 134H330" stroke-width="2"/>
+          <text x="29" y="161" data-df-role="projection">Retained subspace</text>
+          <circle cx="224" cy="53" r="7" class="df-fill" data-df-role="baseline"/>
+          <text x="239" y="58" data-df-role="baseline">Window</text>
+          <path id="residual-line" class="df-stroke" data-df-role="alert" d="M224 53V134" stroke-width="3"/>
+          <circle id="reconstruction-dot" cx="224" cy="53" r="5" class="df-fill" data-df-role="projection"/>
+          <text id="residual-label" x="117" y="98" data-df-role="alert">Residual</text>
+        </svg>
+        <figcaption>Projection and residual, shown schematically.</figcaption>
+      </figure>
+      <div>
+        <p>The reconstruction captures variation similar to the baseline. A large residual means the sensor
+          combination departed from those learned directions.</p>
+        <p>For this exercise, every rank uses the same threshold. Flag a window when
+          <span class="df-math">Q_k &gt; 0.80</span> in squared standardized units.</p>
+      </div>
+    </div>
+
+    <h2 id="evaluation">Held-out pump windows</h2>
+    <p>The six scenarios are specified in score space. To reproduce their raw sensor readings, multiply
+      each row by <span class="df-math">W^\top</span>, then multiply by the sensor scales and add the means from
+      <a href="index.html#baseline-scales">baseline units and scales</a>.</p>
+
+    <table>
+      <caption>Component scores for each evaluation scenario</caption>
+      <thead><tr><th scope="col">Scenario</th><th scope="col">Label</th><th scope="col">PC1</th><th scope="col">PC2</th><th scope="col">PC3</th><th scope="col">PC4</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Higher cooling demand</th><td>Healthy</td><td>1.20</td><td>1.00</td><td>0.20</td><td>0.10</td></tr>
+        <tr><th scope="row">Demand drops</th><td>Healthy</td><td>−0.80</td><td>−0.90</td><td>0.10</td><td>−0.20</td></tr>
+        <tr><th scope="row">Steady load</th><td>Healthy</td><td>0.60</td><td>0.40</td><td>−0.25</td><td>0.10</td></tr>
+        <tr><th scope="row">Pressure reads low relative to flow</th><td>Fault</td><td>0.90</td><td>0.30</td><td>1.20</td><td>0.10</td></tr>
+        <tr><th scope="row">Pressure reads high relative to flow</th><td>Fault</td><td>−0.50</td><td>−0.40</td><td>−1.10</td><td>0.20</td></tr>
+        <tr><th scope="row">Common-mode offset</th><td>Fault</td><td>3.20</td><td>0.10</td><td>0.20</td><td>0.10</td></tr>
+      </tbody>
+    </table>
+
+    <figure id="score-plot">
+      <div data-df-chart="scatter">
+        <script type="application/json">
+          {
+            "x": {"label": "PC1 score"},
+            "y": {"label": "PC2 score", "min": -1.2, "max": 1.2},
+            "series": [
+              {"name": "Healthy", "role": "baseline", "data": [[1.2, 1, "Higher demand"], [-0.8, -0.9, "Demand drops"], [0.6, 0.4, "Steady load"]]},
+              {"name": "Fault", "role": "alert", "data": [[0.9, 0.3, "Pressure reads low"], [-0.5, -0.4, "Pressure reads high"], [3.2, 0.1, "Common-mode offset"]]}
+            ]
+          }
+        </script>
+      </div>
+      <figcaption>Held-out scores in the two leading directions. The table above includes PC3 and PC4.</figcaption>
+    </figure>
+    <p>The common-mode offset is extreme along PC1 in <a href="#score-plot"></a>. Much of that shift survives
+      reconstruction, so its residual remains small.</p>
+
+    <h3 id="rank-exercise">Try the ranks on one fault</h3>
+    <p>Vary the retained rank for the low-pressure scenario. Which component carries most of its residual?</p>
+    <div class="df-params">
+      <div data-df-param="rank" data-df-label="Retained components" data-df-min="1" data-df-max="4" data-df-step="1" data-df-value="2" data-df-role="projection"></div>
+    </div>
+    <div class="df-math" data-df-display data-df-no-number data-df-template="Q_{{rank}} = {{ (rank &lt; 2 ? 0.09 : 0) + (rank &lt; 3 ? 1.44 : 0) + (rank &lt; 4 ? 0.01 : 0) | 2 }}">
+      Q_2 = 1.45
+    </div>
+    <p>Decision at the exercise threshold:
+      <strong data-df-template="{{ rank &lt;= 2 ? 'flag this window' : 'this window passes' }}">flag this window</strong>.</p>
+
+    <h2 id="trade-offs">Compare rank trade-offs</h2>
+    <figure id="variance-by-rank">
+      <div data-df-chart="line">
+        <script type="application/json">
+          {
+            "x": {"label": "Retained components", "min": 1, "max": 4, "digits": 0},
+            "y": {"label": "Baseline variance retained (%)", "min": 50, "max": 105, "unit": "%"},
+            "series": [
+              {"name": "Retained", "role": "projection", "data": [[1, 62], [2, 91], [3, 98], [4, 100]]},
+              {"name": "Target", "color": "gray", "data": [[1, 90], [2, 90], [3, 90], [4, 90]]}
+            ]
+          }
+        </script>
+      </div>
+      <figcaption>Cumulative explained variance on the baseline.</figcaption>
+    </figure>
+
+    <figure id="alert-counts">
+      <div data-df-chart="bar" data-df-y-label="Window count">
+        <table>
+          <thead><tr><th>Rank</th><th data-df-role="decision">Faults flagged</th><th data-df-role="alert">Healthy windows flagged</th></tr></thead>
+          <tbody>
+            <tr><td>1 PC</td><td>2</td><td>2</td></tr>
+            <tr><td>2 PCs</td><td>2</td><td>0</td></tr>
+            <tr><td>3 PCs</td><td>0</td><td>0</td></tr>
+            <tr><td>4 PCs</td><td>0</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Alerts at the same 0.80 threshold for all ranks.</figcaption>
+    </figure>
+
+    <table id="rank-results" data-df-results data-df-heat>
+      <caption>Rank comparison on three healthy and three fault windows</caption>
+      <thead><tr><th scope="col">Rank</th><th scope="col" data-df-best="max">Variance retained</th><th scope="col" data-df-best="min" data-df-heat-color="orange">False alerts</th><th scope="col" data-df-best="max">Faults flagged</th><th scope="col" data-df-no-sort>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>62%</td><td>2</td><td>2</td><td>Flags routine variation</td></tr>
+        <tr><td>2</td><td>91%</td><td>0</td><td>2</td><td>Meets the exercise target</td></tr>
+        <tr><td>3</td><td>98%</td><td>0</td><td>0</td><td>Absorbs both pressure faults</td></tr>
+        <tr><td>4</td><td>100%</td><td>0</td><td>0</td><td>Reconstructs every window exactly</td></tr>
+      </tbody>
+    </table>
+
+    <div class="df-callout" data-df-role="decision" data-df-icon="◆" data-df-reveal="right">
+      <span class="df-callout-title">Keep two components for this exercise</span>
+      Two retain 91% of baseline variance and catch both pressure scenarios without flagging the healthy windows.
+      The common-mode offset is a blind spot for the residual rule.
+    </div>
+
+    <details data-df-role="alert">
+      <summary>How could an operator catch the common-mode offset?</summary>
+      <p>Watch retained scores as well as residuals. One option is a score-space statistic such as
+        <span class="df-math">T^2=\sum_{j=1}^k a_j^2/\lambda_j</span>. Set and assess the thresholds on separate
+        operating periods that include the healthy load range.<span class="df-note">The six scenarios illustrate
+        mechanisms. A production alert rate needs a larger, representative validation period.</span></p>
+    </details>
+
+    <h2 id="implementation">Implement the residual rule</h2>
+    <p>Use the same post-fit score convention in both languages. The change below replaces a rule that monitors
+      all score energy with one that isolates energy outside the retained subspace.</p>
+    <div class="df-tabs" data-df-tab-group="pca-language">
+      <div data-df-tab="Python">
+        <div class="df-diff" data-df-lang="python">
+          <pre data-df-diff="before">def residual_score(scores, rank):
+    return sum(score**2 for score in scores)</pre>
+          <pre data-df-diff="after">def residual_score(scores, rank):
+    return sum(score**2 for score in scores[rank:])</pre>
+        </div>
+      </div>
+      <div data-df-tab="JavaScript">
+        <pre data-df-diff data-df-lang="js">@@ Residual scoring
+ function residualScore(scores, rank) {
+-  return scores.reduce((sum, score) => sum + score ** 2, 0);
++  return scores.slice(rank).reduce((sum, score) => sum + score ** 2, 0);
+ }</pre>
+      </div>
+    </div>
+    <h3 id="check-residual">Check an alert and a pass</h3>
+    <p>Run this with the updated function above. The low-pressure window triggers an alert at rank two and
+      passes at rank three.</p>
+    <div class="df-tabs" data-df-tab-group="pca-language" data-df-no-search>
+      <div data-df-tab="Python">
+        <pre><code class="language-python">low_pressure = [0.90, 0.30, 1.20, 0.10]
+assert residual_score(low_pressure, 2) &gt; 0.80
+assert residual_score(low_pressure, 3) &lt;= 0.80</code></pre>
+      </div>
+      <div data-df-tab="JavaScript">
+        <pre><code class="language-js">const lowPressure = [0.90, 0.30, 1.20, 0.10];
+console.assert(residualScore(lowPressure, 2) &gt; 0.80);
+console.assert(residualScore(lowPressure, 3) &lt;= 0.80);</code></pre>
+      </div>
+    </div>
+    <p>At rank two, the low-pressure window's discarded scores give
+      <span class="df-math">1.20^2+0.10^2=1.45</span>. Compare the input order with
+      <a href="fit.html#loadings">the loading matrix</a>.</p>
+
+    <h2 id="references" data-df-no-outline>References</h2>
+    <div data-df-bibliography></div>
+  </main>
+
+  <script src="site.js" data-df-site></script>
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/refs.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/math.js"></script>
+  <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/chart.js"></script>
+  <script src="../../docform/js/results.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/tabs.js"></script>
+  <script src="../../docform/js/params.js"></script>
+  <script src="../../docform/js/code.js"></script>
+  <script src="../../docform/js/anim.js"></script>
+  <script src="monitor.js"></script>
+</body>
+</html>

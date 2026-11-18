@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Causal self-attention · A Decoder-Only Transformer</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../docform/css/math.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
+  <link rel="stylesheet" href="../../docform/css/anim.css">
+  <link rel="stylesheet" href="../../docform/css/scrolly.css">
+  <link rel="stylesheet" href="../../docform/css/params.css">
+  <link rel="stylesheet" href="../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <h1>Causal self-attention</h1>
+      <p>Each position uses its query to select information from earlier positions and itself. Inspect
+        one attention head with a vocabulary and prompt from
+        <a href="index.html#position">the input chapter</a>.</p>
+    </header>
+
+    <h2 id="causal-mask">Score, mask, normalize</h2>
+    <p>Queries and keys determine the weights. Values carry the information combined with those weights.
+      This head uses identity projections, so <span class="df-math">Q=K=V=X</span>. The
+      <span data-df-term data-df-more="#mask-example">causal mask</span> sets the upper triangle to negative
+      infinity before softmax. <cite data-df-cite="vaswani"></cite></p>
+    <div id="attention-equation" class="df-math" data-df-display>
+      A=\softmax_{\mathrm{row}}\left(\frac{QK^\top}{\sqrt{d_k}}+M\right),\qquad Y=AV,\qquad
+      M_{ij}=\begin{cases}0& j\le i\\-\infty&j>i\end{cases}
+    </div>
+
+    <div class="df-scrolly">
+      <figure id="mask-story" data-df-no-zoom>
+        <svg viewBox="0 0 550 270" role="img" aria-label="A three by three causal mask allows each query to use its own and earlier positions">
+          <g text-anchor="middle">
+            <text x="332" y="25" data-df-role="input">Key position</text>
+            <text x="249" y="54">1 · the</text><text x="332" y="54">2 · train</text><text x="415" y="54">3 · is</text>
+            <text x="66" y="159" data-df-role="input">Query</text>
+            <text x="147" y="104">1 · the</text><text x="147" y="159">2 · train</text><text x="147" y="214">3 · is</text>
+            <g data-df-role="context">
+              <rect x="210" y="71" width="78" height="50" rx="8" class="df-fill-bg"/>
+              <rect x="210" y="126" width="78" height="50" rx="8" class="df-fill-bg"/>
+              <rect x="293" y="126" width="78" height="50" rx="8" class="df-fill-bg"/>
+              <rect x="210" y="181" width="78" height="50" rx="8" class="df-fill-bg"/>
+              <rect x="293" y="181" width="78" height="50" rx="8" class="df-fill-bg"/>
+              <rect x="376" y="181" width="78" height="50" rx="8" class="df-fill-bg"/>
+            </g>
+            <g id="raw-scores" class="df-muted" opacity="0">
+              <text x="249" y="104">0.71</text><text x="332" y="104">0.00</text><text x="415" y="104">1.06</text>
+              <text x="249" y="159">0.00</text><text x="332" y="159">1.59</text><text x="415" y="159">1.06</text>
+              <text x="249" y="214">1.06</text><text x="332" y="214">1.06</text><text x="415" y="214">2.30</text>
+            </g>
+            <g id="masked-cells" data-df-role="masked">
+              <rect x="293" y="71" width="78" height="50" rx="8" class="df-fill-bg"/>
+              <rect x="376" y="71" width="78" height="50" rx="8" class="df-fill-bg"/>
+              <rect x="376" y="126" width="78" height="50" rx="8" class="df-fill-bg"/>
+              <text x="332" y="104">masked</text><text x="415" y="104">masked</text><text x="415" y="159">masked</text>
+            </g>
+            <g id="weight-cells" data-df-role="context">
+              <text x="249" y="104">1.00</text>
+              <text x="249" y="159">0.17</text><text x="332" y="159">0.83</text>
+              <text x="249" y="214">0.18</text><text x="332" y="214">0.18</text><text x="415" y="214">0.63</text>
+            </g>
+          </g>
+        </svg>
+        <figcaption>Scaled scores, the causal mask, and row-wise weights.</figcaption>
+      </figure>
+      <div class="df-scrolly-steps">
+        <div data-df-step><p><strong>Score.</strong> Take each query–key dot product and divide by
+          <span class="df-math">\sqrt{2}</span>, since a key has two coordinates.</p></div>
+        <div data-df-step><p><strong>Mask.</strong> The first query can use one key. The second can use two.
+          The third can use all three. The upper triangle is excluded.</p></div>
+        <div data-df-step><p><strong>Normalize.</strong> Softmax turns allowed scores into weights that sum to
+          one per row. Use each row to mix the value vectors. The drawn weights are rounded.</p></div>
+      </div>
+    </div>
+
+    <h2 id="attention-lab">Change the query position</h2>
+    <p>Compare the weights for all three queries. Where can the head assign weight when the query is at
+      position 1? What changes when a query can see a longer prefix?</p>
+    <div class="df-params">
+      <div data-df-param="position" data-df-label="Query position" data-df-min="1" data-df-max="3" data-df-step="1" data-df-value="3" data-df-role="input"></div>
+      <div data-df-param="sharpness" data-df-label="Attention temperature" data-df-min="0.5" data-df-max="2" data-df-step="0.1" data-df-value="1" data-df-digits="1" data-df-role="context"></div>
+    </div>
+    <p>At query position <strong data-df-bind="position">3</strong>,
+      <strong data-df-template="{{ 3-position }} of 3 keys are masked">0 of 3 keys are masked</strong>.
+      Temperature divides the remaining scores before softmax. The worked forward pass uses 1.</p>
+
+    <figure id="live-weights">
+      <div id="weight-chart" data-df-chart="bar"></div>
+      <noscript><p>At position 3 and temperature 1, the weights are 0.184 for <code>the</code>,
+        0.184 for <code>train</code>, and 0.633 for <code>is</code>.</p></noscript>
+      <figcaption>Attention weights for the selected query. Masked keys keep weight zero at every temperature.</figcaption>
+    </figure>
+    <p>Weighted value vector: <output id="value-context" aria-live="polite">(1.133, 0.908)</output>.</p>
+
+    <details data-df-role="context">
+      <summary>Why does the third query weight “the” and “train” equally?</summary>
+      <p>Its dot products with <span class="df-math">(1,0)</span> and <span class="df-math">(0,1.5)</span> both
+        equal 1.5. The same scale and softmax denominator apply to both. Their value vectors still differ.</p>
+    </details>
+    <details data-df-role="masked">
+      <summary>Why mask before softmax?</summary>
+      <p>Masking before normalization gives the entire probability mass to allowed keys. If you first normalized
+        across all keys and then zeroed future positions, the surviving weights could sum to less than one.</p>
+    </details>
+
+    <div class="df-callout" data-df-role="output" data-df-reveal="left">
+      <span class="df-callout-title">Follow the vector onward</span>
+      <a href="prediction.html#decoder-block">Add the attention output back into the decoder stream</a>
+      and compute the next-token distribution.
+    </div>
+  </main>
+
+  <template id="mask-example">
+    <p>At position 2, the query can use <code>the</code> and <code>train</code>. The key for <code>is</code>
+      is in the future for that query, so its weight is exactly zero.</p>
+  </template>
+
+  <script src="site.js" data-df-site></script>
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/refs.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/math.js"></script>
+  <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
+  <script src="../../docform/js/anim.js"></script>
+  <script src="../../docform/js/scrolly.js"></script>
+  <script src="../../docform/js/params.js"></script>
+  <script src="../../docform/js/chart.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
+  <script src="model.js"></script>
+  <script src="attention.js"></script>
+</body>
+</html>

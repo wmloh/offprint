@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Set up the monitoring study · Pump Monitoring with PCA</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../docform/css/math.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <h1>Pump monitoring with PCA</h1>
+      <p>A cooling-loop pump already has four sensors. Use its healthy operating history to decide how many
+        principal components to keep in a reconstruction-based fault screen.</p>
+    </header>
+
+    <div class="df-callout" data-df-role="decision" data-df-icon="◆" data-df-reveal>
+      <span class="df-callout-title">Decision rule</span>
+      Start with the smallest model that retains at least 90% of baseline variance. Check what it flags on
+      six held-out windows before recommending a setting.
+    </div>
+
+    <h2 id="sensor-windows">What the sensors record</h2>
+    <div class="df-split" data-df-split="3:2" data-df-align="center">
+      <figure id="flow-trace">
+        <div data-df-chart="line" data-df-x-label="Five-minute window" data-df-y-label="Flow (L/min)" data-df-height="200">
+          <table>
+            <thead><tr><th>Window</th><th data-df-role="baseline">Flow</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>139.29</td></tr>
+              <tr><td>2</td><td>137.70</td></tr>
+              <tr><td>3</td><td>133.47</td></tr>
+              <tr><td>4</td><td>127.90</td></tr>
+              <tr><td>5</td><td>122.54</td></tr>
+              <tr><td>6</td><td>118.57</td></tr>
+              <tr><td>7</td><td>116.39</td></tr>
+              <tr><td>8</td><td>115.65</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figcaption>Flow in the first eight baseline windows, rounded to two decimals.</figcaption>
+      </figure>
+      <div>
+        <p>Each row pairs the mean flow, discharge pressure, vibration RMS, and bearing temperature measured over
+          the same five-minute window.<span class="df-note">RMS summarizes vibration amplitude over a window. The
+          example starts with these window summaries.</span></p>
+        <p>The smooth drop in <a href="#flow-trace">the flow trace</a> represents a scheduled load change. A healthy
+          pump can move through a wide range of readings as demand changes.</p>
+      </div>
+    </div>
+
+    <h3 id="baseline-scales">Baseline units and scales</h3>
+    <p><span class="df-tag" data-df-role="baseline">Training only</span> Estimate these values from the
+      32 baseline windows before scoring any new windows.</p>
+    <figure id="sensor-scales">
+      <table>
+        <thead><tr><th scope="col">Signal</th><th scope="col">Unit</th><th scope="col">Mean</th><th scope="col">Sample SD</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Flow</th><td>L/min</td><td>120</td><td>8</td></tr>
+          <tr><th scope="row">Discharge pressure</th><td>kPa</td><td>240</td><td>12</td></tr>
+          <tr><th scope="row">Vibration RMS</th><td>mm/s</td><td>3.0</td><td>0.45</td></tr>
+          <tr><th scope="row">Bearing temperature</th><td>°C</td><td>64</td><td>2.5</td></tr>
+        </tbody>
+      </table>
+      <figcaption>Design values for the 32 healthy training windows.</figcaption>
+    </figure>
+
+    <p>Using raw covariance would give numerically larger signals more influence. Sample-standardize each column
+      with the statistics in <a href="#sensor-scales"></a>, then freeze those statistics for later windows.</p>
+
+    <details data-df-role="baseline">
+      <summary>How the synthetic run was designed</summary>
+      <p>Four smooth, orthogonal operating traces drive the baseline. The first moves all sensors together. The
+        second pairs flow and pressure against vibration and temperature. The two smaller traces give the model
+        some baseline variation in the remaining directions. The <a href="fit.html#baseline-recipe">baseline
+        recipe</a> regenerates all 32 windows.</p>
+    </details>
+    <details data-df-no-bubble data-df-color="gray">
+      <summary>What came from field measurements?</summary>
+      <p>All readings and scenario labels are synthetic. The units, time-window structure, and need to keep
+        evaluation separate from fitting reflect a typical monitoring workflow.</p>
+    </details>
+
+    <h2 id="plan">Analysis plan</h2>
+    <ol data-df-role="baseline">
+      <li><a href="fit.html#fit">Fit and interpret the PCA basis.</a></li>
+      <li><a href="monitor.html#reconstruction">Reconstruct held-out windows and measure the residual.</a></li>
+      <li><a href="monitor.html#trade-offs">Compare ranks against the alerting objective.</a></li>
+    </ol>
+    <div data-df-legend></div>
+  </main>
+
+  <script src="site.js" data-df-site></script>
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/refs.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/math.js"></script>
+  <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/chart.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+</body>
+</html>

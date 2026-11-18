@@ -46,6 +46,7 @@
 
   function setup(blocks, page) {
     var html = document.documentElement;
+    var sidebar = page.parentElement === document.body && document.body.querySelector(':scope > .df-sidebar');
     var pending = false;
 
     function layout() {
@@ -55,10 +56,12 @@
       var left = rect.left + (parseFloat(style.paddingLeft) || 0);
       var right = rect.right - (parseFloat(style.paddingRight) || 0);
       var view = html.clientWidth;
+      // The desktop page shares a grid row with the sidebar. The narrow drawer overlays the page separately.
+      var sidebarRight = sidebar && root.getComputedStyle(sidebar).position === 'sticky' ? sidebar.getBoundingClientRect().right : 0;
       var base = {
         left: left,
         right: right,
-        cellLeft: rect.left - (parseFloat(style.marginLeft) || 0),
+        cellLeft: Math.max(sidebarRight, rect.left - (parseFloat(style.marginLeft) || 0)),
         cellRight: Math.min(view, rect.right + (parseFloat(style.marginRight) || 0)),
         edge: cssPx(html, '--df-page-gutter', EDGE),
         margin: marginInUse(page, view, right)

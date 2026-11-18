@@ -11,7 +11,8 @@
   var LIMIT = 30;
   var TEXT_CAP = 4000;
   var SNIPPET = 140;
-  var SKIP = 'script, style, template, noscript, nav, button:not(.df-step-panel button[data-df-step]), ' +
+  var SKIP = 'script, style, template, noscript, nav, ' +
+    'button:not(.df-step-panel button[data-df-step], .df-card-panel > .df-step-panel > .df-step-list > button[data-df-card]), ' +
     'svg, canvas, select, textarea, [hidden], ' +
     '[aria-hidden="true"], .df-math, .katex, .df-sidebar, .df-controls, .df-tooltip, .df-note-ref, ' +
     '.df-sidenote-num, .df-heading-link, .df-code-bar, [data-df-no-search]';

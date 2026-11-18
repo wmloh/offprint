@@ -87,10 +87,13 @@
         </svg>
         <figcaption>Scaled scores, the causal mask, and row-wise weights.</figcaption>
       </figure>
-      <div class="df-step-panel" role="group" aria-label="Attention steps" data-df-role="context">
-        <button type="button" data-df-step data-df-step-detail="attention-scores">Score</button>
-        <button type="button" data-df-step data-df-step-detail="attention-mask">Mask</button>
-        <button type="button" data-df-step data-df-step-detail="attention-normalize">Normalize</button>
+      <div class="df-step-panel" role="group" aria-labelledby="attention-steps" data-df-role="context">
+        <p class="df-step-heading" id="attention-steps">Attention steps</p>
+        <div class="df-step-list">
+          <button type="button" data-df-step data-df-step-detail="attention-scores">Score</button>
+          <button type="button" data-df-step data-df-step-detail="attention-mask">Mask</button>
+          <button type="button" data-df-step data-df-step-detail="attention-normalize">Normalize</button>
+        </div>
       </div>
       <div class="df-step-details">
         <div id="attention-scores">

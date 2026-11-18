@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="../../../docform/css/chart.css">
   <link rel="stylesheet" href="../../../docform/css/scenarios.css">
   <link rel="stylesheet" href="../../../docform/css/results.css">
+  <link rel="stylesheet" href="../../../docform/css/steps.css">
   <link rel="stylesheet" href="../../../docform/css/data.css">
   <link rel="stylesheet" href="../../../docform/css/tree.css">
   <link rel="stylesheet" href="../../../docform/css/dropzone.css">
@@ -127,26 +128,47 @@
     </div>
 
     <h2 id="data-views">Read data as a table or code</h2>
-    <p>The checkpoint table is stored as CSV inside the page. The run summary beneath it is registered with an
-      inline JSON script and displayed as source code.</p>
-    <pre data-df-data="checkpoints" data-df-type="csv">checkpoint,epoch,retained
+    <div class="df-card-panel">
+      <div class="df-step-panel" data-df-role="context">
+        <p class="df-step-heading" id="training-artifacts">Training artifacts</p>
+        <div class="df-step-list" aria-labelledby="training-artifacts">
+          <button type="button" data-df-card="checkpoint-data">Checkpoints</button>
+          <button type="button" data-df-card="run-summary-data">Run summary</button>
+          <button type="button" data-df-card="training-config-data">Configuration</button>
+        </div>
+      </div>
+      <div class="df-step-details">
+        <div id="checkpoint-data">
+          <p>The checkpoint CSV records which training snapshot was retained.</p>
+          <pre data-df-data="checkpoints" data-df-type="csv">checkpoint,epoch,retained
 "r04, early",3,false
 "r04, final",6,true</pre>
-    <script type="application/json" data-df-data="selected-run">
-      { "run": "r04", "learning_rate": 0.0003, "batch": 16, "validation_loss": 0.57 }
-    </script>
-    <div data-df-data="selected-run" data-df-view="code"></div>
-    <p>The configuration can also render as highlighted YAML.</p>
-    <div data-df-data="sweep" data-df-view="code"></div>
+        </div>
+        <div id="run-summary-data">
+          <p>The inline JSON records run <code>r04</code>'s learning rate, batch size, and validation loss.</p>
+          <script type="application/json" data-df-data="selected-run">
+            { "run": "r04", "learning_rate": 0.0003, "batch": 16, "validation_loss": 0.57 }
+          </script>
+          <div data-df-data="selected-run" data-df-view="code">
+            <p>Learning rate 0.0003, batch size 16, validation loss 0.57.</p>
+          </div>
+        </div>
+        <div id="training-config-data">
+          <p>Review the sweep settings in the <a href="../assets/sweep.yaml">configuration YAML</a>.</p>
+          <div data-df-data="sweep" data-df-view="code"></div>
+        </div>
+      </div>
+    </div>
 
     <h2 id="limits-errors">Check file limits and parse errors</h2>
-    <p>This second view of the run log has a 256-byte limit. Select Show anyway to display the CSV as code.
-      The draft metrics underneath intentionally omit a comma so you can see the parser's error and the source.</p>
+    <p>This second view of the run log has a 256-byte limit. Select Show anyway to display the CSV as code.</p>
     <div data-df-data="runs" data-df-view="code" data-df-max-size="256 B" data-df-max-rows="4"></div>
     <pre data-df-data="draft-metrics" data-df-type="json">{
-  "run": "r04"
+  "run": "r04",
   "validation_loss": 0.57
 }</pre>
+    <p>To try a parse error, save the draft metrics as a <code>.json</code> file, remove the comma after
+      <code>"r04"</code>, and load the file in the <a href="#config-tree">decoder metrics dropzone</a>.</p>
 
     <h2 id="package-results">Package results for offline viewing</h2>
     <p>To swap the built-in run log, keep its column names and wrap the edited CSV with the
@@ -178,6 +200,7 @@
   <script src="../../../docform/js/scenarios.js"></script>
   <script src="../../../docform/js/code.js"></script>
   <script src="../../../docform/js/results.js"></script>
+  <script src="../../../docform/js/steps.js"></script>
   <script src="../../../docform/js/wide.js"></script>
 </body>
 </html>

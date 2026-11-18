@@ -95,12 +95,17 @@
     transition: grid-template-columns 0.25s ease;
   }
 
+  body:has(> .df-sidebar) > .df-page {
+    transition: margin-inline-start 0.25s ease;
+  }
+
   .df-sidebar {
     width: var(--df-sidebar-width);
     transition: transform 0.25s ease, visibility 0s, scrollbar-color 0.2s ease;
   }
 
   .df-nav-hidden body:has(> .df-sidebar) {
+    --df-sidebar-slot: 0px;
     grid-template-columns: 0 minmax(0, 1fr);
   }
 
@@ -133,6 +138,7 @@ html.df-has-controls .df-nav-toggle {
 }
 
 .df-controls-init body,
+.df-controls-init body > .df-page,
 .df-controls-init .df-sidebar,
 .df-controls-init .df-controls,
 .df-controls-init .df-focus-block {

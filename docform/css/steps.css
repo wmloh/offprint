@@ -1,14 +1,16 @@
-/* Full-width figures with step details, or a figure beside title-only steps. */
-.df-figure-steps {
+/* Figure steps and standalone card panels share the selector and detail layout. */
+:is(.df-figure-steps, .df-card-panel) {
+  --df-step-pane-max: min(22rem, 38svh);
+  container-type: inline-size;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
   gap: var(--df-space-4);
   margin: var(--df-space-5) 0;
 }
 
 .df-figure-steps > figure {
   flex: 1 0 100%;
+  align-self: start;
   min-width: 0;
   margin: 0;
 }
@@ -17,64 +19,145 @@
   flex: 3 1 22rem;
 }
 
-.df-figure-steps > .df-step-panel {
-  flex: 1 1 11rem;
+:is(.df-figure-steps, .df-card-panel) > .df-step-panel {
+  flex: 1 1 100%;
   min-width: 0;
-  max-height: min(22rem, 38svh);
-  overflow: hidden auto;
   margin: 0;
-  padding-block: var(--df-space-1);
-  padding-right: var(--df-space-1);
+  padding: var(--df-space-2);
+  background: var(--df-bg-sidebar);
+  border-radius: var(--df-radius-lg);
   color: inherit;
 }
 
+.df-figure-steps[data-df-step-layout="side"]:not(:has(> .df-step-details)) > .df-step-panel {
+  flex-basis: 11rem;
+  align-self: start;
+}
+
+.df-step-panel:has(> .df-step-list) {
+  display: flex;
+  flex-direction: column;
+}
+
+.df-step-panel > .df-step-heading {
+  margin: 0;
+  padding: var(--df-space-1) var(--df-space-3) var(--df-space-2);
+  color: var(--df-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+/* Titled card groups inside a standalone selector list. */
+.df-step-group {
+  display: grid;
+  gap: var(--df-space-1);
+}
+
+.df-step-list > :is(button, .df-step-group) + .df-step-group {
+  margin-top: var(--df-space-1);
+  padding-top: var(--df-space-2);
+  border-top: 1px solid var(--df-border);
+}
+
+.df-step-group-heading {
+  margin: 0;
+  padding: var(--df-space-1) var(--df-space-3) 0;
+  color: var(--df-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.df-step-details {
+  flex: 3 1 100%;
+  min-width: 0;
+  border: 1px solid var(--df-border);
+  border-radius: var(--df-radius-lg);
+}
+
+.df-step-details > * {
+  margin: 0;
+  padding: var(--df-space-2) var(--df-space-4);
+}
+
+@container (min-width: 33rem) {
+  :is(.df-figure-steps, .df-card-panel) > .df-step-panel { flex-basis: 11rem; }
+  :is(.df-figure-steps, .df-card-panel) > .df-step-details { flex-basis: 21rem; }
+}
+
+@media screen {
+  :is(.df-figure-steps-ready, .df-card-panel-ready) > .df-step-panel {
+    max-block-size: var(--df-step-pane-max);
+  }
+
+  .df-figure-steps-ready > .df-step-panel.df-step-scrollport,
+  :is(.df-figure-steps-ready, .df-card-panel-ready) > .df-step-panel > .df-step-list {
+    min-block-size: 0;
+    overflow: hidden auto;
+    scrollbar-gutter: stable;
+  }
+
+  :is(.df-figure-steps-ready, .df-card-panel-ready) > .df-step-details > [inert] { visibility: hidden; }
+
+  @container (width < 33rem) {
+    .df-figure-steps-ready > .df-step-details > [inert] { display: none; }
+
+    .df-card-panel-ready > .df-step-details { position: relative; }
+
+    /* Keep inactive widgets measurable without adding their height to the page. */
+    .df-card-panel-ready > .df-step-details > [inert] {
+      position: absolute;
+      inset: 0 0 auto;
+      max-block-size: 100%;
+      overflow: clip;
+    }
+  }
+
+  @container (min-width: 33rem) {
+    :is(.df-figure-steps-ready, .df-card-panel-ready) > .df-step-details {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+      max-block-size: var(--df-step-pane-max);
+    }
+
+    /* Overlay details to size the pane from the longest one. Each detail scrolls on its own. */
+    :is(.df-figure-steps-ready, .df-card-panel-ready) > .df-step-details > * {
+      grid-area: 1 / 1;
+      min-width: 0;
+      min-block-size: 0;
+      max-block-size: calc(var(--df-step-pane-max) - 2px);
+      overflow: hidden auto;
+      scrollbar-gutter: stable;
+    }
+  }
+}
+
 @supports not selector(::-webkit-scrollbar) {
-  .df-step-panel {
+  .df-step-scrollport {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
   }
 
-  .df-step-panel.df-step-scrollbar-hover {
+  .df-step-scrollport.df-step-scrollbar-hover {
     scrollbar-color: var(--df-border-strong) transparent;
   }
 }
 
 /* Native scrollbar hover also catches direct entry onto the thumb. */
 @supports selector(::-webkit-scrollbar) {
-  .df-step-panel::-webkit-scrollbar { width: 8px; }
-  .df-step-panel::-webkit-scrollbar-track { background: transparent; }
-  .df-step-panel::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+  .df-step-scrollport::-webkit-scrollbar { width: 8px; }
+  .df-step-scrollport::-webkit-scrollbar-track { background: transparent; }
+  .df-step-scrollport::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
 
-  .df-step-panel.df-step-scrollbar-hover::-webkit-scrollbar-thumb,
-  .df-step-panel::-webkit-scrollbar-thumb:hover,
-  .df-step-panel::-webkit-scrollbar-thumb:active {
+  .df-step-scrollport.df-step-scrollbar-hover::-webkit-scrollbar-thumb,
+  .df-step-scrollport::-webkit-scrollbar-thumb:hover,
+  .df-step-scrollport::-webkit-scrollbar-thumb:active {
     background: var(--df-border-strong);
   }
-}
-
-.df-step-details {
-  flex: 3 1 21rem;
-  min-width: 0;
-  align-self: stretch;
-}
-
-@media screen {
-  .df-figure-steps-ready > .df-step-details {
-    display: grid;
-    align-items: start;
-  }
-
-  /* Share one grid cell so changing the visible detail leaves the layout stable. */
-  .df-figure-steps-ready > .df-step-details > * {
-    grid-area: 1 / 1;
-    min-width: 0;
-  }
-
-  .df-figure-steps-ready > .df-step-details > [inert] { visibility: hidden; }
-}
-
-@media (max-width: 600px) {
-  .df-figure-steps > :is(.df-step-panel, .df-step-details) { flex-basis: 100%; }
 }
 
 .df-step-figure > .df-anim-controls {
@@ -89,16 +172,18 @@
   max-height: min(420px, 38svh);
 }
 
-.df-step-panel:not(ol, ul) {
+.df-step-panel:not(ol, ul, :has(> .df-step-list)),
+.df-step-list:not(ol, ul) {
   display: grid;
-  gap: var(--df-space-2);
-  padding-left: var(--df-space-1);
+  align-content: start;
+  gap: var(--df-space-1);
 }
 
-.df-step-panel button[data-df-step] {
-  display: block;
+.df-step-panel button[data-df-step],
+.df-card-panel > .df-step-panel > .df-step-list button[data-df-card] {
+  display: grid;
   width: 100%;
-  padding: var(--df-space-1) var(--df-space-2);
+  padding: var(--df-space-2) var(--df-space-3);
   border: 0;
   border-radius: var(--df-radius-lg);
   background: transparent;
@@ -106,30 +191,65 @@
   font: inherit;
   overflow-wrap: anywhere;
   text-align: start;
-  transition: background-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s;
 }
 
-.df-figure-steps-ready .df-step-panel button[data-df-step] {
+.df-figure-steps-ready > .df-step-panel button[data-df-step],
+.df-card-panel-ready > .df-step-panel > .df-step-list button[data-df-card] {
+  position: relative;
   cursor: pointer;
 }
 
-.df-step-panel:not(ol, ul) button[data-df-step] {
-  padding: var(--df-space-2) var(--df-space-3);
-  box-shadow: inset 0 0 0 1px var(--df-border);
+@media (hover: hover) {
+  .df-figure-steps-ready > .df-step-panel button[data-df-step]:not([aria-current="step"]):hover,
+  .df-card-panel-ready > .df-step-panel > .df-step-list button[data-df-card]:not([aria-selected="true"]):hover {
+    background: var(--df-bg-hover);
+  }
 }
 
-.df-step-panel button[aria-current="step"] {
-  background: var(--df-accent-bg, var(--df-gray-bg));
-  box-shadow: inset 0 0 0 1px var(--df-accent, var(--df-gray));
+/* The selection highlight is one block that slides under the buttons. */
+:is(.df-figure-steps-ready, .df-card-panel-ready) :has(> .df-step-indicator) {
+  position: relative;
 }
 
-.df-step-panel button:focus-visible {
+.df-step-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--df-radius-lg);
+  background: color-mix(in srgb, var(--df-accent, var(--df-gray)) 22%, transparent);
+  pointer-events: none;
+}
+
+.df-step-indicator-glide {
+  transition: transform 0.2s ease-out, width 0.2s ease-out, height 0.2s ease-out;
+}
+
+/* Both copies share one cell, so the bold copy sets the width and rows never shift. */
+:is(.df-step-label, .df-step-label-bold) {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.df-step-label {
+  font-weight: 400;
+  transition: font-weight 0.2s ease-out;
+}
+
+.df-step-label-bold {
+  font-weight: 600;
+  visibility: hidden;
+}
+
+:is(button[aria-current="step"], button[aria-selected="true"]) > .df-step-label {
+  font-weight: 600;
+}
+
+.df-step-panel button:focus-visible,
+.df-step-scrollport:focus-visible {
   outline-offset: -2px;
 }
 
 @media print {
-  .df-figure-steps > .df-step-panel {
-    max-height: none;
-    overflow: visible;
-  }
+  :is(.df-figure-steps, .df-card-panel) { display: block; }
 }

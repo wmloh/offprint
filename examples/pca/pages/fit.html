@@ -43,7 +43,7 @@
     <p>Let <span class="df-math">X</span> be the 32-by-4 baseline matrix. Choose a step to follow one window as it
       is projected onto PC1.</p>
 
-    <div class="df-figure-steps" data-df-step-layout="side">
+    <div class="df-figure-steps">
       <figure id="fit-story" data-df-no-zoom>
         <svg viewBox="0 0 560 220" role="img" aria-label="One pump window and its orthogonal projection onto the first principal direction">
           <path class="df-axis" d="M58 164H518 M138 188V25"/>
@@ -57,17 +57,32 @@
         </svg>
         <figcaption>The baseline's first window in a two-component view.</figcaption>
       </figure>
-      <div class="df-step-panel" role="group" aria-label="Projection steps" data-df-role="projection">
-        <button type="button" data-df-step>Standardize</button>
-        <button type="button" data-df-step>Find PC1</button>
-        <button type="button" data-df-step>Project</button>
+      <div class="df-step-panel" role="group" aria-labelledby="projection-steps" data-df-role="projection">
+        <p class="df-step-heading" id="projection-steps">Projection steps</p>
+        <div class="df-step-list">
+          <button type="button" data-df-step data-df-step-detail="fit-standardize">Standardize</button>
+          <button type="button" data-df-step data-df-step-detail="fit-pc1">Find PC1</button>
+          <button type="button" data-df-step data-df-step-detail="fit-project">Project</button>
+        </div>
+      </div>
+      <div class="df-step-details">
+        <div id="fit-standardize">
+          <p><strong>Put the sensors on a common scale</strong></p>
+          <p>Subtract each sensor's training mean and divide by its sample standard deviation to give it unit variance
+            in the baseline.</p>
+        </div>
+        <div id="fit-pc1">
+          <p><strong>Find the direction of greatest variance</strong></p>
+          <p>Diagonalize the covariance of the standardized data and order the eigenvectors by descending eigenvalue.
+            PC1 is the eigenvector with the largest eigenvalue.</p>
+        </div>
+        <div id="fit-project">
+          <p><strong>Keep the score along PC1</strong></p>
+          <p>A component score is the dot product with one of those directions. Keeping only PC1 drops the PC2
+            coordinate shown here and the two smaller coordinates outside the drawing.</p>
+        </div>
       </div>
     </div>
-
-    <p>Subtract each sensor's training mean and divide by its sample standard deviation to give it unit variance
-      in the baseline. Diagonalize the covariance of the standardized data and order the eigenvectors by descending
-      eigenvalue. A component score is the dot product with one of those directions. Keeping only PC1 drops the PC2
-      coordinate shown here and the two smaller coordinates outside the drawing.</p>
 
     <div class="df-math" data-df-display id="covariance">
       Z_{ij} = \frac{X_{ij}-\mu_j}{s_j},
@@ -122,9 +137,19 @@
       squares 16 over the run. Multiplying each by <span class="df-math">\sqrt{\lambda_j\,31/16}</span>
       gives it the desired sample variance. The orthonormal loading matrix above then mixes the traces into sensor space.</p>
 
-    <div class="df-tabs" data-df-tab-group="pca-language">
-      <div data-df-tab="Python" data-df-selected>
-        <pre data-df-annotate data-df-lines="7, 9-10"><code class="language-python">from math import cos, pi, sqrt
+    <div class="df-card-panel">
+      <div class="df-step-panel" data-df-role="baseline">
+        <p class="df-step-heading" id="baseline-cards">Baseline recipe</p>
+        <div class="df-step-list" aria-labelledby="baseline-cards">
+          <button type="button" data-df-card="baseline-build">Generate windows</button>
+          <button type="button" data-df-card="baseline-check">Check the result</button>
+        </div>
+      </div>
+      <div class="df-step-details">
+        <div id="baseline-build">
+          <div class="df-tabs" data-df-tab-group="pca-language">
+            <div data-df-tab="Python" data-df-selected>
+              <pre data-df-annotate data-df-lines="7, 9-10"><code class="language-python">from math import cos, pi, sqrt
 
 signs = ((1, 1, 1, 1), (1, 1, -1, -1), (1, -1, 1, -1), (1, -1, -1, 1))
 eigenvalues = (2.48, 1.16, 0.28, 0.08)
@@ -137,13 +162,13 @@ def sensor_window(t):
     return [m + sd*x for m, sd, x in zip(means, scales, z)]
 
 baseline = [sensor_window(t) for t in range(32)]</code></pre>
-        <ol data-df-role="baseline">
-          <li>Each cosine supplies one component's score over time.</li>
-          <li>Mix scores using the loading matrix, then return the result to sensor units.</li>
-        </ol>
-      </div>
-      <div data-df-tab="JavaScript">
-        <pre><code class="language-js">const signs = [[1, 1, 1, 1], [1, 1, -1, -1], [1, -1, 1, -1], [1, -1, -1, 1]];
+              <ol data-df-role="baseline">
+                <li>Each cosine supplies one component's score over time.</li>
+                <li>Mix scores using the loading matrix, then return the result to sensor units.</li>
+              </ol>
+            </div>
+            <div data-df-tab="JavaScript">
+              <pre><code class="language-js">const signs = [[1, 1, 1, 1], [1, 1, -1, -1], [1, -1, 1, -1], [1, -1, -1, 1]];
 const eigenvalues = [2.48, 1.16, 0.28, 0.08];
 const means = [120, 240, 3, 64];
 const scales = [8, 12, 0.45, 2.5];
@@ -156,6 +181,19 @@ const baseline = Array.from({ length: 32 }, (_, t) => {
     return mean + scales[j] * z;
   });
 });</code></pre>
+            </div>
+          </div>
+        </div>
+        <div id="baseline-check">
+          <p><strong>Verify the 32 generated windows</strong></p>
+          <ul>
+            <li>Each row has four values in sensor order: flow, pressure, vibration, and temperature.</li>
+            <li>Each column has the mean and sample standard deviation listed in the
+              <a href="../index.html#baseline-scales">baseline scales table</a>.</li>
+            <li>After standardization, the covariance eigenvalues are 2.48, 1.16, 0.28, and 0.08.
+              The first two account for 91% of the total variance.</li>
+          </ul>
+        </div>
       </div>
     </div>
 

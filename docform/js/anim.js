@@ -212,7 +212,7 @@
     var list = tracks(figure, tl);
     var hold = options.hold == null ? 700 : options.hold;
     var intro = options.caption || '';
-    var stepDriven = !!figure.closest('.df-figure-steps');
+    var stepDriven = figure.matches('.df-figure-steps > figure');
     var t = 0;
     var playing = false;
     var frame = 0;

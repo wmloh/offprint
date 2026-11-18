@@ -52,7 +52,9 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 
 The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open. Collapsed pages and sections open when the pointer rests on them and stay open until it leaves the sidebar; with a search index, other pages also list their sections this way; clicking the arrow beside one keeps it open or closed until it is clicked again or the page reloads. Drag the sidebar's right edge to resize it (double-click to reset); the width is remembered across pages. On narrow screens the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
 
-Each outlined heading shows a link icon on hover that copies the URL of its section. The reading column is 880px wide; change it with the `--df-content-width` token and the side padding with `--df-page-gutter`. Scrollbars in the sidebar, code blocks, and tables stay hidden until the pointer is on them.
+Each outlined heading shows a link icon on hover that copies the URL of its section. Scrollbars in the sidebar, code blocks, and tables stay hidden until the pointer is on them.
+
+The reading column is up to 1,120px wide and keeps its width when you toggle navigation. It centers in the window when there is room and moves beside the open sidebar on tighter desktop screens. Use `--df-content-width` to change the maximum width and `--df-page-gutter` to change the side padding.
 
 Standalone figures, tables, and their captions are centered in the reading column, with a little extra space above and below. Pointing at any table cell, headers included, lightly tints its row and column. Links are blue and underlined.
 
@@ -306,19 +308,64 @@ SVG shapes take colours with `data-df-color` or `data-df-role` plus a paint clas
 
 Page scripts can reach a figure's controller later with `DocForm.anim.get(figure)`; besides `play`, `pause`, `next`, `prev`, and `go(step)` (jump), it has `to(step)`, which animates forwards or backwards to a step.
 
-## Figure steps
+## Card panels and figure steps
 
-A `.df-figure-steps` block shows a full-width figure above an independently scrolling list of titles. Add a `.df-step-details` panel to show the selected step's subtitle and explanation beside the list. On narrow screens the explanation moves below the list. Hover, keyboard focus, and tap select a step. The selection stays visible when the reader moves away.
+Include `steps.css` and `steps.js` for either layout. The selector and detail share a capped height and scroll independently when there is room to sit side by side. On narrow pages the detail follows the selector. Scrollbars appear when the pointer reaches their tracks. The selected entry is bold, and its highlight slides to each new selection. With scripts disabled or in print, every card detail is visible.
+
+### Standalone cards
+
+Use `.df-card-panel` for a selector beside authored HTML. Give each button a `data-df-card` value that matches the ID of one direct child of `.df-step-details`. Use distinct IDs across the page. The detail can contain any combination of prose, code, tabs, and figures.
+
+```html
+<div class="df-card-panel">
+  <div class="df-step-panel" data-df-color="blue">
+    <p class="df-step-heading" id="setup-cards">Setup options</p>
+    <div class="df-step-list" aria-labelledby="setup-cards">
+      <button type="button" data-df-card="setup-local">Local file</button>
+      <button type="button" data-df-card="setup-shared">Shared folder</button>
+    </div>
+  </div>
+  <div class="df-step-details">
+    <div id="setup-local"><p>Open the document from your own copy of the folder.</p></div>
+    <div id="setup-shared"><p>Open the document from the shared drive.</p></div>
+  </div>
+</div>
+```
+
+To organize a long list, wrap related buttons in a `.df-step-group` that starts with a `.df-step-group-heading`. Groups and ungrouped buttons can sit side by side in one list.
+
+```html
+<div class="df-step-list" aria-labelledby="run-cards">
+  <div class="df-step-group">
+    <p class="df-step-group-heading">Data</p>
+    <button type="button" data-df-card="run-checkpoints">Checkpoints</button>
+    <button type="button" data-df-card="run-summary">Run summary</button>
+  </div>
+  <div class="df-step-group">
+    <p class="df-step-group-heading">Settings</p>
+    <button type="button" data-df-card="run-config">Configuration</button>
+  </div>
+</div>
+```
+
+The first card starts selected. Use Up, Down, Home, and End to move focus across every group. Click, tap, Enter, or Space selects a card. Tab moves from the selector to the selected detail. Controls inside a detail keep their state when you switch cards.
+
+### Figure steps
+
+A `.df-figure-steps` block shows a full-width figure above a selector. Add a `.df-step-details` pane to show the selected step's explanation. Hover, keyboard focus, and tap select a step. The selection stays visible when the reader moves away.
 
 ```html
 <div class="df-figure-steps">
   <figure id="story">
     <svg viewBox="0 0 200 100">…</svg>
   </figure>
-  <ol class="df-step-panel" data-df-color="blue" aria-label="Drawing steps">
-    <li><button type="button" data-df-step data-df-step-detail="draw-detail">Draw</button></li>
-    <li><button type="button" data-df-step data-df-step-detail="slide-detail">Slide</button></li>
-  </ol>
+  <div class="df-step-panel" role="group" aria-labelledby="drawing-steps" data-df-color="blue">
+    <p class="df-step-heading" id="drawing-steps">Drawing steps</p>
+    <ol class="df-step-list">
+      <li><button type="button" data-df-step data-df-step-detail="draw-detail">Draw</button></li>
+      <li><button type="button" data-df-step data-df-step-detail="slide-detail">Slide</button></li>
+    </ol>
+  </div>
   <div class="df-step-details">
     <div id="draw-detail"><p>Draw the line between the two endpoints.</p></div>
     <div id="slide-detail"><p>Slide the dot along the line to the far endpoint.</p></div>
@@ -330,7 +377,7 @@ A `.df-figure-steps` block shows a full-width figure above an independently scro
 </script>
 ```
 
-- Use an `ol` for numbered steps, a `ul` for bullets, or a `div` with direct button children for compact cards. List steps use the standard marker colours. The scrollbar appears when the pointer reaches its track.
+- Place the selector heading before `.df-step-list` and use its ID to label the group. Use an `ol` for numbered steps, a `ul` for bullets, or a `div` with direct button children for compact cards. List steps use the standard marker colours.
 - For title-only cards beside a smaller figure, omit `.df-step-details` and set `data-df-step-layout="side"` on `.df-figure-steps`. The cards move below the figure when space is tight.
 - The figure starts at the first entry. A bare `data-df-step` uses the entry position starting at 1. Give it an explicit number to choose another step, or `0` to show the animation's starting state.
 - With `anim.js` and `anim.css`, each entry shows its animation step's end state and the panel takes over playback. For a chart, SVG, or other custom figure, listen for `df:figurestep` on the figure and read `event.detail.step`.

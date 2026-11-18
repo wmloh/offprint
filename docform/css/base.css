@@ -50,11 +50,26 @@ body:has(> .df-sidebar) {
 }
 
 .df-page {
+  --df-page-max-width: calc(var(--df-content-width) + 2 * var(--df-page-gutter));
   width: 100%;
-  max-width: calc(var(--df-content-width) + 2 * var(--df-page-gutter));
+  max-width: var(--df-page-max-width);
   margin-inline: auto;
   padding: var(--df-space-8) var(--df-page-gutter) 30vh;
   min-width: 0;
+}
+
+@media (min-width: 861px) {
+  body > .df-sidebar {
+    grid-area: 1 / 1;
+  }
+
+  /* Share the full grid row with the sidebar to centre against the viewport. Keep enough room for it in either state. */
+  body:has(> .df-sidebar) > .df-page {
+    grid-area: 1 / 1 / 2 / -1;
+    --df-page-width: min(var(--df-page-max-width), 100% - var(--df-sidebar-width));
+    width: var(--df-page-width);
+    margin-inline-start: max(var(--df-sidebar-slot, var(--df-sidebar-width)), (100% - var(--df-page-width)) / 2);
+  }
 }
 
 @media (max-width: 860px) {

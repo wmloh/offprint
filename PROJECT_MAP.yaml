@@ -2,7 +2,7 @@ docform/: Copyable offline library folder
   site.template.js: Starter window.DocFormSite manifest to copy beside pages, with an optional glossary page entry
   css/: Design tokens, base typography, and per-module styles
     tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, and reading-column and wide-block widths via light-dark()
-    base.css: Page layout with sidebar slot, reading-column typography, blue links, row and column table hover, tinted list markers, hover-revealed scrollbars, data-df-color accents
+    base.css: Centered reading column with a stable width when navigation toggles, typography, links, table hover, list markers, scrollbars, and data-df-color accents
     roles.css: Roles legend styles
     nav.css: Sidebar tree, collapsible page outline, resize handle, heading copy-link buttons, prev/next links, and narrow-screen drawer
     theme.css: Theme toggle button styles
@@ -15,7 +15,7 @@ docform/: Copyable offline library folder
     anim.css: Figure frames, animation controls, and SVG paint utilities
     params.css: Parameter slider, choice, and switch rows, preset buttons, and bound values
     reveal.css: Scroll reveal offsets and split-view grid with side-gliding panes
-    steps.css: Full-width figures with step details and optional title-only side cards
+    steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus an independently scrolling detail pane for standalone cards and figure steps and optional title-only side cards
     zoom.css: Frosted full-screen figure zoom view
     zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot and trail, ink, crosshair and ruler readouts
     bubble.css: Tinted peek bubbles and the frosted side panel, blurred except while hovered
@@ -45,7 +45,7 @@ docform/: Copyable offline library folder
     anim.js: DocForm.anim step-timeline SVG animations with playback controls, hover-to-play, and animated step jumps
     params.js: data-df-param sliders, selects, and toggles, validated data-df-preset batch updates, data-df-bind/data-df-template outputs, and a subscription API
     reveal.js: One-time data-df-reveal fade-ins and .df-split side-by-side panes
-    steps.js: Figure steps selected by hover, focus, tap, or other page controls
+    steps.js: Standalone HTML card panels with optional titled groups, keyboard focus, and manual selection, plus figure steps selected by hover, focus, tap, or page controls, both with a sliding selection highlight
     zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes; open and close events for add-ons
     zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
     bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
@@ -68,6 +68,6 @@ docform/: Copyable offline library folder
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
 examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
-  pca/: Pump monitoring case study with projection animations, residual exercises, threshold comparisons, a linked telemetry timeline, figure zoom with presentation tools, and an offline glossary and search
-  transformers/: Decoder-only guide with a linked attention trace, decoding presets, log-scale sweep, figure zoom with presentation tools, and training diagnostics with filterable runs, data trees, file dropzones, and offline search
+  pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and search
+  transformers/: Decoder-only guide with a linked attention trace, decoding presets, log-scale sweep, figure zoom, and training diagnostics with artifact cards, filterable runs, data trees, file dropzones, and offline search
 tests/: Built-in node:test checks of module logic

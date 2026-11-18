@@ -48,6 +48,8 @@ class FakeElement extends EventTarget {
   constructor(tag, attrs = {}, children = []) {
     super();
     this.tag = tag;
+    this.tagName = tag.toUpperCase();
+    this.type = attrs.type || '';
     this.attrs = new Map(Object.entries(attrs));
     this.children = children;
     this.text = '';
@@ -55,7 +57,7 @@ class FakeElement extends EventTarget {
     this.checked = false;
     this.className = '';
     const classes = new Set();
-    this.classList = { add: (c) => classes.add(c), contains: (c) => classes.has(c) };
+    this.classList = { add: (...names) => names.forEach((c) => classes.add(c)), contains: (c) => classes.has(c) };
   }
   getAttribute(name) { return this.attrs.has(name) ? this.attrs.get(name) : null; }
   setAttribute(name, value) { this.attrs.set(name, String(value)); }
@@ -80,29 +82,34 @@ function option(value, label, attrs = {}) {
 }
 
 // Loads fresh core and params modules over the given hosts, presets, and bindings, then starts the page.
-function page({ hosts = [], presets = [], bound = [] }) {
+function page({ hosts = [], scoped = [], presets = [], bound = [], frames, setup }) {
   const warned = [];
   let start;
+  const events = [];
   const document = {
     readyState: 'loading',
     addEventListener: (_, fn) => { start = fn; },
     querySelector: () => null,
     createElement: (tag) => new FakeElement(tag),
+    dispatchEvent: (event) => events.push(event),
     querySelectorAll(selector) {
       if (selector === '[data-df-param]') return hosts;
+      if (selector === '[data-df-parameter]') return scoped;
       if (selector === '[data-df-preset]') return presets;
       if (selector === '[data-df-bind], [data-df-template]') return bound;
       return [];
     }
   };
-  const ctx = vm.createContext({ URL, document, location: { href: 'file:///page.html' }, console: { warn: (m) => warned.push(m) } });
+  const ctx = vm.createContext({ URL, document, CustomEvent, requestAnimationFrame: frames && ((fn) => frames.push(fn)),
+    location: { href: 'file:///page.html' }, console: { warn: (m) => warned.push(m) } });
   ctx.window = ctx;
   vm.runInContext(read('core.js'), ctx);
   vm.runInContext(read('params.js'), ctx);
   const calls = [];
   ctx.DocForm.params.on(['k', 'mode', 'flag'], (values, name, changed) => calls.push({ values: { ...values }, name, changed: [...changed] }));
+  if (setup) setup(ctx.DocForm.parameters, events);
   start();
-  return { params: ctx.DocForm.params, warned, calls };
+  return { params: ctx.DocForm.params, parameters: ctx.DocForm.parameters, warned, calls, events };
 }
 
 function choicePage(extraPresets = []) {
@@ -188,4 +195,111 @@ test('invalid presets are disabled and rejected updates change nothing', () => {
   assert.deepEqual({ ...params.values() }, { k: 2, mode: 'exact', flag: true });
   assert.equal(calls.length, 1);
   assert.match(warned.join('\n'), /unknown parameter "other"[\s\S]*at least one[\s\S]*an object[\s\S]*valid JSON/);
+});
+
+test('scoped markup resolves nesting and explicit targets and uses one definition per scope', () => {
+  const outer = new FakeElement('div', { 'data-df-parameter-scope': 'decoder' });
+  const inner = new FakeElement('div', { 'data-df-parameter-scope': 'comparison' });
+  inner.parentElement = outer;
+  function child(tag, attrs, parent) {
+    const el = new FakeElement(tag, attrs);
+    el.parentElement = parent;
+    return el;
+  }
+  const native = child('input', { type: 'range', 'data-df-parameter': 'k' }, outer);
+  const linked = child('div', { 'data-df-parameter': 'k', 'data-df-scope': 'decoder',
+    'data-df-parameter-label': 'Decoder', 'data-df-parameter-digits': '2' }, inner);
+  const local = child('div', { 'data-df-parameter': 'k' }, inner);
+  const implicit = child('select', { 'data-df-parameter': 'mode' });
+  const toggle = child('input', { type: 'checkbox', 'data-df-parameter': 'flag' });
+  const missing = child('div', { 'data-df-parameter': 'k', 'data-df-scope': 'missing' }, inner);
+  missing.textContent = 'Fallback';
+  const text = child('span', { 'data-df-bind': 'k' }, inner);
+  const crossText = child('span', { 'data-df-template': '{{k}}', 'data-df-scope': 'decoder' }, inner);
+  const preset = child('button', { 'data-df-preset': '{"k":"4.5"}', 'data-df-scope': 'decoder' }, inner);
+  const bad = child('button', { 'data-df-preset': '{"k":4.5}' }, inner);
+  const frames = [];
+  const { parameters, events } = page({
+    scoped: [native, linked, local, implicit, toggle, missing], bound: [text, crossText], presets: [preset, bad], frames,
+    setup(params) {
+      params.define('decoder', { k: { type: 'range', max: 5, step: 0.5, default: 2 } });
+      params.define('comparison', { k: { type: 'range', min: 10, max: 12, default: 11 } });
+      params.define('page', { mode: { type: 'select', choices: [{ value: 'fast', label: 'Fast' }] }, flag: { type: 'toggle' } });
+    }
+  });
+  const decoder = parameters.scope('decoder');
+  const comparison = parameters.scope('comparison');
+  assert.equal(native.max, '5');
+  assert.equal(linked.find('input').step, '0.5');
+  assert.equal(linked.find('label').textContent, 'Decoder');
+  assert.equal(linked.find('output').textContent, '2.00');
+  assert.equal(local.find('input').min, '10');
+  assert.equal(implicit.value, 'fast');
+  assert.equal(toggle.checked, false);
+  assert.equal(missing.textContent, 'Fallback');
+  assert.equal(bad.getAttribute('aria-disabled'), 'true');
+  preset.click();
+  assert.equal(decoder.get('k'), 4.5);
+  assert.equal(comparison.get('k'), 11);
+  assert.equal(native.value, '4.5');
+  assert.equal(linked.find('input').value, '4.5');
+  assert.equal(preset.getAttribute('aria-current'), 'true');
+  assert.equal(events.at(-1).detail.origin, 'user');
+  native.value = '3';
+  native.dispatchEvent(new Event('input'));
+  assert.equal(decoder.get('k'), 3);
+  assert.equal(linked.find('output').textContent, '3.00');
+  assert.equal(preset.getAttribute('aria-current'), null);
+  assert.equal(comparison.set('k', 12), true);
+  assert.equal(crossText.textContent, '2.0');
+  assert.equal(frames.length, 1);
+  frames.shift()();
+  assert.equal(crossText.textContent, '3.0');
+  assert.equal(text.textContent, '12.00');
+  decoder.reset();
+  assert.equal(native.value, '2');
+  assert.equal(comparison.get('k'), 12);
+  assert.equal(events.at(-1).detail.origin, 'reset');
+});
+
+test('scoped batches validate before publication and notify filtered subscribers before events', () => {
+  const order = [];
+  const { parameters, events, warned } = page({ setup(params, events) {
+    const scope = params.define(' page ', { gain: { type: 'range' }, total: { type: 'number', min: -2, default: 1 } });
+    assert.equal(params.define('page', { other: { type: 'toggle' } }), null);
+    assert.equal(params.define('bad', { fine: { type: 'toggle' }, broken: { type: 'number' } }), null);
+    assert.equal(params.define('choices', { mode: { type: 'select', choices: [
+      { value: 'x', label: 'X' }, { value: 'x', label: 'Duplicate' }
+    ] } }), null);
+    scope.subscribe((current, meta) => {
+      order.push([meta.origin, ...meta.changedKeys]);
+      if (meta.origin === 'api' && current.total === 2) {
+        assert.equal(events.length, 0);
+        assert.equal(scope.set('total', 3), true);
+        assert.equal(current.total, 2);
+      }
+    }, { immediate: true });
+    scope.subscribe(() => { throw Error('callback failure'); }, { keys: ['total'] });
+    scope.subscribe((current, meta) => order.push([current.total, meta.previous.total]), { keys: ['total'] });
+    scope.subscribe(() => assert.fail('unsubscribed'), { immediate: true })();
+  } });
+  const scope = parameters.scope();
+  assert.equal(parameters.scope('bad'), null);
+  assert.equal(parameters.scope('choices'), null);
+  assert.equal(scope.get('constructor'), undefined);
+  assert.deepEqual(order, [['init', 'gain', 'total']]);
+  const initial = scope.snapshot();
+  assert.ok(Object.isFrozen(initial));
+  assert.equal(scope.update({ gain: 0.3, total: '-1' }), false);
+  assert.equal(scope.set('unknown', 1), false);
+  assert.equal(scope.update({}), false);
+  assert.deepEqual({ ...scope.snapshot() }, { gain: 0, total: 1 });
+  assert.equal(events.length, 0);
+  assert.equal(scope.update({ gain: 0.315, total: 2 }), true);
+  assert.equal(scope.update({ gain: 0.315, total: 3 }), true);
+  assert.deepEqual(order, [['init', 'gain', 'total'], ['api', 'gain', 'total'], [2, 1], ['api', 'total'], [3, 2]]);
+  assert.deepEqual(events.map(event => [event.type, event.detail.scope, event.detail.current.total]),
+    [['df:parameters:change', 'page', 2], ['df:parameters:change', 'page', 3]]);
+  assert.equal(initial.total, 1);
+  assert.match(warned.join('\n'), /subscriber.*callback failure/);
 });

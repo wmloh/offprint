@@ -29,11 +29,12 @@ Use a classic assignment with a JSON object. Inline `script[data-df-site]` uses 
 | `options.citations.entries` (`bibliography`) | Map of citation keys to strings or structured entries. [Citations](../reading/citations.md) |
 | `options.references` (`refs`) | `{equations?: 'all' \| 'labeled'}`. `all` makes every eligible display equation count. The default counts labeled or explicitly opted-in display equations. [References](../reading/references.md) |
 | `selectionGroups` | Named group options `{initial?: string \| null, persist?: boolean}`. Site and page definitions merge by group and field. [Linked selection](../interact/linked-highlighting.md) |
+| `parameterScopes` | Named maps of parameter definitions. Site and page entries merge by scope, parameter, and field. [Parameters](../interact/parameters.md) |
 | `assets.search.output` (`search`) | Manifest-relative classic search index. Page `options.search.index` can override with a page-relative path or clear with `null`. [Search index builder](../reading/search-index.md) |
 | `assets.data` | Map of source names to `{output, source?, type?}`. Paths are manifest-relative. Wrapped output scripts load before setup if `data` is enabled. |
 
 - `pages[].path`, `glossaryPage`, and `search` resolve via `new URL(path, base)`. The base is the `src` URL of the first `script[data-df-site]`, or the page URL if that script or its `src` is missing. Index entries use the base of the configuration that supplies the index path. Ordinary HTML asset URLs still resolve from the page.
-- `DocForm.site` contains `provided`, `base`, normalized `pages`, flattened navigable `order`, the resolved `glossaryPage` and `search` URLs (or `null`), and merged `options` and resolved `assets` with the offline entry. Parenthesized field names are the original manifest keys. A normalized page node has `{title, path, href, collapsed, pages}`. Arrays and objects are optional and default to empty. Unknown fields are omitted.
+- `DocForm.site` contains `provided`, `base`, normalized `pages`, flattened navigable `order`, and the resolved `glossaryPage` and `search` URLs (or `null`). The offline entry adds merged `options`, `selectionGroups`, and `parameterScopes` and resolved `assets`. Parenthesized field names are the original manifest keys. A normalized page node has `{title, path, href, collapsed, pages}`. Arrays and objects are optional and default to empty. Unknown fields are omitted.
 - Assign explicit IDs to headings linked across pages if their text may change. Build the search index again after page or manifest changes that affect indexed content or paths.
 
 [Navigation](../layout/navigation.md) · [Core source](../../js/core.js)

@@ -22,6 +22,10 @@
   var hasOwn = Object.prototype.hasOwnProperty;
   var store = Object.create(null);
   var defaults = { maxBytes: 1024 * 1024, maxRows: 5000 };
+  var sources = new Map();
+  var invalidSources = new Map();
+  var transforms = new Map();
+  var runtime = DocForm._dataViews;
 
   function DataError(message, line) {
     var e = new Error(line ? 'Line ' + line + ': ' + message : message);
@@ -127,7 +131,7 @@
     if (quoted) return text;
     var t = text.trim();
     if (!t) return null;
-    if (/^[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?$/.test(t) && !/^[-+]?0\d/.test(t)) return Number(t);
+    if (/^[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?$/.test(t) && !/^[-+]?0\d/.test(t) && Number.isFinite(Number(t))) return Number(t);
     if (/^true$/i.test(t)) return true;
     if (/^false$/i.test(t)) return false;
     return text;
@@ -313,9 +317,189 @@
     if (!parsed || parsed.type !== 'csv') return parsed ? parsed.value : null;
     return parsed.rows.map(function (row) {
       var item = {};
-      parsed.columns.forEach(function (c, k) { item[c] = row[k]; });
+      parsed.columns.forEach(function (c, k) {
+        Object.defineProperty(item, c, { value: row[k], enumerable: true, writable: true, configurable: true });
+      });
       return item;
     });
+  }
+
+  function keyOf(value) {
+    return typeof value === 'string' && value.trim() || null;
+  }
+
+  function copyValue(value, ancestors) {
+    if (value === null || typeof value === 'string' || typeof value === 'boolean' || Number.isFinite(value)) return value;
+    var proto = value && typeof value === 'object' ? Object.getPrototypeOf(value) : undefined;
+    var array = Array.isArray(value);
+    if (!array && proto !== null && (!proto || Object.getPrototypeOf(proto) !== null ||
+        !hasOwn.call(proto, 'constructor') || proto.constructor.name !== 'Object')) {
+      throw DataError('Expected a JSON-compatible value.');
+    }
+    ancestors = ancestors || new Set();
+    if (ancestors.has(value)) throw DataError('Circular data is not supported.');
+    ancestors.add(value);
+    var copy = array ? Array.from(value, function (item) { return copyValue(item, ancestors); }) :
+      Object.fromEntries(Object.keys(value).map(function (key) { return [key, copyValue(value[key], ancestors)]; }));
+    ancestors.delete(value);
+    return copy;
+  }
+
+  function equalValue(a, b) {
+    if (a === b) return true;
+    if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return false;
+    var keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every(function (key) {
+      return hasOwn.call(b, key) && equalValue(a[key], b[key]);
+    });
+  }
+
+  function readInput(input, name, revision) {
+    var kind = input && input.type;
+    var text = kind === 'value' ? null : input && input.text;
+    var parsed;
+    if (kind === 'value') parsed = { type: kind, value: copyValue(input.value) };
+    else if (TYPES.includes(kind) && typeof text === 'string') parsed = parse(text, kind);
+    else throw DataError('Supply {type, text} for CSV, JSON, or YAML, or {type: "value", value}.');
+    if (kind === 'csv' && new Set(parsed.columns).size !== parsed.columns.length) throw DataError('CSV source fields must be unique.');
+    if (kind === 'json' || kind === 'yaml') parsed.value = copyValue(parsed.value);
+    var value = valueOf(parsed);
+    var display = text === null ? JSON.stringify(value, null, 2) : text;
+    return {
+      snapshot: runtime.freeze({ name: name, type: kind, value: value, text: text, revision: revision }),
+      parsed: parsed, display: display, bytes: size(text === null ? JSON.stringify(value) : text)
+    };
+  }
+
+  function define(name, input) {
+    name = keyOf(name);
+    if (!name || sources.has(name)) {
+      runtime.issue('data', name, name ? 'Data "' + name + '" is registered more than once; keeping the first.' : 'A source needs a nonempty name.');
+      return null;
+    }
+    var original;
+    try { original = readInput(input, name, 0); }
+    catch (error) {
+      if (input && TYPES.includes(input.type) && typeof input.text === 'string') invalidSources.set(name, input);
+      runtime.issue('data', name, error.message);
+      return null;
+    }
+    invalidSources.delete(name);
+    var current = original;
+    var bindings = [];
+    var api = { snapshot: function () { return current.snapshot; } };
+    var events = runtime.signal('data', null, api.snapshot, {
+      identity: 'source',
+      eventState: function (state) { return Object.freeze({ revision: state.revision, type: state.type }); }
+    });
+    api.subscribe = events.subscribe;
+
+    function commit(next, restoring) {
+      var before = current.snapshot;
+      var after = next.snapshot;
+      if (before.type === after.type && (after.type === 'value' ?
+        equalValue(before.value, after.value) : before.text === after.text)) return;
+      var prepared = bindings.map(function (binding) { return binding.prepare(next, restoring); });
+      current = next;
+      var notifications = bindings.map(function (binding, i) { return binding.view.stage(prepared[i], 'source'); });
+      return function (origin) {
+        notifications.forEach(function (notify) { if (notify) notify(); });
+        events.emit(after, before, origin, name);
+      };
+    }
+
+    function attempt(fn) {
+      try { return fn(); }
+      catch (error) { runtime.issue('data', name, error.message); throw error; }
+    }
+    runtime.destination(api, function (input) {
+      return attempt(function () { return commit(readInput(input, name, current.snapshot.revision + 1)); });
+    }, function () {
+      return attempt(function () {
+        var snapshot = Object.assign({}, original.snapshot, { revision: current.snapshot.revision + 1 });
+        return commit(Object.assign({}, original, { snapshot: Object.freeze(snapshot) }), true);
+      });
+    });
+    sources.set(name, { api: api, current: function () { return current; }, bindings: bindings });
+    return api;
+  }
+
+  function source(name) {
+    var key = keyOf(name);
+    var found = sources.get(key);
+    return found ? found.api : null;
+  }
+
+  function registerWrapped(name) {
+    var entry = get(name);
+    return entry && define(name, entry);
+  }
+
+  function defineTransform(name, fn) {
+    name = keyOf(name);
+    if (!name || transforms.has(name) || typeof fn !== 'function') {
+      runtime.issue('data', name, 'Give each transform a unique name and a function.');
+      return false;
+    }
+    transforms.set(name, fn);
+    return true;
+  }
+
+  function optionsFor(feature, host, instance) {
+    var boot = DocForm._boot;
+    return boot ? boot.merge.apply(null, boot.optionLayers(feature, host.id).concat(instance || {})) :
+      Object.assign({}, instance);
+  }
+
+  function mappedFields(value, fields) {
+    var keys = fields.map(keyOf);
+    if (keys.includes(null)) throw DataError('Mapping fields must be nonempty strings.');
+    if (!Array.isArray(value) || value.some(function (record) {
+      return !isPlain(record) || keys.some(function (key) { return !hasOwn.call(record, key) || !scalar(record[key]); });
+    })) throw DataError('Expected records with scalar fields ' + keys.join(', ') + '.');
+    return keys;
+  }
+
+  function transformValue(options, host, input) {
+    if (options.transform === undefined) return input.snapshot.value;
+    var transform = transforms.get(keyOf(options.transform));
+    if (!transform) throw DataError('Unknown data transform "' + options.transform + '".');
+    return runtime.transform(function () {
+      return copyValue(transform(input.snapshot, { host: host, mapping: copyValue(options.mapping ?? null) }));
+    });
+  }
+
+  function binding(feature, host, options, prepare) {
+    var name = keyOf(host.getAttribute('data-df-source'));
+    var entry = sources.get(name);
+    var caps = limits(host, options);
+    var cached;
+    var initial;
+    function prepareView(input, first) {
+      if (input.bytes > caps.maxBytes && !(first && feature === 'data-view')) {
+        throw DataError('Data for ' + (host.id || feature) + ' exceeds ' + formatSize(caps.maxBytes) + '.');
+      }
+      var value = transformValue(options, host, input);
+      if (value !== input.snapshot.value && !(first && feature === 'data-view') &&
+          size(JSON.stringify(value)) > caps.maxBytes) throw DataError('Transformed data exceeds the view’s size limit.');
+      return prepare(value, options.mapping, input, options.transformOutput === 'spec', caps, first);
+    }
+    return {
+      read: function () {
+        if (!entry) throw DataError('No data named "' + name + '" is registered.');
+        var input = entry.current();
+        if (cached !== input) {
+          initial = prepareView(input, true);
+          cached = input;
+        }
+        return initial;
+      },
+      mount: function (view) {
+        if (entry) entry.bindings.push({ view: view, prepare: prepareView });
+        try { view.start(this.read()); }
+        catch (error) { runtime.issue(feature, host, error.message); }
+      }
+    };
   }
 
   // The view to draw: "table", "code", or "tree". A requested table falls back to code when the data is not tabular.
@@ -330,20 +514,21 @@
   }
 
   // Per-block caps from data-df-max-size and data-df-max-rows, else DocForm.dataset.defaults.
-  function limits(el) {
+  function limits(el, options) {
     var out = { maxBytes: defaults.maxBytes, maxRows: defaults.maxRows };
-    var bytes = el && el.getAttribute('data-df-max-size');
-    var rows = el && el.getAttribute('data-df-max-rows');
-    if (bytes !== null && bytes !== undefined) {
+    options = options || {};
+    [options.maxSize, el && el.getAttribute('data-df-max-size')].forEach(function (bytes) {
+      if (bytes == null) return;
       var b = parseSize(bytes);
-      if (b && b > 0) out.maxBytes = b;
-      else DocForm.warnOnce('data-max-size:' + bytes, 'Ignoring data-df-max-size="' + bytes + '": use a size such as "2 MB" or "500 KB".', el);
-    }
-    if (rows !== null && rows !== undefined) {
+      if (b > 0 && Number.isFinite(b)) out.maxBytes = b;
+      else runtime.issue('data', el, 'Invalid size limit "' + bytes + '". Use a size such as "2 MB".');
+    });
+    [options.maxRows, el && el.getAttribute('data-df-max-rows')].forEach(function (rows) {
+      if (rows == null) return;
       var r = Number(rows);
-      if (r > 0 && Math.floor(r) === r) out.maxRows = r;
-      else DocForm.warnOnce('data-max-rows:' + rows, 'Ignoring data-df-max-rows="' + rows + '": use a whole number above 0.', el);
-    }
+      if (r > 0 && Number.isSafeInteger(r)) out.maxRows = r;
+      else runtime.issue('data', el, 'Invalid row limit "' + rows + '". Use a positive whole number.');
+    });
     return out;
   }
 
@@ -359,7 +544,7 @@
   }
 
   function columnKey(th) {
-    var given = th.getAttribute('data-df-column');
+    var given = th.getAttribute('data-df-field') ?? th.getAttribute('data-df-column');
     return (given !== null ? given : th.textContent).trim();
   }
 
@@ -368,14 +553,30 @@
   function buildTable(state, data, limit) {
     var table;
     var picks;
-    if (state.template) {
+    if (state.mapping) {
+      table = state.template ? state.template.cloneNode(true) : make('table');
+      var oldHead = table.tHead && table.tHead.rows[table.tHead.rows.length - 1];
+      var headers = oldHead ? Array.from(oldHead.cells) : [];
+      if (table.tHead) table.deleteTHead();
+      Array.from(table.tBodies).forEach(function (body) { body.remove(); });
+      var row = table.createTHead().insertRow();
+      picks = state.mapping.map(function (column) {
+        var authored = headers.find(function (th) { return columnKey(th) === column.field; });
+        var th = authored || make('th');
+        if (!authored || column.label !== undefined) th.textContent = column.label ?? column.field;
+        th.setAttribute('data-df-field', column.field);
+        th.setAttribute('scope', 'col');
+        row.appendChild(th);
+        return data.columns.indexOf(column.field);
+      });
+    } else if (state.template) {
       table = state.template.cloneNode(true);
       var head = table.tHead && table.tHead.rows[table.tHead.rows.length - 1];
       var lower = data.columns.map(function (c) { return c.toLowerCase(); });
       picks = head ? Array.prototype.map.call(head.cells, function (th) {
         var key = columnKey(th);
         var at = data.columns.indexOf(key);
-        if (at < 0) at = lower.indexOf(key.toLowerCase());
+        if (at < 0 && !th.hasAttribute('data-df-field')) at = lower.indexOf(key.toLowerCase());
         if (at < 0) DocForm.warnOnce('data-col:' + state.name + ':' + key, 'Data "' + state.name + '" has no column "' + key + '".', th);
         return at;
       }) : [];
@@ -422,6 +623,7 @@
     button.addEventListener('click', function () {
       state.shown = shown + step;
       draw(state);
+      if (state.controller) state.controller.change('user');
       var again = state.el.querySelector('.df-data-more button');
       if (again) again.focus();
     });
@@ -437,12 +639,21 @@
     return box;
   }
 
-  function enhanceAll(el) {
-    if (DocForm.results && DocForm.results.enhance) DocForm.all('table[data-df-results]', el).forEach(DocForm.results.enhance);
+  function enhanceAll(el, modern) {
+    if (DocForm.results && DocForm.results.enhance) DocForm.all('table[data-df-results]', el).forEach(function (table) {
+      DocForm.results.enhance(table, { silent: modern });
+    });
     if (DocForm.code && DocForm.code.enhance) DocForm.all('pre', el).forEach(DocForm.code.enhance);
   }
 
   function emit(state, detail) {
+    if (state.modern) {
+      state.snapshot = detail.error ? null : {
+        name: state.name, view: detail.view, total: detail.rows ?? null,
+        shown: detail.rows == null ? null : Math.min(detail.rows, state.shown || state.limits.maxRows)
+      };
+      return;
+    }
     if (typeof CustomEvent !== 'function') return;
     detail.name = state.name;
     state.el.dispatchEvent(new CustomEvent('df:datarender', { bubbles: true, detail: detail }));
@@ -457,7 +668,7 @@
       return;
     }
     var label = '"' + state.name + '"';
-    var bytes = size(entry.text);
+    var bytes = entry.bytes ?? size(entry.text);
     if (bytes > state.limits.maxBytes && !state.force) {
       var note = make('p', 'df-data-notice', label + ' is ' + formatSize(bytes) + ', over this block\'s ' +
         formatSize(state.limits.maxBytes) + ' limit. ');
@@ -466,6 +677,7 @@
       go.addEventListener('click', function () {
         state.force = true;
         draw(state);
+        if (state.controller) state.controller.change('user');
       });
       note.appendChild(go);
       el.appendChild(note);
@@ -486,7 +698,7 @@
       emit(state, { view: 'raw', error: e.message });
       return;
     }
-    var shown = view(parsed, state.view);
+    var shown = state.grid && (state.view === 'auto' || state.view === 'table') ? 'table' : view(parsed, state.view);
     if (shown === 'tree' && !DocForm.tree) {
       DocForm.warnOnce('data-tree', 'data-df-view="tree" needs docform/js/tree.js; showing code instead.', el);
       shown = 'code';
@@ -495,21 +707,126 @@
       el.appendChild(DocForm.tree.build(valueOf(parsed), { label: 'Data ' + label, open: state.open, maxItems: state.limits.maxRows }));
       emit(state, { view: 'tree' });
     } else if (shown === 'table') {
-      var data = table(parsed);
+      var data = state.grid || table(parsed);
       el.appendChild(buildTable(state, data, limit));
       if (data.cells.length > limit) el.appendChild(moreControl(state, limit, data.cells.length, 'rows'));
       emit(state, { view: 'table', rows: data.cells.length });
     } else {
       var lines = linesOf(entry.text, limit);
-      el.appendChild(buildCode(entry.type, lines.text));
+      el.appendChild(buildCode(entry.type === 'value' ? 'json' : entry.type, lines.text));
       if (lines.total > limit) el.appendChild(moreControl(state, limit, lines.total, 'lines'));
       emit(state, { view: 'code', rows: lines.total });
     }
-    enhanceAll(el);
+    enhanceAll(el, state.modern);
   }
 
   function scriptType(el) {
     return type(DocForm.data(el, 'type', null)) || type(el.getAttribute('type'));
+  }
+
+  function tableMapping(value, mapping, template, parsed) {
+    var head = template && template.tHead && template.tHead.rows[template.tHead.rows.length - 1];
+    var required = head ? Array.from(head.cells).filter(function (cell) {
+      return cell.hasAttribute('data-df-field');
+    }).map(columnKey) : [];
+    var columns = mapping && mapping.columns;
+    if (mapping !== undefined) {
+      if (!Array.isArray(columns) || !columns.length || columns.some(function (column) {
+        return !column || (column.label !== undefined && typeof column.label !== 'string');
+      })) throw DataError('Table mapping needs columns with a field and an optional label.');
+      required = columns.map(function (column) { return column.field; });
+    }
+    if (!required.length) return null;
+    var keys = mappedFields(value, required);
+    if (new Set(keys).size !== keys.length) throw DataError('Table fields must be unique.');
+    if (parsed && parsed.type === 'csv' && keys.some(function (key) { return !parsed.columns.includes(key); })) {
+      throw DataError('A required CSV field is missing.');
+    }
+    return columns ? columns.map(function (column, i) { return { field: keys[i], label: column.label }; }) : null;
+  }
+
+  var dataViews = new WeakMap();
+
+  function mountView(target, instance) {
+    var el = runtime.target(target);
+    if (!el) return null;
+    if (dataViews.has(el)) return dataViews.get(el);
+    var name = keyOf(el.getAttribute('data-df-source'));
+    var options = optionsFor('data-view', el, instance);
+    var mode = el.getAttribute('data-df-data-view') ?? options.view ?? 'auto';
+    if (!VIEWS.includes(mode)) {
+      runtime.issue('data-view', el, 'Unknown data view "' + mode + '".');
+      mode = 'auto';
+    }
+    var fallback = Array.from(el.childNodes);
+    var initiallyHidden = el.hidden;
+    var template = el.querySelector(':scope > table');
+    var state = { name: name, view: mode, template: template, modern: true,
+      limits: limits(el, options), open: DocForm.num(el, 'tree-depth', options.treeDepth ?? 1), el: el };
+
+    function prepare(input, value) {
+      var mapping = tableMapping(value, options.mapping, template, input.parsed);
+      var grid = mapping && input.parsed.type !== 'csv' ? {
+        columns: mapping.map(function (column) { return column.field; }),
+        cells: value.map(function (record) {
+          return mapping.map(function (column) { return cellText(record[column.field]); });
+        })
+      } : null;
+      return { input: input, mapping: mapping, grid: grid };
+    }
+
+    function ensureHost() {
+      if (el.tagName === 'PRE' && state.el === el) {
+        state.el = make('div');
+        el.after(state.el);
+        el.hidden = true;
+        dataViews.set(state.el, controller.api);
+      }
+      state.el.classList.add('df-data', 'df-data-ready');
+    }
+
+    var controller = runtime.controller('data-view', el, {
+      prepare: function (entry) {
+        var input = readInput(entry, name, 0);
+        if (input.bytes > state.limits.maxBytes) throw DataError('The file exceeds this view’s size limit.');
+        return prepare(input, input.snapshot.value);
+      },
+      render: function (prepared) {
+        if (!prepared) {
+          if (state.el !== el) { state.el.remove(); state.el = el; el.hidden = initiallyHidden; }
+          else el.replaceChildren.apply(el, fallback);
+          state.snapshot = null;
+          return;
+        }
+        ensureHost();
+        var input = prepared.input;
+        state.mapping = prepared.mapping;
+        state.grid = prepared.grid;
+        state.entry = { text: input.display, type: input.snapshot.type, bytes: input.bytes };
+        state.parsed = input.parsed;
+        state.snapshot = null;
+        state.shown = 0;
+        state.force = false;
+        draw(state);
+      },
+      snapshot: function () { return state.snapshot || null; },
+      alwaysNotify: true
+    }, 'render');
+    state.controller = controller;
+    dataViews.set(el, controller.api);
+    if (name) {
+      binding('data-view', el, options, function (value, mapping, input, spec) {
+        if (spec) input = readInput(value, name, 0);
+        else if (value !== input.snapshot.value) input = readInput({ type: 'value', value: value }, name, 0);
+        return prepare(input, input.snapshot.value);
+      }).mount(controller);
+      if (!sources.has(name) && invalidSources.has(name)) {
+        ensureHost();
+        state.entry = invalidSources.get(name);
+        draw(state);
+      }
+    }
+    return controller.api;
   }
 
   // given and template, from DocForm.dataset.show, draw an entry that is not registered into any element.
@@ -621,7 +938,33 @@
     isBlock: isBlock
   };
 
+  Object.assign(DocForm.data, {
+    define: define, source: source, defineTransform: defineTransform,
+    names: function () { return Array.from(sources.keys()); },
+    parse: parse, table: table, valueOf: valueOf
+  });
+  DocForm._dataSource = {
+    binding: binding, options: optionsFor, fields: mappedFields, key: keyOf, input: readInput,
+    columns: tableMapping, transform: transformValue
+  };
+  DocForm.dataView = {
+    mount: mountView,
+    get: function (target) { return dataViews.get(runtime.target(target)) || null; }
+  };
+
   function readInline() {
+    Object.keys(root.DocFormData || {}).forEach(function (name) {
+      if (!sources.has(name) && !invalidSources.has(name)) registerWrapped(name);
+    });
+    DocForm.all('script[data-df-source], pre[data-df-source]').forEach(function (el) {
+      var name = DocForm.data(el, 'source', '').trim();
+      var text = dedent(el.textContent);
+      var declared = el.getAttribute('data-df-source-type');
+      var kind = el.tagName === 'PRE' ? (declared === null ? sniff(text, name) : type(declared)) :
+        MIME[(el.getAttribute('type') || '').trim().toLowerCase()];
+      if (kind) define(name, { type: kind, text: text });
+      else runtime.issue('data', el, 'Use a CSV, JSON, or YAML data MIME type.');
+    });
     DocForm.all('script[data-df-data]').forEach(function (el) {
       var name = DocForm.data(el, 'data', '').trim();
       add(name, dedent(el.textContent), scriptType(el));
@@ -629,9 +972,13 @@
   }
 
   var boot = DocForm._boot;
-  if (boot) boot.readData = readInline;
+  if (boot) {
+    boot.readData = readInline;
+    boot.registerData = registerWrapped;
+  }
   DocForm.register(boot ? 'data-view' : 'data', function () {
     if (!boot) readInline();
+    DocForm.all('[data-df-data-view]:not([data-df-dropzone])').forEach(function (el) { mountView(el); });
     DocForm.all('[data-df-data]:not(script):not(.df-data-ready)').forEach(function (el) {
       setup(el);
     });

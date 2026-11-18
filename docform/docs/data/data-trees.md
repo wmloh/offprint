@@ -1,9 +1,9 @@
 # Data trees
 
-Load `css/tree.css` and `js/tree.js` after core. Include [data-block assets](data-blocks.md) to render registered data. JSON/YAML objects and lists keep their structure. CSV displays as a list of records keyed by header.
+Enable `tree` and `data-view` to render a [named source](data-blocks.md). JSON/YAML objects and lists keep their structure. CSV displays as a list of records keyed by header.
 
 ```html
-<div data-df-data="config" data-df-view="tree" data-df-tree-depth="2" data-df-max-rows="100"></div>
+<div data-df-source="config" data-df-data-view="tree" data-df-tree-depth="2" data-df-max-rows="100"></div>
 ```
 
 - Top-level entries are visible. `data-df-tree-depth` sets the number of levels to open (default `1`). Use `0` to start with every branch closed. Arrays use indexes, objects use keys, and scalars display typed text. Each branch or root list shows up to the block's row limit. Show more adds another batch to that list.

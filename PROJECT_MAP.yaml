@@ -45,7 +45,7 @@ docform/: Copyable offline library folder
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
     anim.js: SVG timelines with playback controls, hover-to-play, and keyed jumps for figure steps
-    params.js: data-df-param sliders, selects, and toggles, validated data-df-preset batch updates, data-df-bind/data-df-template outputs, and a subscription API
+    params.js: Named parameter scopes with reusable control definitions, scoped presets and text bindings, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
     steps.js: Standalone HTML card panels with optional titled groups, keyboard focus, and manual selection, plus figure steps selected by hover, focus, tap, or page controls, with keyed selection and inert details
     zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes; open and close events for add-ons
@@ -54,14 +54,14 @@ docform/: Copyable offline library folder
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
-    chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with UTC time x-axes, validated base-10 log axes, line gaps, labelled reference lines, keyed point selection through shared groups, legend series toggles, opt-in x-range brushing with keyboard zoom and Reset, optional y rescaling, hover readouts, data coordinates under a viewport point, a table view of what is shown, and spec updates that can restore the source table
-    results.js: Sortable results tables with heatmap shading on column or fixed ranges, best-in-column highlighting, labelled pass/fail thresholds, and opt-in value, number, and date column filters plus named filter chips that reshade over visible rows
+    chart.js: SVG line, bar, and scatter charts with named-source mappings, keyed series and points, interactive ranges, and table views
+    results.js: Source-mapped or authored tables with sorting, heatmaps, thresholds, column filters, and saved state across replacements
     highlight.js: Shared keyed selection controller with startup seeds, persistence, and passive HTML and SVG participants
     stepper.js: Ordered worked examples with Previous, Next, Reset, keyed selection groups, and linked step views
-    scenarios.js: Table-backed single-condition or multi-condition configuration comparisons with fixed baselines, shared chart scales by unit, and Reset
-    data.js: Named CSV, JSON, and YAML data from wrapped files or inline blocks, with quoted-CSV and core-schema YAML parsing, size and row caps, inline parse errors, results-table, code, or tree views, and show/restore of other entries
+    scenarios.js: Keyed scenario comparisons from named sources or authored tables with fixed baselines and shared chart scales by unit
+    data.js: Transactional named sources from offline assets, inline CSV, JSON, YAML, or typed author values, with transforms and raw views
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists
-    dropzone.js: Reader file dropzones that check type and size, read files locally, and show them or feed a target chart, data block, or results table with Reset
+    dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
     glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
     wide.js: data-df-wide figures and table wrappers that grow beside the reading column, bounded by the sidebar and right-margin notes or panels
   tools/search-index.html: Offline page that builds search-index.js, including auto-linked and hand-marked glossary terms and inline tips, from a chosen docs folder
@@ -73,5 +73,5 @@ docform/: Copyable offline library folder
 docs/: Human-facing getting started guide, include order, manifest and component references, and style guide
 examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
   pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and search
-  transformers/: Decoder-only guide with a concept table, linked attention trace, decoding presets, log-scale sweep, figure zoom, and training diagnostics with artifact cards, filterable runs, data trees, file dropzones, and offline search
+  transformers/: Decoder-only guide with linked attention, decoding presets, figure zoom, and training diagnostics with shared runs, scenario comparisons, and offline file replacement
 tests/: Built-in node:test checks of module logic

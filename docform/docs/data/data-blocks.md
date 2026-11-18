@@ -1,27 +1,34 @@
-# Data blocks
+# Named sources and data views
 
-Load `css/data.css` and `js/data.js` after core. Load wrapped files and, for YAML, `vendor/js-yaml/js-yaml.min.js` before block setup. For enhanced views, add CSS and JS for `results`, `code`, or `tree` before the first draw. [Include order](../setup/include-order.md)
+Enable `data` for the registry, `data-view` for raw views, and each consuming feature. `data-view` includes `data`. Enable `results`, `code`, or `tree` for optional table, code, or tree enhancements. [Include order](../setup/include-order.md)
 
 ```html
-<script type="text/csv" data-df-data="runs">
-  model,latency_ms
-  Baseline,12
+<script type="text/csv" data-df-source="runs">
+  run,latency_ms
+  r01,12
 </script>
-<div data-df-data="runs">
+<div id="runs-preview" data-df-source="runs" data-df-data-view="table">
   <table data-df-results>
-    <thead><tr><th>model</th><th data-df-column="latency_ms" data-df-best="min">Latency (ms)</th></tr></thead>
-    <tbody><tr><td>Baseline</td><td>12</td></tr></tbody>
+    <thead><tr><th>run</th><th data-df-field="latency_ms" data-df-best="min">Latency (ms)</th></tr></thead>
+    <tbody><tr><td>r01</td><td>12</td></tr></tbody>
   </table>
 </div>
 ```
 
-- `[data-df-data="name"]` renders a named entry from a [wrapped file](file-wrapper.md), a data script, an earlier inline `pre`, or `DocForm.dataset.add` called before setup. A data script only registers its text, and all data scripts register before hosts render. `pre[data-df-data]` displays raw text without JS, then renders its text and registers the name if free. Give placeholders authored fallback content as needed. `data-df-type="csv|json|yaml"` sets or overrides the type. For inline scripts use a data MIME `type` such as `text/csv`, `application/json`, or `application/yaml`.
-- `data-df-view="auto"` (default) renders CSV and nonempty arrays of flat records as tables, other shapes as source code. `table` falls back to code for nested data. `code` always shows the source. `tree` builds a collapsible view with [tree assets](data-trees.md) and otherwise falls back to code. CSV trees map rows to records.
-- A table template inside a placeholder selects columns from its last header row by `data-df-column` or header text, with case-insensitive fallback. It preserves header labels and results attributes. Missing columns warn and leave blank cells. Without a template, use all columns in source order. The data module re-enhances generated results tables and code after each draw.
-- Per-block caps `data-df-max-size` (default 1 MiB of UTF-8, accepts bytes or sizes like `2 MB`) and `data-df-max-rows` (default 5000). Oversize blocks offer Show anyway. Tables and code start with one batch of rows or lines and Show more adds another batch. Tree limits apply per branch.
-- CSV requires a header and matching field counts. Quoting preserves text and allows embedded commas, newlines, and escaped quotes (`""`). Unquoted values can become numbers, booleans, or null. Leading-zero identifiers stay text. Tables use original CSV cell text. JSON uses `JSON.parse`. YAML accepts a single document with the core schema. Parse errors expose the reason, location when available, and raw text.
-- `DocForm.dataset.add(name, text, type?)`, `get(name)`, `names()`, `parse(text, type?)`, `table(parsed)`, and `valueOf(parsed)`. `parse` returns `{type, value}` for JSON/YAML or `{type, columns, rows, cells}` for CSV and throws on bad input. `table` returns `{columns, cells}` or `null`. Registered names are read from the local registry first, then from `window.DocFormData` on demand.
-- `DocForm.dataset.render(element)` redraws a named block. `show(element, {name, type, text}, template?)` replaces displayed data while retaining an existing block's view, limits, and header. `restore(element)` restores the saved entry and display cap, returning false if there is no saved entry.
-- Bubbling `df:datarender` carries `{name, view, rows?, error?}` before results or code enhancement. `rows` is the total rows or lines for table or code output. A size refusal emits `view: null` with `error: 'size'`. Parse errors emit `view: 'raw'` with the error message. Listen for `df:filter` on filter-enabled result tables to get filtered counts.
+## Source registry
 
-[File wrapper](file-wrapper.md) · [Data trees](data-trees.md) · [Results tables](results-tables.md) · [Code](../reading/code.md) · [Dropzones](dropzones.md) · [Source](../../js/data.js)
+- `DocForm.data.define(name, input)` registers a source and returns its controller or `null`. Input is `{type: 'csv'|'json'|'yaml', text}` or `{type: 'value', value}`. Typed values must be acyclic JSON-compatible data with finite numbers. Register them in `DocForm.setup`. Names are trimmed and case-sensitive. The first accepted definition wins.
+- Other inputs include inert scripts with `data-df-source` and a data MIME type, `pre[data-df-source]` with optional `data-df-source-type`, and offline `window.DocFormData` wrappers. The entry loads manifest `assets.data[name].output` wrappers before setup. Authored raw text and static markup provide fallbacks. An invalid raw definition retains its text for the error display and leaves the name available.
+- `DocForm.data.source(name)` looks up a controller. `names()` lists sources in registration order. A controller exposes `snapshot()`, `update(input)`, `reset()`, and `subscribe(fn, {immediate: true}?)`. The immutable snapshot is `{name, type, value, text, revision}`. CSV values are typed records and keep the original text. A typed value has `text: null`. Subscriptions receive `(current, {previous, origin})` and return an unsubscribe function.
+- An update prepares every bound view before committing. A parse, transform, mapping, or cap rejection leaves the prior revision and rendered views intact. An identical payload succeeds without incrementing the revision. Reset restores the first accepted input. Local view overrides stay visible across shared updates, and their Reset reveals the latest source. `df:data:change` fires on `document` after bound views commit with `{source, current: {revision, type}, previous, origin}`.
+- `DocForm.data.defineTransform(name, fn)` registers a synchronous transform in setup. Set an instance's `transform` to its name. It receives `(sourceSnapshot, {host, mapping})` and returns a JSON-compatible value for the adapter. Use `transformOutput: "spec"` for a complete chart spec, results `{records, mapping}`, scenario `{records, mapping, mode?}`, or raw-view `{type, text|value}` input. Keep transforms free of DOM and controller writes.
+- `parse(text, type?)` throws on invalid text and returns `{type, value}` for JSON/YAML or `{type, columns, rows, cells}` for CSV. `table(parsed)` returns `{columns, cells}` for flat data or `null`. `valueOf(parsed)` returns the typed value. Quoted CSV fields preserve text, including embedded newlines, and unquoted leading-zero identifiers stay text. YAML accepts one core-schema document.
+
+## Raw rendering
+
+- `data-df-data-view="auto|table|code|tree"` selects the view. Auto renders tabular data as a table and other values as code. A nested table request or a missing tree feature falls back to code. Typed values display as JSON in code mode.
+- Raw table instances may use `mapping: {columns: [{field, label?}]}`. Authored `data-df-field` headers select exact fields. Legacy templates can match header text case-insensitively and display blanks for missing optional columns. Without a template or mapping, columns follow source order.
+- Use `maxSize` or `data-df-max-size` (default 1 MiB), and `maxRows` or `data-df-max-rows` (default 5000). Initial oversized raw views offer Show anyway. Tables and code load in batches with Show more. Tree limits apply per branch.
+- `DocForm.dataView.mount(target, options?)` and `get(target)` accept an ID or element. The controller exposes `update(input)` for a local override, `reset()`, `snapshot()`, and `subscribe()`. The view snapshot is `{name, view, total, shown}` with null counts where unavailable. `df:data-view:render` bubbles after the view and any nested enhancements are ready.
+
+[File wrappers](file-wrapper.md) · [Charts](charts.md) · [Results](results-tables.md) · [Scenarios](../interact/scenarios.md) · [Dropzones](dropzones.md) · [Example](../../../examples/transformers/pages/diagnostics.html#shared-runs)

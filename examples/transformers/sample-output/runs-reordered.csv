@@ -1,0 +1,4 @@
+latency_ms,validation_loss,batch,lr,seed,device,run,notes,started
+21,0.71,8,0.0001,11,Laptop,r01,Baseline,2026-11-14
+28,0.53,32,0.0003,11,Lab GPU,r03,Lowest loss,2026-11-15
+24,0.56,16,0.0003,11,Laptop,r04,Under budget,2026-11-15

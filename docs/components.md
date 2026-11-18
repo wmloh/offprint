@@ -444,60 +444,46 @@ Add `zoomtools.css` and `zoomtools.js` (after `zoom.js`) to give the zoom view a
 
 ## Parameters and presets
 
-```html
-<div class="df-params">
-  <div data-df-param="k" data-df-label="$k$" data-df-min="0" data-df-max="5" data-df-step="0.1" data-df-value="2"></div>
-  <div data-df-param="method" data-df-type="select" data-df-label="Method" data-df-value="exact">
-    <option value="exact">Exact</option>
-    <option value="approx">Approximate</option>
-  </div>
-  <div data-df-param="trace" data-df-type="toggle" data-df-label="Show trace" data-df-value="true"></div>
-</div>
+Define a parameter once, then use it in as many controls as you need. Controls with the same key in the same scope stay in sync. A separate scope can use the same key with its own value and limits.
 
-<p>Twice <span class="df-math">k</span> is <span data-df-bind="2 * k" data-df-digits="1">4.0</span>.</p>
-<div class="df-math" data-df-display data-df-template="k^2 = {{k * k|2}}">k^2 = 4.00</div>
+Put the definition in your page configuration before loading `docform.js`.
+
+```html
+<script type="application/json" data-df-page>
+{
+  "features": {"parameters": true},
+  "parameterScopes": {
+    "model": {
+      "gain": {"type": "range", "min": 0, "max": 5, "step": 0.1, "default": 2}
+    }
+  }
+}
+</script>
 ```
 
-- `data-df-param` names a control. Without `data-df-type` it is a slider; `min`, `max`, `step`, `value`, `label`, and `digits` are optional.
-- `data-df-type="select"` lists its choices as `<option>` children with distinct `value`s. Its value is a string.
-- `data-df-type="toggle"` is an on/off switch. Its value is `true` or `false`, set initially with `data-df-value`.
-- Controls that share a name share one value and move together.
-- `data-df-bind` shows the value of an expression.
-- `data-df-template` fills each `{{expression|decimals}}` and re-renders math.
-- Write the starting result inside each bound element so the page reads correctly without scripts.
-
-Expressions may use any parameter name and maths functions such as `sin`, `sqrt`, and `PI`, for example `{{trace ? "shown" : "hidden"}}`.
-
-### Presets
-
-A preset button sets several parameters at once:
+Bind controls and text inside a scope. To use the same parameter elsewhere, add `data-df-scope="model"` to the control, binding, or preset.
 
 ```html
-<div class="df-presets" role="group" aria-label="Setups">
-  <button data-df-preset='{"k": 1, "method": "exact", "trace": false}'>Baseline</button>
-  <button data-df-preset='{"k": 4.5, "method": "approx"}'>Stress test</button>
+<div class="df-params" data-df-parameter-scope="model">
+  <div data-df-parameter="gain" data-df-parameter-label="Gain"></div>
+  <p>Doubled gain is <span data-df-bind="2 * gain" data-df-digits="1">4.0</span>.</p>
+  <button type="button" data-df-preset='{"gain":2}'>Baseline</button>
 </div>
 ```
 
-- Every value is checked first: a known parameter, the right type, a listed choice, and within the slider range. A preset that fails is disabled and a warning explains why.
-- The button whose values match the current state is marked as current.
-- `DocForm.params.apply({ k: 2, trace: true })` does the same from a script and returns `false` without changing anything if a value is rejected. `DocForm.params.set(name, value)` changes one value under the same checks.
+A preset applies its values together and is marked current when they all match. The same scope can include sliders, dropdowns, and switches. Write the initial result in each bound element so readers can still see it without scripts.
 
-The prediction page of the `examples/transformers/` guide combines a shared temperature slider, a selection-rule choice, a blocking toggle, and three named decoding setups.
-
-### Subscriptions
-
-To drive a figure from parameters:
+Use a subscription to update a figure or another output in your page script.
 
 ```js
-DocForm.params.on(['k', 'method'], function (values, name, changed) {
-  document.getElementById('dot').setAttribute('r', values.k * 3);
+DocForm.ready(function (DF) {
+  DF.parameters.scope('model').subscribe(function (values) {
+    document.getElementById('dot').setAttribute('r', values.gain * 3);
+  }, { keys: ['gain'], immediate: true });
 });
 ```
 
-- The callback runs once when all listed parameters exist, then after each change that touches one of them.
-- `values` is a copy of every parameter. `name` is the one parameter that changed, or `null` on the first call and when a preset changes several. `changed` lists every changed name.
-- A preset calls each affected callback once, after all controls show the new values.
+The [Transformers prediction page](../examples/transformers/pages/prediction.html) shows two linked decoder sliders and an independent comparison with its own Reset button. See the [parameter reference](../docform/docs/interact/parameters.md) for definition types and controller methods.
 
 ## Numbered figures and cross-references
 
@@ -731,89 +717,42 @@ The [Transformer run log](../examples/transformers/pages/diagnostics.html#run-fi
 
 ## Data files
 
-Show CSV, JSON, or YAML files as results tables or highlighted code. Pages opened from disk cannot read other files, so each data file is first wrapped as a script:
-
-1. Open `docform/tools/data-file.html` in Chrome and choose your files. It makes one script per file, such as `runs.csv.js`, and warns about files over the default limits. Nothing is uploaded.
-2. Save the script beside your page and load it before `core.js`. Load `data.js` right after `core.js` (see [include order](include-order.md)).
-3. Place the data by name. The name is the file name without its extension.
+Declare a named dataset once and use it in one or more charts, results tables, scenario comparisons, or raw data views. Enable the data feature and the features for each view.
 
 ```html
-<div data-df-data="runs"></div>
+<script type="text/csv" data-df-source="runs">
+  run,latency_ms
+  r01,12
+</script>
+<div data-df-source="runs" data-df-data-view="table"></div>
 ```
 
-- CSV and lists of flat records (JSON or YAML lists of objects whose values are text, numbers, true, false, or null) become sortable [results tables](#results-tables). Other data shows as highlighted code.
-- `data-df-view="code"` shows tabular data as its original text; `data-df-view="table"` asks for a table and falls back to code when the data has no table shape; `data-df-view="tree"` shows a [tree](#data-trees).
-- To choose, rename, and style columns, put a table header inside the placeholder. Each header cell picks the column named by its text or by `data-df-column`, and keeps its results-table options:
+For a separate file, open `docform/tools/data-file.html` and wrap the CSV, JSON, or YAML as a local script. Load the wrapper on the page or configure its output in the site manifest. For inline data you want readers to see with scripts disabled, use a `pre` with `data-df-source` and a type such as `data-df-source-type="csv"`.
 
-  ```html
-  <div data-df-data="runs">
-    <table data-df-results>
-      <thead><tr>
-        <th>model</th>
-        <th data-df-column="latency_ms" data-df-best="min" data-df-threshold="<= 25 ms">Latency (ms)</th>
-      </tr></thead>
-      <tbody><tr><td colspan="2">Shown when scripts are off.</td></tr></tbody>
-    </table>
-  </div>
-  ```
+A raw data view can show a table, code, or a tree. A table template can use `data-df-field="latency_ms"` on a header labelled “Latency (ms)”. This lets the file reorder its columns without changing the table. Use `data-df-max-rows` to adjust the preview batch and `data-df-max-size` to adjust the size limit. A parsing error shows the reason and the raw text.
 
-- Short data can sit in the page. A `pre` shows its text without scripts and a table or code with them; a `script` block only registers the data for placeholders elsewhere:
-
-  ```html
-  <pre data-df-data="hardware" data-df-type="csv">
-    device,cores
-    "Laptop, 2023",8
-  </pre>
-  <script type="application/yaml" data-df-data="defaults">
-    epochs: 30
-  </script>
-  ```
-
-- Limits: a block shows up to 5,000 rows (or code lines) with a Show more button for the rest, and asks before showing data over 1 MB. Change them per block with `data-df-max-rows="200"` and `data-df-max-size="2 MB"`.
-- Data that does not parse shows the error with its line number and the raw text. CSV fields in double quotes may hold commas, line breaks, and doubled quotes (`""`); quoted fields stay text, and unquoted numbers, `true`, and `false` become values. YAML must be a single document without custom tags such as `!secret`.
-- `data-df-type="csv"`, `"json"`, or `"yaml"` overrides the type from the file. From a script, `DocForm.dataset.add(name, text, type)` registers data and `DocForm.dataset.render(element)` redraws a block.
-
-The [Transformer training diagnostics](../examples/transformers/pages/diagnostics.html) show a run log with Show more, a YAML configuration, inline CSV and JSON, a size notice, and a parse error.
+[Named data and mapping reference](../docform/docs/data/data-blocks.md)
 
 ### Data trees
 
-Add `data-df-view="tree"` to a data block to browse nested JSON or YAML as a collapsible tree. Include `tree.css` and `tree.js`.
-
-```html
-<div data-df-data="config" data-df-view="tree" data-df-tree-depth="2"></div>
-```
-
-- The top level starts open. `data-df-tree-depth` sets how many levels start open; `0` closes them all.
-- Click a row to open or close it, or use the buttons for Expand all and Collapse all.
-- Keyboard: Up and Down move between rows, Right opens a row or moves into it, Left closes it or moves to its parent, Home and End jump to the first and last rows, Enter or Space opens or closes a row, and `*` opens a row and the rows beside it.
-- Each row lists up to the block's row limit (5,000 by default). A Show more row lists the rest.
-- CSV rows show as records keyed by column name.
+Enable the tree feature and set `data-df-data-view="tree"` to explore nested data. `data-df-tree-depth` sets how many levels start open. Use the arrow keys to move through and expand branches, or use Expand all and Collapse all. Long branches offer Show more.
 
 ### File dropzones
 
-A dropzone lets readers open a CSV, JSON, or YAML file from their own computer. The browser reads the file on the reader's computer; nothing is uploaded. Include `dropzone.css` and `dropzone.js`.
+Readers can choose a CSV, JSON, or YAML file or drag it onto the zone. The browser reads the file locally. Without a destination, a dropzone displays the file below its prompt.
 
 ```html
-<div data-df-dropzone data-df-accept="json yaml" data-df-view="tree" data-df-max-size="2 MB">
-  <p>Drop a metrics file from your run.</p>
+<div data-df-dropzone data-df-accept="csv" data-df-target="curve">
+  <p>Choose a CSV for this chart.</p>
+</div>
+<div data-df-dropzone data-df-accept="csv" data-df-target-source="runs">
+  <p>Choose a CSV for the shared runs.</p>
 </div>
 ```
 
-- The dropzone has a Choose a file button. Its own content becomes the prompt; without content it says which types it takes.
-- `data-df-accept` lists the types it takes, such as `"csv json"`. It takes all three by default. Files are matched by extension. Other files, and files over `data-df-max-size` (1 MB by default), are turned away with a message.
-- The file shows below the dropzone with the [data views](#data-files). `data-df-view`, `data-df-max-rows`, and `data-df-tree-depth` work as they do on data blocks.
-- To show the file in place of other data on the page, set `data-df-target` to the id of a chart, a data block, or a results table, or of an element that holds one:
+`data-df-target` replaces a single view by its ID. `data-df-target-source` replaces a named dataset after all views accept the file. Reset on a local override returns to the current dataset. Reset on a shared replacement restores the original dataset.
 
-  ```html
-  <div data-df-chart="line" id="curve"> … </div>
-  <div data-df-dropzone data-df-accept="csv" data-df-target="curve"></div>
-  ```
-
-  - A chart plots the first column as x and each other column as a series. It keeps its type, axis labels and types, reference lines, and the colours of series with the same names. Fixed axis bounds are dropped so the new data shows in full. A JSON or YAML file with a `series` list replaces those parts of the chart.
-  - A data block or results table keeps its header, so the file's columns get the same names, best values, heat shading, and pass/fail rules. Columns are matched by name.
-- Reset puts back the page's own data, or clears the file shown below the dropzone.
-
-The [Transformer training diagnostics](../examples/transformers/pages/diagnostics.html#training-history) use sample files to replace the reference curve, run log, and static latency summary, and to open a standalone metrics tree.
+[Transformer training diagnostics](../examples/transformers/pages/diagnostics.html#shared-runs)
 
 ## Interactive explanations
 

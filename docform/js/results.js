@@ -226,7 +226,8 @@
     return n + ' ' + word + (n === 1 ? '' : 's');
   }
 
-  function enhance(table) {
+  function enhance(table, settings) {
+    settings = settings || {};
     // Data placeholders build their tables in data.js and enhance them once filled.
     if (table.classList.contains('df-results') || table.closest('[data-df-data]:not(.df-data-ready)')) return;
     var head = table.tHead ? table.tHead.rows[table.tHead.rows.length - 1] : null;
@@ -271,7 +272,7 @@
       var filterAttr = th.getAttribute('data-df-filter');
       var filterOn = th.colSpan <= 1 && !th.hasAttribute('data-df-no-filter') && filterAttr !== 'false' &&
         (filterAttr !== null || (filterAll !== null && filterAll !== 'false'));
-      var name = (th.getAttribute('data-df-column') || th.textContent).trim();
+      var name = (th.getAttribute('data-df-field') || th.getAttribute('data-df-column') || th.textContent).trim();
 
       if (rule) {
         // Each classified cell keeps its text and gains a visible verdict; missing values get none.
@@ -290,7 +291,8 @@
       if (numeric) th.classList.add('df-num');
       rows.forEach(function (tr) { if (numeric && tr.cells[c]) tr.cells[c].classList.add('df-num'); });
       return {
-        th: th, name: name, label: th.textContent.trim(), keys: keys, values: values, numeric: numeric,
+        th: th, name: name, label: th.textContent.trim(), explicit: th.hasAttribute('data-df-field'),
+        keys: keys, values: values, numeric: numeric,
         kind: numeric ? 'number' : time ? 'time' : 'text', dateOnly: time && keys.every(function (k) { var p = timeParts(k); return !p || p.date; }),
         zoned: time && keys.some(function (k) { var p = timeParts(k); return p && p.zone; }),
         best: bestDir, rule: rule, heatOn: heatOn, heatDir: heatDir, range: range, cellTint: cellTint,
@@ -331,6 +333,10 @@
     shade(null);
 
     var state = { col: -1, dir: null };
+    if (settings.sort) {
+      state.col = columns.findIndex(function (col) { return col.name === settings.sort.field; });
+      if (state.col >= 0) state.dir = settings.sort.dir;
+    }
     var apply = function () {
       var order;
       if (state.col < 0) order = rows;
@@ -367,7 +373,8 @@
       });
     });
 
-    setupFilters(table, body, rows, columns, shade);
+    var filtering = setupFilters(table, body, rows, columns, shade, settings);
+    if (state.col >= 0) apply();
 
     // The rule sits under the header text so readers can see what Pass means.
     columns.forEach(function (col) {
@@ -378,19 +385,26 @@
       note.textContent = (label || 'Pass') + ': ' + SYMBOLS[col.rule.op] + ' ' + col.rule.text;
       col.th.appendChild(note);
     });
+    return {
+      sort: function () { return state.col < 0 ? null : { field: columns[state.col].name, dir: state.dir }; },
+      filter: filtering,
+      snapshot: function () { return filtering ? filtering.snapshot() : { shown: rows.length, total: rows.length, filters: {}, chips: [] }; }
+    };
   }
 
   function findColumn(columns, name) {
+    var exact = columns.find(function (col) { return col.name === name; });
+    if (exact) return exact;
     var lower = name.toLowerCase();
     for (var i = 0; i < columns.length; i++) {
-      if (columns[i].name.toLowerCase() === lower || columns[i].label.toLowerCase() === lower) return columns[i];
+      if (!columns[i].explicit && (columns[i].name.toLowerCase() === lower || columns[i].label.toLowerCase() === lower)) return columns[i];
     }
     return null;
   }
 
   // Header menus, chips, the row count, and Clear. Rows that fail stay in the body (so sorting still moves them)
   // but are hidden; an extra body says so when none pass.
-  function setupFilters(table, body, rows, columns, shade) {
+  function setupFilters(table, body, rows, columns, shade, settings) {
     var chipsAttr = table.getAttribute('data-df-chips');
     var chips = [];
     parseChips(chipsAttr).forEach(function (chip) {
@@ -413,11 +427,11 @@
     if (!filtered.length && !chips.length) return;
 
     var holder = table.closest('.df-data');
-    var saved = SAVED && holder ? SAVED.get(holder) : null;
-    var filters = {};
+    var saved = settings.filters || (SAVED && holder ? SAVED.get(holder) : null);
+    var filters = Object.create(null);
     if (saved) {
       filtered.forEach(function (col) {
-        var f = saved.filters[col.name.toLowerCase()];
+        var f = saved.filters[col.name];
         if (f && !!f.excluded === (col.filter === 'values')) filters[col.name] = f;
       });
       chips.forEach(function (chip) { chip.on = saved.chips.indexOf(chip.label) >= 0; });
@@ -462,7 +476,9 @@
     table.appendChild(emptyBody);
 
     var menu = null;
+    var origin = 'user';
 
+    var state;
     var refresh = function () {
       var mask = rows.map(function (tr, r) {
         return columns.every(function (col) { return passes(filters[col.name], col.values[r], col.keys[r]); }) &&
@@ -488,11 +504,16 @@
         col.toggle.setAttribute('aria-label', 'Filter ' + col.label + (on ? ' (filtered)' : ''));
       });
       if (SAVED && holder) {
-        var keep = { filters: {}, chips: chips.filter(function (chip) { return chip.on; }).map(function (chip) { return chip.label; }) };
-        Object.keys(filters).forEach(function (name) { if (filterActive(filters[name])) keep.filters[name.toLowerCase()] = filters[name]; });
+        var keep = { filters: Object.create(null), chips: chips.filter(function (chip) { return chip.on; }).map(function (chip) { return chip.label; }) };
+        Object.keys(filters).forEach(function (name) { if (filterActive(filters[name])) keep.filters[name] = filters[name]; });
         SAVED.set(holder, keep);
       }
-      if (typeof CustomEvent === 'function') {
+      state = { shown: shown, total: rows.length, filters: Object.fromEntries(Object.entries(filters).map(function (entry) {
+        var filter = entry[1];
+        return [entry[0], filter.excluded ? { excluded: filter.excluded.slice() } : { min: filter.min, max: filter.max }];
+      })), chips: chips.filter(function (chip) { return chip.on; }).map(function (chip) { return chip.label; }) };
+      if (settings.onFilter) settings.onFilter(origin);
+      else if (!settings.silent && typeof CustomEvent === 'function') {
         table.dispatchEvent(new CustomEvent('df:filter', { bubbles: true, detail: { shown: shown, total: rows.length } }));
       }
     };
@@ -676,34 +697,199 @@
       el.appendChild(make('p', 'df-filter-extent', 'Column: ' + show(lo) + ' to ' + show(hi) + '. Rows without a value are hidden once a bound is set.'));
     }
 
+    function write(fn) {
+      if (!settings.onFilter) { fn(); return true; }
+      return DocForm._dataViews.transaction(function () {
+        origin = 'api';
+        try { fn(); } finally { origin = 'user'; }
+        return true;
+      });
+    }
     var api = {
       set: function (name, filter) {
         var col = findColumn(filtered, String(name));
         if (!col) return false;
-        setFilter(col, filter);
-        return true;
+        return write(function () { setFilter(col, filter); });
       },
       chip: function (label, on) {
         var chip = chips.filter(function (c) { return c.label.toLowerCase() === String(label).toLowerCase(); })[0];
         if (!chip) return false;
-        chip.on = on === undefined ? !chip.on : !!on;
-        refresh();
-        return true;
+        return write(function () {
+          chip.on = on === undefined ? !chip.on : !!on;
+          refresh();
+        });
       },
       clear: function () {
-        filters = {};
-        chips.forEach(function (chip) { chip.on = false; });
-        closeMenu(false);
-        refresh();
+        write(function () {
+          filters = Object.create(null);
+          chips.forEach(function (chip) { chip.on = false; });
+          closeMenu(false);
+          refresh();
+        });
       },
       shown: function () { return rows.filter(function (tr) { return !tr.hidden; }).length; }
     };
     if (CONTROLLERS) CONTROLLERS.set(table, api);
     refresh();
+    return { api: api, bar: bar, close: closeMenu, snapshot: function () { return state; } };
+  }
+
+  var resultViews = new WeakMap();
+  var uploadInputs = new WeakMap();
+
+  function mount(target, instance) {
+    var runtime = DocForm._dataViews;
+    var table = runtime.target(target);
+    if (!table || table.tagName !== 'TABLE') return null;
+    if (resultViews.has(table)) return resultViews.get(table);
+    var data = DocForm._dataSource;
+    var options = data ? data.options('results', table, instance) : instance || {};
+    var named = table.hasAttribute('data-df-source');
+    if (named && !data) {
+      runtime.issue('results', table, 'Enable data to use a named results source.');
+      return null;
+    }
+    var authoredHead = table.tHead && table.tHead.rows.length;
+    if (!authoredHead && !options.mapping) {
+      runtime.issue('results', table, 'A results table needs authored headers or a column mapping.');
+      return null;
+    }
+    var template = authoredHead ? table.tHead.cloneNode(true) : document.createElement('thead');
+    if (!template.rows.length) template.insertRow();
+    var caps = data ? DocForm.dataset.limits(table, options) : { maxBytes: 1024 * 1024, maxRows: 5000 };
+
+    function prepare(records, mapping, parsed) {
+      if (!Array.isArray(records) || records.some(function (record) {
+        return !record || typeof record !== 'object' || Array.isArray(record);
+      })) throw new Error('Results need an array of records.');
+      if (records.length > caps.maxRows) throw new Error('Results exceed the ' + caps.maxRows + '-row limit.');
+      var head = template.cloneNode(true);
+      var row = head.rows[head.rows.length - 1];
+      var originals = Array.from(row.cells);
+      function key(cell) {
+        return (cell.getAttribute('data-df-field') || cell.getAttribute('data-df-column') || cell.textContent).trim();
+      }
+      var columns = originals.map(function (cell) {
+        return { field: key(cell), strict: cell.hasAttribute('data-df-field') };
+      });
+      if (mapping !== undefined) {
+        if (!data) throw new Error('Enable data to use an explicit results mapping.');
+        columns = data.columns(records, mapping, null, parsed).map(function (col) {
+          return Object.assign({ strict: true }, col);
+        });
+        row.textContent = '';
+        columns.forEach(function (col) {
+          var cell = originals.find(function (th) { return key(th) === col.field; }) || document.createElement('th');
+          if (col.label !== undefined || !cell.textContent.trim()) cell.textContent = col.label ?? col.field;
+          cell.setAttribute('data-df-field', col.field);
+          cell.setAttribute('scope', 'col');
+          row.appendChild(cell);
+        });
+      } else if (data) {
+        data.columns(records, undefined, template, parsed);
+      }
+      var body = document.createElement('tbody');
+      records.forEach(function (record) {
+        var row = body.insertRow();
+        columns.forEach(function (col) {
+          var field = col.field;
+          if (!col.strict && !Object.hasOwn(record, field)) {
+            field = Object.keys(record).find(function (key) { return key.toLowerCase() === col.field.toLowerCase(); });
+          }
+          var value = field === undefined || !Object.hasOwn(record, field) ? null : record[field];
+          if ((col.strict && !Object.hasOwn(record, col.field)) ||
+              (value !== null && !['number', 'boolean', 'string'].includes(typeof value)) ||
+              (typeof value === 'number' && !Number.isFinite(value))) {
+            throw new Error('Results field "' + col.field + '" must contain a scalar value.');
+          }
+          var cell = row.insertCell();
+          cell.textContent = value == null ? '' : String(value);
+        });
+      });
+      return { head: head, body: body };
+    }
+
+    var original;
+    var current;
+    var rendering = true;
+    function onFilter(origin) {
+      if (!rendering) controller.change(origin);
+    }
+    var controller = runtime.controller('results', table, {
+      prepare: function (records) {
+        if (uploadInputs.has(records)) {
+          var input = data.input(uploadInputs.get(records), DocForm.data(table, 'source', null), 0);
+          if (input.bytes > caps.maxBytes) throw new Error('The file exceeds this table’s size limit.');
+          var value = data.transform(options, table, input);
+          if (options.transformOutput === 'spec') return prepare(value.records, value.mapping);
+          if (!options.mapping && !DocForm.data.table(input.parsed)) {
+            throw new Error('A results table needs CSV or a list of flat records.');
+          }
+          return prepare(value, options.mapping, value === input.snapshot.value ? input.parsed : null);
+        }
+        if (data) {
+          var parsed = data.input({ type: 'value', value: records }, null, 0);
+          if (parsed.bytes > caps.maxBytes) throw new Error('Results exceed this table’s size limit.');
+          records = parsed.snapshot.value;
+        }
+        return prepare(records, options.mapping);
+      },
+      render: function (prepared) {
+        if (!prepared && !original) return;
+        if (!prepared) prepared = original;
+        if (current === original && prepared === original) return;
+        rendering = true;
+        var previous = current && current.interaction;
+        var active = previous && previous.filter;
+        if (active) { active.close(false); active.bar.remove(); }
+        CONTROLLERS.delete(table);
+        BARS.delete(table);
+        if (current) current.sections.forEach(function (section) { section.remove(); });
+        if (prepared === original) {
+          current = original;
+          original.sections.forEach(function (section) { table.appendChild(section); });
+          var filter = original.interaction && original.interaction.filter;
+          if (filter) {
+            table.before(filter.bar);
+            CONTROLLERS.set(table, filter.api);
+            BARS.set(table, filter.bar);
+          }
+        } else {
+          var head = prepared.head.cloneNode(true);
+          var body = prepared.body.cloneNode(true);
+          table.appendChild(head);
+          table.appendChild(body);
+          table.classList.remove('df-results');
+          current = { interaction: enhance(table, {
+            sort: previous && previous.sort(), filters: active && active.snapshot(), onFilter: onFilter
+          }), sections: [head].concat(Array.from(table.tBodies)) };
+        }
+        rendering = false;
+      },
+      snapshot: function () { return current && current.interaction ? current.interaction.snapshot() : null; }
+    }, 'filter');
+    resultViews.set(table, controller.api);
+    var interaction = authoredHead && table.tBodies[0] ? enhance(table, { onFilter: onFilter }) : null;
+    original = current = { interaction: interaction, sections: [table.tHead].concat(Array.from(table.tBodies)).filter(Boolean) };
+    rendering = false;
+    if (named) data.binding('results', table, options, function (records, mapping, input, spec) {
+      if (spec) return prepare(records && records.records, records && records.mapping);
+      return prepare(records, mapping, records === input.snapshot.value ? input.parsed : null);
+    }).mount(controller);
+    else controller.start(original);
+    if (!controller.api.snapshot() && interaction) controller.change('init');
+    return controller.api;
   }
 
   DocForm.results = {
     enhance: enhance,
+    mount: mount,
+    get: function (target) { return resultViews.get(DocForm._dataViews.target(target)) || null; },
+    _upload: function (entry) {
+      var input = {};
+      uploadInputs.set(input, entry);
+      return input;
+    },
     parseCell: parseCell,
     numericColumn: numericColumn,
     sortOrder: sortOrder,
@@ -723,6 +909,10 @@
   };
 
   DocForm.register('results', function () {
-    DocForm.all('table[data-df-results]').forEach(enhance);
+    DocForm.all('table[data-df-results]').forEach(function (table) {
+      if (!DocForm._dataViews) enhance(table);
+      else if (!table.classList.contains('df-results') &&
+        !table.closest('[data-df-data-view]:not(.df-data-ready), [data-df-data]:not(.df-data-ready)')) mount(table);
+    });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

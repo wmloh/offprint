@@ -4,37 +4,35 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Next-token prediction · A Decoder-Only Transformer</title>
-  <link rel="stylesheet" href="../../../docform/css/tokens.css">
-  <link rel="stylesheet" href="../../../docform/css/base.css">
-  <link rel="stylesheet" href="../../../docform/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="../../../docform/css/roles.css">
-  <link rel="stylesheet" href="../../../docform/css/nav.css">
-  <link rel="stylesheet" href="../../../docform/css/theme.css">
-  <link rel="stylesheet" href="../../../docform/css/controls.css">
-  <link rel="stylesheet" href="../../../docform/css/math.css">
-  <link rel="stylesheet" href="../../../docform/css/blocks.css">
-  <link rel="stylesheet" href="../../../docform/css/tooltip.css">
-  <link rel="stylesheet" href="../../../docform/css/refs.css">
-  <link rel="stylesheet" href="../../../docform/css/notes.css">
-  <link rel="stylesheet" href="../../../docform/css/search.css">
-  <link rel="stylesheet" href="../../../docform/css/chart.css">
-  <link rel="stylesheet" href="../../../docform/css/results.css">
-  <link rel="stylesheet" href="../../../docform/css/params.css">
-  <link rel="stylesheet" href="../../../docform/css/tabs.css">
-  <link rel="stylesheet" href="../../../docform/css/highlight.css">
-  <link rel="stylesheet" href="../../../docform/css/code.css">
-  <link rel="stylesheet" href="../../../docform/css/bubble.css">
-  <link rel="stylesheet" href="../../../docform/css/reveal.css">
-  <link rel="stylesheet" href="../../../docform/css/zoom.css">
-  <link rel="stylesheet" href="../../../docform/css/zoomtools.css">
-  <script src="../../../docform/js/theme.js"></script>
+  <link rel="stylesheet" href="../../../docform/docform.css">
+  <script src="../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"math": true, "chart": true, "results": true, "parameters": true, "selection": true,
+        "tabs": true, "code": true, "peek-bubbles": true, "split-views": true, "reveals": true,
+        "zoom": true, "zoom-tools": true},
+      "parameterScopes": {
+        "decoder": {
+          "temperature": {"type": "range", "min": 0.5, "max": 2, "step": 0.1, "default": 1},
+          "rule": {"type": "select", "choices": [
+            {"value": "greedy", "label": "Greedy"},
+            {"value": "top2", "label": "Top-2 sampling"},
+            {"value": "sample", "label": "Full sampling"}
+          ]},
+          "block_period": {"type": "toggle"}
+        },
+        "comparison": {"temperature": {"type": "range", "min": 1, "max": 3, "step": 0.25, "default": 2}}
+      }
+    }
+  </script>
+  <script src="../../../docform/docform.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
     <div data-df-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="df-page" data-df-parameter-scope="decoder">
     <header>
       <h1>Next-token prediction</h1>
       <p>Carry the last position's attention output through the rest of the decoder. Then compare the possible
@@ -105,13 +103,13 @@
       The attention weights and hidden state stay fixed during this comparison.</p>
 
     <div class="df-params">
-      <div data-df-param="temperature" data-df-label="Output temperature" data-df-min="0.5" data-df-max="2" data-df-step="0.1" data-df-value="1" data-df-digits="1" data-df-role="output"></div>
+      <div data-df-parameter="temperature" data-df-parameter-label="Output temperature" data-df-role="output"></div>
     </div>
     <p>At temperature <strong data-df-bind="temperature">1.0</strong>, the probability of <code>late</code> is
       <output id="late-probability" aria-live="polite">46.84%</output>.</p>
 
     <figure id="temperature-plot">
-      <div data-df-chart="line" data-df-x-label="Output temperature" data-df-y-label="Probability (%)">
+      <div id="temperature-chart" data-df-chart="line" data-df-x-label="Output temperature" data-df-y-label="Probability (%)">
         <table>
           <thead><tr><th>Temperature</th><th data-df-role="output">late</th><th data-df-role="context">here</th><th data-df-role="input">. (period)</th></tr></thead>
           <tbody>
@@ -125,6 +123,16 @@
       <figcaption>Probabilities for three vocabulary items at four temperatures. All six logits enter softmax.</figcaption>
     </figure>
 
+    <div class="df-params" data-df-parameter-scope="comparison">
+      <p>Try a second temperature to compare the probability of <code>late</code> with the live chart.</p>
+      <div data-df-parameter="temperature" data-df-scope="decoder" data-df-parameter-label="Decoder temperature"
+        data-df-parameter-digits="2" data-df-role="output"></div>
+      <div data-df-parameter="temperature" data-df-parameter-label="Comparison temperature"></div>
+      <p>At temperature <strong data-df-bind="temperature">2.00</strong>, the probability is
+        <output id="comparison-probability" aria-live="polite">32.20%</output>.</p>
+      <button type="button" class="df-preset" id="reset-comparison" hidden>Reset comparison</button>
+    </div>
+
     <div class="df-callout" data-df-role="output">
       <span class="df-callout-title">Generate one token</span>
       Greedy decoding takes <code>late</code>, the highest-probability token. Sampling can also choose
@@ -133,21 +141,17 @@
 
     <h3 id="decoding-setup">Choose a decoding setup</h3>
     <p>A decoding setup combines a temperature, a rule for choosing the next token, and optional token blocking.
-      Pick a named setup or adjust each control. Both temperature sliders share one value.</p>
+      Pick a named setup or adjust the controls. The two decoder temperature sliders share one value.</p>
 
     <div class="df-params">
       <div class="df-presets" role="group" aria-label="Decoding setups">
         <button data-df-preset='{"temperature": 1, "rule": "greedy", "block_period": false}'>Deterministic</button>
         <button data-df-preset='{"temperature": 0.7, "rule": "top2", "block_period": true}'>Focused</button>
         <button data-df-preset='{"temperature": 1.5, "rule": "sample", "block_period": false}'>Exploratory</button>
+        <button type="button" class="df-preset" id="reset-decoder" hidden>Reset decoder</button>
       </div>
-      <div data-df-param="temperature" data-df-label="Output temperature" data-df-min="0.5" data-df-max="2" data-df-step="0.1" data-df-value="1" data-df-digits="1" data-df-role="output"></div>
-      <div data-df-param="rule" data-df-type="select" data-df-label="Selection rule" data-df-value="greedy" data-df-role="output">
-        <option value="greedy">Greedy</option>
-        <option value="top2">Top-2 sampling</option>
-        <option value="sample">Full sampling</option>
-      </div>
-      <div data-df-param="block_period" data-df-type="toggle" data-df-label="Block the period" data-df-value="false" data-df-role="input"></div>
+      <div data-df-parameter="rule" data-df-parameter-label="Selection rule" data-df-role="output"></div>
+      <div data-df-parameter="block_period" data-df-parameter-label="Block the period" data-df-role="input"></div>
     </div>
     <p>With the period <strong data-df-template="{{block_period ? 'blocked' : 'allowed'}}">allowed</strong>,
       <output id="decode-result" aria-live="polite">greedy decoding always appends late</output>.</p>
@@ -250,27 +254,6 @@ def probabilities(logits, temperature=1):
     <div data-df-bibliography></div>
   </main>
 
-  <script src="../assets/site.js" data-df-site></script>
-  <script src="../../../docform/js/core.js"></script>
-  <script src="../../../docform/vendor/katex/katex.min.js"></script>
-  <script src="../../../docform/js/roles.js"></script>
-  <script src="../../../docform/js/refs.js"></script>
-  <script src="../../../docform/js/nav.js"></script>
-  <script src="../../../docform/js/controls.js"></script>
-  <script src="../../../docform/js/math.js"></script>
-  <script src="../../../docform/js/tooltip.js"></script>
-  <script src="../../../docform/js/notes.js"></script>
-  <script src="../../../docform/js/search.js"></script>
-  <script src="../../../docform/js/chart.js"></script>
-  <script src="../../../docform/js/results.js"></script>
-  <script src="../../../docform/js/params.js"></script>
-  <script src="../../../docform/js/highlight.js"></script>
-  <script src="../../../docform/js/tabs.js"></script>
-  <script src="../../../docform/js/code.js"></script>
-  <script src="../../../docform/js/bubble.js"></script>
-  <script src="../../../docform/js/reveal.js"></script>
-  <script src="../../../docform/js/zoom.js"></script>
-  <script src="../../../docform/js/zoomtools.js"></script>
   <script src="../assets/model.js"></script>
   <script src="../assets/prediction.js"></script>
 </body>

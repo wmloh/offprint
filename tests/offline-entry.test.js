@@ -212,6 +212,8 @@ test('mixed features load all shipped assets and register data before author set
   assert.equal(p.html.getAttribute('data-df-theme'), 'light');
   p.DF.setup(DF => {
     assert.match(DF.dataset.get('runs').text, /r01,2026-11-14/);
+    assert.equal(DF.data.source('runs').snapshot().value[0].run, 'r01');
+    assert.equal(DF.data.define('setup-records', { type: 'value', value: [{ id: 'sample' }] }).snapshot().revision, 0);
     assert.equal(DF.dataset.add('readings', 'x,y\n1,2', 'csv').name, 'readings');
     assert.equal(typeof DF.anim, 'function');
     assert.equal(typeof DF.chart.mount, 'function');
@@ -219,9 +221,37 @@ test('mixed features load all shipped assets and register data before author set
   await p.start();
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
   assert.equal(p.DF.dataset.get('readings').text, 'x,y\n1,2');
+  assert.deepEqual(Array.from(p.DF.data.names()), ['runs', 'setup-records']);
   assert.equal(new Set(p.loads).size, p.loads.length);
   assert.ok(p.loads.includes('docform/js/scenarios.js'));
   assert.ok(p.loads.includes('docform/js/zoomtools.js'));
+});
+
+test('offline parameter scopes merge before setup and publish their first snapshot before ready', async () => {
+  const p = page({
+    site: { profile: 'none', features: { parameters: true }, parameterScopes: {
+      decoder: { temperature: { type: 'range', min: 0.5, max: 2, default: 1 }, flag: { type: 'toggle' } }
+    } },
+    config: { parameterScopes: { decoder: { temperature: { default: 1.5 } } } }
+  });
+  const order = [];
+  p.DF.setup(DF => {
+    const decoder = DF.parameters.scope('decoder');
+    order.push('setup');
+    assert.deepEqual({ ...decoder.snapshot() }, { temperature: 1.5, flag: false });
+    assert.equal(decoder.set('temperature', 0.5), true);
+    DF.parameters.define('experiment', { total: { type: 'number', default: 2 } });
+    decoder.subscribe((state, meta) => order.push([state.temperature, meta.origin]), { immediate: true });
+  });
+  p.DF.ready(DF => {
+    order.push('ready');
+    assert.equal(DF.parameters.scope('experiment').get('total'), 2);
+  });
+  await p.start();
+  assert.deepEqual(order, ['setup', [0.5, 'init'], 'ready']);
+  assert.deepEqual(p.events, []);
+  assert.equal(p.DF.parameters.scope('decoder').reset(), true);
+  assert.equal(p.DF.parameters.scope('decoder').get('temperature'), 1.5);
 });
 
 test('selection groups merge across configuration and an authored group is available in setup', async () => {

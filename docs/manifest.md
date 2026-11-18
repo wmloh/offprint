@@ -24,6 +24,7 @@ window.DocFormSite = {
 | `features` | Enable or disable named features with booleans. A page can override these choices in its `data-df-page` JSON block. |
 | `options` | Configure features by name, for example `options.tooltips.terms` for glossary entries or `options.citations.entries` for bibliography entries. |
 | `selectionGroups` | Named starting keys and optional persistence for [linked controls](components.md#linked-selection). A page can override each group’s settings. |
+| `parameterScopes` | Named sets of [parameter definitions](components.md#parameters-and-presets) shared by sliders, dropdowns, switches, and presets. |
 | `assets.search.output` | Location of the generated search index, relative to the manifest. |
 | `assets.data` | Map of names to wrapped data descriptors, each with a relative `output` path and optional `source` and `type`. |
 

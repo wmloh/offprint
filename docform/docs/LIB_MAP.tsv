@@ -28,14 +28,14 @@ Scroll reveals	Reveal marked blocks once as they enter view	interact/reveals.md
 Split views	Lay out responsive panes with staggered reveals	interact/split-views.md
 Figure zoom	Move a live figure into a full-screen dialog	interact/figure-zoom.md
 Zoom tools	Magnify, point, draw, and measure in the zoom dialog	interact/zoom-tools.md
-Parameters	Bind sliders, choices, switches, and presets to page content	interact/parameters.md
+Parameters	Share parameter definitions and connect scoped controls, presets, bindings, and callbacks	interact/parameters.md
 Linked selection	Synchronize keyed controls, charts, and passive views	interact/linked-highlighting.md
 Worked-example steppers	Step through an ordered example and its linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
 SVG charts	Draw line, bar, and scatter charts with interactive views	data/charts.md
 Concept tables	Style semantic tables for text comparisons	data/concept-tables.md
 Results tables	Sort, shade, classify, and filter result rows	data/results-tables.md
-Data blocks	Render named CSV, JSON, and YAML as tables, code, or trees	data/data-blocks.md
+Named sources and data views	Share CSV, JSON, YAML, or typed values across mapped views and transforms	data/data-blocks.md
 Data file wrapper	Convert local data files into offline registration scripts	data/file-wrapper.md
 Data trees	Explore nested records and lists with collapsible branches	data/data-trees.md
-File dropzones	Read local files and replace data, charts, or results tables	data/dropzones.md
+File dropzones	Read local files for standalone, view-local, or shared replacement	data/dropzones.md

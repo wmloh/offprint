@@ -16,6 +16,8 @@
   var NAMES = { csv: 'CSV', json: 'JSON', yaml: 'YAML' };
   var EXTENSIONS = { csv: ['.csv'], json: ['.json'], yaml: ['.yaml', '.yml'] };
   var COPIED = ['data-df-view', 'data-df-max-rows', 'data-df-max-size', 'data-df-tree-depth'];
+  var runtime = DocForm._dataViews;
+  var legacyDestinations = new WeakMap();
 
   // "csv json" or "csv, yaml" -> types in that order; empty or missing means all three.
   function accepted(value) {
@@ -113,11 +115,65 @@
     return inner && data.isBlock(inner) ? inner : null;
   }
 
+  function controls(api, kind, convert) {
+    var access = runtime.access(api);
+    if (!access) return null;
+    return Object.assign({}, access, {
+      kind: kind,
+      feed: function (entry, limits, zone, ticket) {
+        var made = convert(entry, limits);
+        if (!access.update(made.input, zone, ticket)) {
+          throw access.error() || new Error('The destination rejected this file.');
+        }
+        return made.note || '';
+      },
+      restore: function (zone, ticket) {
+        if (!access.reset(zone, ticket)) throw access.error() || new Error('The destination could not reset.');
+      }
+    });
+  }
+
+  function plotNote(made) {
+    return made.total !== null && made.rows < made.total ?
+      'Plotting the first ' + made.rows.toLocaleString('en-US') + ' of ' + made.total.toLocaleString('en-US') + ' rows.' : '';
+  }
+
+  function legacyDestination(el, makeLink) {
+    if (legacyDestinations.has(el)) return legacyDestinations.get(el);
+    var linked = makeLink();
+    if (!linked) return null;
+    var sequence = 0;
+    var owner = null;
+    var managed = Object.assign({}, linked, {
+      reserve: function () { return ++sequence; },
+      current: function (ticket) { return ticket === sequence; },
+      owns: function (zone) { return owner === zone; },
+      feed: function (entry, limits, zone) {
+        var parsed = data.parse(entry.text, entry.type);
+        if (!parsed) throw new Error('Invalid file.');
+        var note = linked.feed(entry, limits);
+        owner = zone;
+        return note;
+      },
+      restore: function (zone) {
+        if (owner === zone) { linked.restore(); owner = null; }
+      }
+    });
+    legacyDestinations.set(el, managed);
+    return managed;
+  }
+
   // How to send entries to a target and take them back: { kind, feed(entry, limits) -> message, restore() }.
   // feed throws when the data cannot be shown there. template is a static results table's header, read at load.
   function link(el, template) {
     var api = chartOf(el);
     if (api) {
+      var managedChart = controls(api, 'chart', function (entry, limits) {
+        var made = DocForm.chart._upload(api, entry, limits.maxRows) ||
+          chartSpec(data.parse(entry.text, entry.type), DocForm.chart._baseline(api), limits.maxRows);
+        return { input: made.spec, note: plotNote(made) };
+      });
+      if (managedChart) return managedChart;
       var original;
       return {
         kind: 'chart',
@@ -127,8 +183,7 @@
           var errors = DocForm.chart.validate(made.spec);
           if (errors.length) throw new Error(errors.join(' '));
           api.update(made.spec);
-          return made.total !== null && made.rows < made.total ?
-            'Plotting the first ' + made.rows.toLocaleString('en-US') + ' of ' + made.total.toLocaleString('en-US') + ' rows.' : '';
+          return plotNote(made);
         },
         restore: function () {
           if (original !== undefined) api.update(original);
@@ -136,6 +191,8 @@
         }
       };
     }
+    var view = DocForm.dataView.get(el);
+    if (view) return controls(view, 'data', function (entry) { return { input: entry }; });
     var block = blockOf(el);
     if (block) {
       return {
@@ -145,6 +202,10 @@
       };
     }
     var table = el.tagName === 'TABLE' ? el : el.querySelector && el.querySelector('table[data-df-results]');
+    var results = table && DocForm.results && DocForm.results.get(table);
+    if (results) return controls(results, 'table', function (entry) {
+      return { input: DocForm.results._upload(entry) };
+    });
     if (table && template) {
       var host = null;
       return {
@@ -182,19 +243,22 @@
 
   function setup(zone) {
     var accept = accepted(DocForm.data(zone, 'accept', ''));
-    var caps = data.limits(zone);
+    var caps = data.limits(zone, DocForm._dataSource.options('dropzone', zone));
     var targetId = DocForm.data(zone, 'target', '').trim();
+    var sourceName = DocForm.data(zone, 'target-source', '').trim();
+    var hasTarget = zone.hasAttribute('data-df-target');
+    var hasSource = zone.hasAttribute('data-df-target-source');
+    var invalid = hasTarget && hasSource || hasTarget && !targetId || hasSource && !sourceName;
+    if (invalid) runtime.issue('dropzone', zone, 'Choose one valid file destination.');
     var target = null;
     var template = null;
-    if (targetId) {
+    if (!invalid && targetId) {
       target = document.getElementById(targetId);
       if (!target) DocForm.warnOnce('dropzone-target:' + targetId, 'No element has the id "' + targetId + '" for this dropzone.', zone);
       var table = target && (target.tagName === 'TABLE' ? target : target.querySelector('table[data-df-results]'));
       if (table && !table.closest('.df-data')) {
         // A results table's header is read before results.js adds its sort buttons and rule notes.
-        if (table.classList.contains('df-results')) {
-          DocForm.warnOnce('dropzone-order', 'Load dropzone.js before results.js so a dropzone can refill a results table.', zone);
-        } else if (table.tHead) {
+        if (!table.classList.contains('df-results') && table.tHead) {
           template = table.cloneNode(true);
           Array.prototype.slice.call(template.tBodies).forEach(function (b) { b.remove(); });
         }
@@ -235,6 +299,7 @@
     var output = null;
     var linked = null;
     var reading = 0;
+    var request;
 
     var say = function (text, isError, canReset) {
       status.hidden = !text;
@@ -243,41 +308,73 @@
       reset.hidden = !canReset;
     };
 
+    function owns() {
+      return linked ? linked.owns(zone) : !!output;
+    }
+    function destination() {
+      if (invalid) throw new Error('Choose one valid file destination.');
+      if (hasSource) {
+        var source = DocForm.data.source(sourceName);
+        if (!source) throw new Error('No data source named "' + sourceName + '" is registered.');
+        return controls(source, 'source', function (entry) { return { input: entry }; });
+      }
+      if (hasTarget) {
+        var result = target && link(target, template);
+        if (!result) throw new Error('The file target needs a chart, data view, or results table.');
+        return result.reserve ? result : legacyDestination(target, function () { return result; });
+      }
+      return null;
+    }
     var clear = function () {
-      if (linked && zone.classList.contains('is-loaded')) linked.restore();
+      reading++;
+      if (linked && (owns() || request && linked.current(request.ticket))) {
+        linked.restore(zone, linked.reserve());
+      }
+      request = null;
       if (output) output.remove();
       output = null;
       zone.classList.remove('is-loaded');
     };
 
-    var load = function (file) {
+    var load = function (files) {
+      var id = ++reading;
+      try { linked = destination(); }
+      catch (error) {
+        runtime.issue('dropzone', zone, error.message);
+        return say(error.message, true, false);
+      }
+      var ticket = linked ? linked.reserve() : id;
+      request = { ticket: ticket };
+      if (files.length !== 1) return say('Choose one file at a time.', true, owns());
+      var file = files[0];
       var verdict = check(file, accept, caps.maxBytes);
-      if (verdict.error) return say(verdict.error, true, zone.classList.contains('is-loaded'));
-      var ticket = ++reading;
+      if (verdict.error) return say(verdict.error, true, owns());
+      say('Reading "' + file.name + '"…', false, true);
+      function current() {
+        if (id !== reading) return false;
+        if (!linked || linked.current(ticket)) return true;
+        say('This file was superseded by a newer change.', false, owns());
+        return false;
+      }
       var reader = new FileReader();
       reader.onerror = function () {
-        if (ticket === reading) say('Could not read "' + file.name + '".', true, zone.classList.contains('is-loaded'));
+        if (current()) say('Could not read "' + file.name + '".', true, owns());
       };
       reader.onload = function () {
-        if (ticket !== reading) return;
+        if (!current()) return;
         var entry = { name: file.name, type: verdict.type, text: String(reader.result) };
-        // The target is looked up on first use, after the chart and data modules have drawn it.
-        if (target && !linked) linked = link(target, template);
-        if (target && !linked) {
-          DocForm.warnOnce('dropzone-kind:' + targetId, 'The dropzone target "' + targetId + '" is not a chart, data block, or results table.', zone);
-          return say('This file box has nowhere to show the file.', true, false);
-        }
         var note = '';
         if (linked) {
           try {
-            note = linked.feed(entry, caps);
+            note = linked.feed(entry, caps, zone, ticket);
           } catch (e) {
             var m = String(e.message);
-            return say('Could not show "' + file.name + '": ' + m.charAt(0).toLowerCase() + m.slice(1), true, zone.classList.contains('is-loaded'));
+            return say('Could not show "' + file.name + '": ' + m.charAt(0).toLowerCase() + m.slice(1), true, owns());
           }
         } else {
           var next = make('div', 'df-dropzone-output');
           COPIED.forEach(function (a) { if (zone.hasAttribute(a)) next.setAttribute(a, zone.getAttribute(a)); });
+          if (zone.hasAttribute('data-df-data-view')) next.setAttribute('data-df-view', zone.getAttribute('data-df-data-view'));
           if (!next.hasAttribute('data-df-max-size')) next.setAttribute('data-df-max-size', String(caps.maxBytes));
           if (output) output.replaceWith(next);
           else zone.appendChild(next);
@@ -288,17 +385,18 @@
         say('Showing "' + file.name + '" (' + data.formatSize(file.size) + ')' + (linked ? ' in place of the page\'s data' : '') +
           '.' + (note ? ' ' + note : ''), false, true);
       };
-      reader.readAsText(file);
+      try { reader.readAsText(file); }
+      catch (error) { if (current()) say(error.message, true, owns()); }
     };
 
     choose.addEventListener('click', function () { input.click(); });
     input.addEventListener('change', function () {
-      if (input.files && input.files[0]) load(input.files[0]);
+      if (input.files && input.files.length) load(input.files);
       input.value = '';
     });
     reset.addEventListener('click', function () {
-      reading++;
-      clear();
+      try { clear(); }
+      catch (error) { say(error.message, true, owns()); return; }
       say('', false, false);
       choose.focus();
     });
@@ -325,8 +423,7 @@
       zone.classList.remove('is-dragging');
       var files = event.dataTransfer.files;
       if (!files || !files.length) return;
-      if (files.length > 1) return say('Drop one file at a time.', true, zone.classList.contains('is-loaded'));
-      load(files[0]);
+      load(files);
     });
   }
 

@@ -15,10 +15,12 @@
   var started = false;
   var transactions = [];
   var committing = false;
+  var preparingData = false;
   var selectionScans = [];
   var initialItems = null;
 
   function transaction(fn) {
+    if (preparingData) throw new Error('Data transforms cannot change controller state.');
     transactions.push(fn);
     if (committing) return true;
     committing = true;
@@ -37,11 +39,17 @@
     else warnOnce(feature + ':' + (host && host.id) + ':' + message, message, host || undefined);
   }
 
-  function signal(feature, host, snapshot) {
+  function notifyNow(fn) {
+    if (committing) fn();
+    else transaction(fn);
+  }
+
+  function signal(feature, host, snapshot, options) {
+    options = options || {};
     var callbacks = new Set();
     function notify(fn, current, meta) {
       try { fn(current, meta); }
-      catch (error) { issue(feature, host, 'Selection subscriber failed: ' + String(error), 'Check the subscriber callback.'); }
+      catch (error) { issue(feature, host, 'Subscriber failed: ' + String(error), 'Check the subscriber callback.'); }
     }
     return {
       subscribe: function (fn, options) {
@@ -49,9 +57,7 @@
         var listener = { fn: fn };
         callbacks.add(listener);
         if (options && options.immediate && snapshot() !== null) {
-          var immediate = function () { notify(fn, snapshot(), Object.freeze({ previous: null, origin: 'init' })); };
-          if (committing) immediate();
-          else transaction(immediate);
+          notifyNow(function () { notify(fn, snapshot(), Object.freeze({ previous: null, origin: 'init' })); });
         }
         return function () { callbacks.delete(listener); };
       },
@@ -60,9 +66,14 @@
         Array.from(callbacks).forEach(function (listener) {
           if (callbacks.has(listener)) notify(listener.fn, current, meta);
         });
+        if (typeof root.CustomEvent !== 'function' || typeof document === 'undefined') return;
         var detail = Object.assign({ current: current }, meta);
-        if (group !== undefined) detail.group = group;
-        (host || document).dispatchEvent(new root.CustomEvent('df:' + feature + ':change', {
+        if (options.eventState) {
+          detail.current = options.eventState(current);
+          detail.previous = previous === null ? null : options.eventState(previous);
+        }
+        if (group !== undefined) detail[options.identity || 'group'] = group;
+        (host || document).dispatchEvent(new root.CustomEvent('df:' + feature + ':' + (options.action || 'change'), {
           bubbles: Boolean(host), detail: Object.freeze(detail)
         }));
       }
@@ -71,6 +82,115 @@
 
   function selectionKey(value) {
     return typeof value === 'string' && value.trim() || null;
+  }
+
+  function dataIssue(feature, target, message) {
+    if (boot) boot.report('data-input', feature, target, message, 'Check the source, mapping, and view limits.', message);
+    else warnOnce(feature + ':' + message, message, target);
+  }
+
+  function transformData(fn) {
+    var previous = preparingData;
+    preparingData = true;
+    try { return fn(); } finally { preparingData = previous; }
+  }
+
+  function immutable(value) {
+    if (value && typeof value === 'object') {
+      Object.values(value).forEach(immutable);
+      Object.freeze(value);
+    }
+    return value;
+  }
+
+  function destination(api, update, reset) {
+    var sequence = 0;
+    var owner = null;
+    var error = null;
+    function mutate(input, origin, zone, ticket, clear) {
+      return transaction(function () {
+        if (ticket !== undefined && ticket !== sequence) return false;
+        if (zone && clear && owner !== zone) return true;
+        error = null;
+        var committed;
+        try { committed = clear ? reset() : update(input); }
+        catch (failure) { error = failure; return false; }
+        sequence++;
+        owner = zone && !clear ? zone : null;
+        if (committed) committed(origin);
+        return true;
+      });
+    }
+    api.update = function (input) { return mutate(input, 'api'); };
+    api.reset = function () { return mutate(null, 'reset', null, undefined, true); };
+    dataDestinations.set(api, {
+      reserve: function () { return ++sequence; },
+      current: function (ticket) { return sequence === ticket; },
+      owns: function (zone) { return owner === zone; },
+      update: function (input, zone, ticket) { return mutate(input, 'drop', zone, ticket); },
+      reset: function (zone, ticket) { return mutate(null, 'reset', zone, ticket, true); },
+      error: function () { return error; }
+    });
+  }
+
+  var dataDestinations = new WeakMap();
+
+  function viewController(feature, host, adapter, action) {
+    var base = null;
+    var local = false;
+    var state = null;
+    var api = { snapshot: function () { return state; } };
+    var events = signal(feature, host, api.snapshot, { action: action });
+    api.subscribe = events.subscribe;
+
+    function notify(next, origin, force) {
+      var previous = state;
+      state = immutable(next);
+      if (next === null || (!force && JSON.stringify(state) === JSON.stringify(previous))) return;
+      var current = state;
+      return function () { events.emit(current, previous, origin); };
+    }
+
+    function render(prepared, origin) {
+      adapter.render(prepared, origin);
+      return notify(adapter.snapshot(), origin, adapter.alwaysNotify);
+    }
+
+    destination(api, function (input) {
+      var prepared;
+      try { prepared = adapter.prepare(input); }
+      catch (error) { dataIssue(feature, host, error.message); throw error; }
+      adapter.render(prepared, 'local');
+      local = true;
+      return function (origin) {
+        var emission = notify(adapter.snapshot(), origin, adapter.alwaysNotify);
+        if (emission) emission();
+      };
+    }, function () {
+      if (!local && !adapter.resetReader) return;
+      local = false;
+      return render(base, 'reset');
+    });
+
+    return {
+      api: api,
+      baseline: function () { return base; },
+      change: function (origin) {
+        var emission = notify(adapter.snapshot(), origin);
+        if (emission) notifyNow(emission);
+      },
+      stage: function (prepared, origin) {
+        base = prepared;
+        if (!local) return render(prepared, origin);
+      },
+      start: function (prepared) {
+        var emission = this.stage(prepared, 'init');
+        if (emission) {
+          if (initialItems) initialItems.push(emission);
+          else notifyNow(emission);
+        }
+      }
+    };
   }
 
   function selectionFlag(el, name, feature) {
@@ -442,9 +562,16 @@
     termKey: termKey,
     copyText: copyText,
     warnOnce: warnOnce,
+    _dataViews: {
+      controller: viewController, destination: destination, issue: dataIssue, freeze: immutable,
+      transform: transformData,
+      access: function (api) { return dataDestinations.get(api); },
+      transaction: transaction, signal: signal, notify: notifyNow,
+      target: function (target) { return typeof target === 'string' ? document.getElementById(target) : target; }
+    },
     _items: {
       key: selectionKey, flag: selectionFlag, mode: selectionMode, issue: issue, signal: signal,
-      transaction: transaction, domain: itemDomain, controller: itemController, collect: collectItems,
+      transaction: transaction, notify: notifyNow, domain: itemDomain, controller: itemController, collect: collectItems,
       scan: function (feature, fn) { selectionScans.push({ feature: feature, fn: fn }); },
       target: function (target) { return typeof target === 'string' ? document.getElementById(target) : target; }
     }

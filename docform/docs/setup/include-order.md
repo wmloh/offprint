@@ -7,7 +7,7 @@ Synchronous `docform.js` in the head after the optional marked manifest and earl
 - Default `reading` roots: `base`, `blocks`, `theme`, `roles`, `navigation`, `controls`, `tooltips`, `references`, `citations`, `sidenotes`, `search`.
 - Other selectable features: `tokens`, `tags`, `callouts`, `concept-tables`, `math`, `selection`, `animation`, `parameters`, `code`, `tree`, `data`, `data-view`, `chart`, `dropzone`, `results`, `scenarios`, `tabs`, `cards`, `figure-steps`, `stepper`, `split-views`, `reveals`, `peek-bubbles`, `glossary`, `wide`, `zoom`, `zoom-tools`.
 - `features` maps IDs to booleans. Explicitly disabling a requirement prevents its dependents from starting. Examples: `citations` needs `tooltips`, `scenarios` needs `chart`, `data-view` and `dropzone` need `data`, and `zoom-tools` needs `zoom`.
-- Optional integrations activate when both features are selected. Choose `animation` with `figure-steps` for animated steps. Opt into `code`, `results`, or `tree` for the corresponding enhanced data view. References and sidenotes use tooltip previews when available.
+- Optional integrations activate when both features are selected. Choose `animation` with `figure-steps` for animated steps. Enable `data` alongside named-source charts, results, or scenarios. Opt into `code`, `results`, or `tree` for the corresponding enhanced raw data view. References and sidenotes use tooltip previews when available.
 
 ## Individual file includes
 
@@ -28,7 +28,7 @@ Paths below are relative to `docform/`. In HTML, prefix them with the path from 
 | Figure steps and zoom | `anim.css` and `anim.js` for an animated figure. `zoom.js` before `zoomtools.js`, with both stylesheets for presentation tools. |
 | Scenario comparisons | `chart.css` and `scenarios.css`. Load `chart.js` before `scenarios.js`. |
 | Data views | Load wrapped data and, for YAML, `vendor/js-yaml/js-yaml.min.js` before data-block initialization. Putting them before core works with either script placement above. Put `data.js` after core. Add CSS and JS for the enhanced views (`code`, `results`, `tree`). Their APIs must be available when the data block first draws. |
-| Dropzones | Load `data.js` before `dropzone.js`. For static results-table targets load `dropzone.js` before `results.js` to capture the author-supplied table header. |
+| Dropzones | Load `data.js` before `dropzone.js`. Include the module for the target view. |
 | Page scripts | Place scripts that call `DocForm.anim`, `DocForm.params`, or other feature APIs after the feature scripts. |
 
 [Offline setup](setup.md) · [Manifest](manifest.md)

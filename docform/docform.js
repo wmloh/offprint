@@ -27,7 +27,7 @@
     tooltips: { needs: ['base'], css: ['tooltip'], script: 'tooltip', api: 'tooltip' },
     selection: { needs: ['base'], css: ['highlight'], script: 'highlight', api: 'selection' },
     animation: { needs: ['base'], css: ['anim'], script: 'anim', api: 'anim' },
-    parameters: { needs: ['base'], css: ['params'], script: 'params', api: 'params' },
+    parameters: { needs: ['base'], css: ['params'], script: 'params', api: 'parameters' },
     code: { needs: ['base'], css: ['code'], script: 'code', api: 'code' },
     tree: { needs: ['base'], css: ['tree'], script: 'tree', api: 'tree' },
     data: { vendor: ['vendor/js-yaml/js-yaml.min.js', 'jsyaml'], script: 'data', api: 'dataset' },
@@ -442,7 +442,7 @@
       for (var name of Object.keys(DF.site.assets.data)) {
         var url = DF.site.assets.data[name].output;
         if (!await load(url, false)) assetFailure('data', url);
-        else if (!DF.dataset.get(name)) report('data-wrapper', 'data', url,
+        else if (!boot.registerData(name)) report('data-wrapper', 'data', url,
           'Data wrapper did not register "' + name + '".', 'Regenerate the classic data wrapper with that name.', name);
       }
       try { boot.readData(); } catch (error) { boot.moduleFailed('data', error); }
@@ -450,6 +450,7 @@
     boot.prepareSelection();
     setupClosed = true;
     setup.splice(0).forEach(function (callback) { run('setup', callback); });
+    boot.setupComplete = true;
     boot.initialize();
     after.forEach(function (item) {
       try { item.fn(); } catch (error) { boot.moduleFailed(item.name, error); }

@@ -13,19 +13,23 @@
     return cell.textContent.trim().replace(/\s+/g, ' ');
   }
 
-  var MODES = { '': 'single', configurations: 'configurations' };
+  var MODES = { '': 'single', single: 'single', configurations: 'configurations' };
 
   function read(table) {
-    var mode = MODES[(table.getAttribute('data-df-scenarios') || '').trim()];
-    if (!mode) return null;
+    var requested = (table.getAttribute('data-df-scenarios') || '').trim();
+    if (!Object.hasOwn(MODES, requested)) return null;
+    var mode = MODES[requested];
     var heads = DocForm.all(':scope > thead > tr', table);
     if (heads.length !== 1) return null;
     var columns = Array.from(heads[0].cells);
     var names = columns.slice(2).map(text);
+    var keys = columns.slice(2).map(function (cell) {
+      return (cell.getAttribute('data-df-key') ?? text(cell)).trim();
+    });
     var rows = DocForm.all(':scope > tbody > tr', table);
     var conditions = [];
     var groups = new Map();
-    if (table.tFoot || names.length < 2 || names.includes('') || new Set(names).size !== names.length) return null;
+    if (table.tFoot || names.length < 2 || names.includes('') || keys.includes('') || new Set(keys).size !== keys.length) return null;
     if (columns.some(function (cell) { return cell.tagName !== 'TH' || cell.colSpan !== 1 || cell.rowSpan !== 1; })) return null;
 
     for (var row of rows) {
@@ -59,13 +63,13 @@
     var variants = names.slice(1).map(function (name, i) {
       var index = i + 1;
       var changed = conditions.filter(function (condition) { return condition.values[index] !== condition.values[0]; });
-      return { name: name, index: index, changes: changed };
+      return { key: keys[index], name: name, index: index, changes: changed };
     });
     var valid = function (variant) {
       return mode === 'configurations' ? variant.changes.length > 0 : variant.changes.length === 1;
     };
     if (!groups.size || !variants.every(valid)) return null;
-    return { mode: mode, columns: columns, rows: rows, baseline: names[0], groups: groups, variants: variants };
+    return { mode: mode, columns: columns, rows: rows, baseline: names[0], baselineKey: keys[0], groups: groups, variants: variants };
   }
 
   function element(tag, parent, content) {
@@ -83,13 +87,7 @@
     return measure.name + ' changed from ' + withUnit(measure, measure.values[0]) + ' to ' + withUnit(measure, measure.values[index]) + '.';
   }
 
-  function setup(table) {
-    var model = read(table);
-    if (!model) {
-      DocForm.warnOnce('scenarios:markup', 'A comparison needs a measure column, a unit column, a baseline, and named variants with numeric outcomes. Each variant must change exactly one marked condition, or at least one with data-df-scenarios="configurations".', table);
-      return;
-    }
-
+  function draw(table, model, key, onChoose, onReset) {
     var visual = document.createElement('div');
     visual.className = 'df-scenarios-visual';
     var controls = element('div', visual);
@@ -115,8 +113,10 @@
     var plots = Array.from(model.groups.values(), function (group) {
       return { group: group, host: element('div', visual) };
     });
+    var selected;
 
     function show(variant) {
+      selected = variant;
       var index = variant.index;
       select.value = index;
       reset.setAttribute('aria-disabled', String(index === 1));
@@ -149,7 +149,7 @@
           changedText.push(changeText(outcome, index));
           outcome.cells[selectedColumn].setAttribute('data-df-scenario-difference', '');
         });
-        DocForm.chart(plot.host, {
+        (DocForm.chart._embedded || DocForm.chart)(plot.host, {
           type: 'bar',
           title: group.unit ? 'Outcomes in ' + group.unit : 'Unitless outcomes',
           categories: group.categories,
@@ -162,8 +162,8 @@
             max: group.min === group.max ? 1 : group.max
           },
           series: [
-            { name: model.baseline, data: group.outcomes.map(function (outcome) { return outcome.numbers[0]; }) },
-            { name: variant.name, data: group.outcomes.map(function (outcome) { return outcome.numbers[index]; }) }
+            { key: model.baselineKey, name: model.baseline, data: group.outcomes.map(function (outcome) { return outcome.numbers[0]; }) },
+            { key: variant.key, name: variant.name, data: group.outcomes.map(function (outcome) { return outcome.numbers[index]; }) }
           ]
         });
       });
@@ -174,14 +174,148 @@
 
     select.addEventListener('change', function () {
       var variant = model.variants[select.selectedIndex];
-      if (variant) show(variant);
+      if (variant) {
+        if (onChoose) onChoose(variant);
+        else show(variant);
+      }
     });
     reset.addEventListener('click', function () {
-      if (select.selectedIndex !== 0) show(model.variants[0]);
+      if (select.selectedIndex !== 0) {
+        if (onReset) onReset(model.variants[0]);
+        else show(model.variants[0]);
+      }
     });
     table.before(visual);
-    show(model.variants[0]);
+    show(model.variants.find(function (variant) { return variant.key === key; }) || model.variants[0]);
+    return {
+      show: show,
+      remove: function () {
+        plots.forEach(function (plot) { DocForm.chart._remove(plot.host); });
+        visual.remove();
+      },
+      snapshot: function () {
+        return { key: selected.key, label: selected.name, index: selected.index - 1, total: model.variants.length };
+      }
+    };
   }
+
+  var EXPLANATION = 'A comparison needs a measure column, a unit column, a baseline, and named variants with numeric outcomes. Each variant must change exactly one marked condition, or at least one with data-df-scenarios="configurations".';
+  var scenarios = new WeakMap();
+
+  function mapTable(records, mapping, mode) {
+    var data = DocForm._dataSource;
+    if (!data || !mapping || !Array.isArray(mapping.variantKeys) || !mapping.variantKeys.length ||
+        !Array.isArray(mapping.conditions) || !Array.isArray(mapping.outcomes) || !mapping.outcomes.length ||
+        !Object.hasOwn(MODES, mode)) throw new Error(EXPLANATION);
+    var features = mapping.conditions.concat(mapping.outcomes);
+    var fields = data.fields(records, [mapping.recordKey].concat(features.map(function (field) { return field && field.field; })));
+    var byKey = new Map();
+    records.forEach(function (record) {
+      var key = data.key(record[fields[0]]);
+      if (!key || byKey.has(key)) throw new Error('Scenario records need unique nonempty keys.');
+      byKey.set(key, record);
+    });
+    var keys = [mapping.baselineKey].concat(mapping.variantKeys).map(data.key);
+    if (new Set(keys).size !== keys.length || keys.some(function (key) { return !byKey.has(key); })) {
+      throw new Error('Every baseline and variant key must identify a distinct record.');
+    }
+    var table = document.createElement('table');
+    table.setAttribute('data-df-scenarios', mode);
+    var header = table.createTHead().insertRow();
+    element('th', header, 'Measure');
+    element('th', header, 'Unit');
+    keys.forEach(function (key) {
+      var label = mapping.labels && Object.hasOwn(mapping.labels, key) ? mapping.labels[key] : key;
+      if (typeof label !== 'string' || !label.trim()) throw new Error('Use a nonempty scenario label.');
+      element('th', header, label).setAttribute('data-df-key', key);
+    });
+    var body = table.createTBody();
+    features.forEach(function (field, i) {
+      if ((field.label !== undefined && typeof field.label !== 'string') ||
+          (field.unit !== undefined && typeof field.unit !== 'string')) throw new Error('Scenario labels and units must be text.');
+      var row = body.insertRow();
+      if (i < mapping.conditions.length) row.setAttribute('data-df-condition', '');
+      element('th', row, field.label ?? fields[i + 1]).setAttribute('scope', 'row');
+      element('td', row, field.unit);
+      keys.forEach(function (key) {
+        var value = byKey.get(key)[fields[i + 1]];
+        element('td', row, value === null ? '' : String(value));
+      });
+    });
+    return { table: table, model: read(table) };
+  }
+
+  function mount(target, instance) {
+    var runtime = DocForm._dataViews;
+    var table = runtime.target(target);
+    if (!table || table.tagName !== 'TABLE') return null;
+    if (scenarios.has(table)) return scenarios.get(table);
+    var data = DocForm._dataSource;
+    var named = table.getAttribute('data-df-source') !== null;
+    if (named && !data) { runtime.issue('scenarios', table, 'Enable data to use a named scenario source.'); return null; }
+    var options = data ? data.options('scenarios', table, instance) : instance || {};
+    var mode = table.getAttribute('data-df-scenarios') || options.mode || '';
+    var caps = data ? DocForm.dataset.limits(table, options) : null;
+    var original = { model: read(table), sections: [table.tHead].concat(Array.from(table.tBodies)).filter(Boolean) };
+    var current = original;
+    var visual;
+    function prepare(records, mapping, kind) {
+      if (!Array.isArray(records) || records.length > caps.maxRows) throw new Error('Scenarios need records within the row limit.');
+      var result = mapTable(records, mapping, kind);
+      if (!result.model) throw new Error(EXPLANATION);
+      result.sections = [result.table.tHead].concat(Array.from(result.table.tBodies));
+      return result;
+    }
+    function choose(variant, origin) {
+      return runtime.transaction(function () {
+        if (!visual || !current.model.variants.includes(variant)) return false;
+        visual.show(variant);
+        controller.change(origin);
+        return true;
+      });
+    }
+    var controller = runtime.controller('scenarios', table, {
+      prepare: function (input) {
+        if (!data) throw new Error('Enable data to replace scenario records.');
+        var value = data.input({ type: 'value', value: input }, null, 0);
+        if (value.bytes > caps.maxBytes) throw new Error('Scenarios exceed this table’s size limit.');
+        var payload = value.snapshot.value;
+        return Array.isArray(payload) ? prepare(payload, options.mapping, mode) :
+          prepare(payload.records, payload.mapping, payload.mode ?? mode);
+      },
+      render: function (prepared, origin) {
+        var previous = visual && visual.snapshot();
+        if (visual) visual.remove();
+        visual = null;
+        prepared = prepared || original;
+        if (current !== prepared) {
+          current.sections.forEach(function (section) { section.remove(); });
+          prepared.sections.forEach(function (section) { table.appendChild(section); });
+          current = prepared;
+        }
+        if (prepared.model) visual = draw(table, prepared.model, origin !== 'reset' && previous && previous.key,
+          function (variant) { choose(variant, 'user'); }, function (variant) { choose(variant, 'reset'); });
+      },
+      snapshot: function () { return visual ? visual.snapshot() : null; },
+      resetReader: true
+    });
+    controller.api.select = function (key) {
+      var variant = current.model && current.model.variants.find(function (variant) { return variant.key === key; });
+      return variant ? choose(variant, 'api') : false;
+    };
+    scenarios.set(table, controller.api);
+    if (named) data.binding('scenarios', table, options, function (records, mapping, input, spec) {
+      return spec ? prepare(records.records, records.mapping, records.mode ?? mode) : prepare(records, mapping, mode);
+    }).mount(controller);
+    else if (original.model) controller.start(original);
+    else runtime.issue('scenarios', table, EXPLANATION);
+    return controller.api;
+  }
+
+  DocForm.scenarios = {
+    mount: mount,
+    get: function (target) { return scenarios.get(DocForm._dataViews.target(target)) || null; }
+  };
 
   DocForm.register('scenarios', function () {
     var tables = DocForm.all('table[data-df-scenarios]');
@@ -190,6 +324,13 @@
       DocForm.warnOnce('scenarios:chart', 'scenarios.js needs chart.js for interactive comparisons.');
       return;
     }
-    tables.forEach(setup);
+    tables.forEach(function (table) {
+      if (DocForm._dataViews) mount(table);
+      else {
+        var model = read(table);
+        if (model) draw(table, model);
+        else DocForm.warnOnce('scenarios:markup', EXPLANATION, table);
+      }
+    });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

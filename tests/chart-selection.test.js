@@ -8,7 +8,7 @@ const script = (name) => fs.readFileSync(path.join(__dirname, '../docform/js', n
 const GROUP = 'data-df-selection-group';
 const KEY = 'data-df-key';
 
-// Just enough DOM for chart.js to build, draw, and handle events.
+// Enough DOM for data views to build, draw, and handle events.
 class Node extends EventTarget {
   constructor(tag) {
     super();
@@ -16,13 +16,15 @@ class Node extends EventTarget {
     this.children = [];
     this.parentNode = null;
     this.attributes = new Map();
-    this.style = { setProperty() {} };
+    this.style = { setProperty() {}, removeProperty() {} };
     this.text = '';
     this.hidden = false;
     this.nodeType = 1;
     this.clientWidth = 400;
     this.offsetWidth = 0;
     this.offsetHeight = 0;
+    this.colSpan = 1;
+    this.rowSpan = 1;
     const node = this;
     this.classList = {
       add: (...names) => names.forEach((n) => node.classes().add(n) && node.saveClasses()),
@@ -36,6 +38,15 @@ class Node extends EventTarget {
   set className(v) { this.setAttribute('class', v); }
   get firstChild() { return this.children[0] || null; }
   get lastChild() { return this.children[this.children.length - 1] || null; }
+  get tagName() { return this.tag.toUpperCase(); }
+  get id() { return this.getAttribute('id'); }
+  set id(value) { this.setAttribute('id', value); }
+  get childNodes() { return this.children; }
+  get rows() { return this.children.filter((child) => child.tag === 'tr'); }
+  get cells() { return this.children.filter((child) => ['th', 'td'].includes(child.tag)); }
+  get tHead() { return this.children.find((child) => child.tag === 'thead') || null; }
+  get tBodies() { return this.children.filter((child) => child.tag === 'tbody'); }
+  get selectedIndex() { return this.children.findIndex((child) => String(child.value) === String(this.value)); }
   get textContent() { return this.text + this.children.map((c) => c.textContent).join(''); }
   set textContent(v) { this.children.forEach((c) => { c.parentNode = null; }); this.children = []; this.text = String(v); }
   getAttribute(name) { return this.attributes.has(name) ? this.attributes.get(name) : null; }
@@ -52,33 +63,68 @@ class Node extends EventTarget {
   removeChild(child) { this.children.splice(this.children.indexOf(child), 1); child.parentNode = null; }
   replaceChild(child, old) { this.insertBefore(child, old); this.removeChild(old); }
   before(child) { this.parentNode.insertBefore(child, this); }
+  after(child) { this.parentNode.insertBefore(child, this.parentNode.children[this.parentNode.children.indexOf(this) + 1]); }
+  remove() { if (this.parentNode) this.parentNode.removeChild(this); }
+  replaceChildren(...children) { this.textContent = ''; children.forEach((child) => this.appendChild(child)); }
+  cloneNode(deep) {
+    const clone = new Node(this.tag);
+    clone.attributes = new Map(this.attributes);
+    clone.text = this.text;
+    if (deep) this.children.forEach((child) => clone.appendChild(child.cloneNode(true)));
+    return clone;
+  }
+  insertRow() { return this.appendChild(new Node('tr')); }
+  insertCell() { return this.appendChild(new Node('td')); }
+  createTHead() { return this.tHead || this.insertBefore(new Node('thead'), this.firstChild); }
+  createTBody() { return this.appendChild(new Node('tbody')); }
+  deleteTHead() { this.tHead?.remove(); }
+  insertAdjacentHTML() {}
+  focus() {}
   hasAttribute(name) { return this.attributes.has(name); }
   toggleAttribute(name, on) { if (on) this.setAttribute(name, ''); else this.removeAttribute(name); }
   matches(selector) { return selector === `[${GROUP}][${KEY}]` && this.hasAttribute(GROUP) && this.hasAttribute(KEY); }
+  closest(selector) {
+    for (let node = this; node; node = node.parentNode) {
+      if (selector === '.df-data' && node.classList.contains('df-data')) return node;
+    }
+    return null;
+  }
   querySelector(selector) { return this.querySelectorAll(selector)[0] ?? null; }
   querySelectorAll(selector) {
+    if (selector.includes(', ')) return [...new Set(selector.split(', ').flatMap((part) => this.querySelectorAll(part)))];
+    if (selector === ':scope > thead > tr') return this.tHead?.rows || [];
+    if (selector === ':scope > tbody > tr') return this.tBodies.flatMap((section) => section.rows);
+    const exclusion = /^(.*):not\((.+)\)$/.exec(selector);
+    if (exclusion) {
+      return this.querySelectorAll(exclusion[1]).filter((node) =>
+        exclusion[2].startsWith('.') ? !node.classList.contains(exclusion[2].slice(1)) : !node.matchesAttribute(exclusion[2]));
+    }
     const direct = selector.startsWith(':scope > ');
     const simple = direct ? selector.slice(9) : selector;
     return (direct ? this.children : this.all()).filter((node) => {
       if (simple === `[${GROUP}][${KEY}]`) return node.matches(simple);
       if (simple === `[data-df-stepper-view][${KEY}]`) return node.hasAttribute('data-df-stepper-view') && node.hasAttribute(KEY);
       if (simple.startsWith('.')) return node.classList.contains(simple.slice(1));
-      const part = /^([a-z]+)?(?:\[([\w-]+)(?:="([^"]+)")?\])?$/.exec(simple);
-      if (!part) return false;
-      const [, tag, attr, value] = part;
-      return (!tag || node.tag === tag) && (!attr || node.hasAttribute(attr) &&
-        (value === undefined || node.getAttribute(attr) === value));
+      return node.matchesAttribute(simple);
     });
+  }
+  matchesAttribute(selector) {
+    const part = /^([a-z]+)?(?:\[([\w-]+)(?:="([^"]+)")?\])?$/.exec(selector);
+    if (!part) return false;
+    const [, tag, attr, value] = part;
+    return (!tag || this.tag === tag) && (!attr || this.hasAttribute(attr) &&
+      (value === undefined || this.getAttribute(attr) === value));
   }
   getBoundingClientRect() { return { left: 0, top: 0, width: 400 }; }
   all() { return this.children.flatMap((c) => [c, ...c.all()]); }
 }
 
-function setup({ groups, enhance } = {}) {
+function setup({ groups, enhance, modules = [] } = {}) {
   const document = new EventTarget();
   document.body = new Node('body');
   document.createElement = (tag) => new Node(tag);
   document.createElementNS = (_, tag) => new Node(tag);
+  document.createTextNode = (text) => Object.assign(new Node('#text'), { text, nodeType: 3 });
   document.querySelectorAll = (selector) => document.body.querySelectorAll(selector);
   document.getElementById = (id) => document.body.all().find((el) => el.id === id) ?? null;
   const sets = [];
@@ -86,16 +132,19 @@ function setup({ groups, enhance } = {}) {
   document.addEventListener('df:selection:change', ({ detail }) => {
     if (detail.origin !== 'init') sets.push([detail.group, detail.current.key]);
   });
-  const boot = { canInitialize: () => true, optionLayers: () => [], merge: Object.assign, report: (_, feature, host, message) => warnings.push(message),
+  const boot = { canInitialize: () => true, setupComplete: true, optionLayers: () => [], merge: Object.assign,
+    report: (_, feature, host, message) => warnings.push(message),
     moduleFailed: (_, error) => { throw error; } };
   const DocForm = { _boot: boot, site: { base: 'file:///site.js', selectionGroups: groups } };
-  const context = vm.createContext({ DocForm, document, CustomEvent, console: { warn: (message) => warnings.push(message.replace(/^\[docform\] /, '')) },
+  const reads = [];
+  const context = vm.createContext({ DocForm, document, CustomEvent, TextEncoder, console: { warn: (message) => warnings.push(message.replace(/^\[docform\] /, '')) },
+    FileReader: class { readAsText(file) { this.result = file.text; reads.push(() => this.onload()); } },
     MutationObserver: class { observe() {} } });
   context.window = context;
-  for (const name of ['core', 'highlight', 'chart', 'stepper', 'tabs']) vm.runInContext(script(name), context);
+  for (const name of ['core', 'highlight', 'chart', 'stepper', 'tabs', ...modules]) vm.runInContext(script(name), context);
   if (enhance) enhance(DocForm, document, boot);
   boot.initialize();
-  return { chart: DocForm.chart, selection: DocForm.selection, sets, warnings, document };
+  return { chart: DocForm.chart, selection: DocForm.selection, sets, warnings, document, DocForm, reads };
 }
 
 function draw(spec) {
@@ -124,6 +173,216 @@ const shared = {
     { name: 'B', data: [{ x: 1, y: 8, key: 'b1' }, { x: 2, y: 9, key: 'b2' }, [3, 7]] }
   ]
 };
+
+test('named data updates charts, filtered results and scenarios atomically while local uploads keep ownership', () => {
+  const csv = (a = 5) => ({ type: 'csv', text: `run,epoch,ms,loss,device
+r01,1,${a},0.7,Laptop
+r03,2,9,0.5,GPU
+r04,3,7,0.6,Lab` });
+  const reordered = { type: 'csv', text: 'device,loss,run,ms,epoch\nLaptop,0.8,r01,6,1\nGPU,0.4,r03,10,2\nLab,0.6,r04,8,3' };
+  const options = {
+    chart: { mapping: { x: 'epoch', pointKey: 'run', series: [
+      { key: 'budget', field: 'derived', label: 'Budget' }, { key: 'duration', field: 'ms', label: 'Latency' }
+    ] }, transform: 'budget', y: { type: 'log' }, brush: true },
+    results: { mapping: { columns: [{ field: 'run', label: 'Run ID' }, { field: 'ms', label: 'Latency' }] } },
+    scenarios: { mapping: { recordKey: 'run', baselineKey: 'r01', variantKeys: ['r03', 'r04'],
+      labels: { r03: 'Fast candidate', r04: 'Alternative' },
+      conditions: [{ field: 'device' }], outcomes: [{ field: 'ms', label: 'Latency', unit: 'ms' }] } }
+  };
+  const hosts = {};
+  const env = setup({ modules: ['data', 'dropzone', 'results', 'scenarios'], enhance(df, document, boot) {
+    boot.optionLayers = (feature) => [options[feature] || {}];
+    df.data.defineTransform('budget', ({ value }) => value.map((record) => {
+      if (record.device === 'Broken') throw new Error('Rejected device');
+      return { ...record, derived: 12 - record.ms };
+    }));
+    df.data.define('runs', csv());
+    function element(tag, id, attrs) {
+      const el = document.createElement(tag);
+      el.setAttribute('id', id);
+      for (const [key, value] of Object.entries(attrs)) el.setAttribute('data-df-' + key, value);
+      hosts[id] = document.body.appendChild(el);
+      return el;
+    }
+    element('div', 'plot', { chart: 'line', source: 'runs' });
+    const results = element('table', 'results', { results: '', source: 'runs', filters: '',
+      chips: 'Budget: ms <= 8' });
+    const head = results.createTHead().insertRow();
+    for (const field of ['run', 'ms']) {
+      const th = head.appendChild(new Node('th'));
+      th.setAttribute('data-df-field', field);
+      th.textContent = field;
+      if (field === 'ms') th.setAttribute('data-df-threshold', '<= 8');
+    }
+    results.createTBody().insertRow().insertCell().textContent = 'Authored results';
+    element('table', 'scenario', { scenarios: 'configurations', source: 'runs' });
+    element('div', 'raw', { 'data-view': 'code', source: 'runs', 'max-size': '200' });
+    element('div', 'local', { dropzone: '', target: 'plot' });
+    for (const id of ['shared-one', 'shared-two']) element('div', id, { dropzone: '', 'target-source': 'runs' });
+  } });
+  const df = env.DocForm;
+  const source = df.data.source('runs');
+  const chart = df.chart.get('plot');
+  const results = df.results.get('results');
+  const scenario = df.scenarios.get('scenario');
+  const raw = df.dataView.get('raw');
+  function choose(zone, input, name = 'runs.csv') {
+    const field = hosts[zone].querySelector('input');
+    field.files = [{ name, text: input.text, size: input.text.length }];
+    field.dispatchEvent(new Event('change'));
+    return env.reads.pop();
+  }
+  function reset(zone) { hosts[zone].querySelector('.df-dropzone-reset').dispatchEvent(new Event('click')); }
+  const chartY = () => chart.spec().series[0].data[0].y;
+  const snapshots = [];
+  source.subscribe(({ revision }, { origin }) => snapshots.push([revision, origin, chartY(), results.snapshot().shown,
+    scenario.snapshot().key, raw.snapshot().total]));
+  assert.equal(chartY(), 7);
+  assert.equal(hosts.results.tHead.rows[0].cells[1].textContent.startsWith('Latency'), true);
+  assert.equal(df.results.filters(hosts.results).chip('Budget', true), true);
+  assert.equal(scenario.select('r04'), true);
+  assert.equal(chart.setSeriesVisible('duration', false), true);
+  assert.equal(chart.setRange([1.25, 2.75]), true);
+  assert.equal(source.update(reordered), true);
+  assert.deepEqual(snapshots.at(-1), [1, 'api', 6, 2, 'r04', 4]);
+  assert.deepEqual([...chart.snapshot().hiddenSeries], ['duration']);
+  assert.deepEqual([...chart.snapshot().range], [1.25, 2.75]);
+  assert.equal(source.update(reordered), true);
+  assert.equal(snapshots.length, 1);
+  for (const bad of [
+    { type: 'csv', text: 'run,epoch\nr01,1' },
+    { type: 'csv', text: reordered.text.replace('Laptop', 'Broken') },
+    csv(12), { type: 'csv', text: csv().text + ' '.repeat(200) },
+    { type: 'csv', text: 'run,epoch,ms,loss,device\nr01,1,5,0.7,Laptop' }
+  ]) {
+    assert.equal(source.update(bad), false);
+    assert.equal(source.snapshot().revision, 1);
+    assert.equal(chartY(), 6);
+  }
+
+  choose('local', csv(8))();
+  assert.equal(chartY(), 4);
+  assert.equal(source.snapshot().revision, 1);
+  const older = choose('shared-one', csv(9));
+  const newer = choose('shared-two', csv(4));
+  newer();
+  older();
+  assert.deepEqual(snapshots.at(-1), [2, 'drop', 4, 2, 'r04', 4]);
+  reset('shared-one');
+  assert.equal(source.snapshot().revision, 2);
+  reset('local');
+  assert.equal(chartY(), 8);
+  assert.equal(chart.snapshot().range, null);
+  assert.equal(chart.snapshot().hiddenSeries.length, 0);
+  reset('shared-two');
+  assert.equal(source.snapshot().revision, 3);
+  assert.equal(chartY(), 7);
+
+  const pending = choose('shared-one', csv(10));
+  assert.equal(source.update(csv(6)), true);
+  pending();
+  assert.equal(chartY(), 6);
+  const superseded = choose('shared-two', csv(10));
+  choose('shared-one', csv(), 'notes.txt');
+  superseded();
+  assert.equal(source.snapshot().revision, 4);
+  const canceled = choose('shared-two', csv(10));
+  reset('shared-two');
+  canceled();
+  assert.equal(source.snapshot().revision, 4);
+});
+
+test('inline sources preserve raw fallbacks and full chart transforms keep series identity across renaming', () => {
+  const host = new Node('div');
+  host.setAttribute('data-df-chart', 'line');
+  host.setAttribute('data-df-source', 'trace');
+  const fallback = host.appendChild(new Node('table'));
+  const raw = new Node('pre');
+  raw.setAttribute('data-df-source', 'draft');
+  raw.setAttribute('data-df-source-type', 'json');
+  raw.setAttribute('data-df-data-view', 'code');
+  raw.textContent = '{"bad":}';
+  const preview = new Node('div');
+  preview.setAttribute('data-df-source', 'preview');
+  preview.setAttribute('data-df-data-view', 'code');
+  preview.setAttribute('data-df-max-size', '8');
+  preview.setAttribute('data-df-max-rows', '2');
+  const env = setup({ modules: ['data'], enhance(df, document, boot) {
+    const inline = new Node('script');
+    inline.setAttribute('data-df-source', 'trace');
+    inline.setAttribute('type', 'application/json');
+    inline.textContent = '{"label":"Before","y":3}';
+    [inline, host, raw, preview].forEach((node) => document.body.appendChild(node));
+    boot.optionLayers = (feature) => feature === 'chart' ? [{ transform: 'full', transformOutput: 'spec' }] : [];
+    boot.readData();
+    df.data.define('preview', { type: 'csv', text: 'id,n\na,1\nb,2\nc,3' });
+    df.data.defineTransform('full', ({ value }) => ({ series: [
+      { key: 'first', name: value.label, data: [[1, value.y]] },
+      { key: 'second', name: value.label, data: [[1, 2]] }
+    ] }));
+  } });
+  assert.equal(env.DocForm.data.source('draft'), null);
+  assert.equal(raw.hidden, true);
+  assert.match(env.document.body.textContent, /Could not read "draft"/);
+  const view = env.DocForm.dataView.get(preview);
+  assert.equal(view.snapshot(), null);
+  preview.querySelector('button').dispatchEvent(new Event('click'));
+  assert.equal(view.snapshot().shown, 2);
+  preview.querySelector('button').dispatchEvent(new Event('click'));
+  assert.equal(view.snapshot().shown, 4);
+  const api = env.chart.get(host);
+  const source = env.DocForm.data.source('trace');
+  assert.equal(api.spec().series[0].name, 'Before');
+  assert.equal(fallback.parentNode?.classList.contains('df-chart-table'), true);
+  assert.equal(api.setSeriesVisible('first', false), true);
+  assert.equal(source.update({ type: 'value', value: { label: 'After', y: 4 } }), true);
+  assert.equal(api.spec().series[0].name, 'After');
+  assert.deepEqual([...api.snapshot().hiddenSeries], ['first']);
+  const copy = api.spec();
+  copy.series[0].data[0][1] = 100;
+  assert.equal(api.spec().series[0].data[0][1], 4);
+});
+
+test('a static results upload resets to the same authored rows, sort and filters', () => {
+  const table = new Node('table');
+  table.id = 'static';
+  table.setAttribute('data-df-results', '');
+  table.setAttribute('data-df-filters', '');
+  const header = table.createTHead().insertRow();
+  header.appendChild(new Node('th')).textContent = 'Run';
+  header.appendChild(new Node('th')).textContent = 'Latency';
+  const body = table.createTBody();
+  for (const [id, ms] of [['first', 4], ['second', 9]]) {
+    const row = body.insertRow();
+    row.insertCell().textContent = id;
+    row.insertCell().textContent = String(ms);
+  }
+  const zone = new Node('div');
+  zone.setAttribute('data-df-dropzone', '');
+  zone.setAttribute('data-df-target', table.id);
+  const env = setup({ modules: ['data', 'results', 'dropzone'], enhance(df, document) {
+    document.body.appendChild(table);
+    document.body.appendChild(zone);
+  } });
+  const results = env.DocForm.results;
+  const run = results.get(table);
+  const originalFilter = results.filters(table);
+  assert.equal(originalFilter.set('Latency', { max: 5 }), true);
+  header.cells[1].querySelector('.df-sort').dispatchEvent(new Event('click'));
+  const originalOrder = [...body.rows];
+  const text = 'latency,run\n8,replacement\n3,another';
+  const input = zone.querySelector('input');
+  input.files = [{ name: 'results.csv', text, size: text.length }];
+  input.dispatchEvent(new Event('change'));
+  env.reads.pop()();
+  assert.equal(table.tBodies[0].rows[0].cells[0].textContent, 'replacement');
+  assert.equal(run.snapshot().shown, 1);
+  zone.querySelector('.df-dropzone-reset').dispatchEvent(new Event('click'));
+  assert.equal(table.tBodies[0], body);
+  assert.deepEqual(body.rows, originalOrder);
+  assert.equal(results.filters(table), originalFilter);
+  assert.equal(run.snapshot().shown, 1);
+});
 
 test('a click commits the keyed point nearest the pointer, even where series share an x, and a second click clears it', () => {
   const c = draw(shared);

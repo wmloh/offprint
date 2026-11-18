@@ -34,6 +34,37 @@ test('the registry reads added data and wrapped files, keeping the first of dupl
   assert.ok(plain(data.names()).includes('cfg.json'));
 });
 
+test('named sources accept typed and raw data with immutable snapshots and revisioned updates', () => {
+  const api = context.DocForm.data;
+  const input = [{ id: '007', values: { a: true, b: [1, null] } }];
+  const source = api.define(' typed ', { type: 'value', value: input });
+  const received = [];
+  const stop = source.subscribe((state, meta) => received.push([state.revision, meta.origin]), { immediate: true });
+  assert.equal(api.source('typed'), source);
+  assert.equal(api.source('Typed'), null);
+  assert.equal(api.define('typed', { type: 'json', text: 'null' }), null);
+  input[0].values.b[0] = 9;
+  assert.equal(source.snapshot().value[0].values.b[0], 1);
+  assert.equal(Object.isFrozen(source.snapshot().value[0].values.b), true);
+  assert.equal(source.update({ type: 'value', value: [{ values: { b: [1, null], a: true }, id: '007' }] }), true);
+  assert.equal(received.length, 1);
+  const circular = {};
+  circular.ref = circular;
+  for (const value of [circular, new Date(), { bad: Infinity }, [undefined]]) {
+    assert.equal(source.update({ type: 'value', value }), false);
+  }
+  assert.equal(source.update({ type: 'csv', text: 'id,id\na,b' }), false);
+  assert.equal(source.snapshot().revision, 0);
+  assert.equal(source.update({ type: 'yaml', text: 'nested:\n  enabled: true' }), true);
+  assert.deepEqual(plain(source.snapshot().value), { nested: { enabled: true } });
+  assert.equal(source.reset(), true);
+  assert.deepEqual(received, [[0, 'init'], [1, 'api'], [2, 'reset']]);
+  stop();
+  stop();
+  assert.equal(source.update({ type: 'json', text: 'null' }), true);
+  assert.equal(received.length, 3);
+});
+
 test('types come from names, MIME types, or the text itself', () => {
   assert.deepEqual(['yml', 'text/csv', 'application/json', 'toml'].map(data.type), ['yaml', 'csv', 'json', null]);
   assert.equal(data.sniff('anything', 'x.yaml'), 'yaml');

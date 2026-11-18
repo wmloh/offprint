@@ -138,8 +138,59 @@
         /\b(?:class|struct|interface|enum|record)\s+$/)],
       [/(?:0[xX][\da-fA-F_]+|0[bB][01_]+|(?:\d[\d_]*(?:\.\d[\d_]*)?|\.\d[\d_]*)(?:[eE][+-]?\d+)?)(?:[uU][lL]?|[lL][uU]?|[fFdDmM])?/y, 'number'],
       [/=>|[+\-*/%=&|^!<>?~]+/y, 'operator']
+    ],
+    json: [
+      [/"(?:\\.|[^\\"\n])*"(?=\s*:)/y, 'property'],
+      [/"(?:\\.|[^\\"\n])*"?/y, 'string'],
+      [/-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y, 'number'],
+      [/(?:true|false|null)\b/y, 'literal'],
+      [/[{}[\],:]/y, 'punctuation']
+    ],
+    yaml: [
+      [/(?<=^|\s)#[^\n]*/y, 'comment'],
+      [/(?<=^|\n)(?:---|\.\.\.)(?=\s|$)|(?<=^|\n)%[^\n]*/y, 'keyword'],
+      [/[|>][-+0-9]*(?=[ \t]*(?:#[^\n]*)?(?:\n|$))/y, yamlBlock],
+      [/'(?:''|[^'])*'?|"(?:\\[\s\S]|[^\\"])*"?/y, function (m, src, start) {
+        return /^[ \t]*:(?:[ \t\n]|$)/.test(src.slice(start + m[0].length, start + m[0].length + 40)) ? 'property' : 'string';
+      }],
+      [/(?<=^|[\s[{,])(?:!(?:<[^>\n]*>|[\w!./:%-]*)|[&*][^\s,[\]{}]+)/y, function (m) {
+        return m[0].charAt(0) === '!' ? 'keyword' : 'variable';
+      }],
+      [/(?<=^|[\s[{,])[-?](?=[ \t\n]|$)/y, 'punctuation'],
+      [/(?<=^|[\s[{,])(?:[^\s#'"[\]{},:?-]|[-?:](?=\S))[^\n#:]*?(?=[ \t]*:(?:[ \t\n]|$))/y, 'property'],
+      [/(?<=^|[\s[{,])(?:true|false|null|True|False|TRUE|FALSE|Null|NULL|~)(?=[ \t]*(?:#|,|\]|\}|\n|$))/y, 'literal'],
+      [/(?<=^|[\s[{,])(?:[-+]?(?:0x[\da-fA-F]+|0o[0-7]+|(?:\d[\d_]*\.?\d*|\.\d+)(?:[eE][-+]?\d+)?|\.(?:inf|Inf|INF))|\.(?:nan|NaN|NAN))(?=[ \t]*(?:#|,|\]|\}|\n|$))/y, 'number'],
+      [/[[\]{},]|:(?=[ \t\n]|$)/y, 'punctuation']
     ]
   };
+
+  // A YAML block scalar: the | or > indicator, the rest of its line, and every following line that is blank or
+  // indented further than the indicator's line.
+  function yamlBlock(m, src, start) {
+    var lineStart = src.lastIndexOf('\n', start - 1) + 1;
+    var indent = src.slice(lineStart).match(/^ */)[0].length;
+    var pos = start + m[0].length;
+    var eol = src.indexOf('\n', pos);
+    if (eol < 0) eol = src.length;
+    var tail = src.slice(pos, eol);
+    var hash = tail.indexOf('#');
+    var out = [{ type: 'operator', text: m[0] }];
+    if (hash < 0) out.push({ type: null, text: tail });
+    else out.push({ type: null, text: tail.slice(0, hash) }, { type: 'comment', text: tail.slice(hash) });
+    var end = eol;
+    while (end < src.length) {
+      var next = src.indexOf('\n', end + 1);
+      if (next < 0) next = src.length;
+      var line = src.slice(end + 1, next);
+      if (line.trim() && line.match(/^ */)[0].length <= indent) break;
+      end = next;
+    }
+    // Trailing blank lines belong to the following text.
+    var body = src.slice(eol, end);
+    var kept = body.replace(/(?:\n[ \t]*)+$/, '');
+    if (kept) out.push({ type: 'string', text: kept });
+    return out.filter(function (t) { return t.text; });
+  }
 
   var SQL_KEYWORDS = words('add all alter and any as asc begin between by cascade case check column commit conflict ' +
     'constraint create cross database declare default delete desc distinct do drop else end escape except exists ' +
@@ -164,7 +215,7 @@
   ];
 
   var ALIASES = {
-    js: 'js', javascript: 'js', mjs: 'js', cjs: 'js', json: 'js',
+    js: 'js', javascript: 'js', mjs: 'js', cjs: 'js', json: 'json', yaml: 'yaml', yml: 'yaml',
     py: 'python', python: 'python',
     html: 'html', xml: 'html', svg: 'html',
     css: 'css',
@@ -175,7 +226,7 @@
 
   var NAMES = {
     js: 'JavaScript', python: 'Python', html: 'HTML', css: 'CSS', shell: 'Shell', json: 'JSON', xml: 'XML', svg: 'SVG',
-    sql: 'SQL', csharp: 'C#'
+    sql: 'SQL', csharp: 'C#', yaml: 'YAML', yml: 'YAML', csv: 'CSV'
   };
 
   function push(out, type, text) {
@@ -202,8 +253,10 @@
         if (!Array.isArray(result)) result = [{ type: result, text: m[0] }];
         push(out, null, plain);
         plain = '';
-        result.forEach(function (t) { push(out, t.type, t.text); });
-        pos += m[0].length;
+        // A rule may return tokens that run past its match, such as a YAML block scalar body.
+        var used = 0;
+        result.forEach(function (t) { push(out, t.type, t.text); used += t.text.length; });
+        pos += used || m[0].length;
         matched = true;
         break;
       }
@@ -506,7 +559,8 @@
   }
 
   function enhance(pre) {
-    if (pre.closest('.df-code') || pre.hasAttribute('data-df-no-code')) return;
+    // Data placeholders render their own code views from data.js.
+    if (pre.closest('.df-code, [data-df-data]:not(.df-data-ready)') || pre.hasAttribute('data-df-no-code')) return;
     var code = pre.querySelector(':scope > code');
     var target = code || pre;
     var lang = langOf(pre, code);
@@ -593,6 +647,7 @@
   }
 
   DocForm.code = {
+    enhance: enhance,
     tokenize: tokenize,
     highlight: highlight,
     language: language,

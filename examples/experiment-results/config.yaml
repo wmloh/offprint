@@ -1,0 +1,20 @@
+# Sweep used for every run in runs.csv
+sweep:
+  name: vision-baselines
+  seeds: [0, 1, 2]
+  grid:
+    model: [mlp-small, mlp-wide, cnn-base, cnn-deep]
+    optimizer: [sgd, adam]
+    lr: [0.01, 0.001, 0.0003]
+training:
+  epochs: 30
+  batch_size: 128
+  early_stopping:
+    patience: 5
+    min_delta: 0.001
+  augment: true
+evaluation:
+  split: test
+  latency: |
+    Median of 200 single-image passes
+    on one CPU core, after 20 warm-up passes.

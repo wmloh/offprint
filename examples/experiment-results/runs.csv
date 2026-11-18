@@ -1,0 +1,25 @@
+run,model,optimizer,lr,seed,accuracy,latency_ms,notes
+r01,mlp-small,sgd,0.01,1,0.855,5.8,
+r02,mlp-small,sgd,0.001,2,0.857,4.7,
+r03,mlp-small,sgd,0.0003,0,0.833,5.0,
+r04,mlp-small,adam,0.01,1,0.821,6.4,"diverged early, recovered"
+r05,mlp-small,adam,0.001,2,0.863,4.6,
+r06,mlp-small,adam,0.0003,0,0.861,6.8,
+r07,mlp-wide,sgd,0.01,1,0.886,11.0,
+r08,mlp-wide,sgd,0.001,2,0.886,10.7,
+r09,mlp-wide,sgd,0.0003,0,0.856,11.9,
+r10,mlp-wide,adam,0.01,1,0.846,11.3,"diverged early, recovered"
+r11,mlp-wide,adam,0.001,2,0.886,11.9,
+r12,mlp-wide,adam,0.0003,0,0.888,10.7,
+r13,cnn-base,sgd,0.01,1,0.918,20.2,
+r14,cnn-base,sgd,0.001,2,0.917,18.0,
+r15,cnn-base,sgd,0.0003,0,0.888,18.2,
+r16,cnn-base,adam,0.01,1,0.881,20.7,"diverged early, recovered"
+r17,cnn-base,adam,0.001,2,0.917,19.8,
+r18,cnn-base,adam,0.0003,0,0.923,19.6,
+r19,cnn-deep,sgd,0.01,1,0.938,33.4,
+r20,cnn-deep,sgd,0.001,2,0.931,33.0,
+r21,cnn-deep,sgd,0.0003,0,0.903,31.1,
+r22,cnn-deep,adam,0.01,1,0.892,33.7,"diverged early, recovered"
+r23,cnn-deep,adam,0.001,2,0.934,32.2,
+r24,cnn-deep,adam,0.0003,0,0.935,32.0,"best ""deep"" run"

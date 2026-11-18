@@ -64,7 +64,8 @@ function el(tag, text = '', children = []) {
   const props = new Map();
   const node = Object.assign(new EventTarget(), {
     tagName: tag.toUpperCase(), colSpan: 1, children, classes, props,
-    classList: { add: (name) => classes.add(name) },
+    classList: { add: (name) => classes.add(name), contains: (name) => classes.has(name) },
+    closest: () => null,
     style: { setProperty: (name, value) => props.set(name, value) },
     setAttribute: (name, value) => attrs.set(name, String(value)),
     getAttribute: (name) => attrs.get(name) ?? null,

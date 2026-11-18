@@ -104,6 +104,8 @@
     '<path class="df-sort-up" d="M5 1 9 5H1z"/><path class="df-sort-down" d="M5 11 1 7h8z"/></svg>';
 
   function enhance(table) {
+    // Data placeholders build their tables in data.js and enhance them once filled.
+    if (table.classList.contains('df-results') || table.closest('[data-df-data]:not(.df-data-ready)')) return;
     var head = table.tHead ? table.tHead.rows[table.tHead.rows.length - 1] : null;
     var body = table.tBodies[0];
     if (!head || !body) {
@@ -224,6 +226,7 @@
   }
 
   DocForm.results = {
+    enhance: enhance,
     parseCell: parseCell,
     numericColumn: numericColumn,
     sortOrder: sortOrder,

@@ -19,8 +19,10 @@ test('tokens always reassemble to the source', () => {
   const src = 'const s = `a ${b}`; // x\n<p class="y">&amp;</p>';
   const sql = "SELECT 'it''s' AS \"from\", $$x$$, [order] FROM t /* open";
   const cs = 'var p = @"C:\\x ""q"""; var r = """\nraw\n"""; char c = \'\\\'\'; // done';
-  for (const lang of ['js', 'python', 'html', 'css', 'sh', 'sql', 'cs', 'unknown']) {
-    for (const s of [src, sql, cs]) assert.equal(code.tokenize(s, lang).map((t) => t.text).join(''), s, lang);
+  const json = '{"a": [1, -2.5e3, "x\\"y"], "b": nul';
+  const yaml = '# c\n- key: |\n    body: text\n  more\n"q": \'it\'\'s\' # n\n? x\n: !!str &a *b\nlast: >-';
+  for (const lang of ['js', 'python', 'html', 'css', 'sh', 'sql', 'cs', 'json', 'yaml', 'unknown']) {
+    for (const s of [src, sql, cs, json, yaml]) assert.equal(code.tokenize(s, lang).map((t) => t.text).join(''), s, lang);
   }
 });
 
@@ -83,6 +85,29 @@ test('C# gameplay and tooling code', () => {
     'number:2.5f', 'keyword:public', 'keyword:class', 'function:Mover', 'builtin:MonoBehaviour', 'keyword:void',
     'function:Update', 'operator:=>', 'function:Log', 'string:$"v {speed}"', 'string:@"C:\\logs"', "string:'\\n'",
     'number:0', 'keyword:is', 'keyword:not', 'literal:null'
+  ]);
+});
+
+test('JSON keys, values, and punctuation', () => {
+  assert.equal(code.language('json'), 'json');
+  assert.deepEqual(typed('{"run": "a:b", "acc" : 0.91, "tags": [true, null, -1e-3]}', 'json'), [
+    'punctuation:{', 'property:"run"', 'punctuation::', 'string:"a:b"', 'punctuation:,', 'property:"acc"',
+    'punctuation::', 'number:0.91', 'punctuation:,', 'property:"tags"', 'punctuation::', 'punctuation:[',
+    'literal:true',
+    'punctuation:,', 'literal:null', 'punctuation:,', 'number:-1e-3', 'punctuation:]}'
+  ]);
+});
+
+test('YAML keys, scalars, anchors, tags, and block text', () => {
+  for (const name of ['yaml', 'YML']) assert.equal(code.language(name), 'yaml');
+  assert.deepEqual(typed('---\n# runs\n- name: base#1 # first\n  lr: 1e-3\n  "seed": 7\n  ok: true story\n' +
+    '  tags: [a, ~]\n  base: &cfg !!map {}\n  ref: *cfg\n  note: |  # kept\n    key: inside\n\n  url: http://x/y:z', 'yaml'), [
+    'keyword:---', 'comment:# runs', 'punctuation:-', 'property:name', 'punctuation::', 'comment:# first',
+    'property:lr', 'punctuation::', 'number:1e-3', 'property:"seed"', 'punctuation::', 'number:7', 'property:ok',
+    'punctuation::', 'property:tags', 'punctuation::', 'punctuation:[', 'punctuation:,', 'literal:~',
+    'punctuation:]', 'property:base', 'punctuation::', 'variable:&cfg', 'keyword:!!map', 'punctuation:{}',
+    'property:ref', 'punctuation::', 'variable:*cfg', 'property:note', 'punctuation::', 'operator:|',
+    'comment:# kept', 'string:\n    key: inside', 'property:url', 'punctuation::'
   ]);
 });
 

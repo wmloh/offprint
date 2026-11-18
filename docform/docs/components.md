@@ -26,6 +26,7 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Search | `search.css` | `search.js` |
 | Charts | `chart.css` | `chart.js` |
 | Results tables | `results.css` | `results.js` |
+| Data files | `data.css`, plus `code.css` and `results.css` | `data.js`, plus `code.js` and `results.js`; YAML also needs `vendor/js-yaml/js-yaml.min.js` |
 | Linked highlighting | `highlight.css` | `highlight.js` |
 | Worked-example steppers | `stepper.css` | `stepper.js` |
 | Scenario comparisons | `chart.css`, `scenarios.css` | `chart.js`, `scenarios.js` |
@@ -192,7 +193,7 @@ With `terms: { autoLink: true }` in the manifest, every glossary term in paragra
 <pre><code class="language-python">print("hello")</code></pre>
 ```
 
-Adds a language label and a copy button, and highlights JavaScript, JSON, Python, HTML, CSS, shell, SQL, and C#. The language can also be given as `data-df-lang="js"`. Add `data-df-no-code` to a `pre` to leave it plain.
+Adds a language label and a copy button, and highlights JavaScript, JSON, YAML, Python, HTML, CSS, shell, SQL, and C#. The language can also be given as `data-df-lang="js"`. Add `data-df-no-code` to a `pre` to leave it plain.
 
 SQL (`sql`) suits queries and table definitions; keywords are recognized in any letter case, and `-- (1)` works as an annotation marker. C# accepts `csharp`, `cs`, or `c#`, and suits game scripts and tools:
 
@@ -578,6 +579,52 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 - `data-df-heat-range="0, 40"` on a header shades that column against a fixed scale instead of its own smallest and largest values, so the same value gets the same shade in every table that uses the range. Values beyond either end get the end's shade. A range also turns shading on for its column.
 - `data-df-threshold` on a number column's header marks each value Pass or Fail. Write `<`, `<=`, `>`, or `>=` and a number, such as `"<= 16.7"`. The rule uses the same number the column sorts by, including `data-df-value`. Cells keep their text and gain the word Pass or Fail; missing values get neither.
 - `data-df-threshold-label` names the rule shown under the header, such as "Frame budget: ≤ 16.7". Without it the rule reads "Pass: ≤ 16.7".
+
+## Data files
+
+Show CSV, JSON, or YAML files as results tables or highlighted code. Pages opened from disk cannot read other files, so each data file is first wrapped as a script:
+
+1. Open `docform/tools/data-file.html` in Chrome and choose your files. It makes one script per file, such as `runs.csv.js`, and warns about files over the default limits. Nothing is uploaded.
+2. Save the script beside your page and load it before `core.js`. Load `data.js` right after `core.js` (see [include order](include-order.md)).
+3. Place the data by name. The name is the file name without its extension.
+
+```html
+<div data-df-data="runs"></div>
+```
+
+- CSV and lists of flat records (JSON or YAML lists of objects whose values are text, numbers, true, false, or null) become sortable [results tables](#results-tables). Other data shows as highlighted code.
+- `data-df-view="code"` shows tabular data as its original text; `data-df-view="table"` asks for a table and falls back to code when the data has no table shape.
+- To choose, rename, and style columns, put a table header inside the placeholder. Each header cell picks the column named by its text or by `data-df-column`, and keeps its results-table options:
+
+  ```html
+  <div data-df-data="runs">
+    <table data-df-results>
+      <thead><tr>
+        <th>model</th>
+        <th data-df-column="latency_ms" data-df-best="min" data-df-threshold="<= 25 ms">Latency (ms)</th>
+      </tr></thead>
+      <tbody><tr><td colspan="2">Shown when scripts are off.</td></tr></tbody>
+    </table>
+  </div>
+  ```
+
+- Short data can sit in the page. A `pre` shows its text without scripts and a table or code with them; a `script` block only registers the data for placeholders elsewhere:
+
+  ```html
+  <pre data-df-data="hardware" data-df-type="csv">
+    device,cores
+    "Laptop, 2023",8
+  </pre>
+  <script type="application/yaml" data-df-data="defaults">
+    epochs: 30
+  </script>
+  ```
+
+- Limits: a block shows up to 5,000 rows (or code lines) with a Show more button for the rest, and asks before showing data over 1 MB. Change them per block with `data-df-max-rows="200"` and `data-df-max-size="2 MB"`.
+- Data that does not parse shows the error with its line number and the raw text. CSV fields in double quotes may hold commas, line breaks, and doubled quotes (`""`); quoted fields stay text, and unquoted numbers, `true`, and `false` become values. YAML must be a single document without custom tags such as `!secret`.
+- `data-df-type="csv"`, `"json"`, or `"yaml"` overrides the type from the file. From a script, `DocForm.dataset.add(name, text, type)` registers data and `DocForm.dataset.render(element)` redraws a block.
+
+The `examples/experiment-results/` page shows a leaderboard, every run of a sweep with Show more, a YAML configuration, an inline table, a size notice, and a parse error.
 
 ## Interactive explanations
 

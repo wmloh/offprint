@@ -27,6 +27,7 @@ docform/: Copyable offline library folder
     stepper.css: Worked-example step controls and linked view visibility
     scenarios.css: Variant controls and changed comparison cells
     wide.css: Wide-block margins and their glide when the sidebar moves
+    data.css: Data-block parse errors, size notices, and show-more rows
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, manifest normalization
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
@@ -35,7 +36,7 @@ docform/: Copyable offline library folder
     controls.js: Control pill with reading progress, saved focus mode and sidebar state, search and theme buttons, and keyboard shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
     tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, opt-in automatic term linking, and lazy HTML cards for other modules
-    code.js: Code block copy buttons, a dependency-free JS, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
+    code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     tabs.js: Accessible tabbed panels with keyboard navigation and synced groups
     anim.js: DocForm.anim step-timeline SVG animations with playback controls, hover-to-play, and animated step jumps
     params.js: data-df-param sliders, selects, and toggles, validated data-df-preset batch updates, data-df-bind/data-df-template outputs, and a subscription API
@@ -51,14 +52,18 @@ docform/: Copyable offline library folder
     highlight.js: Group-scoped linked selection across prose, tables, figures, and code annotations
     stepper.js: Ordered worked examples with Previous, Next, Reset, keyed step selection, and linked step views
     scenarios.js: Table-backed single-condition or multi-condition configuration comparisons with fixed baselines, shared chart scales by unit, and Reset
+    data.js: Named CSV, JSON, and YAML data from wrapped files or inline blocks, with quoted-CSV and core-schema YAML parsing, size and row caps, inline parse errors, and results-table or code views
     wide.js: data-df-wide figures and table wrappers that grow beside the reading column, bounded by the sidebar and right-margin notes or panels
   tools/search-index.html: Offline page that builds search-index.js from a chosen docs folder
+  tools/data-file.html: Offline page that wraps CSV, JSON, and YAML files as registering data scripts and flags files over the default caps
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
+  vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
 examples/: Example docs opened from file://
   simple/: Pythagorean theorem with a proof, an animated construction, and prediction exercises
   linear-algebra/: Five-page notes with a matrix-vector stepper, interactive SVG planes, and computing examples including solver tables against a time budget
   pca/: Three-chapter pump monitoring case study with projection steps, residual exercises, a wide trace and scores table, alert comparisons, and offline search
   transformers/: Three-chapter decoder-only Transformer guide with a linked attention trace, next-token probabilities, decoding-setup presets, a log-scale learning-rate sweep, and offline search
+  experiment-results/: Model-sweep leaderboard, paged run table, YAML configuration, inline data, size notice, and parse error from wrapped data files
   sales-pipeline/: Retry trace linking steps, event rows on two clocks, and a keyed chart, a comparison of sales totals, SQL and C# deduplication snippets, and batch arrivals on a time axis
 tests/: Built-in node:test checks of module logic

@@ -46,11 +46,17 @@ test('each element reveals once and is no longer watched', () => {
   assert.match(observer.options.rootMargin, /-12%/);
 });
 
-test('a callout enters and exits at both edges on repeated passes', () => {
-  const positions = [[776, 836], [775, 835], [-37, 23], [-35, 25], [777, 837]];
-  assert.deepEqual(positions.map(([top, bottom]) => reveal.calloutPosition(top, bottom, 800)),
-    ['below', 'inside', 'above', 'inside', 'below']);
-  assert.equal(reveal.calloutPosition(-300, 1100, 800), 'inside');
+test('a callout enters and exits the middle half of the viewport on repeated passes', () => {
+  const positions = [[600, 660], [599, 659], [140, 200], [141, 201], [601, 661]];
+  assert.deepEqual(positions.map(([top, bottom]) => reveal.calloutVisible(top, bottom, 800, 400, 400)),
+    [false, true, false, true, false]);
+  assert.equal(reveal.calloutVisible(-300, 1100, 800, 400, 400), true);
+});
+
+test('callouts can stay visible at the start and end of the page', () => {
+  assert.equal(reveal.calloutVisible(100, 160, 800, 0, 400), true);
+  assert.equal(reveal.calloutVisible(620, 680, 800, 400, 0), true);
+  assert.equal(reveal.calloutVisible(620, 680, 800, 0, 400), false);
 });
 
 test('split column shares follow the spec and default to equal panes', () => {

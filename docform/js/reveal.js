@@ -10,7 +10,7 @@
 
   var SELECTOR = '[data-df-reveal]:not(.df-callout, [data-df-no-reveal]), .df-split:not([data-df-no-reveal])';
   var STAGGER = 140;
-  var CALLOUT_INSET = 24;
+  var CALLOUT_INSET = 0.25;
   var doc = root.document;
   var html = doc && doc.documentElement;
   var canObserve = typeof root.IntersectionObserver === 'function';
@@ -62,11 +62,12 @@
     el.classList.add('df-revealed');
   }
 
-  function calloutPosition(top, bottom, height) {
-    var inset = Math.min(CALLOUT_INSET, height / 4);
-    if (bottom <= inset) return 'above';
-    if (top >= height - inset) return 'below';
-    return 'inside';
+  function calloutVisible(top, bottom, height, scrolled, remaining) {
+    // Widen the band at the page ends so every callout can reach it.
+    var inset = height * CALLOUT_INSET;
+    var start = Math.min(inset, Math.max(0, scrolled));
+    var end = height - Math.min(inset, Math.max(0, remaining));
+    return bottom > start && top < end;
   }
 
   function slideCallouts(callouts) {
@@ -77,16 +78,14 @@
     function update() {
       pending = false;
       var height = root.innerHeight;
-      var positions = callouts.map(function (el) {
+      var scrolled = root.scrollY;
+      var remaining = html.scrollHeight - height - scrolled;
+      var visible = callouts.map(function (el) {
         var rect = el.getBoundingClientRect();
-        // Measure against the layout position so the animated offset cannot move the trigger.
-        var translate = root.getComputedStyle(el).translate;
-        var offset = parseFloat(translate && translate.split(' ')[1]) || 0;
-        return calloutPosition(rect.top - offset, rect.bottom - offset, height);
+        return calloutVisible(rect.top, rect.bottom, height, scrolled, remaining);
       });
       callouts.forEach(function (el, i) {
-        el.classList.toggle('df-callout-above', positions[i] === 'above');
-        el.classList.toggle('df-callout-below', positions[i] === 'below');
+        el.classList.toggle('df-callout-away', !visible[i]);
       });
     }
 
@@ -129,7 +128,7 @@
     shouldReveal: shouldReveal,
     revealer: revealer,
     splitColumns: splitColumns,
-    calloutPosition: calloutPosition,
+    calloutVisible: calloutVisible,
     show: show
   };
 })(typeof window !== 'undefined' ? window : globalThis);

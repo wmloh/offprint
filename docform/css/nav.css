@@ -234,21 +234,28 @@ button.df-nav-label {
   }
 
   .df-has-controls.df-nav-hidden .df-section-rail {
-    display: block;
+    --df-section-panel-width: min(320px, calc(100vw - 20px));
+    --df-section-panel-padding: 4px;
+    display: grid;
+    /* The rail clips a full-width list so labels keep their line breaks. */
+    grid-template-columns: calc(var(--df-section-panel-width) - 2 * (var(--df-section-panel-padding) + 1px));
     position: fixed;
     top: 50%;
     left: 10px;
     z-index: 26;
     width: 52px;
-    padding: 4px;
+    padding: var(--df-section-panel-padding);
+    overflow: clip;
     border: 1px solid transparent;
     border-radius: var(--df-radius-lg);
     translate: 0 -50%;
-    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    transition-property: width, background-color, border-color, box-shadow, backdrop-filter;
+    transition-duration: 0.24s;
+    transition-timing-function: ease-in-out;
   }
 
   .df-has-controls.df-nav-hidden .df-section-rail:is(:hover, :has(:focus-visible)) {
-    width: min(320px, calc(100vw - 20px));
+    width: var(--df-section-panel-width);
     border-color: var(--df-border-strong);
     background-color: color-mix(in srgb, var(--df-bg) 78%, transparent);
     -webkit-backdrop-filter: blur(14px) saturate(1.6);
@@ -264,29 +271,22 @@ button.df-nav-label {
     padding: 5px;
     overflow: hidden auto;
     overscroll-behavior: contain;
-    scrollbar-width: none;
-    list-style: none;
-  }
-
-  .df-section-rail:is(:hover, :has(:focus-visible)) .df-section-list {
     scrollbar-width: thin;
     scrollbar-color: var(--df-border-strong) transparent;
+    list-style: none;
   }
 
   .df-section-link {
     display: grid;
-    grid-template-columns: 32px;
+    grid-template-columns: 32px minmax(0, 1fr);
     align-items: center;
-    gap: 8px;
+    /* Start the label beyond the collapsed rail's clipping edge. */
+    gap: 10px;
     min-height: 36px;
     padding: 2px 0;
     border-radius: var(--df-radius);
     color: var(--df-text);
     text-decoration: none;
-  }
-
-  .df-section-rail:is(:hover, :has(:focus-visible)) .df-section-link {
-    grid-template-columns: 32px minmax(0, 1fr);
   }
 
   .df-section-link:is(:hover, :focus-visible) {
@@ -334,21 +334,12 @@ button.df-nav-label {
   }
 
   .df-section-name {
-    display: none;
     padding-right: 8px;
+    overflow: clip;
     overflow-wrap: anywhere;
     font-size: 13px;
     line-height: 1.25;
   }
-
-  .df-section-rail:is(:hover, :has(:focus-visible)) .df-section-name {
-    display: block;
-    animation: df-section-name-in 0.18s ease-out;
-  }
-}
-
-@keyframes df-section-name-in {
-  from { opacity: 0; translate: -5px 0; }
 }
 
 .df-nav-resizing,

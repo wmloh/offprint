@@ -160,7 +160,7 @@ Write TeX as-is, without dollar signs. Errors show in red with the message on ho
 </div>
 ```
 
-The icon and title are optional. With `reveal.css` and `reveal.js`, callouts in `.df-page` slide in from the top or bottom edge they enter and slide back out as they leave. Add `data-df-no-reveal` to keep an individual callout still.
+The icon and title are optional. With `reveal.css` and `reveal.js`, callouts in `.df-page` slide in from the right as they reach the middle of the viewport and slide back to the right as they leave that area. Add `data-df-no-reveal` to keep an individual callout still.
 
 ## Peek bubbles
 

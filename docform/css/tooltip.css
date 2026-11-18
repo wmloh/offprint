@@ -2,8 +2,8 @@
 .df-tip,
 .df-term {
   text-decoration: underline dotted;
-  text-decoration-color: var(--df-text-faint);
-  text-decoration-thickness: 1.5px;
+  text-decoration-color: color-mix(in srgb, currentColor 80%, transparent);
+  text-decoration-thickness: 2px;
   text-underline-offset: 0.2em;
   cursor: help;
 }
@@ -14,13 +14,13 @@
 }
 
 .df-term-auto {
-  text-decoration-color: color-mix(in srgb, var(--df-text-faint) 45%, transparent);
-  text-decoration-thickness: 1px;
+  text-decoration-color: var(--df-text-muted);
+  text-decoration-thickness: 1.5px;
   transition: text-decoration-color 0.15s, text-decoration-thickness 0.15s;
 }
 
 .df-term-auto:hover {
-  text-decoration-thickness: 1.5px;
+  text-decoration-thickness: 2px;
 }
 
 /* Long presses on terms with extended text must not open touch callouts or select text. */

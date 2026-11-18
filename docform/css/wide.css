@@ -12,6 +12,13 @@
   margin-right: calc(-1 * var(--df-wide-right, 0px));
 }
 
-.df-wide-ready .df-page > [data-df-wide] {
+/* Keep the controls aligned with the reading column as the table widens. */
+.df-page > [data-df-wide].df-wide-on > :is(.df-filter-bar, .df-data-more) {
+  margin-left: var(--df-wide-left, 0px);
+  margin-right: var(--df-wide-right, 0px);
+}
+
+.df-wide-ready .df-page > [data-df-wide],
+.df-wide-ready .df-page > [data-df-wide] > :is(.df-filter-bar, .df-data-more) {
   transition: margin 0.25s ease;
 }

@@ -129,8 +129,26 @@
       order: order,
       roles: normalizeRoles(source.roles),
       glossary: plainObject(source.glossary, 'glossary'),
-      macros: plainObject(source.macros, 'macros')
+      terms: plainObject(source.terms, 'terms'),
+      macros: plainObject(source.macros, 'macros'),
+      bibliography: plainObject(source.bibliography, 'bibliography'),
+      refs: plainObject(source.refs, 'refs'),
+      search: typeof source.search === 'string' && source.search ? resolvePath(source.search, base) : null
     };
+  }
+
+  // Heading anchors: shared by nav.js, which assigns them, and the search index, which must predict them.
+  function slug(text) {
+    var out = String(text).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+    return out || 'section';
+  }
+
+  function uniqueSlug(base, used) {
+    var out = base;
+    for (var n = 2; used.has(out); n++) out = base + '-' + n;
+    used.add(out);
+    return out;
   }
 
   function roleColor(name, site) {
@@ -147,6 +165,35 @@
     } catch (e) {
       warnOnce('init:' + mod.name, 'Module "' + mod.name + '" failed to initialise.', e);
     }
+  }
+
+  // Clipboard API first; file:// pages and blocked permissions fall back to execCommand on a hidden textarea.
+  function copyText(text) {
+    var nav = root.navigator;
+    if (nav && nav.clipboard && root.isSecureContext !== false) {
+      return nav.clipboard.writeText(text).catch(function () { return fallbackCopy(text); });
+    }
+    return fallbackCopy(text);
+  }
+
+  function fallbackCopy(text) {
+    return new Promise(function (resolve, reject) {
+      var area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+      document.body.appendChild(area);
+      area.select();
+      var ok = false;
+      try {
+        ok = document.execCommand('copy');
+      } catch (e) {
+        ok = false;
+      }
+      area.remove();
+      if (ok) resolve();
+      else reject(new Error('Copy was blocked.'));
+    });
   }
 
   function register(name, init) {
@@ -183,6 +230,9 @@
     roleColor: roleColor,
     resolvePath: resolvePath,
     normalizeSite: normalizeSite,
+    slug: slug,
+    uniqueSlug: uniqueSlug,
+    copyText: copyText,
     warnOnce: warnOnce
   };
 

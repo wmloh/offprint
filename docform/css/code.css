@@ -79,3 +79,149 @@
 .df-tok-variable { color: var(--df-pink); }
 .df-tok-operator,
 .df-tok-punctuation { color: var(--df-text-muted); }
+
+/* Line rows, used when a block highlights lines, carries annotation markers, or shows a diff.
+   Rows stretch across the padded block so their tint reaches both edges, even when the block scrolls sideways. */
+.df-page pre > code.df-code-lines {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}
+
+.df-code-line {
+  display: block;
+  position: relative;
+  margin: 0 calc(-1 * var(--df-space-5));
+  padding: 0 var(--df-space-5);
+  transition: background-color 0.15s;
+}
+
+.df-code-line.is-hl {
+  background: color-mix(in srgb, var(--df-yellow) 16%, transparent);
+  box-shadow: inset 2px 0 0 var(--df-yellow);
+}
+
+/* Circled annotation markers at the end of a line, matched to the numbered list after the block. */
+.df-code-marks {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 0.75em;
+  vertical-align: 0.05em;
+  user-select: none;
+}
+
+.df-code-mark {
+  --df-mark: var(--df-accent, var(--df-blue));
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  padding: 0 0.3em;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--df-mark) 16%, transparent);
+  color: var(--df-mark);
+  font: 600 0.8em/1 var(--df-font);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.df-code-mark:is(:hover, :focus-visible, .is-linked) {
+  background: var(--df-mark);
+  color: var(--df-bg);
+  transform: scale(1.1);
+}
+
+.df-code-mark.is-missing {
+  background: var(--df-red-bg);
+  color: var(--df-red);
+  cursor: default;
+}
+
+.df-code-line.is-linked {
+  background: color-mix(in srgb, var(--df-accent, var(--df-blue)) 10%, transparent);
+}
+
+/* The list under an annotated block: its numbers match the markers and light up together. */
+.df-page ol.df-code-notes {
+  --df-accent: var(--df-blue);
+  --df-accent-bg: var(--df-blue-bg);
+  margin-top: 0.25em;
+  font-size: 0.95em;
+}
+
+.df-code-notes > li {
+  border-radius: var(--df-radius);
+  transition: background-color 0.15s;
+}
+
+.df-code-notes > li.is-linked {
+  background: var(--df-bg-hover);
+}
+
+.df-page ol.df-code-notes > li.is-linked::before {
+  background: var(--df-list-tint);
+  color: var(--df-bg);
+}
+
+.df-code-notes > li.is-flash {
+  animation: df-code-flash 1.2s ease-out;
+}
+
+@keyframes df-code-flash {
+  from { background: var(--df-blue-bg); }
+}
+
+.df-code-tip {
+  max-width: 380px;
+}
+
+.df-code-tip > div > :first-child { margin-top: 0; }
+.df-code-tip > div > :last-child { margin-bottom: 0; }
+
+/* Diffs: removed and added rows with a sign in the left gutter. */
+.df-page pre.df-code-diff {
+  padding-left: calc(var(--df-space-5) + 8px);
+}
+
+.df-code-diff .df-code-line {
+  margin-left: calc(-1 * var(--df-space-5) - 8px);
+  padding-left: calc(var(--df-space-5) + 8px);
+}
+
+.df-code-diff .df-code-line::before {
+  position: absolute;
+  left: 10px;
+  color: var(--df-text-faint);
+  user-select: none;
+}
+
+.df-code-line.is-add {
+  background: color-mix(in srgb, var(--df-green) 14%, transparent);
+}
+
+.df-code-line.is-add::before {
+  content: "+";
+  color: var(--df-green);
+}
+
+.df-code-line.is-del {
+  background: color-mix(in srgb, var(--df-red) 12%, transparent);
+}
+
+.df-code-line.is-del::before {
+  content: "\2212";
+  color: var(--df-red);
+}
+
+.df-code-line.is-del > :not(.df-code-marks) {
+  opacity: 0.8;
+}
+
+.df-code-line:is(.is-hunk, .is-meta) {
+  color: var(--df-text-faint);
+}
+
+.df-code-line.is-hunk {
+  background: var(--df-bg-hover);
+}

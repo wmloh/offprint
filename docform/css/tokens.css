@@ -22,6 +22,15 @@
   --df-red: light-dark(#d44c47, #df5452);
   --df-red-bg: light-dark(#fdebec, #522e2a);
 
+  /* Chart series, in fixed order: brighter steps of the named hues, checked for colour-blind separation on both
+     surfaces. Series with data-df-role or data-df-color use that colour instead. */
+  --df-chart-1: #2477b3;
+  --df-chart-2: #d9730d;
+  --df-chart-3: #8f5bc4;
+  --df-chart-4: #2e8b57;
+  --df-chart-5: #d44c47;
+  --df-chart-6: #b8860b;
+
   /* Neutral surfaces and text. */
   --df-bg: light-dark(#ffffff, #191919);
   --df-bg-sidebar: light-dark(#f7f7f5, #202020);
@@ -56,7 +65,8 @@
   --df-radius-sm: 3px;
   --df-radius: 4px;
   --df-radius-lg: 8px;
-  --df-content-width: 720px;
+  --df-content-width: 880px;
+  --df-page-gutter: var(--df-space-5);
   --df-sidebar-width: 260px;
 }
 

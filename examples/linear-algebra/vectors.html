@@ -21,6 +21,9 @@
   <link rel="stylesheet" href="../../docform/css/reveal.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
   <link rel="stylesheet" href="../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
@@ -45,7 +48,7 @@
       Add vectors component by component. In the picture, place the tail of
       <span class="df-math" data-df-role="v">\vec v</span> at the tip of
       <span class="df-math" data-df-role="u">\vec u</span>; the sum runs from the start of the first to the end of
-      the second.
+      the second, as <a href="#addition"></a> shows.
     </p>
 
     <figure id="addition">
@@ -94,16 +97,18 @@
 
     <p>
       The length of a vector comes from the Pythagorean theorem,
-      <span class="df-math">\norm{\vec v} = \sqrt{v_1^2 + v_2^2}</span>. The
+      <span class="df-math">\norm{\vec v} = \sqrt{v_1^2 + v_2^2}</span>.<span class="df-note">In
+      <span class="df-math">\R^n</span> the formula gains one square per coordinate:
+      <span class="df-math">\norm{\vec v} = \sqrt{v_1^2 + \dots + v_n^2}</span>.</span> The
       <span data-df-term>dot product</span> combines two vectors into a number that measures how much they point the
-      same way:
+      same way <cite data-df-cite="strang"></cite>:
     </p>
 
-    <div class="df-math" data-df-display>\vec u \cdot \vec v = u_1 v_1 + u_2 v_2 = \norm{\vec u}\,\norm{\vec v}\cos\theta.</div>
+    <div class="df-math" id="dot-angle" data-df-display>\vec u \cdot \vec v = u_1 v_1 + u_2 v_2 = \norm{\vec u}\,\norm{\vec v}\cos\theta.</div>
 
     <p>
       Take <span class="df-math">\norm{\vec u} = 3</span> and <span class="df-math">\norm{\vec v} = 2</span>, and
-      change the angle between them:
+      change the angle between them in <a href="#dot-angle"></a>:
     </p>
 
     <div class="df-params">
@@ -120,7 +125,7 @@
     <div class="df-callout" data-df-role="theorem" data-df-icon="◆" data-df-reveal>
       <span class="df-callout-title">Cauchy–Schwarz inequality</span>
       For all vectors, <span class="df-math">|\vec u \cdot \vec v| \le \norm{\vec u}\,\norm{\vec v}</span>, with
-      equality exactly when one is a multiple of the other.
+      equality exactly when one is a multiple of the other <cite data-df-cite="axler"></cite>.
     </div>
 
     <details>
@@ -132,11 +137,17 @@
         one line.
       </p>
     </details>
+
+    <p>
+      Matrices reuse the dot product for every entry of a product; see
+      <a href="matrices.html#multiplying-matrices">multiplying matrices</a>.
+    </p>
   </main>
 
   <script src="site.js" data-df-site></script>
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/refs.js"></script>
   <script src="../../docform/js/nav.js"></script>
   <script src="../../docform/js/controls.js"></script>
   <script src="../../docform/js/reveal.js"></script>
@@ -145,6 +156,8 @@
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
   <script src="../../docform/js/anim.js"></script>
   <script src="../../docform/js/params.js"></script>
   <script src="figures.js"></script>

@@ -5,7 +5,8 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Feature | Stylesheet | Script |
 | --- | --- | --- |
 | Layout and typography | `tokens.css`, `base.css` | `core.js` |
-| Sidebar and outline | `nav.css` | `nav.js` |
+| Lists | `base.css` | none |
+| Sidebar, outline, heading links | `nav.css` | `nav.js` |
 | Theme toggle | `theme.css` | `theme.js` (in `<head>`) |
 | Control pill, focus mode, shortcuts | `controls.css` | `controls.js` |
 | Roles legend | `roles.css` | `roles.js` |
@@ -13,13 +14,18 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 | Tags and callouts | `blocks.css` | none |
 | Peek bubbles | `blocks.css`, `bubble.css` | `bubble.js` |
 | Tooltips and glossary | `tooltip.css` | `tooltip.js` |
-| Code blocks | `code.css` | `code.js` |
+| Code blocks, annotations, diffs | `code.css` | `code.js` |
 | Tabs | `tabs.css` | `tabs.js` |
 | Animated figures | `anim.css` | `anim.js` |
 | Pinned scrolling figures | `anim.css`, `scrolly.css` | `anim.js`, `scrolly.js` |
 | Reveals and split views | `reveal.css` | `reveal.js` |
 | Figure zoom | `zoom.css` | `zoom.js` |
 | Sliders | `params.css` | `params.js` |
+| Numbering, cross-references, citations | `refs.css` | `refs.js` |
+| Sidenotes | `notes.css` | `notes.js` |
+| Search | `search.css` | `search.js` |
+| Charts | `chart.css` | `chart.js` |
+| Results tables | `results.css` | `results.js` |
 
 ## Page layout
 
@@ -37,6 +43,22 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 
 The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open; readers can open others with the arrow beside a heading, and they stay open until closed or the page reloads. On narrow screens the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
 
+Each outlined heading shows a link icon on hover that copies the URL of its section. The reading column is 880px wide; change it with the `--df-content-width` token and the side padding with `--df-page-gutter`. Scrollbars in the sidebar, code blocks, and tables stay hidden until the pointer is on them.
+
+## Lists
+
+Lists in the page get numbers in small tinted circles and bullets as tinted dots, which deepen when the reader hovers an item. The tint is gray unless the list, an item, or a block around it has `data-df-color` or `data-df-role`; the text keeps its normal colour. Add `data-df-no-list-style` to a list (or a block around it) to keep plain browser markers.
+
+```html
+<ol data-df-color="blue">
+  <li>Arrange the triangles.</li>
+  <li>Cancel <span class="df-math">2ab</span>.</li>
+</ol>
+<ul data-df-role="warning">
+  <li>Not commutative.</li>
+</ul>
+```
+
 ## Control pill
 
 Load `controls.css` and `controls.js` and a small frosted pill appears in the top-left corner of the page, beside the sidebar. It needs no markup. It holds:
@@ -44,6 +66,7 @@ Load `controls.css` and `controls.js` and a small frosted pill appears in the to
 - a ring that fills as the reader scrolls through the page;
 - a sidebar button that slides the navigation away and recentres the page, or opens the drawer on narrow screens;
 - a focus-mode button that keeps the section in the middle of the screen, everything in the central part of the screen, and the page title sharp, and blurs the rest; pointing at a blurred block sharpens it;
+- a search button, when `search.js` is loaded;
 - the theme toggle, when `theme.js` is loaded.
 
 The page scrollbar stays hidden until the pointer comes near the right edge. The sidebar and focus-mode choices are remembered across pages. Keyboard shortcuts work anywhere except while typing in a form field:
@@ -54,6 +77,7 @@ The page scrollbar stays hidden until the pointer comes near the right edge. The
 | `F` | Focus mode |
 | `N` | Sidebar |
 | `J` / `K` | Next / previous section |
+| `Ctrl`+`K` (`⌘`+`K` on a Mac) | Search, with `search.js` |
 
 ## Theme toggle
 
@@ -123,6 +147,17 @@ The tint is purple unless `data-df-color` or `data-df-role` says otherwise. Put 
 
 `data-df-tip` holds the text directly. `data-df-term` looks up the manifest glossary, using the element's own text when the attribute is empty. Both accept `$…$` math; write `\$` for a literal dollar sign.
 
+Terms with extended text (the glossary's `more`, see [manifest.md](manifest.md)) show a ring in their tooltip. Press and hold the term, by mouse, touch, or Enter, to fill the ring and open the larger card. Give one term its own extended text with `data-df-more`, either as HTML or as the id of a `template`:
+
+```html
+<span data-df-term data-df-more="#eigen-more">eigenvector</span>
+<template id="eigen-more"><p>For a shear, $e_1$ is one.</p></template>
+```
+
+An empty `data-df-more` turns the card off for that term, and `data-df-hold="900"` changes its hold time.
+
+With `terms: { autoLink: true }` in the manifest, every glossary term in paragraphs and list items becomes a tooltip term automatically. These get a fainter underline than hand-marked terms and are not added to the Tab order. To link terms on one page or block only, put `data-df-autolink` on it; to keep a block out, use `data-df-no-autolink`.
+
 ## Code blocks
 
 ```html
@@ -130,6 +165,39 @@ The tint is purple unless `data-df-color` or `data-df-role` says otherwise. Put 
 ```
 
 Adds a language label and a copy button, and highlights JavaScript, JSON, Python, HTML, CSS, and shell. The language can also be given as `data-df-lang="js"`. Add `data-df-no-code` to a `pre` to leave it plain.
+
+### Highlighted lines and annotations
+
+```html
+<pre data-df-annotate data-df-lines="3-4"><code class="language-python">
+def norm(v):
+    total = 0  # (1)
+    for x in v:
+        total += x * x
+    return total ** 0.5  # (2)
+</code></pre>
+<ol>
+  <li>Start from zero.</li>
+  <li>The square root of the sum of squares.</li>
+</ol>
+```
+
+- `data-df-lines` tints lines by number, such as `"2"`, `"3-4"`, or `"1, 5-7"`.
+- With `data-df-annotate`, a comment at the end of a line that holds only numbers, such as `# (1)` or `// (2) (3)`, becomes a circled marker. The comment is removed, also from copied code.
+- Marker `(n)` matches item `n` of the numbered list right after the block, or of the list named by `data-df-annotate="#id"`. Pointing at a marker shows its note and lights up the item; clicking it scrolls to the item. Pointing at an item lights up its markers and lines.
+
+### Diffs
+
+Give the old and new versions, and the block shows what changed:
+
+```html
+<div class="df-diff" data-df-lang="python">
+  <pre data-df-diff="before">x = np.linalg.inv(A) @ b</pre>
+  <pre data-df-diff="after">x = np.linalg.solve(A, b)</pre>
+</div>
+```
+
+Or write the diff yourself on a `pre` with `data-df-diff`, starting lines with `+` (added), `-` (removed), or a space (unchanged); `@@` lines are section headers. Removed lines are red, added lines green, and the copy button copies the new version. `data-df-lines` also works on diffs.
 
 ## Tabs
 
@@ -256,3 +324,118 @@ DocForm.params.on('k', function (values) {
   document.getElementById('dot').setAttribute('r', values.k * 3);
 });
 ```
+
+## Numbered figures and cross-references
+
+With `refs.js`, figures and tables that have a caption or an `id` are numbered in page order, and so are display equations that have an `id`. An empty link to one of them fills in its label:
+
+```html
+<figure id="addition">
+  <svg>…</svg>
+  <figcaption>Tip-to-tail addition.</figcaption>   <!-- shows "Figure 1 Tip-to-tail addition." -->
+</figure>
+
+<div class="df-math" id="dot" data-df-display>\vec u \cdot \vec v = u_1 v_1 + u_2 v_2</div>   <!-- numbered (1) -->
+
+<p>See <a href="#addition"></a> and <a href="#dot"></a>.</p>   <!-- "Figure 1" and "Equation (1)" -->
+```
+
+- A figure that holds only a table counts as a table, even with math in its cells; one holding a chart counts as a figure. A figure with an `id` but no caption gets a caption with just its label.
+- An empty link to a heading shows the heading's text.
+- Add `data-df-no-number` to skip an element, or `data-df-number` to number one without an `id`. Set `refs: { equations: 'all' }` in the manifest to number every display equation.
+- With `tooltip.js`, pointing at a link to something on the same page previews it: the figure, table, or equation, or the start of a section. Links to another page of the site preview that section from the search index. Add `data-df-no-preview` to a link to turn this off.
+- Load `refs.js` before `nav.js` so a generated References heading appears in the outline.
+
+## Sidenotes
+
+Write a note where its marker should go:
+
+```html
+<p>
+  The theorem is named after Pythagoras.<span class="df-note">Babylonian scribes used it a thousand years earlier.</span>
+</p>
+```
+
+`notes.js` numbers the notes and replaces each with a small marker. When the window leaves room beside the reading column, the notes sit in the right margin next to their lines; otherwise they open as hover cards from the marker (with `tooltip.js`) or in place when the marker is clicked. Notes inside split views, tables, figures, tabs, and peek bubbles always use hover cards. Without the script a note reads as a muted aside in parentheses.
+
+## Citations
+
+List sources in the manifest's `bibliography` (see [manifest.md](manifest.md)) and cite them by key:
+
+```html
+<p>Attention scales well <cite data-df-cite="vaswani2017"></cite>, as later work showed <cite data-df-cite="a, b"></cite>.</p>
+
+<h2>References</h2>
+<div data-df-bibliography></div>
+```
+
+Citations show as `[1]` or `[1, 2]`, numbered in the order sources are first cited on the page. Each number links to the reference list and, with `tooltip.js`, shows the full entry on hover. The list goes into `data-df-bibliography`; without one, a References section is added at the end of the page. Unknown keys show as `?` and are reported in the console.
+
+## Search
+
+`search.js` opens a search palette with `Ctrl`+`K` (`⌘`+`K` on a Mac) or the pill's search button. It searches page titles, section headings, and text; arrow keys move through the results and `Enter` opens one. With an empty query it lists the site's pages.
+
+Pages opened from disk cannot read each other, so searching the whole site needs a prebuilt index:
+
+1. Open `docform/tools/search-index.html` in Chrome.
+2. Choose the folder that holds your manifest and pages. The index is built in the page; nothing is uploaded.
+3. Download `search-index.js`, save it beside your manifest, and add `search: 'search-index.js'` to the manifest.
+
+Build the index again after editing pages. Without an index, the palette searches the current page only. Add `data-df-no-search` to leave a block out of the index.
+
+## Charts
+
+Put the data inside an element with `data-df-chart`, either as JSON or as a table:
+
+```html
+<figure id="loss">
+  <div data-df-chart="line">
+    <script type="application/json">
+      {
+        "x": { "label": "Epoch" },
+        "y": { "label": "Loss", "min": 0 },
+        "series": [
+          { "name": "Train", "data": [[1, 0.9], [2, 0.6], [3, 0.45]] },
+          { "name": "Validation", "data": [[1, 1.0], [2, 0.7], [3, 0.62]] }
+        ]
+      }
+    </script>
+  </div>
+  <figcaption>Loss during training.</figcaption>
+</figure>
+
+<div data-df-chart="bar" data-df-y-label="Accuracy (%)">
+  <table>
+    <tr><th>Model</th><th>Small</th><th>Large</th></tr>
+    <tr><td>Baseline</td><td>71.2</td><td>74.0</td></tr>
+    <tr><td>Ours</td><td>75.8</td><td>79.1</td></tr>
+  </table>
+</div>
+```
+
+- Types are `line`, `bar`, and `scatter`. Points are `[x, y]`, `[x, y, "label"]`, `{ "x": …, "y": …, "label": … }`, or plain numbers with `"categories": ["a", "b", …]`. Text x values give one slot per value; bar charts always do.
+- A table's first column is x and every other column is a series named by its header. Without scripts the table shows instead of the chart.
+- Axis options: `label`, `min`, `max`, `digits` (decimals in the readout), and `unit` (added to readout values, such as `" ms"`). `height` sets the plot height in pixels (default 260); `data-df-height`, `data-df-x-label`, and `data-df-y-label` on the element override the data.
+- Series get six fixed colours in order. Give a series `"role"` or `"color"` (or a table header `data-df-role` or `data-df-color`) to use a manifest role or a named colour instead.
+- Pointing at the chart, or focusing it and pressing the arrow keys, shows the values at that spot. Charts with two or more series get a legend; line ends are labelled when they don't crowd. The Table button lists the data.
+- From a script: `DocForm.chart(element, spec)` draws a chart and returns `{ update(spec) }`.
+
+## Results tables
+
+```html
+<table data-df-results data-df-heat>
+  <thead>
+    <tr><th>Model</th><th data-df-best="max">Accuracy (%)</th><th data-df-best="min">Latency (ms)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Baseline</td><td>71.2 ± 0.4</td><td>12</td></tr>
+    <tr><td>Ours</td><td>75.8 ± 0.3</td><td>15</td></tr>
+  </tbody>
+</table>
+```
+
+- Click a header to sort: the first click puts the best (or largest, or A to Z) first, the second reverses, and the third restores the written order. Add `data-df-no-sort` to a header to keep it fixed.
+- `data-df-best="max"` or `"min"` on a header makes that column's best value bold and underlined.
+- `data-df-heat` on the table shades every number column except the first, stronger toward the best end; put it on a header instead to shade one column, with `"min"` or `"max"` to choose the direction. `data-df-heat-color="green"` changes the tint (blue by default).
+- Cells such as `92.1 ± 0.3`, `1,204 ms`, or `12%` count as numbers; `—` and blanks are skipped and sort last. `data-df-value` on a cell gives the number to use.
+- The table needs a `thead` and a `tbody`.

@@ -1,0 +1,157 @@
+/* Numbered captions and equations, reference links, preview cards, citations, and reference lists from refs.js. */
+.df-page .df-label {
+  font-weight: 600;
+  color: var(--df-text);
+}
+
+.df-page figcaption,
+.df-page caption {
+  color: var(--df-text-muted);
+  font-size: 0.875em;
+}
+
+.df-page caption {
+  caption-side: top;
+  padding-bottom: var(--df-space-2);
+  text-align: left;
+}
+
+.df-math[data-df-display][data-df-number] {
+  position: relative;
+  padding-inline: 3.5em;
+}
+
+.df-math[data-df-display][data-df-number]::after {
+  content: attr(data-df-number);
+  position: absolute;
+  top: 50%;
+  right: 0;
+  translate: 0 -50%;
+  color: var(--df-text-muted);
+  font-size: 0.95em;
+  font-variant-numeric: tabular-nums;
+}
+
+.df-ref-missing {
+  color: var(--df-red) !important;
+}
+
+/* A brief tint on the element a reference link jumps to. */
+.df-ref-flash {
+  animation: df-ref-flash 1.4s ease-out;
+}
+
+@keyframes df-ref-flash {
+  0%, 30% {
+    background-color: var(--df-yellow-bg);
+    box-shadow: 0 0 0 6px var(--df-yellow-bg);
+  }
+}
+
+/* Preview cards reuse the tooltip box from tooltip.css. */
+.df-tooltip.df-peek {
+  width: min(440px, calc(100vw - 16px));
+  max-width: min(440px, calc(100vw - 16px));
+  max-height: min(360px, calc(100vh - 16px));
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  pointer-events: none;
+}
+
+.df-peek :is(p, ul, ol, figure, table, pre, blockquote, .df-callout) {
+  margin: 0.5em 0;
+}
+
+.df-peek :is(figure, .df-math[data-df-display]) {
+  margin: 0;
+}
+
+.df-peek :is(svg, img) {
+  max-width: 100%;
+  height: auto;
+}
+
+.df-peek .df-math[data-df-display] {
+  overflow: hidden;
+}
+
+.df-peek-page {
+  color: var(--df-text-faint);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.df-peek-title {
+  font-weight: 600;
+}
+
+/* Citations: [1, 2] with each number linking to the reference list. */
+.df-cite {
+  font-style: normal;
+  white-space: nowrap;
+  color: var(--df-text-muted);
+}
+
+.df-page .df-cite-link {
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.df-page .df-cite-link:hover {
+  text-decoration: underline;
+}
+
+.df-cite-missing {
+  color: var(--df-red);
+  cursor: help;
+}
+
+.df-tooltip.df-cite-card {
+  max-width: min(400px, calc(100vw - 16px));
+}
+
+.df-bib-title {
+  font-weight: 500;
+}
+
+.df-bib-where {
+  font-style: italic;
+}
+
+.df-bib-link {
+  word-break: break-all;
+}
+
+.df-page ol.df-references {
+  padding-left: 2.2em;
+  list-style: none;
+  counter-reset: df-ref;
+  font-size: 0.9375em;
+}
+
+.df-page .df-references > li {
+  position: relative;
+  counter-increment: df-ref;
+  margin: 0.4em 0;
+  scroll-margin-top: var(--df-space-7);
+}
+
+.df-page .df-references > li::before {
+  content: "[" counter(df-ref) "]";
+  position: absolute;
+  right: calc(100% + 0.6em);
+  color: var(--df-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.df-page .df-bib-back {
+  color: var(--df-text-faint);
+  text-decoration: none;
+}
+
+.df-page .df-bib-back:hover {
+  color: var(--df-text);
+}

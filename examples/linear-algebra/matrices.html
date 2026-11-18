@@ -21,6 +21,9 @@
   <link rel="stylesheet" href="../../docform/css/reveal.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
   <link rel="stylesheet" href="../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
@@ -46,7 +49,7 @@
       columns of <span class="df-math">A</span> with weights taken from <span class="df-math">\vec x</span>:
     </p>
 
-    <div class="df-math" data-df-display>A\vec x = x_1 \vec a_1 + x_2 \vec a_2.</div>
+    <div class="df-math" id="column-picture" data-df-display>A\vec x = x_1 \vec a_1 + x_2 \vec a_2.</div>
 
     <h3>A worked example</h3>
 
@@ -85,12 +88,13 @@
 
     <p>
       The product <span class="df-math">AB</span> applies <span class="df-math">B</span> first, then
-      <span class="df-math">A</span>. Its entry in row <span class="df-math">i</span> and column
+      <span class="df-math">A</span> <cite data-df-cite="3b1b, strang"></cite>.<span class="df-note">Reading right to
+      left matches function composition: <span class="df-math">(AB)\vec x = A(B\vec x)</span>.</span> Its entry in row <span class="df-math">i</span> and column
       <span class="df-math">j</span> is the <span data-df-term>dot product</span> of row <span class="df-math">i</span>
       of <span class="df-math">A</span> with column <span class="df-math">j</span> of <span class="df-math">B</span>:
     </p>
 
-    <div class="df-math" data-df-display>(AB)_{ij} = \sum_k a_{ik} b_{kj}.</div>
+    <div class="df-math" id="product-entry" data-df-display>(AB)_{ij} = \sum_k a_{ik} b_{kj}.</div>
 
     <h3>Order matters</h3>
 
@@ -99,6 +103,18 @@
       In general <span class="df-math">AB \ne BA</span>. For example,
       <div class="df-math" data-df-display>\begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix}\begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix} = \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix}, \qquad \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix}\begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix} = \begin{pmatrix} 0 & 0 \\ 0 & 1 \end{pmatrix}.</div>
     </div>
+
+    <p>Other familiar rules still hold:</p>
+    <ul data-df-color="green">
+      <li>Associativity: <span class="df-math">(AB)C = A(BC)</span>.</li>
+      <li>Distributivity on both sides:
+        <ul>
+          <li><span class="df-math">A(B + C) = AB + AC</span>,</li>
+          <li><span class="df-math">(A + B)C = AC + BC</span>.</li>
+        </ul>
+      </li>
+      <li>The identity changes nothing: <span class="df-math">IA = AI = A</span>.</li>
+    </ul>
 
     <h3>Why row times column</h3>
 
@@ -109,7 +125,8 @@
         <span class="df-math">AB</span> sends <span class="df-math">\vec e_j</span>. That is
         <span class="df-math">A</span> applied to <span class="df-math">B\vec e_j = \vec b_j</span>, and each entry of
         <span class="df-math">A\vec b_j</span> is a row of <span class="df-math">A</span> dotted with
-        <span class="df-math">\vec b_j</span>.
+        <span class="df-math">\vec b_j</span>, which is <a href="#product-entry"></a>. Applied to one column, it is
+        the column picture of <a href="#column-picture"></a>.
       </p>
     </details>
 
@@ -139,11 +156,16 @@ print(A @ B)  # [[1 0] [0 0]]
 print(B @ A)  # [[0 0] [0 1]]</code></pre>
       </div>
     </div>
+
+    <h2>Further reading</h2>
+
+    <div data-df-bibliography></div>
   </main>
 
   <script src="site.js" data-df-site></script>
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/refs.js"></script>
   <script src="../../docform/js/nav.js"></script>
   <script src="../../docform/js/controls.js"></script>
   <script src="../../docform/js/reveal.js"></script>
@@ -152,6 +174,8 @@ print(B @ A)  # [[0 0] [0 1]]</code></pre>
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
   <script src="../../docform/js/code.js"></script>
   <script src="../../docform/js/tabs.js"></script>
   <script src="../../docform/js/anim.js"></script>

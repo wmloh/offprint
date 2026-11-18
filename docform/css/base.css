@@ -51,9 +51,9 @@ body:has(> .df-sidebar) {
 
 .df-page {
   width: 100%;
-  max-width: calc(var(--df-content-width) + 2 * var(--df-space-7));
+  max-width: calc(var(--df-content-width) + 2 * var(--df-page-gutter));
   margin-inline: auto;
-  padding: var(--df-space-8) var(--df-space-7) 30vh;
+  padding: var(--df-space-8) var(--df-page-gutter) 30vh;
   min-width: 0;
 }
 
@@ -125,6 +125,84 @@ body:has(> .df-sidebar) {
 
 .df-page li::marker {
   color: var(--df-text-muted);
+}
+
+/* Styled list markers: numbers in tinted circles, bullets as tinted dots. The tint comes from data-df-color or
+   data-df-role on the list, an item, or an ancestor (gray otherwise); data-df-no-list-style keeps native markers.
+   Sizes assume the inherited unitless line height: an ordered marker is 0.75em text in a 1.25em-wide circle. */
+.df-page :is(ul, ol):not(.df-legend-list, [role], nav *, [data-df-no-list-style], [data-df-no-list-style] *) {
+  --df-list-tint: var(--df-accent, var(--df-gray));
+  --df-list-tint-bg: var(--df-accent-bg, var(--df-gray-bg));
+  list-style: none;
+  padding-left: 1.9em;
+
+  &:is([data-df-color], [data-df-role]),
+  & > li:is([data-df-color], [data-df-role]) {
+    color: inherit;
+  }
+
+  & > li {
+    position: relative;
+  }
+
+  & > li::before {
+    content: "";
+    position: absolute;
+    right: 100%;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+
+  &:is(ol) > li::before {
+    content: counter(list-item);
+    top: 0.2333em;
+    min-width: 1.6667em;
+    height: 1.6667em;
+    margin-right: 0.6em;
+    padding: 0 0.4em;
+    border-radius: 999px;
+    background: var(--df-list-tint-bg);
+    color: var(--df-list-tint);
+    font-size: 0.75em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.6667em;
+    text-align: center;
+  }
+
+  &:is(ol ol) > li::before { content: counter(list-item, lower-alpha); }
+  &:is(ol ol ol) > li::before { content: counter(list-item, lower-roman); }
+
+  &:is(ul) > li::before {
+    top: 0.6125em;
+    width: 0.375em;
+    height: 0.375em;
+    margin-right: 0.7em;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--df-list-tint) 55%, transparent);
+  }
+
+  &:is(ul ul) > li::before {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--df-list-tint) 70%, transparent);
+  }
+
+  &:is(ul ul ul) > li::before {
+    border-radius: 1.5px;
+    background: color-mix(in srgb, var(--df-list-tint) 55%, transparent);
+    box-shadow: none;
+  }
+
+  /* Hovering an item (but not an item nested inside it) intensifies its marker. */
+  &:is(ol) > li:hover:not(:has(li:hover))::before {
+    background: var(--df-list-tint);
+    color: var(--df-bg);
+  }
+
+  &:is(ul) > li:hover:not(:has(li:hover))::before {
+    background: var(--df-list-tint);
+    box-shadow: inset 0 0 0 1.5px var(--df-list-tint);
+    transform: scale(1.35);
+  }
 }
 
 .df-page a {
@@ -205,6 +283,20 @@ body:has(> .df-sidebar) {
   background: var(--df-bg-subtle);
   font-weight: 600;
   color: var(--df-text-muted);
+}
+
+/* Sidebar, code block, and table scrollbars stay transparent (keeping their size) until the pointer is on them.
+   controls.js handles the page scrollbar. */
+.df-sidebar,
+.df-page pre,
+.df-page table {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+:is(.df-sidebar, .df-page pre, .df-page table):is(:hover, :focus-visible) {
+  scrollbar-color: var(--df-border-strong) transparent;
 }
 
 /* Colour contract: [data-df-color] and [data-df-role] set --df-accent and --df-accent-bg.

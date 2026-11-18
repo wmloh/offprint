@@ -15,18 +15,8 @@
   var CARET_SMALL = SVG + ' width="10" height="10"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
   var MENU = SVG + ' width="18" height="18"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg>';
 
-  function slugify(text) {
-    var slug = String(text).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
-      .replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
-    return slug || 'section';
-  }
-
-  function uniqueSlug(base, used) {
-    var slug = base;
-    for (var n = 2; used.has(slug); n++) slug = base + '-' + n;
-    used.add(slug);
-    return slug;
-  }
+  var slugify = DocForm.slug;
+  var uniqueSlug = DocForm.uniqueSlug;
 
   // Compares pages by location only, so "dir/" and "dir/index.html" match and query or hash are ignored.
   function pageKey(href) {
@@ -101,6 +91,45 @@
       if (!h.id) h.id = uniqueSlug(slugify(h.textContent), used);
       return { level: h.tagName === 'H2' ? 2 : 3, id: h.id, text: h.textContent.trim(), el: h };
     });
+  }
+
+  function headingUrl(href, id) {
+    return String(href).split('#')[0] + '#' + encodeURIComponent(id);
+  }
+
+  var LINK_ICON = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M6.5 9.5a3 3 0 0 0 4.2 0l2.1-2.1a3 3 0 0 0-4.2-4.2l-.9.9"/>' +
+    '<path d="M9.5 6.5a3 3 0 0 0-4.2 0L3.2 8.6a3 3 0 0 0 4.2 4.2l.9-.9"/></svg>';
+  var DONE_ICON = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+
+  // A button after the heading text copies the section's URL; if copying is blocked, the URL goes to the address bar.
+  function linkHeading(h) {
+    if (h.querySelector('.df-heading-link')) return;
+    var button = make('button', 'df-heading-link');
+    button.type = 'button';
+    button.innerHTML = LINK_ICON;
+    button.setAttribute('aria-label', 'Copy link to this section');
+    button.title = 'Copy link';
+    var timer = 0;
+    button.addEventListener('click', function () {
+      var url = headingUrl(root.location.href, h.id);
+      DocForm.copyText(url).then(function () {
+        button.classList.add('is-done');
+        button.innerHTML = DONE_ICON;
+        button.title = 'Link copied';
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          button.classList.remove('is-done');
+          button.innerHTML = LINK_ICON;
+          button.title = 'Copy link';
+        }, 1600);
+      }, function () {
+        if (root.history && root.history.replaceState) root.history.replaceState(null, '', url);
+      });
+    });
+    h.appendChild(button);
   }
 
   function renderOutline(nodes, links, groups) {
@@ -361,12 +390,14 @@
     pickActive: pickActive,
     outlineTree: outlineTree,
     outlineOpen: outlineOpen,
+    headingUrl: headingUrl,
     drawer: null
   };
 
   DocForm.register('nav', function (site) {
     var main = document.querySelector('.df-page') || document.querySelector('main') || document.body;
     var headings = collectHeadings(main);
+    headings.forEach(function (h) { linkHeading(h.el); });
     var hasTree = site.provided && site.pages.length > 0;
     var sidebar = document.querySelector('.df-sidebar');
     if (!hasTree && !headings.length && !sidebar) return;

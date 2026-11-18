@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="../../docform/css/anim.css">
   <link rel="stylesheet" href="../../docform/css/reveal.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
   <script src="../../docform/js/theme.js"></script>
 </head>
 <body>
@@ -29,7 +32,9 @@
     <p>
       Few results are as old or as useful as this one. It links the three sides of every
       <span data-df-tip="A triangle with one angle of exactly $90^\circ$.">right triangle</span>,
-      and it is the reason distance on a map is computed with a square root.
+      and it is the reason distance on a map is computed with a square root.<span class="df-note">It carries
+      Pythagoras's name, but Babylonian scribes were using it more than a thousand years before him.</span>
+      The <a href="#why-it-holds">proof below</a> needs nothing more than the areas of squares and triangles.
     </p>
 
     <h2>Statement <span class="df-tag" data-df-color="purple">Theorem</span></h2>
@@ -41,7 +46,7 @@
       Then
     </p>
 
-    <div class="df-math" data-df-display>a^2 + b^2 = c^2.</div>
+    <div class="df-math" id="pythagorean" data-df-display>a^2 + b^2 = c^2.</div>
 
     <div class="df-callout" data-df-color="yellow" data-df-icon="💡" data-df-reveal>
       <span class="df-callout-title">Reading the squares</span>
@@ -54,6 +59,7 @@
     <p>
       Step through the figure. The legs measure <span class="df-math">a = 3</span> and
       <span class="df-math">b = 4</span>, so the hypotenuse is <span class="df-math">c = 5</span>.
+      <a href="#pythagoras"></a> builds a square on each side.
     </p>
 
     <figure id="pythagoras">
@@ -88,13 +94,11 @@
 
     <div class="df-split" data-df-align="center">
       <div>
-        <p>
-          Arrange four copies of the triangle inside a square of side <span class="df-math">a + b</span>. The space
-          they leave uncovered is a tilted square of side <span class="df-math">c</span>.
-        </p>
-        <p>
-          Expanding the left side below and cancelling <span class="df-math">2ab</span> leaves the theorem.
-        </p>
+        <ol data-df-color="blue">
+          <li>Arrange four copies of the triangle inside a square of side <span class="df-math">a + b</span>.</li>
+          <li>The space they leave uncovered is a tilted square of side <span class="df-math">c</span>.</li>
+          <li>Expanding the left side below and cancelling <span class="df-math">2ab</span> leaves the theorem.</li>
+        </ol>
       </div>
       <div>
         <div class="df-math" data-df-display>(a + b)^2 = 4 \cdot \tfrac{1}{2}ab + c^2</div>
@@ -106,10 +110,12 @@
 
     <p>
       The distance between points <span class="df-math">(x_1, y_1)</span> and <span class="df-math">(x_2, y_2)</span>
-      is the hypotenuse of a triangle whose legs are the horizontal and vertical gaps:
+      is the hypotenuse of a triangle whose legs are the horizontal and vertical gaps, so
+      <a href="#pythagorean"></a> gives<span class="df-note">The same idea extends to any number of dimensions:
+      add one squared gap per coordinate.</span>
     </p>
 
-    <div class="df-math" data-df-display>d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}.</div>
+    <div class="df-math" id="distance" data-df-display>d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}.</div>
 
     <div class="df-callout" data-df-color="red" data-df-icon="⚠️" data-df-reveal="left">
       The theorem needs a right angle. For other triangles, use the law of cosines,
@@ -119,6 +125,7 @@
   </main>
 
   <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/js/refs.js"></script>
   <script src="../../docform/js/nav.js"></script>
   <script src="../../docform/js/controls.js"></script>
   <script src="../../docform/js/reveal.js"></script>
@@ -126,6 +133,8 @@
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
   <script src="../../docform/js/anim.js"></script>
   <script>
     DocForm.anim('pythagoras', [

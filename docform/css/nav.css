@@ -294,3 +294,47 @@ button.df-nav-label {
     padding-top: var(--df-space-8);
   }
 }
+
+/* Copy-link button after h2 and h3 text: shown while the heading is hovered or the button has focus. */
+.df-heading-link {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4em;
+  height: 1.4em;
+  margin: 0 0 0 0.3em;
+  padding: 0;
+  border: 0;
+  border-radius: var(--df-radius);
+  background: transparent;
+  color: var(--df-text-faint);
+  font-size: 0.7em;
+  line-height: 1;
+  vertical-align: 0.1em;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.df-heading-link svg {
+  width: 1em;
+  height: 1em;
+}
+
+:is(h2, h3):hover > .df-heading-link,
+.df-heading-link:focus-visible,
+.df-heading-link.is-done {
+  opacity: 1;
+}
+
+.df-heading-link:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-heading-link.is-done {
+  color: var(--df-green);
+}
+
+@media (hover: none) {
+  .df-heading-link { opacity: 0.6; }
+}

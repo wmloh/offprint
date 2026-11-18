@@ -91,7 +91,7 @@
 
   .df-sidebar {
     width: var(--df-sidebar-width);
-    transition: transform 0.25s ease, visibility 0s;
+    transition: transform 0.25s ease, visibility 0s, scrollbar-color 0.2s ease;
   }
 
   .df-nav-hidden body:has(> .df-sidebar) {
@@ -105,7 +105,7 @@
   .df-nav-hidden .df-sidebar {
     transform: translateX(-100%);
     visibility: hidden;
-    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+    transition: transform 0.25s ease, visibility 0s linear 0.25s, scrollbar-color 0.2s ease;
   }
 }
 

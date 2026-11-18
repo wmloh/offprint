@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Computing · Linear Algebra Notes</title>
+  <link rel="stylesheet" href="../../docform/css/tokens.css">
+  <link rel="stylesheet" href="../../docform/css/base.css">
+  <link rel="stylesheet" href="../../docform/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../docform/css/roles.css">
+  <link rel="stylesheet" href="../../docform/css/nav.css">
+  <link rel="stylesheet" href="../../docform/css/theme.css">
+  <link rel="stylesheet" href="../../docform/css/controls.css">
+  <link rel="stylesheet" href="../../docform/css/math.css">
+  <link rel="stylesheet" href="../../docform/css/blocks.css">
+  <link rel="stylesheet" href="../../docform/css/tooltip.css">
+  <link rel="stylesheet" href="../../docform/css/code.css">
+  <link rel="stylesheet" href="../../docform/css/tabs.css">
+  <link rel="stylesheet" href="../../docform/css/anim.css">
+  <link rel="stylesheet" href="../../docform/css/params.css">
+  <link rel="stylesheet" href="../../docform/css/reveal.css">
+  <link rel="stylesheet" href="../../docform/css/zoom.css">
+  <link rel="stylesheet" href="../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
+  <link rel="stylesheet" href="../../docform/css/chart.css">
+  <link rel="stylesheet" href="../../docform/css/results.css">
+  <script src="../../docform/js/theme.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <h1>Computing with matrices</h1>
+
+    <p>
+      The ideas so far run on paper, but most real matrices are too big for that. This page shows how a
+      <span data-df-term>matrix</span>-vector product looks in code, how fast the common approaches are, and how
+      the standard solvers compare. Timings are illustrative, not measured on your machine.
+    </p>
+
+    <h2>A matrix-vector product by hand</h2>
+
+    <p>
+      Each entry of <span class="df-math">A\vec x</span> is the <span data-df-term>dot product</span> of one row of
+      <span class="df-math">A</span> with <span class="df-math">\vec x</span>. The loop below spells that out; the
+      highlighted lines do the work. Hover a numbered marker to read its note.
+    </p>
+
+    <pre data-df-annotate data-df-lines="6-7"><code class="language-python">
+      import numpy as np
+
+      def matvec(A, x):
+          n, m = A.shape  # (1)
+          y = np.zeros(n)
+          for i in range(n):
+              y[i] = A[i] @ x  # (2)
+          return y
+
+      A = np.array([[2.0, -1.0], [1.0, 1.0]])
+      print(matvec(A, np.array([2.0, 1.0])))  # (3)
+    </code></pre>
+    <ol>
+      <li>An <span class="df-math">n \times m</span> matrix needs <span class="df-math">\vec x \in \R^m</span>; the result lives in <span class="df-math">\R^n</span>.</li>
+      <li>Row <span class="df-math">i</span> dotted with <span class="df-math">\vec x</span> gives entry <span class="df-math">y_i</span>.</li>
+      <li>Prints <code>[3. 3.]</code>, the same <span class="df-math">A\vec x = (3, 3)</span> as the column picture on the matrices page.</li>
+    </ol>
+
+    <h2>Letting the library do it</h2>
+
+    <p>NumPy already has the product built in. The diff shows what changes when the loop goes away:</p>
+
+    <div class="df-diff" data-df-lang="python">
+      <pre data-df-diff="before">
+        def matvec(A, x):
+            n, m = A.shape
+            y = np.zeros(n)
+            for i in range(n):
+                y[i] = A[i] @ x
+            return y
+      </pre>
+      <pre data-df-diff="after">
+        def matvec(A, x):
+            return A @ x
+      </pre>
+    </div>
+
+    <p>A diff can also be written by hand with <code>+</code> and <code>-</code> at the start of each line:</p>
+
+    <pre data-df-diff><code class="language-python">
+      @@ solve.py @@
+      -x = np.linalg.inv(A) @ b
+      +x = np.linalg.solve(A, b)
+       print(np.allclose(A @ x, b))
+    </code></pre>
+
+    <h2>How fast is it?</h2>
+
+    <p>
+      <a href="#fig-speed"></a> compares the loop with the built-in product as the matrix grows. The loop's time grows
+      with the number of entries, <span class="df-math">n^2</span>, and is hundreds of times slower throughout.
+    </p>
+
+    <figure id="fig-speed">
+      <div data-df-chart="line" data-df-height="280">
+        <script type="application/json">
+          {
+            "x": { "label": "Matrix size n" },
+            "y": { "label": "Time (ms)", "unit": " ms" },
+            "series": [
+              { "name": "Python loop", "data": [[100, 2.1], [200, 8.3], [400, 33], [800, 131], [1600, 524]] },
+              { "name": "NumPy A @ x", "data": [[100, 0.01], [200, 0.03], [400, 0.09], [800, 0.4], [1600, 1.6]] }
+            ]
+          }
+        </script>
+      </div>
+      <figcaption>Time for one product <span class="df-math">A\vec x</span> with an <span class="df-math">n \times n</span> matrix.</figcaption>
+    </figure>
+
+    <p>
+      The <span data-df-term>determinant</span> is a sharper case. Expanding by cofactors multiplies far more than
+      elimination does, even for small matrices (<a href="#fig-det"></a>). This chart reads its numbers from the table
+      inside it, so the table still shows without scripts.
+    </p>
+
+    <figure id="fig-det">
+      <div data-df-chart="bar" data-df-y-label="Multiplications">
+        <table>
+          <thead>
+            <tr><th>Size</th><th>Cofactor expansion</th><th>Elimination</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>3 × 3</td><td>9</td><td>10</td></tr>
+            <tr><td>4 × 4</td><td>40</td><td>23</td></tr>
+            <tr><td>5 × 5</td><td>205</td><td>44</td></tr>
+            <tr><td>6 × 6</td><td>1236</td><td>75</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Approximate multiplications to compute <span class="df-math">\det A</span>.</figcaption>
+    </figure>
+
+    <h2>When answers go wrong</h2>
+
+    <p>
+      A matrix close to singular, with <span class="df-math">\det A</span> near zero, amplifies rounding errors. The
+      condition number measures that amplification; <a href="#fig-cond"></a> plots it against the error in the
+      solution for a few test matrices, coloured by the manifest's roles.
+    </p>
+
+    <figure id="fig-cond">
+      <div data-df-chart="scatter" data-df-height="260">
+        <script type="application/json">
+          {
+            "x": { "label": "Condition number" },
+            "y": { "label": "Relative error (×10⁻¹²)" },
+            "series": [
+              { "name": "Well conditioned", "role": "example",
+                "data": [[2, 0.4, "Rotation"], [5, 0.9, "Shear"], [12, 1.6, "Random A"], [30, 3.1, "Random B"]] },
+              { "name": "Ill conditioned", "role": "warning",
+                "data": [[180, 21, "Near-parallel columns"], [420, 55, "Hilbert 4 × 4"], [700, 96, "Hilbert 5 × 5"]] }
+            ]
+          }
+        </script>
+      </div>
+      <figcaption>Error grows with the condition number.</figcaption>
+    </figure>
+
+    <h2>Comparing solvers</h2>
+
+    <p>
+      <a href="#tbl-solvers"></a> compares ways to solve <span class="df-math">A\vec x = \vec b</span> for a
+      <span class="df-math">1000 \times 1000</span> matrix. Click a header to sort; shading and bold mark the best
+      values, lower being better in both number columns.
+    </p>
+
+    <figure id="tbl-solvers">
+      <table data-df-results data-df-heat>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th data-df-best="min">Time (ms)</th>
+            <th data-df-best="min">Residual (×10⁻¹³)</th>
+            <th>Needs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Inverse, then multiply</td><td>61.0 ± 2.1</td><td>9.8</td><td>Invertible <span class="df-math">A</span></td></tr>
+          <tr><td>LU with pivoting</td><td>21.4 ± 0.8</td><td>1.2</td><td>Invertible <span class="df-math">A</span></td></tr>
+          <tr><td>QR</td><td>48.7 ± 1.5</td><td>0.9</td><td>Any full-rank <span class="df-math">A</span></td></tr>
+          <tr><td>Cholesky</td><td>11.9 ± 0.6</td><td>1.1</td><td>Symmetric positive definite</td></tr>
+          <tr><td>Conjugate gradient</td><td>—</td><td>4.5</td><td>Symmetric positive definite</td></tr>
+        </tbody>
+      </table>
+      <figcaption>Solvers for one dense system; the iterative method's time depends on its stopping rule.</figcaption>
+    </figure>
+  </main>
+
+  <script src="site.js" data-df-site></script>
+  <script src="../../docform/js/core.js"></script>
+  <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/refs.js"></script>
+  <script src="../../docform/js/nav.js"></script>
+  <script src="../../docform/js/controls.js"></script>
+  <script src="../../docform/js/reveal.js"></script>
+  <script src="../../docform/js/zoom.js"></script>
+  <script src="../../docform/js/bubble.js"></script>
+  <script src="../../docform/vendor/katex/katex.min.js"></script>
+  <script src="../../docform/js/math.js"></script>
+  <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
+  <script src="../../docform/js/code.js"></script>
+  <script src="../../docform/js/tabs.js"></script>
+  <script src="../../docform/js/anim.js"></script>
+  <script src="../../docform/js/params.js"></script>
+  <script src="../../docform/js/chart.js"></script>
+  <script src="../../docform/js/results.js"></script>
+</body>
+</html>

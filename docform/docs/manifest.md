@@ -1,6 +1,6 @@
 # Manifest reference
 
-A manifest describes a site: its pages, colour roles, glossary, and math macros. It is an ordinary script that sets `window.DocFormSite`. Start from `docform/site.template.js`, save it beside your pages as `site.js`, and load it before `core.js`:
+A manifest describes a site: its pages, colour roles, glossary, term options, math macros, bibliography, numbering options, and search index. It is an ordinary script that sets `window.DocFormSite`. Start from `docform/site.template.js`, save it beside your pages as `site.js`, and load it before `core.js`:
 
 ```html
 <script src="site.js" data-df-site></script>
@@ -15,7 +15,11 @@ window.DocFormSite = {
   pages: [ /* ... */ ],
   roles: { /* ... */ },
   glossary: { /* ... */ },
-  macros: { /* ... */ }
+  terms: { /* ... */ },
+  macros: { /* ... */ },
+  bibliography: { /* ... */ },
+  refs: { /* ... */ },
+  search: 'search-index.js'
 };
 ```
 
@@ -63,19 +67,36 @@ Use a role anywhere with `data-df-role="theorem"`: on tags, callouts, math, text
 
 ## glossary
 
-Terms shown as tooltips wherever `data-df-term` is used. A definition is a string, or an object with a `title` and `text`. Definitions may contain `$…$` math.
+Terms shown as tooltips wherever `data-df-term` is used. A definition is a string, or an object with a `title`, `text`, and optional `more`. Definitions may contain `$…$` math.
 
 ```js
 glossary: {
   vector: 'A quantity with magnitude and direction, such as $(3, 4)$.',
   'dot product': {
     title: 'Dot product',
-    text: 'The number $u_1 v_1 + u_2 v_2$.'
+    text: 'The number $u_1 v_1 + u_2 v_2$.',
+    more: '<p>It is zero exactly when $u$ and $v$ are perpendicular.</p>'
   }
 }
 ```
 
+`more` is a longer explanation written as HTML, with `$…$` math allowed. Terms that have it show a small ring in their tooltip; pressing and holding the term fills the ring and grows the tooltip into a larger card.
+
 Keys ignore case, and spaces, hyphens, and underscores count as the same, so `Dot-Product` finds `dot product`. A missing term is marked on the page and reported in the console.
+
+## terms
+
+Options for glossary terms.
+
+```js
+terms: {
+  autoLink: true,
+  hold: 600
+}
+```
+
+- `autoLink: true`: turns every glossary term in paragraphs and list items into a tooltip term, without writing `data-df-term` by hand. Matching ignores case and only takes whole words, so `vector` does not match `vectors` or `eigenvector`. Where two terms overlap, the one starting first wins, and the longer one wins when both start at the same word. Headings, code, math, links, and existing terms are left alone. Off by default.
+- `hold`: how long, in milliseconds, a reader presses a term before its extended card opens. Defaults to 600.
 
 ## macros
 
@@ -89,3 +110,46 @@ macros: {
 ```
 
 Backslashes are doubled inside JavaScript strings. `#1`, `#2`, … are macro arguments.
+
+## bibliography
+
+Sources for `<cite data-df-cite="key"></cite>`, keyed by the name you cite them with.
+
+```js
+bibliography: {
+  vaswani2017: {
+    author: 'Ashish Vaswani and Noam Shazeer and Niki Parmar',
+    title: 'Attention is all you need',
+    booktitle: 'Advances in Neural Information Processing Systems',
+    year: 2017,
+    url: 'https://arxiv.org/abs/1706.03762'
+  },
+  notes: 'J. Doe. Lecture notes, 2024.'
+}
+```
+
+- `author` is a string with names joined by `and`, or `authors` is a list of names.
+- `title`, `year`, and one of `venue`, `journal`, `booktitle`, or `publisher` make up the entry; `volume`, `pages`, `note`, `url`, and `doi` are optional.
+- A plain string is shown exactly as written.
+
+Entries appear as `Authors. Title. Venue, Year.` with a link when there is a `url` or `doi`.
+
+## refs
+
+Numbering options for figures, tables, and equations.
+
+```js
+refs: {
+  equations: 'all'
+}
+```
+
+- `equations: 'all'`: numbers every display equation. By default only equations with an `id` are numbered.
+
+## search
+
+The path of the search index, relative to the manifest, as made by `docform/tools/search-index.html`. See the Search section of [components.md](components.md).
+
+```js
+search: 'search-index.js'
+```

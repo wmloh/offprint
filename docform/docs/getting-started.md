@@ -76,8 +76,8 @@ Open the file in Chrome. Without a manifest the sidebar shows the page outline; 
 
 ## Where next
 
-- [manifest.md](manifest.md): pages, roles, glossary, and math macros shared across a site.
-- [components.md](components.md): markup for every feature.
+- [manifest.md](manifest.md): pages, roles, glossary, term options, and math macros shared across a site.
+- [components.md](components.md): markup for every feature, including how to build the search index.
 - [style-guide.md](style-guide.md): how to keep pages calm and colours meaningful.
 
 The `examples/` folder in the DocForm repository has a one-page and a multi-page example to copy from.

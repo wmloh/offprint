@@ -1,0 +1,78 @@
+/* Results tables from results.js: sort buttons in headers, heatmap shading, and best-in-column values. */
+.df-results {
+  --df-heat-color: var(--df-blue);
+}
+
+.df-results .df-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.df-results th[aria-sort] {
+  padding: 0;
+}
+
+.df-sort {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0.4em 0.6em;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.df-num > .df-sort {
+  justify-content: flex-end;
+}
+
+.df-sort:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-sort:focus-visible {
+  outline: 2px solid var(--df-focus);
+  outline-offset: -2px;
+}
+
+.df-sort-icon {
+  display: inline-flex;
+  flex: none;
+  fill: currentColor;
+}
+
+.df-num > .df-sort > .df-sort-icon {
+  order: -1;
+}
+
+.df-sort-icon path {
+  opacity: 0.25;
+  transition: opacity 0.15s;
+}
+
+.df-sort[data-df-sorted="asc"] .df-sort-up,
+.df-sort[data-df-sorted="desc"] .df-sort-down {
+  opacity: 1;
+}
+
+.df-sort[data-df-sorted="asc"],
+.df-sort[data-df-sorted="desc"] {
+  color: var(--df-text);
+}
+
+/* One hue from faint to about a third strength, so text stays readable on the strongest cell. */
+.df-heat {
+  background: color-mix(in srgb, var(--df-heat-color) calc(var(--df-heat, 0) * 34%), transparent);
+}
+
+.df-best {
+  font-weight: 600;
+  color: var(--df-text);
+  box-shadow: inset 0 -2px 0 var(--df-heat-color);
+}

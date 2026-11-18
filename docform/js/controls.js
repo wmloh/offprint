@@ -291,6 +291,16 @@
       focusButton.addEventListener('click', actions.focus);
     }
 
+    if (DocForm.search && typeof DocForm.search.open === 'function') {
+      var searchButton = pill.appendChild(make('button', 'df-controls-btn df-controls-search'));
+      searchButton.type = 'button';
+      searchButton.innerHTML = DocForm.search.icon;
+      searchButton.setAttribute('aria-keyshortcuts', 'Control+K Meta+K');
+      searchButton.setAttribute('aria-label', 'Search');
+      searchButton.title = 'Search (Ctrl+K)';
+      searchButton.addEventListener('click', function () { DocForm.search.open(searchButton); });
+    }
+
     if (theme && typeof theme.toggle === 'function') {
       var themeButton = make('button', 'df-controls-btn');
       themeButton.setAttribute('aria-keyshortcuts', 'T');

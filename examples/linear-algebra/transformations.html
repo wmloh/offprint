@@ -20,6 +20,9 @@
   <link rel="stylesheet" href="../../docform/css/scrolly.css">
   <link rel="stylesheet" href="../../docform/css/zoom.css">
   <link rel="stylesheet" href="../../docform/css/bubble.css">
+  <link rel="stylesheet" href="../../docform/css/refs.css">
+  <link rel="stylesheet" href="../../docform/css/notes.css">
+  <link rel="stylesheet" href="../../docform/css/search.css">
   <script src="../../docform/js/theme.js"></script>
   <style>
     .warp line { vector-effect: non-scaling-stroke; }
@@ -136,15 +139,21 @@
       <summary>Directions that only stretch</summary>
       <p>
         Some matrices leave certain directions unchanged and only stretch along them. Such a direction is an
-        <span data-df-term>eigenvector</span>, and the stretch factor <span class="df-math">\lambda</span> solves
+        <span data-df-term data-df-more="#eigenvector-more">eigenvector</span>, and the stretch factor <span class="df-math">\lambda</span> solves
         <span class="df-math">\det(A - \lambda I) = 0</span>. In the shear above, the horizontal axis is one.
       </p>
     </details>
   </main>
 
+  <template id="eigenvector-more">
+    <p>For the shear $\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}$, $\vec e_1$ maps to itself, so it is an eigenvector with $\lambda = 1$.</p>
+    <p>A rotation by $90^\circ$ has no real eigenvectors: it turns every direction.</p>
+  </template>
+
   <script src="site.js" data-df-site></script>
   <script src="../../docform/js/core.js"></script>
   <script src="../../docform/js/roles.js"></script>
+  <script src="../../docform/js/refs.js"></script>
   <script src="../../docform/js/nav.js"></script>
   <script src="../../docform/js/controls.js"></script>
   <script src="../../docform/js/reveal.js"></script>
@@ -154,6 +163,8 @@
   <script src="../../docform/vendor/katex/katex.min.js"></script>
   <script src="../../docform/js/math.js"></script>
   <script src="../../docform/js/tooltip.js"></script>
+  <script src="../../docform/js/notes.js"></script>
+  <script src="../../docform/js/search.js"></script>
   <script src="../../docform/js/anim.js"></script>
   <script src="../../docform/js/params.js"></script>
   <script src="figures.js"></script>

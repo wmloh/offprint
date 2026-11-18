@@ -30,7 +30,11 @@ test('missing manifest normalizes to empty defaults', () => {
     order: [],
     roles: {},
     glossary: {},
-    macros: {}
+    terms: {},
+    macros: {},
+    bibliography: {},
+    refs: {},
+    search: null
   });
   assert.equal(warnings.length, 0);
 });
@@ -91,4 +95,38 @@ test('non-object manifest fields are ignored with a warning', () => {
   assert.deepEqual(plain(site.glossary), {});
   assert.deepEqual(plain(site.macros), {});
   assert.equal(warnings.length, 2);
+});
+
+test('copyText uses the clipboard and falls back to execCommand when it is refused', async () => {
+  const copied = [];
+  let allowFallback = true;
+  const area = { style: {}, setAttribute() {}, select() { copied.push('fallback:' + this.value); }, remove() {} };
+  const document = {
+    readyState: 'loading',
+    addEventListener() {},
+    createElement: () => area,
+    body: { appendChild() {} },
+    execCommand: () => allowFallback
+  };
+  const clipboard = { writeText: (text) => (text === 'refused' ? Promise.reject(new Error('no')) : (copied.push(text), Promise.resolve())) };
+  const window = { navigator: { clipboard }, isSecureContext: true };
+  vm.runInNewContext(source, { window, document, URL, console: { warn() {} } });
+  const { DocForm } = window;
+  await DocForm.copyText('plain');
+  await DocForm.copyText('refused');
+  allowFallback = false;
+  await assert.rejects(DocForm.copyText('refused'));
+  assert.deepEqual(copied, ['plain', 'fallback:refused', 'fallback:refused']);
+});
+
+test('bibliography, refs, and the search index path are read from the manifest', () => {
+  const { DocForm } = load();
+  const site = DocForm.normalizeSite({
+    bibliography: { a: 'Entry' },
+    refs: { equations: 'all' },
+    search: 'search-index.js'
+  }, 'file:///repo/docs/site.js');
+  assert.deepEqual(plain(site.bibliography), { a: 'Entry' });
+  assert.deepEqual(plain(site.refs), { equations: 'all' });
+  assert.equal(site.search, 'file:///repo/docs/search-index.js');
 });

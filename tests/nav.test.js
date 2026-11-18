@@ -68,3 +68,9 @@ test('outline subsections open for the section in view and for sections the read
   assert.deepEqual(plain(nav.outlineOpen(ids, 'b', new Set(['a']), 'b')), ['a']);
   assert.deepEqual(plain(nav.outlineOpen(ids, null, new Set(), null)), []);
 });
+
+test('heading links replace any hash and encode the section id', () => {
+  const { nav } = load();
+  assert.equal(nav.headingUrl('file:///notes/page.html#old', 'basis'), 'file:///notes/page.html#basis');
+  assert.equal(nav.headingUrl('file:///notes/page.html?x=1', 'a b#c'), 'file:///notes/page.html?x=1#a%20b%23c');
+});

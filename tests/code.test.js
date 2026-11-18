@@ -65,3 +65,21 @@ test('highlight escapes markup, and dedent strips shared indentation', () => {
   assert.equal(code.highlight('<b>', 'text'), '&lt;b&gt;');
   assert.equal(code.dedent('\n    if x:\n\n      y\n  '), 'if x:\n\n  y');
 });
+
+test('line lists, token lines, and annotation markers', () => {
+  assert.deepEqual([...code.lineList('4-6, 2 6 x 9-8')], [2, 4, 5, 6, 8, 9]);
+  const lines = JSON.parse(JSON.stringify(code.tokenLines(code.tokenize('a = """x\ny"""', 'py'))));
+  assert.deepEqual(lines.map((l) => l.map((t) => t.text).join('')), ['a = """x', 'y"""']);
+  const parsed = code.annotations('x = 1  # (1)\nfoo(); // (2) (3)\n<b> <!-- (4) -->\ny = "(5)"\nz  # see (6) later');
+  assert.equal(parsed.source, 'x = 1\nfoo();\n<b>\ny = "(5)"\nz  # see (6) later');
+  assert.deepEqual(JSON.parse(JSON.stringify(parsed.markers)), [[1], [2, 3], [4], [], []]);
+});
+
+test('diff rows from prefixed text and from before and after versions', () => {
+  const rows = (list) => JSON.parse(JSON.stringify(list)).map((r) => r.type[0] + r.text);
+  assert.deepEqual(rows(code.diffRows('--- a.py\n+++ b.py\n@@ -1 +1 @@\n x = 1\n-y = 2\n+y = 3\n--z\nplain')),
+    ['m--- a.py', 'm+++ b.py', 'h@@ -1 +1 @@', 'sx = 1', 'dy = 2', 'ay = 3', 'd-z', 'splain']);
+  assert.deepEqual(rows(code.diffLines('a\nb\nc\nd', 'a\nc\nx\nd')), ['sa', 'db', 'sc', 'ax', 'sd']);
+  assert.deepEqual(rows(code.diffLines('a\nb', 'z\na\nb\ny')), ['az', 'sa', 'sb', 'ay']);
+  assert.deepEqual(rows(code.diffLines('old', 'new')), ['dold', 'anew']);
+});

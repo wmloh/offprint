@@ -1,16 +1,16 @@
 docform/: Copyable offline library folder
   site.template.js: Starter window.DocFormSite manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
-    tokens.css: Notion-style named colours, neutrals, spacing, radii, and fonts via light-dark()
-    base.css: Page layout with sidebar slot, reading-column typography, data-df-color accents
+    tokens.css: Notion-style named colours, chart series colours, neutrals, spacing, radii, fonts, and reading-column width via light-dark()
+    base.css: Page layout with sidebar slot, reading-column typography, tinted list markers, hover-revealed scrollbars, data-df-color accents
     roles.css: Roles legend styles
-    nav.css: Sidebar tree, collapsible page outline, prev/next links, and narrow-screen drawer
+    nav.css: Sidebar tree, collapsible page outline, heading copy-link buttons, prev/next links, and narrow-screen drawer
     theme.css: Theme toggle button styles
     controls.css: Top-left frosted control pill, progress ring, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
     math.css: Display math layout and inline TeX error styles
     blocks.css: Inline tags, callouts, and the no-script tinted card look of details
-    tooltip.css: Tooltip box and dotted term underlines
-    code.css: Code block bar, copy button, and token colours
+    tooltip.css: Tooltip box, hold-to-expand card with progress ring, and dotted term underlines (fainter for auto-linked terms)
+    code.css: Code block bar, copy button, token colours, highlighted lines, circled annotation markers, and diff rows
     tabs.css: Tab list and panels with a no-JS fallback
     anim.css: Figure frames, animation controls, and SVG paint utilities
     params.css: Parameter slider rows and bound values
@@ -18,15 +18,20 @@ docform/: Copyable offline library folder
     scrolly.css: Sticky frosted figure and scrolling step cards for pinned figures
     zoom.css: Frosted full-screen figure zoom view
     bubble.css: Tinted peek bubbles and the frosted side panel, blurred except while hovered
+    refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
+    notes.css: Margin sidenotes, note markers, and the no-script inline aside
+    search.css: Frosted Ctrl+K search dialog with highlighted results
+    chart.css: Chart legend, grid, thin marks, hover readout, and table view
+    results.css: Sortable results-table headers, heatmap shading, and best-in-column values
   js/: Per-module classic scripts on a shared DocForm namespace
-    core.js: DocForm namespace, module registry, data-df-* helpers, manifest normalization
+    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, manifest normalization
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
-    nav.js: Sidebar page tree with collapsible heading outline, scroll-spy, prev/next links, and drawer API
+    nav.js: Sidebar page tree with collapsible heading outline, heading copy links, scroll-spy, prev/next links, and drawer API
     theme.js: Head-loaded light and dark theme switching with saved choice and toggles
-    controls.js: Control pill with reading progress, saved focus mode and sidebar state, theme toggle, and keyboard shortcuts
+    controls.js: Control pill with reading progress, saved focus mode and sidebar state, search and theme buttons, and keyboard shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
-    tooltip.js: data-df-tip tooltips and manifest glossary terms via data-df-term
-    code.js: Code block copy buttons and a dependency-free JS, Python, HTML, CSS, and shell highlighter
+    tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, opt-in automatic term linking, and lazy HTML cards for other modules
+    code.js: Code block copy buttons, a dependency-free JS, Python, HTML, CSS, and shell highlighter, line highlights, annotation markers linked to list items, and diffs
     tabs.js: Accessible tabbed panels with keyboard navigation and synced groups
     anim.js: DocForm.anim step-timeline SVG animations with playback controls, hover-to-play, and animated step jumps
     params.js: data-df-param sliders, data-df-bind/data-df-template outputs, and a subscription API
@@ -34,9 +39,15 @@ docform/: Copyable offline library folder
     scrolly.js: Pinned .df-scrolly figures whose data-df-step prose drives DocForm.anim steps
     zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes
     bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
+    refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
+    notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
+    search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor and ranking
+    chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with hover readouts and a table view
+    results.js: Sortable results tables with heatmap shading and best-in-column highlighting
+  tools/search-index.html: Offline page that builds search-index.js from a chosen docs folder
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide
 examples/: Example docs opened from file://
-  simple/: Single-page Pythagorean theorem example without a manifest, with reveals and a split view
-  linear-algebra/: Four-page linear algebra notes with a manifest, figures.js plane and arrow helpers, sliders, animations, split views, peek bubbles, and a pinned scrolling figure
+  simple/: Single-page Pythagorean theorem example without a manifest, with reveals, a split view, a tinted numbered list, numbered references, sidenotes, and page search
+  linear-algebra/: Five-page linear algebra notes with a manifest, figures.js plane and arrow helpers, sliders, animations, split views, peek bubbles, a pinned scrolling figure, and auto-linked glossary terms with extended cards, cross-references, sidenotes, citations, search, annotated code, diffs, charts, and a results table
 tests/: Built-in node:test checks of module logic

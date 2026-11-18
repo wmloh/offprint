@@ -60,13 +60,26 @@ test('outline nests h3 under the preceding h2 and scroll-spy picks the last head
   assert.equal(nav.pickActive([-500, 400, 900], 200, true), 2);
 });
 
-test('outline subsections open for the section in view and for sections the reader opened, unless dismissed', () => {
+test('groups open on their own or under the pointer until a caret click holds them open or closed', () => {
   const { nav } = load();
-  const ids = ['a', 'b', 'c'];
-  assert.deepEqual(plain(nav.outlineOpen(ids, 'b', new Set(), null)), ['b']);
-  assert.deepEqual(plain(nav.outlineOpen(ids, 'b', new Set(['a']), null)), ['a', 'b']);
-  assert.deepEqual(plain(nav.outlineOpen(ids, 'b', new Set(['a']), 'b')), ['a']);
-  assert.deepEqual(plain(nav.outlineOpen(ids, null, new Set(), null)), []);
+  assert.equal(nav.groupOpen(false, false, null), false);
+  assert.equal(nav.groupOpen(true, false, null), true);
+  assert.equal(nav.groupOpen(false, true, null), true);
+  assert.equal(nav.groupOpen(true, true, false), false);
+  assert.equal(nav.groupOpen(false, false, true), true);
+  assert.equal(nav.caretChoice(false, true, null), true);
+  assert.equal(nav.caretChoice(true, true, null), false);
+  assert.equal(nav.caretChoice(false, true, true), false);
+  assert.equal(nav.caretChoice(false, true, false), true);
+});
+
+test('sidebar width stays between 200px and the smaller of 480px and 40% of the viewport', () => {
+  const { nav } = load();
+  assert.equal(nav.clampWidth(100, 1920), 200);
+  assert.equal(nav.clampWidth(320.4, 1920), 320);
+  assert.equal(nav.clampWidth(900, 1920), 480);
+  assert.equal(nav.clampWidth(900, 1000), 400);
+  assert.equal(nav.clampWidth(300, 400), 200);
 });
 
 test('heading links replace any hash and encode the section id', () => {

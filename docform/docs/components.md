@@ -44,11 +44,11 @@ Each feature needs its stylesheet in `<head>` and, where listed, its script afte
 </body>
 ```
 
-The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open; readers can open others with the arrow beside a heading, and they stay open until closed or the page reloads. On narrow screens the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
+The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open. Collapsed pages and sections open when the pointer rests on them and stay open until it leaves the sidebar; with a search index, other pages also list their sections this way; clicking the arrow beside one keeps it open or closed until it is clicked again or the page reloads. Drag the sidebar's right edge to resize it (double-click to reset); the width is remembered across pages. On narrow screens the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
 
 Each outlined heading shows a link icon on hover that copies the URL of its section. The reading column is 880px wide; change it with the `--df-content-width` token and the side padding with `--df-page-gutter`. Scrollbars in the sidebar, code blocks, and tables stay hidden until the pointer is on them.
 
-Standalone figures, tables, and their captions are centered in the reading column.
+Standalone figures, tables, and their captions are centered in the reading column, with a little extra space above and below. Pointing at any table cell, headers included, lightly tints its row and column. Links are blue and underlined.
 
 ## Lists
 
@@ -309,7 +309,7 @@ Values: empty (rise from below), `left`, `right`, or `fade`. `data-df-reveal-del
 
 With `zoom.js`, clicking an image or a figure in the page opens it full screen over a frosted backdrop. <kbd>Esc</kbd>, a click on the backdrop, or the close button returns it. Animations and sliders keep working while it is enlarged, and keyboard users can open a figure with <kbd>Enter</kbd>.
 
-- Clicks on links, buttons, sliders, and animation controls inside a figure do not open it.
+- Clicks on links, buttons, sliders, tooltip terms, and animation controls inside a figure do not open it. Clicks on a chart's plot do.
 - Add `data-df-no-zoom` to a figure or image to leave it out, or `data-df-zoom` to make another block zoomable.
 
 ## Sliders
@@ -354,6 +354,7 @@ With `refs.js`, figures and tables that have a caption or an `id` are numbered i
 - An empty link to a heading shows the heading's text.
 - Add `data-df-no-number` to skip an element, or `data-df-number` to number one without an `id`. Set `refs: { equations: 'all' }` in the manifest to number every display equation.
 - With `tooltip.js`, pointing at a link to something on the same page previews it: the figure, table, or equation, or the start of a section. Links to another page of the site preview that section from the search index. Add `data-df-no-preview` to a link to turn this off.
+- Links to something on the same page are green (the `--df-xref` token), so they stand apart from blue links to other pages and from dotted tooltip terms.
 - Load `refs.js` before `nav.js` so a generated References heading appears in the outline.
 
 ## Sidenotes

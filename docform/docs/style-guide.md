@@ -28,6 +28,21 @@ Nine muted colours, each with a text shade and a pale background tint:
 
 These are suggestions, not rules; what matters is that a site uses each colour consistently.
 
+## Heading and emphasis colours
+
+Headings, bold, and italic text can each take their own colour, set separately for light and dark mode. Override the tokens in a stylesheet loaded after `tokens.css`:
+
+```css
+:root {
+  --df-h2-light: #2f3f5c;
+  --df-h2-dark: #c9d6ee;
+  --df-strong-light: #2b2a26;
+  --df-strong-dark: #f2f0ea;
+}
+```
+
+The tokens are `--df-h1` to `--df-h4` (`h4` also covers `h5` and `h6`), `--df-strong` (bold), and `--df-em` (italic), each with `-light` and `-dark` versions. Stay close to the default text colour so emphasis still reads as text, not as a role. Bold and italic text keep the surrounding colour by default, and elements with `data-df-color` or `data-df-role` keep theirs.
+
 ## Choosing roles
 
 A role is a named meaning, such as `definition` or `warning`, mapped to a colour in the manifest. Prefer roles over raw colours:

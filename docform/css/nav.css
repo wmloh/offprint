@@ -21,7 +21,7 @@ a.df-nav-title:hover {
   margin: var(--df-space-2) 0 var(--df-space-1);
   padding: 0 var(--df-space-2);
   color: var(--df-text-faint);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -40,7 +40,7 @@ a.df-nav-title:hover {
   display: flex;
   align-items: center;
   gap: 2px;
-  min-height: 28px;
+  min-height: 31px;
   padding-left: 2px;
   border-radius: var(--df-radius);
   transition: background-color 0.15s;
@@ -74,10 +74,6 @@ a.df-nav-title:hover {
   color: var(--df-text-muted);
 }
 
-.df-nav-caret svg {
-  transition: transform 0.15s;
-}
-
 .df-nav-caret[aria-expanded="true"] svg {
   transform: rotate(90deg);
 }
@@ -86,7 +82,7 @@ a.df-nav-title:hover {
 .df-nav-label {
   flex: 1;
   min-width: 0;
-  padding: 3px 6px 3px 2px;
+  padding: 4px 6px 4px 2px;
   overflow: hidden;
   color: inherit;
   text-decoration: none;
@@ -111,7 +107,7 @@ button.df-nav-label {
 .df-outline {
   margin: 2px 0 var(--df-space-2) 23px;
   border-left: 1px solid var(--df-border-strong);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .df-nav-heading + .df-outline {
@@ -133,7 +129,7 @@ button.df-nav-label {
   flex: 1;
   min-width: 0;
   margin-left: -1px;
-  padding: 2px var(--df-space-2) 2px 10px;
+  padding: 3.5px var(--df-space-2) 3.5px 10px;
   border-left: 2px solid transparent;
   color: var(--df-text-muted);
   line-height: 1.4;
@@ -175,12 +171,76 @@ button.df-nav-label {
   color: var(--df-text-muted);
 }
 
-.df-outline-caret svg {
-  transition: transform 0.15s;
-}
-
 .df-outline-caret[aria-expanded="true"] svg {
   transform: rotate(90deg);
+}
+
+/* Groups opened only by the pointer resting on them show a fainter caret; a caret click holds them. */
+.is-peek > :is(.df-nav-row, .df-outline-row) > :is(.df-nav-caret, .df-outline-caret) {
+  opacity: 0.5;
+}
+
+.df-nav-caret svg,
+.df-outline-caret svg {
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Resize handle on the sidebar's right edge (wide screens only). */
+.df-nav-resize {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .df-nav-resize {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: calc(var(--df-sidebar-width) - 4px);
+    z-index: 25;
+    width: 8px;
+    height: 100vh;
+    cursor: col-resize;
+    touch-action: none;
+    transition: left 0.25s ease;
+  }
+
+  .df-nav-resize::after {
+    content: "";
+    position: absolute;
+    inset: 0 3px;
+    background: var(--df-blue);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .df-nav-resize:hover::after {
+    opacity: 0.6;
+    transition-delay: 0.15s;
+  }
+
+  .df-nav-resizing .df-nav-resize::after,
+  .df-nav-resize:focus-visible::after {
+    opacity: 1;
+    transition-delay: 0s;
+  }
+
+  .df-nav-resize:focus-visible {
+    outline: none;
+  }
+
+  .df-nav-hidden .df-nav-resize {
+    display: none;
+  }
+}
+
+.df-nav-resizing,
+.df-nav-resizing * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+.df-nav-resizing :is(body, .df-sidebar, .df-controls, .df-nav-resize) {
+  transition: none !important;
 }
 
 /* Previous and next pages. */

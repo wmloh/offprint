@@ -36,7 +36,7 @@
   --df-bg-sidebar: light-dark(#f7f7f5, #202020);
   --df-bg-hover: light-dark(rgba(55, 53, 47, 0.06), rgba(255, 255, 255, 0.055));
   --df-bg-subtle: light-dark(rgba(55, 53, 47, 0.03), rgba(255, 255, 255, 0.03));
-  --df-text: light-dark(#37352f, rgba(255, 255, 255, 0.81));
+  --df-text: light-dark(#37352f, rgba(255, 255, 255, 0.9));
   --df-text-muted: light-dark(rgba(55, 53, 47, 0.65), rgba(255, 255, 255, 0.46));
   --df-text-faint: light-dark(rgba(55, 53, 47, 0.45), rgba(255, 255, 255, 0.28));
   --df-border: light-dark(rgba(55, 53, 47, 0.09), rgba(255, 255, 255, 0.094));
@@ -45,6 +45,31 @@
   --df-code-bg: light-dark(rgba(135, 131, 120, 0.15), rgba(135, 131, 120, 0.2));
   --df-selection: light-dark(rgba(35, 131, 226, 0.28), rgba(35, 131, 226, 0.35));
   --df-focus: var(--df-blue);
+  --df-link: light-dark(#0b65d6, #5aa5ff);
+  --df-xref: var(--df-green);
+  --df-table-hover: light-dark(rgba(55, 53, 47, 0.045), rgba(255, 255, 255, 0.045));
+
+  /* Emphasis colours, set separately for light and dark mode. Override the -light and -dark values in a page
+     stylesheet loaded after this one; values close to the defaults keep text calm. currentColor keeps the
+     surrounding colour, so bold and italic text inside coloured text stays coloured. */
+  --df-h1-light: #37352f;
+  --df-h1-dark: rgba(255, 255, 255, 0.9);
+  --df-h2-light: #37352f;
+  --df-h2-dark: rgba(255, 255, 255, 0.9);
+  --df-h3-light: #37352f;
+  --df-h3-dark: rgba(255, 255, 255, 0.9);
+  --df-h4-light: #37352f;
+  --df-h4-dark: rgba(255, 255, 255, 0.9);
+  --df-strong-light: currentColor;
+  --df-strong-dark: currentColor;
+  --df-em-light: currentColor;
+  --df-em-dark: currentColor;
+  --df-h1: light-dark(var(--df-h1-light), var(--df-h1-dark));
+  --df-h2: light-dark(var(--df-h2-light), var(--df-h2-dark));
+  --df-h3: light-dark(var(--df-h3-light), var(--df-h3-dark));
+  --df-h4: light-dark(var(--df-h4-light), var(--df-h4-dark));
+  --df-strong: light-dark(var(--df-strong-light), var(--df-strong-dark));
+  --df-em: light-dark(var(--df-em-light), var(--df-em-dark));
 
   /* Type: system fonts only, no web fonts. */
   --df-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";

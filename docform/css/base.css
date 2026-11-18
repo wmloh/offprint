@@ -45,7 +45,7 @@ body:has(> .df-sidebar) {
   padding: var(--df-space-4) var(--df-space-3);
   background: var(--df-bg-sidebar);
   border-right: 1px solid var(--df-border);
-  font-size: 14px;
+  font-size: 15px;
   color: var(--df-text-muted);
 }
 
@@ -87,6 +87,16 @@ body:has(> .df-sidebar) {
 .df-page h3 { font-size: 1.25em; margin-top: 1.2em; }
 .df-page :is(h4, h5, h6) { font-size: 1em; }
 
+/* Emphasis colours from tokens.css; elements with their own colour keep it. */
+.df-page :is(h1, h2, h3, h4, h5, h6, strong, b, em, i):not([data-df-color], [data-df-role]) {
+  &:is(h1) { color: var(--df-h1); }
+  &:is(h2) { color: var(--df-h2); }
+  &:is(h3) { color: var(--df-h3); }
+  &:is(h4, h5, h6) { color: var(--df-h4); }
+  &:is(strong, b):not(a *) { color: var(--df-strong); }
+  &:is(em, i):not(a *) { color: var(--df-em); }
+}
+
 .df-page > h1:first-child {
   margin: 0 0 0.5em;
   font-size: 2.5em;
@@ -101,6 +111,10 @@ body:has(> .df-sidebar) {
 /* Text blocks */
 .df-page :is(p, ul, ol, blockquote, table, pre, figure) {
   margin: 0.5em 0;
+}
+
+.df-page :is(figure, table):not(:where(figure *, .df-chart *)) {
+  margin-block: 1.1em;
 }
 
 .df-page :is(ul, ol) {
@@ -206,9 +220,9 @@ body:has(> .df-sidebar) {
 }
 
 .df-page a {
-  color: inherit;
+  color: var(--df-link);
   text-decoration: underline;
-  text-decoration-color: var(--df-border-strong);
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
   transition: text-decoration-color 0.15s, color 0.15s;
@@ -304,6 +318,32 @@ body:has(> .df-sidebar) {
   font-weight: 600;
   color: var(--df-text-muted);
 }
+
+/* Hovering any cell, header included, tints its row and its column; the crossing cell gets both tints.
+   Images layer over cell backgrounds such as heatmap shading. Columns count cells, so colspan shifts them. */
+.df-page :is(th, td) {
+  --df-row-tint: transparent;
+  --df-col-tint: transparent;
+  background-image: linear-gradient(var(--df-row-tint), var(--df-row-tint)),
+    linear-gradient(var(--df-col-tint), var(--df-col-tint));
+}
+
+.df-page tr:hover > :is(th, td) {
+  --df-row-tint: var(--df-table-hover);
+}
+
+.df-page table:has(> * > tr > :nth-child(1):hover) > * > tr > :nth-child(1) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(2):hover) > * > tr > :nth-child(2) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(3):hover) > * > tr > :nth-child(3) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(4):hover) > * > tr > :nth-child(4) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(5):hover) > * > tr > :nth-child(5) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(6):hover) > * > tr > :nth-child(6) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(7):hover) > * > tr > :nth-child(7) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(8):hover) > * > tr > :nth-child(8) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(9):hover) > * > tr > :nth-child(9) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(10):hover) > * > tr > :nth-child(10) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(11):hover) > * > tr > :nth-child(11) { --df-col-tint: var(--df-table-hover); }
+.df-page table:has(> * > tr > :nth-child(12):hover) > * > tr > :nth-child(12) { --df-col-tint: var(--df-table-hover); }
 
 /* Sidebar, code block, and table scrollbars stay transparent (keeping their size) until the pointer is on them.
    controls.js handles the page scrollbar. */

@@ -441,6 +441,16 @@
       typeof event.key === 'string' && event.key.toLowerCase() === 'k';
   }
 
+  // Indexed pages with resolved URLs, for other modules such as the sidebar: callback([{ href, title, sections }]|null).
+  function pages(callback) {
+    load(function (data) {
+      if (!data) return callback(null);
+      callback(data.pages.map(function (page) {
+        return { href: DocForm.resolvePath(page.path, base()), title: page.title, sections: page.sections || [] };
+      }).filter(function (page) { return page.href; }));
+    });
+  }
+
   DocForm.search = {
     extract: extract,
     tokens: tokens,
@@ -450,6 +460,7 @@
     isShortcut: isShortcut,
     load: load,
     find: find,
+    pages: pages,
     open: open,
     close: close,
     toggle: toggle,

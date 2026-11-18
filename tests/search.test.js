@@ -11,7 +11,7 @@ function load() {
   context.window = context;
   vm.runInContext(read('core.js'), context);
   vm.runInContext(read('search.js'), context);
-  return context.DocForm.search;
+  return Object.assign({}, context.DocForm.search, { context });
 }
 
 const json = (value) => JSON.parse(JSON.stringify(value));
@@ -62,4 +62,14 @@ test('Ctrl+K and Cmd+K open the palette, other chords do not', () => {
   assert.equal(search.isShortcut({ key: 'K', metaKey: true }), true);
   assert.equal(search.isShortcut({ key: 'k', ctrlKey: true, shiftKey: true }), false);
   assert.equal(search.isShortcut({ key: 'k' }), false);
+});
+
+test('indexed pages are listed with URLs resolved against the manifest base', () => {
+  const search = load();
+  const context = search.context;
+  context.DocForm.site = { provided: true, base: 'file:///notes/' };
+  context.DocFormSearch = { pages: [{ path: 'a/b.html', title: 'B', sections: [{ id: 'x', level: 2, title: 'X' }] }] };
+  let result;
+  search.pages((pages) => { result = pages; });
+  assert.deepEqual(json(result), [{ href: 'file:///notes/a/b.html', title: 'B', sections: [{ id: 'x', level: 2, title: 'X' }] }]);
 });

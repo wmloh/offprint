@@ -1,10 +1,10 @@
 docform/: Copyable offline library folder
   site.template.js: Starter window.DocFormSite manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
-    tokens.css: Notion-style named colours, chart series colours, neutrals, spacing, radii, fonts, and reading-column width via light-dark()
-    base.css: Page layout with sidebar slot, reading-column typography, tinted list markers, hover-revealed scrollbars, data-df-color accents
+    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, and reading-column width via light-dark()
+    base.css: Page layout with sidebar slot, reading-column typography, blue links, row and column table hover, tinted list markers, hover-revealed scrollbars, data-df-color accents
     roles.css: Roles legend styles
-    nav.css: Sidebar tree, collapsible page outline, heading copy-link buttons, prev/next links, and narrow-screen drawer
+    nav.css: Sidebar tree, collapsible page outline, resize handle, heading copy-link buttons, prev/next links, and narrow-screen drawer
     theme.css: Theme toggle button styles
     controls.css: Top-left frosted control pill, progress ring, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
     math.css: Display math layout and inline TeX error styles
@@ -29,7 +29,7 @@ docform/: Copyable offline library folder
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, manifest normalization
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
-    nav.js: Sidebar page tree with collapsible heading outline, heading copy links, scroll-spy, prev/next links, and drawer API
+    nav.js: Sidebar page tree and heading outline (other pages via the search index) with animated groups that open on hover until the pointer leaves the sidebar, resizable sidebar width, heading copy links, scroll-spy, prev/next links, and drawer API
     theme.js: Head-loaded light and dark theme switching with saved choice and toggles
     controls.js: Control pill with reading progress, saved focus mode and sidebar state, search and theme buttons, and keyboard shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
@@ -44,7 +44,7 @@ docform/: Copyable offline library folder
     bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
-    search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor and ranking
+    search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor, ranking, and indexed page list
     chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with hover readouts and a table view
     results.js: Sortable results tables with heatmap shading and best-in-column highlighting
     highlight.js: Group-scoped linked selection across prose, tables, figures, and code annotations

@@ -15,6 +15,16 @@
   var CARET_SMALL = SVG + ' width="10" height="10"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
   var MENU = SVG + ' width="18" height="18"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg>';
 
+  var HOVER_OPEN = 50;
+  var HOVER_CLOSE = 50;
+  var SLIDE_MS = 180;
+  var SLIDE_EASE = 'cubic-bezier(0.2, 0, 0, 1)';
+  var WIDTH_KEY = 'docform-nav-width';
+  var WIDTH_MIN = 200;
+  var WIDTH_MAX = 480;
+  var WIDTH_SHARE = 0.4;
+  var WIDTH_STEP = 16;
+
   var slugify = DocForm.slug;
   var uniqueSlug = DocForm.uniqueSlug;
 
@@ -68,12 +78,21 @@
     return tree;
   }
 
-  // An outline subsection list is open when the reader opened it by hand, or when its section is in view and the
-  // reader has not closed it since that section came into view.
-  function outlineOpen(ids, active, pinned, dismissed) {
-    return ids.filter(function (id) {
-      return pinned.has(id) || (id === active && id !== dismissed);
-    });
+  // A group follows the reader's caret choice once one is made; until then it is open for its own reason (the section
+  // in view, the manifest) or while the pointer rests on it.
+  function groupOpen(base, hovered, held) {
+    return held === null ? base || hovered : held;
+  }
+
+  // A caret click keeps a group that is open only under the pointer open; otherwise it flips what is shown.
+  function caretChoice(base, hovered, held) {
+    if (held === null && !base && hovered) return true;
+    return !groupOpen(base, hovered, held);
+  }
+
+  function clampWidth(width, viewport) {
+    var max = Math.max(WIDTH_MIN, Math.min(WIDTH_MAX, Math.round(viewport * WIDTH_SHARE)));
+    return Math.round(Math.min(max, Math.max(WIDTH_MIN, width)));
   }
 
   function make(tag, className, text) {
@@ -132,75 +151,147 @@
     h.appendChild(button);
   }
 
-  function renderOutline(nodes, links, groups) {
+  // Outlines of other pages link to their URL and prefix list ids so they cannot clash with this page's.
+  function renderOutline(nodes, links, groups, href, idPrefix) {
+    href = href || '';
+    idPrefix = idPrefix || 'df-outline-';
     var list = make('ul', 'df-outline');
     nodes.forEach(function (node) {
       var li = make('li', 'df-outline-item');
       var row = make('div', 'df-outline-row');
       var link = make('a', 'df-outline-link', node.item.text);
-      link.href = '#' + encodeURIComponent(node.item.id);
+      link.href = href + '#' + encodeURIComponent(node.item.id);
       links[node.item.id] = link;
       row.appendChild(link);
       li.appendChild(row);
       if (node.children.length) {
-        var sub = renderOutline(node.children, links, groups);
+        var sub = renderOutline(node.children, links, groups, href, idPrefix);
         var caret = make('button', 'df-outline-caret');
         caret.type = 'button';
         caret.innerHTML = CARET_SMALL;
         caret.setAttribute('aria-label', 'Toggle ' + node.item.text);
-        sub.id = 'df-outline-' + node.item.id;
+        sub.id = idPrefix + node.item.id;
         caret.setAttribute('aria-controls', sub.id);
         row.appendChild(caret);
         li.appendChild(sub);
-        groups[node.item.id] = { caret: caret, list: sub };
+        groups[node.item.id] = { li: li, caret: caret, list: sub };
       }
       list.appendChild(li);
     });
     return list;
   }
 
-  function setGroup(caret, list, open) {
-    caret.setAttribute('aria-expanded', String(open));
-    list.hidden = !open;
+  var motions = typeof WeakMap === 'function' ? new WeakMap() : null;
+
+  // Animates a list's height between its natural size and zero, starting from wherever a running slide had reached.
+  function slide(list, open, animate) {
+    var running = motions && motions.get(list);
+    var from = list.hidden ? 0 : list.getBoundingClientRect().height;
+    var fade = list.hidden ? 0 : Number(root.getComputedStyle(list).opacity);
+    if (running) {
+      running.cancel();
+      motions.delete(list);
+    }
+    list.hidden = false;
+    if (!animate || !motions || typeof list.animate !== 'function') {
+      list.style.overflow = '';
+      list.hidden = !open;
+      return;
+    }
+    var to = open ? list.getBoundingClientRect().height : 0;
+    list.style.overflow = 'hidden';
+    var motion = list.animate([
+      { height: from + 'px', opacity: fade },
+      { height: to + 'px', opacity: open ? 1 : 0 }
+    ], { duration: SLIDE_MS, easing: SLIDE_EASE });
+    motions.set(list, motion);
+    motion.onfinish = function () {
+      motions.delete(list);
+      list.style.overflow = '';
+      list.hidden = !open;
+    };
   }
 
-  function collapser(groups) {
-    var ids = Object.keys(groups);
-    var pinned = new Set();
-    var dismissed = null;
-    var active = null;
+  var peeks = [];
 
-    function apply() {
-      var open = outlineOpen(ids, active, pinned, dismissed);
-      ids.forEach(function (id) { setGroup(groups[id].caret, groups[id].list, open.indexOf(id) >= 0); });
+  function disclosure(li, caret, list, base) {
+    var group = { base: base, held: null, hovered: false, shown: null };
+    var timer = 0;
+
+    group.render = function (animate) {
+      var open = groupOpen(group.base, group.hovered, group.held);
+      li.classList.toggle('is-peek', open && group.held === null && !group.base);
+      if (open === group.shown) return;
+      group.shown = open;
+      caret.setAttribute('aria-expanded', String(open));
+      slide(list, open, animate);
+    };
+
+    group.toggle = function () {
+      clearTimeout(timer);
+      group.held = caretChoice(group.base, group.hovered, group.held);
+      group.render(true);
+    };
+
+    // Short delays let the pointer sweep across the tree without opening everything on its way.
+    function hover(value, delay) {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (group.hovered === value) return;
+        group.hovered = value;
+        group.render(true);
+      }, delay);
     }
 
-    ids.forEach(function (id) {
-      groups[id].caret.addEventListener('click', function () {
-        if (groups[id].list.hidden) {
-          pinned.add(id);
-          if (dismissed === id) dismissed = null;
-        } else {
-          pinned.delete(id);
-          if (id === active) dismissed = id;
-        }
-        apply();
-      });
+    li.addEventListener('pointerenter', function (event) {
+      if (event.pointerType !== 'touch') hover(true, HOVER_OPEN);
     });
-    apply();
+    // Groups opened under the pointer stay open, so their links are easy to reach, until it leaves the sidebar.
+    peeks.push(function () { hover(false, HOVER_CLOSE); });
+    caret.addEventListener('click', group.toggle);
+    group.render(false);
+    // Groups added after the pointer already rests on them, such as outlines of other pages, still open.
+    if (li.matches && li.matches(':hover')) hover(true, HOVER_OPEN);
+    return group;
+  }
+
+  function collapser(entries) {
+    var ids = Object.keys(entries);
+    var animate = false;
+    var active;
+    var groups = ids.map(function (id) {
+      var entry = entries[id];
+      return { id: id, group: disclosure(entry.li, entry.caret, entry.list, false) };
+    });
+
+    function apply(open) {
+      groups.forEach(function (g) {
+        g.group.base = open(g.id);
+        g.group.render(animate);
+      });
+      animate = true;
+    }
 
     return {
       activate: function (id) {
         if (id === active) return;
         active = id;
-        dismissed = null;
-        apply();
+        apply(function (gid) { return gid === id; });
       },
       openAll: function () {
-        ids.forEach(function (id) { pinned.add(id); });
-        apply();
+        apply(function () { return true; });
       }
     };
+  }
+
+  function pageCaret(title, box, ctx) {
+    var caret = make('button', 'df-nav-caret');
+    caret.type = 'button';
+    caret.innerHTML = CARET;
+    caret.setAttribute('aria-label', 'Toggle ' + title);
+    box.id = 'df-nav-group-' + (++ctx.groups);
+    caret.setAttribute('aria-controls', box.id);
+    return caret;
   }
 
   function renderPages(pages, ctx) {
@@ -211,29 +302,25 @@
       var row = make('div', 'df-nav-row');
       var isCurrent = page === ctx.current;
       var sub = page.pages.length ? renderPages(page.pages, ctx) : null;
+      var entry = { page: page, li: li, row: row, box: null };
       var label;
 
       if (page.href) {
         label = make('a', 'df-nav-link', page.title);
         label.href = page.href;
         if (isCurrent) label.setAttribute('aria-current', 'page');
+        else ctx.others.push(entry);
       } else {
         label = make(sub ? 'button' : 'span', 'df-nav-label', page.title);
         if (sub) label.type = 'button';
       }
 
       if (sub) {
-        var caret = make('button', 'df-nav-caret');
-        var groupList = sub.list;
-        caret.type = 'button';
-        caret.innerHTML = CARET;
-        caret.setAttribute('aria-label', 'Toggle ' + page.title);
-        groupList.id = 'df-nav-group-' + (++ctx.groups);
-        caret.setAttribute('aria-controls', groupList.id);
-        setGroup(caret, groupList, !page.collapsed || isCurrent || sub.found);
-        var toggle = function () { setGroup(caret, groupList, groupList.hidden); };
-        caret.addEventListener('click', toggle);
-        if (!page.href) label.addEventListener('click', toggle);
+        entry.box = make('div', 'df-nav-group');
+        entry.box.appendChild(sub.list);
+        var caret = pageCaret(page.title, entry.box, ctx);
+        var group = disclosure(li, caret, entry.box, !page.collapsed || isCurrent || sub.found);
+        if (!page.href) label.addEventListener('click', group.toggle);
         row.appendChild(caret);
       } else {
         row.appendChild(make('span', 'df-nav-caret-space'));
@@ -242,11 +329,52 @@
       row.appendChild(label);
       li.appendChild(row);
       if (isCurrent && ctx.outline) li.appendChild(ctx.outline);
-      if (sub) li.appendChild(sub.list);
+      if (entry.box) li.appendChild(entry.box);
       list.appendChild(li);
       found = found || isCurrent || sub && sub.found;
     });
     return { list: list, found: found };
+  }
+
+  // Another page's h2 and h3 sections, from the search index, become a collapsed outline under its entry.
+  function attachOutline(entry, sections, ctx) {
+    var items = sections.filter(function (s) {
+      return s.id && (s.level === 2 || s.level === 3);
+    }).map(function (s) {
+      return { level: s.level, id: s.id, text: s.title };
+    });
+    if (!items.length) return;
+    var groups = {};
+    var href = entry.page.href.split('#')[0];
+    var outline = renderOutline(outlineTree(items), {}, groups, href, 'df-outline-' + (++ctx.groups) + '-');
+    Object.keys(groups).forEach(function (id) {
+      disclosure(groups[id].li, groups[id].caret, groups[id].list, false);
+    });
+    if (entry.box) {
+      entry.box.insertBefore(outline, entry.box.firstChild);
+      return;
+    }
+    entry.box = make('div', 'df-nav-group');
+    entry.box.hidden = true;
+    entry.box.appendChild(outline);
+    var caret = pageCaret(entry.page.title, entry.box, ctx);
+    entry.row.replaceChild(caret, entry.row.querySelector('.df-nav-caret-space'));
+    entry.li.appendChild(entry.box);
+    disclosure(entry.li, caret, entry.box, false);
+  }
+
+  function outlineOthers(ctx) {
+    var search = DocForm.search;
+    if (!ctx.others.length || !search || typeof search.pages !== 'function') return;
+    search.pages(function (indexed) {
+      if (!indexed) return;
+      var byKey = {};
+      indexed.forEach(function (page) { byKey[pageKey(page.href)] = page; });
+      ctx.others.forEach(function (entry) {
+        var page = byKey[pageKey(entry.page.href)];
+        if (page) attachOutline(entry, page.sections, ctx);
+      });
+    });
   }
 
   function renderPager(main, order, index) {
@@ -382,6 +510,120 @@
     return { isOpen: isOpen, toggle: toggle, close: function () { setOpen(false, true); } };
   }
 
+  function loadWidth() {
+    try {
+      var value = parseFloat(root.localStorage.getItem(WIDTH_KEY));
+      return isFinite(value) ? value : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveWidth(value) {
+    try {
+      if (value === null) root.localStorage.removeItem(WIDTH_KEY);
+      else root.localStorage.setItem(WIDTH_KEY, String(value));
+    } catch (e) {
+      // Storage can be blocked; the width then lasts only for this page view.
+    }
+  }
+
+  function setWidth(width) {
+    var style = document.documentElement.style;
+    if (width === null) style.removeProperty('--df-sidebar-width');
+    else style.setProperty('--df-sidebar-width', width + 'px');
+  }
+
+  // Restores the saved width before the first layout, so the page does not jump when nav.js initializes.
+  if (typeof document !== 'undefined' && document.documentElement) {
+    var savedWidth = loadWidth();
+    if (savedWidth !== null) setWidth(clampWidth(savedWidth, root.innerWidth));
+  }
+
+  // A handle on the sidebar's right edge: drag or use arrow keys to resize, double-click to reset.
+  function resizer(sidebar) {
+    var html = document.documentElement;
+    var handle = make('div', 'df-nav-resize');
+    handle.tabIndex = 0;
+    handle.title = 'Drag to resize, double-click to reset';
+    handle.setAttribute('role', 'separator');
+    handle.setAttribute('aria-orientation', 'vertical');
+    handle.setAttribute('aria-label', 'Resize navigation');
+    handle.setAttribute('aria-controls', sidebar.id);
+    handle.setAttribute('aria-valuemin', String(WIDTH_MIN));
+    sidebar.parentNode.insertBefore(handle, sidebar.nextSibling);
+
+    function sync() {
+      handle.setAttribute('aria-valuemax', String(clampWidth(Infinity, root.innerWidth)));
+      handle.setAttribute('aria-valuenow', String(Math.round(sidebar.getBoundingClientRect().width)));
+    }
+
+    function apply(width) {
+      var value = clampWidth(width, root.innerWidth);
+      setWidth(value);
+      sync();
+      return value;
+    }
+
+    // Modules that lay out around the sidebar, such as margin notes and bubbles, relayout on resize.
+    function settled() {
+      if (typeof root.Event === 'function') root.dispatchEvent(new root.Event('resize'));
+    }
+
+    handle.addEventListener('pointerdown', function (event) {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      var startX = event.clientX;
+      var startWidth = sidebar.getBoundingClientRect().width;
+      var width = startWidth;
+      handle.setPointerCapture(event.pointerId);
+      html.classList.add('df-nav-resizing');
+
+      function move(e) {
+        width = apply(startWidth + e.clientX - startX);
+      }
+
+      function end() {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', end);
+        handle.removeEventListener('pointercancel', end);
+        html.classList.remove('df-nav-resizing');
+        saveWidth(width);
+        settled();
+      }
+
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', end);
+      handle.addEventListener('pointercancel', end);
+    });
+
+    handle.addEventListener('keydown', function (event) {
+      var width = sidebar.getBoundingClientRect().width;
+      if (event.key === 'ArrowLeft') width -= WIDTH_STEP;
+      else if (event.key === 'ArrowRight') width += WIDTH_STEP;
+      else if (event.key === 'Home') width = WIDTH_MIN;
+      else if (event.key === 'End') width = Infinity;
+      else return;
+      event.preventDefault();
+      saveWidth(apply(width));
+      settled();
+    });
+
+    handle.addEventListener('dblclick', function () {
+      setWidth(null);
+      saveWidth(null);
+      sync();
+      settled();
+    });
+
+    root.addEventListener('resize', function () {
+      var saved = loadWidth();
+      if (saved !== null) apply(saved);
+      else sync();
+    });
+    sync();
+  }
+
   DocForm.nav = {
     slugify: slugify,
     uniqueSlug: uniqueSlug,
@@ -389,7 +631,9 @@
     findCurrent: findCurrent,
     pickActive: pickActive,
     outlineTree: outlineTree,
-    outlineOpen: outlineOpen,
+    groupOpen: groupOpen,
+    caretChoice: caretChoice,
+    clampWidth: clampWidth,
     headingUrl: headingUrl,
     drawer: null
   };
@@ -430,8 +674,11 @@
         if (first) title.href = first.href;
         host.appendChild(title);
       }
-      var pages = renderPages(site.pages, { current: site.order[index] || null, outline: outline, groups: 0 });
+      var ctx = { current: site.order[index] || null, outline: outline, groups: 0, others: [] };
+      var pages = renderPages(site.pages, ctx);
       host.appendChild(pages.list);
+      // Waits for search.js, which may load after nav.js, to register its index API.
+      setTimeout(function () { outlineOthers(ctx); }, 0);
       if (pages.found) outline = null;
     }
     if (outline) {
@@ -445,5 +692,9 @@
     });
     if (!spying) collapse.openAll();
     DocForm.nav.drawer = drawer(sidebar);
+    resizer(sidebar);
+    sidebar.addEventListener('pointerleave', function (event) {
+      if (event.pointerType !== 'touch') peeks.forEach(function (close) { close(); });
+    });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

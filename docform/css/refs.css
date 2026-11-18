@@ -35,6 +35,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* In-page references with hover previews use their own colour so they read apart from links to other pages and
+   from tooltip terms. */
+.df-page a.df-ref:not(.df-ref-page) {
+  color: var(--df-xref);
+}
+
 .df-ref-missing {
   color: var(--df-red) !important;
 }
@@ -111,6 +117,7 @@
 }
 
 .df-page .df-cite-link {
+  color: inherit;
   text-decoration: none;
   font-variant-numeric: tabular-nums;
 }

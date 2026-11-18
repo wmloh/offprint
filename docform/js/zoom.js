@@ -10,8 +10,10 @@
   }
 
   var TRIGGERS = '.df-page img, .df-page figure, .df-page [data-df-zoom]';
-  var SKIP = 'a, button, input, select, textarea, label, summary, [contenteditable], [tabindex], [data-df-term], ' +
-    '[data-df-tip], .df-anim-controls, .df-anim-caption, [data-df-no-zoom]';
+  // Focusable regions without a control role, such as chart plots, still open the zoom view.
+  var SKIP = 'a, button, input, select, textarea, label, summary, [contenteditable], [role="button"], [role="link"], ' +
+    '[role="tab"], [role="slider"], [role="checkbox"], [role="switch"], [role="option"], [role="menuitem"], ' +
+    '[tabindex][aria-describedby], [data-df-term], [data-df-tip], .df-anim-controls, .df-anim-caption, [data-df-no-zoom]';
   var CLOSE_ICON = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
     'stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
   var CLOSE_MS = 260;

@@ -1,0 +1,47 @@
+.df-stepper-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--df-space-2);
+  margin-block: var(--df-space-4) var(--df-space-2);
+}
+
+.df-stepper-status {
+  margin-inline-end: var(--df-space-2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.df-stepper-controls button {
+  padding: var(--df-space-1) var(--df-space-3);
+  border: 1px solid var(--df-border-strong);
+  border-radius: var(--df-radius);
+  background: var(--df-bg);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.df-stepper-controls button[aria-disabled="true"] {
+  color: var(--df-text-muted);
+  cursor: default;
+}
+
+.df-stepper-controls button[aria-disabled="false"]:hover {
+  background: var(--df-bg-hover);
+}
+
+.df-page ol.df-stepper-ready,
+ol.df-stepper-ready {
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+.df-stepper-ready > li {
+  padding-inline-start: 0;
+}
+
+.df-stepper-ready > li[hidden],
+[data-df-stepper-view][hidden] {
+  display: none !important;
+}

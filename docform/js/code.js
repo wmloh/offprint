@@ -406,6 +406,12 @@
       var group = groups[n] || (groups[n] = { li: li, els: [li] });
       group.els.push(mark, mark.closest('.df-code-line'));
       li.setAttribute('data-df-note', n);
+      var highlightGroup = li.getAttribute('data-df-highlight-group');
+      var highlightKey = li.getAttribute('data-df-highlight-key');
+      if (highlightGroup && highlightKey) {
+        mark.setAttribute('data-df-highlight-group', highlightGroup);
+        mark.setAttribute('data-df-highlight-key', highlightKey);
+      }
       mark.addEventListener('click', function () {
         li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         li.classList.remove('is-flash');

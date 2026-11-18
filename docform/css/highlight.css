@@ -1,0 +1,12 @@
+[data-df-highlight-key][data-df-highlight-group]:is(button, [role="button"][tabindex]):not(:disabled, [aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+[data-df-highlight-active] {
+  outline: 2px dashed currentColor;
+  outline-offset: 2px;
+}
+
+[data-df-highlight-active]:focus-visible {
+  outline: 4px double currentColor;
+}

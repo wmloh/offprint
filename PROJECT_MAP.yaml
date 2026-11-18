@@ -23,6 +23,8 @@ docform/: Copyable offline library folder
     search.css: Frosted Ctrl+K search dialog with highlighted results
     chart.css: Chart legend, grid, thin marks, hover readout, and table view
     results.css: Sortable results-table headers, heatmap shading, and best-in-column values
+    highlight.css: Outlines for selected items in linked views
+    stepper.css: Worked-example step controls and linked view visibility
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, manifest normalization
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
@@ -44,6 +46,8 @@ docform/: Copyable offline library folder
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor and ranking
     chart.js: Dependency-free SVG line, bar, and scatter charts from inline JSON or tables, with hover readouts and a table view
     results.js: Sortable results tables with heatmap shading and best-in-column highlighting
+    highlight.js: Group-scoped linked selection across prose, tables, figures, and code annotations
+    stepper.js: Ordered worked examples with Previous, Next, Reset, and linked step views
   tools/search-index.html: Offline page that builds search-index.js from a chosen docs folder
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   docs/: Usage guide: getting started, include order, manifest and component references, style guide

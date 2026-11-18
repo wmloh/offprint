@@ -1,6 +1,6 @@
 # Design tokens
 
-Load `css/tokens.css` before other DocForm styles. Override custom properties in a later stylesheet or on a wrapper for local styling.
+Tokens load with `base` and are included in `docform.css`. Override custom properties in a later stylesheet or on a wrapper for local styling.
 
 | Group | Tokens |
 | --- | --- |

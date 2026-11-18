@@ -1,7 +1,7 @@
 // Data files: CSV, JSON, and YAML text registered under a name and shown as results tables, highlighted code, or a
 // tree (data-df-view="tree", drawn by tree.js).
-// Sources are wrapped .js files that set window.DocFormData[name] = { type, text } (made by
-// docform/tools/data-file.html), <script type="text/csv" data-df-data="name"> blocks, and <pre data-df-data> blocks
+// Sources are wrapped .js files that set window.DocFormData[name] (made by docform/tools/assets.html),
+// <script type="text/csv" data-df-data="name"> blocks, and <pre data-df-data> blocks
 // that also render in place. Any other element with data-df-data="name" is a placeholder for that data.
 (function (root) {
   'use strict';
@@ -114,6 +114,11 @@
     if (!globals || typeof globals !== 'object' || !hasOwn.call(globals, key)) return null;
     var entry = globals[key];
     if (typeof entry === 'string') return add(key, entry);
+    if (entry && (entry.format !== undefined || entry.version !== undefined) &&
+        (entry.format !== 'docform-data' || entry.version !== 1)) {
+      DocForm.warnOnce('data-version:' + key, 'Regenerate the data wrapper for "' + key + '" with the current asset tool.');
+      return null;
+    }
     if (entry && typeof entry.text === 'string') return add(key, entry.text, entry.type);
     DocForm.warnOnce('data-entry:' + key, 'window.DocFormData["' + key + '"] needs a text string; ignoring it.');
     return null;
@@ -562,7 +567,7 @@
   }
 
   function columnKey(th) {
-    var given = th.getAttribute('data-df-field') ?? th.getAttribute('data-df-column');
+    var given = th.getAttribute('data-df-field');
     return (given !== null ? given : th.textContent).trim();
   }
 

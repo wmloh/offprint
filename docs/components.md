@@ -1,41 +1,19 @@
 # Component reference
 
-Each feature needs its stylesheet in `<head>` and, where listed, its script after `core.js`. Content stays readable if a script is missing.
+Use the [offline entry](include-order.md) and enable the features your page needs. The default reading profile covers typography, navigation, theme, reading controls, roles, tooltips, references, citations, sidenotes, search, tags, and callouts.
 
-| Feature | Stylesheet | Script |
-| --- | --- | --- |
-| Layout and typography | `tokens.css`, `base.css` | `core.js` |
-| Lists | `base.css` | none |
-| Concept tables | `base.css`, plus `blocks.css` for tags | none |
-| Sidebar, outline, heading links | `nav.css` | `nav.js` |
-| Theme toggle | `theme.css` | `theme.js` (in `<head>`) |
-| Control pill, focus mode, shortcuts | `controls.css` | `controls.js` |
-| Roles legend | `roles.css` | `roles.js` |
-| Math | `vendor/katex/katex.min.css`, `math.css` | `vendor/katex/katex.min.js`, `math.js` |
-| Tags and callouts | `blocks.css` | none |
-| Peek bubbles | `blocks.css`, `bubble.css` | `bubble.js` |
-| Tooltips and glossary | `tooltip.css` | `tooltip.js` |
-| Glossary page | `glossary.css` | `glossary.js`, with `tooltip.js`; `search.js` for page definitions and links |
-| Code blocks, annotations, diffs | `code.css` | `code.js` |
-| Tabs | `tabs.css` | `tabs.js` |
-| Animated figures | `anim.css` | `anim.js` |
-| Figure steps | `steps.css` | `steps.js` |
-| Reveals and split views | `reveal.css` | `reveal.js` |
-| Figure zoom | `zoom.css` | `zoom.js` |
-| Zoom presentation tools | `zoomtools.css` | `zoomtools.js`, with `zoom.js` |
-| Parameters and presets | `params.css` | `params.js` |
-| Numbering, cross-references, citations | `refs.css` | `refs.js` |
-| Sidenotes | `notes.css` | `notes.js` |
-| Search | `search.css` | `search.js` |
-| Charts | `chart.css` | `chart.js` |
-| Results tables | `results.css` | `results.js` |
-| Data files | `data.css`, plus `code.css` and `results.css` | `data.js`, plus `code.js` and `results.js`; YAML also needs `vendor/js-yaml/js-yaml.min.js` |
-| Data trees | `tree.css` | `tree.js`, with `data.js` |
-| File dropzones | `dropzone.css` | `dropzone.js`, with `data.js` |
-| Linked selection | `highlight.css` | `highlight.js` |
-| Worked-example steppers | `stepper.css` | `stepper.js` |
-| Scenario comparisons | `chart.css`, `scenarios.css` | `chart.js`, `scenarios.js` |
-| Wide blocks | `wide.css` | `wide.js` |
+| To add | Enable |
+| --- | --- |
+| TeX, syntax highlighting, or a site glossary | `math`, `code`, or `glossary` |
+| Peek bubbles, reveals, split views, or wide blocks | `peek-bubbles`, `reveals`, `split-views`, or `wide` |
+| Tabs, standalone cards, or worked-example controls | `tabs`, `cards`, or `stepper` |
+| Animated figures and figure-step panels | `animation` and `figure-steps` as needed |
+| Full-screen figures and presentation tools | `zoom` or `zoom-tools` |
+| Scoped sliders, switches, and presets | `parameters` |
+| Charts, results tables, and scenario comparisons | `chart`, `results`, or `scenarios` |
+| Named sources, raw views, and interactive trees | `data`, `data-view`, and `tree` as needed |
+| Local file pickers | `dropzone` and the target's feature |
+| Shared selection between keyed items | `selection` |
 
 ## Page layout
 
@@ -97,13 +75,13 @@ Lists in the page get numbers in small tinted circles and bullets as tinted dots
 
 ## Control pill
 
-Load `controls.css` and `controls.js` and a small frosted pill appears in the top-left corner of the page, beside the sidebar. It needs no markup. It holds:
+With `controls` enabled, a small frosted pill appears in the top-left corner of the page, beside the sidebar. It needs no markup. It holds:
 
 - a ring that fills as the reader scrolls through the page;
 - a sidebar button that cycles through shown, hidden, and auto-hide on desktop and opens the drawer on narrow screens and touch-only devices
 - a focus-mode button that keeps the section in the middle of the screen, everything in the central part of the screen, and the page title sharp, and blurs the rest; pointing at a blurred block sharpens it;
-- a search button, when `search.js` is loaded;
-- the theme toggle, when `theme.js` is loaded.
+- a search button, when `search` is enabled;
+- the theme toggle, when `theme` is enabled.
 
 In auto-hide, move the pointer to the far left edge to open the sidebar and shift the page. Moving the pointer away closes it again. With the desktop sidebar closed, numbered rings follow the page outline in reading order. The current ring glows and fills as you scroll, and earlier rings stay filled. Hover over the rings or focus a numbered link to see all subsection names. Select a number or name to jump to that heading.
 
@@ -115,7 +93,7 @@ The page scrollbar stays hidden until the pointer comes near the right edge. The
 | `F` | Focus mode |
 | `N` | Cycle sidebar modes or toggle the drawer |
 | `J` / `K` | Next / previous section |
-| `Ctrl`+`K` (`⌘`+`K` on a Mac) | Search, with `search.js` |
+| `Ctrl`+`K` (`⌘`+`K` on a Mac) | Search, with `search` enabled |
 
 ## Theme toggle
 
@@ -160,7 +138,7 @@ Write TeX as-is, without dollar signs. Errors show in red with the message on ho
 </div>
 ```
 
-The icon and title are optional. With `reveal.css` and `reveal.js`, callouts in `.df-page` slide in from the right as they reach the middle of the viewport and slide back to the right as they leave that area. Add `data-df-no-reveal` to keep an individual callout still.
+The icon and title are optional. With `reveals` enabled, callouts in `.df-page` slide in from the right as they reach the middle of the viewport and slide back to the right as they leave that area. Add `data-df-no-reveal` to keep an individual callout still.
 
 ## Peek bubbles
 
@@ -171,7 +149,7 @@ The icon and title are optional. With `reveal.css` and `reveal.js`, callouts in 
 </details>
 ```
 
-With `bubble.js`, every `details` in the page becomes a small tinted bubble showing its title. As the reader scrolls it towards the middle of the screen, it flies into a large frosted panel in the empty space to the right of the text. When several bubbles are near the middle at once, their panels stack vertically. A panel's content is blurred except while the pointer is over it or keyboard focus is inside it; a tap clears it on touch screens. Each panel scrolls on its own. Once the reader scrolls past the bubble, the panel shrinks back into it. Clicking the bubble brings it to the middle and opens it right away; `Escape` closes it. When the space to the right is too narrow, the bubble expands in place instead.
+With `peek-bubbles` enabled, every `details` in the page becomes a small tinted bubble showing its title. As the reader scrolls it towards the middle of the screen, it flies into a large frosted panel in the empty space to the right of the text. When several bubbles are near the middle at once, their panels stack vertically. A panel's content is blurred except while the pointer is over it or keyboard focus is inside it; a tap clears it on touch screens. Each panel scrolls on its own. Once the reader scrolls past the bubble, the panel shrinks back into it. Clicking the bubble brings it to the middle and opens it right away; `Escape` closes it. When the space to the right is too narrow, the bubble expands in place instead.
 
 The tint is purple unless `data-df-color` or `data-df-role` says otherwise. Put `data-df-no-bubble` on a `details` (or a block around it) to leave it as a plain card. Without the script, each `details` shows as a tinted card.
 
@@ -185,16 +163,16 @@ The tint is purple unless `data-df-color` or `data-df-role` says otherwise. Put 
 
 `data-df-tip` holds the text directly. `data-df-term` looks up the manifest glossary, using the element's own text when the attribute is empty. Both accept `$…$` math; write `\$` for a literal dollar sign.
 
-Terms with extended text (the glossary's `more`, see [manifest.md](manifest.md)) show a ring in their tooltip. Press and hold the term, by mouse, touch, or Enter, to fill the ring and open the larger card. Give one term its own extended text with `data-df-more`, either as HTML or as the id of a `template`:
+Terms with extended text (the glossary's `more`, see [manifest.md](manifest.md)) show a ring in their tooltip. Press and hold the term, by mouse, touch, or Enter, to fill the ring and open the larger card. Give one term its own extended text with `data-df-more` as HTML, or with `data-df-more-id` naming a `template`:
 
 ```html
-<span data-df-term data-df-more="#eigen-more">eigenvector</span>
+<span data-df-term data-df-more-id="eigen-more">eigenvector</span>
 <template id="eigen-more"><p>For a shear, $e_1$ is one.</p></template>
 ```
 
 An empty `data-df-more` turns the card off for that term, and `data-df-hold="900"` changes its hold time.
 
-With `terms: { autoLink: true }` in the manifest, every glossary term in paragraphs and list items becomes a tooltip term automatically. These get a fainter underline than hand-marked terms and are not added to the Tab order. To link terms on one page or block only, put `data-df-autolink` on it; to keep a block out, use `data-df-no-autolink`.
+With `options.tooltips.autoLink: true` in the manifest, every glossary term in paragraphs and list items becomes a tooltip term automatically. These get a fainter underline than hand-marked terms and are not added to the Tab order. To link terms on one page or block only, put `data-df-autolink` on it; to keep a block out, use `data-df-no-autolink`.
 
 ### Glossary page
 
@@ -238,22 +216,22 @@ public class Spinner : MonoBehaviour
 ### Highlighted lines and annotations
 
 ```html
-<pre data-df-annotate data-df-lines="3-4"><code class="language-python">
+<pre data-df-annotation-list="norm-notes" data-df-lines="3-4"><code class="language-python">
 def norm(v):
     total = 0  # (1)
     for x in v:
         total += x * x
     return total ** 0.5  # (2)
 </code></pre>
-<ol>
+<ol id="norm-notes">
   <li>Start from zero.</li>
   <li>The square root of the sum of squares.</li>
 </ol>
 ```
 
 - `data-df-lines` tints lines by number, such as `"2"`, `"3-4"`, or `"1, 5-7"`.
-- With `data-df-annotate`, a comment at the end of a line that holds only numbers, such as `# (1)` or `// (2) (3)`, becomes a circled marker. The comment is removed, also from copied code.
-- Marker `(n)` matches item `n` of the numbered list right after the block, or of the list named by `data-df-annotate="#id"`. Pointing at a marker shows its note and lights up the item; clicking it scrolls to the item. Pointing at an item lights up its markers and lines.
+- With `data-df-annotation-list`, a comment at the end of a line that holds only numbers, such as `# (1)` or `// (2) (3)`, becomes a circled marker. The comment is removed, also from copied code.
+- Marker `(n)` matches item `n` of the numbered list named by the plain ID. Pointing at a marker shows its note and lights up the item; clicking it scrolls to the item. Pointing at an item lights up its markers and lines.
 
 ### Diffs
 
@@ -290,11 +268,13 @@ Give each panel a `data-df-tab` label and a unique `data-df-key`. Tab sets shari
 </figure>
 
 <script>
-  DocForm.anim('demo', [
-    { caption: 'Draw the line.', actions: [{ draw: '#line' }] },
-    { caption: 'Slide the dot along it.', actions: [{ move: '#dot', to: [180, 0], easing: 'ease-out' }] },
-    { caption: 'Shrink it.', actions: [{ attr: '#dot', name: 'r', to: 3 }] }
-  ], { caption: 'Press play.' });
+  DocForm.setup(function (df) {
+    df.animation.mount('demo', { caption: 'Press play.', steps: [
+      { key: 'draw', caption: 'Draw the line.', actions: [{ draw: '#line' }] },
+      { key: 'slide', caption: 'Slide the dot along it.', actions: [{ move: '#dot', to: [180, 0], easing: 'ease-out' }] },
+      { key: 'shrink', caption: 'Shrink it.', actions: [{ attr: '#dot', name: 'r', to: 3 }] }
+    ] });
+  });
 </script>
 ```
 
@@ -305,15 +285,15 @@ Each step has a caption (which may contain `$…$` math) and a list of actions:
 - `move`: shifts by `to: [x, y]` in SVG units.
 - `attr`: tweens an attribute (`name`) to a value.
 
-Actions accept `duration`, `delay` (in milliseconds), and `easing` (`ease`, `linear`, `ease-in`, `ease-out`, `ease-in-out`, `back-out`). Options after the steps: `caption` (shown before the first step), `duration`, `easing`, `hold` (pause between steps while playing), and `autoplay` (play when scrolled into view; or put `data-df-autoplay` on the figure). A stopped figure also plays when a mouse or pen pointer moves onto it: a paused one resumes and a finished one starts again. After the reader presses Pause, it stays paused until the pointer leaves.
+Actions accept `duration`, `delay` (in milliseconds), and `easing` (`ease`, `linear`, `ease-in`, `ease-out`, `ease-in-out`, `back-out`). Options include `caption` (shown before the first step), `duration`, `easing`, `hold` (pause between steps while playing), and `autoplay` (play when scrolled into view; or put `data-df-animation-autoplay` on the figure). A stopped figure also plays when a mouse or pen pointer moves onto it: a paused one resumes and a finished one starts again. After the reader presses Pause, it stays paused until the pointer leaves.
 
 SVG shapes take colours with `data-df-color` or `data-df-role` plus a paint class: `df-stroke`, `df-fill`, or `df-fill-bg` (the pale tint). `df-grid`, `df-axis`, and `df-muted` give neutral greys for backgrounds.
 
-Page scripts can reach a figure's controller later with `DocForm.anim.get(figure)`; besides `play`, `pause`, `next`, `prev`, and `go(step)` (jump), it has `to(step)`, which animates forwards or backwards to a step.
+Page scripts can reach a figure's controller later with `DocForm.animation.get('demo')`. Use `go('slide')` to jump to the end of a step or `to('slide')` to animate to it.
 
 ## Card panels and figure steps
 
-Include `steps.css` and `steps.js` for either layout. The selector and detail share a capped height and scroll independently when there is room to sit side by side. On narrow pages the detail follows the selector. Scrollbars appear when the pointer reaches their tracks. The selected entry is bold, and its highlight slides to each new selection. With scripts disabled or in print, every card detail is visible.
+Enable `cards` or `figure-steps`. The selector and detail share a capped height and scroll independently when there is room to sit side by side. On narrow pages the detail follows the selector. Scrollbars appear when the pointer reaches their tracks. The selected entry is bold, and its highlight slides to each new selection. With scripts disabled or in print, every card detail is visible.
 
 ### Standalone cards
 
@@ -421,14 +401,14 @@ Values: empty (rise from below), `left`, `right`, or `fade`. `data-df-reveal-del
 
 ## Figure zoom
 
-With `zoom.js`, clicking an image or a figure in the page opens it full screen over a frosted backdrop. <kbd>Esc</kbd>, a click on the backdrop, or the close button returns it. Animations and sliders keep working while it is enlarged, and keyboard users can open a figure with <kbd>Enter</kbd>.
+With `zoom` enabled, clicking an image or a figure in the page opens it full screen over a frosted backdrop. <kbd>Esc</kbd>, a click on the backdrop, or the close button returns it. Animations and sliders keep working while it is enlarged, and keyboard users can open a figure with <kbd>Enter</kbd>.
 
 - Clicks on links, buttons, sliders, tooltip terms, and animation controls inside a figure do not open it. Clicks on a chart's plot do.
 - Add `data-df-no-zoom` to a figure or image to leave it out, or `data-df-zoom` to make another block zoomable.
 
 ### Presentation tools
 
-Add `zoomtools.css` and `zoomtools.js` (after `zoom.js`) to give the zoom view a tool pill at the top of the screen for presenting a figure. Each view opens with the cursor, and closing it throws the ink away.
+Enable `zoom-tools` to give the zoom view a tool pill at the top of the screen for presenting a figure. Each view opens with the cursor, and closing it throws the ink away.
 
 | Tool | Key | What it does |
 | --- | --- | --- |
@@ -487,7 +467,7 @@ The [Transformers prediction page](../examples/transformers/pages/prediction.htm
 
 ## Numbered figures and cross-references
 
-With `refs.js`, figures and tables that have a caption or an `id` are numbered in page order, and so are display equations that have an `id`. An empty link to one of them fills in its label:
+With `references` enabled, figures and tables that have a caption or an `id` are numbered in page order, and so are display equations that have an `id`. An empty link to one of them fills in its label:
 
 ```html
 <figure id="addition">
@@ -502,10 +482,9 @@ With `refs.js`, figures and tables that have a caption or an `id` are numbered i
 
 - A figure that holds only a table counts as a table, even with math in its cells; one holding a chart counts as a figure. A figure with an `id` but no caption gets a caption with just its label.
 - An empty link to a heading shows the heading's text.
-- Add `data-df-no-number` to skip an element, or `data-df-number` to number one without an `id`. Set `refs: { equations: 'all' }` in the manifest to number every display equation.
-- With `tooltip.js`, pointing at a link to something on the same page previews it: the figure, table, or equation, or the start of a section. Links to another page of the site preview that section from the search index. Add `data-df-no-preview` to a link to turn this off.
+- Add `data-df-no-number` to skip an element, or `data-df-number` to number one without an `id`. Set `options.references.equations` to `"all"` in the manifest to number every display equation.
+- With `tooltips` enabled, pointing at a link to something on the same page previews it: the figure, table, or equation, or the start of a section. Links to another page of the site preview that section from the search index. Add `data-df-no-preview` to a link to turn this off.
 - Links to something on the same page are green (the `--df-xref` token), so they stand apart from blue links to other pages and from dotted tooltip terms.
-- Load `refs.js` before `nav.js` so a generated References heading appears in the outline.
 
 ## Sidenotes
 
@@ -517,11 +496,11 @@ Write a note where its marker should go:
 </p>
 ```
 
-`notes.js` numbers the notes and replaces each with a small marker. When the window leaves room beside the reading column, the notes sit in the right margin next to their lines; otherwise they open as hover cards from the marker (with `tooltip.js`) or in place when the marker is clicked. Notes inside split views, tables, figures, tabs, and peek bubbles always use hover cards. Without the script a note reads as a muted aside in parentheses.
+The `sidenotes` feature numbers the notes and replaces each with a small marker. When the window leaves room beside the reading column, the notes sit in the right margin next to their lines; otherwise they open as hover cards from the marker (with `tooltips`) or in place when the marker is clicked. Notes inside split views, tables, figures, tabs, and peek bubbles always use hover cards. Without the script a note reads as a muted aside in parentheses.
 
 ## Citations
 
-List sources in the manifest's `bibliography` (see [manifest.md](manifest.md)) and cite them by key:
+List sources in the manifest's `options.citations.entries` (see [manifest.md](manifest.md)) and cite them by key:
 
 ```html
 <p>Attention scales well <cite data-df-cite="vaswani2017"></cite>, as later work showed <cite data-df-cite="a, b"></cite>.</p>
@@ -530,17 +509,17 @@ List sources in the manifest's `bibliography` (see [manifest.md](manifest.md)) a
 <div data-df-bibliography></div>
 ```
 
-Citations show as `[1]` or `[1, 2]`, numbered in the order sources are first cited on the page. Each number links to the reference list and, with `tooltip.js`, shows the full entry on hover. The list goes into `data-df-bibliography`; without one, a References section is added at the end of the page. Unknown keys show as `?` and are reported in the console.
+Citations show as `[1]` or `[1, 2]`, numbered in the order sources are first cited on the page. Each number links to the reference list and, with `tooltips`, shows the full entry on hover. The list goes into `data-df-bibliography`; without one, a References section is added at the end of the page. Unknown keys show as `?` and are reported in the console.
 
 ## Search
 
-`search.js` opens a search palette with `Ctrl`+`K` (`⌘`+`K` on a Mac) or the pill's search button. It searches page titles, section headings, and text; arrow keys move through the results and `Enter` opens one. With an empty query it lists the site's pages.
+The `search` feature opens a palette with `Ctrl`+`K` (`⌘`+`K` on a Mac) or the pill's search button. It searches page titles, section headings, and text; arrow keys move through the results and `Enter` opens one. With an empty query it lists the site's pages.
 
 Pages opened from disk cannot read each other, so searching the whole site needs a prebuilt index:
 
-1. Open `docform/tools/search-index.html` in Chrome.
-2. Choose the folder that holds your manifest and pages. The index is built in the page; nothing is uploaded.
-3. Download `search-index.js`, save it beside your manifest, and add `search: 'search-index.js'` to the manifest.
+1. Set `assets.search.output` in your JSON site manifest to the path where you want the index.
+2. Open [the asset tool](../docform/tools/assets.html) from disk and choose your site folder.
+3. Select the search index. Save it to the site folder, or download it and move it to the destination shown.
 
 Build the index again after editing pages. The index also records the tips and glossary terms on each page for the [glossary page](#glossary-page). Without an index, the palette searches the current page only. Add `data-df-no-search` to leave a block out of the index.
 
@@ -608,7 +587,7 @@ Put the data inside an element with `data-df-chart`, either as JSON or as a tabl
 - Series get six fixed colours in order. Give a series `"role"` or `"color"` (or a table header `data-df-role` or `data-df-color`) to use a manifest role or a named colour instead.
 - Pointing at the chart, or focusing it and pressing the arrow keys, shows the values at that spot. Charts with two or more series get a legend; line ends are labelled when they don't crowd. The Table button lists the data.
 - Selectable points: give the chart a selection group with `"selectionGroup": "trace"` (or `data-df-selection-group="trace"` on the element), and give points a key: `{ "x": 22.3, "y": 12, "key": "retry" }`, or `data-df-key="retry"` on a table cell. Pointing or the arrow keys only read a point; a click, Enter, or Space selects its key, and doing it again clears it. Rows, buttons, and other items with the same group and key are outlined with it, and selecting one of those outlines the point. The selection is kept by key when the chart redraws or shows its table, and needs `highlight.js`.
-- From a script: `DocForm.chart(element, spec)` draws a chart and returns `{ update(spec) }`, or `null` if the data is invalid. `DocForm.chart.validate(spec)` lists the problems without drawing.
+- From a script: `DocForm.chart.get('curve')` retrieves the chart controller after startup. Call `update(spec)` to apply a new spec. `DocForm.chart.validate(spec)` lists the problems without drawing.
 
 ### Series toggles and range brushing
 
@@ -708,7 +687,7 @@ See the [Transformer input comparison](../examples/transformers/index.html#input
 
 - `data-df-filters` on the table adds a filter button to every header. To filter only some columns, put `data-df-filter` on those headers instead. `data-df-no-filter` leaves a column out.
 - Text columns list their values with counts; untick values to hide their rows. Number columns take a Min and a Max, and date columns (such as `2026-03-01` or `2026-03-01T14:05Z`) take From and To. Leave a box empty to leave that side open. Once a bound is set, rows without a value are hidden. `data-df-filter="values"` gives a number column a value list instead, which suits columns with a few repeated values such as seeds.
-- `data-df-chips` names one-click filters for the reader. Write `Label: Column op value`, with `<`, `<=`, `>`, `>=`, `=`, or `!=`. Join conditions with `&`, list alternatives with `|` (`Optimizer = adam | sgd`), and separate chips with `;`. Columns are matched by header text or `data-df-column`, ignoring case. Text matches whole cells, ignoring case.
+- `data-df-chips` names one-click filters for the reader. Write `Label: Column op value`, with `<`, `<=`, `>`, `>=`, `=`, or `!=`. Join conditions with `&`, list alternatives with `|` (`Optimizer = adam | sgd`), and separate chips with `;`. Columns are matched by `data-df-field` or header text, ignoring case. Text matches whole cells, ignoring case.
 - A row shows when it passes every column filter and every chip that is turned on. The bar above the table shows how many rows match. Clear turns every filter and chip off.
 - Heat shading and best values are worked out again over the rows that are showing. Fixed heat ranges, Pass and Fail words, and the sort order stay as they are; sorting works while rows are filtered.
 - On data-file tables, filters check the rows that are loaded, and they stay on after Show more.
@@ -717,7 +696,7 @@ The [Transformer run log](../examples/transformers/pages/diagnostics.html#run-fi
 
 ## Data files
 
-Declare a named dataset once and use it in one or more charts, results tables, scenario comparisons, or raw data views. Enable the data feature and the features for each view.
+Declare a named dataset once and use it in one or more charts, results tables, scenario comparisons, or raw data views. Enable `data-view` for raw views or `data` alongside named-source charts, results, and scenarios.
 
 ```html
 <script type="text/csv" data-df-source="runs">
@@ -727,7 +706,7 @@ Declare a named dataset once and use it in one or more charts, results tables, s
 <div data-df-source="runs" data-df-data-view="table"></div>
 ```
 
-For a separate file, open `docform/tools/data-file.html` and wrap the CSV, JSON, or YAML as a local script. Load the wrapper on the page or configure its output in the site manifest. For inline data you want readers to see with scripts disabled, use a `pre` with `data-df-source` and a type such as `data-df-source-type="csv"`.
+For a separate CSV, JSON, or YAML file, set its `source` and `output` under `assets.data` in the site manifest. Select that output in [the asset tool](../docform/tools/assets.html) to generate the local script. For inline data you want readers to see with scripts disabled, use a `pre` with `data-df-source` and a type such as `data-df-source-type="csv"`.
 
 A raw data view can show a table, code, or a tree. A table template can use `data-df-field="latency_ms"` on a header labelled “Latency (ms)”. This lets the file reorder its columns without changing the table. Use `data-df-max-rows` to adjust the preview batch and `data-df-max-size` to adjust the size limit. A parsing error shows the reason and the raw text.
 
@@ -735,7 +714,7 @@ A raw data view can show a table, code, or a tree. A table template can use `dat
 
 ### Data trees
 
-Enable the tree feature and set `data-df-data-view="tree"` to explore nested data. `data-df-tree-depth` sets how many levels start open. Use the arrow keys to move through and expand branches, or use Expand all and Collapse all. Long branches offer Show more.
+Enable `data-view` and `tree` and set `data-df-data-view="tree"` to explore nested data. `data-df-tree-depth` sets how many levels start open. Use the arrow keys to move through and expand branches, or use Expand all and Collapse all. Long branches offer Show more.
 
 ### File dropzones
 
@@ -756,24 +735,13 @@ Readers can choose a CSV, JSON, or YAML file or drag it onto the zone. The brows
 
 ## Interactive explanations
 
-These snippets assume your HTML file sits beside the `docform/` folder. Put the shared setup in `<head>` and add the includes for each pattern you use. Put the example markup inside `<main class="df-page">`. You can open the file directly from disk. [Include order](include-order.md)
-
-```html
-<link rel="stylesheet" href="docform/css/tokens.css">
-<link rel="stylesheet" href="docform/css/base.css">
-<script defer src="docform/js/core.js"></script>
-```
+Put these patterns inside `<main class="df-page">` and opt into their features in your [page configuration](include-order.md).
 
 ### Linked selection
 
-```html
-<link rel="stylesheet" href="docform/css/highlight.css">
-<script defer src="docform/js/highlight.js"></script>
-```
-
 Give a button and its matching items the same `data-df-selection-group` and `data-df-key`. Selecting the button outlines every match. Activate it again to clear the selection. Each group has its own selection.
 
-Enable the `selection` feature when using the offline entry. A page can set the start under `selectionGroups` in its configuration. For example, `{"selectionGroups":{"sales":{"initial":"total"}}}` opens the sales trace on its total.
+Enable `selection`. A page can set the start under `selectionGroups` in its configuration. For example, `{"selectionGroups":{"sales":{"initial":"total"}}}` opens the sales trace on its total.
 
 To trace an output, tag the output and each input row, including excluded inputs. Write each row's contribution and reason in the table so readers can follow the calculation with scripts off.
 
@@ -799,10 +767,7 @@ To trace an output, tag the output and each input row, including excluded inputs
 
 ### Worked-example steppers
 
-```html
-<link rel="stylesheet" href="docform/css/stepper.css">
-<script defer src="docform/js/stepper.js"></script>
-```
+Enable `stepper`.
 
 Give the ordered list an `id` and `data-df-stepper`. Each direct list item needs a unique `data-df-key` and a direct child marked `data-df-step-label`. Follow the name with the rule and what it produces. DocForm adds Previous, Next, and Reset. Mark the starting item with `data-df-initial` or use the default first step.
 
@@ -867,12 +832,7 @@ The [PCA incident timeline](../examples/pca/pages/telemetry.html#incident-timeli
 
 ### Scenario comparisons
 
-```html
-<link rel="stylesheet" href="docform/css/chart.css">
-<link rel="stylesheet" href="docform/css/scenarios.css">
-<script defer src="docform/js/chart.js"></script>
-<script defer src="docform/js/scenarios.js"></script>
-```
+Enable `scenarios`.
 
 Use one header row and put the measure, unit, baseline, and named variants in that order. Mark each condition row with `data-df-condition`. By default, each variant must change exactly one marked condition from the baseline, so any outcome change can be attributed to that condition. Write outcome values as plain numbers and put their units in the unit column. Leave that column's cell empty for unitless values.
 
@@ -914,7 +874,7 @@ To compare named configurations that change several conditions together, such as
 
 ### Prediction and explanation
 
-Ask for a prediction before revealing the reasoning. Put the worked answer in a `details` element, then give a second case with new inputs and the same rule. Use `data-df-no-bubble` to keep each answer expandable in place on pages that load `bubble.js`. Native `details` works without scripts.
+Ask for a prediction before revealing the reasoning. Put the worked answer in a `details` element, then give a second case with new inputs and the same rule. Use `data-df-no-bubble` to keep each answer expandable in place on pages with `peek-bubbles` enabled. Native `details` works without scripts.
 
 ```html
 <p>A right triangle has legs of 6 cm and 8 cm. Predict the hypotenuse length.</p>

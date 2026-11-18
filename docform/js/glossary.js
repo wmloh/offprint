@@ -149,11 +149,11 @@
   function notice(pages) {
     if (!pages) {
       return 'Showing the manifest glossary only: no search index is loaded. Build one with ' +
-        'docform/tools/search-index.html to add definitions written on pages and links to where each term is used.';
+        'docform/tools/assets.html to add definitions written on pages and links to where each term is used.';
     }
     if (pages.length && pages.every(function (p) { return !p.terms; })) {
       return 'Showing the manifest glossary only: the search index has no glossary data. Build it again with ' +
-        'docform/tools/search-index.html to add definitions written on pages and links to where each term is used.';
+        'docform/tools/assets.html to add definitions written on pages and links to where each term is used.';
     }
     return null;
   }

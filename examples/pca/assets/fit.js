@@ -1,7 +1,7 @@
-(function () {
+DocForm.setup(function (df) {
   'use strict';
 
-  DocForm.animation.mount('fit-story', { steps: [
+  df.animation.mount('fit-story', { steps: [
     { key: 'standardize', caption: 'The window is expressed in standardized coordinates.', actions: [
       { attr: '#window-dot', name: 'r', to: 10 }
     ] },
@@ -16,7 +16,7 @@
   ], duration: 620 });
 
   var axis = document.getElementById('trial-axis');
-  DocForm.params.on('angle', function (values) {
+  df.parameters.scope().subscribe(function (values) {
     axis.setAttribute('transform', 'rotate(' + -values.angle + ' 190 164)');
-  });
-})();
+  }, { keys: ['angle'], immediate: true });
+});

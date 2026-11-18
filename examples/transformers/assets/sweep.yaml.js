@@ -1,2 +1,0 @@
-// DocForm data "sweep" from sweep.yaml, made with docform/tools/data-file.html. Convert the file again after editing it.
-(window.DocFormData = window.DocFormData || {})["sweep"] = {"type":"yaml","text":"model:\n  name: six-token-decoder\n  vocabulary: [the, train, is, late, here, '.']\n  causal: true\nsweep:\n  learning_rates: [0.0001, 0.0003, 0.001, 0.003]\n  batch_sizes: [8, 16, 32]\n  seeds: [11, 23, 37, 41, 59, 73]\nbudget:\n  latency_ms: 25\n  validation_loss: 0.60\n  selected_run: r04\n"};

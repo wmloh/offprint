@@ -4,29 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Causal self-attention · A Decoder-Only Transformer</title>
-  <link rel="stylesheet" href="../../../docform/css/tokens.css">
-  <link rel="stylesheet" href="../../../docform/css/base.css">
-  <link rel="stylesheet" href="../../../docform/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="../../../docform/css/roles.css">
-  <link rel="stylesheet" href="../../../docform/css/nav.css">
-  <link rel="stylesheet" href="../../../docform/css/theme.css">
-  <link rel="stylesheet" href="../../../docform/css/controls.css">
-  <link rel="stylesheet" href="../../../docform/css/math.css">
-  <link rel="stylesheet" href="../../../docform/css/blocks.css">
-  <link rel="stylesheet" href="../../../docform/css/tooltip.css">
-  <link rel="stylesheet" href="../../../docform/css/refs.css">
-  <link rel="stylesheet" href="../../../docform/css/notes.css">
-  <link rel="stylesheet" href="../../../docform/css/search.css">
-  <link rel="stylesheet" href="../../../docform/css/anim.css">
-  <link rel="stylesheet" href="../../../docform/css/steps.css">
-  <link rel="stylesheet" href="../../../docform/css/params.css">
-  <link rel="stylesheet" href="../../../docform/css/chart.css">
-  <link rel="stylesheet" href="../../../docform/css/highlight.css">
-  <link rel="stylesheet" href="../../../docform/css/reveal.css">
-  <link rel="stylesheet" href="../../../docform/css/zoom.css">
-  <link rel="stylesheet" href="../../../docform/css/zoomtools.css">
-  <link rel="stylesheet" href="../../../docform/css/bubble.css">
-  <script src="../../../docform/js/theme.js"></script>
+  <link rel="stylesheet" href="../../../docform/docform.css">
+  <script src="../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"animation": true, "figure-steps": true, "parameters": true, "chart": true, "selection": true, "peek-bubbles": true, "zoom-tools": true},
+      "parameterScopes": {"page": {
+        "position": {"type": "range", "min": 1, "max": 3, "step": 1, "default": 3},
+        "sharpness": {"type": "range", "min": 0.5, "max": 2, "step": 0.1, "default": 1}
+      }}
+    }
+  </script>
+  <script src="../../../docform/docform.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
@@ -44,7 +33,7 @@
     <h2 id="causal-mask">Score, mask, normalize</h2>
     <p>Queries and keys determine the weights. Values carry the information combined with those weights.
       This head uses identity projections, so <span class="df-math">Q=K=V=X</span>. The
-      <span data-df-term data-df-more="#mask-example">causal mask</span> sets the upper triangle to negative
+      <span data-df-term data-df-more-id="mask-example">causal mask</span> sets the upper triangle to negative
       infinity before softmax. <cite data-df-cite="vaswani"></cite></p>
     <div id="attention-equation" class="df-math" data-df-display>
       A=\softmax_{\mathrm{row}}\left(\frac{QK^\top}{\sqrt{d_k}}+M\right),\qquad Y=AV,\qquad
@@ -149,17 +138,24 @@
     <p>Compare the weights for all three queries. Where can the head assign weight when the query is at
       position 1? What changes when a query can see a longer prefix?</p>
     <div class="df-params">
-      <div data-df-param="position" data-df-label="Query position" data-df-min="1" data-df-max="3" data-df-step="1" data-df-value="3" data-df-role="input"></div>
-      <div data-df-param="sharpness" data-df-label="Attention temperature" data-df-min="0.5" data-df-max="2" data-df-step="0.1" data-df-value="1" data-df-digits="1" data-df-role="context"></div>
+      <div data-df-parameter="position" data-df-parameter-label="Query position" data-df-role="input"></div>
+      <div data-df-parameter="sharpness" data-df-parameter-label="Attention temperature" data-df-role="context"></div>
     </div>
     <p>At query position <strong data-df-bind="position">3</strong>,
       <strong data-df-template="{{ 3-position }} of 3 keys are masked">0 of 3 keys are masked</strong>.
       Temperature divides the remaining scores before softmax. The worked forward pass uses 1.</p>
 
     <figure id="live-weights">
-      <div id="weight-chart" data-df-chart="bar"></div>
-      <noscript><p>At position 3 and temperature 1, the weights are 0.184 for <code>the</code>,
-        0.184 for <code>train</code>, and 0.633 for <code>is</code>.</p></noscript>
+      <div id="weight-chart" data-df-chart="bar">
+        <table>
+          <thead><tr><th scope="col">Key</th><th scope="col">Attention weight at position 3 and temperature 1</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">the</th><td>0.184</td></tr>
+            <tr><th scope="row">train</th><td>0.184</td></tr>
+            <tr><th scope="row">is</th><td>0.633</td></tr>
+          </tbody>
+        </table>
+      </div>
       <figcaption>Attention weights for the selected query. Masked keys keep weight zero at every temperature.</figcaption>
     </figure>
     <p>Weighted value vector: <output id="value-context" aria-live="polite">(1.133, 0.908)</output>.</p>
@@ -187,26 +183,6 @@
       is in the future for that query, so its weight is exactly zero.</p>
   </template>
 
-  <script src="../assets/site.js" data-df-site></script>
-  <script src="../../../docform/js/core.js"></script>
-  <script src="../../../docform/vendor/katex/katex.min.js"></script>
-  <script src="../../../docform/js/roles.js"></script>
-  <script src="../../../docform/js/refs.js"></script>
-  <script src="../../../docform/js/nav.js"></script>
-  <script src="../../../docform/js/controls.js"></script>
-  <script src="../../../docform/js/math.js"></script>
-  <script src="../../../docform/js/tooltip.js"></script>
-  <script src="../../../docform/js/notes.js"></script>
-  <script src="../../../docform/js/search.js"></script>
-  <script src="../../../docform/js/anim.js"></script>
-  <script src="../../../docform/js/steps.js"></script>
-  <script src="../../../docform/js/params.js"></script>
-  <script src="../../../docform/js/chart.js"></script>
-  <script src="../../../docform/js/highlight.js"></script>
-  <script src="../../../docform/js/reveal.js"></script>
-  <script src="../../../docform/js/zoom.js"></script>
-  <script src="../../../docform/js/zoomtools.js"></script>
-  <script src="../../../docform/js/bubble.js"></script>
   <script src="../assets/model.js"></script>
   <script src="../assets/attention.js"></script>
 </body>

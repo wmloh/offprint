@@ -4,33 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Choose a component count · Pump Monitoring with PCA</title>
-  <link rel="stylesheet" href="../../../docform/css/tokens.css">
-  <link rel="stylesheet" href="../../../docform/css/base.css">
-  <link rel="stylesheet" href="../../../docform/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="../../../docform/css/roles.css">
-  <link rel="stylesheet" href="../../../docform/css/nav.css">
-  <link rel="stylesheet" href="../../../docform/css/theme.css">
-  <link rel="stylesheet" href="../../../docform/css/controls.css">
-  <link rel="stylesheet" href="../../../docform/css/math.css">
-  <link rel="stylesheet" href="../../../docform/css/blocks.css">
-  <link rel="stylesheet" href="../../../docform/css/tooltip.css">
-  <link rel="stylesheet" href="../../../docform/css/refs.css">
-  <link rel="stylesheet" href="../../../docform/css/notes.css">
-  <link rel="stylesheet" href="../../../docform/css/search.css">
-  <link rel="stylesheet" href="../../../docform/css/bubble.css">
-  <link rel="stylesheet" href="../../../docform/css/reveal.css">
-  <link rel="stylesheet" href="../../../docform/css/chart.css">
-  <link rel="stylesheet" href="../../../docform/css/scenarios.css">
-  <link rel="stylesheet" href="../../../docform/css/results.css">
-  <link rel="stylesheet" href="../../../docform/css/zoom.css">
-  <link rel="stylesheet" href="../../../docform/css/zoomtools.css">
-  <link rel="stylesheet" href="../../../docform/css/tabs.css">
-  <link rel="stylesheet" href="../../../docform/css/highlight.css">
-  <link rel="stylesheet" href="../../../docform/css/params.css">
-  <link rel="stylesheet" href="../../../docform/css/code.css">
-  <link rel="stylesheet" href="../../../docform/css/anim.css">
-  <link rel="stylesheet" href="../../../docform/css/wide.css">
-  <script src="../../../docform/js/theme.js"></script>
+  <link rel="stylesheet" href="../../../docform/docform.css">
+  <script src="../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"animation": true, "parameters": true, "chart": true, "results": true, "scenarios": true, "peek-bubbles": true, "tabs": true, "selection": true, "code": true, "split-views": true, "wide": true, "zoom-tools": true},
+      "parameterScopes": {"page": {
+        "rank": {"type": "range", "min": 1, "max": 4, "step": 1, "default": 2}
+      }}
+    }
+  </script>
+  <script src="../../../docform/docform.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
@@ -56,7 +40,7 @@
       gives the same score directly from the discarded components.</p>
 
     <div class="df-split" data-df-align="center">
-      <figure id="residual-story" data-df-autoplay>
+      <figure id="residual-story" data-df-animation-autoplay>
         <svg viewBox="0 0 355 188" role="img" aria-label="A standardized window projected onto the retained subspace, leaving a perpendicular residual">
           <path class="df-stroke" data-df-role="projection" d="M25 134H330" stroke-width="2"/>
           <text x="29" y="161" data-df-role="projection">Retained subspace</text>
@@ -122,7 +106,7 @@
     <h3 id="rank-exercise">Try the ranks on one fault</h3>
     <p>Vary the retained rank for the low-pressure scenario. Which component carries most of its residual?</p>
     <div class="df-params">
-      <div data-df-param="rank" data-df-label="Retained components" data-df-min="1" data-df-max="4" data-df-step="1" data-df-value="2" data-df-role="projection"></div>
+      <div data-df-parameter="rank" data-df-parameter-label="Retained components" data-df-role="projection"></div>
     </div>
     <div class="df-math" data-df-display data-df-no-number data-df-template="Q_{{rank}} = {{ (rank &lt; 2 ? 0.09 : 0) + (rank &lt; 3 ? 1.44 : 0) + (rank &lt; 4 ? 0.01 : 0) | 2 }}">
       Q_2 = 1.45
@@ -266,30 +250,6 @@ console.assert(residualScore(lowPressure, 3) &lt;= 0.80);</code></pre>
     <div data-df-bibliography></div>
   </main>
 
-  <script src="../assets/site.js" data-df-site></script>
-  <script src="../../../docform/js/core.js"></script>
-  <script src="../../../docform/vendor/katex/katex.min.js"></script>
-  <script src="../../../docform/js/roles.js"></script>
-  <script src="../../../docform/js/refs.js"></script>
-  <script src="../../../docform/js/nav.js"></script>
-  <script src="../../../docform/js/controls.js"></script>
-  <script src="../../../docform/js/math.js"></script>
-  <script src="../../../docform/js/tooltip.js"></script>
-  <script src="../../../docform/js/notes.js"></script>
-  <script src="../../../docform/js/search.js"></script>
-  <script src="../../../docform/js/bubble.js"></script>
-  <script src="../../../docform/js/reveal.js"></script>
-  <script src="../../../docform/js/chart.js"></script>
-  <script src="../../../docform/js/scenarios.js"></script>
-  <script src="../../../docform/js/results.js"></script>
-  <script src="../../../docform/js/zoom.js"></script>
-  <script src="../../../docform/js/zoomtools.js"></script>
-  <script src="../../../docform/js/highlight.js"></script>
-  <script src="../../../docform/js/tabs.js"></script>
-  <script src="../../../docform/js/params.js"></script>
-  <script src="../../../docform/js/code.js"></script>
-  <script src="../../../docform/js/anim.js"></script>
-  <script src="../../../docform/js/wide.js"></script>
   <script src="../assets/monitor.js"></script>
 </body>
 </html>

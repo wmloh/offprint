@@ -43,6 +43,5 @@ Enable `features.parameters` with the [offline entry](../setup/include-order.md)
 - `fn(current, {previous, changedKeys, origin})` runs once per affected batch. `keys` optionally filters notifications. `immediate: true` publishes a first snapshot with `previous: null`, `origin: 'init'`, and the watched keys (all keys by default). Setup subscriptions receive it after enhancement. The returned function unsubscribes.
 - Controls and preset state synchronize before callbacks. Bindings coalesce per animation frame. The document event `df:parameters:change` follows callbacks with `{scope, current, previous, changedKeys, origin}`. Origins are `api`, `user` for controls and presets, and `reset`. Only committed changes emit events.
 
-Legacy pages using individual scripts can load `css/params.css` and `js/params.js` after core. Their `data-df-param` controls and `DocForm.params` still support existing examples. For migration, move local control constraints to definitions and replace `on`, `values`, and `apply` with scoped `subscribe`, `snapshot`, and `update`.
 
 [Figure steps](figure-steps.md) · [Animations](animations.md) · [Charts](../data/charts.md) · [Source](../../js/params.js)

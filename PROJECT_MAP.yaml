@@ -64,14 +64,17 @@ docform/: Copyable offline library folder
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
     glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
     wide.js: data-df-wide figures and table wrappers that grow beside the reading column, bounded by the sidebar and right-margin notes or panels
-  tools/search-index.html: Offline page that builds search-index.js, including auto-linked and hand-marked glossary terms and inline tips, from a chosen docs folder
-  tools/data-file.html: Offline page that wraps CSV, JSON, and YAML files as registering data scripts and flags files over the default caps
+  tools/: Offline asset checker and exporter for manifest-configured search indexes and wrapped CSV, JSON, and YAML sources
+    assets.html: Folder selection, asset status and diagnostics, and selective save, download, or copy
+    asset-build.js: Manifest discovery, output planning, deterministic search and data serialization, and stale checks
+    asset-page.js: Asset tool page controller for folder access, previews, and exports
+    search-index.html, data-file.html: Redirects from the former builder and converter to the asset tool
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Agent-facing setup, layout, reading, interaction, and data references grouped by purpose
     LIB_MAP.tsv: Index of agent references by component, description, and relative path
-docs/: Human-facing getting started guide, include order, manifest and component references, and style guide
+docs/: Human-facing getting started guide, include order, manifest and component references, migration guide, and style guide
 examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
-  pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and search
-  transformers/: Decoder-only guide with linked attention, decoding presets, figure zoom, and training diagnostics with shared runs, scenario comparisons, and offline file replacement
+  pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and generated search
+  transformers/: Decoder-only guide with linked attention, decoding presets, figure zoom, and training diagnostics with shared runs, scenario comparisons, generated assets, and offline file replacement
 tests/: Built-in node:test checks of module logic

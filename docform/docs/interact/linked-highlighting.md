@@ -1,6 +1,6 @@
 # Linked selection
 
-Enable `selection` in the [offline entry](../setup/setup.md), or load `css/highlight.css` and `js/highlight.js` with core. Names and keys are trimmed, nonempty, case-sensitive strings.
+Enable `selection` in the [offline entry](../setup/setup.md). Names and keys are trimmed, nonempty, case-sensitive strings.
 
 ```html
 <button type="button" data-df-selection-group="trace" data-df-key="retry">Trace the retry</button>

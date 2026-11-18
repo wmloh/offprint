@@ -208,7 +208,10 @@
 
   function index() {
     var value = root.DocFormSearch;
-    return value && Array.isArray(value.pages) ? value : null;
+    if (!value || !Array.isArray(value.pages)) return null;
+    if ((value.format !== undefined || value.version !== undefined) &&
+        (value.format !== 'docform-search' || value.version !== 1)) return null;
+    return value;
   }
 
   function load(callback) {

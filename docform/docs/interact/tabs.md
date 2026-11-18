@@ -1,6 +1,6 @@
 # Tabs
 
-Enable `tabs` or load `css/tabs.css` and `js/tabs.js` with core. Use `.df-tabs` or `[data-df-tabs]` and put each labelled panel directly inside it.
+Enable `tabs`. Use `.df-tabs` or `[data-df-tabs]` and put each labelled panel directly inside it.
 
 ```html
 <div class="df-tabs" data-df-selection-group="language">

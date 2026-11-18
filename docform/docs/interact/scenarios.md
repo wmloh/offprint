@@ -1,6 +1,6 @@
 # Scenario comparisons
 
-Load `css/chart.css` and `css/scenarios.css`. Load `js/chart.js` before `js/scenarios.js`, after core. Use a table with one `thead` row of unspanned headers, a `tbody`, and columns ordered measure, unit, baseline, then one or more uniquely named variants.
+Enable `scenarios`, which includes `chart`. Use a table with one `thead` row of unspanned headers, a `tbody`, and columns ordered measure, unit, baseline, then one or more uniquely named variants.
 
 ```html
 <table data-df-scenarios>

@@ -47,9 +47,10 @@ Open the HTML file directly in a modern browser. Add a site manifest before the 
 
 ## Where next
 
-- [manifest.md](manifest.md): pages, roles, glossary, term options, and math macros shared across a site.
-- [components.md](components.md): markup for every feature, including how to build the search index.
-- [style-guide.md](style-guide.md): how to keep pages calm and colours meaningful.
+- [Site manifest](manifest.md) for shared navigation, glossary, colour roles, and generated assets.
+- [Components](components.md) for feature choices and example markup.
+- [Style guide](style-guide.md) for page layout and meaningful colours.
+- [Migration guide](migration.md) for sites that already use DocForm.
 
 The repository has two offline examples to copy from. Open [Pump Monitoring with PCA](../examples/pca/index.html)
 for animated projections, an incident timeline, and a glossary. Open [A Decoder-Only Transformer](../examples/transformers/index.html)

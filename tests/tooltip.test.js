@@ -99,17 +99,18 @@ test('glossary accepts extended text and ignores a non-text one', () => {
   assert.equal(warnings.length, 1);
 });
 
-test('extended text comes from data-df-more, a referenced element, or the glossary', () => {
+test('extended text comes from data-df-more-id, inline data-df-more, or the glossary', () => {
   const { tip, warnings } = load();
   const entry = { title: 'Basis', text: 'Short.', more: '<p>Glossary.</p>' };
-  const doc = { getElementById: (id) => (id === 'basis-more' ? { innerHTML: '\n<p>Template.</p>\n' } : null) };
-  const node = (value) => ({ ownerDocument: doc, getAttribute: () => value });
-  assert.equal(tip.extended(entry, node(null)), '<p>Glossary.</p>');
-  assert.equal(tip.extended(entry, node('Inline <b>override</b>')), 'Inline <b>override</b>');
-  assert.equal(tip.extended(entry, node('#basis-more')), '<p>Template.</p>');
-  assert.equal(tip.extended(entry, node('')), '');
-  assert.equal(tip.extended({ title: 'X', text: 'Y', more: '' }, node(null)), '');
-  assert.equal(tip.extended(entry, node('#missing')), '<p>Glossary.</p>');
+  const doc = { getElementById: (id) => (id === 'basis-more' ? { nodeType: 1, innerHTML: '\n<p>Template.</p>\n' } : null) };
+  const node = (attrs) => ({ ownerDocument: doc, getAttribute: (name) => (name in attrs ? attrs[name] : null) });
+  assert.equal(tip.extended(entry, node({})), '<p>Glossary.</p>');
+  assert.equal(tip.extended(entry, node({ 'data-df-more': 'Inline <b>override</b>' })), 'Inline <b>override</b>');
+  assert.equal(tip.extended(entry, node({ 'data-df-more-id': 'basis-more', 'data-df-more': 'Ignored' })), '<p>Template.</p>');
+  assert.equal(tip.extended(entry, node({ 'data-df-more': '#basis-more' })), '#basis-more');
+  assert.equal(tip.extended(entry, node({ 'data-df-more': '' })), '');
+  assert.equal(tip.extended({ title: 'X', text: 'Y', more: '' }, node({})), '');
+  assert.equal(tip.extended(entry, node({ 'data-df-more-id': 'missing' })), '<p>Glossary.</p>');
   assert.equal(warnings.length, 1);
 });
 

@@ -39,8 +39,6 @@
     }
   </script>
   <script src="../../../docform/docform.js"></script>
-  <script src="../assets/runs.csv.js"></script>
-  <script src="../assets/sweep.yaml.js"></script>
   <script src="../assets/diagnostics.js"></script>
 </head>
 <body>
@@ -148,8 +146,8 @@
       to reuse the same columns and budget rule, then Reset to restore the authored rows.</p>
     <table id="latency-summary-table" data-df-results data-df-filters>
       <caption>Latency check for the baseline and the selected run</caption>
-      <thead><tr><th>Run</th><th data-df-column="validation_loss" data-df-best="min" data-df-heat>Validation loss</th>
-        <th data-df-column="latency_ms" data-df-best="min" data-df-threshold="&lt;= 25"
+      <thead><tr><th>Run</th><th data-df-field="validation_loss" data-df-best="min" data-df-heat>Validation loss</th>
+        <th data-df-field="latency_ms" data-df-best="min" data-df-threshold="&lt;= 25"
           data-df-threshold-label="Decoding budget">Latency (ms)</th></tr></thead>
       <tbody>
         <tr><td>r01</td><td>0.72</td><td>20</td></tr>
@@ -166,7 +164,7 @@
     <div data-df-source="sweep" data-df-data-view="tree" data-df-tree-depth="2" data-df-max-rows="4"></div>
     <p>Load <a href="../sample-output/metrics.json">metrics.json</a> to open a separate metrics tree. Try
       <a href="../sample-output/notes.txt">notes.txt</a> to check the unsupported-file message. Files stay on this computer.</p>
-    <div data-df-dropzone data-df-accept="json yaml" data-df-view="tree" data-df-tree-depth="2" data-df-max-size="64 KB">
+    <div data-df-dropzone data-df-accept="json yaml" data-df-data-view="tree" data-df-tree-depth="2" data-df-max-size="64 KB">
       <p>Drop decoder metrics (JSON or YAML).</p>
     </div>
 
@@ -213,9 +211,9 @@
     <p>Add a comma after <code>"r04"</code> to repair the draft metrics.</p>
 
     <h2 id="package-results">Package results for offline viewing</h2>
-    <p>To swap the built-in run log, keep its column names and wrap the edited CSV with the
-      <a href="../../../docform/tools/data-file.html">offline data file converter</a>. Load the resulting script
-      before the page finishes loading. The shell command checks the first few lines, and the HTML and CSS show the markup
+    <p>To swap the built-in run log, keep its column names, edit <code>runs.csv</code>, and regenerate
+      <code>generated/runs.js</code> with the <a href="../../../docform/tools/assets.html">offline asset tool</a>.
+      The site manifest loads the generated script. The shell command checks the first few lines, and the HTML and CSS show the markup
       for a wide data view and a limit on its width.</p>
     <pre><code class="language-shell">head -n 5 runs.csv</code></pre>
     <pre><code class="language-html">&lt;div class="run-log" data-df-source="runs" data-df-data-view="table" data-df-wide&gt;&lt;/div&gt;</code></pre>

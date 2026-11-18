@@ -13,7 +13,7 @@ count += 1
 <ol id="notes"><li>Start with an empty count.</li></ol>
 ```
 
-- `data-df-lines` takes one-based line numbers and ranges separated by spaces or commas. `data-df-annotate` uses the following sibling `ol`. Use `data-df-annotation-list="plain-id"` for an explicit list. Both extract trailing marker-only comments such as `# (1)` or `// (2) (3)` from code and copied text. Numbering respects `ol[start]`.
+- `data-df-lines` takes one-based line numbers and ranges separated by spaces or commas. Set `data-df-annotation-list="plain-id"` to the ID of an `ol`. The highlighter extracts trailing marker-only comments such as `# (1)` or `// (2) (3)` from code and copied text. Numbering respects `ol[start]`.
 - A marker and its list item highlight together on hover/focus. Clicking a marker scrolls to its note. Enable `tooltips` for marker previews. List item `data-df-selection-group` and `data-df-key` are copied to its markers for linked views.
 
 ```html

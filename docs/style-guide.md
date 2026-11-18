@@ -30,7 +30,7 @@ These are suggestions, not rules; what matters is that a site uses each colour c
 
 ## Heading and emphasis colours
 
-Headings, bold, and italic text can each take their own colour, set separately for light and dark mode. Override the tokens in a stylesheet loaded after `tokens.css`:
+Headings, bold, and italic text can each take their own colour, set separately for light and dark mode. Override the tokens in a stylesheet loaded after `docform/docform.css`:
 
 ```css
 :root {

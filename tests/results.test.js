@@ -204,6 +204,14 @@ const find = (node, cls) => node.classes.has(cls) ? node : node.children.map((ch
 const shownNames = (body) => body.children.filter((tr) => !tr.hidden).map((tr) => tr.cells[0].textContent);
 const marks = (rows, c) => rows.map((tr) => [tr.cells[c].classes.has('df-best'), tr.cells[c].props.get('--df-heat') ?? null]);
 
+test('chips match columns by data-df-field or header text, not the removed data-df-column', () => {
+  const { warnings } = build([['Run'], ['Latency (ms)', { 'data-df-field': 'latency' }],
+    ['Validation loss', { 'data-df-column': 'loss' }]], [['a', '10', '1'], ['b', '30', '2']],
+  { 'data-df-chips': 'Fast: latency <= 25; Low: Validation loss < 2; Old: loss < 2' });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Old.*no column "loss"/);
+});
+
 test('column filters and chips combine, recompute marks over visible rows, and keep fixed ranges and verdicts', () => {
   const { table, ths, rows, body, warnings, results: api } = build(BENCH, BENCH_ROWS, {
     'data-df-filters': '', 'data-df-chips': 'Within budget: Latency (ms) <= 25; Adam: optimizer = adam; Broken: Nope = 1'

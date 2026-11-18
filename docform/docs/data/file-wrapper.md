@@ -1,15 +1,19 @@
-# Offline data file wrapper
+# Offline data file wrappers
 
-Open [tools/data-file.html](../../tools/data-file.html) from disk. Select local `.csv`, `.json`, `.yaml`, or `.yml` files. Download or copy the generated script for each file. The converter reads and checks files locally and still provides a wrapper when it reports a parse or size issue.
+Open [tools/assets.html](../../tools/assets.html) from disk and choose the site folder. Use a site manifest with named data descriptors. Paths resolve from the manifest. The tool detects CSV, JSON, YAML, and YML by extension. Set `type` explicitly to override detection.
 
-- `runs.csv` becomes `runs.csv.js`, registering the name `runs` (basename without last extension). The script stores raw text and detected type in `window.DocFormData[name] = {type, text}`. Use distinct names because wrappers assign directly by key.
-- Save the wrapper beside the page or in its asset folder. Set `assets.data.runs.output` to its manifest-relative path, or load it as a classic script before startup. Enable `data-view` for a raw preview. Reconvert after editing the source file.
-
-```html
-<script src="assets/runs.csv.js"></script>
-<div data-df-source="runs" data-df-data-view="table"></div>
+```json
+{
+  "assets": {
+    "data": {
+      "runs": {"source": "../data/runs.csv", "output": "generated/runs.js"}
+    }
+  }
+}
 ```
 
-- The converter reports parse problems, table shape or nested data, and default-cap warnings at 1 MiB and 5000 rows or lines. The page decides its own cap and presentation. Copy falls back to selecting the generated script text if clipboard access is blocked.
+- Check the outputs to generate. Save selected scripts directly when folder save access is available, or download each script and move it to its listed destination. Expand an output to preview or copy it.
+- Each wrapper registers an entry in `window.DocFormData` under the configured name with `format`, `version`, `metadata`, `type`, and raw `text`. The offline entry loads it through `assets.data[name].output` before setup when `data` is enabled.
+- Missing or malformed sources block their own outputs. An invalid raw file can still be copied or downloaded as an explicit draft. Sources above the default 1 MiB or 5000 rows or lines are flagged and remain exportable. Each page controls its view caps.
 
-[Data blocks and assets](data-blocks.md) · [Include order](../setup/include-order.md) · [Reader dropzones](dropzones.md)
+[Data blocks and assets](data-blocks.md) · [Search index](../reading/search-index.md) · [Reader dropzones](dropzones.md)

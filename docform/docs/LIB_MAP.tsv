@@ -1,6 +1,6 @@
 Offline setup	Use the offline entry and author lifecycle hooks	setup/setup.md
-Include order	Choose features and load cooperating modules	setup/include-order.md
-Site manifest	Configure page paths, roles, glossary, macros, citations, and search	setup/manifest.md
+Include order	Select offline profiles and feature dependencies	setup/include-order.md
+Site manifest	Configure pages, feature options, registries, and generated assets	setup/manifest.md
 Base layout	Style the reading column, typography, lists, and tables	layout/base.md
 Wide blocks	Extend figures and tables into available side space	layout/wide.md
 Design tokens	Override colours, fonts, spacing, and widths	layout/tokens.md
@@ -19,7 +19,7 @@ Cross-references	Number figures, tables, and equations and preview links	reading
 Citations	Number sources and generate a bibliography per page	reading/citations.md
 Sidenotes	Show inline notes in the margin or at their markers	reading/sidenotes.md
 Search	Search live page text and an offline site index	reading/search.md
-Search index builder	Generate the offline page and glossary index	reading/search-index.md
+Search index	Check and export the offline page and glossary index	reading/search-index.md
 Tabs	Switch panels and synchronize choices by group	interact/tabs.md
 SVG animations	Play, scrub, and control a step timeline	interact/animations.md
 Card panels	Select details from standalone cards and groups	interact/card-panels.md
@@ -36,6 +36,6 @@ SVG charts	Draw line, bar, and scatter charts with interactive views	data/charts
 Concept tables	Style semantic tables for text comparisons	data/concept-tables.md
 Results tables	Sort, shade, classify, and filter result rows	data/results-tables.md
 Named sources and data views	Share CSV, JSON, YAML, or typed values across mapped views and transforms	data/data-blocks.md
-Data file wrapper	Convert local data files into offline registration scripts	data/file-wrapper.md
+Data file wrapper	Check and export local data as named offline sources	data/file-wrapper.md
 Data trees	Explore nested records and lists with collapsible branches	data/data-trees.md
 File dropzones	Read local files for standalone, view-local, or shared replacement	data/dropzones.md

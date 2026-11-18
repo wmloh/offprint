@@ -1,6 +1,6 @@
 # Concept tables
 
-Use `table[data-df-concept]` inside `.df-page` for text comparisons. Load `css/tokens.css` and `css/base.css`. Add `css/blocks.css` for labelled [tags](../reading/tags.md). No script required.
+Use `table[data-df-concept]` inside `.df-page` for text comparisons. Link `docform.css` for static styling, including labelled [tags](../reading/tags.md).
 
 ```html
 <table data-df-concept>

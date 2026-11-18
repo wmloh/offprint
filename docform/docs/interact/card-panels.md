@@ -1,6 +1,6 @@
 # Card panels
 
-Enable `cards` or load `css/steps.css` and `js/steps.js` with core. Place the selector and details directly inside `.df-card-panel`. Label the `.df-step-list` with `aria-labelledby` and pair every button with exactly one direct detail child by its unique ID.
+Enable `cards`. Place the selector and details directly inside `.df-card-panel`. Label the `.df-step-list` with `aria-labelledby` and pair every button with exactly one direct detail child by its unique ID.
 
 ```html
 <div class="df-card-panel">

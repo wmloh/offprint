@@ -1,6 +1,6 @@
 # Inline tags
 
-Load `css/blocks.css`. Put `.df-tag` on an inline element with a short, explicit label. No script is required.
+Enable `tags` or link `docform.css` for static styling. Put `.df-tag` on an inline element with a short, explicit label. No script is required.
 
 ```html
 <span class="df-tag" data-df-color="orange">Draft</span>

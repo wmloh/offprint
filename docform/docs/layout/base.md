@@ -1,6 +1,6 @@
 # Base layout and typography
 
-Load `css/tokens.css` then `css/base.css`. Use `<main class="df-page">` as a direct child of `body`. An optional sibling `<nav class="df-sidebar">` enables the desktop sidebar grid. Author headings, paragraphs, figures, and tables in reading order.
+Enable `base` (included in the reading profile and `docform.css`). Use `<main class="df-page">` as a direct child of `body`. An optional sibling `<nav class="df-sidebar">` enables the desktop sidebar grid. Author headings, paragraphs, figures, and tables in reading order.
 
 - Desktop with a hover-capable pointer and viewport wider than 860 px. The reading column caps at `--df-content-width` (1120 px) plus two `--df-page-gutter` values (24 px each). It centers in the viewport when the sidebar clears it and shifts beside the sidebar otherwise. It sizes against the configured sidebar width in either visibility state.
 - At 860 px and below, or with no hover-capable pointer, the base layout stacks and uses 16 px inner gutters. [Navigation](navigation.md) enhances the sidebar into a drawer. The design viewport is 1920 × 1080.

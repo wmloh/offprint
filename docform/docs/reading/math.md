@@ -1,6 +1,6 @@
 # TeX math
 
-Load `vendor/katex/katex.min.css` before `css/math.css`. Keep the vendored fonts beside the KaTeX stylesheet. Load `vendor/katex/katex.min.js` before `js/math.js` in the classic script sequence. KaTeX is bundled for offline use.
+Enable `math`. The entry loads bundled KaTeX. Keep its fonts beside the vendored stylesheet.
 
 ```html
 <span class="df-math">a^2 + b^2 = c^2</span>

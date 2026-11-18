@@ -1,6 +1,6 @@
 # Zoom presentation tools
 
-Load `css/zoom.css` and `css/zoomtools.css`. Load `js/zoom.js` before `js/zoomtools.js`, both after core. The add-on listens for the zoom lifecycle events and creates a fresh tool session on each open.
+Enable `zoom-tools`, which includes `zoom`. The add-on listens for the zoom lifecycle events and creates a fresh tool session on each open.
 
 | Tool ID | Key | Behavior |
 | --- | --- | --- |

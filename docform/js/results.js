@@ -272,7 +272,7 @@
       var filterAttr = th.getAttribute('data-df-filter');
       var filterOn = th.colSpan <= 1 && !th.hasAttribute('data-df-no-filter') && filterAttr !== 'false' &&
         (filterAttr !== null || (filterAll !== null && filterAll !== 'false'));
-      var name = (th.getAttribute('data-df-field') || th.getAttribute('data-df-column') || th.textContent).trim();
+      var name = (th.getAttribute('data-df-field') || th.textContent).trim();
 
       if (rule) {
         // Each classified cell keeps its text and gains a visible verdict; missing values get none.
@@ -767,7 +767,7 @@
       var row = head.rows[head.rows.length - 1];
       var originals = Array.from(row.cells);
       function key(cell) {
-        return (cell.getAttribute('data-df-field') || cell.getAttribute('data-df-column') || cell.textContent).trim();
+        return (cell.getAttribute('data-df-field') || cell.textContent).trim();
       }
       var columns = originals.map(function (cell) {
         return { field: key(cell), strict: cell.hasAttribute('data-df-field') };

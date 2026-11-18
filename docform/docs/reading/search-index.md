@@ -1,10 +1,11 @@
-# Offline search index builder
+# Offline search index
 
-Open `docform/tools/search-index.html` in a browser with folder selection. Choose a local folder containing the pages and optional manifest. Save `search-index.js` beside the manifest and set `search: 'search-index.js'`. Rebuild after changing indexed text, term markup, heading IDs, or page paths.
+Open [tools/assets.html](../../tools/assets.html) from disk. Choose the folder containing the site pages and manifest. Use an external `script[src][data-df-site]` on the pages. Choose the intended manifest if several are found. A file named `site.js` is also discoverable without a marked page. The manifest must be a single `window.DocFormSite = <JSON object>;` assignment.
 
-- The builder evaluates candidate scripts containing `DocFormSite` with a synthetic `window`. It prefers `site.js`, then shallower scripts, and excludes paths under `docform/` and `node_modules/`.
-- With a manifest, it walks reading order, including `glossaryPage`, and stores paths relative to the manifest. Directory targets ending in `/` resolve to `index.html`. Off-site and out-of-folder URLs are skipped. Missing files are reported. For a site without a manifest, paths are relative to the chosen folder and pages resolve them against their own URL. Load the index script directly on pages at that level.
-- Pages are parsed as HTML. The tool applies manifest glossary auto-linking and extracts author text and term markup. Page scripts that generate content do not run during extraction.
-- Output is a classic script assigning `window.DocFormSearch = {generated, pages}`. Each page has `{path, title, sections, terms}`. Sections have `{id, title, level, text}`, with an empty ID for the intro. Term records carry `{text, section, tip}` or `{text, section, term}`, with `section` set to an indexed heading ID or empty for the intro.
+- Configure `"assets": {"search": {"output": "search-index.js"}}` in the manifest. The optional `include` array replaces the default manifest reading order, including `glossaryPage`. Paths resolve from the manifest. Directory page paths resolve to `index.html`.
+- The tool extracts authored page text, heading IDs, term uses, and inline tips. It applies glossary auto-linking and reads embedded page options. Page scripts stay inert during extraction.
+- The tool marks each output missing, stale, current, or blocked. The output records a generator and format version, normalized configuration, and ordered SHA-256 input hashes. Identical inputs and configuration produce identical scripts.
+- Check the outputs to regenerate. Save selected outputs directly if the folder offers save access, or use the listed destinations to place downloaded files. Expand an output to preview or copy its script.
+- The index assigns `window.DocFormSearch = {format, version, metadata, pages}`. Each page has `{path, title, sections, terms}`. Page paths resolve from the manifest. Sections have `{id, title, level, text}`, with an empty ID for the intro. Term uses have `{text, section, tip}` or `{text, section, term}`.
 
-[Search palette](search.md) · [Glossary page](glossary.md) · [Builder](../../tools/search-index.html)
+[Search palette](search.md) · [Glossary page](glossary.md) · [Data wrappers](../data/file-wrapper.md)

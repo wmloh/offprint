@@ -1,6 +1,6 @@
 # Worked-example steppers
 
-Enable `stepper` or load `css/stepper.css` and `js/stepper.js` with core. Use a nonempty `ol[data-df-stepper]` with an ID. Each direct `li` needs a unique `data-df-key` and a direct child with `data-df-step-label` and nonempty text.
+Enable `stepper`. Use a nonempty `ol[data-df-stepper]` with an ID. Each direct `li` needs a unique `data-df-key` and a direct child with `data-df-step-label` and nonempty text.
 
 ```html
 <ol id="delivery" data-df-stepper data-df-selection-group="trace">

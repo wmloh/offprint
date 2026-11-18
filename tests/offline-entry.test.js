@@ -235,7 +235,7 @@ test('mixed features load all shipped assets and register data before author set
     'glossary math parameters peek-bubbles results reveals scenarios selection split-views stepper tabs tree wide zoom-tools')
     .split(' ').map(key => [key, true]));
   const p = page({ nested: true, site: { features, assets: { data: {
-    runs: { source: 'examples/transformers/assets/runs.csv', output: 'examples/transformers/assets/runs.csv.js' }
+    runs: { source: 'examples/transformers/assets/runs.csv', output: 'examples/transformers/assets/generated/runs.js' }
   } } }, storage: { 'docform-theme': 'light' }, dark: true });
   assert.equal(p.html.getAttribute('data-df-theme'), 'light');
   p.DF.setup(DF => {

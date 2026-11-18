@@ -73,26 +73,17 @@
     return null;
   }
 
-  // Extended HTML for a term: data-df-more overrides the glossary, either as HTML or as "#id" of a template or hidden
-  // element; an empty attribute turns the extended card off.
+  // Extended HTML for a term: data-df-more-id names a template or hidden element, else data-df-more gives inline
+  // HTML (an empty value turns the extended card off), else the glossary's text.
   function extended(entry, el) {
     var fallback = entry && entry.more ? entry.more : '';
-    var attr = el.getAttribute('data-df-more');
-    if (boot) {
-      var id = el.getAttribute('data-df-more-id');
-      if (id !== null) {
-        var target = component.target(id, 'tooltips', true, el.ownerDocument);
-        if (target) return String(target.innerHTML).trim();
-      }
-      return attr === null ? fallback : attr.trim();
+    var id = el.getAttribute('data-df-more-id');
+    if (id !== null) {
+      var target = component.target(id.trim(), 'tooltips', true, el.ownerDocument);
+      if (target) return String(target.innerHTML).trim();
     }
-    if (attr === null) return fallback;
-    attr = attr.trim();
-    if (attr.charAt(0) !== '#') return attr;
-    var source = el.ownerDocument.getElementById(attr.slice(1));
-    if (source) return String(source.innerHTML).trim();
-    DocForm.warnOnce('more:' + attr, 'No element "' + attr + '" for data-df-more; using the glossary text.');
-    return fallback;
+    var attr = el.getAttribute('data-df-more');
+    return attr === null ? fallback : attr.trim();
   }
 
   function holdTime(el, site) {

@@ -1,6 +1,6 @@
 # Site glossary page
 
-Load `css/glossary.css` and `js/glossary.js` with `tooltip.js`. Load `search.js` first to read indexed tips and term uses. Add [math assets](math.md) for TeX in definitions.
+Enable `glossary` (requires `tooltips`). Enable `search` to read indexed tips and term uses and [math](math.md) for TeX in definitions.
 
 ```html
 <main class="df-page">

@@ -13,6 +13,6 @@ Load `css/zoom.css` and `css/zoomtools.css`. Load `js/zoom.js` before `js/zoomto
 
 - Ink modes remember their own swatch within the session and expose Undo (Ctrl or Cmd+Z) and Clear. Closing discards ink, measurement, and tool state. Tool shortcuts skip typing fields. The magnifier's cloned content is inert and has IDs removed.
 - The crosshair uses the active chart's `coords(clientX, clientY)` and follows its current scales and range. With other figures the ruler uses the displayed SVG or image when available.
-- `DocForm.zoomtools.active()` returns the current tool ID or `null`. `use(id)` selects a tool and returns `false` when the ID is unknown or no session is open. `tools`, `colors`, and `limits` expose supported IDs, swatches, and lens bounds.
+- `DocForm.zoomTools.active()` returns the current tool ID or `null`. `use(id)` selects a tool and returns `false` when the ID is unknown or no session is open. `tools`, `colors`, and `limits` expose supported IDs, swatches, and lens bounds.
 
 [Figure zoom](figure-zoom.md) · [Chart API](../data/charts.md) · [Source](../../js/zoomtools.js)

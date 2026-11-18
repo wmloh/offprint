@@ -168,7 +168,7 @@
   }
 
   function mixed(el, text) {
-    var tooltip = DocForm.tooltip;
+    var tooltip = DocForm.tooltips;
     if (tooltip && tooltip.mixed) tooltip.mixed(el, text);
     else el.textContent = text;
     return el;
@@ -217,6 +217,8 @@
   }
 
   function render(el, entries, message) {
+    if (typeof el === 'string') el = DocForm._component.target(el, 'glossary', true);
+    if (!el) return;
     var used = new Set(DocForm.all('[id]').filter(function (node) { return !el.contains(node); })
       .map(function (node) { return node.id; }));
     el.classList.add('df-glossary');
@@ -260,7 +262,7 @@
         dt.id = DocForm.uniqueSlug('term-' + (DocForm.slug(e.key) || 'entry'), used);
         var dd = dl.appendChild(make('dd', 'df-glossary-entry'));
         mixed(dd.appendChild(make('p', 'df-glossary-text')), e.text);
-        if (e.more && DocForm.tooltip && DocForm.tooltip.rich) DocForm.tooltip.rich(dd.appendChild(make('div', 'df-glossary-more')), e.more);
+        if (e.more && DocForm.tooltips && DocForm.tooltips.rich) DocForm.tooltips.rich(dd.appendChild(make('div', 'df-glossary-more')), e.more);
         if (e.variants.length) dd.appendChild(variantsBlock(e.variants));
         if (e.uses.length) dd.appendChild(usesLine(e.uses));
       });
@@ -277,10 +279,12 @@
   };
 
   DocForm.register('glossary', function (site) {
-    var holders = DocForm.all('[data-df-glossary]');
+    var holders = DocForm.all('[data-df-glossary]').filter(function (el) {
+      return !DocForm._boot || DocForm._component.flag(el, 'glossary', 'glossary');
+    });
     if (!holders.length) return;
-    if (!DocForm.tooltip) DocForm.warnOnce('glossary-tooltip', 'glossary.js needs tooltip.js for the manifest glossary.');
-    var terms = DocForm.tooltip ? DocForm.tooltip.glossary(site.glossary) : {};
+    if (!DocForm.tooltips) DocForm.warnOnce('glossary-tooltip', 'glossary.js needs tooltip.js for the manifest glossary.');
+    var terms = DocForm.tooltips ? DocForm.tooltips.glossary(site.glossary) : {};
     var draw = function (pages) {
       var entries = merge(terms, pages);
       var message = notice(pages);

@@ -21,16 +21,16 @@
     blocks: { needs: ['tags', 'callouts'] },
     'concept-tables': { needs: ['base'] },
     theme: { needs: ['tokens'], css: ['theme'], script: 'theme', api: 'theme' },
-    roles: { needs: ['base'], css: ['roles'], script: 'roles', api: 'roleCss' },
+    roles: { needs: ['base'], css: ['roles'], script: 'roles', api: 'roles' },
     math: { needs: ['base'], css: ['vendor/katex/katex.min.css', 'math'],
       vendor: ['vendor/katex/katex.min.js', 'katex'], script: 'math', api: 'math' },
-    tooltips: { needs: ['base'], css: ['tooltip'], script: 'tooltip', api: 'tooltip' },
+    tooltips: { needs: ['base'], css: ['tooltip'], script: 'tooltip', api: 'tooltips' },
     selection: { needs: ['base'], css: ['highlight'], script: 'highlight', api: 'selection' },
-    animation: { needs: ['base'], css: ['anim'], script: 'anim', api: 'anim' },
+    animation: { needs: ['base'], css: ['anim'], script: 'anim', api: 'animation' },
     parameters: { needs: ['base'], css: ['params'], script: 'params', api: 'parameters' },
     code: { needs: ['base'], css: ['code'], script: 'code', api: 'code' },
     tree: { needs: ['base'], css: ['tree'], script: 'tree', api: 'tree' },
-    data: { vendor: ['vendor/js-yaml/js-yaml.min.js', 'jsyaml'], script: 'data', api: 'dataset' },
+    data: { vendor: ['vendor/js-yaml/js-yaml.min.js', 'jsyaml'], script: 'data', api: 'data' },
     'data-view': { needs: ['base', 'data'], css: ['data'] },
     chart: { needs: ['base'], css: ['chart'], script: 'chart', api: 'chart' },
     dropzone: { needs: ['base', 'data'], css: ['dropzone', 'data'], script: 'dropzone', api: 'dropzone' },
@@ -40,19 +40,19 @@
     cards: { needs: ['base'], css: ['steps'], script: 'steps', api: 'cards' },
     'figure-steps': { needs: ['base'], css: ['steps'], script: 'steps', api: 'figureSteps' },
     stepper: { needs: ['base'], css: ['stepper'], script: 'stepper', api: 'stepper' },
-    'split-views': { needs: ['base'], css: ['reveal'], script: 'reveal', api: 'reveal' },
-    reveals: { needs: ['base'], css: ['reveal'], script: 'reveal', api: 'reveal' },
-    'peek-bubbles': { needs: ['base'], css: ['blocks', 'bubble'], script: 'bubble', api: 'bubble' },
+    'split-views': { needs: ['base'], css: ['reveal'], script: 'reveal', module: 'split-views' },
+    reveals: { needs: ['base'], css: ['reveal'], script: 'reveal', api: 'reveals' },
+    'peek-bubbles': { needs: ['base'], css: ['blocks', 'bubble'], script: 'bubble', api: 'peekBubbles' },
     search: { needs: ['base'], css: ['search'], script: 'search', api: 'search' },
     glossary: { needs: ['tooltips'], css: ['glossary'], script: 'glossary', api: 'glossary' },
-    references: { needs: ['base'], css: ['refs'], script: 'refs', api: 'refs' },
-    citations: { needs: ['tooltips'], css: ['refs'], script: 'refs', api: 'refs' },
-    navigation: { needs: ['base'], css: ['nav'], script: 'nav', api: 'nav' },
-    sidenotes: { needs: ['base'], css: ['notes'], script: 'notes', api: 'notes' },
+    references: { needs: ['base'], css: ['refs'], script: 'refs', api: 'references' },
+    citations: { needs: ['tooltips'], css: ['refs'], script: 'refs', api: 'citations' },
+    navigation: { needs: ['base'], css: ['nav'], script: 'nav', api: 'navigation' },
+    sidenotes: { needs: ['base'], css: ['notes'], script: 'notes', api: 'sidenotes' },
     wide: { needs: ['base'], css: ['wide'], script: 'wide', api: 'wide' },
     controls: { needs: ['base'], css: ['controls'], script: 'controls', api: 'controls' },
     zoom: { needs: ['base'], css: ['zoom'], script: 'zoom', api: 'zoom' },
-    'zoom-tools': { needs: ['zoom'], css: ['zoomtools'], script: 'zoomtools', api: 'zoomtools' }
+    'zoom-tools': { needs: ['zoom'], css: ['zoomtools'], script: 'zoomtools', api: 'zoomTools' }
   };
   var reading = ['base', 'blocks', 'theme', 'roles', 'navigation', 'controls', 'tooltips',
     'references', 'citations', 'sidenotes', 'search'];
@@ -249,6 +249,7 @@
       report('theme-mode', 'theme', 'options.theme.mode', 'Unknown initial theme.',
         'Choose "light", "dark", or null for the system preference.', mode);
     }
+    if (authoredTheme === 'light' || authoredTheme === 'dark') return authoredTheme;
   }
 
   function earlyTheme(config) {
@@ -328,7 +329,7 @@
     }
     if (item.script) {
       var script = new URL('js/' + item.script + '.js', library).href;
-      if (!await load(script, false) || (item.api ? !DF[item.api] : !boot.registered(item.script))) {
+      if (!await load(script, false) || (item.api ? !DF[item.api] : !boot.registered(item.module || item.script))) {
         assetFailure(id, script);
         return false;
       }
@@ -353,6 +354,40 @@
   function siteConfig(config) {
     var site = config.site;
     var options = config.options;
+    function optionMap(feature, field, accept) {
+      var map;
+      [site, config.page].forEach(function (layer) {
+        var values = layer.options && layer.options[feature];
+        if (!object(values) || !own(values, field)) return;
+        var path = 'options.' + feature + '.' + field;
+        var raw = values[field];
+        if (!object(raw)) {
+          report('feature-option', feature, path, 'Invalid ' + path + '.', 'Supply a keyed object.', raw);
+          return;
+        }
+        if (!map) map = Object.create(null);
+        Object.keys(raw).forEach(function (key) {
+          var value = object(raw[key]) ? merge(map[key], raw[key]) : raw[key];
+          if (accept(value)) map[key] = value;
+          else report('feature-option', feature, path + '.' + key, 'Invalid entry "' + key + '" in ' + path + '.',
+            'Check the feature’s supported entry format.', raw[key]);
+        });
+      });
+      if (map !== undefined) {
+        if (!object(options[feature])) options[feature] = {};
+        options[feature][field] = map;
+      } else if (object(options[feature])) delete options[feature][field];
+    }
+    optionMap('roles', 'colors', function (value) {
+      return typeof value === 'string' && DF.colors.includes(value.trim().toLowerCase());
+    });
+    optionMap('math', 'macros', function (value) { return typeof value === 'string'; });
+    optionMap('tooltips', 'terms', function (value) {
+      return typeof value === 'string' || (object(value) && typeof value.text === 'string' &&
+        (!own(value, 'more') || typeof value.more === 'string') &&
+        (!own(value, 'title') || typeof value.title === 'string'));
+    });
+    optionMap('citations', 'entries', function (value) { return typeof value === 'string' || object(value); });
     var hasManifest = !!siteScript && object(root.DocFormSite);
     var normalized = DF.normalizeSite(hasManifest ? copy(site) : undefined, siteURL, options);
     var declared = object(site.assets) ? site.assets : {};

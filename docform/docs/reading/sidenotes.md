@@ -8,6 +8,6 @@ Load `css/notes.css` and `js/notes.js`. Put `.df-note` inline at its reference p
 
 - Eligible notes use the right margin when it fits `--df-note-width` (240 px), `--df-note-gap` (32 px), and a 16 px edge. Hover links the marker and note visually. Clicking a margin marker flashes its note.
 - Narrow layouts and notes inside split views, tables, figures, code, tabs, card panels, figure steps, or peek panels use the marker's hover/focus card when `tooltip.js` and `tooltip.css` are loaded. Without tooltip JS the marker toggles the note in place. Without notes JS the note appears as a muted parenthesized aside.
-- Load `bubble.js` before `notes.js` if both are used, so notes inside moved peek content are measured in their panel. `DocForm.notes.fits(viewWidth, columnRight, width, gap, edge)` tests margin fit. `layout()` is available after notes initialize.
+- The offline entry mounts `peek-bubbles` before `sidenotes` so moved content is measured in its panel. `DocForm.sidenotes.fits(viewWidth, columnRight, width, gap, edge)` tests margin fit. `layout()` is available after notes initialize.
 
 [Wide blocks](../layout/wide.md) · [Tooltips](tooltips.md) · [Sidenote source](../../js/notes.js)

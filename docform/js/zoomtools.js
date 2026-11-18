@@ -674,11 +674,16 @@
   }
 
   if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
-    document.addEventListener('df:zoomopen', function (event) { if (event.detail) start(event.detail); });
-    document.addEventListener('df:zoomclose', stop);
+    if (DocForm._boot) {
+      DocForm.zoom.subscribe(function (current) { if (current) start(current); });
+      document.addEventListener('df:zoom:closing', stop);
+    } else {
+      document.addEventListener('df:zoomopen', function (event) { if (event.detail) start(event.detail); });
+      document.addEventListener('df:zoomclose', stop);
+    }
   }
 
-  DocForm.zoomtools = {
+  DocForm.zoomTools = DocForm.zoomtools = {
     tools: TOOLS.map(function (t) { return t.id; }),
     colors: COLORS.slice(),
     limits: { min: ZOOM.min, max: ZOOM.max, start: ZOOM.start },

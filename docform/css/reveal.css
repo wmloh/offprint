@@ -33,7 +33,7 @@
 }
 
 /* Reveals. html.df-reveal-on is set by reveal.js; .df-revealed is added once per element. */
-[data-df-reveal]:not(.df-split, .df-callout, [data-df-no-reveal]),
+[data-df-reveal]:not(.df-split, .df-callout),
 .df-split-pane {
   transition:
     opacity 0.7s ease,
@@ -45,28 +45,28 @@
   transition-delay: calc(var(--df-reveal-delay, 0ms) + var(--df-pane-delay, 0ms));
 }
 
-.df-reveal-on [data-df-reveal]:not(.df-split, .df-callout, .df-revealed, [data-df-no-reveal]) {
+.df-reveal-on .df-reveal-watched[data-df-reveal]:not(.df-split, .df-callout, .df-revealed) {
   opacity: 0;
   translate: 0 24px;
 }
 
-.df-reveal-on [data-df-reveal="left" i]:not(.df-split, .df-callout, .df-revealed, [data-df-no-reveal]) { translate: -40px 0; }
-.df-reveal-on [data-df-reveal="right" i]:not(.df-split, .df-callout, .df-revealed, [data-df-no-reveal]) { translate: 40px 0; }
-.df-reveal-on [data-df-reveal="fade" i]:not(.df-split, .df-callout, .df-revealed, [data-df-no-reveal]) { translate: none; }
+.df-reveal-on .df-reveal-watched[data-df-reveal="left" i]:not(.df-split, .df-callout, .df-revealed) { translate: -40px 0; }
+.df-reveal-on .df-reveal-watched[data-df-reveal="right" i]:not(.df-split, .df-callout, .df-revealed) { translate: 40px 0; }
+.df-reveal-on .df-reveal-watched[data-df-reveal="fade" i]:not(.df-split, .df-callout, .df-revealed) { translate: none; }
 
 /* Split panes glide in from their own sides, one after another. */
-.df-reveal-on .df-split:not(.df-revealed, [data-df-no-reveal]) > .df-split-pane:not(.df-callout) {
+.df-reveal-on .df-reveal-watched.df-split:not(.df-revealed) > .df-split-pane:not(.df-callout) {
   opacity: 0;
   translate: 0 24px;
 }
 
 @media (min-width: 701px) {
-  .df-reveal-on .df-split:not(.df-revealed, [data-df-no-reveal]) > .df-split-start:not(.df-callout) { translate: -48px 0; }
-  .df-reveal-on .df-split:not(.df-revealed, [data-df-no-reveal]) > .df-split-end:not(.df-callout) { translate: 48px 0; }
+  .df-reveal-on .df-reveal-watched.df-split:not(.df-revealed) > .df-split-start:not(.df-callout) { translate: -48px 0; }
+  .df-reveal-on .df-reveal-watched.df-split:not(.df-revealed) > .df-split-end:not(.df-callout) { translate: 48px 0; }
 }
 
 /* Keep focus-mode blur transitions on revealed top-level blocks. */
-[data-df-reveal].df-focus-block:not(.df-split, .df-callout, [data-df-no-reveal]) {
+[data-df-reveal].df-focus-block:not(.df-split, .df-callout) {
   transition:
     filter 0.35s ease,
     opacity 0.7s ease,

@@ -29,11 +29,11 @@
   function renderLegend(el, roles) {
     var names = Object.keys(roles);
     el.classList.add('df-legend');
-    el.textContent = '';
     if (!names.length) {
       DocForm.warnOnce('legend:empty', 'A data-df-legend element was found but the manifest defines no roles.');
       return;
     }
+    el.textContent = '';
     var list = document.createElement('ul');
     list.className = 'df-legend-list';
     list.setAttribute('aria-label', 'Colour roles');
@@ -63,6 +63,14 @@
   }
 
   DocForm.roleCss = roleCss;
+  DocForm.roles = {
+    color: function (name, colors) {
+      var map = colors === undefined ? (DocForm.site || {}).roles : DocForm._normalizeRoles(colors);
+      var key = String(name).trim().toLowerCase();
+      return map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : null;
+    },
+    css: function (colors) { return roleCss(DocForm._normalizeRoles(colors)); }
+  };
 
   DocForm.register('roles', function (site) {
     var css = roleCss(site.roles);
@@ -72,7 +80,9 @@
       style.textContent = css;
       document.head.appendChild(style);
     }
-    DocForm.all('[data-df-legend]').forEach(function (el) { renderLegend(el, site.roles); });
+    DocForm.all('[data-df-legend]').forEach(function (el) {
+      if (!DocForm._boot || DocForm._component.flag(el, 'legend', 'roles')) renderLegend(el, site.roles);
+    });
     checkMarkup(site);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

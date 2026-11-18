@@ -113,7 +113,7 @@
   function collectHeadings(scope) {
     var used = new Set(DocForm.all('[id]').map(function (el) { return el.id; }));
     return DocForm.all('h2, h3', scope).filter(function (h) {
-      return !h.closest('.df-sidebar, [data-df-no-outline]');
+      return !h.closest('.df-sidebar') && !DocForm._component.closestFlag(h, 'no-outline', 'navigation');
     }).map(function (h) {
       if (!h.id) h.id = uniqueSlug(slugify(h.textContent), used);
       return { level: h.tagName === 'H2' ? 2 : 3, id: h.id, text: h.textContent.trim(), el: h };
@@ -377,7 +377,7 @@
   }
 
   function renderPager(main, order, index) {
-    if (index < 0 || main.hasAttribute('data-df-no-pager')) return;
+    if (index < 0 || DocForm._component.closestFlag(main, 'no-pager', 'navigation')) return;
     var prev = order[index - 1];
     var next = order[index + 1];
     if (!prev && !next) return;
@@ -518,49 +518,70 @@
     sidebar.parentNode.insertBefore(button, sidebar.nextSibling);
     html.classList.add('df-has-drawer');
     var opener = button;
+    var component = DocForm._boot && DocForm._component;
+    var changes = component && component.signal('navigation', null, snapshot, { action: 'drawer' });
 
     function isOpen() {
       return html.classList.contains('df-nav-open');
     }
 
-    function setOpen(open, moveFocus) {
+    function snapshot() { return Object.freeze({ open: isOpen() }); }
+
+    function setOpen(open, moveFocus, origin) {
+      var previous = snapshot();
       var changed = open !== isOpen();
       html.classList.toggle('df-nav-open', open);
       button.setAttribute('aria-expanded', String(open));
       button.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
-      if (changed && typeof root.CustomEvent === 'function') {
+      if (moveFocus && changed) {
+        if (open) sidebar.focus({ preventScroll: true });
+        else opener.focus();
+      }
+      if (changed && changes) changes.emit(snapshot(), previous, origin);
+      else if (changed && typeof root.CustomEvent === 'function') {
         document.dispatchEvent(new root.CustomEvent('df:drawer', { detail: { open: open } }));
       }
-      if (!moveFocus) return;
-      if (open) sidebar.focus({ preventScroll: true });
-      else opener.focus();
+      return true;
     }
 
     // Another control, such as the control pill, can open the drawer and get focus back when it closes.
-    function toggle(from) {
-      if (isOpen()) {
-        setOpen(false, true);
-      } else {
+    function mutate(fn) { return component ? component.transaction(fn) : fn(); }
+    function toggle(from, origin) {
+      return mutate(function () {
+        if (isOpen()) return setOpen(false, true, origin);
         opener = from || button;
-        setOpen(true, true);
-      }
+        return setOpen(true, true, origin);
+      });
+    }
+    function close(moveFocus, origin) {
+      return mutate(function () { return setOpen(false, moveFocus, origin); });
     }
 
-    setOpen(false, false);
-    button.addEventListener('click', function () { toggle(button); });
-    backdrop.addEventListener('click', function () { setOpen(false, true); });
+    setOpen(false, false, 'init');
+    button.addEventListener('click', function () { toggle(button, 'user'); });
+    backdrop.addEventListener('click', function () { close(true, 'user'); });
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && isOpen()) setOpen(false, true);
+      if (event.key === 'Escape' && isOpen()) close(true, 'user');
     });
     sidebar.addEventListener('click', function (event) {
-      if (isOpen() && event.target.closest('a[href]')) setOpen(false, false);
+      if (isOpen() && event.target.closest('a[href]')) close(false, 'user');
     });
     if (narrow) {
       narrow.addEventListener('change', function () {
-        if (!narrow.matches && isOpen()) setOpen(false, false);
+        if (!narrow.matches && isOpen()) close(false, 'user');
       });
     }
-    return { isOpen: isOpen, toggle: toggle, close: function () { setOpen(false, true); } };
+    return {
+      isOpen: isOpen,
+      toggle: function (from) {
+        var el = from == null || !component ? from : component.target(from, 'navigation', true);
+        return from != null && !el ? false : toggle(el, 'api');
+      },
+      close: function () { return close(true, 'api'); },
+      snapshot: snapshot,
+      subscribe: changes && changes.subscribe,
+      _toggleFromControl: function (from) { return toggle(from, 'user'); }
+    };
   }
 
   function loadWidth() {
@@ -677,7 +698,7 @@
     sync();
   }
 
-  DocForm.nav = {
+  DocForm.navigation = DocForm.nav = {
     slugify: slugify,
     uniqueSlug: uniqueSlug,
     pageKey: pageKey,

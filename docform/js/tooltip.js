@@ -20,8 +20,8 @@
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'code', 'pre', 'kbd', 'samp', 'a', 'button', 'label', 'summary',
     'script', 'style', 'textarea', 'select', 'svg', 'math', 'nav', '[role="tooltip"]',
     '.df-math', '.katex', '.df-term', '.df-tip', '[data-df-term]', '[data-df-tip]',
-    '[data-df-template]', '[data-df-bind]', '[data-df-param]', '.df-sidebar', '.df-controls', '.df-legend', '.df-bubble',
-    '[data-df-no-autolink]', '[data-df-autolink="false"]'
+    '[data-df-template]', '[data-df-bind]', '[data-df-param]', '[data-df-parameter]', '.df-sidebar', '.df-controls',
+    '.df-legend', '.df-bubble', '[data-df-autolink="false"]'
   ].join(', ');
   var RING = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle class="df-ring-track" cx="8" cy="8" r="6"/>' +
     '<circle class="df-ring-fill" cx="8" cy="8" r="6" pathLength="1"/></svg>';
@@ -29,6 +29,8 @@
   var hasOwn = Object.prototype.hasOwnProperty;
 
   var termKey = DocForm.termKey;
+  var boot = DocForm._boot;
+  var component = DocForm._component;
 
   // Normalizes manifest glossary entries to { key: { title, text, more } }. Entries are strings or { title, text, more }.
   function glossary(raw) {
@@ -76,6 +78,14 @@
   function extended(entry, el) {
     var fallback = entry && entry.more ? entry.more : '';
     var attr = el.getAttribute('data-df-more');
+    if (boot) {
+      var id = el.getAttribute('data-df-more-id');
+      if (id !== null) {
+        var target = component.target(id, 'tooltips', true, el.ownerDocument);
+        if (target) return String(target.innerHTML).trim();
+      }
+      return attr === null ? fallback : attr.trim();
+    }
     if (attr === null) return fallback;
     attr = attr.trim();
     if (attr.charAt(0) !== '#') return attr;
@@ -86,6 +96,11 @@
   }
 
   function holdTime(el, site) {
+    if (boot) {
+      var valid = function (value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; };
+      var fallback = component.option('tooltips', el, 'hold', HOLD, valid);
+      return component.number(el, 'hold', 'tooltips', fallback, valid);
+    }
     var value = el.getAttribute('data-df-hold');
     if (value === null) value = site && site.terms ? site.terms.hold : undefined;
     if (value === undefined || value === null) return HOLD;
@@ -122,7 +137,8 @@
     var parent = node.parentElement;
     if (!parent) return false;
     var block = parent.closest(BLOCKS);
-    return !!block && rootEl.contains(block) && !parent.closest(SKIP);
+    return !!block && rootEl.contains(block) && !parent.closest(SKIP) &&
+      !component.closestFlag(parent, 'no-autolink', 'tooltips');
   }
 
   // Wraps glossary terms found in the roots' text with span.df-term.df-term-auto and returns the new spans.
@@ -270,7 +286,7 @@
   function show(item) {
     clearTimeout(hideTimer);
     if (active === item) return;
-    if (item.enabled && !item.enabled()) return;
+    if (item.disposed || (item.enabled && !item.enabled())) return;
     if (active) hide(true);
     active = item;
     if (item.card.content) fill(item.card);
@@ -325,6 +341,7 @@
     if (!item.card.more) return;
     cancelHold();
     show(item);
+    if (active !== item) return;
     var box = item.card.box;
     if (box.classList.contains('is-expanded')) return;
     box.style.setProperty('--df-hold', item.hold + 'ms');
@@ -353,7 +370,14 @@
   }
 
   function attach(el, title, text, options) {
+    if (boot || typeof el === 'string') el = component.target(el, 'tooltips', true);
+    if (!el) return null;
     options = options || {};
+    var listeners = [];
+    function listen(type, fn) {
+      listeners.push([type, fn]);
+      el.addEventListener(type, fn);
+    }
     var record = options.card || card(title, text, options.more || '', options);
     var item = {
       el: el,
@@ -369,43 +393,65 @@
       if (ids.indexOf(record.box.id) < 0) ids.push(record.box.id);
       el.setAttribute('aria-describedby', ids.join(' '));
     }
-    if (options.focusable !== false && !el.matches(FOCUSABLE)) el.tabIndex = 0;
+    var tabindex = el.getAttribute('tabindex');
+    var addedTabindex = options.focusable !== false && !el.matches(FOCUSABLE);
+    if (addedTabindex) el.tabIndex = 0;
 
     var later = function () {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
       showTimer = setTimeout(function () { show(item); }, item.delay);
     };
-    el.addEventListener('mouseenter', later);
-    el.addEventListener('mouseleave', function () { hide(false); });
-    el.addEventListener('focus', function () { show(item); });
-    el.addEventListener('blur', function () {
+    listen('mouseenter', later);
+    listen('mouseleave', function () { hide(false); });
+    listen('focus', function () { show(item); });
+    listen('blur', function () {
       if (active === item && record.box.matches(':hover')) return;
       hide(true);
     });
 
+    var addedMore = record.more && !el.classList.contains('df-term-more');
     if (record.more) {
       el.classList.add('df-term-more');
-      el.addEventListener('pointerdown', function (event) {
+      listen('pointerdown', function (event) {
         if (event.pointerType === 'mouse' && event.button !== 0) return;
         startHold(item, event);
       });
-      el.addEventListener('keydown', function (event) {
+      listen('keydown', function (event) {
         if ((event.key !== 'Enter' && event.key !== ' ') || event.repeat) return;
         event.preventDefault();
         startHold(item, null);
       });
-      el.addEventListener('keyup', function (event) {
+      listen('keyup', function (event) {
         if (event.key === 'Enter' || event.key === ' ') cancelHold();
       });
-      el.addEventListener('contextmenu', function (event) {
+      listen('contextmenu', function (event) {
         if (holding || Date.now() - holdEnded < 800) event.preventDefault();
       });
     }
-    return item;
+    return function () {
+      if (item.disposed) return;
+      item.disposed = true;
+      if (active === item) hide(true);
+      if (holding && holding.item === item) cancelHold();
+      listeners.forEach(function (entry) { el.removeEventListener(entry[0], entry[1]); });
+      if (options.describe !== false) {
+        var ids = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (id) {
+          return id && id !== record.box.id;
+        });
+        if (ids.length) el.setAttribute('aria-describedby', ids.join(' '));
+        else el.removeAttribute('aria-describedby');
+      }
+      if (addedTabindex && el.getAttribute('tabindex') === '0') {
+        if (tabindex === null) el.removeAttribute('tabindex');
+        else el.setAttribute('tabindex', tabindex);
+      }
+      if (addedMore) el.classList.remove('df-term-more');
+      if (!options.card) record.box.remove();
+    };
   }
 
-  DocForm.tooltip = {
+  DocForm.tooltips = DocForm.tooltip = {
     termKey: termKey,
     glossary: glossary,
     lookup: lookup,
@@ -426,8 +472,15 @@
     var terms = glossary(site.glossary);
     var options = site.terms || {};
 
-    var roots = DocForm.all('[data-df-autolink]:not([data-df-autolink="false"])');
-    if (options.autoLink === true) roots = DocForm.all('.df-page').concat(roots);
+    var roots = DocForm.all('[data-df-autolink]').filter(function (el) {
+      return boot ? component.flag(el, 'autolink', 'tooltips') : el.getAttribute('data-df-autolink') !== 'false';
+    });
+    var autoLinkPages = boot ? component.option('tooltips', null, 'autoLink', false, function (value) {
+      return typeof value === 'boolean';
+    }) : options.autoLink === true;
+    if (autoLinkPages) roots = DocForm.all('.df-page').filter(function (el) {
+      return !boot || component.flag(el, 'autolink', 'tooltips', true);
+    }).concat(roots);
     var auto = new Set(autoLink(roots, matcher(Object.keys(terms))));
 
     DocForm.all('[data-df-tip]').forEach(function (el) {
@@ -446,7 +499,7 @@
       }
       var more = extended(entry, el);
       var byMore = shared.get(entry);
-      if (!byMore) shared.set(entry, byMore = {});
+      if (!byMore) shared.set(entry, byMore = Object.create(null));
       if (!hasOwn.call(byMore, more)) byMore[more] = card(entry.title, entry.text, more);
       attach(el, entry.title, entry.text, {
         card: byMore[more],

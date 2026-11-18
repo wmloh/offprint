@@ -36,11 +36,11 @@
   // Whether sidenotes or peek panels currently use the right margin, judged by their own modules' rules.
   function marginInUse(page, view, contentRight) {
     var html = document.documentElement;
-    var notes = DocForm.notes;
+    var notes = DocForm.sidenotes;
     if (notes && notes.fits && page.querySelector('.df-sidenote:not(.df-note-inline)') &&
       notes.fits(view, contentRight, cssPx(html, '--df-note-width', notes.width), cssPx(html, '--df-note-gap', notes.gap),
         notes.edge || 16)) return true;
-    var bubble = DocForm.bubble;
+    var bubble = DocForm.peekBubbles;
     return !!(bubble && bubble.layout && page.querySelector('.df-bubble') && bubble.layout(view, contentRight).mode === 'panel');
   }
 
@@ -103,15 +103,30 @@
     return layout;
   }
 
-  DocForm.wide = { span: span, max: MAX };
+  var layoutPage = null;
+  DocForm.wide = {
+    span: span,
+    max: MAX,
+    layout: function () {
+      if (!layoutPage) return false;
+      layoutPage();
+      return true;
+    }
+  };
 
   DocForm.register('wide', function () {
     var page = document.querySelector('.df-page');
     if (!page) return;
-    var blocks = DocForm.all(':scope > [data-df-wide]', page);
-    DocForm.all('[data-df-wide]', page).forEach(function (el) {
-      if (blocks.indexOf(el) < 0) DocForm.warnOnce('wide:nested', 'data-df-wide works only on direct children of .df-page; ignoring nested blocks.');
+    var blocks = DocForm.all(':scope > [data-df-wide]', page).filter(function (el) {
+      return !DocForm._boot || DocForm._component.flag(el, 'wide', 'wide');
     });
-    if (blocks.length) DocForm.wide.layout = setup(blocks, page);
+    DocForm.all('[data-df-wide]', page).forEach(function (el) {
+      if (!blocks.includes(el) && (!DocForm._boot || DocForm._component.flag(el, 'wide', 'wide'))) {
+        if (DocForm._boot) DocForm._component.issue('wide', el, 'Wide blocks must be direct children of .df-page.',
+          'Place data-df-wide on a top-level figure or table wrapper.');
+        else DocForm.warnOnce('wide:nested', 'data-df-wide works only on direct children of .df-page; ignoring nested blocks.');
+      }
+    });
+    if (blocks.length) layoutPage = setup(blocks, page);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

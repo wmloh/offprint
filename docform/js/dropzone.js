@@ -252,9 +252,9 @@
     if (invalid) runtime.issue('dropzone', zone, 'Choose one valid file destination.');
     var target = null;
     var template = null;
+    var display = DocForm._boot && !hasTarget && !hasSource ? DocForm._dataSource.fileDisplay(zone, caps) : null;
     if (!invalid && targetId) {
-      target = document.getElementById(targetId);
-      if (!target) DocForm.warnOnce('dropzone-target:' + targetId, 'No element has the id "' + targetId + '" for this dropzone.', zone);
+      target = DocForm._component.target(targetId, 'dropzone', true);
       var table = target && (target.tagName === 'TABLE' ? target : target.querySelector('table[data-df-results]'));
       if (table && !table.closest('.df-data')) {
         // A results table's header is read before results.js adds its sort buttons and rule notes.
@@ -373,13 +373,15 @@
           }
         } else {
           var next = make('div', 'df-dropzone-output');
-          COPIED.forEach(function (a) { if (zone.hasAttribute(a)) next.setAttribute(a, zone.getAttribute(a)); });
-          if (zone.hasAttribute('data-df-data-view')) next.setAttribute('data-df-view', zone.getAttribute('data-df-data-view'));
-          if (!next.hasAttribute('data-df-max-size')) next.setAttribute('data-df-max-size', String(caps.maxBytes));
           if (output) output.replaceWith(next);
           else zone.appendChild(next);
           output = next;
-          data.show(output, entry);
+          if (display) DocForm._dataSource.showFile(output, entry, display);
+          else {
+            COPIED.forEach(function (a) { if (zone.hasAttribute(a)) next.setAttribute(a, zone.getAttribute(a)); });
+            if (!next.hasAttribute('data-df-max-size')) next.setAttribute('data-df-max-size', String(caps.maxBytes));
+            data.show(output, entry);
+          }
         }
         zone.classList.add('is-loaded');
         say('Showing "' + file.name + '" (' + data.formatSize(file.size) + ')' + (linked ? ' in place of the page\'s data' : '') +

@@ -95,7 +95,7 @@
       within a replay of this pump's telemetry. Both snippets count distinct flagged windows.</p>
     <div class="df-tabs">
       <div data-df-tab="SQL" data-df-key="sql">
-        <pre data-df-annotate="#arrival-notes" data-df-lines="3-4"><code class="language-sql">WITH ranked AS (
+        <pre data-df-annotation-list="arrival-notes" data-df-lines="3-4"><code class="language-sql">WITH ranked AS (
   SELECT q2, ROW_NUMBER() OVER (
     PARTITION BY window_id ORDER BY received_at, arrival_id  -- (1)
   ) AS arrival_rank
@@ -109,7 +109,7 @@ WHERE arrival_rank = 1 AND q2 &gt; 0.80;</code></pre>
         </ol>
       </div>
       <div data-df-tab="C#" data-df-key="c-sharp">
-        <pre data-df-annotate="#receiver-notes"><code class="language-cs">var seen = new HashSet&lt;string&gt;();
+        <pre data-df-annotation-list="receiver-notes"><code class="language-cs">var seen = new HashSet&lt;string&gt;();
 int alerts = 0;
 foreach (var reading in arrivalsInReceiptOrder)
 {

@@ -8,13 +8,15 @@
     return;
   }
 
-  var SELECTOR = '[data-df-reveal]:not(.df-callout, .df-split, [data-df-no-reveal])';
-  var SPLIT = '.df-split:not([data-df-no-reveal])';
+  var SELECTOR = '[data-df-reveal]:not(.df-callout, .df-split)';
+  var SPLIT = '.df-split';
   var STAGGER = 140;
   var CALLOUT_INSET = 0.25;
   var doc = root.document;
   var html = doc && doc.documentElement;
   var canObserve = typeof root.IntersectionObserver === 'function';
+  var component = DocForm._component;
+  var observer;
 
   // Revealed once it intersects, or once it is already above the viewport (such as after a restored scroll
   // position), so nothing stays hidden behind the reader.
@@ -39,8 +41,8 @@
     var parts = String(spec || '').split(/[\s:\/,]+/).filter(Boolean);
     var cols = [];
     for (var i = 0; i < count; i++) {
-      var share = parseFloat(parts[i]);
-      cols.push('minmax(0, ' + (share > 0 ? share : 1) + 'fr)');
+      var share = Number(parts[i]);
+      cols.push('minmax(0, ' + (Number.isFinite(share) && share > 0 ? share : 1) + 'fr)');
     }
     return cols.join(' ');
   }
@@ -61,6 +63,14 @@
 
   function show(el) {
     el.classList.add('df-revealed');
+  }
+
+  function showTarget(target) {
+    var el = component.target(target, 'reveals', true);
+    if (!el) return false;
+    if (observer) observer.unobserve(el);
+    show(el);
+    return true;
   }
 
   function calloutVisible(top, bottom, height, scrolled, remaining) {
@@ -107,21 +117,25 @@
   }
 
   var boot = DocForm._boot;
+  function revealAllowed(el) {
+    return boot ? !component.flag(el, 'no-reveal', 'reveals') : !el.hasAttribute('data-df-no-reveal');
+  }
   function setupSplits() { DocForm.all('.df-split').forEach(setupSplit); }
   if (boot) DocForm.register('split-views', setupSplits);
   DocForm.register('reveal', function () {
     var splits = !boot || boot.enabled('split-views');
     if (!boot) setupSplits();
-    if (!boot || boot.enabled('callouts')) slideCallouts(DocForm.all('.df-page .df-callout:not([data-df-no-reveal])'));
-    var targets = DocForm.all(splits ? SELECTOR + ', ' + SPLIT : SELECTOR);
+    if (!boot || boot.enabled('callouts')) slideCallouts(DocForm.all('.df-page .df-callout').filter(revealAllowed));
+    var targets = DocForm.all(splits ? SELECTOR + ', ' + SPLIT : SELECTOR).filter(revealAllowed);
     if (!canObserve) {
       targets.forEach(show);
       return;
     }
-    var observer = revealer(root.IntersectionObserver, show);
+    observer = revealer(root.IntersectionObserver, show);
     targets.forEach(function (el) {
-      var delay = DocForm.num(el, 'reveal-delay', NaN);
-      if (isFinite(delay)) el.style.setProperty('--df-reveal-delay', delay + 'ms');
+      var delay = component.number(el, 'reveal-delay', 'reveals', null, function (value) { return value >= 0; });
+      if (delay !== null) el.style.setProperty('--df-reveal-delay', delay + 'ms');
+      el.classList.add('df-reveal-watched');
       observer.observe(el);
     });
     if (html && html.classList) html.classList.add('df-reveal-on');
@@ -134,4 +148,5 @@
     calloutVisible: calloutVisible,
     show: show
   };
+  DocForm.reveals = { show: showTarget };
 })(typeof window !== 'undefined' ? window : globalThis);

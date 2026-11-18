@@ -14,9 +14,15 @@
   var PREVIEW_BLOCKS = 3;
   var FLASH = 1400;
   var NO_PREVIEW = '.df-sidebar, .df-pager, .df-outline, .df-heading-link, .df-cite, .df-note-ref, .df-references, ' +
-    '.df-tooltip, .df-controls, [data-df-no-preview]';
+    '.df-tooltip, .df-controls';
   var STRIP = 'script, .df-heading-link, .df-code-copy, .df-anim-controls, .df-param input';
   var hasOwn = Object.prototype.hasOwnProperty;
+  var boot = DocForm._boot;
+  var component = DocForm._component;
+
+  function flag(el, name) {
+    return boot ? component.flag(el, name, 'references') : el.hasAttribute('data-df-' + name);
+  }
 
   function label(kind, n) {
     return kind === 'equation' ? NAMES.equation + ' (' + n + ')' : NAMES[kind] + ' ' + n;
@@ -34,8 +40,8 @@
   // What a numberable element is, or null. Figures and tables need a caption or an id (or data-df-number);
   // display equations need an id unless the manifest asks for all of them.
   function kindOf(el, allEquations) {
-    if (el.hasAttribute('data-df-no-number') || el.closest('.df-tooltip')) return null;
-    var asked = el.hasAttribute('data-df-number');
+    if (flag(el, 'no-number') || el.closest('.df-tooltip')) return null;
+    var asked = flag(el, 'number');
     var tag = el.tagName;
     if (tag === 'FIGURE') {
       if (el.parentElement && el.parentElement.closest('figure')) return null;
@@ -49,7 +55,7 @@
       if (el.closest('figure')) return null;
       return asked || el.id || el.querySelector(':scope > caption') ? 'table' : null;
     }
-    if (el.matches('.df-math[data-df-display]')) {
+    if (el.matches('.df-math[data-df-display]') && flag(el, 'display')) {
       if (el.closest('figure, .df-tooltip')) return null;
       return asked || el.id || allEquations ? 'equation' : null;
     }
@@ -70,7 +76,7 @@
     el.setAttribute('data-df-label', text);
     if (kind === 'equation') {
       // An attribute rather than a child, so re-rendering the TeX keeps it.
-      el.setAttribute('data-df-number', '(' + n + ')');
+      el.setAttribute('data-df-equation-label', '(' + n + ')');
       return;
     }
     var caption = el.querySelector(el.tagName === 'TABLE' ? ':scope > caption' : ':scope > figcaption');
@@ -83,7 +89,10 @@
   }
 
   function numberPage(pages, site) {
-    var allEquations = site.refs && site.refs.equations === 'all';
+    var equations = boot ? component.option('references', null, 'equations', 'labeled', function (value) {
+      return value === 'all' || value === 'labeled';
+    }) : site.refs && site.refs.equations;
+    var allEquations = equations === 'all';
     var found = [];
     pages.forEach(function (page) {
       DocForm.all('figure, table, .df-math[data-df-display]', page).forEach(function (el) {
@@ -201,11 +210,11 @@
   }
 
   function linkRefs(pages, site) {
-    var tooltip = DocForm.tooltip;
+    var tooltip = DocForm.tooltips;
     var remote = false;
     pages.forEach(function (page) {
       DocForm.all('a[href]', page).forEach(function (a) {
-        if (a.closest(NO_PREVIEW)) return;
+        if (a.closest(NO_PREVIEW) || component.closestFlag(a, 'no-preview', 'references')) return;
         var raw = a.getAttribute('href');
         var url;
         try {
@@ -226,7 +235,7 @@
           a.classList.add('df-ref');
           if (empty) a.textContent = refText(target);
           a.addEventListener('click', function () { flash(target); });
-          if (tooltip && !a.hasAttribute('data-df-no-preview')) {
+          if (tooltip) {
             tooltip.attach(a, '', '', {
               content: function () { return preview(target); },
               className: 'df-peek',
@@ -274,7 +283,7 @@
 
   // Numbers bibliography keys by first citation: lists of keys in page order -> { numbers, order, missing }.
   function assignNumbers(lists, bib) {
-    var numbers = {};
+    var numbers = Object.create(null);
     var order = [];
     var missing = [];
     lists.forEach(function (keys) {
@@ -378,10 +387,14 @@
     result.missing.forEach(function (key) {
       DocForm.warnOnce('cite:' + key, 'Unknown citation "' + key + '"; add it to the manifest bibliography.');
     });
-    var first = {};
-    var tooltip = DocForm.tooltip;
+    var first = Object.create(null);
+    var tooltip = DocForm.tooltips;
 
     cites.forEach(function (el, i) {
+      if (!lists[i].length) {
+        if (boot) component.issue('citations', el, 'Empty citation.', 'Supply one or more keys from options.citations.entries.');
+        return;
+      }
       el.classList.add('df-cite');
       el.textContent = '';
       var keys = lists[i].filter(function (key, j, arr) { return arr.indexOf(key) === j; });
@@ -390,6 +403,8 @@
       keys.forEach(function (key, j) {
         if (j) el.appendChild(document.createTextNode(', '));
         if (!hasOwn.call(result.numbers, key)) {
+          if (boot) component.issue('citations', el, 'Unknown citation "' + key + '".',
+            'Define the key in options.citations.entries.');
           var miss = document.createElement('span');
           miss.className = 'df-cite-missing';
           miss.textContent = '?';
@@ -479,7 +494,13 @@
     return pages.length ? pages : [document.querySelector('main') || document.body];
   }
 
-  var boot = DocForm._boot;
+  DocForm.references = {
+    label: function (target) {
+      var el = component.target(target, 'references', false);
+      return el ? el.getAttribute('data-df-label') : null;
+    }
+  };
+  DocForm.citations = { citeKeys: citeKeys, formatEntry: formatEntry, citationText: citationText };
   DocForm.register('refs', function (site) {
     var pages = pageRoots();
     numberPage(pages, site);

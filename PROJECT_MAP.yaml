@@ -37,18 +37,18 @@ docform/: Copyable offline library folder
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, glossary term keys, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
-    nav.js: Sidebar tree and heading outlines with hover groups, numbered subsection progress, scroll-spy, resizing, heading and prev/next links, and drawer API
-    theme.js: Head-loaded light and dark theme switching with saved choice and toggles
+    nav.js: Sidebar tree and heading outlines with hover groups, subsection progress, resizing, heading and prev/next links, and a subscribable drawer
+    theme.js: Light and dark theme state, saved preferences, and mountable toggles
     controls.js: Control pill with reading progress, focus mode, three saved sidebar modes, search and theme buttons, and shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
     tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, opt-in automatic term linking, and lazy HTML cards for other modules
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
-    anim.js: SVG timelines with playback controls, hover-to-play, and keyed jumps for figure steps
+    anim.js: Keyed SVG timeline controllers with playback, step subscriptions, and figure-step integration
     params.js: Named parameter scopes with reusable control definitions, scoped presets and text bindings, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
     steps.js: Standalone HTML card panels with optional titled groups, keyboard focus, and manual selection, plus figure steps selected by hover, focus, tap, or page controls, with keyed selection and inert details
-    zoom.js: Click or Enter opens page images and figures full screen; Escape or backdrop closes; open and close events for add-ons
+    zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
     zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
     bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list

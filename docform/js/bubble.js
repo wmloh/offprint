@@ -319,7 +319,7 @@
     update();
   }
 
-  DocForm.bubble = {
+  DocForm.peekBubbles = DocForm.bubble = {
     layout: layout,
     pick: pick,
     cap: cap,
@@ -331,7 +331,7 @@
   DocForm.register('bubble', function () {
     var page = doc.querySelector('.df-page') || doc.querySelector('main') || doc.body;
     var list = DocForm.all('details', page).filter(function (el) {
-      return !el.closest('[data-df-no-bubble]') && !el.parentElement.closest('details');
+      return !DocForm._component.closestFlag(el, 'no-bubble', 'peek-bubbles') && !el.parentElement.closest('details');
     });
     if (list.length) setup(list);
   });

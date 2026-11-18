@@ -15,9 +15,10 @@
     'button:not(.df-step-panel button[data-df-key]), ' +
     'svg, canvas, select, textarea, [hidden], ' +
     '[aria-hidden="true"], .df-math, .katex, .df-sidebar, .df-controls, .df-tooltip, .df-note-ref, ' +
-    '.df-sidenote-num, .df-heading-link, .df-code-bar, [data-df-no-search]';
+    '.df-sidenote-num, .df-heading-link, .df-code-bar';
   var BLOCK = /^(P|LI|DIV|SECTION|ARTICLE|ASIDE|BLOCKQUOTE|PRE|TABLE|TR|TD|TH|CAPTION|FIGURE|FIGCAPTION|DL|DT|DD|UL|OL|H[1-6]|BR|HR|HEADER|FOOTER|MAIN|DETAILS|SUMMARY|BUTTON)$/;
   var hasOwn = Object.prototype.hasOwnProperty;
+  var component = DocForm._component;
 
   function clean(text) {
     return String(text).replace(/\s+/g, ' ').trim();
@@ -55,20 +56,24 @@
     var main = pageRoot(doc);
     var used = new Set(Array.prototype.map.call(doc.querySelectorAll('[id]'), function (el) { return el.id; }));
     Array.prototype.forEach.call(main.querySelectorAll('h2, h3'), function (h) {
-      if (!h.id && !h.closest('.df-sidebar, [data-df-no-outline]')) h.id = DocForm.uniqueSlug(DocForm.slug(h.textContent), used);
+      if (!h.id && !h.closest('.df-sidebar') && !component.closestFlag(h, 'no-outline', 'search')) {
+        h.id = DocForm.uniqueSlug(DocForm.slug(h.textContent), used);
+      }
     });
     var h1 = main.querySelector('h1');
     var titleEl = doc.querySelector('title');
     var pageTitle = clean(title || (h1 && h1.textContent) || (titleEl && titleEl.textContent) || '');
     var sections = [{ id: '', title: pageTitle, level: 1, text: '' }];
+    if (component.closestFlag(main, 'no-search', 'search')) return { title: pageTitle, sections: sections, terms: [] };
     var parts = [[]];
     var terms = [];
     var seen = {};
     var walker = doc.createTreeWalker(main, 5, {
       acceptNode: function (node) {
         if (node.nodeType === 1) {
-          if (node.matches(SKIP) || node.tagName === 'H1' && node === h1) return 2;
-          if (/^H[23]$/.test(node.tagName) && node.id && !node.closest('[data-df-no-outline]')) {
+          if (node.matches(SKIP) || component.closestFlag(node, 'no-search', 'search') ||
+            node.tagName === 'H1' && node === h1) return 2;
+          if (/^H[23]$/.test(node.tagName) && node.id && !component.closestFlag(node, 'no-outline', 'search')) {
             sections.push({ id: node.id, title: clean(node.textContent), level: node.tagName === 'H2' ? 2 : 3, text: '' });
             parts.push([]);
             return 2;
@@ -208,7 +213,8 @@
 
   function load(callback) {
     if (index() || failed) return callback(index());
-    var src = DocForm.site && DocForm.site.search;
+    var site = DocForm.site;
+    var src = site && (site.assets ? site.assets.search.output : site.search);
     if (!src) return callback(null);
     if (waiting) return waiting.push(callback);
     waiting = [callback];
@@ -445,8 +451,12 @@
   }
 
   function open(opener) {
+    if (opener != null) {
+      opener = component.target(opener, 'search', true);
+      if (!opener) return false;
+    }
     if (!ui) ui = build();
-    if (ui.dialog.open) return;
+    if (ui.dialog.open) return true;
     ui.opener = opener || document.activeElement;
     ui.all = null;
     ui.dialog.showModal();
@@ -458,15 +468,16 @@
       ui.all = null;
       if (ui.dialog.open) update(ui);
     });
+    return true;
   }
 
   function close() {
     if (ui && ui.dialog.open) ui.dialog.close();
+    return true;
   }
 
   function toggle(opener) {
-    if (ui && ui.dialog.open) close();
-    else open(opener);
+    return ui && ui.dialog.open ? close() : open(opener);
   }
 
   function isShortcut(event) {

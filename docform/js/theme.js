@@ -17,8 +17,12 @@
   };
   var doc = root.document;
   var boot = root.DocForm && root.DocForm._boot;
+  var component = boot && root.DocForm._component;
   var mode = 'light';
-  var toggles = [];
+  var toggles = new Map();
+
+  function snapshot() { return Object.freeze({ mode: mode }); }
+  var changes = component && component.signal('theme', null, snapshot);
 
   // Unknown or missing values fall back to the OS preference, so the result is always light or dark.
   function normalize(value, dark) {
@@ -69,7 +73,6 @@
   }
 
   function announce() {
-    toggles.forEach(paint);
     if (!doc || typeof root.CustomEvent !== 'function') return;
     doc.dispatchEvent(new root.CustomEvent('df:themechange', {
       detail: { mode: mode, theme: mode }
@@ -77,13 +80,36 @@
   }
 
   function set(value) {
+    if (component) return change(value, 'api', true);
     apply(value);
     write(mode);
+    paintToggles();
     announce();
     return mode;
   }
 
+  function paintToggles() {
+    new Set(toggles.values()).forEach(function (button) { paint(button); });
+  }
+
+  function change(value, origin, persist) {
+    if (!MODES.includes(value)) {
+      component.issue('theme', null, 'Unknown theme "' + String(value) + '".', 'Use light or dark.');
+      return false;
+    }
+    return component.transaction(function () {
+      var previous = snapshot();
+      if (persist) write(value);
+      if (value === mode) return true;
+      apply(value);
+      paintToggles();
+      changes.emit(snapshot(), previous, origin);
+      return true;
+    });
+  }
+
   function renderToggle(host) {
+    if (toggles.has(host)) return toggles.get(host);
     var button = host;
     if (host.tagName !== 'BUTTON') {
       button = doc.createElement('button');
@@ -92,23 +118,33 @@
     }
     button.type = 'button';
     button.classList.add('df-theme-toggle');
-    button.addEventListener('click', function () { set(next(mode)); });
-    toggles.push(button);
+    button.addEventListener('click', function () {
+      if (component) change(next(mode), 'user', true);
+      else set(next(mode));
+    });
+    toggles.set(host, button);
+    toggles.set(button, button);
     paint(button);
     return button;
   }
 
   function start() {
-    Array.prototype.forEach.call(doc.querySelectorAll('[data-df-theme-toggle]'), renderToggle);
+    Array.prototype.forEach.call(doc.querySelectorAll('[data-df-theme-toggle]'), function (host) {
+      if (!component || component.flag(host, 'theme-toggle', 'theme')) renderToggle(host);
+    });
     if (root.DocForm) root.DocForm.theme = api;
     root.addEventListener('storage', function (event) {
       if (event.key !== KEY && event.key !== null) return;
-      apply(read());
-      announce();
+      if (component) change(read(), 'storage', false);
+      else {
+        apply(read());
+        paintToggles();
+        announce();
+      }
     });
   }
 
-  var api = root.DocFormTheme = {
+  var api = {
     modes: MODES.slice(),
     key: KEY,
     normalize: normalize,
@@ -123,10 +159,19 @@
   apply(read());
 
   if (boot) {
+    api.snapshot = snapshot;
+    api.subscribe = changes.subscribe;
+    api.mount = function (target) {
+      var host = component.target(target, 'theme', true);
+      return host ? renderToggle(host) : null;
+    };
     root.DocForm.theme = api;
     root.DocForm.register('theme', start);
-  } else if (doc && doc.addEventListener) {
-    if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start);
-    else start();
+  } else {
+    root.DocFormTheme = api;
+    if (doc && doc.addEventListener) {
+      if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start);
+      else start();
+    }
   }
 })(typeof window !== 'undefined' ? window : globalThis);

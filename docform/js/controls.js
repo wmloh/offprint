@@ -59,11 +59,18 @@
   }
 
   var boot = DocForm._boot;
-  var defaults = boot && DocForm.site.options.controls || {};
+  var component = DocForm._component;
+  var initialFocus = component.option('controls', null, 'focus', false, function (value) {
+    return typeof value === 'boolean';
+  });
+  var initialNav = component.option('controls', null, 'navMode', 'shown', function (value) {
+    return typeof value === 'string' && hasOwn.call(NAV_MODES, value);
+  });
   var focus = load(KEYS.focus);
+  var savedNav = load(KEYS.nav);
   var state = {
-    focus: focus === null ? defaults.focus === true : focus === 'on',
-    navMode: navMode(load(KEYS.nav) || defaults.navMode),
+    focus: focus === 'on' || (focus !== 'off' && initialFocus),
+    navMode: hasOwn.call(NAV_MODES, savedNav) ? savedNav : initialNav,
     peeking: false
   };
 
@@ -78,11 +85,12 @@
   }
 
   function setFocus(on) {
+    if (boot && typeof on !== 'boolean') return false;
     state.focus = !!on;
-    save(KEYS.focus, state.focus ? 'on' : null);
+    save(KEYS.focus, state.focus ? 'on' : boot ? 'off' : null);
     applyClasses();
     listeners.forEach(function (fn) { fn(); });
-    return state.focus;
+    return boot ? true : state.focus;
   }
 
   function setNav(shown) {
@@ -91,12 +99,13 @@
   }
 
   function setNavMode(mode) {
+    if (boot && (typeof mode !== 'string' || !hasOwn.call(NAV_MODES, mode))) return false;
     state.navMode = navMode(mode);
     state.peeking = false;
-    save(KEYS.nav, state.navMode === 'shown' ? null : state.navMode);
+    save(KEYS.nav, !boot && state.navMode === 'shown' ? null : state.navMode);
     applyClasses();
     listeners.forEach(function (fn) { fn(); });
-    return state.navMode;
+    return boot ? true : state.navMode;
   }
 
   // The focused section is the last heading at or above the viewport centre (-1 is the text before any heading),
@@ -336,7 +345,7 @@
     pill.appendChild(progressRing.el);
 
     function drawer() {
-      return drawerMode && drawerMode.matches && DocForm.nav && DocForm.nav.drawer ? DocForm.nav.drawer : null;
+      return drawerMode && drawerMode.matches && DocForm.navigation && DocForm.navigation.drawer ? DocForm.navigation.drawer : null;
     }
 
     function syncNav() {
@@ -369,11 +378,12 @@
       navButton.setAttribute('aria-controls', sidebar.id);
       actions.nav = function () {
         var d = drawer();
-        if (d) d.toggle(navButton);
+        if (d) d._toggleFromControl(navButton);
         else setNavMode(NAV_MODES[state.navMode]);
       };
       navButton.addEventListener('click', actions.nav);
-      document.addEventListener('df:drawer', syncNav);
+      if (boot && DocForm.navigation && DocForm.navigation.drawer) DocForm.navigation.drawer.subscribe(syncNav);
+      else if (!boot) document.addEventListener('df:drawer', syncNav);
       if (drawerMode) drawerMode.addEventListener('change', syncNav);
       watchAutoNav(sidebar, navButton, drawerMode, syncNav);
     }
@@ -398,8 +408,9 @@
       var themeButton = make('button', 'df-controls-btn');
       themeButton.setAttribute('aria-keyshortcuts', 'T');
       pill.appendChild(themeButton);
-      theme.toggle(themeButton);
-      actions.theme = function () { theme.set(theme.next(theme.get())); };
+      if (boot) theme.mount(themeButton);
+      else theme.toggle(themeButton);
+      actions.theme = function () { themeButton.click(); };
     }
 
     if (headings.length) {
@@ -461,6 +472,7 @@
     shortcut: shortcut,
     dispatch: dispatch,
     state: function () { return { focus: state.focus, nav: navShown() }; },
+    snapshot: function () { return Object.freeze({ focus: state.focus, nav: navShown(), navMode: state.navMode }); },
     setFocus: setFocus,
     setNav: setNav,
     setNavMode: setNavMode

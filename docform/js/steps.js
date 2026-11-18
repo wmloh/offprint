@@ -134,27 +134,26 @@
     var buttons = domain.items;
     var highlight = trackSelection(list, buttons);
 
-    function sync(current) {
-      if (!current.animationKey) return true;
-      var ctl = DocForm.animation && DocForm.animation.get(figure);
-      if (!ctl) return false;
-      if (!ctl.go(current.animationKey)) {
+    function sync(current, origin) {
+      if (!current.animationKey || !DocForm._animationStep) return null;
+      var notification = DocForm._animationStep(figure, current.animationKey, origin);
+      if (notification === false) {
         items.issue('figure-steps', box, 'Unknown animation key "' + current.animationKey + '".', 'Use a key from the figure animation or start.');
       }
-      return true;
+      return notification;
     }
 
     var state = items.controller('figure-steps', box, domain, function (index, key) {
       var detail = prepared.targets[index];
       return { key: key, index: index, animationKey: items.key(DocForm.data(buttons[index], 'animation-key')),
         detailId: detail ? detail.id : null };
-    }, function (current, previous) {
+    }, function (current, previous, origin) {
       if (previous) buttons[previous.index].removeAttribute('aria-current');
       var button = buttons[current.index];
       button.setAttribute('aria-current', 'step');
       highlight(button);
       showDetail(prepared.details, prepared.targets[current.index]);
-      sync(current);
+      return sync(current, origin);
     });
 
     buttons.forEach(function (button, index) {
@@ -180,7 +179,10 @@
     figures.set(box, state.controller);
     state.start();
     if (document.readyState !== 'complete' && !(DocForm.animation && DocForm.animation.get(figure))) {
-      root.addEventListener('load', function () { sync(state.controller.snapshot()); }, { once: true });
+      root.addEventListener('load', function () {
+        var notify = sync(state.controller.snapshot(), 'init');
+        if (typeof notify === 'function') items.notify(notify);
+      }, { once: true });
     }
   }
 

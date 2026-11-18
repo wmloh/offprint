@@ -19,13 +19,13 @@
   text-align: left;
 }
 
-.df-math[data-df-display][data-df-number] {
+.df-math[data-df-equation-label] {
   position: relative;
   padding-inline: 3.5em;
 }
 
-.df-math[data-df-display][data-df-number]::after {
-  content: attr(data-df-number);
+.df-math[data-df-equation-label]::after {
+  content: attr(data-df-equation-label);
   position: absolute;
   top: 50%;
   right: 0;

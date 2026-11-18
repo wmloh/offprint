@@ -35,7 +35,7 @@
   }
 
   function issue(feature, host, message, correction) {
-    if (boot) boot.report('selection-input', feature, host, message, correction, message);
+    if (boot) boot.report('component-input', feature, host, message, correction, message);
     else warnOnce(feature + ':' + (host && host.id) + ':' + message, message, host || undefined);
   }
 
@@ -193,12 +193,55 @@
     };
   }
 
-  function selectionFlag(el, name, feature) {
+  function attributeFlag(el, name, feature, fallback) {
     var value = data(el, name, null);
-    if (value === null || value === 'false') return false;
+    if (value === null) return fallback === true;
+    if (value === 'false') return false;
     if (value === '' || value === 'true') return true;
     issue(feature, el, 'Invalid data-df-' + name + ' value.', 'Use an empty attribute, true, or false.');
-    return false;
+    return fallback === true;
+  }
+
+  function closestFlag(el, name, feature) {
+    if (!boot) return el.closest('[data-df-' + name + ']');
+    for (var node = el; node; node = node.parentElement) {
+      if (node.hasAttribute('data-df-' + name) && attributeFlag(node, name, feature)) return node;
+    }
+    return null;
+  }
+
+  function attributeNumber(el, name, feature, fallback, valid) {
+    var value = data(el, name, null);
+    if (value === null) return fallback;
+    var parsed = Number(value);
+    if (/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()) &&
+      Number.isFinite(parsed) && valid(parsed)) return parsed;
+    issue(feature, el, 'Invalid data-df-' + name + ' value.', 'Use a finite number within the supported range.');
+    return fallback;
+  }
+
+  function option(feature, host, name, fallback, valid, programmatic) {
+    var layers = boot ? boot.optionLayers(feature, host && host.id) : [];
+    return layers.concat(programmatic || {}).reduce(function (value, layer) {
+      if (!isObject(layer) || !hasOwn.call(layer, name)) return value;
+      if (valid(layer[name])) return layer[name];
+      issue(feature, host, 'Invalid ' + feature + ' option "' + name + '".', 'Check the supported values for ' + name + '.');
+      return value;
+    }, fallback);
+  }
+
+  function elementTarget(target, feature, report, doc) {
+    doc = doc || root.document;
+    if (target && target.nodeType === 1) return target;
+    if (typeof target === 'string' && target && doc) {
+      var element = doc.getElementById(target);
+      if (element && (!doc.querySelectorAll || all('[id]', doc).filter(function (el) {
+        return el.id === target;
+      }).length < 2)) return element;
+    }
+    if (report) issue(feature, null, 'Cannot resolve a unique element for "' + String(target) + '".',
+      'Pass a unique plain ID or an Element.');
+    return null;
   }
 
   function selectionMode(host, feature) {
@@ -214,7 +257,7 @@
       issue(feature, host, 'Each item needs a unique nonempty key.', 'Set a distinct data-df-key on every item.');
       return null;
     }
-    var initial = items.findIndex(function (el) { return selectionFlag(el, 'initial', feature); });
+    var initial = items.findIndex(function (el) { return attributeFlag(el, 'initial', feature); });
     return { keys: keys, initial: Math.max(0, initial), items: items };
   }
 
@@ -225,7 +268,7 @@
       return;
     }
     DocForm._selection.collect(name, domain.keys,
-      selectionMode(host, feature) !== 'follow' && selectionFlag(host, 'selection-seed', feature)
+      selectionMode(host, feature) !== 'follow' && attributeFlag(host, 'selection-seed', feature)
         ? [[domain.items[domain.initial], domain.keys[domain.initial]]] : []);
   }
 
@@ -242,8 +285,11 @@
       var previous = state;
       state = Object.freeze(snapshotAt(index, keys[index]));
       var current = state;
-      render(current, previous);
-      return function () { events.emit(current, previous, origin); };
+      var notify = render(current, previous, origin);
+      return function () {
+        if (typeof notify === 'function') notify();
+        events.emit(current, previous, origin);
+      };
     }
 
     function choose(index, origin) {
@@ -554,6 +600,7 @@
     num: num,
     all: all,
     color: color,
+    _normalizeRoles: normalizeRoles,
     roleColor: roleColor,
     resolvePath: resolvePath,
     normalizeSite: normalizeSite,
@@ -562,6 +609,10 @@
     termKey: termKey,
     copyText: copyText,
     warnOnce: warnOnce,
+    _component: {
+      target: elementTarget, flag: attributeFlag, closestFlag: closestFlag, number: attributeNumber, option: option, issue: issue,
+      transaction: transaction, notify: notifyNow, signal: signal
+    },
     _dataViews: {
       controller: viewController, destination: destination, issue: dataIssue, freeze: immutable,
       transform: transformData,
@@ -570,7 +621,7 @@
       target: function (target) { return typeof target === 'string' ? document.getElementById(target) : target; }
     },
     _items: {
-      key: selectionKey, flag: selectionFlag, mode: selectionMode, issue: issue, signal: signal,
+      key: selectionKey, flag: attributeFlag, mode: selectionMode, issue: issue, signal: signal,
       transaction: transaction, notify: notifyNow, domain: itemDomain, controller: itemController, collect: collectItems,
       scan: function (feature, fn) { selectionScans.push({ feature: feature, fn: fn }); },
       target: function (target) { return typeof target === 'string' ? document.getElementById(target) : target; }

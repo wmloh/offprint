@@ -1,5 +1,5 @@
 /* Math rendered by math.js with the vendored KaTeX stylesheet. */
-.df-math[data-df-display] {
+.df-math[data-df-display]:not([data-df-display="false"]) {
   display: block;
   margin: var(--df-space-4) 0;
   overflow-x: auto;
@@ -26,6 +26,6 @@
   cursor: help;
 }
 
-.df-math-error[data-df-display] {
+.df-math-error[data-df-display]:not([data-df-display="false"]) {
   text-align: left;
 }

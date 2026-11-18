@@ -453,6 +453,10 @@
     '<path d="M10.5 5.5V3.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg>';
 
   var DIFFS = typeof WeakMap === 'function' ? new WeakMap() : null;
+  var mounted = new WeakSet();
+  var mountedDiffs = new WeakMap();
+  var boot = DocForm._boot;
+  var component = DocForm._component;
 
   // Replaces the before and after blocks of a .df-diff with one pre whose rows come from the line diff.
   function buildDiff(box) {
@@ -481,6 +485,7 @@
     box.insertBefore(pre, before);
     before.remove();
     after.remove();
+    return pre;
   }
 
   function renderRows(target, rows) {
@@ -499,7 +504,9 @@
   // Links each circled marker to the matching item of the annotation list: hover lights both, click scrolls to it.
   function linkNotes(wrap, pre) {
     var ref = DocForm.data(pre, 'annotate', '');
-    var list = ref.charAt(0) === '#' ? document.getElementById(ref.slice(1)) : wrap.nextElementSibling;
+    var target = pre.getAttribute('data-df-annotation-list');
+    var list = target !== null ? component.target(target, 'code', true) :
+      !boot && ref.charAt(0) === '#' ? document.getElementById(ref.slice(1)) : wrap.nextElementSibling;
     var marks = DocForm.all('.df-code-mark', wrap);
     if (!list || list.tagName !== 'OL') {
       if (marks.length) DocForm.warnOnce('code-notes:' + ref, 'No ordered list found for the code annotations.', pre);
@@ -533,8 +540,8 @@
         void li.offsetWidth;
         li.classList.add('is-flash');
       });
-      if (DocForm.tooltip) {
-        DocForm.tooltip.attach(mark, '', '', {
+      if (DocForm.tooltips) {
+        DocForm.tooltips.attach(mark, '', '', {
           className: 'df-code-tip',
           content: function () {
             var copy = li.cloneNode(true);
@@ -560,17 +567,23 @@
   }
 
   function enhance(pre) {
+    if (mounted.has(pre)) return pre;
     // Data placeholders render their own code views from data.js.
-    if (pre.closest('.df-code, [data-df-data]:not(.df-data-ready)') || pre.hasAttribute('data-df-no-code')) return;
+    if (!pre.parentNode || pre.closest('.df-code, [data-df-data]:not(.df-data-ready), [data-df-data-view]:not(.df-data-ready)') ||
+      pre.hasAttribute('data-df-source') ||
+      (boot ? component.flag(pre, 'no-code', 'code') : pre.hasAttribute('data-df-no-code'))) return null;
     var code = pre.querySelector(':scope > code');
     var target = code || pre;
     var lang = langOf(pre, code);
     var key = language(lang);
     var diff = DIFFS && DIFFS.get(pre);
     var source = diff ? '' : dedent(target.textContent);
-    var annotate = pre.hasAttribute('data-df-annotate');
+    var annotate = pre.hasAttribute('data-df-annotation-list') ||
+      (boot ? component.flag(pre, 'annotate', 'code') : pre.hasAttribute('data-df-annotate'));
     var markers = null;
-    if (!diff && DocForm.flag(pre, 'diff')) diff = diffRows(source);
+    var diffMode = pre.getAttribute('data-df-diff');
+    if (!diff && diffMode !== 'before' && diffMode !== 'after' &&
+      (boot ? component.flag(pre, 'diff', 'code') : DocForm.flag(pre, 'diff'))) diff = diffRows(source);
     if (annotate && !diff) {
       var parsed = annotations(source);
       source = parsed.source;
@@ -645,9 +658,28 @@
     });
     bar.appendChild(button);
     wrap.appendChild(bar);
+    mounted.add(pre);
+    return pre;
+  }
+
+  function mount(target) {
+    var host = component.target(target, 'code', true);
+    if (!host) return null;
+    if (host.tagName === 'PRE') return enhance(host);
+    if (host.classList.contains('df-diff')) {
+      if (mountedDiffs.has(host)) return mountedDiffs.get(host);
+      var pre = buildDiff(host);
+      if (!pre) return null;
+      enhance(pre);
+      mountedDiffs.set(host, host);
+      return host;
+    }
+    component.issue('code', host, 'Unsupported code host.', 'Pass a pre or a .df-diff element.');
+    return null;
   }
 
   DocForm.code = {
+    mount: mount,
     enhance: enhance,
     tokenize: tokenize,
     highlight: highlight,
@@ -663,7 +695,7 @@
   DocForm.register('code', function () {
     // Every .df-page, including bubble panels that live outside the main page.
     var pages = DocForm.all('.df-page');
-    (pages.length ? DocForm.all('.df-page .df-diff') : DocForm.all('.df-diff', document.body)).forEach(buildDiff);
-    (pages.length ? DocForm.all('.df-page pre') : DocForm.all('pre', document.body)).forEach(enhance);
+    (pages.length ? DocForm.all('.df-page .df-diff') : DocForm.all('.df-diff', document.body)).forEach(mount);
+    (pages.length ? DocForm.all('.df-page pre') : DocForm.all('pre', document.body)).forEach(mount);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

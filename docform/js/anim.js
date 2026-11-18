@@ -10,6 +10,7 @@
   var EPS = 1e-6;
   var KINDS = ['draw', 'fade', 'move', 'attr'];
   var NUM = /-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi;
+  var component = DocForm._component;
 
   function cubicIn(p) { return p * p * p; }
   function cubicOut(p) { return 1 - Math.pow(1 - p, 3); }
@@ -147,7 +148,7 @@
     }
   }
 
-  function tracks(figure, tl) {
+  function tracks(figure, tl, strict) {
     var map = new Map();
     tl.actions.forEach(function (a) {
       if (!a.kind) {
@@ -156,7 +157,11 @@
       }
       var selector = a.action[a.kind];
       var targets = DocForm.all(selector, figure);
-      if (!targets.length) DocForm.warnOnce('anim-target:' + figure.id + selector, 'Animation "' + figure.id + '" has no element matching "' + selector + '".');
+      if (!targets.length) {
+        var message = 'No animation element matches "' + selector + '".';
+        if (strict) throw new Error(message);
+        DocForm.warnOnce('anim-target:' + figure.id + selector, message);
+      }
       var prop = a.kind === 'attr' ? a.action.name : a.kind;
       if (a.kind === 'attr' && !prop) {
         DocForm.warnOnce('anim-attr:' + selector, 'An attr action on "' + selector + '" needs a name.');
@@ -207,9 +212,9 @@
     return b;
   }
 
-  function setup(figure, steps, options, ctl) {
+  function setup(figure, steps, options, ctl, keys) {
     var tl = timeline(steps, options);
-    var list = tracks(figure, tl);
+    var list = tracks(figure, tl, Boolean(keys));
     var hold = options.hold == null ? 700 : options.hold;
     var intro = options.caption || '';
     var stepDriven = figure.matches('.df-figure-steps > figure');
@@ -218,6 +223,25 @@
     var frame = 0;
     var timer = 0;
     var target = null;
+    var origin = 'init';
+    var changes = keys && component.signal('animation', figure, snapshot, { action: 'step' });
+    var displayed = null;
+    var staging = false;
+    var pendingStep = null;
+
+    function snapshot() {
+      var at = locate(tl.ends, t);
+      return Object.freeze({ key: keys[at.current], index: at.current, completed: at.done, time: t });
+    }
+
+    function commit(fn, from) {
+      if (!keys) return fn();
+      return component.transaction(function () {
+        origin = from;
+        fn();
+        return true;
+      });
+    }
 
     figure.classList.add('df-anim');
     var controls = document.createElement('div');
@@ -250,15 +274,13 @@
       var at = locate(tl.ends, t);
       scrub.value = String(t);
       counter.textContent = at.current + ' / ' + tl.ends.length;
-      if (at.current !== shown) {
+      var changed = at.current !== shown;
+      if (changed) {
         shown = at.current;
         var text = at.current ? tl.captions[at.current - 1] : intro;
         if (DocForm.math && DocForm.math.mixed) caption.innerHTML = DocForm.math.mixed(text);
         else caption.textContent = text;
         caption.hidden = !text;
-        if (typeof root.CustomEvent === 'function') {
-          figure.dispatchEvent(new root.CustomEvent('df:animstep', { detail: { step: at.current, done: at.done } }));
-        }
       }
       prev.disabled = t <= EPS;
       next.disabled = t >= tl.total - EPS;
@@ -266,6 +288,17 @@
       play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
       play.title = play.getAttribute('aria-label');
       figure.classList.toggle('is-playing', playing);
+      if (!changed) return;
+      if (changes) {
+        var previous = displayed;
+        var current = displayed = snapshot();
+        var from = origin;
+        var notify = function () { changes.emit(current, previous, from); };
+        if (staging) pendingStep = notify;
+        else notify();
+      } else if (typeof root.CustomEvent === 'function') {
+        figure.dispatchEvent(new root.CustomEvent('df:animstep', { detail: { step: at.current, done: at.done } }));
+      }
     }
 
     function stop() {
@@ -285,8 +318,9 @@
     // Moves time forwards or backwards to `goal` at normal speed, then calls done.
     function run(goal, done) {
       target = goal;
+      var from = origin;
       var last = null;
-      function tick(now) {
+      function advance(now) {
         if (last === null) last = now;
         var dt = now - last;
         t = goal >= t ? Math.min(goal, t + dt) : Math.max(goal, t - dt);
@@ -299,6 +333,7 @@
           if (done) done();
         }
       }
+      function tick(now) { commit(function () { advance(now); }, from); }
       frame = root.requestAnimationFrame(tick);
     }
 
@@ -322,7 +357,10 @@
       run(nextEnd(t), function () {
         if (!playing) return;
         if (t >= tl.total - EPS) playOn();
-        else timer = setTimeout(playOn, hold);
+        else {
+          var from = origin;
+          timer = setTimeout(function () { commit(playOn, from); }, hold);
+        }
       });
     }
 
@@ -371,31 +409,72 @@
     Object.defineProperty(ctl, 'time', { get: function () { return t; } });
     Object.defineProperty(ctl, 'step', { get: function () { return locate(tl.ends, t).done; } });
 
+    function invoke(method, from, arg) {
+      return commit(function () { ctl[method](arg); }, from);
+    }
+
+    if (keys) {
+      var api = {
+        figure: figure, svg: svg, snapshot: snapshot, subscribe: changes.subscribe,
+        reset: function () { return invoke('go', 'reset', 0); },
+        seek: function (time) {
+          if (typeof time !== 'number' || !Number.isFinite(time)) return false;
+          return invoke('seek', 'api', time);
+        }
+      };
+      Object.defineProperty(api, 'timeline', { get: function () { return copy(tl); } });
+      ['play', 'pause', 'next', 'prev'].forEach(function (method) {
+        api[method] = function () { return invoke(method, 'api'); };
+      });
+      ['go', 'to'].forEach(function (method) {
+        api[method] = function (key) {
+          var index = keys.indexOf(DocForm._items.key(key));
+          return index < 0 ? false : invoke(method, 'api', index);
+        };
+      });
+      keyed.set(figure, api);
+      linkedSteps.set(figure, function (key, from) {
+        var index = keys.indexOf(key);
+        if (index < 0) return false;
+        origin = from;
+        staging = true;
+        try {
+          ctl.go(index);
+          return pendingStep;
+        } finally {
+          pendingStep = null;
+          staging = false;
+        }
+      });
+    }
+
     // A mouse or pen crossing a stopped figure plays it; pressing Pause holds it until the pointer leaves.
     var held = false;
     figure.addEventListener('pointerenter', function (event) {
       if (hoverPlays({ playing: playing, held: held, pointer: event.pointerType, stepDriven: stepDriven })) {
-        ctl.play();
+        invoke('play', 'user');
       }
     });
     figure.addEventListener('pointerleave', function () { held = false; });
     play.addEventListener('click', function () {
       if (playing) {
         held = true;
-        ctl.pause();
-      } else ctl.play();
+        invoke('pause', 'user');
+      } else invoke('play', 'user');
     });
-    next.addEventListener('click', ctl.next);
-    prev.addEventListener('click', ctl.prev);
-    scrub.addEventListener('input', function () { ctl.seek(parseFloat(scrub.value)); });
-    render();
+    next.addEventListener('click', function () { invoke('next', 'user'); });
+    prev.addEventListener('click', function () { invoke('prev', 'user'); });
+    scrub.addEventListener('input', function () { invoke('seek', 'user', parseFloat(scrub.value)); });
+    if (keys) component.notify(render);
+    else render();
 
-    var auto = options.autoplay != null ? options.autoplay : DocForm.flag(figure, 'autoplay');
+    var auto = keys ? component.flag(figure, 'animation-autoplay', 'animation', options.autoplay) :
+      options.autoplay != null ? options.autoplay : DocForm.flag(figure, 'autoplay');
     if (auto && !stepDriven && typeof root.IntersectionObserver === 'function') {
       var seen = new IntersectionObserver(function (entries) {
         if (!entries.some(function (e) { return e.isIntersecting; })) return;
         seen.disconnect();
-        if (t <= EPS && !playing) ctl.play();
+        if (t <= EPS && !playing) invoke('play', 'user');
       }, { threshold: 0.5 });
       seen.observe(figure);
     }
@@ -456,13 +535,40 @@
   DocForm.anim = anim;
 
   var keyed = new WeakMap();
+  var linkedSteps = new WeakMap();
+  DocForm._animationStep = function (figure, key, origin) {
+    var sync = linkedSteps.get(figure);
+    return sync ? sync(key, origin) : undefined;
+  };
+  function copy(value) {
+    if (!value || typeof value !== 'object') return value;
+    if (Array.isArray(value)) return value.map(copy);
+    return Object.fromEntries(Object.entries(value).map(function (entry) { return [entry[0], copy(entry[1])]; }));
+  }
+
   DocForm.animation = {
-    get: function (target) { return keyed.get(DocForm._items.target(target)) || null; },
+    get: function (target) { return keyed.get(component.target(target, 'animation', false)) || null; },
     mount: function (target, options) {
-      var figure = DocForm._items.target(target);
+      var figure = component.target(target, 'animation', true);
       if (!figure) return null;
       if (keyed.has(figure)) return keyed.get(figure);
-      var keys = ['start'].concat(Array.isArray(options && options.steps) ? options.steps.map(function (step) {
+      if (!figure.matches('figure') || !figure.querySelector('svg')) {
+        component.issue('animation', figure, 'Animation needs a figure containing an SVG.', 'Pass the animation figure.');
+        return null;
+      }
+      options = options || {};
+      var animation = {};
+      var number = function (value) { return Number.isFinite(value) && value >= 0; };
+      var text = function (value) { return typeof value === 'string'; };
+      var ease = function (value) { return typeof value === 'function' || Object.hasOwn(EASINGS, value); };
+      var valid = { hold: number, duration: number, easing: ease, caption: text, autoplay: function (value) {
+        return typeof value === 'boolean';
+      } };
+      Object.keys(valid).forEach(function (key) {
+        animation[key] = component.option('animation', figure, key, undefined, valid[key], options);
+      });
+      var steps = component.option('animation', figure, 'steps', null, Array.isArray, options);
+      var keys = ['start'].concat(steps ? steps.map(function (step) {
         return DocForm._items.key(step && step.key);
       }) : [null]);
       if (keys.includes(null) || new Set(keys).size !== keys.length) {
@@ -470,18 +576,33 @@
           'Set a nonempty key for each step and reserve start for the starting state.');
         return null;
       }
-      var ctl = anim(figure, options.steps, options);
-      var api = Object.create(ctl);
-      ['go', 'to'].forEach(function (method) {
-        api[method] = function (key) {
-          var index = keys.indexOf(DocForm._items.key(key));
-          if (index < 0) return false;
-          ctl[method](index);
-          return true;
-        };
-      });
-      keyed.set(figure, api);
-      return api;
+      function validAction(action) {
+        if (!action || (action.delay !== undefined && !number(action.delay)) ||
+          (action.duration !== undefined && !number(action.duration)) ||
+          (action.easing !== undefined && !ease(action.easing))) return false;
+        var kind = kindOf(action);
+        if (!kind || !text(action[kind]) || !action[kind].trim()) return false;
+        if (kind === 'attr') return text(action.name) && /^[A-Za-z_][\w:.-]*$/.test(action.name) && action.to !== undefined;
+        if (kind !== 'move') return true;
+        return [action.from, action.to].every(function (point, i) {
+          return (i === 0 && point === undefined) ||
+            (Array.isArray(point) && point.length === 2 && point.every(Number.isFinite));
+        });
+      }
+      if (!steps.every(function (step) {
+        return Array.isArray(step.actions) && (step.duration === undefined || number(step.duration)) &&
+          (step.easing === undefined || ease(step.easing)) && step.actions.every(validAction);
+      })) {
+        component.issue('animation', figure, 'Invalid animation actions or timings.',
+          'Give each step an actions array and use nonnegative finite durations and delays.');
+        return null;
+      }
+      try { setup(figure, copy(steps), animation, {}, keys); }
+      catch (error) {
+        component.issue('animation', figure, 'Cannot mount animation: ' + error.message, 'Check the animation actions and SVG selectors.');
+        return null;
+      }
+      return keyed.get(figure);
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -159,7 +159,9 @@ body:has(> .df-sidebar) {
 /* Styled list markers: numbers in tinted circles, bullets as tinted dots. The tint comes from data-df-color or
    data-df-role on the list, an item, or an ancestor (gray otherwise); data-df-no-list-style keeps native markers.
    Sizes assume the inherited unitless line height: an ordered marker is 0.75em text in a 1.25em-wide circle. */
-.df-page :is(ul, ol):not(.df-legend-list, [role], nav *, [data-df-no-list-style], [data-df-no-list-style] *) {
+.df-page :is(ul, ol):not(.df-legend-list, [role], nav *,
+  :is([data-df-no-list-style=""], [data-df-no-list-style="true"]),
+  :is([data-df-no-list-style=""], [data-df-no-list-style="true"]) *) {
   --df-list-tint: var(--df-accent, var(--df-gray));
   --df-list-tint-bg: var(--df-accent-bg, var(--df-gray-bg));
   list-style: none;

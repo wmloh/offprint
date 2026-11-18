@@ -26,7 +26,7 @@
 
   function setup(notes, main) {
     var html = document.documentElement;
-    var tooltip = DocForm.tooltip;
+    var tooltip = DocForm.tooltips;
     var items = notes.map(function (note, i) {
       var n = i + 1;
       var inline = !!note.parentElement.closest(INLINE_ONLY);
@@ -139,12 +139,20 @@
     return { layout: layout };
   }
 
-  DocForm.notes = { fits: fits, width: WIDTH, gap: GAP, edge: EDGE };
+  var layoutPage = null;
+  DocForm.sidenotes = DocForm.notes = {
+    fits: fits, width: WIDTH, gap: GAP, edge: EDGE,
+    layout: function () {
+      if (!layoutPage) return false;
+      layoutPage();
+      return true;
+    }
+  };
 
   DocForm.register('notes', function () {
     var main = document.querySelector('.df-page') || document.querySelector('main') || document.body;
     var notes = DocForm.all('.df-note').filter(function (el) { return !el.closest('.df-tooltip'); });
     if (!notes.length) return;
-    DocForm.notes.layout = setup(notes, main).layout;
+    layoutPage = setup(notes, main).layout;
   });
 })(typeof window !== 'undefined' ? window : globalThis);

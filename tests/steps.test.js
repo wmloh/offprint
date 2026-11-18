@@ -88,6 +88,7 @@ function setup({ list = false, headed = false, late = false, descriptions = fals
     { getComputedStyle: () => ({ direction: 'ltr' }), addEventListener: view.addEventListener.bind(view) }
   );
   DocForm.animation = { get: () => controller };
+  DocForm._animationStep = (figure, key) => { if (controller) controller.go(key); };
   vm.runInContext(source, context);
   boot.initialize();
 

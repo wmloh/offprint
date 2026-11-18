@@ -9,22 +9,29 @@
     return;
   }
 
-  var TRIGGERS = '.df-page img, .df-page figure, .df-page [data-df-zoom]';
+  var TRIGGERS = '.df-page img, .df-page figure, [data-df-zoom]';
   // Focusable regions without a control role, such as chart plots, still open the zoom view.
   var SKIP = 'a, button, input, select, textarea, label, summary, [contenteditable], [role="button"], [role="link"], ' +
     '[role="tab"], [role="slider"], [role="checkbox"], [role="switch"], [role="option"], [role="menuitem"], ' +
-    '[tabindex][aria-describedby], [data-df-term], [data-df-tip], .df-anim-controls, .df-anim-caption, [data-df-no-zoom]';
+    '[tabindex][aria-describedby], [data-df-term], [data-df-tip], .df-anim-controls, .df-anim-caption';
   var CLOSE_ICON = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
     'stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
   var CLOSE_MS = 260;
 
   var open = null;
+  var component = DocForm._component;
+  var boot = DocForm._boot;
+  var changes = component.signal('zoom', null, snapshot);
+  var closing = component.signal('zoom', null, snapshot, { action: 'closing' });
+
+  function snapshot() {
+    return open ? Object.freeze({ target: open.target, overlay: open.overlay, stage: open.stage }) : null;
+  }
 
   // The element that zooms for a trigger: its enclosing figure, else the trigger itself.
   function zoomTarget(el) {
-    if (el.closest('[data-df-no-zoom], .df-sidebar, .df-controls, a')) return null;
+    if (el.closest('.df-sidebar, .df-controls, a') || component.closestFlag(el, 'no-zoom', 'zoom')) return null;
     var figure = el.closest('.df-page figure');
-    if (figure && figure.closest('[data-df-no-zoom]')) return null;
     return figure || el;
   }
 
@@ -36,30 +43,38 @@
     return text ? 'Enlarged: ' + text : 'Enlarged figure';
   }
 
-  function close() {
-    if (!open) return;
+  function beginClose(origin) {
+    if (!open || open.finish) return;
     var state = open;
-    open = null;
+    var previous = snapshot();
     state.overlay.classList.remove('is-open');
     document.documentElement.classList.remove('df-zoom-open');
-    emit('df:zoomclose', state);
-    document.removeEventListener('keydown', state.onKey, true);
-    var done = false;
-    function finish() {
-      if (done) return;
-      done = true;
-      state.placeholder.parentNode.replaceChild(state.target, state.placeholder);
+    state.finish = function () {
+      if (open !== state) return;
+      open = null;
+      clearTimeout(state.timer);
+      document.removeEventListener('keydown', state.onKey, true);
+      if (state.placeholder.parentNode) state.placeholder.parentNode.replaceChild(state.target, state.placeholder);
       state.target.classList.remove('df-zoomed');
       state.overlay.remove();
       if (state.opener && typeof state.opener.focus === 'function') state.opener.focus({ preventScroll: true });
-    }
+      changes.emit(null, previous, origin);
+    };
     state.overlay.addEventListener('transitionend', function (event) {
-      if (event.target === state.overlay) finish();
+      if (event.target === state.overlay) component.transaction(state.finish);
     });
-    setTimeout(finish, CLOSE_MS + 80);
+    state.timer = setTimeout(function () { component.transaction(state.finish); }, CLOSE_MS + 80);
+    if (!boot) emit('df:zoomclose', state);
+    closing.emit(null, previous, origin);
   }
 
-  // Tells add-ons such as zoomtools.js that a view opened or started closing.
+  function close(origin) {
+    return component.transaction(function () {
+      beginClose(origin);
+      return true;
+    });
+  }
+
   function emit(type, state) {
     var event;
     var detail = { target: state.target, overlay: state.overlay, stage: state.stage };
@@ -71,8 +86,7 @@
     document.dispatchEvent(event);
   }
 
-  function show(target, opener) {
-    if (open) close();
+  function show(target, opener, origin) {
     var rect = target.getBoundingClientRect();
     var styles = root.getComputedStyle(target);
     var placeholder = document.createElement('div');
@@ -108,7 +122,7 @@
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        close();
+        close('user');
       } else if (event.key === 'Tab') {
         // Keeps keyboard focus inside the zoom view.
         var items = DocForm.all('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', overlay)
@@ -123,28 +137,57 @@
     open = { target: target, placeholder: placeholder, overlay: overlay, stage: stage, opener: opener, onKey: onKey };
     document.addEventListener('keydown', onKey, true);
     overlay.addEventListener('click', function (event) {
-      if (event.target === overlay || event.target === stage) close();
+      if (event.target === overlay || event.target === stage) close('user');
     });
-    closeButton.addEventListener('click', close);
+    closeButton.addEventListener('click', function () { close('user'); });
     // Two frames let the start state paint before the open transition.
     root.requestAnimationFrame(function () {
-      root.requestAnimationFrame(function () { overlay.classList.add('is-open'); });
+      root.requestAnimationFrame(function () {
+        if (open && open.overlay === overlay && !open.finish) overlay.classList.add('is-open');
+      });
     });
     closeButton.focus({ preventScroll: true });
-    emit('df:zoomopen', open);
+    if (!boot) emit('df:zoomopen', open);
+    changes.emit(snapshot(), null, origin);
+  }
+
+  function requestOpen(el, opener, origin) {
+    return component.transaction(function () {
+      var target = zoomTarget(el);
+      if (!target || !target.parentNode) return false;
+      if (open && open.target.contains(target)) {
+        if (!open.finish) return true;
+        target = open.target;
+      }
+      if (open) {
+        beginClose(origin);
+        open.finish();
+      }
+      if (!target.parentNode) return false;
+      show(target, opener, origin);
+      return true;
+    });
   }
 
   // The zoom trigger around a clicked node, unless the click landed on a control or link inside it.
   function triggerFor(node) {
     if (!node || typeof node.closest !== 'function' || node.closest('.df-zoom')) return null;
+    if (component.closestFlag(node, 'no-zoom', 'zoom')) return null;
     var trigger = node.closest(TRIGGERS);
+    while (trigger && !isTrigger(trigger)) trigger = trigger.parentElement && trigger.parentElement.closest(TRIGGERS);
     if (!trigger) return null;
     for (var el = node; el && el !== trigger; el = el.parentElement) if (el.matches(SKIP)) return null;
     return trigger;
   }
 
+  function isTrigger(el) {
+    return el.matches('.df-page img, .df-page figure') ||
+      (boot ? component.flag(el, 'zoom', 'zoom') : el.hasAttribute('data-df-zoom'));
+  }
+
   DocForm.register('zoom', function () {
     DocForm.all(TRIGGERS).forEach(function (el) {
+      if (!isTrigger(el)) return;
       var target = zoomTarget(el);
       if (!target) return;
       if (target.classList.contains('df-zoomable')) return;
@@ -156,25 +199,26 @@
       var trigger = triggerFor(event.target);
       var target = trigger && zoomTarget(trigger);
       if (!target) return;
-      show(target, target);
+      requestOpen(target, target, 'user');
     });
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       var el = event.target;
       if (!el || !el.classList || !el.classList.contains('df-zoomable') || el.closest('.df-zoom')) return;
       event.preventDefault();
-      show(el, el);
+      requestOpen(el, el, 'user');
     });
   });
 
   DocForm.zoom = {
-    open: function (el) {
-      var target = el && zoomTarget(el);
-      if (target) show(target, document.activeElement);
+    open: function (target) {
+      var el = component.target(target, 'zoom', true);
+      return !!el && requestOpen(el, document.activeElement, 'api');
     },
-    close: close,
+    close: function () { return close('api'); },
     isOpen: function () { return !!open; },
-    // The open view's { target, overlay, stage }, or null.
-    current: function () { return open ? { target: open.target, overlay: open.overlay, stage: open.stage } : null; }
+    snapshot: snapshot,
+    subscribe: changes.subscribe,
+    current: snapshot
   };
 })(typeof window !== 'undefined' ? window : globalThis);

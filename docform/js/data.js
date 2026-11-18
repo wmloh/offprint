@@ -532,6 +532,24 @@
     return out;
   }
 
+  function treeDepth(feature, el, instance) {
+    var component = DocForm._component;
+    var valid = function (value) { return Number.isSafeInteger(value) && value >= 0; };
+    var fallback = component.option(feature, el, 'treeDepth', 1, valid, instance);
+    return component.number(el, 'tree-depth', feature, fallback, valid);
+  }
+
+  function viewMode(feature, el, instance) {
+    var component = DocForm._component;
+    var valid = function (value) { return VIEWS.includes(value); };
+    var fallback = component.option(feature, el, 'view', 'auto', valid, instance);
+    var mode = el.getAttribute('data-df-data-view');
+    if (mode === null) return fallback;
+    if (valid(mode)) return mode;
+    component.issue(feature, el, 'Unknown data view "' + mode + '".', 'Use auto, table, code, or tree.');
+    return fallback;
+  }
+
   // DOM rendering below.
 
   var STATE = typeof WeakMap === 'function' ? new WeakMap() : null;
@@ -623,7 +641,7 @@
     button.addEventListener('click', function () {
       state.shown = shown + step;
       draw(state);
-      if (state.controller) state.controller.change('user');
+      changed(state, 'user');
       var again = state.el.querySelector('.df-data-more button');
       if (again) again.focus();
     });
@@ -643,7 +661,7 @@
     if (DocForm.results && DocForm.results.enhance) DocForm.all('table[data-df-results]', el).forEach(function (table) {
       DocForm.results.enhance(table, { silent: modern });
     });
-    if (DocForm.code && DocForm.code.enhance) DocForm.all('pre', el).forEach(DocForm.code.enhance);
+    if (DocForm.code) DocForm.all('pre', el).forEach(DocForm.code.mount);
   }
 
   function emit(state, detail) {
@@ -657,6 +675,15 @@
     if (typeof CustomEvent !== 'function') return;
     detail.name = state.name;
     state.el.dispatchEvent(new CustomEvent('df:datarender', { bubbles: true, detail: detail }));
+  }
+
+  function changed(state, origin) {
+    if (state.controller) state.controller.change(origin);
+    else if (state.fileSignal && state.snapshot) {
+      var previous = state.reported || null;
+      var current = state.reported = Object.freeze(state.snapshot);
+      runtime.notify(function () { state.fileSignal.emit(current, previous, origin); });
+    }
   }
 
   function draw(state) {
@@ -677,7 +704,7 @@
       go.addEventListener('click', function () {
         state.force = true;
         draw(state);
-        if (state.controller) state.controller.change('user');
+        changed(state, 'user');
       });
       note.appendChild(go);
       el.appendChild(note);
@@ -689,6 +716,7 @@
     try {
       parsed = state.parsed || (state.parsed = parse(entry.text, entry.type));
     } catch (e) {
+      if (state.fileSignal) runtime.issue('data-view', el, e.message);
       el.appendChild(errorBox('Could not read ' + label + ' as ' + NAMES[entry.type] + '.', e.message));
       var raw = linesOf(entry.text, limit);
       var pre = make('pre', 'df-data-raw', raw.text);
@@ -700,7 +728,8 @@
     }
     var shown = state.grid && (state.view === 'auto' || state.view === 'table') ? 'table' : view(parsed, state.view);
     if (shown === 'tree' && !DocForm.tree) {
-      DocForm.warnOnce('data-tree', 'data-df-view="tree" needs docform/js/tree.js; showing code instead.', el);
+      if (state.modern) runtime.issue('data-view', el, 'Enable the tree feature for tree views. Showing code.');
+      else DocForm.warnOnce('data-tree', 'data-df-view="tree" needs docform/js/tree.js; showing code instead.', el);
       shown = 'code';
     }
     if (shown === 'tree') {
@@ -748,21 +777,17 @@
   var dataViews = new WeakMap();
 
   function mountView(target, instance) {
-    var el = runtime.target(target);
+    var el = DocForm._component.target(target, 'data-view', true);
     if (!el) return null;
     if (dataViews.has(el)) return dataViews.get(el);
     var name = keyOf(el.getAttribute('data-df-source'));
     var options = optionsFor('data-view', el, instance);
-    var mode = el.getAttribute('data-df-data-view') ?? options.view ?? 'auto';
-    if (!VIEWS.includes(mode)) {
-      runtime.issue('data-view', el, 'Unknown data view "' + mode + '".');
-      mode = 'auto';
-    }
+    var mode = viewMode('data-view', el, instance);
     var fallback = Array.from(el.childNodes);
     var initiallyHidden = el.hidden;
     var template = el.querySelector(':scope > table');
     var state = { name: name, view: mode, template: template, modern: true,
-      limits: limits(el, options), open: DocForm.num(el, 'tree-depth', options.treeDepth ?? 1), el: el };
+      limits: limits(el, options), open: treeDepth('data-view', el, instance), el: el };
 
     function prepare(input, value) {
       var mapping = tableMapping(value, options.mapping, template, input.parsed);
@@ -830,7 +855,7 @@
   }
 
   // given and template, from DocForm.dataset.show, draw an entry that is not registered into any element.
-  function setup(el, given, template) {
+  function setup(el, given, template, display) {
     var name = given ? given.name : DocForm.data(el, 'data', '').trim();
     var entry;
     var host = el;
@@ -850,7 +875,7 @@
       var given = type(DocForm.data(el, 'type', null));
       if (entry && given && given !== entry.type) entry = { name: entry.name, type: given, text: entry.text };
     }
-    var requested = DocForm.data(host, 'view', 'auto').trim().toLowerCase();
+    var requested = display ? display.view : DocForm.data(host, 'view', 'auto').trim().toLowerCase();
     if (VIEWS.indexOf(requested) < 0) {
       DocForm.warnOnce('data-view:' + requested, 'Unknown data-df-view "' + requested + '"; use auto, table, code, or tree.', host);
       requested = 'auto';
@@ -862,16 +887,22 @@
       entry: entry,
       view: requested,
       template: template && template.tHead ? template.cloneNode(true) : null,
-      limits: limits(host),
-      open: DocForm.num(host, 'tree-depth', 1),
+      limits: display ? display.limits : limits(host),
+      open: display ? display.open : DocForm.num(host, 'tree-depth', 1),
       shown: 0,
       force: false,
       parsed: null
     };
+    if (display) {
+      state.modern = true;
+      state.fileSignal = runtime.signal('data-view', host, function () { return state.snapshot || null; },
+        { action: 'render' });
+    }
     host.classList.add('df-data', 'df-data-ready');
     if (!entry) DocForm.warnOnce('data-missing:' + name, 'No data named "' + name + '" is registered.', host);
     if (STATE) STATE.set(host, state);
     draw(state);
+    if (display) changed(state, 'drop');
   }
 
   function render(el) {
@@ -945,11 +976,15 @@
   });
   DocForm._dataSource = {
     binding: binding, options: optionsFor, fields: mappedFields, key: keyOf, input: readInput,
-    columns: tableMapping, transform: transformValue
+    columns: tableMapping, transform: transformValue,
+    fileDisplay: function (el, caps) {
+      return { view: viewMode('dropzone', el), open: treeDepth('dropzone', el), limits: caps };
+    },
+    showFile: function (host, entry, display) { setup(host, entry, null, display); }
   };
   DocForm.dataView = {
     mount: mountView,
-    get: function (target) { return dataViews.get(runtime.target(target)) || null; }
+    get: function (target) { return dataViews.get(DocForm._component.target(target, 'data-view', false)) || null; }
   };
 
   function readInline() {

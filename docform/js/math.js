@@ -12,6 +12,7 @@
   var ERROR = 'df-math-error';
   var macroSite = null;
   var macroCopy = null;
+  var component = DocForm._component;
 
   // One shared copy per manifest, so \gdef in one formula carries to later ones without touching the manifest.
   function macros() {
@@ -43,6 +44,8 @@
   }
 
   function source(el) {
+    if (typeof el === 'string') el = component.target(el, 'math', true);
+    if (!el || typeof el.getAttribute !== 'function') return null;
     var tex = el.getAttribute('data-df-tex');
     return tex === null ? String(el.textContent || '').trim() : tex;
   }
@@ -52,7 +55,7 @@
     if (tex === undefined) tex = source(el);
     el.setAttribute('data-df-tex', tex);
     try {
-      el.innerHTML = html(tex, DocForm.flag(el, 'display'));
+      el.innerHTML = html(tex, DocForm._boot ? component.flag(el, 'display', 'math') : DocForm.flag(el, 'display'));
       el.classList.remove(ERROR);
       el.removeAttribute('title');
     } catch (e) {
@@ -60,7 +63,8 @@
       el.textContent = tex;
       el.classList.add(ERROR);
       el.title = message;
-      DocForm.warnOnce('math-error:' + tex, 'Cannot render TeX "' + tex + '": ' + message);
+      if (DocForm._boot) component.issue('math', el, 'Cannot render TeX: ' + message, 'Check the TeX source and configured macros.');
+      else DocForm.warnOnce('math-error:' + tex, 'Cannot render TeX "' + tex + '": ' + message);
     }
     el.classList.add(RENDERED);
     return true;
@@ -68,6 +72,10 @@
 
   // Renders math in `scope` (default: the document) that has not been rendered yet; pass force to redo all of it.
   function render(scope, force) {
+    if (typeof scope === 'string') {
+      scope = component.target(scope, 'math', true);
+      if (!scope) return 0;
+    }
     scope = scope || document;
     var list = DocForm.all(SELECTOR, scope);
     if (scope.matches && scope.matches(SELECTOR)) list.unshift(scope);
@@ -81,6 +89,8 @@
 
   // Replaces one element's TeX and re-renders it, for live bindings.
   function set(el, tex) {
+    if (typeof el === 'string') el = component.target(el, 'math', true);
+    if (!el || typeof el.getAttribute !== 'function') return false;
     return renderElement(el, String(tex));
   }
 

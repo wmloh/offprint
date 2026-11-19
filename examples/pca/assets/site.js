@@ -1,7 +1,8 @@
 window.DocFormSite = {
   "title": "Pump Monitoring with PCA",
   "features": {
-    "math": true
+    "math": true,
+    "reveals": true
   },
   "selectionGroups": {
     "pca-language": {

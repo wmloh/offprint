@@ -29,6 +29,7 @@
   var GROUP = 'data-df-selection-group';
   var KEY = 'data-df-key';
   var charts = typeof WeakMap === 'function' ? new WeakMap() : null;
+  var playbacks = new WeakMap();
 
   function isNum(v) {
     return typeof v === 'number' && isFinite(v);
@@ -781,6 +782,42 @@
     return chart.model.categories ? String(x) : format(x, chart.model.x);
   }
 
+  function revealInOrder(entries, show, hide) {
+    var count = 0;
+    return function (x) {
+      while (count && entries[count - 1].x > x) hide(entries[--count]);
+      while (count < entries.length && entries[count].x <= x) show(entries[count++]);
+    };
+  }
+
+  function drawPlayhead(chart, frame, entries, spots, clip) {
+    var g = chart.geom;
+    var line = svg('line', { y1: g.top, y2: g.bottom, class: 'df-chart-playhead' }, frame);
+    var checkpoint = playbacks.get(chart.box).checkpoint;
+    var marker = svg('circle', { cy: g.top, r: 4, class: 'df-chart-checkpoint', 'aria-hidden': 'true' }, frame);
+    var revealMarks = revealInOrder(entries.sort(function (a, b) { return a.x - b.x; }), function (mark) {
+      mark.el.removeAttribute('display');
+      tagKey(chart.model, mark.el, mark.point);
+    }, function (mark) {
+      mark.el.setAttribute('display', 'none');
+      [GROUP, KEY, 'data-df-selection-active'].forEach(function (attr) { mark.el.removeAttribute(attr); });
+    });
+    var revealSpots = revealInOrder(spots, function (spot) { chart.spots.push(spot); }, function () { chart.spots.pop(); });
+    return function (x) {
+      var px = g.x(x);
+      clip.setAttribute('width', Math.max(0, Math.min(g.right, px) - g.left));
+      var inPlot = px >= g.left && px <= g.right;
+      line.setAttribute('display', inPlot ? 'inline' : 'none');
+      line.setAttribute('x1', px);
+      line.setAttribute('x2', px);
+      marker.setAttribute('display', inPlot && checkpoint() ? 'inline' : 'none');
+      marker.setAttribute('cx', px);
+      revealMarks(x);
+      revealSpots(x);
+      if (chart.active >= chart.spots.length) hide(chart);
+    };
+  }
+
   // Draws chart.view. The y axis covers every series unless the chart rescales to the series and range shown.
   function draw(chart) {
     var model = chart.view;
@@ -792,6 +829,7 @@
     var series = model.series;
     var cats = model.categories;
     var range = model.range;
+    var playback = chart.playhead !== null;
 
     var span = extent(model);
     var xs = span.xs;
@@ -838,7 +876,8 @@
       var xTicks = model.x.time ? timeTicks : model.x.log ? logTicks : ticks;
       if (model.x.min !== null) xLo = model.x.min;
       if (model.x.max !== null) xHi = model.x.max;
-      if (range) { xLo = range[0]; xHi = range[1]; }
+      var limits = range || (playback ? domain(chart.model) : null);
+      if (limits) { xLo = limits[0]; xHi = limits[1]; }
       xInfo = xTicks(xLo, xHi, Math.max(2, Math.round(plotW / (model.x.time ? 110 : 90))),
         exact || !!range || model.x.min !== null, exact || !!range || model.x.max !== null);
       if (xInfo.min === xInfo.max) xInfo = xTicks(xLo, xHi, 4);
@@ -850,9 +889,10 @@
       viewBox: '0 0 ' + width + ' ' + height, width: width, height: height, 'aria-hidden': 'true', focusable: 'false'
     });
     // A narrowed range clips line paths that run on to the readings just beyond each end.
-    if (range) {
+    var clipRect;
+    if (range || playback) {
       var clip = svg('clipPath', { id: chart.clip }, svg('defs', {}, frame));
-      svg('rect', { x: left, y: top - 3, width: plotW, height: height - bottom - top + 6 }, clip);
+      clipRect = svg('rect', { x: left, y: top - 3, width: plotW, height: height - bottom - top + 6 }, clip);
     }
 
     var grid = svg('g', { class: 'df-chart-grid' }, frame);
@@ -900,9 +940,15 @@
       thick = Math.max(2, Math.min(24, (band * 0.72 - gap * (m - 1)) / m));
     }
     var markOf = new Map();
+    var future = [];
     // Keyed marks follow the shared selection after every redraw.
     var place = function (p, el, px) {
       markOf.set(p, { el: el, px: px });
+      if (playback) {
+        el.setAttribute('display', 'none');
+        if (px >= left && px <= left + plotW) future.push({ x: p.x, el: el, point: p });
+        return el;
+      }
       return tagKey(model, el, p);
     };
     series.forEach(function (s, si) {
@@ -916,7 +962,7 @@
         }).join('');
         if (d) {
           var path = svg('path', { d: d, class: 'df-chart-line' }, g);
-          if (range) path.setAttribute('clip-path', 'url(#' + chart.clip + ')');
+          if (clipRect) path.setAttribute('clip-path', 'url(#' + chart.clip + ')');
         }
         // Isolated readings between gaps, and selectable points, keep a marker even on dense lines.
         runs.forEach(function (run) {
@@ -943,8 +989,13 @@
     });
 
     ends.forEach(function (e) {
-      svg('text', { x: xAt(e.p.x) + 10, y: e.y, 'dominant-baseline': 'middle', class: 'df-chart-end' }, frame)
-        .textContent = e.s.name;
+      var px = xAt(e.p.x);
+      var label = svg('text', { x: px + 10, y: e.y, 'dominant-baseline': 'middle', class: 'df-chart-end' }, frame);
+      label.textContent = e.s.name;
+      if (playback) {
+        label.setAttribute('display', 'none');
+        if (px >= left && px <= left + plotW) future.push({ x: e.p.x, el: label });
+      }
     });
 
     // Reference lines use the data scales and are skipped, not clamped, when their value lies off the plot.
@@ -979,12 +1030,16 @@
       }
     });
 
-    chart.spots = spotsFor(model, xAt, y, function (p) { return markOf.get(p); });
+    var spots = spotsFor(model, xAt, y, function (p) { return markOf.get(p); });
+    chart.spots = playback ? [] : spots;
     chart.geom = { left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0 };
+    chart.revealPlot = playback ? drawPlayhead(chart, frame, future, spots.filter(function (spot) {
+      return spot.px >= left && spot.px <= plotR;
+    }), clipRect) : null;
     chart.overlay = svg('g', { class: 'df-chart-hover' }, frame);
     chart.marks = marks;
 
-    var empty = !series.length ? EMPTY_SERIES : range && !chart.spots.length ? EMPTY_RANGE : '';
+    var empty = !series.length ? EMPTY_SERIES : range && !spots.length ? EMPTY_RANGE : '';
     chart.empty.textContent = empty;
     chart.empty.hidden = !empty;
     chart.empty.style.left = left + 'px';
@@ -995,6 +1050,7 @@
     if (chart.svg) chart.plot.replaceChild(frame, chart.svg);
     else chart.plot.insertBefore(frame, chart.plot.firstChild);
     chart.svg = frame;
+    if (chart.revealPlot) chart.revealPlot(chart.playhead);
     if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
   }
 
@@ -1108,6 +1164,7 @@
     var py = at.y;
     var g = chart.geom;
     var spots = chart.spots;
+    if (chart.playhead !== null && px > g.x(chart.playhead)) return hide(chart);
     if (!spots.length || px < g.left - HIT || px > g.right + HIT || py < g.top - HIT || py > g.bottom + HIT) return hide(chart);
     if (chart.model.type === 'scatter') {
       var best = -1;
@@ -1149,7 +1206,7 @@
     return el;
   }
 
-  function buildTable(model) {
+  function buildTable(model, collectRow) {
     var table = document.createElement('table');
     var head = html('tr', '', html('thead', '', table));
     var body = html('tbody', '', table);
@@ -1192,6 +1249,7 @@
         var p = lookup[i].get(String(x));
         tagKey(model, html('td', '', tr, p ? format(p.y, model.y) : ''), p);
       });
+      if (collectRow) collectRow({ x: x, row: tr, body: body });
     });
     return table;
   }
@@ -1270,8 +1328,40 @@
   // The table view lists what the plot shows; a source table stands in while nothing is hidden or narrowed.
   function fillTable(chart) {
     chart.table.textContent = '';
-    if (chart.ownTable && !chart.range && !chart.view.hiddenCount) chart.table.appendChild(chart.sourceTable);
+    chart.revealTable = null;
+    if (chart.playhead !== null) {
+      if (!chart.plot.hidden) return;
+      var rows = [];
+      var table = chart.view.series.length ? buildTable(chart.view, function (entry) {
+        entry.row.remove();
+        rows.push(entry);
+      }) : tableView(chart.view);
+      chart.table.appendChild(table);
+      chart.revealTable = revealInOrder(rows, function (entry) {
+        entry.body.appendChild(entry.row);
+        if (DocForm._selection) DocForm.all('[' + GROUP + '][' + KEY + ']', entry.row).forEach(DocForm._selection.sync);
+      }, function (entry) { entry.row.remove(); });
+      chart.revealTable(chart.playhead);
+    } else if (chart.ownTable && !chart.range && !chart.view.hiddenCount) chart.table.appendChild(chart.sourceTable);
     else if (chart.plot.hidden) chart.table.appendChild(tableView(chart.view));
+  }
+
+  function setPlayhead(chart, x) {
+    var wasActive = chart.playhead !== null;
+    chart.playhead = x;
+    if (wasActive !== (x !== null)) {
+      hide(chart);
+      fillTable(chart);
+      if (!chart.plot.hidden) draw(chart);
+      return;
+    }
+    if (!chart.plot.hidden && chart.revealPlot) chart.revealPlot(x);
+    if (chart.revealTable) chart.revealTable(x);
+  }
+
+  function reconcilePlayhead(host, model, origin) {
+    var playback = playbacks.get(host);
+    return playback ? playback.reconcile(model, origin) : null;
   }
 
   function refresh(chart) {
@@ -1370,20 +1460,21 @@
   }
 
   function setTable(chart, on) {
-    if (on && !chart.table.firstChild) chart.table.appendChild(tableView(chart.view));
     chart.box.classList.toggle('is-table', on);
     chart.table.hidden = !on;
     chart.plot.hidden = on;
+    if (on && !chart.table.firstChild) fillTable(chart);
     chart.toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     chart.toggle.textContent = on ? 'Chart' : 'Table';
     if (!on) draw(chart);
     if (chart.controller && !chart.updating) chart.controller.change('user');
   }
 
-  function build(host, model, sourceTable, spec, useSourceTable) {
+  function build(host, model, sourceTable, spec, useSourceTable, origin) {
     var chart = {
       box: host, model: model, spec: spec, active: -1, spots: [], svg: null, width: 0, geom: {},
-      hidden: Object.create(null), range: null, drag: null, dragged: false, clip: 'df-chart-clip-' + (++clips)
+      hidden: Object.create(null), range: null, drag: null, dragged: false, clip: 'df-chart-clip-' + (++clips),
+      playhead: reconcilePlayhead(host, model, origin)
     };
     chart.view = viewOf(model, chart.hidden, null);
     host.classList.add('df-chart');
@@ -1414,7 +1505,7 @@
     chart.sourceTable = sourceTable || null;
     chart.sourceSpec = useSourceTable ? spec : null;
     chart.ownTable = Boolean(sourceTable && useSourceTable);
-    if (sourceTable) chart.table.appendChild(sourceTable);
+    if (sourceTable && chart.playhead === null) chart.table.appendChild(sourceTable);
     host.insertBefore(chart.table, host.firstChild);
     host.insertBefore(chart.plot, chart.table);
     host.insertBefore(head, chart.plot);
@@ -1494,7 +1585,8 @@
       update: function (next) {
         var model = chartModel(host, next);
         if (!report(model, host, true)) return false;
-        return replace(next, model);
+        function apply() { return replace(next, model, 'api'); }
+        return DocForm._component ? DocForm._component.transaction(apply) : apply();
       },
       model: function () { return copyChart(chart.model); },
       // coords(clientX, clientY) reads the data position under a viewport point.
@@ -1502,7 +1594,9 @@
         if (!chart.svg || chart.plot.hidden) return null;
         var box = chart.svg.getBoundingClientRect();
         var k = box.width && chart.width ? chart.width / box.width : 1;
-        var hit = readAt(chart.view, chart.geom, (cx - box.left) * k, (cy - box.top) * k);
+        var px = (cx - box.left) * k;
+        if (chart.playhead !== null && px > chart.geom.x(chart.playhead)) return null;
+        var hit = readAt(chart.view, chart.geom, px, (cy - box.top) * k);
         if (!hit) return null;
         var g = chart.geom;
         hit.plot = { left: box.left + g.left / k, right: box.left + g.right / k, top: box.top + g.top / k, bottom: box.top + g.bottom / k };
@@ -1541,9 +1635,9 @@
       }
       return DocForm._dataViews ? DocForm._dataViews.transaction(apply) : apply();
     }
-    function replace(next, model, reset) {
+    function replace(next, model, origin) {
       chart.updating = true;
-      if (reset) {
+      if (origin === 'reset') {
         chart.hidden = Object.create(null);
         chart.range = null;
         if (chart.plot.hidden) setTable(chart, false);
@@ -1553,6 +1647,7 @@
       });
       chart.range = keepRange(chart.range, chart.model, model);
       chart.model = model;
+      chart.playhead = reconcilePlayhead(host, model, origin);
       chart.spec = next;
       chart.view = viewOf(model, chart.hidden, chart.range);
       watch(chart);
@@ -1574,7 +1669,8 @@
       return true;
     }
     chart.replace = replace;
-    chart.remove = function () {
+    chart.remove = function (origin) {
+      reconcilePlayhead(host, null, origin);
       if (chart.observer) chart.observer.disconnect();
       if (chart.unfollow) chart.unfollow();
       if (sourceTable) host.insertBefore(sourceTable, head);
@@ -1833,10 +1929,10 @@
       prepare: function (spec) { return preparedChart(host, spec); },
       render: function (prepared, origin) {
         var current = charts.get(host);
-        if (!prepared) { if (current) current.remove(); return; }
-        if (current) current.replace(prepared.spec, prepared.model, origin === 'reset');
+        if (!prepared) { if (current) current.remove(origin); return; }
+        if (current) current.replace(prepared.spec, prepared.model, origin);
         else {
-          build(host, prepared.model, sourceTable, prepared.spec, prepared === original && original.useSourceTable);
+          build(host, prepared.model, sourceTable, prepared.spec, prepared === original && original.useSourceTable, origin);
           charts.get(host).controller = controller;
         }
       },
@@ -1915,6 +2011,14 @@
     return chartControllers.get(el) || (c ? c.api : null);
   };
   var chartBaselines = new WeakMap();
+  chart._playback = function (host, reconcile, checkpoint) {
+    if (playbacks.has(host)) return null;
+    playbacks.set(host, { reconcile: reconcile, checkpoint: checkpoint });
+    return function (x) {
+      var current = charts.get(host);
+      if (current) setPlayhead(current, x);
+    };
+  };
   chart._upload = function (api, entry, cap) {
     var named = namedInputs.get(api.element);
     return named ? named.upload(entry, cap) : null;
@@ -1935,22 +2039,25 @@
     if (!host || !charts || !host.querySelector) return null;
     return chart.get(host) || fromMarkup(host, options);
   };
+  chart._selectionModel = function (host) {
+    var mounted = charts.get(host);
+    if (mounted) return mounted.model;
+    if (!host.hasAttribute('data-df-chart')) return null;
+    if (host.hasAttribute('data-df-source')) {
+      if (DocForm._boot && !DocForm._boot.setupComplete) return null;
+      var named = namedInput(host);
+      try { return named ? named.binding.read().model : null; }
+      catch (error) { DocForm._dataViews.issue('chart', host, error.message); return null; }
+    }
+    var input = readMarkup(host);
+    return input && chartModel(host, input.spec);
+  };
   DocForm.chart = chart;
 
   if (DocForm._items) DocForm._items.scan('chart', function () {
     DocForm.all('[data-df-chart]').forEach(function (host) {
       DocForm._selection.ensure(DocForm.data(host, 'selection-group', null));
-      var mounted = charts.get(host);
-      var model = mounted && mounted.model;
-      if (!mounted && host.hasAttribute('data-df-source')) {
-        if (DocForm._boot && !DocForm._boot.setupComplete) return;
-        var named = namedInput(host);
-        try { if (named) model = named.binding.read().model; }
-        catch (error) { DocForm._dataViews.issue('chart', host, error.message); }
-      } else if (!mounted) {
-        var input = readMarkup(host);
-        model = input && chartModel(host, input.spec);
-      }
+      var model = chart._selectionModel(host);
       if (!model || model.errors.length || !model.selectionGroup) return;
       var keys = model.series.flatMap(function (series) {
         return series.points.map(function (point) { return point.key; }).filter(Boolean);

@@ -205,10 +205,10 @@
     <p>This configuration preview has a 256-byte limit. Select Show anyway to display the YAML as code.</p>
     <div data-df-source="sweep" data-df-data-view="code" data-df-max-size="256 B" data-df-max-rows="4"></div>
     <pre data-df-source="draft-metrics" data-df-source-type="json" data-df-data-view="code">{
-  "run": "r04"
+  "run": "r04",
   "validation_loss": 0.57
 }</pre>
-    <p>Add a comma after <code>"r04"</code> to repair the draft metrics.</p>
+    <p>The comma after <code>"r04"</code> separates the two JSON properties. Omitting it causes a parse error on the next line.</p>
 
     <h2 id="package-results">Package results for offline viewing</h2>
     <p>To swap the built-in run log, keep its column names, edit <code>runs.csv</code>, and regenerate

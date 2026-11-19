@@ -179,8 +179,7 @@
   gap: var(--df-space-1);
 }
 
-.df-step-panel button[data-df-step],
-.df-card-panel > .df-step-panel > .df-step-list button[data-df-key] {
+.df-step-panel button[data-df-key] {
   display: grid;
   width: 100%;
   padding: var(--df-space-2) var(--df-space-3);
@@ -194,14 +193,14 @@
   transition: background-color 0.15s;
 }
 
-.df-figure-steps-ready > .df-step-panel button[data-df-step],
+.df-figure-steps-ready > .df-step-panel button[data-df-key],
 .df-card-panel-ready > .df-step-panel > .df-step-list button[data-df-key] {
   position: relative;
   cursor: pointer;
 }
 
 @media (hover: hover) {
-  .df-figure-steps-ready > .df-step-panel button[data-df-step]:not([aria-current="step"]):hover,
+  .df-figure-steps-ready > .df-step-panel button[data-df-key]:not([aria-current="step"]):hover,
   .df-card-panel-ready > .df-step-panel > .df-step-list button[data-df-key]:not([aria-selected="true"]):hover {
     background: var(--df-bg-hover);
   }

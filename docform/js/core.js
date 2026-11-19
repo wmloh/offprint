@@ -113,7 +113,7 @@
         if (zone && clear && owner !== zone) return true;
         error = null;
         var committed;
-        try { committed = clear ? reset() : update(input); }
+        try { committed = clear ? reset() : update(input, origin); }
         catch (failure) { error = failure; return false; }
         sequence++;
         owner = zone && !clear ? zone : null;
@@ -156,11 +156,11 @@
       return notify(adapter.snapshot(), origin, adapter.alwaysNotify);
     }
 
-    destination(api, function (input) {
+    destination(api, function (input, origin) {
       var prepared;
       try { prepared = adapter.prepare(input); }
       catch (error) { dataIssue(feature, host, error.message); throw error; }
-      adapter.render(prepared, 'local');
+      adapter.render(prepared, origin);
       local = true;
       return function (origin) {
         var emission = notify(adapter.snapshot(), origin, adapter.alwaysNotify);

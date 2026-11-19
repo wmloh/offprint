@@ -25,6 +25,7 @@ docform/: Copyable offline library folder
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
     search.css: Frosted Ctrl+K search dialog with highlighted results
     chart.css: Chart legend with series toggles, grid, thin marks, dashed reference lines, selected points, range brush and Reset, empty-state message, hover readout, and table view
+    chart-playback.css: Guided playback controls, playhead, checkpoint marker, and note visibility
     results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with a chip and row-count bar
     highlight.css: Outlines for selected items in linked views
     stepper.css: Worked-example step controls and linked view visibility
@@ -55,6 +56,7 @@ docform/: Copyable offline library folder
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
     chart.js: SVG line, bar, and scatter charts with named-source mappings, keyed series and points, interactive ranges, and table views
+    chart-playback.js: Guided playback for numeric line charts with authored checkpoint notes and linked selection
     results.js: Source-mapped or authored tables with sorting, heatmaps, thresholds, column filters, and saved state across replacements
     highlight.js: Shared keyed selection controller with startup seeds, persistence, and passive HTML and SVG participants
     stepper.js: Ordered worked examples with Previous, Next, Reset, keyed selection groups, and linked step views

@@ -177,17 +177,19 @@ test('standalone reading profile applies early theme and renders citations with 
   assert.equal(order.at(-1), 'late ready');
 });
 
-test('nested none profile clears inherited choices and loads a chart with its styles once', async () => {
+test('nested none profile clears inherited choices and loads playback after its chart dependency', async () => {
   const p = page({ nested: true, entryProfile: 'reading',
     site: { profile: 'reading', features: { math: true }, pages: ['pages/chapter.html'] },
-    lateConfig: { profile: 'none', features: { chart: true, cards: true, 'figure-steps': true } }
+    lateConfig: { profile: 'none', features: { 'chart-playback': true, cards: true, 'figure-steps': true } }
   });
   await p.start();
   assert.equal(p.DF.site.order[0].href, p.DF.page);
   assert.ok(Object.isFrozen(p.DF.site.order[0]));
   assert.equal(p.html.getAttribute('data-df-theme'), null);
   assert.deepEqual(p.loads, ['docform/js/core.js', 'docform/css/tokens.css', 'docform/css/base.css',
-    'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/steps.css', 'docform/js/steps.js']);
+    'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
+    'docform/css/steps.css', 'docform/js/steps.js']);
+  assert.equal(typeof p.DF.chartPlayback.mount, 'function');
   assert.equal(p.DF.diagnostics.list().length, 0);
 });
 

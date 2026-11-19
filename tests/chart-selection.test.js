@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const script = (name) => fs.readFileSync(path.join(__dirname, '../docform/js', name + '.js'), 'utf8');
 const GROUP = 'data-df-selection-group';
 const KEY = 'data-df-key';
+const CONTROL = 'button:not([role="tab"]), [role="button"][tabindex]';
 
 // Enough DOM for data views to build, draw, and handle events.
 class Node extends EventTarget {
@@ -82,10 +83,16 @@ class Node extends EventTarget {
   focus() {}
   hasAttribute(name) { return this.attributes.has(name); }
   toggleAttribute(name, on) { if (on) this.setAttribute(name, ''); else this.removeAttribute(name); }
-  matches(selector) { return selector === `[${GROUP}][${KEY}]` && this.hasAttribute(GROUP) && this.hasAttribute(KEY); }
+  matches(selector) {
+    if (selector === `[${GROUP}][${KEY}]`) return this.hasAttribute(GROUP) && this.hasAttribute(KEY);
+    if (selector === CONTROL) return this.tag === 'button' && this.getAttribute('role') !== 'tab';
+    if (selector === ':disabled, [aria-disabled="true"]') return this.getAttribute('aria-disabled') === 'true';
+    return this.matchesAttribute(selector);
+  }
   closest(selector) {
     for (let node = this; node; node = node.parentNode) {
       if (selector === '.df-data' && node.classList.contains('df-data')) return node;
+      if (node.matches(selector)) return node;
     }
     return null;
   }
@@ -119,7 +126,7 @@ class Node extends EventTarget {
   all() { return this.children.flatMap((c) => [c, ...c.all()]); }
 }
 
-function setup({ groups, enhance, modules = [] } = {}) {
+function setup({ groups, enhance, modules = [], animation = {} } = {}) {
   const document = new EventTarget();
   document.body = new Node('body');
   document.createElement = (tag) => new Node(tag);
@@ -139,7 +146,7 @@ function setup({ groups, enhance, modules = [] } = {}) {
   const reads = [];
   const context = vm.createContext({ DocForm, document, CustomEvent, TextEncoder, console: { warn: (message) => warnings.push(message.replace(/^\[docform\] /, '')) },
     FileReader: class { readAsText(file) { this.result = file.text; reads.push(() => this.onload()); } },
-    MutationObserver: class { observe() {} } });
+    MutationObserver: class { observe() {} }, ...animation });
   context.window = context;
   for (const name of ['core', 'highlight', 'chart', 'stepper', 'tabs', ...modules]) vm.runInContext(script(name), context);
   if (enhance) enhance(DocForm, document, boot);
@@ -173,6 +180,344 @@ const shared = {
     { name: 'B', data: [{ x: 1, y: 8, key: 'b1' }, { x: 2, y: 9, key: 'b2' }, [3, 7]] }
   ]
 };
+
+function guided(reduced = false, author, groups) {
+  let now = 0;
+  let nextId = 0;
+  const frames = new Map();
+  const chartHost = new Node('div');
+  chartHost.id = 'trace';
+  chartHost.setAttribute('data-df-chart', 'line');
+  chartHost.setAttribute('data-df-source', 'readings');
+  const host = new Node('ol');
+  host.id = 'walkthrough';
+  host.setAttribute('data-df-chart-playback', '');
+  host.setAttribute('data-df-target', 'trace');
+  const events = [];
+  host.addEventListener('df:chart-playback:change', ({ detail }) => events.push(detail));
+  const data = (end = 10) => ({ type: 'csv', text: `x,y,key\n0,1,zero\n2,3,two\n4,,gap\n6,9,six\n${end},15,last` });
+  const env = setup({ groups, modules: ['data', 'chart-playback'], animation: {
+    performance: { now: () => now },
+    matchMedia: () => ({ matches: reduced }),
+    requestAnimationFrame(fn) { frames.set(++nextId, fn); return nextId; },
+    cancelAnimationFrame(id) { frames.delete(id); }
+  }, enhance(df, document, boot) {
+    df.data.define('readings', data());
+    boot.optionLayers = (feature, id) => {
+      if (feature === 'chart') return [{ brush: true, gaps: 'break', selectionGroup: 'trace',
+        mapping: { x: 'x', pointKey: 'key', series: [{ field: 'y', key: 'series' }] } }];
+      if (feature === 'chart-playback' && id === host.id) return [{
+        target: 'overridden-by-markup', duration: 1000, checkpoints: [
+          { key: 'start', x: 0 }, { key: 'gap', x: 4.5, label: 'Between readings' }, { key: 'later', x: 8 }
+        ]
+      }];
+      return [];
+    };
+    document.body.appendChild(chartHost);
+    document.body.appendChild(host);
+    if (author) author(host, document);
+  } });
+  const playback = env.DocForm.chartPlayback.get(host.id);
+  const chart = env.chart.get(chartHost);
+  const plot = chartHost.querySelector('.df-chart-plot');
+  const controls = env.document.body.querySelector('.df-chart-playback-controls');
+  function advance(ms) {
+    now += ms;
+    for (const [id, fn] of [...frames]) if (frames.delete(id)) fn(now);
+  }
+  return { ...env, host, chartHost, chart, playback, plot, controls, events, frames, advance, data };
+}
+
+test('guided playback reveals exact observations while clipping the same line geometry over time', () => {
+  const { chart, chartHost, playback, plot, controls, events, frames, advance, DocForm, host } = guided();
+  const shape = () => ({ ...playback.snapshot() });
+  const keys = () => plot.all().filter((el) => el.hasAttribute(KEY)).map((el) => el.getAttribute(KEY));
+  const button = (label) => controls.children.find((el) => el.textContent === label);
+  const fire = (type, props) => plot.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), props));
+  const line = plot.querySelector('.df-chart-line');
+  const clip = plot.all().find((el) => el.tag === 'clipPath').firstChild;
+  const playhead = plot.querySelector('.df-chart-playhead');
+  const ticks = plot.querySelectorAll('.df-chart-tick');
+  assert.equal(DocForm.chartPlayback.mount(host), playback);
+  assert.deepEqual(shape(), { x: 0, key: 'start', index: 0, total: 3, state: 'paused' });
+  assert.equal(events[0].origin, 'init');
+  assert.equal(events[0].previous, null);
+  assert.equal(button('Previous').getAttribute('aria-disabled'), 'true');
+  assert.deepEqual(keys(), ['zero']);
+  assert.equal(+clip.getAttribute('width'), 0);
+  assert.equal(line.getAttribute('d').match(/M/g).length, 2);
+
+  button('Next').dispatchEvent(new Event('click'));
+  assert.equal(events.at(-1).origin, 'user');
+  assert.equal(playback.next(), true);
+  assert.equal(frames.size, 1);
+  advance(500);
+  assert.equal(shape().x, 2.25);
+  assert.deepEqual(keys(), ['zero', 'two']);
+  assert.equal(clip.getAttribute('width'), String(+playhead.getAttribute('x1') - +clip.getAttribute('x')));
+  assert.equal(plot.querySelector('.df-chart-line'), line);
+  assert.deepEqual(plot.querySelectorAll('.df-chart-tick'), ticks);
+
+  const future = plot.querySelectorAll('.df-chart-dot').find((el) => el.getAttribute('display') === 'none');
+  const position = { clientX: +future.getAttribute('cx'), clientY: +future.getAttribute('cy') };
+  assert.equal(chart.coords(position.clientX, position.clientY), null);
+  fire('pointermove', position);
+  assert.equal(plot.querySelector('.df-chart-tip').hidden, true);
+  fire('keydown', { key: 'End' });
+  assert.equal(plot.querySelector('.df-chart-tip-head').textContent, 'x 2');
+  fire('keydown', { key: 'Enter' });
+  assert.equal(DocForm.selection.group('trace').get(), 'two');
+
+  assert.equal(playback.pause(), true);
+  advance(5000);
+  assert.equal(shape().x, 2.25);
+  playback.next();
+  advance(500);
+  assert.deepEqual(shape(), { x: 4.5, key: 'gap', index: 1, total: 3, state: 'paused' });
+  assert.equal(controls.lastChild.textContent, 'Between readings');
+  assert.deepEqual(keys(), ['zero', 'two']);
+
+  const table = chartHost.querySelector('.df-chart-table');
+  const toggle = chartHost.querySelector('.df-chart-toggle');
+  toggle.dispatchEvent(new Event('click'));
+  assert.deepEqual(table.querySelector('tbody').rows.map((row) => row.firstChild.textContent), ['0', '2', '4']);
+  playback.next();
+  advance(5000);
+  assert.deepEqual(table.querySelector('tbody').rows.map((row) => row.firstChild.textContent), ['0', '2', '4', '6']);
+  toggle.dispatchEvent(new Event('click'));
+  assert.equal(chart.setRange([1, 7]), true);
+  assert.deepEqual([...chart.range()], [1, 7]);
+  assert.equal(plot.querySelector('.df-chart-playhead').getAttribute('display'), 'none');
+  playback.prev();
+  assert.equal(shape().x, 4.5);
+  assert.deepEqual([...chart.range()], [1, 7]);
+  playback.reset();
+  assert.equal(shape().key, 'start');
+  assert.deepEqual(keys(), []);
+});
+
+test('reduced motion reaches each stop immediately and chart replacement reconciles the last reached key', () => {
+  const { chart, playback, controls, chartHost, DocForm, frames, events, data, warnings } = guided(true);
+  const source = DocForm.data.source('readings');
+  assert.equal(playback.select('unknown'), false);
+  assert.equal(playback.next(), true);
+  assert.equal(playback.snapshot().key, 'gap');
+  assert.equal(playback.next(), true);
+  assert.equal(playback.snapshot().key, 'later');
+  assert.equal(playback.next(), true);
+  assert.equal(playback.snapshot().state, 'ended');
+  assert.equal(playback.snapshot().key, null);
+  assert.equal(playback.next(), true);
+  assert.equal(events.length, 4);
+  assert.equal(frames.size, 0);
+  assert.equal(controls.children.find((el) => el.textContent === 'Next').getAttribute('aria-disabled'), 'true');
+  playback.prev();
+  const reached = playback.snapshot();
+  playback.next();
+  assert.equal(source.update(data(11)), true);
+  assert.deepEqual(playback.snapshot(), reached);
+  assert.equal(source.update({ type: 'csv', text: 'bad,y\n12,3' }), false);
+  assert.deepEqual(playback.snapshot(), reached);
+  assert.equal(source.update(data(7)), true);
+  assert.equal(playback.snapshot().x, null);
+  assert.equal(events.at(-1).origin, 'source');
+  assert.equal(playback.next(), false);
+  assert.match(warnings.at(-1), /Checkpoint "later"/);
+  assert.equal(chartHost.querySelector('.df-chart-playhead'), null);
+  assert.equal(source.update(data(12)), true);
+  assert.deepEqual(playback.snapshot(), reached);
+  assert.ok(chartHost.querySelector('.df-chart-playhead'));
+  assert.equal(chart.reset(), true);
+  assert.deepEqual(playback.snapshot(), reached);
+});
+
+test('replacement during a leg cancels its clock before source subscribers see the restored chart', () => {
+  const { playback, DocForm, data, frames, advance, events } = guided();
+  const source = DocForm.data.source('readings');
+  playback.select('gap');
+  playback.next();
+  advance(500);
+  assert.equal(playback.snapshot().x, 6.25);
+  let duringSource;
+  source.subscribe(() => { duringSource = playback.snapshot(); });
+  assert.equal(source.update(data(12)), true);
+  assert.equal(duringSource.key, 'gap');
+  assert.equal(duringSource.state, 'paused');
+  assert.equal(events.at(-1).origin, 'source');
+  assert.equal(frames.size, 0);
+  advance(5000);
+  assert.equal(playback.snapshot().key, 'gap');
+});
+
+test('invalid targets and checkpoints preserve authored content and leave the chart available', () => {
+  const { DocForm, document, warnings } = setup({ modules: ['chart-playback'] });
+  const host = document.body.appendChild(new Node('ol'));
+  const note = host.appendChild(new Node('li'));
+  note.setAttribute(KEY, 'finish');
+  note.setAttribute('data-df-x', '5');
+  note.textContent = 'Static walkthrough';
+  const chart = document.body.appendChild(new Node('div'));
+  chart.id = 'manual';
+  DocForm.chart(chart, { type: 'scatter', data: [[0, 1], [5, 3]] });
+  const api = DocForm.chartPlayback;
+  assert.equal(api.mount(host, { target: chart.id }), null);
+  DocForm.chart(chart, { type: 'line', data: [[0, 1], [5, 3]] });
+  const competitor = document.body.appendChild(new Node('ol'));
+  assert.equal(api.mount(competitor, { target: chart.id, checkpoints: [{ key: 'duplicate', x: 1 }, { key: 'duplicate', x: 2 }] }), null);
+  assert.equal(document.querySelectorAll('.df-chart-playback-controls').length, 0);
+  assert.equal(host.textContent, 'Static walkthrough');
+  assert.ok(warnings.some((warning) => warning.includes('no playable numeric line range')));
+  assert.ok(warnings.some((warning) => warning.includes('Invalid checkpoint "duplicate"')));
+  note.setAttribute('data-df-x', '5 steps');
+  assert.equal(api.mount(host, { target: chart.id, checkpoints: [{ key: 'valid', x: 5 }] }), null);
+  assert.equal(note.hidden, false);
+  note.setAttribute('data-df-x', '5');
+  const playback = api.mount(host, { target: chart.id });
+  assert.equal(playback.select('finish'), true);
+  assert.equal(playback.snapshot().key, 'finish');
+  assert.equal(playback.snapshot().state, 'ended');
+  assert.equal(api.mount(competitor, { target: chart.id }), null);
+  assert.equal(api.get(host), playback);
+});
+
+function checkpointItem(host, key, x, label) {
+  const item = host.appendChild(new Node('li'));
+  item.setAttribute(KEY, key);
+  item.setAttribute('data-df-x', x);
+  const title = item.appendChild(new Node('strong'));
+  title.setAttribute('data-df-step-label', '');
+  title.textContent = label;
+  item.appendChild(new Node('p')).textContent = 'Notes for ' + key;
+  return item;
+}
+
+test('authored checkpoints reveal HTML and an off-sample marker and link to a companion button', () => {
+  let start, gap, finish, companion, detail;
+  const { playback, chart, document, controls, selection, events, sets, plot, DocForm, data, advance } =
+    guided(false, (host, doc) => {
+      host.setAttribute(GROUP, 'checkpoints');
+      host.setAttribute('data-df-selection-seed', '');
+      start = checkpointItem(host, 'opening', 0, 'Opening');
+      gap = checkpointItem(host, 'schedule', 4.5, 'Schedule change');
+      finish = checkpointItem(host, 'final', 10, 'Final checkpoint');
+      detail = doc.body.appendChild(new Node('aside'));
+      detail.id = 'schedule-note';
+      detail.appendChild(new Node('em')).textContent = 'The schedule changed here.';
+      gap.setAttribute('data-df-detail', detail.id);
+      companion = doc.body.appendChild(new Node('button'));
+      companion.setAttribute(GROUP, 'checkpoints');
+      companion.setAttribute(KEY, 'schedule');
+      assert.deepEqual(host.children.map((item) => item.hidden), [false, false, false]);
+    });
+  const group = selection.group('checkpoints');
+  assert.equal(group.get(), 'opening');
+  assert.equal(start.getAttribute('aria-current'), 'step');
+  assert.equal(gap.hidden, true);
+  assert.equal(detail.hidden, true);
+  assert.equal(controls.lastChild.getAttribute('role'), 'status');
+  playback.next();
+  advance(500);
+  assert.equal(gap.hidden, true);
+  assert.equal(plot.querySelector('.df-chart-checkpoint').getAttribute('display'), 'none');
+  const click = new Event('click');
+  Object.defineProperties(click, { target: { value: companion }, button: { value: 0 } });
+  document.dispatchEvent(click);
+  assert.equal(playback.snapshot().state, 'paused');
+  assert.equal(playback.snapshot().x, 4.5);
+  assert.equal(events.at(-1).origin, 'group');
+  assert.deepEqual(sets, [['checkpoints', 'schedule']]);
+  assert.equal(companion.getAttribute('aria-pressed'), 'true');
+  assert.equal(gap.getAttribute('aria-current'), 'step');
+  assert.equal(start.hidden, true);
+  assert.equal(detail.hidden, false);
+  assert.equal(detail.firstChild.tag, 'em');
+  assert.equal(controls.lastChild.textContent, 'Schedule change');
+  const marker = plot.querySelector('.df-chart-checkpoint');
+  assert.equal(marker.getAttribute('display'), 'inline');
+  assert.equal(marker.getAttribute('cx'), plot.querySelector('.df-chart-playhead').getAttribute('x1'));
+  assert.equal(plot.querySelectorAll('.df-chart-line')[0].getAttribute('d').match(/M/g).length, 2);
+  const table = chart.element.querySelector('.df-chart-table');
+  const toggle = chart.element.querySelector('.df-chart-toggle');
+  toggle.dispatchEvent(new Event('click'));
+  assert.deepEqual(table.querySelector('tbody').rows.map((row) => row.firstChild.textContent), ['0', '2', '4']);
+  toggle.dispatchEvent(new Event('click'));
+  group.clear();
+  group.select('unknown');
+  assert.equal(playback.snapshot().key, 'schedule');
+  playback.next();
+  advance(1000);
+  assert.equal(playback.snapshot().state, 'ended');
+  assert.equal(group.get(), 'final');
+  assert.equal(finish.getAttribute('aria-current'), 'step');
+  const source = DocForm.data.source('readings');
+  assert.equal(source.update(data(7)), true);
+  assert.deepEqual([start, gap, finish, detail].map((item) => item.hidden), [false, false, false, false]);
+  assert.equal(finish.getAttribute('aria-current'), null);
+  assert.equal(source.reset(), true);
+  assert.equal(finish.getAttribute('aria-current'), 'step');
+  playback.reset();
+  assert.equal(group.get(), 'opening');
+});
+
+test('configured note references validate before enhancement and cannot be claimed twice', () => {
+  const { DocForm, document, warnings } = setup({ modules: ['chart-playback'] });
+  const host = document.body.appendChild(new Node('ol'));
+  const chart = document.body.appendChild(new Node('div'));
+  chart.id = 'manual';
+  DocForm.chart(chart, { type: 'line', data: [[0, 2], [2, 4], [8, 8]] });
+  const note = document.body.appendChild(new Node('aside'));
+  note.id = 'note';
+  note.textContent = 'Static note';
+  const mount = (target, detailId, playbackHost = host) => DocForm.chartPlayback.mount(playbackHost, {
+    target, checkpoints: [{ key: 'schedule', x: 4.5, label: 'Schedule change', detailId }]
+  });
+  assert.equal(mount(chart.id, 'missing'), null);
+  const duplicate = document.body.appendChild(new Node('div'));
+  duplicate.id = note.id;
+  assert.equal(mount(chart.id, note.id), null);
+  duplicate.remove();
+  assert.equal(mount(chart.id, chart.id), null);
+  assert.equal(note.hidden, false);
+  assert.equal(chart.querySelector('.df-chart-playhead'), null);
+  assert.ok(warnings.some((warning) => warning.includes('Invalid detail reference "missing"')));
+  const playback = mount(chart.id, note.id);
+  assert.equal(note.hidden, true);
+  playback.select('schedule');
+  assert.equal(note.hidden, false);
+  const other = document.body.appendChild(new Node('div'));
+  other.id = 'other';
+  DocForm.chart(other, { type: 'line', data: [[0, 2], [3, 4], [8, 8]] });
+  const otherHost = document.body.appendChild(new Node('ol'));
+  assert.equal(mount(other.id, note.id, otherHost), null);
+  assert.equal(note.hidden, false);
+  assert.equal(other.querySelector('.df-chart-playhead'), null);
+  const otherNote = document.body.appendChild(new Node('aside'));
+  otherNote.id = 'other-note';
+  const otherPlayback = mount(other.id, otherNote.id, otherHost);
+  otherPlayback.select('schedule');
+  assert.equal(otherPlayback.snapshot().x, 4.5);
+  assert.equal(otherNote.hidden, false);
+  assert.equal(other.querySelector('.df-chart-checkpoint').getAttribute('display'), 'inline');
+});
+
+test('publish-only and follow-only modes respect a configured startup selection', () => {
+  for (const mode of ['publish', 'follow']) {
+    const { playback, selection } = guided(true, (host) => {
+      host.setAttribute(GROUP, 'checkpoints');
+      host.setAttribute('data-df-selection-mode', mode);
+      checkpointItem(host, 'start', 0, 'Start');
+      checkpointItem(host, 'off-sample', 4.5, 'Midpoint');
+    }, { checkpoints: { initial: 'off-sample' } });
+    const group = selection.group('checkpoints');
+    assert.equal(group.get(), 'off-sample');
+    assert.equal(playback.snapshot().key, mode === 'publish' ? 'start' : 'off-sample');
+    playback.reset();
+    assert.equal(group.get(), mode === 'publish' ? 'start' : 'off-sample');
+    group.clear();
+    group.select('off-sample');
+    assert.equal(playback.snapshot().key, mode === 'publish' ? 'start' : 'off-sample');
+  }
+});
 
 test('named data updates charts, filtered results and scenarios atomically while local uploads keep ownership', () => {
   const csv = (a = 5) => ({ type: 'csv', text: `run,epoch,ms,loss,device

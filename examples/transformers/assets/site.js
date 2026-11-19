@@ -1,7 +1,8 @@
 window.DocFormSite = {
   "title": "A Decoder-Only Transformer",
   "features": {
-    "math": true
+    "math": true,
+    "reveals": true
   },
   "selectionGroups": {
     "transformer-language": {

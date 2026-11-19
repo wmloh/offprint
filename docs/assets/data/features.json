@@ -1,0 +1,668 @@
+[
+  {
+    "id": "tokens",
+    "onByDefault": true,
+    "readingRoot": false,
+    "needs": [],
+    "loads": 0,
+    "styles": [
+      "css/tokens.css"
+    ],
+    "scripts": [],
+    "styleBytes": 5713,
+    "scriptBytes": 0
+  },
+  {
+    "id": "base",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "tokens"
+    ],
+    "loads": 1,
+    "styles": [
+      "css/base.css",
+      "css/text.css",
+      "css/sections.css",
+      "css/buttons.css"
+    ],
+    "scripts": [],
+    "styleBytes": 24972,
+    "scriptBytes": 0
+  },
+  {
+    "id": "tags",
+    "onByDefault": true,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/blocks.css"
+    ],
+    "scripts": [],
+    "styleBytes": 2317,
+    "scriptBytes": 0
+  },
+  {
+    "id": "callouts",
+    "onByDefault": true,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/blocks.css"
+    ],
+    "scripts": [],
+    "styleBytes": 2317,
+    "scriptBytes": 0
+  },
+  {
+    "id": "blocks",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "tags",
+      "callouts"
+    ],
+    "loads": 4,
+    "styles": [],
+    "scripts": [],
+    "styleBytes": 0,
+    "scriptBytes": 0
+  },
+  {
+    "id": "concept-tables",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [],
+    "scripts": [],
+    "styleBytes": 0,
+    "scriptBytes": 0
+  },
+  {
+    "id": "theme",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "tokens"
+    ],
+    "loads": 1,
+    "styles": [
+      "css/theme.css"
+    ],
+    "scripts": [
+      "js/theme.js"
+    ],
+    "styleBytes": 548,
+    "scriptBytes": 5538
+  },
+  {
+    "id": "roles",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/roles.css"
+    ],
+    "scripts": [
+      "js/roles.js"
+    ],
+    "styleBytes": 621,
+    "scriptBytes": 3201
+  },
+  {
+    "id": "math",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "vendor/katex/katex.min.css",
+      "css/math.css"
+    ],
+    "scripts": [
+      "vendor/katex/katex.min.js",
+      "js/math.js"
+    ],
+    "styleBytes": 25460,
+    "scriptBytes": 278032
+  },
+  {
+    "id": "tooltips",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/tooltip.css"
+    ],
+    "scripts": [
+      "js/tooltip.js"
+    ],
+    "styleBytes": 3216,
+    "scriptBytes": 20490
+  },
+  {
+    "id": "selection",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/highlight.css"
+    ],
+    "scripts": [
+      "js/highlight.js"
+    ],
+    "styleBytes": 2022,
+    "scriptBytes": 9362
+  },
+  {
+    "id": "animation",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/anim.css"
+    ],
+    "scripts": [
+      "js/anim.js"
+    ],
+    "styleBytes": 2276,
+    "scriptBytes": 22858
+  },
+  {
+    "id": "parameters",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/params.css"
+    ],
+    "scripts": [
+      "js/params.js"
+    ],
+    "styleBytes": 3335,
+    "scriptBytes": 34135
+  },
+  {
+    "id": "code",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/code.css"
+    ],
+    "scripts": [
+      "js/code.js"
+    ],
+    "styleBytes": 5199,
+    "scriptBytes": 30677
+  },
+  {
+    "id": "tree",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/tree.css"
+    ],
+    "scripts": [
+      "js/tree.js"
+    ],
+    "styleBytes": 2260,
+    "scriptBytes": 11945
+  },
+  {
+    "id": "data",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [],
+    "loads": 0,
+    "styles": [],
+    "scripts": [
+      "vendor/js-yaml/js-yaml.min.js",
+      "js/data.js"
+    ],
+    "styleBytes": 0,
+    "scriptBytes": 86114
+  },
+  {
+    "id": "data-view",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base",
+      "data"
+    ],
+    "loads": 3,
+    "styles": [
+      "css/data.css"
+    ],
+    "scripts": [],
+    "styleBytes": 901,
+    "scriptBytes": 0
+  },
+  {
+    "id": "chart",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/chart.css"
+    ],
+    "scripts": [
+      "js/chart.js"
+    ],
+    "styleBytes": 7422,
+    "scriptBytes": 109152
+  },
+  {
+    "id": "dropzone",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base",
+      "data"
+    ],
+    "loads": 3,
+    "styles": [
+      "css/dropzone.css",
+      "css/data.css"
+    ],
+    "scripts": [
+      "js/dropzone.js"
+    ],
+    "styleBytes": 2059,
+    "scriptBytes": 18689
+  },
+  {
+    "id": "chart-playback",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "chart"
+    ],
+    "loads": 3,
+    "styles": [
+      "css/chart-playback.css"
+    ],
+    "scripts": [
+      "js/chart-playback.js"
+    ],
+    "styleBytes": 639,
+    "scriptBytes": 18425
+  },
+  {
+    "id": "results",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/results.css"
+    ],
+    "scripts": [
+      "js/results.js"
+    ],
+    "styleBytes": 6757,
+    "scriptBytes": 44948
+  },
+  {
+    "id": "matrix",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base",
+      "data"
+    ],
+    "loads": 3,
+    "styles": [
+      "css/matrix.css"
+    ],
+    "scripts": [
+      "js/matrix.js"
+    ],
+    "styleBytes": 1165,
+    "scriptBytes": 11450
+  },
+  {
+    "id": "scenarios",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "chart"
+    ],
+    "loads": 3,
+    "styles": [
+      "css/scenarios.css"
+    ],
+    "scripts": [
+      "js/scenarios.js"
+    ],
+    "styleBytes": 977,
+    "scriptBytes": 19349
+  },
+  {
+    "id": "tabs",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/tabs.css"
+    ],
+    "scripts": [
+      "js/tabs.js"
+    ],
+    "styleBytes": 1269,
+    "scriptBytes": 3127
+  },
+  {
+    "id": "cards",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/steps.css"
+    ],
+    "scripts": [
+      "js/steps.js"
+    ],
+    "styleBytes": 6844,
+    "scriptBytes": 12432
+  },
+  {
+    "id": "figure-steps",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/steps.css"
+    ],
+    "scripts": [
+      "js/steps.js"
+    ],
+    "styleBytes": 6844,
+    "scriptBytes": 12432
+  },
+  {
+    "id": "stepper",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/stepper.css"
+    ],
+    "scripts": [
+      "js/stepper.js"
+    ],
+    "styleBytes": 331,
+    "scriptBytes": 3549
+  },
+  {
+    "id": "split-views",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/reveal.css"
+    ],
+    "scripts": [
+      "js/reveal.js"
+    ],
+    "styleBytes": 3155,
+    "scriptBytes": 5692
+  },
+  {
+    "id": "reveals",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/reveal.css"
+    ],
+    "scripts": [
+      "js/reveal.js"
+    ],
+    "styleBytes": 3155,
+    "scriptBytes": 5692
+  },
+  {
+    "id": "peek-bubbles",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/blocks.css",
+      "css/bubble.css"
+    ],
+    "scripts": [
+      "js/bubble.js"
+    ],
+    "styleBytes": 5589,
+    "scriptBytes": 11119
+  },
+  {
+    "id": "search",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/search.css"
+    ],
+    "scripts": [
+      "js/search.js"
+    ],
+    "styleBytes": 3016,
+    "scriptBytes": 20456
+  },
+  {
+    "id": "glossary",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "tooltips"
+    ],
+    "loads": 3,
+    "styles": [
+      "css/glossary.css"
+    ],
+    "scripts": [
+      "js/glossary.js"
+    ],
+    "styleBytes": 2034,
+    "scriptBytes": 11763
+  },
+  {
+    "id": "references",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/refs.css"
+    ],
+    "scripts": [
+      "js/refs.js"
+    ],
+    "styleBytes": 3747,
+    "scriptBytes": 19567
+  },
+  {
+    "id": "citations",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "tooltips"
+    ],
+    "loads": 3,
+    "styles": [
+      "css/refs.css"
+    ],
+    "scripts": [
+      "js/refs.js"
+    ],
+    "styleBytes": 3747,
+    "scriptBytes": 19567
+  },
+  {
+    "id": "navigation",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/nav.css"
+    ],
+    "scripts": [
+      "js/nav.js"
+    ],
+    "styleBytes": 11070,
+    "scriptBytes": 29211
+  },
+  {
+    "id": "sidenotes",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/notes.css"
+    ],
+    "scripts": [
+      "js/notes.js"
+    ],
+    "styleBytes": 2331,
+    "scriptBytes": 6344
+  },
+  {
+    "id": "sections",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [],
+    "scripts": [
+      "js/sections.js"
+    ],
+    "styleBytes": 0,
+    "scriptBytes": 6515
+  },
+  {
+    "id": "controls",
+    "onByDefault": true,
+    "readingRoot": true,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/controls.css"
+    ],
+    "scripts": [
+      "js/controls.js"
+    ],
+    "styleBytes": 4265,
+    "scriptBytes": 18966
+  },
+  {
+    "id": "zoom",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/zoom.css"
+    ],
+    "scripts": [
+      "js/zoom.js"
+    ],
+    "styleBytes": 2556,
+    "scriptBytes": 9645
+  },
+  {
+    "id": "zoom-tools",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "zoom"
+    ],
+    "loads": 3,
+    "styles": [
+      "css/zoomtools.css"
+    ],
+    "scripts": [
+      "js/zoomtools.js"
+    ],
+    "styleBytes": 5072,
+    "scriptBytes": 27539
+  }
+]

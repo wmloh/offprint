@@ -79,7 +79,10 @@ docform/: Copyable offline library folder
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Agent-facing setup, layout, reading, interaction, and data references grouped by purpose
     LIB_MAP.tsv: Index of agent references by component, description, and relative path
-docs/: Human-facing getting started guide, include order, manifest and component references, migration guide, and style guide
+docs/: Human-facing beginner DocForm site (placeholder pages so far) beside the legacy Markdown guides
+  index.html: Welcome page
+  pages/: Start here, hierarchy, feature guide, recipe, and reference pages in group folders, plus the glossary page
+  assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data; generated search index
 examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
   pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and generated search
   transformers/: Decoder-only guide with linked attention, decoding presets, and training diagnostics with synchronized playback, uncertainty, shared filters, paired comparisons, matrices, and offline file replacement

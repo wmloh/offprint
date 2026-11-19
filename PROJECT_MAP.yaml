@@ -15,7 +15,7 @@ docform/: Copyable offline library folder
     code.css: Code block bar, copy button, token colours, highlighted lines, circled annotation markers, and diff rows
     tabs.css: Tab list and panels with a no-JS fallback
     anim.css: Figure frames, animation controls, and SVG paint utilities
-    params.css: Parameter slider, choice, and switch rows, preset buttons, and bound values
+    params.css: Parameter sliders, single and multiple choices, switches, preset buttons, and bound values
     reveal.css: Scroll reveals, two-way callout slides, and split views with side-gliding panes
     steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus an independently scrolling detail pane for standalone cards and figure steps and optional title-only side cards
     zoom.css: Frosted full-screen figure zoom view
@@ -24,9 +24,10 @@ docform/: Copyable offline library folder
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
     search.css: Frosted Ctrl+K search dialog with highlighted results
-    chart.css: Chart legend with series toggles, grid, thin marks, dashed reference lines, selected points, range brush and Reset, empty-state message, hover readout, and table view
+    chart.css: Chart legend with series toggles, grid, thin marks, dashed reference lines, selected points, range brush and Reset, shared x cursor, hover readout, and table view
     chart-playback.css: Guided playback controls, playhead, checkpoint marker, and note visibility
     results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with a chip and row-count bar
+    matrix.css: Evaluation matrix measure chooser, numeric cells, and shared color scale
     highlight.css: Outlines for selected items in linked views
     stepper.css: Worked-example step controls and linked view visibility
     scenarios.css: Variant controls and changed comparison cells
@@ -46,7 +47,7 @@ docform/: Copyable offline library folder
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
     anim.js: Keyed SVG timeline controllers with playback, step subscriptions, and figure-step integration
-    params.js: Named parameter scopes with reusable control definitions, scoped presets and text bindings, atomic updates, Reset, and subscriptions
+    params.js: Named parameter scopes with multiple-choice controls, presets, text bindings, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
     steps.js: Standalone HTML card panels with optional titled groups, keyboard focus, and manual selection, plus figure steps selected by hover, focus, tap, or page controls, with keyed selection and inert details
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
@@ -55,13 +56,14 @@ docform/: Copyable offline library folder
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
-    chart.js: SVG line, bar, and scatter charts with named-source mappings, keyed series and points, interactive ranges, and table views
-    chart-playback.js: Guided playback for numeric line charts with authored checkpoint notes and linked selection
-    results.js: Source-mapped or authored tables with sorting, heatmaps, thresholds, column filters, and saved state across replacements
+    chart.js: SVG line, bar, and scatter charts with column and grouped observation mappings, supplied intervals, keyed series and points, shared x-position groups, interactive ranges, and table views
+    chart-playback.js: Guided playback for individual numeric line charts and x-position groups with authored checkpoint notes and linked selection
+    results.js: Source-mapped or authored tables with supplied intervals, sorting, heatmaps, thresholds, column filters, and saved state across replacements
+    matrix.js: Named evaluation records pivoted into semantic tables with keyed axes, interchangeable measures, and static fallbacks
     highlight.js: Shared keyed selection controller with startup seeds, persistence, and passive HTML and SVG participants
     stepper.js: Ordered worked examples with Previous, Next, Reset, keyed selection groups, and linked step views
-    scenarios.js: Keyed scenario comparisons from named sources or authored tables with fixed baselines and shared chart scales by unit
-    data.js: Transactional named sources from offline assets, inline CSV, JSON, YAML, or typed author values, with transforms and raw views
+    scenarios.js: Keyed scenario comparisons with fixed baselines, shared chart scales by unit, and supplied outcome intervals and baseline-paired differences
+    data.js: Transactional named sources with record transforms, scoped chart and results filters, and raw views
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
     glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with variant definitions, used-on back-links, letter jumps, and a manifest-only fallback

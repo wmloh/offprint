@@ -136,10 +136,12 @@ function setup({ groups, enhance, modules = [], animation = {} } = {}) {
   document.getElementById = (id) => document.body.all().find((el) => el.id === id) ?? null;
   const sets = [];
   const warnings = [];
+  const after = [];
   document.addEventListener('df:selection:change', ({ detail }) => {
     if (detail.origin !== 'init') sets.push([detail.group, detail.current.key]);
   });
   const boot = { canInitialize: () => true, setupComplete: true, optionLayers: () => [], merge: Object.assign,
+    after: (_, fn) => after.push(fn),
     report: (_, feature, host, message) => warnings.push(message),
     moduleFailed: (_, error) => { throw error; } };
   const DocForm = { _boot: boot, site: { base: 'file:///site.js', selectionGroups: groups } };
@@ -151,6 +153,7 @@ function setup({ groups, enhance, modules = [], animation = {} } = {}) {
   for (const name of ['core', 'highlight', 'chart', 'stepper', 'tabs', ...modules]) vm.runInContext(script(name), context);
   if (enhance) enhance(DocForm, document, boot);
   boot.initialize();
+  after.forEach((fn) => fn());
   return { chart: DocForm.chart, selection: DocForm.selection, sets, warnings, document, DocForm, reads };
 }
 
@@ -181,10 +184,11 @@ const shared = {
   ]
 };
 
-function guided(reduced = false, author, groups) {
+function guided(reduced = false, author, groups, intervals = false) {
   let now = 0;
   let nextId = 0;
   const frames = new Map();
+  const observers = new Map();
   const chartHost = new Node('div');
   chartHost.id = 'trace';
   chartHost.setAttribute('data-df-chart', 'line');
@@ -195,17 +199,21 @@ function guided(reduced = false, author, groups) {
   host.setAttribute('data-df-target', 'trace');
   const events = [];
   host.addEventListener('df:chart-playback:change', ({ detail }) => events.push(detail));
-  const data = (end = 10) => ({ type: 'csv', text: `x,y,key\n0,1,zero\n2,3,two\n4,,gap\n6,9,six\n${end},15,last` });
+  const data = (end = 10) => ({ type: 'csv', text: intervals ?
+    `x,y,key,lo,hi\n0,1,zero,0,2\n2,3,two,1,5\n4,,gap,,\n6,9,six,7,11\n${end},15,last,12,30` :
+    `x,y,key\n0,1,zero\n2,3,two\n4,,gap\n6,9,six\n${end},15,last` });
   const env = setup({ groups, modules: ['data', 'chart-playback'], animation: {
     performance: { now: () => now },
     matchMedia: () => ({ matches: reduced }),
     requestAnimationFrame(fn) { frames.set(++nextId, fn); return nextId; },
-    cancelAnimationFrame(id) { frames.delete(id); }
+    cancelAnimationFrame(id) { frames.delete(id); },
+    ResizeObserver: class { constructor(fn) { this.fn = fn; } observe(el) { observers.set(el, this.fn); } }
   }, enhance(df, document, boot) {
     df.data.define('readings', data());
     boot.optionLayers = (feature, id) => {
       if (feature === 'chart') return [{ brush: true, gaps: 'break', selectionGroup: 'trace',
-        mapping: { x: 'x', pointKey: 'key', series: [{ field: 'y', key: 'series' }] } }];
+        mapping: { x: 'x', pointKey: 'key', series: [{ field: 'y', key: 'series',
+          interval: intervals ? { lower: 'lo', upper: 'hi', label: '90% interval' } : undefined }] } }];
       if (feature === 'chart-playback' && id === host.id) return [{
         target: 'overridden-by-markup', duration: 1000, checkpoints: [
           { key: 'start', x: 0 }, { key: 'gap', x: 4.5, label: 'Between readings' }, { key: 'later', x: 8 }
@@ -215,7 +223,7 @@ function guided(reduced = false, author, groups) {
     };
     document.body.appendChild(chartHost);
     document.body.appendChild(host);
-    if (author) author(host, document);
+    if (author) author(host, document, df);
   } });
   const playback = env.DocForm.chartPlayback.get(host.id);
   const chart = env.chart.get(chartHost);
@@ -225,8 +233,198 @@ function guided(reduced = false, author, groups) {
     now += ms;
     for (const [id, fn] of [...frames]) if (frames.delete(id)) fn(now);
   }
-  return { ...env, host, chartHost, chart, playback, plot, controls, events, frames, advance, data };
+  function resize(el, width) {
+    el.clientWidth = width;
+    observers.get(el)();
+  }
+  return { ...env, host, chartHost, chart, playback, plot, controls, events, frames, advance, data, resize };
 }
+
+function positionChart(DocForm, document, id, group, spec) {
+  const host = document.body.appendChild(new Node('div'));
+  host.id = id;
+  host.setAttribute('data-df-x-group', group);
+  const api = DocForm.chart(host, spec);
+  const plot = host.querySelector('.df-chart-plot');
+  return { host, api, plot };
+}
+
+const cursor = (plot) => plot.querySelector('.df-chart-x-cursor');
+const playhead = (plot) => plot.querySelector('.df-chart-playhead');
+const display = (el) => el.getAttribute('display');
+const firePlot = (plot, type, props) => plot.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), props));
+
+test('x-position groups share keyboard and pointer inspection in data units with independent viewports', () => {
+  const { DocForm, document } = setup();
+  const a = positionChart(DocForm, document, 'a', 'steps', { type: 'line', data: [[0, 1], [4, 2], [10, 3]] });
+  const b = positionChart(DocForm, document, 'b', 'steps',
+    { type: 'line', brush: true, data: [[1, 10], [3, 20], [6, 30], [9, 50]] });
+  const c = positionChart(DocForm, document, 'c', 'other', { type: 'scatter', data: [[0, 10], [10, 20]] });
+  const group = DocForm.chart.xGroup('steps');
+  const events = [];
+  const seen = [];
+  group.subscribe((current, meta) => seen.push([current.x, meta.origin, display(cursor(b.plot))]), { immediate: true });
+  document.addEventListener('df:chart:x', ({ detail }) => events.push(detail));
+  assert.equal(DocForm.chart.xGroup('unknown'), null);
+  assert.equal(group.set('4'), false);
+  assert.equal(group.set(Infinity), false);
+  assert.equal(b.api.setRange([2, 8]), true);
+  firePlot(a.plot, 'keydown', { key: 'Home' });
+  firePlot(a.plot, 'keydown', { key: 'ArrowRight' });
+  assert.deepEqual(seen, [[null, 'init', 'none'], [0, 'user', 'none'], [4, 'user', 'inline']]);
+  assert.equal(events.at(-1).group, 'steps');
+  assert.equal(events.at(-1).previous.x, 0);
+  assert.match(a.plot.querySelector('.df-chart-tip-head').textContent, /4$/);
+  assert.equal(b.plot.querySelector('.df-chart-tip').hidden, true);
+  const pixel = +cursor(b.plot).getAttribute('x1');
+  assert.notEqual(pixel, +cursor(a.plot).getAttribute('x1'));
+  assert.equal(b.api.coords(pixel, 80).x, 4);
+  assert.deepEqual([...b.api.range()], [2, 8]);
+  assert.equal(display(cursor(c.plot)), 'none');
+
+  firePlot(b.plot, 'pointermove', { clientX: pixel, clientY: 80 });
+  assert.equal(group.snapshot().x, 4, 'pointer uses the exact x even between observations');
+  assert.equal(events.length, 2, 'same x transfers ownership without an event');
+  assert.match(b.plot.querySelector('.df-chart-tip-head').textContent, /3$/, 'the readout shows its actual observation');
+  firePlot(a.plot, 'blur');
+  assert.equal(group.snapshot().x, 4);
+  firePlot(b.plot, 'pointerleave');
+  assert.equal(group.snapshot().x, null);
+  assert.equal(display(cursor(a.plot)), 'none');
+
+  assert.equal(group.set(7), true);
+  assert.equal(b.api.setRange([2, 5]), true);
+  assert.equal(display(cursor(b.plot)), 'none');
+  assert.equal(group.snapshot().x, 7);
+  assert.equal(b.api.setRange(null), true);
+  assert.equal(display(cursor(b.plot)), 'inline');
+  firePlot(a.plot, 'pointerleave');
+  assert.equal(group.snapshot().x, 7, 'local exits preserve a programmatic position');
+  assert.equal(DocForm.chart.xGroup('other').set(5), true);
+  assert.equal(group.clear(), true);
+  assert.equal(display(cursor(c.plot)), 'inline');
+  assert.equal(events.at(-1).origin, 'api');
+});
+
+test('one x-group playback clock gates independently sampled charts through source, resize and table redraws', () => {
+  let follower;
+  const followerSpec = { type: 'line', brush: true, data: [[1, 100], [3, 900], [7, 200], [13, 500]] };
+  const env = guided(false, (host, document, DocForm) => {
+    host.removeAttribute('data-df-target');
+    host.setAttribute('data-df-x-group', 'steps');
+    document.getElementById('trace').setAttribute('data-df-x-group', 'steps');
+    follower = positionChart(DocForm, document, 'score', 'steps', followerSpec);
+  });
+  const { DocForm, document, chart, chartHost, plot, playback, advance, frames, data, warnings } = env;
+  const other = follower.plot;
+  const group = DocForm.chart.xGroup('steps');
+  const visible = (p) => p.querySelectorAll('.df-chart-dot').filter((dot) => display(dot) !== 'none').length;
+  assert.equal(playback.snapshot().x, 0, 'the first chart in document order supplies the domain');
+  assert.equal(display(playhead(other)), 'none');
+  assert.equal(visible(other), 0);
+  assert.equal(follower.api.setRange([2, 9]), true);
+  assert.equal(group.set(1), false);
+  const seen = [];
+  playback.subscribe(({ x, state }) => seen.push([x, state, visible(plot), visible(other)]));
+  playback.next();
+  assert.equal(frames.size, 1);
+  advance(500);
+  assert.equal(playback.snapshot().x, 2.25);
+  assert.deepEqual([visible(plot), visible(other)], [2, 0]);
+  assert.equal(group.set(2), true);
+  assert.equal(group.set(3), false);
+  const future = other.querySelectorAll('.df-chart-dot').find((dot) => display(dot) === 'none');
+  const point = { clientX: +future.getAttribute('cx'), clientY: +future.getAttribute('cy') };
+  assert.equal(follower.api.coords(point.clientX, point.clientY), null);
+  firePlot(other, 'pointermove', point);
+  assert.equal(group.snapshot().x, 2);
+
+  env.resize(other, 550);
+  advance(500);
+  assert.deepEqual(seen.at(-1), [4.5, 'paused', 2, 1]);
+  assert.equal(other.querySelector('svg').getAttribute('width'), '550');
+  firePlot(other, 'keydown', { key: 'End' });
+  assert.equal(group.snapshot().x, 3);
+  assert.equal(playback.snapshot().x, 4.5);
+  assert.deepEqual([...follower.api.range()], [2, 9]);
+  const toggle = follower.host.querySelector('.df-chart-toggle');
+  click(toggle);
+  const rows = () => follower.host.querySelector('tbody').rows.map((row) => row.firstChild.textContent);
+  assert.deepEqual(rows(), ['3']);
+  playback.next();
+  advance(500);
+  assert.equal(playback.snapshot().x, 6.25);
+  assert.equal(follower.api.update(followerSpec), true);
+  assert.equal(playback.snapshot().x, 6.25, 'a compatible follower redraw keeps the current frame');
+  assert.deepEqual(rows(), ['3']);
+  advance(500);
+  assert.deepEqual(rows(), ['3', '7']);
+  click(toggle);
+  assert.equal(display(playhead(other)), 'inline');
+  assert.equal(group.set(7), true);
+  const beforeResize = other.querySelector('svg');
+  env.resize(other, 0);
+  advance(16);
+  env.resize(other, 550);
+  advance(16);
+  assert.notEqual(other.querySelector('svg'), beforeResize);
+  assert.equal(display(cursor(other)), 'inline');
+
+  const source = DocForm.data.source('readings');
+  let observed;
+  source.subscribe(() => { observed = [playback.snapshot().x, visible(plot), visible(other)]; });
+  playback.next();
+  advance(200);
+  assert.equal(source.update(data(12)), true);
+  assert.deepEqual(observed, [8, 3, 2]);
+  assert.equal(frames.size, 0);
+  assert.equal(playback.snapshot().key, 'later');
+  assert.equal(chart.range(), null);
+  assert.deepEqual([...follower.api.range()], [2, 9]);
+  const marker = other.querySelector('.df-chart-checkpoint');
+  playback.next();
+  assert.equal(display(marker), 'none');
+  assert.equal(source.update(data(13)), true);
+  assert.equal(playback.snapshot().x, 8);
+  assert.equal(display(marker), 'inline', 'same-position reconciliation restores the follower checkpoint marker');
+  playback.reset();
+  assert.equal(group.snapshot().x, null, 'rewind clears inspection beyond the playhead');
+  assert.equal(display(playhead(other)), 'none');
+  assert.equal(follower.api.update({ type: 'scatter', data: [[1, 2], [9, 3]] }), true);
+  assert.equal(playback.snapshot().x, null);
+  assert.equal(playhead(plot), null);
+  assert.equal(follower.api.update(followerSpec), true);
+  assert.equal(playback.snapshot().x, 0);
+  assert.ok(warnings.some((warning) => warning.includes('incompatible chart')));
+
+  const competing = document.body.appendChild(new Node('ol'));
+  assert.equal(DocForm.chartPlayback.mount(competing, { xGroup: 'steps' }), null);
+  assert.equal(DocForm.chartPlayback.mount(competing, { target: follower.host.id }), null);
+  assert.equal(DocForm.chartPlayback.get(env.host), playback);
+  assert.equal(chartHost.querySelector('.df-chart-playhead'), playhead(plot));
+});
+
+test('configured group playback rejects incompatible charts and claims all members together', () => {
+  const { DocForm, document } = setup({ modules: ['chart-playback'], animation: {
+    matchMedia: () => ({ matches: true })
+  } });
+  const spec = { type: 'line', data: [[0, 2], [5, 3]] };
+  const a = positionChart(DocForm, document, 'a', 'steps', spec);
+  const b = positionChart(DocForm, document, 'b', 'steps', { ...spec, type: 'scatter' });
+  const host = document.body.appendChild(new Node('ol'));
+  const single = document.body.appendChild(new Node('ol'));
+  const api = DocForm.chartPlayback;
+  assert.equal(api.mount(host, { xGroup: 'steps' }), null);
+  assert.equal(playhead(a.plot), null);
+  assert.equal(playhead(b.plot), null);
+  assert.equal(b.api.update(spec), true);
+  const playback = api.mount(host, { xGroup: 'steps', checkpoints: [{ key: 'middle', x: 2 }] });
+  assert.equal(playback.next(), true);
+  assert.equal(playback.snapshot().x, 2);
+  assert.equal(display(playhead(a.plot)), 'inline');
+  assert.equal(display(playhead(b.plot)), 'inline');
+  assert.equal(api.mount(single, { target: b.host.id }), null);
+});
 
 test('guided playback reveals exact observations while clipping the same line geometry over time', () => {
   const { chart, chartHost, playback, plot, controls, events, frames, advance, DocForm, host } = guided();
@@ -519,6 +717,129 @@ test('publish-only and follow-only modes respect a configured startup selection'
   }
 });
 
+test('line intervals split at chart gaps and advance within the playback and brush clips', () => {
+  const { chart, chartHost, plot, playback, advance } = guided(false, undefined, undefined, true);
+  const band = plot.querySelector('.df-chart-band-interval');
+  const bandClip = () => plot.all().find((el) => el.tag === 'clipPath' && el.id.endsWith('-band')).firstChild;
+  assert.equal(band.getAttribute('d').match(/M/g).length, 2);
+  assert.equal(+bandClip().getAttribute('width'), 0);
+  assert.ok(plot.querySelectorAll('.df-chart-tick').some((tick) => tick.textContent === '30'));
+  const fire = (key) => plot.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key }));
+  fire('End');
+  assert.match(plot.querySelector('.df-chart-tip').textContent, /90% interval \[0, 2\]/);
+  playback.next();
+  advance(500);
+  assert.ok(+bandClip().getAttribute('width') > 0);
+  assert.equal(plot.querySelector('.df-chart-band-interval'), band);
+  fire('End');
+  assert.match(plot.querySelector('.df-chart-tip').textContent, /90% interval \[1, 5\]/);
+  assert.equal(chart.setRange([1, 7]), true);
+  const clip = bandClip();
+  const playhead = plot.querySelector('.df-chart-playhead');
+  assert.equal(+clip.getAttribute('width'), +playhead.getAttribute('x1') - +clip.getAttribute('x'));
+  chartHost.querySelector('.df-chart-toggle').dispatchEvent(new Event('click'));
+  const table = chartHost.querySelector('.df-chart-table');
+  assert.match(table.textContent, /90% interval \[1, 5\]/);
+  assert.doesNotMatch(table.textContent, /\[7, 11\]|\[12, 30\]/);
+  playback.select('later');
+  assert.match(table.textContent, /90% interval \[7, 11\]/);
+  assert.doesNotMatch(table.textContent, /\[12, 30\]/);
+});
+
+test('direct intervals handle disjoint bounds, missing intervals, fixed scales, and invalid updates', () => {
+  const interval = { lower: 3, upper: 5, label: 'Supplied bounds', count: 0 };
+  const spec = { type: 'line', data: [
+    { x: 1, y: 2, interval }, { x: 2, y: 2 }, { x: 3, y: 2, interval }, { x: 4, y: 4, interval }
+  ] };
+  const env = draw(spec);
+  assert.equal(env.plot.querySelectorAll('.df-chart-whisker').length, 1);
+  assert.equal(env.plot.querySelector('.df-chart-band-interval').getAttribute('d').match(/M/g).length, 1);
+  assert.equal(env.api.model().series[0].points[1].interval, undefined);
+  const band = env.plot.querySelector('.df-chart-band-interval');
+  for (const invalid of [{ lower: 1 }, { lower: 3, upper: 2 }, { lower: 0, upper: Infinity }, { ...interval, count: 1.2 }]) {
+    assert.equal(env.api.update({ data: [{ x: 1, y: 2, interval: invalid }] }), false);
+  }
+  assert.equal(env.api.update({ data: [{ x: 1, y: null, interval }] }), false);
+  assert.equal(env.api.update({ y: { type: 'log' }, data: [
+    { x: 1, y: 2, interval: { lower: 0, upper: 3 } }
+  ] }), false);
+  assert.equal(env.plot.querySelector('.df-chart-band-interval'), band);
+  for (const type of ['bar', 'scatter']) {
+    const { plot, tip, fire } = draw({ type, y: { min: 0, max: 4 }, data: [{ x: 1, y: 2, interval }] });
+    assert.equal(plot.querySelectorAll('.df-chart-whisker').length, 1);
+    const clip = plot.all().find((el) => el.tag === 'clipPath' && el.id.endsWith('-interval')).firstChild;
+    assert.ok(+clip.getAttribute('height') > 0);
+    assert.ok(plot.querySelectorAll('.df-chart-tick').some((tick) => tick.textContent === '4'));
+    assert.ok(!plot.querySelectorAll('.df-chart-tick').some((tick) => tick.textContent === '5'));
+    fire('keydown', { key: 'End' });
+    assert.match(tip().textContent, /Supplied bounds \[3, 5\] \(n = 0\)/);
+  }
+});
+
+test('mapped intervals retain numeric results behavior and paired differences retain their baseline identity', () => {
+  const bounds = { lower: 'lo', upper: 'hi', count: 'n', label: 'Outcome bounds' };
+  const paired = { field: 'delta', baselineKeyField: 'reference', interval: { lower: 'dlo', upper: 'dhi', label: 'Paired bounds' } };
+  const records = [
+    { run: 'base', device: 'CPU', x: 1, score: 10, lo: 8, hi: 14, n: 5 },
+    { run: 'alt', device: 'GPU', x: 2, score: 20, lo: 12, hi: 24, n: 3, delta: -2, reference: 'base', dlo: -5, dhi: 1 },
+    { run: 'other', device: 'TPU', x: 3, score: 8, lo: null, hi: null, n: null, delta: null, reference: null, dlo: null, dhi: null }
+  ];
+  const hosts = {};
+  const { DocForm: df } = setup({ modules: ['data', 'results', 'scenarios'], enhance(df, document, boot) {
+    const options = {
+      chart: { mapping: { x: 'x', value: 'score', group: { field: 'run' }, interval: bounds } },
+      results: { mapping: { columns: [{ field: 'run' }, { field: 'score', interval: bounds }] } },
+      scenarios: { mapping: { recordKey: 'run', baselineKey: 'base', variantKeys: ['alt', 'other'],
+        labels: { base: 'Reference' }, conditions: [{ field: 'device' }],
+        outcomes: [{ field: 'score', unit: '%', interval: bounds, pairedDifference: paired }] } }
+    };
+    boot.optionLayers = (feature) => [options[feature] || {}];
+    df.data.define('scores', { type: 'value', value: records });
+    for (const [id, tag, mode] of [['chart', 'div', 'scatter'], ['results', 'table', ''], ['scenarios', 'table', '']]) {
+      const host = document.createElement(tag);
+      host.id = id;
+      host.setAttribute('data-df-' + id, mode);
+      host.setAttribute('data-df-source', 'scores');
+      hosts[id] = document.body.appendChild(host);
+    }
+    const header = hosts.results.createTHead().insertRow().appendChild(new Node('th'));
+    header.setAttribute('data-df-field', 'score');
+    header.setAttribute('data-df-threshold', '>= 10');
+    header.setAttribute('data-df-best', 'max');
+  } });
+  const source = df.data.source('scores');
+  const chart = df.chart.get('chart');
+  const results = () => hosts.results.tBodies[0].rows;
+  const outcome = (index) => hosts.scenarios.tBodies[0].rows[1].cells[index];
+  const cell = results()[1].cells[1];
+  assert.equal(cell.getAttribute('data-df-value'), '20');
+  assert.match(cell.textContent, /Outcome bounds \[12, 24\] \(n = 3\)/);
+  assert.ok(cell.classList.contains('df-pass'));
+  assert.ok(cell.classList.contains('df-best'));
+  assert.ok(results()[2].cells[1].classList.contains('df-fail'));
+  const sort = hosts.results.tHead.rows[0].cells[1].querySelector('button');
+  sort.dispatchEvent(new Event('click'));
+  assert.deepEqual(results().map((row) => row.cells[0].textContent), ['alt', 'base', 'other']);
+  sort.dispatchEvent(new Event('click'));
+  sort.dispatchEvent(new Event('click'));
+  assert.match(outcome(3).textContent, /Outcome bounds \[12%, 24%\].*Paired difference vs Reference \(base\) -2%.*Paired bounds \[-5%, 1%\]/);
+  assert.equal(df.scenarios.get('scenarios').select('other'), true);
+  assert.equal(outcome(4).hidden, false);
+  assert.doesNotMatch(outcome(4).textContent, /bounds|Paired difference/);
+  assert.equal(chart.model().series.find((s) => s.key === 'alt').points[0].interval.upper, 24);
+  for (const invalid of [{ hi: null }, { n: -1 }, { reference: 'other' }, { dlo: 4 }]) {
+    assert.equal(source.update({ type: 'value', value: [records[0], { ...records[1], ...invalid }, records[2]] }), false);
+    assert.equal(source.snapshot().revision, 0);
+    assert.equal(results()[1].cells[1], cell);
+  }
+  assert.equal(source.update({ type: 'value', value: [records[0], { ...records[1], hi: 60 }, records[2]] }), true);
+  assert.equal(chart.model().series.find((s) => s.key === 'alt').points[0].interval.upper, 60);
+  assert.match(outcome(3).textContent, /Outcome bounds \[12%, 60%\].*Paired bounds \[-5%, 1%\]/);
+  assert.equal(df.scenarios.get('scenarios').snapshot().key, 'other');
+  assert.equal(source.reset(), true);
+  assert.match(results()[1].cells[1].textContent, /Outcome bounds \[12, 24\]/);
+});
+
 test('named data updates charts, filtered results and scenarios atomically while local uploads keep ownership', () => {
   const csv = (a = 5) => ({ type: 'csv', text: `run,epoch,ms,loss,device
 r01,1,${a},0.7,Laptop
@@ -635,6 +956,254 @@ r04,3,7,0.6,Lab` });
   reset('shared-two');
   canceled();
   assert.equal(source.snapshot().revision, 4);
+});
+
+test('a shared parameter scope commits filtered charts and results with coordinated replacement and Reset', () => {
+  const choices = (...values) => values.map((value) => ({ value, label: value }));
+  const row = (run, step, loss, split = 'dev', accepted = true) => ({ run, step, loss, split, accepted, tableRun: run });
+  const initial = [row('a', 0, 5), row('a', 4, 6), row('b', 0, 8), row('b', 4, 9),
+    row('a', 0, 11, 'test'), row('a', 0, 12, 'test'), row('b', 0, 99, 'dev', 'true')];
+  const payload = (value) => ({ type: 'value', value });
+  const hosts = {};
+  const filter = { scope: 'eval', fields: { runs: 'run', split: 'split' }, where: { accepted: true } };
+  const env = setup({ modules: ['params', 'data', 'dropzone', 'results'], enhance(df, document, boot) {
+    df.parameters.define('eval', {
+      runs: { type: 'multiselect', choices: choices('a', 'b') },
+      split: { type: 'select', choices: choices('dev', 'test') }
+    });
+    df.data.define('runs', payload(initial));
+    const options = {
+      plot: { filter, brush: true, maxRows: 8, mapping: { x: 'step', value: 'value', group: { field: 'run' } },
+        transform: 'observations' },
+      results: { filter, mapping: { columns: [{ field: 'tableRun' }, { field: 'loss' }] } },
+      fixed: { filter: { where: { accepted: 'true' } }, mapping: { columns: [{ field: 'loss' }] } },
+      fixedPlot: { filter: { where: { accepted: 'true' } },
+        mapping: { x: 'step', series: [{ key: 'loss', field: 'loss' }] } }
+    };
+    df.data.defineTransform('observations', ({ value }) => value.map((record) => ({ ...record, value: record.loss })));
+    boot.optionLayers = (_, id) => [options[id] || {}];
+    function element(tag, id, attrs) {
+      const el = document.createElement(tag);
+      el.id = id;
+      for (const [key, value] of Object.entries(attrs)) el.setAttribute('data-df-' + key, value);
+      return hosts[id] = document.body.appendChild(el);
+    }
+    element('div', 'plot', { chart: 'line', source: 'runs' });
+    const table = element('table', 'results', { results: '', source: 'runs', filters: '', heat: '',
+      chips: 'Small: loss <= 8' });
+    const head = table.createTHead().insertRow();
+    for (const field of ['tableRun', 'loss']) {
+      const th = head.appendChild(new Node('th'));
+      th.setAttribute('data-df-field', field);
+      th.textContent = field;
+      if (field === 'loss') th.setAttribute('data-df-best', 'max');
+    }
+    element('table', 'fixed', { results: '', source: 'runs' });
+    element('div', 'fixedPlot', { chart: 'line', source: 'runs' });
+    element('div', 'local', { dropzone: '', target: 'plot' });
+    element('select', 'split', { scope: 'eval', parameter: 'split' });
+    element('button', 'preset', { scope: 'eval', preset: '{"runs":["b"],"split":"dev"}' });
+  } });
+  const df = env.DocForm;
+  const scope = df.parameters.scope('eval');
+  const source = df.data.source('runs');
+  const chart = df.chart.get('plot');
+  const results = df.results.get('results');
+  const fixed = df.results.get('fixed');
+  const table = hosts.results;
+  const series = () => Array.from(chart.spec().series, ({ key, data }) => [key, ...Array.from(data, ({ y }) => y)]);
+  const rendered = () => table.tBodies[0].rows.filter((tr) => !tr.hidden).map((tr) => tr.cells[1].textContent);
+  const state = () => [[...scope.get('runs')], scope.get('split'), series(), rendered(), results.snapshot().shown];
+  const observations = [];
+  scope.subscribe(() => observations.push(['scope', state()]));
+  results.subscribe(() => observations.push(['results', state()]));
+  source.subscribe(() => observations.push(['source', state()]));
+
+  assert.deepEqual(series(), [['a', 5, 6], ['b', 8, 9]]);
+  assert.equal(fixed.snapshot().shown, 1, 'fixed predicates compare the original scalar type');
+  assert.equal(chart.setSeriesVisible('a', false), true);
+  assert.equal(chart.setRange([1, 3]), true);
+  hosts.plot.querySelector('.df-chart-toggle').dispatchEvent(new Event('click'));
+  const localFilters = () => df.results.filters(table);
+  localFilters().set('loss', { min: 6 });
+  localFilters().chip('Small', true);
+  const header = () => table.tHead.rows[0].cells[1];
+  header().querySelector('.df-sort').dispatchEvent(new Event('click'));
+  observations.length = 0;
+  hosts.preset.dispatchEvent(new Event('click'));
+  const presetState = [['b'], 'dev', [['b', 8, 9]], ['8'], 1];
+  assert.deepEqual(observations, [['results', presetState], ['scope', presetState]]);
+  assert.equal(table.tBodies[0].rows[1].cells[1].classList.contains('df-best'), true);
+  assert.equal(hosts.preset.getAttribute('aria-current'), 'true');
+  assert.equal(header().getAttribute('aria-sort'), 'descending');
+
+  assert.equal(scope.reset(), true);
+  assert.equal(chart.visible('a'), false);
+  assert.equal(chart.snapshot().table, true);
+  assert.deepEqual([...chart.range()], [1, 3]);
+  const before = scope.snapshot();
+  const noticeCount = observations.length;
+  hosts.split.value = 'test';
+  hosts.split.dispatchEvent(new Event('change'));
+  assert.equal(scope.snapshot(), before, 'duplicate x values in the proposed slice reject the whole update');
+  assert.equal(hosts.split.value, 'dev');
+  assert.equal(observations.length, noticeCount);
+
+  assert.equal(scope.set('runs', []), true);
+  assert.deepEqual(series(), []);
+  assert.match(hosts.plot.querySelector('.df-chart-table').textContent, /No readings match/);
+  assert.match(table.querySelector('.df-filter-empty').textContent, /No rows match/);
+  assert.deepEqual([...results.snapshot().chips], ['Small']);
+  assert.equal(results.snapshot().filters.loss.min, 6);
+  const { tableRun, ...missingColumn } = row('a', 0, 5);
+  assert.equal(source.update(payload([missingColumn])), false);
+  assert.equal(source.update(payload([{ run: 'a', step: 0, loss: 5, accepted: true }])), false);
+  assert.equal(source.update(payload(Array.from({ length: 9 }, (_, i) => row('a', i, i)))), false);
+  assert.equal(source.snapshot().revision, 0);
+
+  const replacement = [row('b', 0, 7, 'test'), row('b', 4, 8, 'test'), row('a', 0, 6), row('a', 4, 7)];
+  assert.equal(source.update(payload(replacement)), true);
+  assert.deepEqual(observations.at(-1), ['source', [[], 'dev', [], [], 0]]);
+  assert.match(hosts.fixed.textContent, /No rows match/);
+  assert.match(hosts.fixedPlot.querySelector('.df-chart-empty').textContent, /No readings match/);
+  assert.equal(scope.update({ runs: ['b'], split: 'test' }), true);
+  assert.deepEqual(series(), [['b', 7, 8]]);
+  assert.equal(chart.snapshot().table, true);
+  assert.deepEqual([...chart.range()], [1, 3]);
+  assert.equal(header().getAttribute('aria-sort'), 'descending');
+  assert.deepEqual(rendered(), ['8', '7']);
+
+  const local = hosts.local.querySelector('input');
+  const text = JSON.stringify([row('a', 0, 15), row('a', 4, 16), row('b', 0, 17, 'test')]);
+  local.files = [{ name: 'local.json', text, size: text.length }];
+  local.dispatchEvent(new Event('change'));
+  env.reads.pop()();
+  const records = [row('a', 0, 6), row('b', 0, 8, 'test')];
+  assert.equal(results.update(records), true);
+  records[0].loss = 99;
+  assert.deepEqual(series(), [['b', 17]]);
+  assert.equal(scope.reset(), true);
+  assert.deepEqual(series(), [['a', 15, 16]]);
+  assert.deepEqual(rendered(), ['6']);
+  assert.equal(source.reset(), true);
+  assert.deepEqual(series(), [['a', 15, 16]]);
+  assert.deepEqual(rendered(), ['6']);
+  hosts.local.querySelector('.df-dropzone-reset').dispatchEvent(new Event('click'));
+  assert.equal(results.reset(), true);
+  assert.deepEqual(series(), [['a', 5, 6], ['b', 8, 9]]);
+
+  const override = { series: [{ key: 'override', data: [[0, 25]] }] };
+  assert.equal(chart.update(override), true);
+  assert.equal(scope.set('runs', ['a']), true);
+  assert.equal(source.update(payload(replacement)), true);
+  assert.equal(chart.spec().series[0].key, 'override');
+  assert.equal(chart.reset(), true);
+  assert.deepEqual(series(), [['a', 6, 7]]);
+});
+
+test('grouped line charts keep irregular observations, gaps, and colors through source and local file replacement', () => {
+  const initial = { type: 'csv', text: 'Step,Loss,Run,ID\n6,4,z,z6\n4,,control,c4\n1,3,control,c1\n1,5,z,z1\n6,2,control,c6\n2,8,a,a2' };
+  const replacement = { type: 'csv', text: 'ID,Run,Loss,Step\nz2,z,6,2\nc3,control,4,3\nb1,b,7,1' };
+  const host = new Node('div');
+  host.id = 'plot';
+  host.setAttribute('data-df-chart', 'line');
+  host.setAttribute('data-df-source', 'observations');
+  host.setAttribute('data-df-gaps', 'break');
+  const zone = new Node('div');
+  zone.setAttribute('data-df-dropzone', '');
+  zone.setAttribute('data-df-target', 'plot');
+  zone.setAttribute('data-df-max-rows', '2');
+  const env = setup({ modules: ['data', 'dropzone'], enhance(df, document, boot) {
+    boot.optionLayers = (feature) => feature === 'chart' ? [{ maxRows: 6, mapping: {
+      x: { field: 'Step', label: 'Training step' }, value: 'Loss', pointKey: 'ID',
+      group: { field: 'Run', series: [{ key: 'control', label: 'Reference', role: 'baseline' }, { key: 'absent' }] }
+    } }] : [];
+    df.data.define('observations', initial);
+    document.body.appendChild(host);
+    document.body.appendChild(zone);
+  } });
+  const chart = env.chart.get(host);
+  const source = env.DocForm.data.source('observations');
+  const series = () => JSON.parse(JSON.stringify(chart.model().series));
+  const input = zone.querySelector('input');
+  const status = zone.querySelector('.df-dropzone-status');
+  function choose(text, name = 'observations.json') {
+    input.files = [{ name, text, size: text.length }];
+    input.dispatchEvent(new Event('change'));
+    env.reads.pop()();
+  }
+  assert.equal(chart.model().x.label, 'Training step');
+  assert.deepEqual(series().map(({ key, name, role }) => [key, name, role]),
+    [['control', 'Reference', 'baseline'], ['a', 'a', null], ['z', 'z', null]]);
+  assert.deepEqual(series().map(({ points, missing }) => [points.map(({ x, y, key }) => [x, y, key]), missing]),
+    [[[[1, 3, 'c1'], [6, 2, 'c6']], [4]], [[[2, 8, 'a2']], []], [[[1, 5, 'z1'], [6, 4, 'z6']], []]]);
+  const zColor = series().find(({ key }) => key === 'z').index;
+  assert.equal(chart.setSeriesVisible('z', false), true);
+  const observed = [];
+  source.subscribe(({ revision }) => observed.push([revision, series().map(({ key }) => key)]));
+  assert.equal(source.update(replacement), true);
+  assert.deepEqual(observed, [[1, ['control', 'b', 'z']]]);
+  assert.deepEqual([...chart.snapshot().hiddenSeries], ['z']);
+  assert.equal(series().at(-1).index, zColor);
+
+  const local = [{ Step: 10, Loss: 2, Run: 'z', ID: 'z10' }, { Step: 7, Loss: 0, Run: 'a', ID: 'a7' }];
+  choose(JSON.stringify(local));
+  assert.deepEqual(series().map(({ points }) => points[0].y), [0, 2]);
+  assert.equal(series().at(-1).index, zColor);
+  assert.equal(source.snapshot().revision, 1);
+  choose(JSON.stringify([...local, { Step: 11, Loss: 3, Run: 'z', ID: 'z11' }]));
+  assert.match(status.textContent, /2-row limit/);
+  choose('Step,Loss,Run,ID\n10,,z,z10\n"10.0",2,z,z11', 'observations.csv');
+  assert.match(status.textContent, /Duplicate x 10 for series "z" in records 1 and 2/i);
+  assert.deepEqual(series().map(({ points }) => points[0].x), [7, 10]);
+
+  for (const bad of [
+    { ...local[0], Step: 'unknown' }, { ...local[0], Step: '1e999' }, { ...local[0], Loss: 'unknown' },
+    { ...local[0], Run: 1 }, { ...local[0], ID: '' }, { ...local[0], Loss: undefined }, { ...local[0], run: 'z', Run: undefined }
+  ]) {
+    assert.equal(source.update({ type: 'json', text: JSON.stringify([bad]) }), false);
+    assert.equal(source.snapshot().revision, 1);
+  }
+  assert.equal(source.update({ type: 'csv', text: 'step,Loss,Run,ID' }), false);
+  assert.equal(source.update({ type: 'csv', text: 'Step,Loss,Run,ID\n1,,z,z1\n"01",5,z,z2' }), false);
+  assert.equal(source.update({ type: 'value', value: Array.from({ length: 7 }, (_, Step) => ({ ...local[0], Step })) }), false);
+  assert.equal(observed.length, 1);
+  assert.equal(source.update({ type: 'value', value: [{ ...local[0], Step: 12 }] }), true);
+  assert.deepEqual(observed.at(-1), [2, ['a', 'z']], 'source replacement retains the local override');
+  zone.querySelector('.df-dropzone-reset').dispatchEvent(new Event('click'));
+  assert.deepEqual(series().map(({ key, points }) => [key, points[0].x]), [['z', 12]]);
+  assert.equal(series()[0].index, zColor);
+  assert.equal(source.reset(), true);
+  assert.deepEqual(series().map(({ key }) => key), ['control', 'a', 'z']);
+  assert.equal(series().at(-1).index, zColor);
+  assert.equal(source.update({ type: 'csv', text: 'Step,Loss,Run,ID' }), true);
+  assert.deepEqual(series(), []);
+  assert.equal(source.reset(), true);
+  assert.equal(series().at(-1).index, zColor);
+});
+
+test('grouped scatter charts match exact fields and compare timestamps by instant within each series', () => {
+  const host = new Node('div');
+  host.id = 'plot';
+  host.setAttribute('data-df-chart', 'scatter');
+  host.setAttribute('data-df-source', 'observations');
+  const utc = { time: '2025-05-01T00:00:00Z', ' score ': 2, run: 'utc' };
+  const offset = { time: '2025-05-01T01:00:00+01:00', ' score ': 3, run: 'offset' };
+  const env = setup({ modules: ['data'], enhance(df, document, boot) {
+    boot.optionLayers = () => [{ x: { type: 'time' }, y: { type: 'log' },
+      mapping: { x: 'time', value: ' score ', group: { field: 'run' } } }];
+    df.data.define('observations', { type: 'value', value: [utc, offset] });
+    document.body.appendChild(host);
+  } });
+  const chart = env.chart.get(host);
+  const source = env.DocForm.data.source('observations');
+  const time = Date.parse(utc.time);
+  assert.deepEqual(Array.from(chart.model().series, ({ key, points }) => [key, points[0].x]), [['offset', time], ['utc', time]]);
+  for (const bad of [{ ...offset, run: 'utc' }, { ...offset, time: '2025-05-01T00:00:00' }, { ...offset, ' score ': 0 }]) {
+    assert.equal(source.update({ type: 'value', value: [utc, bad] }), false);
+    assert.equal(source.snapshot().revision, 0);
+  }
+  assert.match(env.warnings.join('\n'), /Duplicate x .* for series "utc" in records 1 and 2/);
 });
 
 test('inline sources preserve raw fallbacks and full chart transforms keep series identity across renaming', () => {

@@ -13,7 +13,7 @@
     component.issue(feature, host, message, correction);
   }
 
-  function readStops(host, chartHost, input, list) {
+  function readStops(host, chartHosts, input, list) {
     if (!Array.isArray(input)) {
       issue(host, 'Invalid checkpoints option.', 'Supply an ordered array of checkpoint objects.');
       return null;
@@ -33,7 +33,8 @@
       if (stop.detailId !== undefined) {
         detail = typeof stop.detailId === 'string' && component.target(stop.detailId, feature);
         var playbackList = detail && detail.closest(HOST);
-        if (!detail || !contains(document.body, detail) || contains(detail, host) || contains(chartHost, detail) ||
+        if (!detail || !contains(document.body, detail) || contains(detail, host) ||
+          chartHosts.some(function (chartHost) { return contains(chartHost, detail); }) ||
           (playbackList && playbackList !== host) || detail.querySelector(HOST) ||
           (detail.namespaceURI && detail.namespaceURI !== 'http://www.w3.org/1999/xhtml') ||
           detail.tagName === 'SCRIPT' || detail.tagName === 'TEMPLATE') {
@@ -50,7 +51,8 @@
     for (var checkpoint of stops) {
       for (var note of [checkpoint.item, checkpoint.detail]) {
         if (!note) continue;
-        if (bound.has(note) || contains(note, chartHost) || overlapsControlledNote(note)) {
+        if (bound.has(note) || overlapsControlledNote(note) ||
+          chartHosts.some(function (chartHost) { return contains(note, chartHost); })) {
           return noteConflict(host, checkpoint);
         }
         bound.set(note, checkpoint);
@@ -86,9 +88,31 @@
     function option(name, fallback, valid) {
       return component.option(feature, host, name, fallback, valid, options);
     }
-    var targetId = DocForm.data(host, 'target', option('target', null, function () { return true; }));
-    var chartHost = typeof targetId === 'string' && component.target(targetId, feature);
-    if (!chartHost || chartHost === host) {
+    var targetId = DocForm.data(host, 'target', null);
+    var groupOption = DocForm.data(host, 'x-group', null);
+    if (targetId === null && groupOption === null) {
+      targetId = option('target', null, function () { return true; });
+      groupOption = option('xGroup', null, function () { return true; });
+    }
+    var xGroup = items.key(groupOption);
+    var chartHosts;
+    if (groupOption !== null) {
+      if (!xGroup || targetId !== null) {
+        if (report) issue(host, 'Invalid playback x-group target.',
+          'Supply one nonempty x-group name in data-df-x-group or xGroup, or supply a chart target.');
+        return null;
+      }
+      chartHosts = DocForm.chart._positionHosts(xGroup, !report);
+      if (!chartHosts.length) {
+        if (report) issue(host, 'Cannot resolve chart x-group "' + xGroup + '".',
+          'Mount charts with this data-df-x-group before mounting playback.');
+        return null;
+      }
+    } else {
+      var chartHost = typeof targetId === 'string' && component.target(targetId, feature);
+      chartHosts = chartHost && chartHost !== host ? [chartHost] : [];
+    }
+    if (!chartHosts.length) {
       if (report) reportTarget(host, targetId);
       return null;
     }
@@ -98,8 +122,8 @@
       return { key: DocForm.data(item, 'key'), x: component.number(item, 'x', feature, NaN, Number.isFinite),
         label: title ? title.textContent : undefined, detailId: DocForm.data(item, 'detail') };
     }) : option('checkpoints', [], function () { return true; });
-    var stops = readStops(host, chartHost, input, list);
-    return stops && { chartHost: chartHost, targetId: targetId, stops: stops, option: option };
+    var stops = readStops(host, chartHosts, input, list);
+    return stops && { chartHosts: chartHosts, targetId: targetId, xGroup: xGroup, stops: stops, option: option };
   }
 
   function reportTarget(host, targetId) {
@@ -107,8 +131,18 @@
       'Set data-df-target or the target option to the unique plain ID of a mounted chart.');
   }
 
-  function playableRange(host, model, stops, report) {
-    var range = model && !model.errors.length && model.type === 'line' && !model.x.time && !model.x.log &&
+  function revealModel(model) {
+    return model && !model.errors.length && model.type === 'line' && !model.categories && !model.x.time && !model.x.log;
+  }
+
+  function playableRange(host, models, stops, report) {
+    if (models.slice(1).some(function (model) { return !revealModel(model); })) {
+      if (report) issue(host, 'The playback x-group has an incompatible chart.',
+        'Use continuous linear-x line charts with the same x units for group playback.');
+      return null;
+    }
+    var model = models[0];
+    var range = revealModel(model) &&
       model.series.some(function (series) { return series.points.length; }) && DocForm.chart.domain(model);
     if (!range || !Number.isFinite(range[1] - range[0])) {
       if (report) issue(host, 'The target has no playable numeric line range.',
@@ -131,15 +165,18 @@
 
     var instance = readInstance(host, options, true);
     if (!instance) return null;
-    var chartHost = instance.chartHost;
-    var chart = DocForm.chart.get(chartHost);
-    if (!chart) {
+    var chartHost = instance.chartHosts[0];
+    var models = instance.chartHosts.map(function (target) {
+      var chart = DocForm.chart.get(target);
+      return chart && chart.model();
+    });
+    if (!models[0] && !instance.xGroup) {
       reportTarget(host, instance.targetId);
       return null;
     }
     var stops = instance.stops;
-    var model = chart.model();
-    var range = playableRange(host, model, stops, true);
+    var model = models[0];
+    var range = playableRange(host, models, stops, true);
     if (!range) return null;
     var positive = function (value) { return Number.isFinite(value) && value > 0; };
     var duration = component.number(host, 'duration', feature, instance.option('duration', 800, positive), positive);
@@ -160,6 +197,7 @@
     var leg = null;
     var frame = null;
     var announced = null;
+    var beforeReconcile = null;
     var motion = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)');
     var events = component.signal(feature, host, snapshot);
     var api = {
@@ -249,7 +287,7 @@
       var before = snapshot();
       cancel();
       restAt(to);
-      paint(x);
+      paint(x, origin);
       renderControls();
       return function () { publish(before, origin); };
     }
@@ -276,7 +314,7 @@
       }
       leg.progress = progress;
       x = position;
-      paint(x);
+      paint(x, origin);
       frame = root.requestAnimationFrame(function (now) { tick(now, activeLeg, origin); });
     }
 
@@ -291,7 +329,7 @@
       var activeLeg = leg;
       state = 'playing';
       frame = root.requestAnimationFrame(function (time) { tick(time, activeLeg, origin); });
-      paint(x);
+      paint(x, origin);
       renderControls();
       publish(before, origin);
       return true;
@@ -317,30 +355,39 @@
 
     function reset(origin) { return jump(range[0], origin); }
 
-    function reconcile(nextModel, origin) {
-      var before = snapshot();
+    function reconcile(models, origin, referenceChanged) {
+      var nextRange = playableRange(host, models, stops, true);
+      if (!referenceChanged && Boolean(range) === Boolean(nextRange)) return { x: x };
+      var before = beforeReconcile || snapshot();
       cancel();
-      model = nextModel;
-      range = playableRange(host, model, stops, true);
+      model = models[0];
+      range = nextRange;
       var reached = stops.find(function (stop) { return stop.key === lastReached; });
       var remembered = lastReached;
       restAt(range ? (reached ? reached.x : range[0]) : null);
       if (!range) lastReached = remembered;
       renderControls();
-      component.transaction(function () { publish(before, origin || 'api'); });
-      return x;
+      if (beforeReconcile) return { x: x };
+      beforeReconcile = before;
+      return { x: x, notify: function () {
+        component.transaction(function () {
+          beforeReconcile = null;
+          publish(before, origin || 'api');
+        });
+      } };
     }
 
-    var paint = DocForm.chart._playback(chartHost, reconcile, checkpoint);
+    var paint = DocForm.chart._playback(chartHost, instance.xGroup, reconcile, checkpoint);
     if (!paint) {
-      issue(host, 'The chart already has a playback controller.', 'Use one playback controller per chart.');
+      issue(host, 'A target chart already has a playback controller.', 'Use one playback controller per chart or x-group.');
       return null;
     }
+    var controlIds = instance.chartHosts.concat(host).map(function (target) { return target.id; }).filter(Boolean);
     [['Previous', previous], ['Next', next], ['Pause', pause], ['Reset', reset]].forEach(function (entry) {
       var button = document.createElement('button');
       button.type = 'button';
       button.textContent = entry[0];
-      button.setAttribute('aria-controls', instance.targetId + (host.id ? ' ' + host.id : ''));
+      if (controlIds.length) button.setAttribute('aria-controls', controlIds.join(' '));
       button.addEventListener('click', function () {
         if (button.getAttribute('aria-disabled') === 'false') transport(entry[1], 'user')();
       });
@@ -365,9 +412,9 @@
       });
     }
     restAt(shared ? shared.x : x);
-    paint(x);
     renderControls();
     controllers.set(host, api);
+    paint(x);
     component.notify(function () { publish(null, 'init'); });
     return api;
   }
@@ -384,8 +431,8 @@
       if (DocForm._boot && !DocForm._boot.setupComplete) return;
       var instance = readInstance(host);
       if (!instance) return;
-      var model = DocForm.chart._selectionModel(instance.chartHost);
-      var range = playableRange(host, model, instance.stops);
+      var models = instance.chartHosts.map(DocForm.chart._selectionModel);
+      var range = playableRange(host, models, instance.stops);
       if (!range) return;
       var initial = instance.stops[0];
       var seed = initial && initial.x === range[0] && items.mode(host, feature) !== 'follow' &&

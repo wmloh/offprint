@@ -11,12 +11,20 @@ const entry = fs.readFileSync(entryURL, 'utf8');
 function element(tag) {
   const attrs = new Map();
   const classes = new Set();
+  const properties = new Map();
   const listeners = new EventTarget();
+  let text = '';
   return {
     tagName: tag.toUpperCase(),
     nodeType: 1,
     clientWidth: 400,
     childNodes: [],
+    get children() { return this.childNodes.filter(node => node.nodeType === 1); },
+    get textContent() { return text + this.childNodes.map(node => node.textContent).join(''); },
+    set textContent(value) {
+      text = String(value);
+      while (this.firstChild) this.removeChild(this.firstChild);
+    },
     get id() { return this.getAttribute('id') || ''; },
     set id(value) { this.setAttribute('id', value); },
     get parentElement() { return this.parentNode || null; },
@@ -37,6 +45,7 @@ function element(tag) {
     getBoundingClientRect() { return { height: 10, width: 10 }; },
     focus() { this.focused = true; },
     appendChild(child) { return this.insertBefore(child, null); },
+    before(child) { this.parentNode?.insertBefore(child, this); },
     insertBefore(child, before) {
       child.parentNode?.removeChild(child);
       const index = this.childNodes.indexOf(before);
@@ -53,7 +62,11 @@ function element(tag) {
       Object.defineProperty(event, 'target', { value: this, configurable: true });
       return listeners.dispatchEvent(event);
     },
-    style: { setProperty() {}, removeProperty() {} },
+    style: {
+      setProperty: (name, value) => properties.set(name, String(value)),
+      removeProperty: name => properties.delete(name),
+      getPropertyValue: name => properties.get(name) ?? ''
+    },
     classList: { add: (...names) => names.forEach(name => classes.add(name)), remove: name => classes.delete(name),
       contains: name => classes.has(name), toggle: (name, on) => on ? classes.add(name) : classes.delete(name) }
   };
@@ -255,6 +268,186 @@ test('mixed features load all shipped assets and register data before author set
   assert.equal(new Set(p.loads).size, p.loads.length);
   assert.ok(p.loads.includes('docform/js/scenarios.js'));
   assert.ok(p.loads.includes('docform/js/zoomtools.js'));
+});
+
+const matrixMapping = {
+  row: 'actual class', column: 'prediction',
+  rows: [{ key: 'A', label: 'Actual A' }, { key: 'B', label: 'Actual B' }],
+  columns: [{ key: 'A', label: 'Predicted A' }, { key: 'B', label: 'Predicted B' }],
+  measures: [
+    { key: 'count', field: 'count', label: 'Count' },
+    { key: 'share', field: 'percent', label: 'Normalized', unit: '%', range: [0, 100],
+      normalization: 'Share of actual class' }
+  ]
+};
+
+function matrixPage({ enabled = true, fail, options, attributes, input } = {}) {
+  const p = page({ fail, config: { profile: 'none', features: { matrix: enabled },
+    options: { matrix: { instances: { confusion: { mapping: matrixMapping, ...options } } } } } });
+  const table = p.body.appendChild(element('table'));
+  table.id = 'confusion';
+  table.setAttribute('data-df-matrix', '');
+  table.setAttribute('data-df-source', 'outcomes');
+  for (const [key, value] of Object.entries(attributes || {})) table.setAttribute(key, value);
+  p.ids.set(table.id, table);
+  p.body.querySelectorAll = selector => selector === 'table[data-df-matrix]' ? [table] : [];
+  const caption = table.appendChild(element('caption'));
+  caption.textContent = 'Confusion matrix';
+  const fallbackHead = table.appendChild(element('thead'));
+  fallbackHead.appendChild(element('tr')).appendChild(element('th')).textContent = 'Actual class';
+  const fallbackBody = table.appendChild(element('tbody'));
+  fallbackBody.appendChild(element('tr')).appendChild(element('td')).textContent = 'Static evaluation totals';
+  if (enabled) p.DF.setup(DF => DF.data.define('outcomes', input || {
+    type: 'csv', text: 'prediction,count,actual class,percent\nA,4,B,50\nB,0,A,\nA,8,A,80'
+  }));
+  return { ...p, table, caption, fallbackHead, fallbackBody };
+}
+
+const matrixRecord = (row, column, count, percent) => ({ 'actual class': row, prediction: column, count, percent });
+const matrixValues = (...value) => ({ type: 'value', value });
+
+test('offline matrices pivot by declared keys and use one scale per native measure choice', async () => {
+  const p = matrixPage();
+  const events = [];
+  p.table.addEventListener('df:matrix:change', event => events.push(event));
+  await p.start();
+  const matrix = p.DF.matrix.get('confusion');
+  assert.equal(matrix, p.DF.matrix.mount(p.table));
+  assert.ok(p.loads.indexOf('docform/js/data.js') < p.loads.indexOf('docform/js/matrix.js'));
+  assert.ok(p.loads.includes('docform/css/matrix.css'));
+  assert.equal(p.table.firstChild, p.caption);
+  const [label, status, ramp] = p.body.firstChild.children;
+  const picker = label.firstChild;
+  assert.equal(picker.tagName, 'SELECT');
+  assert.equal(label.tagName, 'LABEL');
+  assert.match(label.textContent, /^Measure /);
+  assert.deepEqual(picker.children.map(option => option.value), ['count', 'share']);
+  assert.equal(status.getAttribute('role'), 'status');
+  assert.equal(ramp.getAttribute('aria-hidden'), 'true');
+  assert.deepEqual(p.table.children[1].firstChild.children.slice(1).map(cell =>
+    [cell.tagName, cell.getAttribute('scope'), cell.textContent]),
+    [['TH', 'col', 'Predicted A'], ['TH', 'col', 'Predicted B']]);
+  const cells = () => p.table.lastChild.children.flatMap(row => row.children.slice(1));
+  const values = () => cells().map(cell => cell.textContent);
+  const shades = () => cells().map(cell => cell.style.getPropertyValue('--df-matrix-strength'));
+  assert.deepEqual(p.table.lastChild.children.map(row => [row.firstChild.getAttribute('scope'), row.firstChild.textContent]),
+    [['row', 'Actual A'], ['row', 'Actual B']]);
+  assert.deepEqual(values(), ['8', '0', '4', 'Missing']);
+  assert.deepEqual(shades(), ['1', '0', '0.5', '']);
+  assert.equal(status.textContent, '0 to 8');
+  assert.equal(ramp.hidden, false);
+
+  const observed = [];
+  matrix.subscribe((state, meta) => observed.push([state.key, meta.origin, values()]), { immediate: true });
+  picker.focus();
+  picker.value = 'share';
+  picker.dispatchEvent(new Event('change'));
+  assert.equal(label.firstChild, picker);
+  assert.equal(picker.focused, true);
+  assert.deepEqual(values(), ['80%', 'Missing', '50%', 'Missing']);
+  assert.deepEqual(shades(), ['0.8', '', '0.5', '']);
+  assert.equal(status.textContent, 'Share of actual class · 0% to 100%');
+  assert.deepEqual({ ...matrix.snapshot() }, { key: 'share', index: 1, label: 'Normalized', total: 2 });
+  assert.equal(Object.isFrozen(matrix.snapshot()), true);
+  assert.equal(matrix.select('unknown'), false);
+  assert.equal(matrix.select('share'), true);
+  assert.deepEqual(observed, [
+    ['count', 'init', ['8', '0', '4', 'Missing']],
+    ['share', 'user', ['80%', 'Missing', '50%', 'Missing']]
+  ]);
+  assert.deepEqual(events.map(event => [event.target, event.bubbles, event.detail.origin, event.detail.previous?.key]),
+    [[p.table, true, 'init', undefined], [p.table, true, 'user', 'count']]);
+
+  const source = p.DF.data.source('outcomes');
+  const replaced = matrixValues(matrixRecord('B', 'B', 12, 65));
+  assert.equal(source.update(replaced), true);
+  assert.equal(matrix.snapshot().key, 'share');
+  assert.deepEqual(values(), ['Missing', 'Missing', 'Missing', '65%']);
+  assert.equal(label.firstChild, picker);
+  assert.equal(matrix.update([matrixRecord('A', 'A', 3, 100)]), true);
+  assert.equal(source.update(matrixValues(matrixRecord('A', 'B', 11, 75))), true);
+  assert.deepEqual(values(), ['100%', 'Missing', 'Missing', 'Missing']);
+  assert.equal(matrix.reset(), true);
+  assert.equal(matrix.snapshot().key, 'count');
+  assert.deepEqual(values(), ['Missing', '11', 'Missing', 'Missing']);
+  assert.deepEqual(shades(), ['', '', '', '']);
+  assert.equal(status.textContent, 'All values equal 11');
+  assert.equal(ramp.hidden, true);
+  assert.equal(source.reset(), true);
+  assert.deepEqual(values(), ['8', '0', '4', 'Missing']);
+  assert.equal(source.update(matrixValues()), true);
+  assert.ok(values().every(value => value === 'Missing'));
+  assert.equal(status.textContent, 'No values supplied');
+  assert.deepEqual(Array.from(p.DF.diagnostics.list()), []);
+});
+
+test('invalid matrix replacements roll back and authored content survives failed or disabled enhancement', async () => {
+  const p = matrixPage({ options: { maxRows: 3, maxSize: '512 B', maxCells: 4 } });
+  await p.start();
+  const source = p.DF.data.source('outcomes');
+  const matrix = p.DF.matrix.get(p.table);
+  const initial = source.snapshot();
+  const body = p.table.lastChild;
+  const valid = matrixRecord('A', 'A', 2, null);
+  for (const input of [
+    matrixValues(valid, valid),
+    matrixValues(matrixRecord('A', 'unknown', 2, null)),
+    matrixValues(matrixRecord('A', 'A', '2', null)),
+    matrixValues({ 'actual class': 'A', prediction: 'A', count: 2 }),
+    matrixValues(valid, valid, valid, valid),
+    matrixValues({ ...valid, padding: 'a'.repeat(512) }),
+    { type: 'csv', text: 'actual class,prediction,count' }
+  ]) {
+    assert.equal(source.update(input), false);
+    assert.equal(source.snapshot(), initial);
+    assert.equal(p.table.lastChild, body);
+  }
+  assert.equal(matrix.update([matrixRecord('A', 'A', 2, true)]), false);
+  assert.equal(p.table.lastChild, body);
+  for (const inputs of [
+    { enabled: false },
+    { fail: ['docform/js/data.js'] },
+    { attributes: { 'data-df-max-cells': '3' } },
+    { options: { mapping: { ...matrixMapping, rows: [matrixMapping.rows[0], matrixMapping.rows[0]] } } },
+    { options: { mapping: { ...matrixMapping, measures: [matrixMapping.measures[0], matrixMapping.measures[0]] } } },
+    { input: matrixValues(matrixRecord('A', 'unknown', 3, 50)) }
+  ]) {
+    const fallback = matrixPage(inputs);
+    await fallback.start();
+    assert.deepEqual(fallback.body.children, [fallback.table]);
+    assert.deepEqual(fallback.table.children, [fallback.caption, fallback.fallbackHead, fallback.fallbackBody]);
+    if (inputs.input) {
+      const api = fallback.DF.matrix.get(fallback.table);
+      assert.equal(api.snapshot(), null);
+      assert.equal(api.update([valid]), true);
+      assert.equal(api.reset(), true);
+      assert.deepEqual(fallback.table.children, [fallback.caption, fallback.fallbackHead, fallback.fallbackBody]);
+      assert.equal(fallback.DF.data.source('outcomes').update(matrixValues(valid)), true);
+      assert.equal(api.snapshot().key, 'count');
+    }
+  }
+});
+
+test('matrix selection follows its key through named transform replacements', async () => {
+  const p = matrixPage({ options: { transform: 'matrix-spec', transformOutput: 'spec' },
+    input: matrixValues(matrixRecord('A', 'A', 1, 50)) });
+  p.DF.setup(DF => DF.data.defineTransform('matrix-spec', ({ value }, { mapping }) => {
+    const count = value[0].count;
+    const measures = count === 1 ? mapping.measures :
+      count === 2 ? [{ ...mapping.measures[1], label: 'Row share' }, mapping.measures[0]] : mapping.measures.slice(0, 1);
+    return { records: value, mapping: { ...mapping, measures } };
+  }));
+  await p.start();
+  const matrix = p.DF.matrix.get(p.table);
+  const source = p.DF.data.source('outcomes');
+  const [label] = p.body.firstChild.children;
+  assert.equal(matrix.select('share'), true);
+  assert.equal(source.update(matrixValues(matrixRecord('A', 'A', 2, 75))), true);
+  assert.deepEqual({ ...matrix.snapshot() }, { key: 'share', index: 0, label: 'Row share', total: 2 });
+  assert.equal(label.firstChild.value, 'share');
+  assert.equal(source.update(matrixValues(matrixRecord('A', 'A', 3, 90))), true);
+  assert.deepEqual({ ...matrix.snapshot() }, { key: 'count', index: 0, label: 'Count', total: 1 });
+  assert.equal(label.hidden, true);
 });
 
 test('theme changes commit before listeners and queue writes requested by subscribers', async () => {

@@ -303,3 +303,48 @@ test('scoped batches validate before publication and notify filtered subscribers
   assert.equal(initial.total, 1);
   assert.match(warned.join('\n'), /subscriber.*callback failure/);
 });
+
+test('scoped multiple choices use ordered immutable arrays in controls, presets and subscriptions', () => {
+  const attrs = { 'data-df-parameter': 'runs', 'data-df-parameter-label': 'Runs to show' };
+  const generated = new FakeElement('div', attrs);
+  const native = new FakeElement('select', { ...attrs, multiple: '' });
+  const preset = new FakeElement('button', { 'data-df-preset': '{"runs":["b","a"]}' });
+  const { parameters, events } = page({ scoped: [generated, native], presets: [preset], setup(params) {
+    params.define('page', { runs: { type: 'multiselect', choices: [
+      { value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }
+    ] } });
+  } });
+  const scope = parameters.scope();
+  const group = generated.find('fieldset');
+  const checks = group.children.filter((child) => child.tag === 'label').map((label) => label.find('input'));
+  assert.equal(group.find('legend').textContent, 'Runs to show');
+  assert.equal(native.getAttribute('aria-label'), 'Runs to show');
+  assert.deepEqual(checks.map((check) => [check.type, check.checked]), [['checkbox', true], ['checkbox', true]]);
+  assert.equal(preset.getAttribute('aria-current'), 'true');
+  const old = scope.get('runs');
+  assert.ok(Object.isFrozen(old));
+  assert.equal(scope.set('runs', ['b', 'a']), true);
+  assert.equal(scope.get('runs'), old);
+  assert.equal(events.length, 0);
+  for (const invalid of ['a', ['a', 'a'], ['c'], [1], Array(1)]) assert.equal(scope.set('runs', invalid), false);
+
+  checks[0].checked = false;
+  checks[0].dispatchEvent(new Event('change'));
+  assert.deepEqual([...scope.get('runs')], ['b']);
+  assert.deepEqual(native.children.map((option) => option.selected), [false, true]);
+  assert.equal(preset.getAttribute('aria-current'), null);
+  native.children[1].selected = false;
+  native.dispatchEvent(new Event('change'));
+  assert.deepEqual([...scope.get('runs')], []);
+  assert.deepEqual(checks.map((check) => check.checked), [false, false]);
+  preset.click();
+  assert.deepEqual([...scope.get('runs')], ['a', 'b']);
+  assert.equal(preset.getAttribute('aria-current'), 'true');
+  const input = ['a'];
+  assert.equal(scope.set('runs', input), true);
+  input.push('b');
+  assert.deepEqual([...scope.get('runs')], ['a']);
+  assert.equal(scope.reset(), true);
+  assert.deepEqual([...scope.get('runs')], ['a', 'b']);
+  assert.deepEqual([...events.at(-1).detail.previous.runs], ['a']);
+});

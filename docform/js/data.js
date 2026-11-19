@@ -456,13 +456,53 @@
       Object.assign({}, instance);
   }
 
-  function mappedFields(value, fields) {
-    var keys = fields.map(keyOf);
+  function mappedFields(value, fields, exact) {
+    var keys = fields.map(function (field) {
+      var key = keyOf(field);
+      return exact && key ? field : key;
+    });
     if (keys.includes(null)) throw DataError('Mapping fields must be nonempty strings.');
     if (!Array.isArray(value) || value.some(function (record) {
       return !isPlain(record) || keys.some(function (key) { return !hasOwn.call(record, key) || !scalar(record[key]); });
     })) throw DataError('Expected records with scalar fields ' + keys.join(', ') + '.');
     return keys;
+  }
+
+  function mappedInterval(records, descriptor, parsed, at) {
+    if (descriptor === undefined) return function () {};
+    if (!isPlain(descriptor)) throw DataError(at + ' needs an interval mapping with lower and upper field names.');
+    var fields = [descriptor.lower, descriptor.upper];
+    if (descriptor.count !== undefined) fields.push(descriptor.count);
+    if (descriptor.label !== undefined && (typeof descriptor.label !== 'string' || !descriptor.label.trim())) {
+      throw DataError(at + ' needs a nonempty interval label.');
+    }
+    if (fields.some(function (field) { return !keyOf(field); })) {
+      throw DataError(at + ' needs nonempty field names for the interval bounds and optional count.');
+    }
+    var names = fields.map(function (field) { return JSON.stringify(field); }).join(', ');
+    if (parsed && parsed.type === 'csv' && fields.some(function (field) { return !parsed.columns.includes(field); })) {
+      throw DataError(at + ' needs CSV fields ' + names + '.');
+    }
+    var intervals = new Map();
+    records.forEach(function (record, i) {
+      var location = at + ' in record ' + (i + 1) + ' (fields ' + names + ')';
+      if (fields.some(function (field) { return !hasOwn.call(record, field); })) {
+        throw DataError(location + ' needs all mapped fields.');
+      }
+      var lower = record[fields[0]];
+      var upper = record[fields[1]];
+      var count = fields.length === 3 ? record[fields[2]] : null;
+      if (lower === null && upper === null) {
+        if (count !== null && (!Number.isInteger(count) || count < 0)) {
+          throw DataError(location + ' needs a nonnegative integer interval count.');
+        }
+        return;
+      }
+      intervals.set(record, DocForm._interval.normalize({
+        lower: lower, upper: upper, label: descriptor.label, count: count === null ? undefined : count
+      }, location));
+    });
+    return function (record) { return intervals.get(record); };
   }
 
   function transformValue(options, host, input) {
@@ -474,33 +514,82 @@
     });
   }
 
-  function binding(feature, host, options, prepare) {
+  function recordFilter(options) {
+    var spec = options.filter;
+    if (spec == null) return null;
+    if (!isPlain(spec) || (spec.fields !== undefined && !isPlain(spec.fields)) ||
+        (spec.where !== undefined && !isPlain(spec.where))) {
+      throw DataError('Use filter with a fields or where object.');
+    }
+    if (options.transformOutput === 'spec') throw DataError('Apply filters inside full-spec transforms.');
+    var fields = Object.entries(spec.fields || {});
+    var fixed = Object.entries(spec.where || {});
+    if ((!fields.length && !fixed.length) || fields.some(function (entry) { return !keyOf(entry[1]); }) ||
+        fixed.some(function ([field, value]) {
+          return !keyOf(field) || !scalar(value) || (typeof value === 'number' && !Number.isFinite(value));
+        })) {
+      throw DataError('Filters need exact record fields and scalar fixed values.');
+    }
+    var scope = null;
+    if (fields.length || spec.scope !== undefined) {
+      var keys = fields.map(function (entry) { return entry[0]; });
+      scope = DocForm._parameterViews && DocForm._parameterViews(spec.scope, keys);
+      if (!scope) throw DataError('Filter fields need select or multiselect keys in a named parameter scope.');
+    }
+    var required = fields.map(function (entry) { return entry[1]; }).concat(fixed.map(function (entry) { return entry[0]; }));
+    return {
+      scope: scope,
+      rows: function (records, parsed, values) {
+        mappedFields(records, required, true);
+        if (parsed && parsed.type === 'csv' && required.some(function (key) { return !parsed.columns.includes(key); })) {
+          throw DataError('A required CSV filter field is missing.');
+        }
+        if (scope && values === undefined) values = scope.snapshot();
+        return records.filter(function (record) {
+          return fixed.every(function ([field, value]) { return record[field] === value; }) &&
+            fields.every(function ([key, field]) {
+              var choice = values[key];
+              return Array.isArray(choice) ? choice.includes(record[field]) : record[field] === choice;
+            });
+        });
+      }
+    };
+  }
+
+  function binding(feature, host, options, prepare, filter) {
     var name = keyOf(host.getAttribute('data-df-source'));
     var entry = sources.get(name);
     var caps = limits(host, options);
     var cached;
+    var cachedValues;
     var initial;
-    function prepareView(input, first) {
+    var scope = filter && filter.scope;
+    function prepareView(input, first, values) {
       if (input.bytes > caps.maxBytes && !(first && feature === 'data-view')) {
         throw DataError('Data for ' + (host.id || feature) + ' exceeds ' + formatSize(caps.maxBytes) + '.');
       }
       var value = transformValue(options, host, input);
       if (value !== input.snapshot.value && !(first && feature === 'data-view') &&
           size(JSON.stringify(value)) > caps.maxBytes) throw DataError('Transformed data exceeds the view’s size limit.');
-      return prepare(value, options.mapping, input, options.transformOutput === 'spec', caps, first);
+      return prepare(value, options.mapping, input, options.transformOutput === 'spec', caps, values);
     }
     return {
       read: function () {
         if (!entry) throw DataError('No data named "' + name + '" is registered.');
         var input = entry.current();
-        if (cached !== input) {
-          initial = prepareView(input, true);
+        var values = scope && scope.snapshot();
+        if (cached !== input || cachedValues !== values) {
+          initial = prepareView(input, true, values);
           cached = input;
+          cachedValues = values;
         }
         return initial;
       },
       mount: function (view) {
         if (entry) entry.bindings.push({ view: view, prepare: prepareView });
+        if (entry && scope) scope.bind(function (values) {
+          return view.prepareFilter(prepareView(entry.current(), false, values), values);
+        });
         try { view.start(this.read()); }
         catch (error) { runtime.issue(feature, host, error.message); }
       }
@@ -981,7 +1070,7 @@
   });
   DocForm._dataSource = {
     binding: binding, options: optionsFor, fields: mappedFields, key: keyOf, input: readInput,
-    columns: tableMapping, transform: transformValue,
+    columns: tableMapping, interval: mappedInterval, transform: transformValue, filter: recordFilter, size: size,
     fileDisplay: function (el, caps) {
       return { view: viewMode('dropzone', el), open: treeDepth('dropzone', el), limits: caps };
     },

@@ -50,3 +50,12 @@
 .df-scenarios-conditions {
   margin-block-start: var(--df-space-1);
 }
+
+.df-scenarios-interval,
+.df-scenarios-paired {
+  display: block;
+}
+
+.df-scenarios-interval {
+  color: var(--df-text-muted);
+}

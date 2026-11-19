@@ -251,8 +251,9 @@
         return given !== null ? given : cell.textContent;
       });
       var keys = texts.map(function (t) { return String(t).trim(); });
-      var numeric = numericColumn(texts);
-      var time = !numeric && timeColumn(texts);
+      var typeTexts = rows.length || !settings.referenceTexts ? texts : settings.referenceTexts[c];
+      var numeric = numericColumn(typeTexts);
+      var time = !numeric && timeColumn(typeTexts);
       var values = keys.map(function (t) { return numeric ? parseCell(t) : time ? timeValue(t) : t; });
       var bestDir = direction(DocForm.data(th, 'best', null));
       var heatAttr = th.getAttribute('data-df-heat');
@@ -293,8 +294,8 @@
       return {
         th: th, name: name, label: th.textContent.trim(), explicit: th.hasAttribute('data-df-field'),
         keys: keys, values: values, numeric: numeric,
-        kind: numeric ? 'number' : time ? 'time' : 'text', dateOnly: time && keys.every(function (k) { var p = timeParts(k); return !p || p.date; }),
-        zoned: time && keys.some(function (k) { var p = timeParts(k); return p && p.zone; }),
+        kind: numeric ? 'number' : time ? 'time' : 'text', dateOnly: time && typeTexts.every(function (k) { var p = timeParts(k); return !p || p.date; }),
+        zoned: time && typeTexts.some(function (k) { var p = timeParts(k); return p && p.zone; }),
         best: bestDir, rule: rule, heatOn: heatOn, heatDir: heatDir, range: range, cellTint: cellTint,
         filter: filterOn ? (filterAttr === 'values' || !(numeric || time) ? 'values' : numeric ? 'range' : 'time') : null
       };
@@ -470,6 +471,7 @@
     emptyCell.textContent = 'No rows match these filters. ';
     var emptyClear = make('button', null, 'Clear filters');
     emptyClear.type = 'button';
+    emptyClear.hidden = !!settings.noMatches;
     emptyClear.addEventListener('click', function () { api.clear(); });
     emptyCell.appendChild(emptyClear);
     emptyBody.hidden = true;
@@ -749,6 +751,11 @@
       runtime.issue('results', table, 'Enable data to use a named results source.');
       return null;
     }
+    var filter;
+    if (named) {
+      try { filter = data.filter(options); }
+      catch (error) { runtime.issue('results', table, error.message); return null; }
+    }
     var authoredHead = table.tHead && table.tHead.rows.length;
     if (!authoredHead && !options.mapping) {
       runtime.issue('results', table, 'A results table needs authored headers or a column mapping.');
@@ -758,7 +765,7 @@
     if (!template.rows.length) template.insertRow();
     var caps = data ? DocForm.dataset.limits(table, options) : { maxBytes: 1024 * 1024, maxRows: 5000 };
 
-    function prepare(records, mapping, parsed) {
+    function prepare(records, mapping, parsed, values) {
       if (!Array.isArray(records) || records.some(function (record) {
         return !record || typeof record !== 'object' || Array.isArray(record);
       })) throw new Error('Results need an array of records.');
@@ -774,8 +781,9 @@
       });
       if (mapping !== undefined) {
         if (!data) throw new Error('Enable data to use an explicit results mapping.');
-        columns = data.columns(records, mapping, null, parsed).map(function (col) {
-          return Object.assign({ strict: true }, col);
+        columns = data.columns(records, mapping, null, parsed).map(function (col, i) {
+          return Object.assign({ strict: true, interval: data.interval(records, mapping.columns[i].interval,
+            parsed, 'Results column ' + JSON.stringify(col.field)) }, col);
         });
         row.textContent = '';
         columns.forEach(function (col) {
@@ -788,10 +796,9 @@
       } else if (data) {
         data.columns(records, undefined, template, parsed);
       }
-      var body = document.createElement('tbody');
+      var cells = new Map();
       records.forEach(function (record) {
-        var row = body.insertRow();
-        columns.forEach(function (col) {
+        cells.set(record, columns.map(function (col) {
           var field = col.field;
           if (!col.strict && !Object.hasOwn(record, field)) {
             field = Object.keys(record).find(function (key) { return key.toLowerCase() === col.field.toLowerCase(); });
@@ -802,11 +809,39 @@
               (typeof value === 'number' && !Number.isFinite(value))) {
             throw new Error('Results field "' + col.field + '" must contain a scalar value.');
           }
+          var text = value == null ? '' : String(value);
+          var interval = col.interval && col.interval(record);
+          if (interval && !Number.isFinite(parseCell(text))) {
+            throw new Error('Results column ' + JSON.stringify(col.field) + ' needs a finite estimate to supply an interval.');
+          }
+          return { text: text, interval: interval };
+        }));
+      });
+      var rows = filter ? filter.rows(records, parsed, values) : records;
+      var body = document.createElement('tbody');
+      rows.forEach(function (record) {
+        var row = body.insertRow();
+        cells.get(record).forEach(function (entry) {
           var cell = row.insertCell();
-          cell.textContent = value == null ? '' : String(value);
+          cell.textContent = entry.text;
+          if (entry.interval) {
+            cell.setAttribute('data-df-value', entry.text);
+            cell.appendChild(make('span', 'df-results-interval', DocForm._interval.text(entry.interval, String)));
+          }
         });
       });
-      return { head: head, body: body };
+      var noMatches = Boolean(filter && !rows.length);
+      return { head: head, body: body, noMatches: noMatches, referenceTexts: noMatches ?
+        columns.map(function (_, c) { return records.map(function (record) { return cells.get(record)[c].text; }); }) : null };
+    }
+
+    function localRecords(records, mapping, parsed) {
+      function refilter(values) {
+        var prepared = prepare(records, mapping, parsed, values);
+        if (filter && filter.scope) prepared.refilter = refilter;
+        return prepared;
+      }
+      return refilter();
     }
 
     var original;
@@ -821,18 +856,21 @@
           var input = data.input(uploadInputs.get(records), DocForm.data(table, 'source', null), 0);
           if (input.bytes > caps.maxBytes) throw new Error('The file exceeds this table’s size limit.');
           var value = data.transform(options, table, input);
+          if (filter && value !== input.snapshot.value && data.size(JSON.stringify(value)) > caps.maxBytes) {
+            throw new Error('Transformed data exceeds the table’s size limit.');
+          }
           if (options.transformOutput === 'spec') return prepare(value.records, value.mapping);
           if (!options.mapping && !DocForm.data.table(input.parsed)) {
             throw new Error('A results table needs CSV or a list of flat records.');
           }
-          return prepare(value, options.mapping, value === input.snapshot.value ? input.parsed : null);
+          return localRecords(value, options.mapping, value === input.snapshot.value ? input.parsed : null);
         }
         if (data) {
           var parsed = data.input({ type: 'value', value: records }, null, 0);
           if (parsed.bytes > caps.maxBytes) throw new Error('Results exceed this table’s size limit.');
           records = parsed.snapshot.value;
         }
-        return prepare(records, options.mapping);
+        return localRecords(records, options.mapping);
       },
       render: function (prepared) {
         if (!prepared && !original) return;
@@ -860,9 +898,18 @@
           table.appendChild(head);
           table.appendChild(body);
           table.classList.remove('df-results');
-          current = { interaction: enhance(table, {
-            sort: previous && previous.sort(), filters: active && active.snapshot(), onFilter: onFilter
-          }), sections: [head].concat(Array.from(table.tBodies)) };
+          var interaction = enhance(table, {
+            sort: previous && previous.sort(), filters: active && active.snapshot(), onFilter: onFilter,
+            referenceTexts: prepared.referenceTexts, noMatches: prepared.noMatches
+          });
+          if (prepared.noMatches && interaction && !interaction.filter) {
+            var empty = table.createTBody();
+            var cell = empty.insertRow().insertCell();
+            cell.colSpan = Math.max(1, head.rows[head.rows.length - 1].cells.length);
+            cell.setAttribute('role', 'status');
+            cell.textContent = 'No rows match these filters.';
+          }
+          current = { interaction: interaction, sections: [head].concat(Array.from(table.tBodies)) };
         }
         rendering = false;
       },
@@ -872,10 +919,10 @@
     var interaction = authoredHead && table.tBodies[0] ? enhance(table, { onFilter: onFilter }) : null;
     original = current = { interaction: interaction, sections: [table.tHead].concat(Array.from(table.tBodies)).filter(Boolean) };
     rendering = false;
-    if (named) data.binding('results', table, options, function (records, mapping, input, spec) {
+    if (named) data.binding('results', table, options, function (records, mapping, input, spec, caps, values) {
       if (spec) return prepare(records && records.records, records && records.mapping);
-      return prepare(records, mapping, records === input.snapshot.value ? input.parsed : null);
-    }).mount(controller);
+      return prepare(records, mapping, records === input.snapshot.value ? input.parsed : null, values);
+    }, filter).mount(controller);
     else controller.start(original);
     if (!controller.api.snapshot() && interaction) controller.change('init');
     return controller.api;

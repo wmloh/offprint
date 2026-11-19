@@ -36,6 +36,7 @@
     dropzone: { needs: ['base', 'data'], css: ['dropzone', 'data'], script: 'dropzone', api: 'dropzone' },
     'chart-playback': { needs: ['chart'], css: ['chart-playback'], script: 'chart-playback', api: 'chartPlayback' },
     results: { needs: ['base'], css: ['results'], script: 'results', api: 'results' },
+    matrix: { needs: ['base', 'data'], css: ['matrix'], script: 'matrix', api: 'matrix' },
     scenarios: { needs: ['chart'], css: ['scenarios'], script: 'scenarios' },
     tabs: { needs: ['base'], css: ['tabs'], script: 'tabs', api: 'tabs' },
     cards: { needs: ['base'], css: ['steps'], script: 'steps', api: 'cards' },

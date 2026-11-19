@@ -147,7 +147,12 @@
   }
 
   function same(a, b) {
-    return Object.keys(a).every(function (n) { return hasOwn.call(b, n) && b[n] === a[n]; });
+    return Object.keys(a).every(function (n) { return hasOwn.call(b, n) && sameValue(b[n], a[n]); });
+  }
+
+  function sameValue(a, b) {
+    return a === b || (Array.isArray(a) && Array.isArray(b) && a.length === b.length &&
+      a.every(function (value, i) { return value === b[i]; }));
   }
 
   function markPresets() {
@@ -398,11 +403,23 @@
   function accepts(def, value) {
     if (def.type === 'toggle') return typeof value === 'boolean';
     if (def.type === 'select') return def.choices.some(function (choice) { return choice.value === value; });
+    if (def.type === 'multiselect') {
+      if (!Array.isArray(value)) return false;
+      var choices = new Set(value);
+      return choices.size === value.length &&
+        def.choices.filter(function (choice) { return choices.has(choice.value); }).length === choices.size;
+    }
     return Number.isFinite(value) && value >= def.min && value <= def.max;
   }
 
+  function normalizeValue(def, value) {
+    if (def.type !== 'multiselect') return value;
+    return Object.freeze(def.choices.map(function (choice) { return choice.value; })
+      .filter(function (choice) { return value.includes(choice); }));
+  }
+
   function definition(raw) {
-    if (!record(raw) || !['range', 'number', 'select', 'toggle'].includes(raw.type)) return null;
+    if (!record(raw) || !['range', 'number', 'select', 'multiselect', 'toggle'].includes(raw.type)) return null;
     var type = raw.type;
     var def = { type: type, digits: raw.digits };
     if (def.digits !== undefined && !precision(def.digits)) return null;
@@ -422,17 +439,19 @@
         if (def.digits === undefined) def.digits = digitsOf(def.step);
         initial = def.min;
       }
-    } else if (type === 'select') {
+    } else if (type === 'select' || type === 'multiselect') {
       if (!Array.isArray(raw.choices) || !raw.choices.length) return null;
       def.choices = Array.from(raw.choices, function (choice) {
         return record(choice) && typeof choice.value === 'string' && typeof choice.label === 'string'
           ? { value: choice.value, label: choice.label } : null;
       });
       if (def.choices.includes(null) || new Set(def.choices.map(function (c) { return c.value; })).size !== def.choices.length) return null;
-      initial = def.choices[0].value;
+      initial = type === 'select' ? def.choices[0].value : def.choices.map(function (choice) { return choice.value; });
     } else initial = false;
     def.initial = raw.default === undefined ? initial : raw.default;
-    return accepts(def, def.initial) ? def : null;
+    if (!accepts(def, def.initial)) return null;
+    def.initial = normalizeValue(def, def.initial);
+    return def;
   }
 
   function valueFromMarkup(def, value) {
@@ -450,6 +469,17 @@
     var places = Object.create(null);
     Object.keys(definitions).forEach(function (key) { places[key] = definitions[key].digits; });
     var subscribers = new Set();
+    var views = [];
+
+    state.views = function (keys) {
+      if (!keys.every(function (key) {
+        return knownKey(key) && ['select', 'multiselect'].includes(definitions[key].type);
+      })) return null;
+      return {
+        snapshot: function () { return current; },
+        bind: function (prepare) { views.push({ keys: keys, prepare: prepare }); }
+      };
+    };
 
     state.validate = function (update, fromMarkup) {
       if (!record(update)) return { error: 'requires an object of parameter values.' };
@@ -461,7 +491,7 @@
         if (!def) return { error: 'sets unknown parameter "' + key + '".' };
         var value = fromMarkup ? valueFromMarkup(def, update[key]) : update[key];
         if (!accepts(def, value)) return { error: 'has an invalid value for "' + key + '".' };
-        next[key] = value;
+        next[key] = normalizeValue(def, value);
       }
       return { values: next };
     };
@@ -477,12 +507,32 @@
     }
 
     function commit(next, origin) {
-      var changed = Object.keys(next).filter(function (key) { return current[key] !== next[key]; });
+      var changed = Object.keys(next).filter(function (key) { return !sameValue(current[key], next[key]); });
       if (!changed.length) return true;
       var previous = current;
-      current = Object.freeze({ ...current, ...next });
-      changed.forEach(function (key) { (displays.get(key) || []).forEach(function (showValue) { showValue(current[key]); }); });
+      var candidate = { ...current };
+      changed.forEach(function (key) { candidate[key] = next[key]; });
+      Object.freeze(candidate);
+      var prepared;
+      function renderControls() {
+        changed.forEach(function (key) {
+          (displays.get(key) || []).forEach(function (showValue) { showValue(current[key]); });
+        });
+      }
+      try {
+        prepared = views.filter(function (view) {
+          return view.keys.some(function (key) { return changed.includes(key); });
+        }).map(function (view) { return view.prepare(candidate); });
+      } catch (error) {
+        renderControls();
+        parameterIssue(null, 'Parameter update for "' + name + '" was rejected. ' + error.message);
+        return false;
+      }
+      current = candidate;
+      renderControls();
       renderPresets(state.presets, current);
+      var notifications = prepared.map(function (stage) { return stage(); });
+      notifications.forEach(function (notify) { if (notify) notify(); });
       if (!scopesReady) return true;
       scheduleScopedBindings(state);
       var meta = Object.freeze({ previous: previous, changedKeys: Object.freeze(changed), origin: origin });
@@ -514,7 +564,7 @@
         return;
       }
       var showValue = scopedControl(host, key, def, function (value) {
-        state.write({ [key]: value }, 'user');
+        if (!state.write({ [key]: value }, 'user')) showValue(current[key]);
       });
       if (!showValue) return;
       if (!displays.has(key)) displays.set(key, []);
@@ -580,12 +630,40 @@
       parameterIssue(host, 'Invalid display precision for parameter "' + key + '".');
       places = null;
     }
-    if (native && (type === 'select' ? tag !== 'select' : tag !== 'input' ||
+    if (type === 'multiselect' && !native) {
+      var group = document.createElement('fieldset');
+      group.className = 'df-param-multiselect';
+      var legend = document.createElement('legend');
+      legend.textContent = label === null ? key : label;
+      group.appendChild(legend);
+      var checks = def.choices.map(function (choice) {
+        var item = document.createElement('label');
+        var check = document.createElement('input');
+        check.type = 'checkbox';
+        check.value = choice.value;
+        item.appendChild(check);
+        var text = document.createElement('span');
+        text.textContent = choice.label;
+        item.appendChild(text);
+        group.appendChild(item);
+        check.addEventListener('change', function () {
+          change(checks.filter(function (input) { return input.checked; }).map(function (input) { return input.value; }));
+        });
+        return check;
+      });
+      host.textContent = '';
+      host.appendChild(group);
+      return function (value) {
+        checks.forEach(function (check) { check.checked = value.includes(check.value); });
+      };
+    }
+    var selectType = type === 'select' || type === 'multiselect';
+    if (native && (selectType ? tag !== 'select' || host.hasAttribute('multiple') !== (type === 'multiselect') : tag !== 'input' ||
         host.type !== (type === 'toggle' ? 'checkbox' : 'range'))) {
       parameterIssue(host, 'Native control for parameter "' + key + '" does not match its ' + type + ' definition.');
       return null;
     }
-    var input = native ? host : document.createElement(type === 'select' ? 'select' : 'input');
+    var input = native ? host : document.createElement(selectType ? 'select' : 'input');
     var output;
     if (!native) {
       input.id = 'df-param-' + key + '-' + (++count);
@@ -612,15 +690,24 @@
         if (output) output.textContent = format(value, places === null ? def.digits : Number(places));
       };
     }
-    if (type === 'select') {
+    if (selectType) {
       input.textContent = '';
       input.classList.add('df-param-select');
-      def.choices.forEach(function (choice) {
+      var options = def.choices.map(function (choice) {
         var option = document.createElement('option');
         option.value = choice.value;
         option.textContent = choice.label;
         input.appendChild(option);
+        return option;
       });
+      if (type === 'multiselect') {
+        input.addEventListener('change', function () {
+          change(options.filter(function (option) { return option.selected; }).map(function (option) { return option.value; }));
+        });
+        return function (value) {
+          options.forEach(function (option) { option.selected = value.includes(option.value); });
+        };
+      }
       input.addEventListener('change', function () { change(input.value); });
       return function (value) { input.value = value; };
     }
@@ -683,6 +770,10 @@
       var scope = scopes.get(name === undefined ? 'page' : scopeName(name));
       return scope ? scope.api : null;
     }
+  };
+  DocForm._parameterViews = function (name, keys) {
+    var scope = scopes.get(scopeName(name));
+    return scope ? scope.views(keys) : null;
   };
 
   var configured = (boot ? DocForm.site : root.DocFormSite) || {};

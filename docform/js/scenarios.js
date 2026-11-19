@@ -87,6 +87,11 @@
     return measure.name + ' changed from ' + withUnit(measure, measure.values[0]) + ' to ' + withUnit(measure, measure.values[index]) + '.';
   }
 
+  function outcomePoint(outcome, index) {
+    var interval = outcome.intervals && outcome.intervals[index];
+    return interval ? { x: outcome.name, y: outcome.numbers[index], interval: interval } : outcome.numbers[index];
+  }
+
   function draw(table, model, key, onChoose, onReset) {
     var visual = document.createElement('div');
     visual.className = 'df-scenarios-visual';
@@ -162,8 +167,8 @@
             max: group.min === group.max ? 1 : group.max
           },
           series: [
-            { key: model.baselineKey, name: model.baseline, data: group.outcomes.map(function (outcome) { return outcome.numbers[0]; }) },
-            { key: variant.key, name: variant.name, data: group.outcomes.map(function (outcome) { return outcome.numbers[index]; }) }
+            { key: model.baselineKey, name: model.baseline, data: group.outcomes.map(function (outcome) { return outcomePoint(outcome, 0); }) },
+            { key: variant.key, name: variant.name, data: group.outcomes.map(function (outcome) { return outcomePoint(outcome, index); }) }
           ]
         });
       });
@@ -202,7 +207,56 @@
   var EXPLANATION = 'A comparison needs a measure column, a unit column, a baseline, and named variants with numeric outcomes. Each variant must change exactly one marked condition, or at least one with data-df-scenarios="configurations".';
   var scenarios = new WeakMap();
 
-  function mapTable(records, mapping, mode) {
+  function supplyUncertainty(model, mapping, records, selected, parsed) {
+    var data = DocForm._dataSource;
+    var variants = selected.slice(1);
+    var groups = new Map();
+    model.groups.forEach(function (group) {
+      group.outcomes.forEach(function (outcome) { groups.set(outcome.cells[0], { group: group, outcome: outcome }); });
+    });
+    mapping.outcomes.forEach(function (field, i) {
+      var row = model.rows[mapping.conditions.length + i];
+      var entry = groups.get(row.cells[0]);
+      var outcome = entry.outcome;
+      var at = 'Scenario outcome ' + JSON.stringify(field.field);
+      var interval = data.interval(records, field.interval, parsed, at);
+      var format = function (value) { return withUnit(outcome, String(value)); };
+      outcome.intervals = selected.map(function (record, index) {
+        var bounds = interval(record);
+        if (!bounds) return;
+        entry.group.min = Math.min(entry.group.min, bounds.lower);
+        entry.group.max = Math.max(entry.group.max, bounds.upper);
+        element('span', outcome.cells[index + 2], DocForm._interval.text(bounds, format)).className = 'df-scenarios-interval';
+        return bounds;
+      });
+
+      var paired = field.pairedDifference;
+      if (paired === undefined) return;
+      if (!paired || typeof paired !== 'object' || Array.isArray(paired) || !data.key(paired.baselineKeyField)) {
+        throw new Error(at + ' needs pairedDifference with a field and baselineKeyField.');
+      }
+      var pairedField = data.fields(variants, [paired.field], true)[0];
+      var pairedInterval = data.interval(variants, paired.interval, parsed, at + ' paired difference');
+      variants.forEach(function (record, index) {
+        var value = record[pairedField];
+        var bounds = pairedInterval(record);
+        var variant = model.variants[index];
+        var location = at + ', variant ' + JSON.stringify(variant.key);
+        if (value === null && !bounds) return;
+        if (!Number.isFinite(value)) throw new Error(location + ' needs a finite paired difference in ' + JSON.stringify(pairedField) + '.');
+        if (!Object.hasOwn(record, paired.baselineKeyField) || data.key(record[paired.baselineKeyField]) !== model.baselineKey) {
+          throw new Error(location + ' needs paired baseline ' + JSON.stringify(model.baselineKey) +
+            ' in ' + JSON.stringify(paired.baselineKeyField) + '.');
+        }
+        var baseline = model.baseline === model.baselineKey ? model.baseline : model.baseline + ' (' + model.baselineKey + ')';
+        var detail = element('span', outcome.cells[index + 3], 'Paired difference vs ' + baseline + ' ' + format(value));
+        detail.className = 'df-scenarios-paired';
+        if (bounds) element('span', detail, DocForm._interval.text(bounds, format)).className = 'df-scenarios-interval';
+      });
+    });
+  }
+
+  function mapTable(records, mapping, mode, parsed) {
     var data = DocForm._dataSource;
     if (!data || !mapping || !Array.isArray(mapping.variantKeys) || !mapping.variantKeys.length ||
         !Array.isArray(mapping.conditions) || !Array.isArray(mapping.outcomes) || !mapping.outcomes.length ||
@@ -242,7 +296,9 @@
         element('td', row, value === null ? '' : String(value));
       });
     });
-    return { table: table, model: read(table) };
+    var model = read(table);
+    if (model) supplyUncertainty(model, mapping, records, keys.map(function (key) { return byKey.get(key); }), parsed);
+    return { table: table, model: model };
   }
 
   function mount(target, instance) {
@@ -259,9 +315,9 @@
     var original = { model: read(table), sections: [table.tHead].concat(Array.from(table.tBodies)).filter(Boolean) };
     var current = original;
     var visual;
-    function prepare(records, mapping, kind) {
+    function prepare(records, mapping, kind, parsed) {
       if (!Array.isArray(records) || records.length > caps.maxRows) throw new Error('Scenarios need records within the row limit.');
-      var result = mapTable(records, mapping, kind);
+      var result = mapTable(records, mapping, kind, parsed);
       if (!result.model) throw new Error(EXPLANATION);
       result.sections = [result.table.tHead].concat(Array.from(result.table.tBodies));
       return result;
@@ -305,7 +361,8 @@
     };
     scenarios.set(table, controller.api);
     if (named) data.binding('scenarios', table, options, function (records, mapping, input, spec) {
-      return spec ? prepare(records.records, records.mapping, records.mode ?? mode) : prepare(records, mapping, mode);
+      return spec ? prepare(records.records, records.mapping, records.mode ?? mode) :
+        prepare(records, mapping, mode, records === input.snapshot.value ? input.parsed : null);
     }).mount(controller);
     else if (original.model) controller.start(original);
     else runtime.issue('scenarios', table, EXPLANATION);

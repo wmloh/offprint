@@ -25,11 +25,92 @@
   var MIN_SPAN = 1e-3;
   var EMPTY_SERIES = 'Every series is hidden. Choose one in the legend to show it.';
   var EMPTY_RANGE = 'No readings in this range.';
+  var EMPTY_FILTER = 'No readings match these filters.';
   var clips = 0;
   var GROUP = 'data-df-selection-group';
   var KEY = 'data-df-key';
   var charts = typeof WeakMap === 'function' ? new WeakMap() : null;
   var playbacks = new WeakMap();
+  var xGroups = new Map();
+
+  function linearX(model) {
+    return model && !model.errors.length && !model.categories && !model.x.time && !model.x.log;
+  }
+
+  function xGroupName(host) {
+    var name = host.getAttribute('data-df-x-group');
+    return name && DocForm._items.key(name);
+  }
+
+  function joinXGroup(chart) {
+    var name = xGroupName(chart.box);
+    if (!name) return null;
+    var group = xGroups.get(name);
+    if (!group) {
+      group = { members: new Set(), x: null, owner: null, playback: null };
+      xGroups.set(name, group);
+      function snapshot() { return Object.freeze({ x: group.x }); }
+      group.events = DocForm._component.signal('chart', null, snapshot, { action: 'x' });
+      group.name = name;
+      group.api = {
+        snapshot: snapshot, subscribe: group.events.subscribe,
+        set: function (x) { return Number.isFinite(x) && writeX(group, x, null, 'api'); },
+        clear: function () { return writeX(group, null, null, 'api'); }
+      };
+    }
+    group.members.add(chart.box);
+    return group;
+  }
+
+  function writeX(group, x, owner, origin, exiting) {
+    var limit = group.playback && group.playback.x;
+    if (limit !== null && x !== null && x > limit) return false;
+    return DocForm._component.transaction(function () {
+      var limit = group.playback && group.playback.x;
+      if (limit !== null && x !== null && x > limit) return false;
+      if (exiting && group.owner !== owner) return true;
+      var emit = commitX(group, x, owner, origin);
+      if (emit) emit();
+      return true;
+    });
+  }
+
+  function commitX(group, x, owner, origin) {
+    var previous = group.api.snapshot();
+    if (group.owner && group.owner !== owner) hide(group.owner);
+    group.owner = owner;
+    if (x === group.x) return null;
+    group.x = x;
+    group.members.forEach(function (host) {
+      var member = charts.get(host);
+      if (member) paintCursor(member);
+    });
+    var current = group.api.snapshot();
+    return function () { group.events.emit(current, previous, origin, group.name); };
+  }
+
+  function paintCursor(chart) {
+    if (!chart.cursor) return;
+    var x = chart.xGroup.x;
+    var g = chart.geom;
+    var px = x === null ? NaN : g.x(x);
+    var visible = px >= g.left && px <= g.right && !chart.plot.hidden &&
+      (chart.playhead === null || x <= chart.playhead);
+    chart.cursor.setAttribute('display', visible ? 'inline' : 'none');
+    if (visible) {
+      chart.cursor.setAttribute('x1', px);
+      chart.cursor.setAttribute('x2', px);
+    }
+  }
+
+  function inspect(chart, x) {
+    if (chart.xGroup && linearX(chart.model) && Number.isFinite(x)) writeX(chart.xGroup, x, chart, 'user');
+  }
+
+  function leaveInspection(chart, origin) {
+    hide(chart);
+    if (chart.xGroup && chart.xGroup.owner === chart) writeX(chart.xGroup, null, chart, origin || 'user', true);
+  }
 
   function isNum(v) {
     return typeof v === 'number' && isFinite(v);
@@ -380,16 +461,27 @@
     }
     var categories = Array.isArray(spec.categories) ? spec.categories.map(String) : null;
     var list = Array.isArray(spec.series) ? spec.series : Array.isArray(spec.data) ? [{ name: spec.name, data: spec.data }] : [];
+    var errors = [];
     var series = list.map(function (s, si) {
       s = s || {};
       var entries = [];
       (Array.isArray(s.data) ? s.data : []).forEach(function (d, i) {
-        var x, y, label, key;
+        var x, y, label, key, interval;
         if (Array.isArray(d)) { x = d[0]; y = d[1]; label = d[2]; }
         else if (d && typeof d === 'object') { x = d.x; y = d.y; label = d.label; key = d.key; }
         else { x = categories ? categories[i] : i; y = d; }
         var blank = y === null || (typeof y === 'string' && !y.trim());
         y = toNumber(y);
+        if (d && d.interval !== undefined) {
+          var at = 'Chart series ' + JSON.stringify(s.key || s.name || si + 1) + ', point ' + (i + 1);
+          try {
+            interval = DocForm._interval.normalize(d.interval, at);
+            if (x == null || !isNum(y) || (time && toTime(x) === null)) {
+              throw new Error(at + ' needs a valid x and estimate to supply an interval.');
+            }
+            if (yLog && interval.lower <= 0) throw new Error(at + ' needs positive interval bounds on a log y axis.');
+          } catch (error) { errors.push(error.message); }
+        }
         if (x == null || (y === null && !(breaks && blank))) return;
         if (time) {
           var at = toTime(x);
@@ -401,7 +493,9 @@
           x = at;
         } else if (typeof x === 'string' && !categories && type !== 'bar' && toNumber(x) !== null) x = toNumber(x);
         key = typeof key === 'string' ? key.trim() : '';
-        entries.push({ x: x, y: y, label: label == null ? '' : String(label), key: key || null });
+        var point = { x: x, y: y, label: label == null ? '' : String(label), key: key || null };
+        if (interval) point.interval = interval;
+        entries.push(point);
       });
       var name = s.name == null || s.name === '' ? (list.length > 1 ? 'Series ' + (si + 1) : '') : String(s.name);
       return {
@@ -484,7 +578,7 @@
       y: axisSpec(spec.y, false, yLog),
       height: isNum(spec.height) && spec.height > 80 ? spec.height : 260
     };
-    model.errors = logErrors(model, spec);
+    model.errors = errors.concat(logErrors(model, spec));
     if (new Set(series.map(function (item) { return item.key; })).size !== series.length) {
       model.errors.push('Each chart series needs a unique key or a unique name.');
     }
@@ -591,21 +685,24 @@
 
   // Data extent before tick rounding: reference lines never widen it, and missing x values keep their place.
   function extent(model) {
-    var ys = [];
+    var yLo = Infinity;
+    var yHi = -Infinity;
+    var count = 0;
     var xs = [];
     model.series.forEach(function (s) {
       s.points.forEach(function (p) {
-        ys.push(p.y);
+        count++;
+        yLo = Math.min(yLo, p.y, p.interval ? p.interval.lower : p.y);
+        yHi = Math.max(yHi, p.y, p.interval ? p.interval.upper : p.y);
         if (!model.categories) xs.push(p.x);
       });
       if (!model.categories && s.missing) xs.push.apply(xs, s.missing);
     });
-    var yLo = ys.length ? Math.min.apply(null, ys) : 0;
-    var yHi = ys.length ? Math.max.apply(null, ys) : 1;
+    if (!count) { yLo = 0; yHi = 1; }
     if (model.type === 'bar') { yLo = Math.min(yLo, 0); yHi = Math.max(yHi, 0); }
     if (model.y.min !== null) yLo = model.y.min;
     if (model.y.max !== null) yHi = model.y.max;
-    return { yLo: yLo, yHi: yHi, xs: xs, count: ys.length };
+    return { yLo: yLo, yHi: yHi, xs: xs, count: count };
   }
 
   // The x span of all the data, with fixed axis ends, or null on text axes and charts with a single x value.
@@ -782,6 +879,22 @@
     return chart.model.categories ? String(x) : format(x, chart.model.x);
   }
 
+  function intervalReadout(parent, point, axis) {
+    if (!point.interval) return;
+    html('span', 'df-chart-interval-text', parent, DocForm._interval.text(point.interval, function (value) {
+      return format(value, axis);
+    }));
+  }
+
+  function whisker(parent, interval, x, y) {
+    var lower = y(interval.lower);
+    var upper = y(interval.upper);
+    return svg('path', { class: 'df-chart-whisker',
+      d: 'M' + x + ',' + lower + 'V' + upper +
+        'M' + (x - 3) + ',' + lower + 'h6M' + (x - 3) + ',' + upper + 'h6'
+    }, parent);
+  }
+
   function revealInOrder(entries, show, hide) {
     var count = 0;
     return function (x) {
@@ -790,10 +903,10 @@
     };
   }
 
-  function drawPlayhead(chart, frame, entries, spots, clip) {
+  function drawPlayhead(chart, frame, entries, spots, clips) {
     var g = chart.geom;
     var line = svg('line', { y1: g.top, y2: g.bottom, class: 'df-chart-playhead' }, frame);
-    var checkpoint = playbacks.get(chart.box).checkpoint;
+    var checkpoint = playbackFor(chart).checkpoint;
     var marker = svg('circle', { cy: g.top, r: 4, class: 'df-chart-checkpoint', 'aria-hidden': 'true' }, frame);
     var revealMarks = revealInOrder(entries.sort(function (a, b) { return a.x - b.x; }), function (mark) {
       mark.el.removeAttribute('display');
@@ -805,7 +918,8 @@
     var revealSpots = revealInOrder(spots, function (spot) { chart.spots.push(spot); }, function () { chart.spots.pop(); });
     return function (x) {
       var px = g.x(x);
-      clip.setAttribute('width', Math.max(0, Math.min(g.right, px) - g.left));
+      var width = Math.max(0, Math.min(g.right, px) - g.left);
+      clips.forEach(function (clip) { clip.setAttribute('width', width); });
       var inPlot = px >= g.left && px <= g.right;
       line.setAttribute('display', inPlot ? 'inline' : 'none');
       line.setAttribute('x1', px);
@@ -822,8 +936,8 @@
   function draw(chart) {
     var model = chart.view;
     var width = Math.round(chart.plot.clientWidth);
-    if (!width) return;
     chart.width = width;
+    if (!width) return;
     var height = model.height;
     var type = model.type;
     var series = model.series;
@@ -890,9 +1004,21 @@
     });
     // A narrowed range clips line paths that run on to the readings just beyond each end.
     var clipRect;
+    var intervalRect;
+    var hasIntervals = series.some(function (s) { return s.line.some(function (p) { return p.interval; }); });
+    var defs = range || playback || hasIntervals ? svg('defs', {}, frame) : null;
     if (range || playback) {
-      var clip = svg('clipPath', { id: chart.clip }, svg('defs', {}, frame));
+      var clip = svg('clipPath', { id: chart.clip }, defs);
       clipRect = svg('rect', { x: left, y: top - 3, width: plotW, height: height - bottom - top + 6 }, clip);
+    }
+    if (hasIntervals) {
+      var intervalClip = svg('clipPath', { id: chart.clip + '-interval' }, defs);
+      var bounds = { x: left, y: top, width: plotW, height: height - bottom - top };
+      svg('rect', bounds, intervalClip);
+      if (playback) {
+        var bandClip = svg('clipPath', { id: chart.clip + '-band' }, defs);
+        intervalRect = svg('rect', bounds, bandClip);
+      }
     }
 
     var grid = svg('g', { class: 'df-chart-grid' }, frame);
@@ -954,9 +1080,39 @@
     series.forEach(function (s, si) {
       var g = svg('g', { class: 'df-chart-series' }, marks);
       paint(g, s);
+      var intervals = hasIntervals && type !== 'bar' ?
+        svg('g', { 'clip-path': 'url(#' + chart.clip + '-interval)' }, g) : null;
       if (type === 'line') {
         var runs = model.gaps ? segments(s.line, s.breaks, cats ? function (x) { return cats.indexOf(String(x)); } :
           function (x) { return x; }) : [s.line];
+        if (intervals) {
+          var bandPath = '';
+          var addBand = function (run) {
+            if (!run.length) return;
+            if (run.length === 1) {
+              var p = run[0];
+              var px = xAt(p.x);
+              if (px < left || px > left + plotW) return;
+              var mark = whisker(intervals, p.interval, px, y);
+              if (playback) future.push({ x: p.x, el: mark });
+              return;
+            }
+            bandPath += run.map(function (p, i) { return (i ? 'L' : 'M') + xAt(p.x) + ',' + y(p.interval.upper); }).join('') +
+              run.slice().reverse().map(function (p) { return 'L' + xAt(p.x) + ',' + y(p.interval.lower); }).join('') + 'Z';
+          };
+          runs.forEach(function (run) {
+            var bounded = [];
+            run.forEach(function (p) {
+              if (p.interval) bounded.push(p);
+              else { addBand(bounded); bounded = []; }
+            });
+            addBand(bounded);
+          });
+          if (bandPath) {
+            var bandMark = svg('path', { class: 'df-chart-band-interval', d: bandPath }, intervals);
+            if (intervalRect) bandMark.setAttribute('clip-path', 'url(#' + chart.clip + '-band)');
+          }
+        }
         var d = runs.map(function (run) {
           return run.length > 1 ? run.map(function (p, i) { return (i ? 'L' : 'M') + xAt(p.x) + ',' + y(p.y); }).join('') : '';
         }).join('');
@@ -980,9 +1136,12 @@
           var bar = svg('path', { d: barPath(x0, thick, y0, y(p.y), 4), class: 'df-chart-bar' }, g);
           bar.setAttribute('data-df-x', p.x);
           place(p, bar, x0 + thick / 2);
+          if (p.interval) whisker(g, p.interval, x0 + thick / 2, y)
+            .setAttribute('clip-path', 'url(#' + chart.clip + '-interval)');
         });
       } else {
         s.points.forEach(function (p) {
+          if (p.interval) whisker(intervals, p.interval, xAt(p.x), y);
           place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4.5, class: 'df-chart-dot' }, g), xAt(p.x));
         });
       }
@@ -1031,15 +1190,20 @@
     });
 
     var spots = spotsFor(model, xAt, y, function (p) { return markOf.get(p); });
+    if (playback || chart.xGroup && linearX(model)) {
+      spots = spots.filter(function (spot) { return spot.px >= left && spot.px <= plotR; });
+    }
     chart.spots = playback ? [] : spots;
     chart.geom = { left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0 };
-    chart.revealPlot = playback ? drawPlayhead(chart, frame, future, spots.filter(function (spot) {
-      return spot.px >= left && spot.px <= plotR;
-    }), clipRect) : null;
+    chart.revealPlot = playback ? drawPlayhead(chart, frame, future, spots,
+      intervalRect ? [clipRect, intervalRect] : [clipRect]) : null;
+    chart.cursor = chart.xGroup && linearX(model) ? svg('line', {
+      y1: top, y2: height - bottom, class: 'df-chart-x-cursor', display: 'none'
+    }, frame) : null;
     chart.overlay = svg('g', { class: 'df-chart-hover' }, frame);
     chart.marks = marks;
 
-    var empty = !series.length ? EMPTY_SERIES : range && !spots.length ? EMPTY_RANGE : '';
+    var empty = chart.model.noMatches ? EMPTY_FILTER : !series.length ? EMPTY_SERIES : range && !spots.length ? EMPTY_RANGE : '';
     chart.empty.textContent = empty;
     chart.empty.hidden = !empty;
     chart.empty.style.left = left + 'px';
@@ -1051,6 +1215,7 @@
     else chart.plot.insertBefore(frame, chart.plot.firstChild);
     chart.svg = frame;
     if (chart.revealPlot) chart.revealPlot(chart.playhead);
+    paintCursor(chart);
     if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
   }
 
@@ -1066,7 +1231,7 @@
     var r = html('div', 'df-chart-tip-row', tip);
     key(type === 'line' ? 'line' : type === 'bar' ? 'bar' : 'dot', s, r);
     html('b', '', r, value);
-    if (s.name) html('span', '', r, s.name);
+    if (s.name) html('span', 'df-chart-tip-series', r, s.name);
     return r;
   }
 
@@ -1106,6 +1271,7 @@
       }
       line(xName(model, 'x'), xText(chart, spot.p.x));
       line(model.y.label || 'y', format(spot.p.y, model.y));
+      intervalReadout(tip, spot.p, model.y);
       anchorY = spot.py;
     } else {
       html('div', 'df-chart-tip-head', tip, (model.x.label && !model.categories ? model.x.label + ' ' : '') + xText(chart, spot.x));
@@ -1119,7 +1285,9 @@
           if (el.getAttribute('data-df-x') === String(spot.x)) el.classList.add('is-active');
         });
       } else {
-        svg('line', { x1: spot.cx, x2: spot.cx, y1: g.top, y2: g.bottom, class: 'df-chart-cross' }, chart.overlay);
+        if (!chart.cursor) {
+          svg('line', { x1: spot.cx, x2: spot.cx, y1: g.top, y2: g.bottom, class: 'df-chart-cross' }, chart.overlay);
+        }
         chart.marks.parentNode.appendChild(chart.overlay);
         // Per-point spots mark which of the readings at this x a click or Enter would select.
         if (spot.p) paint(svg('circle', { cx: spot.cx, cy: spot.py, r: 7, class: 'df-chart-ring' }, chart.overlay), spot.s);
@@ -1136,6 +1304,7 @@
           paint(dot, s);
         }
         var r = row(tip, s, format(p.y, model.y), model.type);
+        intervalReadout(r, p, model.y);
         if (spot.p && spot.s === s && model.series.length > 1) r.classList.add('is-current');
       });
       anchorY = pointerY == null ? g.top : pointerY;
@@ -1164,18 +1333,25 @@
     var py = at.y;
     var g = chart.geom;
     var spots = chart.spots;
-    if (chart.playhead !== null && px > g.x(chart.playhead)) return hide(chart);
-    if (!spots.length || px < g.left - HIT || px > g.right + HIT || py < g.top - HIT || py > g.bottom + HIT) return hide(chart);
-    if (chart.model.type === 'scatter') {
+    if (chart.playhead !== null && px > g.x(chart.playhead)) return leaveInspection(chart);
+    if (chart.cursor && (px < g.left || px > g.right || py < g.top || py > g.bottom)) return leaveInspection(chart);
+    if (!spots.length || px < g.left - HIT || px > g.right + HIT || py < g.top - HIT || py > g.bottom + HIT) {
+      hide(chart);
+    } else if (chart.model.type === 'scatter') {
       var best = -1;
       var dist = HIT;
       spots.forEach(function (s, i) {
         var d = Math.sqrt((s.px - px) * (s.px - px) + (s.py - py) * (s.py - py));
         if (d <= dist) { dist = d; best = i; }
       });
-      return best < 0 ? hide(chart) : show(chart, best, null);
+      show(chart, best, null);
+    } else {
+      show(chart, closest(spots, px, py), py);
     }
-    show(chart, closest(spots, px, py), py);
+    if (chart.cursor) {
+      var x = g.x.invert(px);
+      inspect(chart, chart.playhead === null ? x : Math.min(x, chart.playhead));
+    }
   }
 
   // Commits the previewed point without changing the chart range or series.
@@ -1220,7 +1396,7 @@
           if (model.series.length > 1) html('td', '', tr, s.name);
           if (labels) html('td', '', tr, p.label);
           html('td', '', tr, format(p.x, model.x));
-          html('td', '', tr, format(p.y, model.y));
+          intervalReadout(html('td', '', tr, format(p.y, model.y)), p, model.y);
         });
       });
       return table;
@@ -1247,7 +1423,8 @@
       html('th', '', tr, model.categories ? x : format(x, model.x)).setAttribute('scope', 'row');
       model.series.forEach(function (s, i) {
         var p = lookup[i].get(String(x));
-        tagKey(model, html('td', '', tr, p ? format(p.y, model.y) : ''), p);
+        var cell = tagKey(model, html('td', '', tr, p ? format(p.y, model.y) : ''), p);
+        if (p) intervalReadout(cell, p, model.y);
       });
       if (collectRow) collectRow({ x: x, row: tr, body: body });
     });
@@ -1282,7 +1459,7 @@
     var model = chart.model;
     chart.legend.textContent = '';
     chart.seriesItems = [];
-    if (model.series.length > 1) {
+    if (model.series.length > 1 || model.toggles) {
       model.series.forEach(function (s) {
         var item = html(model.toggles ? 'button' : 'span', 'df-chart-legend-item', chart.legend);
         if (model.toggles) {
@@ -1322,6 +1499,7 @@
   }
 
   function tableView(view) {
+    if (view.noMatches) return html('p', 'df-chart-empty-note', null, EMPTY_FILTER);
     return view.series.length ? buildTable(view) : html('p', 'df-chart-empty-note', null, EMPTY_SERIES);
   }
 
@@ -1332,7 +1510,7 @@
     if (chart.playhead !== null) {
       if (!chart.plot.hidden) return;
       var rows = [];
-      var table = chart.view.series.length ? buildTable(chart.view, function (entry) {
+      var table = !chart.view.noMatches && chart.view.series.length ? buildTable(chart.view, function (entry) {
         entry.row.remove();
         rows.push(entry);
       }) : tableView(chart.view);
@@ -1357,11 +1535,40 @@
     }
     if (!chart.plot.hidden && chart.revealPlot) chart.revealPlot(x);
     if (chart.revealTable) chart.revealTable(x);
+    paintCursor(chart);
   }
 
-  function reconcilePlayhead(host, model, origin) {
-    var playback = playbacks.get(host);
-    return playback ? playback.reconcile(model, origin) : null;
+  function playbackFor(chart) {
+    return playbacks.get(chart.box) || (chart.xGroup && chart.xGroup.playback);
+  }
+
+  function paintPlayback(playback, x, origin, redraw) {
+    var group = playback.group;
+    playback.x = x;
+    if (redraw) redraw.playhead = x;
+    var members = group ? group.members : [playback.reference];
+    members.forEach(function (host) {
+      var chart = charts.get(host);
+      if (chart && chart !== redraw) setPlayhead(chart, x);
+    });
+    if (group && x !== null && group.x !== null && group.x > x) {
+      var emit = commitX(group, null, null, origin || 'group');
+      if (emit) DocForm._component.transaction(emit);
+    }
+  }
+
+  function reconcilePlayhead(chart, origin) {
+    var playback = playbackFor(chart);
+    if (!playback) return;
+    var reference = charts.get(playback.reference);
+    var models = [reference && reference.model];
+    if (playback.group) playback.group.members.forEach(function (host) {
+      var member = charts.get(host);
+      if (host !== playback.reference && member) models.push(member.model);
+    });
+    var update = playback.reconcile(models, origin, chart.box === playback.reference);
+    paintPlayback(playback, update.x, origin, chart);
+    return update.notify;
   }
 
   function refresh(chart) {
@@ -1407,7 +1614,7 @@
     if (!d.moved && Math.abs(d.to - d.from) < DRAG) return;
     if (!d.moved) {
       d.moved = true;
-      hide(chart);
+      leaveInspection(chart);
       chart.box.classList.add('is-brushing');
       try { chart.plot.setPointerCapture(d.id); } catch (e) { /* capture is optional */ }
       d.rect = svg('rect', { y: g.top, height: g.bottom - g.top, class: 'df-chart-brush' }, chart.svg);
@@ -1439,7 +1646,12 @@
   function readNear(chart, x) {
     if (!chart.spots.length || !chart.geom || !chart.geom.x) return;
     var px = isNum(x) ? chart.geom.x(x) : (chart.geom.left + chart.geom.right) / 2;
-    show(chart, closest(chart.spots, px, null), null);
+    inspectSpot(chart, closest(chart.spots, px, null));
+  }
+
+  function inspectSpot(chart, index) {
+    show(chart, index, null);
+    inspect(chart, readX(chart));
   }
 
   // + and - narrow and widen the range around the reading; Shift with the left and right arrows moves it.
@@ -1474,7 +1686,7 @@
     var chart = {
       box: host, model: model, spec: spec, active: -1, spots: [], svg: null, width: 0, geom: {},
       hidden: Object.create(null), range: null, drag: null, dragged: false, clip: 'df-chart-clip-' + (++clips),
-      playhead: reconcilePlayhead(host, model, origin)
+      playhead: null
     };
     chart.view = viewOf(model, chart.hidden, null);
     host.classList.add('df-chart');
@@ -1530,12 +1742,12 @@
       else if (chart.svg) pick(chart, event);
     });
     chart.plot.addEventListener('pointerup', function () { endDrag(chart, true); });
-    chart.plot.addEventListener('pointercancel', function () { endDrag(chart, false); });
-    chart.plot.addEventListener('pointerleave', function () { if (!chart.drag) hide(chart); });
+    chart.plot.addEventListener('pointercancel', function () { endDrag(chart, false); leaveInspection(chart); });
+    chart.plot.addEventListener('pointerleave', function () { if (!chart.drag) leaveInspection(chart); });
     chart.plot.addEventListener('focus', function () {
-      if (chart.plot.matches(':focus-visible')) show(chart, Math.max(0, chart.active), null);
+      if (chart.plot.matches(':focus-visible')) inspectSpot(chart, Math.max(0, chart.active));
     });
-    chart.plot.addEventListener('blur', function () { hide(chart); });
+    chart.plot.addEventListener('blur', function () { leaveInspection(chart); });
     // A committed point click stops here, so a zoomable figure around the chart stays in place.
     chart.plot.addEventListener('click', function (event) {
       if (chart.dragged) {
@@ -1549,6 +1761,7 @@
     });
     chart.plot.addEventListener('keydown', function (event) {
       if (keyRange(chart, event)) return;
+      if (event.key === 'Escape') return leaveInspection(chart);
       var n = chart.spots.length;
       if (!n) return;
       if (event.key === 'Enter' || event.key === ' ') {
@@ -1562,10 +1775,9 @@
       else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') i = Math.max(0, i - 1);
       else if (event.key === 'Home') i = 0;
       else if (event.key === 'End') i = n - 1;
-      else if (event.key === 'Escape') return hide(chart);
       else return;
       event.preventDefault();
-      show(chart, i, null);
+      inspectSpot(chart, i);
     });
 
     if (typeof ResizeObserver === 'function') {
@@ -1643,11 +1855,14 @@
         if (chart.plot.hidden) setTable(chart, false);
       }
       Object.keys(chart.hidden).forEach(function (name) {
-        if (model.series.length < 2 || !model.series.some(function (s) { return s.key === name; })) delete chart.hidden[name];
+        var compatible = model.filterSeries ? model.filterSeries.includes(name) :
+          model.series.length > 1 && model.series.some(function (s) { return s.key === name; });
+        if (!compatible) delete chart.hidden[name];
       });
-      chart.range = keepRange(chart.range, chart.model, model);
+      if (!model.noMatches) chart.range = keepRange(chart.range, chart.model, model);
       chart.model = model;
-      chart.playhead = reconcilePlayhead(host, model, origin);
+      var notifyPlayback = reconcilePlayhead(chart, origin);
+      if (chart.xGroup && chart.xGroup.owner === chart && !linearX(model)) leaveInspection(chart, origin);
       chart.spec = next;
       chart.view = viewOf(model, chart.hidden, chart.range);
       watch(chart);
@@ -1666,11 +1881,15 @@
         if (!chart.plot.hidden) draw(chart);
       }
       chart.updating = false;
+      if (notifyPlayback) notifyPlayback();
       return true;
     }
     chart.replace = replace;
     chart.remove = function (origin) {
-      reconcilePlayhead(host, null, origin);
+      charts.delete(host);
+      if (chart.xGroup) chart.xGroup.members.delete(host);
+      var notifyPlayback = reconcilePlayhead(chart, origin);
+      leaveInspection(chart, origin || 'api');
       if (chart.observer) chart.observer.disconnect();
       if (chart.unfollow) chart.unfollow();
       if (sourceTable) host.insertBefore(sourceTable, head);
@@ -1678,11 +1897,15 @@
       chart.plot.remove();
       chart.table.remove();
       host.classList.remove('df-chart', 'is-line', 'is-bar', 'is-scatter', 'is-table');
-      charts.delete(host);
+      if (notifyPlayback) notifyPlayback();
     };
     charts.set(host, chart);
+    chart.xGroup = joinXGroup(chart);
+    var notifyPlayback = reconcilePlayhead(chart, origin);
+    if (chart.playhead !== null) fillTable(chart);
     watch(chart);
     draw(chart);
+    if (notifyPlayback) notifyPlayback();
     return chart.api;
   }
 
@@ -1832,25 +2055,113 @@
 
   var chartControllers = new WeakMap();
   var namedInputs = new WeakMap();
+  var groupedSpecs = new WeakSet();
 
-  function mappedSpec(value, mapping, base, maxRows, parsed, truncate) {
+  function groupedSeries(rows, mapping, spec, keys, interval) {
     var data = DocForm._dataSource;
-    if (!mapping || !Array.isArray(mapping.series) || !mapping.series.length) {
-      throw new Error('Chart mapping needs an x field and at least one series.');
+    var declared = new Map();
+    var descriptors = mapping.group.series;
+    if (descriptors !== undefined && !Array.isArray(descriptors)) {
+      throw new Error('Use an array of series descriptors for chart mapping.group.series.');
+    }
+    (descriptors || []).forEach(function (series) {
+      var key = series && data.key(series.key);
+      if (!key || declared.has(key) || ['label', 'role', 'color'].some(function (field) {
+        return series[field] !== undefined && typeof series[field] !== 'string';
+      })) throw new Error('Chart mapping.group.series needs distinct string keys and optional string labels, roles, and colors.');
+      declared.set(key, series);
+    });
+    var groups = new Map();
+    var xType = axisType(spec.x);
+    var yLog = axisType(spec.y) === 'log';
+    rows.forEach(function (record, i) {
+      var at = ' in record ' + (i + 1) + '.';
+      var key = data.key(record[keys[2]]);
+      if (!key) throw new Error('Use a nonempty string group key for field ' + JSON.stringify(keys[2]) + at);
+      var x = xType === 'time' ? toTime(record[keys[0]]) : toNumber(record[keys[0]]);
+      if (!isNum(x) || (xType === 'log' && x <= 0)) {
+        throw new Error('Use a valid x coordinate for field ' + JSON.stringify(keys[0]) + at);
+      }
+      var raw = record[keys[1]];
+      var y = toNumber(raw);
+      var missing = raw === null || (typeof raw === 'string' && !raw.trim());
+      if (!missing && (!isNum(y) || (yLog && y <= 0))) {
+        throw new Error('Use a valid chart value for field ' + JSON.stringify(keys[1]) + at);
+      }
+      var pointKey = keys.length === 4 ? data.key(record[keys[3]]) : null;
+      if (keys.length === 4 && !pointKey) {
+        throw new Error('Use a nonempty string point key for field ' + JSON.stringify(keys[3]) + at);
+      }
+      if (!groups.has(key)) groups.set(key, new Map());
+      var points = groups.get(key);
+      if (points.has(x)) {
+        throw new Error('Duplicate x ' + x + ' for series ' + JSON.stringify(key) + ' in records ' +
+          points.get(x).row + ' and ' + (i + 1) + '. Keep one observation per series and x.');
+      }
+      points.set(x, { point: { x: x, y: y, key: pointKey, interval: interval(record) }, row: i + 1 });
+    });
+    var order = Array.from(declared.keys()).filter(function (key) { return groups.has(key); })
+      .concat(Array.from(groups.keys()).filter(function (key) { return !declared.has(key); }).sort());
+    return order.map(function (key) {
+      var series = declared.get(key) || {};
+      return { key: key, name: series.label ?? key, role: series.role, color: series.color,
+        data: Array.from(groups.get(key).values(), function (entry) { return entry.point; })
+          .sort(function (a, b) { return a.x - b.x; })
+      };
+    });
+  }
+
+  function mappedSpec(value, mapping, base, maxRows, parsed, truncate, filter, values) {
+    var data = DocForm._dataSource;
+    var grouped = mapping && mapping.group !== undefined;
+    if (grouped) {
+      if (!mapping.group || typeof mapping.group !== 'object' || Array.isArray(mapping.group) || mapping.series != null) {
+        throw new Error('Use chart mapping.group with a field and optional series descriptors, or use mapping.series for columns.');
+      }
+      if ((base.type && base.type !== 'line' && base.type !== 'scatter') || Array.isArray(base.categories)) {
+        throw new Error('Grouped chart mapping needs a line or scatter chart with a numeric or time x axis.');
+      }
+    } else if (!mapping || !Array.isArray(mapping.series) || !mapping.series.length) {
+      throw new Error('Chart mapping needs an x field and either column series or a value and group field.');
     }
     var x = typeof mapping.x === 'string' ? mapping.x : mapping.x && mapping.x.field;
-    var fields = [x].concat(mapping.series.map(function (s) { return s && s.field; }));
+    var fields = grouped ? [x, mapping.value, mapping.group.field] :
+      [x].concat(mapping.series.map(function (s) { return s && s.field; }));
     if (mapping.pointKey !== undefined) fields.push(mapping.pointKey);
-    var keys = data.fields(value, fields);
-    if (parsed && parsed.type === 'csv' && keys.some(function (key) { return !parsed.columns.includes(key); })) {
-      throw new Error('A required CSV chart field is missing.');
+    var keys = data.fields(value, fields, grouped);
+    if (parsed && parsed.type === 'csv') {
+      var missing = keys.find(function (key) { return !parsed.columns.includes(key); });
+      if (missing !== undefined) throw new Error('Required CSV chart field ' + JSON.stringify(missing) + ' is missing.');
     }
-    if (value.length > maxRows && !truncate) throw new Error('The chart exceeds its ' + maxRows + '-row limit.');
-    var rows = value.slice(0, maxRows);
+    if (value.length > maxRows && (grouped || !truncate || filter)) throw new Error('The chart exceeds its ' + maxRows + '-row limit.');
+    var rows = filter ? filter.rows(value, parsed, values) : value.slice(0, maxRows);
     var axis = Object.assign({}, typeof base.x === 'string' ? { label: base.x } : base.x);
     axis.label = mapping.x && mapping.x.label !== undefined ? mapping.x.label : axis.label ?? keys[0];
     var spec = Object.assign({}, base, { x: axis });
     delete spec.data;
+
+    function readInterval(descriptor, field, at) {
+      var interval = data.interval(value, descriptor, parsed, at);
+      if (descriptor !== undefined) value.forEach(function (record, i) {
+        var supplied = interval(record);
+        if (!supplied) return;
+        if (!isNum(toNumber(record[field]))) {
+          throw new Error(at + ' needs a finite estimate in record ' + (i + 1) + '.');
+        }
+        if (spec.type !== 'bar' && axisType(spec.y) === 'log' && supplied.lower <= 0) {
+          throw new Error(at + ' needs positive interval bounds on a log y axis in record ' + (i + 1) + '.');
+        }
+      });
+      return interval;
+    }
+
+    if (grouped) {
+      var interval = readInterval(mapping.interval, keys[1], 'Grouped chart value ' + JSON.stringify(keys[1]));
+      spec.series = groupedSeries(rows, mapping, spec, keys, interval);
+      groupedSpecs.add(spec);
+      return { spec: spec, rows: rows.length, filterSeries: filter ?
+        Array.from(new Set(value.map(function (record) { return data.key(record[keys[2]]); }).filter(Boolean))) : null };
+    }
     var ids = new Set();
     spec.series = mapping.series.map(function (s, i) {
       var id = data.key(s.key);
@@ -1858,6 +2169,7 @@
         throw new Error('Mapped chart series need distinct keys and string labels.');
       }
       ids.add(id);
+      var interval = readInterval(s.interval, keys[i + 1], 'Chart series ' + JSON.stringify(id));
       return { key: id, name: s.label ?? keys[i + 1], role: s.role, color: s.color,
         data: rows.map(function (record) {
           var pointKey = mapping.pointKey === undefined ? null : data.key(record[keys[keys.length - 1]]);
@@ -1868,11 +2180,11 @@
               (toNumber(y) === null && !(spec.gaps === 'break' && (y === null || y === '')))) {
             throw new Error('Mapped chart coordinates must be valid for their axes.');
           }
-          return { x: x, y: y, key: pointKey };
+          return { x: x, y: y, key: pointKey, interval: interval(record) };
         })
       };
     });
-    return spec;
+    return { spec: spec, rows: rows.length };
   }
 
   function preparedChart(host, input) {
@@ -1885,7 +2197,7 @@
     var spec = copyChart(input);
     var model = chartModel(host, spec);
     if (model.errors.length) throw new Error('Chart update ignored; the last valid chart stays. ' + model.errors.join(' '));
-    return { spec: spec, model: model };
+    return { spec: spec, model: model, grouped: groupedSpecs.has(input) };
   }
 
   function namedInput(host, instance) {
@@ -1896,9 +2208,23 @@
       return null;
     }
     var options = data.options('chart', host, instance);
+    var filter;
+    try { filter = data.filter(options); }
+    catch (error) { DocForm._dataViews.issue('chart', host, error.message); return null; }
     var markup = readMarkup(host, instance || {});
     if (!markup) return null;
     var base = markup.spec;
+    function mapped(value, dataset, maxRows, truncate, values) {
+      var result = mappedSpec(value, options.mapping, base, maxRows,
+        value === dataset.snapshot.value ? dataset.parsed : null, truncate, filter, values);
+      var prepared = preparedChart(host, result.spec);
+      if (filter) {
+        prepared.model.filterSeries = result.filterSeries || prepared.model.series.map(function (series) { return series.key; });
+        prepared.model.noMatches = result.rows === 0;
+        if (prepared.grouped && result.spec.toggles !== false && prepared.model.series.length) prepared.model.toggles = true;
+      }
+      return prepared;
+    }
     var input = {
       table: host.querySelector(':scope > table'),
       upload: function (entry, cap) {
@@ -1909,15 +2235,27 @@
         var value = data.transform(options, host, dataset);
         if (options.transformOutput === 'spec') return { spec: value, rows: null, total: null };
         var maxRows = Math.min(cap, caps.maxRows);
-        return { spec: mappedSpec(value, options.mapping, base, maxRows,
-          value === dataset.snapshot.value ? dataset.parsed : null, true),
-          total: value.length, rows: Math.min(value.length, maxRows) };
+        if (!filter) {
+          var result = mappedSpec(value, options.mapping, base, maxRows,
+            value === dataset.snapshot.value ? dataset.parsed : null, true);
+          return { spec: result.spec, total: value.length, rows: result.rows };
+        }
+        if (value !== dataset.snapshot.value && data.size(JSON.stringify(value)) > caps.maxBytes) {
+          throw new Error('Transformed data exceeds the chart’s size limit.');
+        }
+        function refilter(values) {
+          var prepared = mapped(value, dataset, maxRows, false, values);
+          if (filter.scope) prepared.refilter = refilter;
+          return prepared;
+        }
+        var token = {};
+        chartUploads.set(token, refilter);
+        return { spec: token, rows: null, total: null };
       }
     };
-    input.binding = data.binding('chart', host, options, function (value, mapping, source, fullSpec, caps) {
-      return preparedChart(host, fullSpec ? value : mappedSpec(value, mapping, base, caps.maxRows,
-        value === source.snapshot.value ? source.parsed : null, false));
-    });
+    input.binding = data.binding('chart', host, options, function (value, mapping, source, fullSpec, caps, values) {
+      return fullSpec ? preparedChart(host, value) : mapped(value, source, caps.maxRows, false, values);
+    }, filter);
     namedInputs.set(host, input);
     return input;
   }
@@ -1925,11 +2263,21 @@
   function chartController(host, original, named) {
     var runtime = DocForm._dataViews;
     var sourceTable = named ? named.table : original.table;
+    var groupColors = new Map();
     var controller = runtime.controller('chart', host, {
-      prepare: function (spec) { return preparedChart(host, spec); },
+      prepare: function (spec) {
+        var refilter = chartUploads.get(spec);
+        return refilter ? refilter() : preparedChart(host, spec);
+      },
       render: function (prepared, origin) {
         var current = charts.get(host);
         if (!prepared) { if (current) current.remove(origin); return; }
+        // Remember palette slots only for committed views so rejected inputs cannot affect later colors.
+        if (prepared.grouped) prepared.model.series.forEach(function (series) {
+          if (series.role || series.color) return;
+          if (!groupColors.has(series.key) && groupColors.size < COLORS) groupColors.set(series.key, groupColors.size);
+          series.index = groupColors.get(series.key) ?? COLORS;
+        });
         if (current) current.replace(prepared.spec, prepared.model, origin);
         else {
           build(host, prepared.model, sourceTable, prepared.spec, prepared === original && original.useSourceTable, origin);
@@ -2011,12 +2359,28 @@
     return chartControllers.get(el) || (c ? c.api : null);
   };
   var chartBaselines = new WeakMap();
-  chart._playback = function (host, reconcile, checkpoint) {
-    if (playbacks.has(host)) return null;
-    playbacks.set(host, { reconcile: reconcile, checkpoint: checkpoint });
-    return function (x) {
-      var current = charts.get(host);
-      if (current) setPlayhead(current, x);
+  var chartUploads = new WeakMap();
+  chart.xGroup = function (name) {
+    var group = xGroups.get(DocForm._items.key(name));
+    return group ? group.api : null;
+  };
+  chart._positionHosts = function (name, pending) {
+    var group = xGroups.get(name);
+    return DocForm.all('[data-df-x-group]').filter(function (host) {
+      return (group && group.members.has(host)) ||
+        (pending && host.hasAttribute('data-df-chart') && xGroupName(host) === name);
+    });
+  };
+  chart._playback = function (host, name, reconcile, checkpoint) {
+    var group = name ? xGroups.get(name) : null;
+    var target = charts.get(host);
+    if (!target || playbackFor(target) || (name && !group) ||
+      (group && Array.from(group.members).some(function (member) { return playbacks.has(member); }))) return null;
+    var playback = { reference: host, group: group, reconcile: reconcile, checkpoint: checkpoint, x: null };
+    if (group) group.playback = playback;
+    else playbacks.set(host, playback);
+    return function (x, origin) {
+      paintPlayback(playback, x, origin);
     };
   };
   chart._upload = function (api, entry, cap) {

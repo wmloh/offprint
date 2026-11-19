@@ -9,6 +9,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.df-results-interval {
+  display: block;
+  color: var(--df-text-muted);
+}
+
 .df-results th[aria-sort],
 .df-results th.df-filterable {
   padding: 0;

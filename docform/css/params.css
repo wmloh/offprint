@@ -57,6 +57,23 @@
   font: inherit;
 }
 
+.df-param-multiselect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--df-space-2) var(--df-space-3);
+  min-inline-size: 0;
+  padding: var(--df-space-2) var(--df-space-3);
+  border: 1px solid var(--df-border-strong);
+  border-radius: var(--df-radius);
+}
+
+.df-param-multiselect label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--df-space-1);
+  cursor: pointer;
+}
+
 /* The toggle is a checkbox with role="switch", drawn as a track and knob. */
 .df-param-switch {
   appearance: none;

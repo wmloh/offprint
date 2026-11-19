@@ -183,6 +183,25 @@
   stroke-linecap: round;
 }
 
+.df-chart-band-interval {
+  fill: var(--df-series);
+  fill-opacity: 0.17;
+  stroke: var(--df-series);
+  stroke-opacity: 0.45;
+  pointer-events: none;
+}
+
+.df-chart-whisker {
+  fill: none;
+  stroke: var(--df-series);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.df-chart.is-bar .df-chart-whisker {
+  stroke: var(--df-text);
+}
+
 /* Dots carry a 2px ring in the page colour so they stay readable where they cross lines or each other. */
 .df-chart-dot,
 .df-chart-ring {
@@ -222,6 +241,13 @@
   shape-rendering: crispEdges;
 }
 
+.df-chart-x-cursor {
+  stroke: var(--df-text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
 .df-chart-band {
   fill: var(--df-bg-hover);
 }
@@ -252,8 +278,18 @@
 
 .df-chart-tip-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.df-chart-interval-text {
+  display: block;
+  color: var(--df-text-muted);
+}
+
+.df-chart-tip-row > .df-chart-interval-text {
+  flex-basis: 100%;
 }
 
 .df-chart-tip-row > b {
@@ -262,7 +298,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.df-chart-tip-row.is-current > span:last-child,
+.df-chart-tip-row.is-current > .df-chart-tip-series,
 .df-chart-tip-note {
   color: var(--df-text);
 }

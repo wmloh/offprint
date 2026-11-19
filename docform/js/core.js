@@ -138,6 +138,7 @@
   function viewController(feature, host, adapter, action) {
     var base = null;
     var local = false;
+    var refilterLocal = null;
     var state = null;
     var api = { snapshot: function () { return state; } };
     var events = signal(feature, host, api.snapshot, { action: action });
@@ -162,6 +163,7 @@
       catch (error) { dataIssue(feature, host, error.message); throw error; }
       adapter.render(prepared, origin);
       local = true;
+      refilterLocal = prepared && prepared.refilter;
       return function (origin) {
         var emission = notify(adapter.snapshot(), origin, adapter.alwaysNotify);
         if (emission) emission();
@@ -169,6 +171,7 @@
     }, function () {
       if (!local && !adapter.resetReader) return;
       local = false;
+      refilterLocal = null;
       return render(base, 'reset');
     });
 
@@ -182,6 +185,14 @@
       stage: function (prepared, origin) {
         base = prepared;
         if (!local) return render(prepared, origin);
+      },
+      prepareFilter: function (prepared, values) {
+        var nextLocal = refilterLocal ? refilterLocal(values) : null;
+        return function () {
+          base = prepared;
+          if (!local) return render(prepared, 'group');
+          if (nextLocal) return render(nextLocal, 'group');
+        };
       },
       start: function (prepared) {
         var emission = this.stage(prepared, 'init');
@@ -592,6 +603,29 @@
     initialize();
   }
 
+  function estimateInterval(value, at) {
+    if (value === undefined) return undefined;
+    if (!value || typeof value !== 'object' || Array.isArray(value) ||
+        !Number.isFinite(value.lower) || !Number.isFinite(value.upper) || value.lower > value.upper) {
+      throw new Error(at + ' needs finite interval bounds with lower ≤ upper.');
+    }
+    var interval = { lower: value.lower, upper: value.upper };
+    if (value.label !== undefined) {
+      if (typeof value.label !== 'string' || !value.label.trim()) throw new Error(at + ' needs a nonempty interval label.');
+      interval.label = value.label;
+    }
+    if (value.count !== undefined) {
+      if (!Number.isInteger(value.count) || value.count < 0) throw new Error(at + ' needs a nonnegative integer interval count.');
+      interval.count = value.count;
+    }
+    return interval;
+  }
+
+  function intervalText(interval, format) {
+    return (interval.label || 'Interval') + ' [' + format(interval.lower) + ', ' + format(interval.upper) + ']' +
+      (interval.count === undefined ? '' : ' (n = ' + interval.count + ')');
+  }
+
   var DocForm = root.DocForm = Object.assign(root.DocForm || { site: null, page: null }, {
     colors: COLORS.slice(),
     register: register,
@@ -620,6 +654,7 @@
       transaction: transaction, signal: signal, notify: notifyNow,
       target: function (target) { return typeof target === 'string' ? document.getElementById(target) : target; }
     },
+    _interval: { normalize: estimateInterval, text: intervalText },
     _items: {
       key: selectionKey, flag: attributeFlag, mode: selectionMode, issue: issue, signal: signal,
       transaction: transaction, notify: notifyNow, domain: itemDomain, controller: itemController, collect: collectItems,

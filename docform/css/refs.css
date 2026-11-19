@@ -98,11 +98,11 @@
 }
 
 .df-peek-page {
-  color: var(--df-text-faint);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  color: var(--df-text-label);
+  font-size: var(--df-eyebrow-size);
+  font-weight: var(--df-eyebrow-weight);
+  letter-spacing: var(--df-eyebrow-tracking);
+  text-transform: var(--df-eyebrow-case);
 }
 
 .df-peek-title {

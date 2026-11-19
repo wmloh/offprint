@@ -104,6 +104,17 @@
   --df-section-offset: 14px;
   --df-section-line-width: 2px;
   --df-section-line-strength: 45%;
+
+  /* Text roles (text.css): eyebrows are short context lines above a heading or block, and labelled fields pair
+     labels with values. Module context labels such as step counts share these values. --df-text-label is quieter
+     than body text but keeps small labels readable (about 5:1 in light mode). Set --df-eyebrow-case to none for
+     sentence-case labels, which keep familiar word shapes for dyslexic and early readers. */
+  --df-text-label: light-dark(rgba(55, 53, 47, 0.76), rgba(255, 255, 255, 0.62));
+  --df-eyebrow-size: max(12px, 0.75em);
+  --df-eyebrow-weight: 650;
+  --df-eyebrow-tracking: 0.07em;
+  --df-eyebrow-case: uppercase;
+  --df-field-label-width: 11em;
 }
 
 /* Forced themes set by theme.js; without the attribute, the system preference applies. */

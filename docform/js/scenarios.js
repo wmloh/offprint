@@ -115,7 +115,7 @@
 
     var conditionList = null;
     if (model.mode === 'configurations') {
-      element('p', visual, 'Changed conditions').className = 'df-scenarios-heading';
+      element('p', visual, 'Changed conditions').className = 'df-eyebrow df-scenarios-heading';
       conditionList = element('ul', visual);
       conditionList.className = 'df-scenarios-conditions';
     }

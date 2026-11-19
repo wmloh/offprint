@@ -2,8 +2,11 @@
   margin-block: var(--df-space-4) var(--df-space-2);
 }
 
+/* The status is a live sentence such as "Playing to epoch 12", not a short label, so it keeps sentence case. */
 .df-chart-playback-controls .df-pill-count {
   max-width: 22em;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .df-chart-playhead {

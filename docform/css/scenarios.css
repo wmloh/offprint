@@ -33,9 +33,8 @@
   display: none;
 }
 
-.df-scenarios-heading {
-  margin-block-end: 0;
-  font-weight: 600;
+.df-page .df-scenarios-heading {
+  margin-block: var(--df-space-4) 0;
 }
 
 .df-scenarios-conditions {

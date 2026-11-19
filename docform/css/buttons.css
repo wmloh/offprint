@@ -116,12 +116,12 @@
   min-width: 0;
   padding-inline: 0.55em;
   overflow: hidden;
-  color: var(--df-text-muted);
-  font-size: 0.78em;
-  font-weight: 600;
+  color: var(--df-text-label);
+  font-size: var(--df-eyebrow-size);
+  font-weight: var(--df-eyebrow-weight);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--df-eyebrow-tracking);
   text-overflow: ellipsis;
-  text-transform: uppercase;
+  text-transform: var(--df-eyebrow-case);
   white-space: nowrap;
 }

@@ -15,7 +15,7 @@
   // Declaration order is startup order. Shared files still load just once.
   var catalog = {
     tokens: { css: ['tokens'] },
-    base: { needs: ['tokens'], css: ['base', 'sections', 'buttons'] },
+    base: { needs: ['tokens'], css: ['base', 'text', 'sections', 'buttons'] },
     tags: { needs: ['base'], css: ['blocks'] },
     callouts: { needs: ['base'], css: ['blocks'] },
     blocks: { needs: ['tags', 'callouts'] },
@@ -59,7 +59,7 @@
   };
   var reading = ['base', 'blocks', 'theme', 'roles', 'navigation', 'controls', 'tooltips',
     'references', 'citations', 'sidenotes', 'search', 'sections'];
-  var readingStyles = new Set(['tokens', 'base', 'sections', 'buttons', 'blocks', 'theme', 'roles', 'tooltip', 'search',
+  var readingStyles = new Set(['tokens', 'base', 'text', 'sections', 'buttons', 'blocks', 'theme', 'roles', 'tooltip', 'search',
     'refs', 'nav', 'notes', 'controls']);
   var moduleFeatures = {
     tooltip: 'tooltips', params: 'parameters',

@@ -1,6 +1,7 @@
 /* Static reading profile styles for use before startup or without JavaScript. */
 @import url("css/tokens.css");
 @import url("css/base.css");
+@import url("css/text.css");
 @import url("css/sections.css");
 @import url("css/buttons.css");
 @import url("css/blocks.css");

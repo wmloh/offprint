@@ -42,12 +42,12 @@
 .df-step-panel > .df-step-heading {
   margin: 0;
   padding: var(--df-space-1) var(--df-space-3) var(--df-space-2);
-  color: var(--df-text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  color: var(--df-text-label);
+  font-size: var(--df-eyebrow-size);
+  font-weight: var(--df-eyebrow-weight);
+  letter-spacing: var(--df-eyebrow-tracking);
   line-height: 1.4;
-  text-transform: uppercase;
+  text-transform: var(--df-eyebrow-case);
   overflow-wrap: anywhere;
 }
 

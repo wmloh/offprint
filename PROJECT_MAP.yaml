@@ -3,8 +3,9 @@ docform/: Copyable offline library folder
   docform.css: Optional static reading-profile styles
   site.template.js: Starter JSON site manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
-    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, reading-column, figure-cap, and wide-block widths, and section spacing and colour cycle via light-dark()
+    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, reading-column, figure-cap, and wide-block widths, section spacing and colour cycle, and eyebrow and field-label text roles via light-dark()
     base.css: Centered reading column, typography, section heading spacing, links, figure and table width limits, concept tables, table hover, list markers, scrollbars, and data-df-color accents
+    text.css: Muted small-caps eyebrows and aligned labelled-field lists for visual hierarchy
     sections.css: Cycled h2 section colours and uniform left-margin section lines
     buttons.css: Shared soft tinted pill buttons with optional icons for author and module actions, and the frosted icon pill for step controls
     roles.css: Roles legend styles

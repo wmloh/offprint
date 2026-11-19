@@ -200,7 +200,7 @@ test('nested none profile clears inherited choices and loads playback after its 
   assert.ok(Object.isFrozen(p.DF.site.order[0]));
   assert.equal(p.html.getAttribute('data-df-theme'), null);
   assert.deepEqual(p.loads, ['docform/js/core.js', 'docform/css/tokens.css', 'docform/css/base.css',
-    'docform/css/sections.css', 'docform/css/buttons.css', 'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
+    'docform/css/text.css', 'docform/css/sections.css', 'docform/css/buttons.css', 'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
     'docform/css/steps.css', 'docform/js/steps.js']);
   assert.equal(typeof p.DF.chartPlayback.mount, 'function');
   assert.equal(p.DF.diagnostics.list().length, 0);

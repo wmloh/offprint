@@ -105,6 +105,11 @@
   font-weight: 600;
 }
 
+/* The panel title is a copy of the bubble title; the arrow only belongs on the bubble in the text. */
+.df-bubble-panel-title .df-bubble-title::after {
+  display: none;
+}
+
 .df-bubble-panel-title > * > :is(h1, h2, h3, h4, h5, h6, p) {
   display: inline;
   margin: 0;

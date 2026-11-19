@@ -2,6 +2,7 @@ Offline setup	Use the offline entry and author lifecycle hooks	setup/setup.md
 Include order	Select offline profiles and feature dependencies	setup/include-order.md
 Site manifest	Configure pages, feature options, registries, and generated assets	setup/manifest.md
 Base layout	Style the reading column, typography, lists, and tables	layout/base.md
+Section lines	Space and colour h2 sections with margin bars and lines	layout/sections.md
 Wide blocks	Extend figures and tables into available side space	layout/wide.md
 Design tokens	Override colours, fonts, spacing, and widths	layout/tokens.md
 Colour roles	Assign semantic accents and render a legend	layout/roles.md

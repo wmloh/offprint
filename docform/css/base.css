@@ -123,6 +123,12 @@ body:has(> .df-sidebar) {
   margin-top: 0.25em;
 }
 
+/* Standard space before the page's own subsections; none at the page top, and little between adjacent headings. */
+.df-page:not(.df-bubble-body) > h2 { margin-top: var(--df-space-h2); }
+.df-page:not(.df-bubble-body) > h3 { margin-top: var(--df-space-h3); }
+.df-page:not(.df-bubble-body) > :is(h1, h2, h3, h4, h5, h6) + :is(h2, h3) { margin-top: 0.5em; }
+.df-page:not(.df-bubble-body) > :is(h2, h3):first-child { margin-top: 0; }
+
 /* Text blocks */
 .df-page :is(p, ul, ol, blockquote, table, pre, figure) {
   margin: 0.5em 0;

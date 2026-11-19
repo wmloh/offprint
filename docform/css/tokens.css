@@ -94,6 +94,15 @@
   --df-wide-width: 1240px;
   --df-page-gutter: var(--df-space-5);
   --df-sidebar-width: 260px;
+
+  /* Page sections: space before top-level headings, and the h2 colour cycle with its left-margin line.
+     The cycle lists named colours in order; sections.js reads it, and the no-script bars use the default order. */
+  --df-space-h2: 56px;
+  --df-space-h3: 32px;
+  --df-section-cycle: blue green purple orange pink brown;
+  --df-section-offset: 14px;
+  --df-section-line-width: 2px;
+  --df-section-line-strength: 45%;
 }
 
 /* Forced themes set by theme.js; without the attribute, the system preference applies. */

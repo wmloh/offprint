@@ -35,6 +35,8 @@ Each outlined heading shows a link icon on hover that copies the URL of its sect
 
 The reading column is up to 1,120px wide and keeps its width when you toggle navigation. It centers in the window when there is room and moves beside the open sidebar on tighter desktop screens. Use `--df-content-width` to change the maximum width and `--df-page-gutter` to change the side padding.
 
+Each `h2` directly in `main` starts a section with about 56px of space above it (32px before an `h3`), less when a heading follows another heading or opens the page. Sections take turns through calm named colours (blue, green, purple, orange, pink, brown). A thin line in that colour starts beside the heading in the left margin and continues at the same width down to the next `h2`, unbroken past tables and figures. Heading text keeps its usual colour. Put `data-df-color` or `data-df-role` on an `h2` to choose its section colour. Change the order with `--df-section-cycle` (for example `--df-section-cycle: green blue;`) and the spacing with `--df-space-h2` and `--df-space-h3`. Without scripts the line only spans the heading, in the default order.
+
 Standalone figures, tables, and their captions are centered in the reading column, with a little extra space above and below. Pointing at any table cell, headers included, lightly tints its row and column. Links are blue and underlined.
 
 ### Wide blocks

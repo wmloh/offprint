@@ -15,7 +15,7 @@
   // Declaration order is startup order. Shared files still load just once.
   var catalog = {
     tokens: { css: ['tokens'] },
-    base: { needs: ['tokens'], css: ['base'] },
+    base: { needs: ['tokens'], css: ['base', 'sections'] },
     tags: { needs: ['base'], css: ['blocks'] },
     callouts: { needs: ['base'], css: ['blocks'] },
     blocks: { needs: ['tags', 'callouts'] },
@@ -52,13 +52,14 @@
     navigation: { needs: ['base'], css: ['nav'], script: 'nav', api: 'navigation' },
     sidenotes: { needs: ['base'], css: ['notes'], script: 'notes', api: 'sidenotes' },
     wide: { needs: ['base'], css: ['wide'], script: 'wide', api: 'wide' },
+    sections: { needs: ['base'], script: 'sections', api: 'sections' },
     controls: { needs: ['base'], css: ['controls'], script: 'controls', api: 'controls' },
     zoom: { needs: ['base'], css: ['zoom'], script: 'zoom', api: 'zoom' },
     'zoom-tools': { needs: ['zoom'], css: ['zoomtools'], script: 'zoomtools', api: 'zoomTools' }
   };
   var reading = ['base', 'blocks', 'theme', 'roles', 'navigation', 'controls', 'tooltips',
-    'references', 'citations', 'sidenotes', 'search'];
-  var readingStyles = new Set(['tokens', 'base', 'blocks', 'theme', 'roles', 'tooltip', 'search',
+    'references', 'citations', 'sidenotes', 'search', 'sections'];
+  var readingStyles = new Set(['tokens', 'base', 'sections', 'blocks', 'theme', 'roles', 'tooltip', 'search',
     'refs', 'nav', 'notes', 'controls']);
   var moduleFeatures = {
     tooltip: 'tooltips', params: 'parameters',

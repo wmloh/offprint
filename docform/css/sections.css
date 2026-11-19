@@ -1,0 +1,46 @@
+/* Section colours: each top-level h2 gets the next colour from --df-section-cycle, or its own data-df-color or
+   data-df-role. One thin line in the left margin marks the heading; with sections.js it continues at the same width
+   and colour down to the end of the section, past tables and figures. Heading text keeps its usual colour. */
+.df-page:not(.df-bubble-body) > h2 {
+  --df-section-color: var(--df-blue);
+  --df-section-line: color-mix(in srgb, var(--df-section-color) var(--df-section-line-strength), transparent);
+  position: relative;
+
+  &:nth-of-type(6n + 2) { --df-section-color: var(--df-green); }
+  &:nth-of-type(6n + 3) { --df-section-color: var(--df-purple); }
+  &:nth-of-type(6n + 4) { --df-section-color: var(--df-orange); }
+  &:nth-of-type(6n + 5) { --df-section-color: var(--df-pink); }
+  &:nth-of-type(6n) { --df-section-color: var(--df-brown); }
+  &:is([data-df-color], [data-df-role]):nth-of-type(n) { --df-section-color: var(--df-accent); }
+
+  /* Heading height without the script; sections.js sets --df-section-length to reach the end of the section. */
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0.15em;
+    left: calc(-1 * var(--df-section-offset) - var(--df-section-line-width) / 2);
+    width: var(--df-section-line-width);
+    height: var(--df-section-length, calc(100% - 0.3em));
+    border-radius: 999px;
+    background: var(--df-section-line);
+    pointer-events: none;
+  }
+}
+
+/* sections.js sets this while the numbered section rail covers the margin. */
+.df-page.df-sections-covered > h2::before {
+  display: none;
+}
+
+@media (max-width: 860px), (any-hover: none) {
+  :root {
+    --df-section-offset: 9px;
+  }
+}
+
+/* Printed pages keep the heading-height mark only. */
+@media print {
+  .df-page:not(.df-bubble-body) > h2::before {
+    height: calc(100% - 0.3em);
+  }
+}

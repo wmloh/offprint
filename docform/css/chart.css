@@ -102,20 +102,15 @@
   border-radius: 50%;
 }
 
+/* Shared .df-button pills, sized to the legend row; Table shows on hover or focus. */
 .df-chart-toggle,
 .df-chart-reset {
-  padding: 2px 8px;
-  border: 0;
-  border-radius: var(--df-radius);
-  background: transparent;
-  box-shadow: 0 0 0 1px var(--df-border-strong);
-  color: var(--df-text-muted);
-  font: inherit;
+  padding: 1px 10px;
   font-size: 12px;
-  line-height: 1.5;
-  cursor: pointer;
+}
+
+.df-chart-toggle {
   opacity: 0;
-  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
 }
 
 .df-chart:is(:hover, :focus-within) .df-chart-toggle,
@@ -125,16 +120,6 @@
 
 @media (hover: none) {
   .df-chart-toggle { opacity: 1; }
-}
-
-.df-chart-reset {
-  opacity: 1;
-}
-
-.df-chart-toggle:hover,
-.df-chart-reset:hover {
-  background: var(--df-bg-hover);
-  color: var(--df-text);
 }
 
 .df-chart-plot {

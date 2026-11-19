@@ -730,7 +730,7 @@
     p.appendChild(document.createTextNode('Showing ' + count(shown) + ' of ' + count(total) + ' ' + unit + '. '));
     var left = total - shown;
     var step = Math.min(left, state.limits.maxRows);
-    var button = make('button', null, step === left ? 'Show all' : 'Show ' + count(step) + ' more');
+    var button = make('button', 'df-button', step === left ? 'Show all' : 'Show ' + count(step) + ' more');
     button.type = 'button';
     button.addEventListener('click', function () {
       state.shown = shown + step;
@@ -793,7 +793,7 @@
     if (bytes > state.limits.maxBytes && !state.force) {
       var note = make('p', 'df-data-notice', label + ' is ' + formatSize(bytes) + ', over this block\'s ' +
         formatSize(state.limits.maxBytes) + ' limit. ');
-      var go = make('button', null, 'Show anyway');
+      var go = make('button', 'df-button', 'Show anyway');
       go.type = 'button';
       go.addEventListener('click', function () {
         state.force = true;

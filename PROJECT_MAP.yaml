@@ -3,9 +3,10 @@ docform/: Copyable offline library folder
   docform.css: Optional static reading-profile styles
   site.template.js: Starter JSON site manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
-    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, and reading-column and wide-block widths, and section spacing and colour cycle via light-dark()
-    base.css: Centered reading column, typography, section heading spacing, links, concept tables, table hover, list markers, scrollbars, and data-df-color accents
+    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, reading-column, figure-cap, and wide-block widths, and section spacing and colour cycle via light-dark()
+    base.css: Centered reading column, typography, section heading spacing, links, figure and table width limits, concept tables, table hover, list markers, scrollbars, and data-df-color accents
     sections.css: Cycled h2 section colours and uniform left-margin section lines
+    buttons.css: Shared soft tinted pill buttons with optional icons for author and module actions
     roles.css: Roles legend styles
     nav.css: Sidebar tree, collapsible outline, numbered subsection rail, resize handle, heading links, prev/next links, and drawer
     theme.css: Theme toggle button styles
@@ -38,7 +39,7 @@ docform/: Copyable offline library folder
     dropzone.css: Dashed file drop area, status line with Reset, and the dropped file's view
     glossary.css: Glossary page letter jumps, letter groups, definitions, variant definitions, and used-on links
   js/: Per-module classic scripts on a shared DocForm namespace
-    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, heading slugs, glossary term keys, manifest normalization including the glossary page entry
+    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, data-df-max-width limits, heading slugs, glossary term keys, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
     nav.js: Sidebar tree and heading outlines with hover groups, subsection progress, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles

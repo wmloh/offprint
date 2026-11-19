@@ -282,8 +282,8 @@
     var t = { model: m, byEl: typeof WeakMap === 'function' ? new WeakMap() : new Map(), current: null };
     var box = make('div', 'df-tree');
     var bar = make('div', 'df-tree-bar');
-    var openAll = make('button', null, 'Expand all');
-    var closeAll = make('button', null, 'Collapse all');
+    var openAll = make('button', 'df-button', 'Expand all');
+    var closeAll = make('button', 'df-button', 'Collapse all');
     openAll.type = closeAll.type = 'button';
     bar.appendChild(openAll);
     bar.appendChild(closeAll);

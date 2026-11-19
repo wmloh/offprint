@@ -31,25 +31,6 @@
   font-size: 0.9em;
 }
 
-.df-dropzone button {
-  padding: var(--df-space-1) var(--df-space-3);
-  border: 1px solid var(--df-border-strong);
-  border-radius: var(--df-radius);
-  background: var(--df-bg);
-  color: var(--df-text);
-  font: inherit;
-  cursor: pointer;
-}
-
-.df-dropzone button:hover {
-  background: var(--df-bg-hover);
-}
-
-.df-dropzone button:focus-visible {
-  outline: 2px solid var(--df-focus);
-  outline-offset: 2px;
-}
-
 .df-dropzone-status {
   display: flex;
   flex-wrap: wrap;

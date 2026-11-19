@@ -39,6 +39,15 @@ Each `h2` directly in `main` starts a section with about 56px of space above it 
 
 Standalone figures, tables, and their captions are centered in the reading column, with a little extra space above and below. Pointing at any table cell, headers included, lightly tints its row and column. Links are blue and underlined.
 
+Figures, tables, charts, code blocks, animations, tabs, and split views never grow past the reading column. Images and charts shrink to fit, and wide tables and code scroll sideways inside their box. To make all of them narrower than the text, set `--df-figure-max-width` (for example `--df-figure-max-width: 880px;`). To limit one block, add `data-df-max-width` with a length or percentage:
+
+```html
+<figure data-df-max-width="640px">…</figure>
+<div data-df-chart="line" data-df-max-width="80%">…</div>
+```
+
+Only [wide blocks](#wide-blocks) grow past the column, and these limits do not apply to them. A zoomed figure uses the full zoom view.
+
 ### Wide blocks
 
 A figure or table that needs more room than the reading column can grow into the space beside it. Mark a figure, or a `div` around a table, that sits directly inside `main`:
@@ -130,6 +139,17 @@ Write TeX as-is, without dollar signs. Errors show in red with the message on ho
 <h2>Statement <span class="df-tag" data-df-role="theorem">Theorem</span></h2>
 <span class="df-tag" data-df-color="orange">draft</span>
 ```
+
+## Buttons
+
+Give a button the `df-button` class for a soft, rounded action button. It takes its colour from `data-df-color` or `data-df-role` and is gray otherwise. An icon placed first inside it sits before the label.
+
+```html
+<button type="button" class="df-button" data-df-color="blue">Run again</button>
+<button type="button" class="df-button" data-df-role="alert"><svg aria-hidden="true" viewBox="0 0 16 16">…</svg>Zoom to the first alert</button>
+```
+
+Buttons lift slightly on hover, show a ring when focused from the keyboard, and fade when disabled. Built-in actions such as Reset range, Show more, Expand all, and Clear filters use the same style. The PCA case study's [telemetry page](../examples/pca/pages/telemetry.html#jump-to-alert) has an example.
 
 ## Callouts
 

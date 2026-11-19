@@ -568,9 +568,37 @@
     if (started) run(mod);
   }
 
+  // data-df-max-width: a positive CSS length or percentage, else null.
+  function maxWidthValue(value) {
+    var text = String(value == null ? '' : value).trim().toLowerCase();
+    var match = /^(\d+\.?\d*|\.\d+)(px|em|rem|ch|ex|vw|vh|vmin|vmax|svw|lvw|dvw|cqw|cqi|cm|mm|in|pt|pc|%)$/.exec(text);
+    return match && Number(match[1]) > 0 ? Number(match[1]) + match[2] : null;
+  }
+
+  function applyMaxWidth(el) {
+    var value = maxWidthValue(el.getAttribute('data-df-max-width'));
+    if (value) el.style.setProperty('--df-max-width', value);
+    else {
+      el.style.removeProperty('--df-max-width');
+      if (el.hasAttribute('data-df-max-width')) {
+        issue('base', el, 'Invalid data-df-max-width value.', 'Use a positive length such as 720px or a percentage such as 80%.');
+      }
+    }
+  }
+
+  function watchMaxWidths() {
+    if (typeof document === 'undefined' || !document.documentElement) return;
+    all('[data-df-max-width]').forEach(applyMaxWidth);
+    if (typeof root.MutationObserver !== 'function') return;
+    new root.MutationObserver(function (records) {
+      records.forEach(function (record) { applyMaxWidth(record.target); });
+    }).observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['data-df-max-width'] });
+  }
+
   function initialize() {
     if (started) return;
     started = true;
+    watchMaxWidths();
     if (DocForm._selection) {
       prepareSelection();
       DocForm._selection.start();
@@ -655,6 +683,7 @@
       target: function (target) { return typeof target === 'string' ? document.getElementById(target) : target; }
     },
     _interval: { normalize: estimateInterval, text: intervalText },
+    _maxWidth: maxWidthValue,
     _items: {
       key: selectionKey, flag: attributeFlag, mode: selectionMode, issue: issue, signal: signal,
       transaction: transaction, notify: notifyNow, domain: itemDomain, controller: itemController, collect: collectItems,

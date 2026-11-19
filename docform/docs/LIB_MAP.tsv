@@ -1,7 +1,7 @@
 Offline setup	Use the offline entry and author lifecycle hooks	setup/setup.md
 Include order	Select offline profiles and feature dependencies	setup/include-order.md
 Site manifest	Configure pages, feature options, registries, and generated assets	setup/manifest.md
-Base layout	Style the reading column, typography, lists, and tables	layout/base.md
+Base layout	Style the reading column, typography, lists, tables, and figure width limits	layout/base.md
 Section lines	Space and colour h2 sections with margin bars and lines	layout/sections.md
 Wide blocks	Extend figures and tables into available side space	layout/wide.md
 Design tokens	Override colours, fonts, spacing, and widths	layout/tokens.md
@@ -21,6 +21,7 @@ Citations	Number sources and generate a bibliography per page	reading/citations.
 Sidenotes	Show inline notes in the margin or at their markers	reading/sidenotes.md
 Search	Search live page text and an offline site index	reading/search.md
 Search index	Check and export the offline page and glossary index	reading/search-index.md
+Buttons	Style author and module actions as tinted pills	interact/buttons.md
 Tabs	Switch panels and synchronize choices by group	interact/tabs.md
 SVG animations	Play, scrub, and control a step timeline	interact/animations.md
 Card panels	Select details from standalone cards and groups	interact/card-panels.md

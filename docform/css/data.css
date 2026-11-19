@@ -42,25 +42,3 @@
   border: 1px dashed var(--df-border-strong);
   border-radius: var(--df-radius);
 }
-
-.df-data-more button,
-.df-data-notice button {
-  padding: var(--df-space-1) var(--df-space-3);
-  border: 1px solid var(--df-border-strong);
-  border-radius: var(--df-radius);
-  background: var(--df-bg);
-  color: var(--df-text);
-  font: inherit;
-  cursor: pointer;
-}
-
-.df-data-more button:hover,
-.df-data-notice button:hover {
-  background: var(--df-bg-hover);
-}
-
-.df-data-more button:focus-visible,
-.df-data-notice button:focus-visible {
-  outline: 2px solid var(--df-focus);
-  outline-offset: 2px;
-}

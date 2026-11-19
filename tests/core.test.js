@@ -131,3 +131,13 @@ test('bibliography, refs, and the search index path are read from the manifest',
   assert.deepEqual(plain(site.refs), { equations: 'all' });
   assert.equal(site.search, 'file:///repo/docs/search-index.js');
 });
+
+test('max-width attributes accept positive lengths and percentages only', () => {
+  const { DocForm } = load();
+  const parse = DocForm._maxWidth;
+  assert.equal(parse(' 720PX '), '720px');
+  assert.equal(parse('80%'), '80%');
+  assert.equal(parse('.5em'), '0.5em');
+  assert.equal(parse('42rem'), '42rem');
+  for (const bad of [null, '', '0px', '720', '-10px', 'calc(100% - 2em)', '10 px', 'wide']) assert.equal(parse(bad), null);
+});

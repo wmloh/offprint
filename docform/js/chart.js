@@ -1696,9 +1696,9 @@
     chart.legend = html('div', 'df-chart-legend', head);
     var tools = html('div', 'df-chart-tools', head);
     chart.rangeText = html('span', 'df-chart-range', tools);
-    chart.reset = html('button', 'df-chart-reset', tools, 'Reset range');
+    chart.reset = html('button', 'df-button df-chart-reset', tools, 'Reset range');
     chart.reset.type = 'button';
-    chart.toggle = html('button', 'df-chart-toggle', tools, 'Table');
+    chart.toggle = html('button', 'df-button df-chart-toggle', tools, 'Table');
     chart.toggle.type = 'button';
     chart.toggle.hidden = !chart.model.table;
     chart.toggle.setAttribute('aria-pressed', 'false');

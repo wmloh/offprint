@@ -275,7 +275,7 @@
       area.appendChild(make('p', 'df-dropzone-prompt', 'Drop a ' + listNames(accept) + ' file here.'));
     }
     var hint = make('p', 'df-dropzone-hint');
-    var choose = make('button', 'df-dropzone-choose', 'Choose a file');
+    var choose = make('button', 'df-button df-dropzone-choose', 'Choose a file');
     choose.type = 'button';
     var input = make('input');
     input.type = 'file';
@@ -290,7 +290,7 @@
     status.setAttribute('aria-live', 'polite');
     status.hidden = true;
     var statusText = make('span');
-    var reset = make('button', 'df-dropzone-reset', 'Reset');
+    var reset = make('button', 'df-button df-dropzone-reset', 'Reset');
     reset.type = 'button';
     status.appendChild(statusText);
     status.appendChild(reset);

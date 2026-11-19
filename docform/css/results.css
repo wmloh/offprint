@@ -196,10 +196,7 @@
   margin-right: auto;
 }
 
-.df-chip,
-.df-filter-clear,
-.df-filter-empty button,
-.df-filter-menu button {
+.df-chip {
   padding: 2px var(--df-space-3);
   border: 1px solid var(--df-border-strong);
   border-radius: 999px;
@@ -210,10 +207,7 @@
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 
-.df-chip:hover,
-.df-filter-clear:hover:not(:disabled),
-.df-filter-empty button:hover,
-.df-filter-menu button:hover {
+.df-chip:hover {
   background: var(--df-bg-hover);
 }
 
@@ -228,13 +222,12 @@
   content: "✓ ";
 }
 
-.df-filter-clear:disabled {
-  color: var(--df-text-muted);
-  cursor: default;
-  opacity: 0.6;
+.df-filter-bar .df-button,
+.df-filter-menu .df-button {
+  padding: 0.15em 0.85em;
 }
 
-:is(.df-chip, .df-filter-clear, .df-filter-empty button, .df-filter-menu button):focus-visible {
+.df-chip:focus-visible {
   outline: 2px solid var(--df-focus);
   outline-offset: 1px;
 }

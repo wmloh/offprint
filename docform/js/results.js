@@ -457,7 +457,7 @@
     }
     var count = make('span', 'df-filter-count');
     count.setAttribute('aria-live', 'polite');
-    var clear = make('button', 'df-filter-clear', 'Clear filters');
+    var clear = make('button', 'df-button df-filter-clear', 'Clear filters');
     clear.type = 'button';
     clear.addEventListener('click', function () { api.clear(); });
     bar.appendChild(count);
@@ -469,7 +469,7 @@
     var emptyCell = emptyBody.insertRow().insertCell();
     emptyCell.colSpan = Math.max(1, columns.length);
     emptyCell.textContent = 'No rows match these filters. ';
-    var emptyClear = make('button', null, 'Clear filters');
+    var emptyClear = make('button', 'df-button', 'Clear filters');
     emptyClear.type = 'button';
     emptyClear.hidden = !!settings.noMatches;
     emptyClear.addEventListener('click', function () { api.clear(); });
@@ -574,7 +574,7 @@
       el.appendChild(make('p', 'df-filter-title', col.label));
       if (col.filter === 'values') valueList(el, col);
       else boundInputs(el, col);
-      var reset = make('button', 'df-filter-reset', 'Reset column');
+      var reset = make('button', 'df-button df-filter-reset', 'Reset column');
       reset.type = 'button';
       reset.addEventListener('click', function () {
         setFilter(col, null);
@@ -637,7 +637,7 @@
         setFilter(col, { excluded: boxes.filter(function (b) { return !b.input.checked; }).map(function (b) { return b.key; }) });
       };
       [['All', true], ['None', false]].forEach(function (pair) {
-        var b = make('button', null, pair[0]);
+        var b = make('button', 'df-button', pair[0]);
         b.type = 'button';
         b.addEventListener('click', function () {
           boxes.forEach(function (box) { box.input.checked = pair[1]; });

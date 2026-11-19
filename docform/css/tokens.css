@@ -92,6 +92,7 @@
   --df-radius-lg: 8px;
   --df-content-width: 1120px;
   --df-wide-width: 1240px;
+  --df-figure-max-width: 100%;
   --df-page-gutter: var(--df-space-5);
   --df-sidebar-width: 260px;
 

@@ -651,7 +651,7 @@ See the [Transformer input comparison](../examples/transformers/index.html#input
 
 ## Evaluation walkthroughs
 
-- **Guide readers through training.** Enable `chart-playback` and put `data-df-chart-playback` on an ordered list. Point it at a numeric line chart with `data-df-target` and give each note a `data-df-key` and `data-df-x`. To advance several charts with the same x units, use the same `data-df-x-group` on the list and charts. Keep a table inside each chart host for reading with scripts off. [Guided training example](../examples/transformers/pages/diagnostics.html#guided-training)
+- **Guide readers through training.** Enable `chart-playback` and put `data-df-chart-playback` on an ordered list. Point it at a numeric line chart with `data-df-target` and give each note a `data-df-key` and `data-df-x`. To advance several charts with the same x units, use the same `data-df-x-group` on the list and charts. Keep a table inside each chart host for reading with scripts off. Play animates to the next note (and becomes Pause while moving), and Next jumps straight to it. [Guided training example](../examples/transformers/pages/diagnostics.html#guided-training)
 - **Plot grouped records and supplied intervals.** For a named chart, map `x` and `value` to fields and set `group.field` to the field that names each series. A loss estimate can carry lower and upper bounds, shown as bands on lines and whiskers on scatter and bar charts. A mapped results column can display the bounds alongside its estimate. [Chart mapping and interval reference](../docform/docs/data/charts.md#named-source)
 - **Share run filters.** Define a run choice in `parameterScopes`, then bind the chart and results instances to it with the same `filter`, for example `{"scope":"evaluation","fields":{"runs":"run"},"where":{"split":"test"}}`. The controls update both views. [Held-out results example](../examples/transformers/pages/diagnostics.html#heldout-results)
 - **Report paired effects.** In a named scenario outcome, map the supplied difference and the field containing the baseline key with `pairedDifference`. Give that difference its own bounds when available. [Paired-loss example](../examples/transformers/pages/diagnostics.html#paired-loss)
@@ -769,7 +769,7 @@ Put these patterns inside `<main class="df-page">` and opt into their features i
 
 ### Linked selection
 
-Give a button and its matching items the same `data-df-selection-group` and `data-df-key`. Selecting the button outlines every match. Activate it again to clear the selection. Each group has its own selection.
+Give a button and its matching items the same `data-df-selection-group` and `data-df-key`. Selecting the button tints every match with a thin coloured edge on its leading side (rows are tinted only). The colour comes from `data-df-color` or `data-df-role`, else blue. Activate it again to clear the selection. Each group has its own selection.
 
 Enable `selection`. A page can set the start under `selectionGroups` in its configuration. For example, `{"selectionGroups":{"sales":{"initial":"total"}}}` opens the sales trace on its total.
 
@@ -799,7 +799,7 @@ To trace an output, tag the output and each input row, including excluded inputs
 
 Enable `stepper`.
 
-Give the ordered list an `id` and `data-df-stepper`. Each direct list item needs a unique `data-df-key` and a direct child marked `data-df-step-label`. Follow the name with the rule and what it produces. DocForm adds Previous, Next, and Reset. Mark the starting item with `data-df-initial` or use the default first step.
+Give the ordered list an `id` and `data-df-stepper`. Each direct list item needs a unique `data-df-key` and a direct child marked `data-df-step-label`. Follow the name with the rule and what it produces. DocForm adds a small control pill above the list with Reset, Previous, the step count, and Next. Mark the starting item with `data-df-initial` or use the default first step.
 
 ```html
 <ol id="invoice" data-df-stepper>
@@ -883,7 +883,7 @@ Use one header row and put the measure, unit, baseline, and named variants in th
 </table>
 ```
 
-The comparison keeps the baseline fixed and uses the same scale and row order for outcomes with the same unit. It names changes in text and marks changed outcomes on the chart. Reset selects the first variant again. With scripts off, all columns remain visible.
+The comparison keeps the baseline fixed and uses the same scale and row order for outcomes with the same unit. It names changes in text and marks changed outcomes on the chart. Previous and Next step through the variants, and Reset selects the first variant again. With scripts off, all columns remain visible.
 
 To compare named configurations that change several conditions together, such as candidate release settings, set `data-df-scenarios="configurations"`. Each variant must change at least one condition. The comparison lists every changed condition with its baseline and variant values, in table order, and marks those cells. An outcome difference then reflects the combined effect of all listed changes, so it cannot be attributed to any one condition. Use the default mode to test one cause, and use configurations to choose between complete setups.
 

@@ -1,33 +1,9 @@
 .df-chart-playback-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--df-space-2);
   margin-block: var(--df-space-4) var(--df-space-2);
 }
 
-.df-chart-playback-controls button {
-  padding: var(--df-space-1) var(--df-space-3);
-  border: 1px solid var(--df-border-strong);
-  border-radius: var(--df-radius);
-  background: var(--df-bg);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.df-chart-playback-controls button[aria-disabled="true"] {
-  color: var(--df-text-muted);
-  cursor: default;
-}
-
-.df-chart-playback-controls button[aria-disabled="false"]:hover {
-  background: var(--df-bg-hover);
-}
-
-.df-chart-playback-controls [role="status"] {
-  margin-inline-start: var(--df-space-2);
-  font-variant-numeric: tabular-nums;
+.df-chart-playback-controls .df-pill-count {
+  max-width: 22em;
 }
 
 .df-chart-playhead {

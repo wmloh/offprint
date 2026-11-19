@@ -58,3 +58,70 @@
   cursor: default;
   opacity: 0.5;
 }
+
+/* Step controls: a frosted icon pill aligned right above the stepped content, like the page control pill.
+   Round icon buttons carry tooltips and labels; the muted count between them is the live status. */
+.df-pill {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline-start: auto;
+  padding: 3px;
+  border: 1px solid var(--df-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--df-bg) 70%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.df-pill-button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--df-text-muted);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.df-pill-button:hover:not([aria-disabled="true"]) {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-pill-button:focus-visible {
+  outline: 2px solid var(--df-focus);
+  outline-offset: 1px;
+  border-radius: 999px;
+}
+
+.df-pill-button[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.df-pill-count {
+  min-width: 0;
+  padding-inline: 0.55em;
+  overflow: hidden;
+  color: var(--df-text-muted);
+  font-size: 0.78em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}

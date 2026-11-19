@@ -4,7 +4,7 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const vm = require('node:vm');
 
-const sources = ['chart.js', 'scenarios.js'].map((file) => readFileSync(join(__dirname, '../docform/js', file), 'utf8'));
+const sources = ['chart.js', 'scenarios.js', 'core.js'].map((file) => readFileSync(join(__dirname, '../docform/js', file), 'utf8'));
 
 function node(tag, text = '', children = []) {
   const attrs = new Map();
@@ -83,7 +83,12 @@ function setup({ table }, withChart = true) {
     warnOnce: (_, message) => warnings.push(message),
     register: (name, start) => modules.set(name, start)
   };
-  const context = vm.createContext({ DocForm, document: { createElement: node, createElementNS: (_, tag) => node(tag) } });
+  const document = { createElement: node, createElementNS: (_, tag) => node(tag) };
+  // Only the shared step pill comes from core; the rest of this fake stays a page without data views.
+  const core = vm.createContext({ DocForm: { _boot: {} }, document });
+  vm.runInContext(sources[2], core);
+  DocForm._pill = core.DocForm._pill;
+  const context = vm.createContext({ DocForm, document });
   if (withChart) vm.runInContext(sources[0], context);
   vm.runInContext(sources[1], context);
   return { page, chart: DocForm.chart, warnings, start: modules.get('scenarios') };
@@ -103,8 +108,10 @@ test('selecting and resetting variants keeps baseline geometry and highlights th
   start();
 
   const [controls, status, key, alerts, seconds] = page.firstChild.children;
-  const [label, reset] = controls.children;
+  const [label, pill] = controls.children;
+  const [reset, previous, count, next] = pill.children;
   const select = label.firstChild;
+  const disabled = () => [reset, previous, next].map((button) => button.getAttribute('aria-disabled'));
   const selectVariant = (index) => {
     select.value = select.children[index].value;
     select.dispatchEvent(new Event('change'));
@@ -117,6 +124,16 @@ test('selecting and resetting variants keeps baseline geometry and highlights th
   const baselinePaths = [paths(alerts).slice(0, 2), paths(seconds).slice(0, 1)];
 
   assert.equal(status.getAttribute('role'), 'status');
+  assert.deepEqual([reset, previous, next].map((button) => button.getAttribute('aria-label')),
+    ['Reset to the first variant', 'Previous variant', 'Next variant']);
+  assert.equal(count.textContent, '1 of 3');
+  assert.deepEqual(disabled(), ['true', 'true', 'false']);
+  next.click();
+  assert.equal(select.selectedIndex, 1);
+  assert.equal(count.textContent, '2 of 3');
+  previous.click();
+  previous.click();
+  assert.equal(select.selectedIndex, 0);
   assert.match(status.textContent, /Threshold changed from 20% to 25%\. False alarms changed from 6 alerts to 2 alerts\. Lead time changed/);
   assert.deepEqual(axis(alerts), [0, 9, 'False alarms', 'Missed alerts']);
   assert.deepEqual(axis(seconds), [-3, 10, 'Lead time']);
@@ -141,6 +158,9 @@ test('selecting and resetting variants keeps baseline geometry and highlights th
   assert.equal(key.hidden, true);
   assert.equal(markerCount(seconds), 0);
   assert.deepEqual(metricCells(5), [data.rows[0]]);
+  assert.deepEqual(disabled(), ['false', 'false', 'true']);
+  next.click();
+  assert.equal(select.selectedIndex, 2);
   reset.click();
   assert.equal(select.selectedIndex, 0);
   assert.equal(reset.getAttribute('aria-disabled'), 'true');
@@ -167,7 +187,8 @@ test('configuration mode lists and marks every changed condition and resets to t
   start();
 
   const [controls, heading, list, status, , alerts] = page.firstChild.children;
-  const [label, reset] = controls.children;
+  const [label, pill] = controls.children;
+  const [reset] = pill.children;
   const select = label.firstChild;
   const items = () => list.children.map((li) => li.textContent);
   const marked = (column) => data.rows.filter((tr) => tr.cells[column].hasAttribute('data-df-scenario-difference'));

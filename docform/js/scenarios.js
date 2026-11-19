@@ -102,8 +102,16 @@
     model.variants.forEach(function (variant) {
       element('option', select, variant.name).value = variant.index;
     });
-    var reset = element('button', controls, 'Reset');
-    reset.type = 'button';
+    var pill = DocForm._pill.create('', 'Scenario variants', [
+      { name: 'reset', label: 'Reset to the first variant', run: function () { go(0, onReset); } },
+      { name: 'previous', label: 'Previous variant', run: function () { go(selected.index - 2, onChoose); } },
+      'count',
+      { name: 'next', label: 'Next variant', run: function () { go(selected.index, onChoose); } }
+    ]);
+    controls.appendChild(pill.element);
+    var buttons = pill.buttons;
+    pill.count.removeAttribute('role');
+    pill.count.setAttribute('aria-hidden', 'true');
 
     var conditionList = null;
     if (model.mode === 'configurations') {
@@ -124,7 +132,10 @@
       selected = variant;
       var index = variant.index;
       select.value = index;
-      reset.setAttribute('aria-disabled', String(index === 1));
+      buttons.reset.setAttribute('aria-disabled', String(index === 1));
+      buttons.previous.setAttribute('aria-disabled', String(index === 1));
+      buttons.next.setAttribute('aria-disabled', String(index === model.variants.length));
+      pill.count.textContent = index + ' of ' + model.variants.length;
       var conditionText = variant.changes.map(function (change) { return changeText(change, index); });
       var changedText = [];
       var selectedColumn = index + 2;
@@ -177,19 +188,14 @@
       marker.hidden = !changedText.length;
     }
 
-    select.addEventListener('change', function () {
-      var variant = model.variants[select.selectedIndex];
-      if (variant) {
-        if (onChoose) onChoose(variant);
-        else show(variant);
-      }
-    });
-    reset.addEventListener('click', function () {
-      if (select.selectedIndex !== 0) {
-        if (onReset) onReset(model.variants[0]);
-        else show(model.variants[0]);
-      }
-    });
+    function go(position, apply) {
+      var variant = model.variants[position];
+      if (!variant || variant === selected) return;
+      if (apply) apply(variant);
+      else show(variant);
+    }
+
+    select.addEventListener('change', function () { go(select.selectedIndex, onChoose); });
     table.before(visual);
     show(model.variants.find(function (variant) { return variant.key === key; }) || model.variants[0]);
     return {

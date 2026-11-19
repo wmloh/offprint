@@ -12,16 +12,6 @@
   var controllers = new WeakMap();
   var HOST = 'ol[data-df-stepper]';
 
-  function button(controls, id, label, activate) {
-    var control = document.createElement('button');
-    control.type = 'button';
-    control.textContent = label;
-    control.setAttribute('aria-controls', id);
-    control.addEventListener('click', activate);
-    controls.appendChild(control);
-    return control;
-  }
-
   function prepare(list) {
     var domain = items.domain('stepper', list, DocForm.all(':scope > li', list));
     if (!domain) return null;
@@ -48,13 +38,6 @@
       if (domain.keys.includes(key)) bindings.push({ view: view, key: key });
     });
 
-    var controls = document.createElement('div');
-    controls.className = 'df-stepper-controls';
-    var status = document.createElement('span');
-    status.className = 'df-stepper-status';
-    status.setAttribute('role', 'status');
-    controls.appendChild(status);
-
     var state = items.controller('stepper', list, domain, function (index, key) {
       return { key: key, index: index, label: domain.labels[index], total: steps.length };
     }, function (current) {
@@ -67,22 +50,25 @@
       bindings.forEach(function (binding) {
         binding.view.toggleAttribute('hidden', binding.key !== current.key);
       });
-      // Keep focus on the activated control when it reaches a boundary.
-      previous.setAttribute('aria-disabled', String(index === 0));
-      next.setAttribute('aria-disabled', String(index === steps.length - 1));
-      reset.setAttribute('aria-disabled', String(index === domain.initial));
-      status.textContent = 'Step ' + (index + 1) + ' of ' + steps.length;
+      // aria-disabled keeps focus on the activated control when it reaches a boundary.
+      buttons.previous.setAttribute('aria-disabled', String(index === 0));
+      buttons.next.setAttribute('aria-disabled', String(index === steps.length - 1));
+      buttons.reset.setAttribute('aria-disabled', String(index === domain.initial));
+      controls.count.textContent = 'Step ' + (index + 1) + ' of ' + steps.length;
     });
 
-    var previous = button(controls, list.id, 'Previous', function () {
-      state.choose(state.controller.snapshot().index - 1, 'user');
-    });
-    var next = button(controls, list.id, 'Next', function () {
-      state.choose(state.controller.snapshot().index + 1, 'user');
-    });
-    var reset = button(controls, list.id, 'Reset', state.controller.reset);
+    var move = function (by) {
+      return function () { state.choose(state.controller.snapshot().index + by, 'user'); };
+    };
+    var controls = DocForm._pill.create('df-stepper-controls', 'Worked example steps', [
+      { name: 'reset', label: 'Reset', run: state.controller.reset },
+      { name: 'previous', label: 'Previous step', run: move(-1) },
+      'count',
+      { name: 'next', label: 'Next step', run: move(1) }
+    ], list.id);
+    var buttons = controls.buttons;
 
-    list.before(controls);
+    list.before(controls.element);
     list.classList.add('df-stepper-ready');
     list.setAttribute('role', 'list');
     controllers.set(list, state.controller);

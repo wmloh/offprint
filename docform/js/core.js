@@ -631,6 +631,56 @@
     initialize();
   }
 
+  var PILL_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">';
+  var PILL_ICONS = {
+    reset: '<path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9L2.5 5.6"/><path d="M2.5 2.5v3.1h3.1"/>',
+    previous: '<path d="m10 3.5-4.5 4.5 4.5 4.5"/>',
+    next: '<path d="m6 3.5 4.5 4.5-4.5 4.5"/>',
+    play: '<path d="M5 3.3v9.4L12.3 8z" fill="currentColor"/>',
+    pause: '<path d="M5.5 3.5v9M10.5 3.5v9"/>'
+  };
+
+  function pillIcon(button, icon, label) {
+    if (button.getAttribute('aria-label') === label) return;
+    button.innerHTML = PILL_SVG + PILL_ICONS[icon] + '</svg>';
+    button.setAttribute('aria-label', label);
+    button.title = label;
+  }
+
+  // Frosted step-control pill: parts are {name, label, run, icon?} buttons or 'count', a muted status line.
+  // Buttons stay focusable at their ends through aria-disabled, so focus never jumps.
+  function pill(className, label, parts, controls) {
+    var group = document.createElement('div');
+    group.className = 'df-pill' + (className ? ' ' + className : '');
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-label', label);
+    var buttons = {};
+    var count = null;
+    parts.forEach(function (part) {
+      if (part === 'count') {
+        count = document.createElement('span');
+        count.className = 'df-pill-count';
+        count.setAttribute('role', 'status');
+        count.setAttribute('aria-atomic', 'true');
+        group.appendChild(count);
+        return;
+      }
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'df-pill-button df-pill-' + part.name;
+      if (controls) button.setAttribute('aria-controls', controls);
+      button.setAttribute('aria-disabled', 'false');
+      pillIcon(button, part.icon || part.name, part.label);
+      button.addEventListener('click', function () {
+        if (button.getAttribute('aria-disabled') !== 'true') part.run();
+      });
+      group.appendChild(button);
+      buttons[part.name] = button;
+    });
+    return { element: group, buttons: buttons, count: count };
+  }
+
   function estimateInterval(value, at) {
     if (value === undefined) return undefined;
     if (!value || typeof value !== 'object' || Array.isArray(value) ||
@@ -684,6 +734,7 @@
     },
     _interval: { normalize: estimateInterval, text: intervalText },
     _maxWidth: maxWidthValue,
+    _pill: { create: pill, icon: pillIcon },
     _items: {
       key: selectionKey, flag: attributeFlag, mode: selectionMode, issue: issue, signal: signal,
       transaction: transaction, notify: notifyNow, domain: itemDomain, controller: itemController, collect: collectItems,

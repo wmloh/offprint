@@ -13,4 +13,10 @@ Loads with `base` (reading profile and `docform.css`); no script. Put `.df-butto
 - Font size follows the context; module rules may set compact padding or size.
 - Module text buttons use the same class: chart Reset range and Table, data Show more and Show anyway, tree Expand all and Collapse all, dropzone Choose a file and Reset, results Clear filters, filter-menu All, None, and Reset column. Results filter chips keep their toggle chip look.
 
+## Step pill
+
+- `.df-pill` from `DocForm._pill.create(className, label, parts, controlsIds?)` (core.js, internal): frosted, bordered group (`role="group"`, aria-label) with `margin-inline-start: auto`, so it sits right-aligned above stepped content. Used by [steppers](worked-examples.md), [chart playback](../data/chart-playback.md), and [scenarios](scenarios.md).
+- Parts: `{name, label, run, icon?}` → 30 px round `.df-pill-button.df-pill-<name>` with a 16 px stroke icon (`reset`, `previous`, `next`, `play`, `pause`), `aria-label` and `title` tooltip; or `'count'` → `.df-pill-count`, a muted uppercase small status with `role="status"`. `DocForm._pill.icon(button, icon, label)` swaps icon and label in place.
+- Buttons use `aria-disabled="true"` (35 % opacity, clicks ignored) so focus stays at ends. `:focus-visible` draws a `--df-focus` ring.
+
 [Tags](../reading/tags.md) · [Colour roles](../layout/roles.md) · [Stylesheet](../../css/buttons.css) · [PCA telemetry example](../../../examples/pca/pages/telemetry.html#jump-to-alert)

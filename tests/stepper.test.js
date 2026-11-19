@@ -87,21 +87,24 @@ test('controls stop at both boundaries and Reset restores the initial step and l
     assert.equal(event.bubbles, true);
     assert.equal(event.detail.current, stepper.get('sum').snapshot());
     assert.equal(list.children[index].getAttribute('aria-current'), 'step');
-    assert.equal(list.controls.children[0].textContent, `Step ${index + 1} of ${total}`);
+    assert.equal(list.controls.children[2].textContent, `Step ${index + 1} of ${total}`);
     changes.push({ index, key, name: label, visible: viewVisibility() });
   });
 
   assert.deepEqual(viewVisibility(), [true, true, true, true]);
   assert.equal(list.controls, undefined);
   start();
-  const [status, previous, next, reset] = list.controls.children;
+  const [reset, previous, status, next] = list.controls.children;
   const isDisabled = (button) => button.getAttribute('aria-disabled') === 'true';
   const disabled = () => [previous, next, reset].map(isDisabled);
+  assert.equal(list.controls.getAttribute('role'), 'group');
   assert.equal(status.getAttribute('role'), 'status');
-  assert.deepEqual([previous, next, reset].map((button) => button.textContent), ['Previous', 'Next', 'Reset']);
+  assert.deepEqual([previous, next, reset].map((button) => button.getAttribute('aria-label')), ['Previous step', 'Next step', 'Reset']);
   for (const button of [previous, next, reset]) {
     assert.equal(button.tag, 'button');
     assert.equal(button.type, 'button');
+    assert.equal(button.title, button.getAttribute('aria-label'));
+    assert.match(button.innerHTML, /^<svg [^>]*aria-hidden="true"/);
     assert.equal(button.getAttribute('aria-controls'), 'sum');
   }
   assert.deepEqual(disabled(), [true, false, true]);
@@ -138,7 +141,7 @@ test('steppers with the same keys update only their own views', () => {
   const { start, stepper } = setup([first, second], [firstView, secondView]);
   start();
 
-  first.controls.children[2].click();
+  first.controls.children[3].click();
   assert.equal(stepper.get(first).snapshot().key, 'Check');
   assert.equal(stepper.get(second).snapshot().key, 'Inputs');
   assert.equal(firstView.getAttribute('hidden'), null);
@@ -151,7 +154,7 @@ test('a single step stays visible and an ambiguous sequence stays readable', () 
   const { start, stepper, warnings } = setup([single, invalid]);
   start();
 
-  for (const control of single.controls.children.slice(1)) {
+  for (const control of single.controls.children.filter((child) => child.tag === 'button')) {
     assert.equal(control.getAttribute('aria-disabled'), 'true');
     control.click();
   }
@@ -171,7 +174,7 @@ test('select jumps to a named step through the same update as the controls', () 
   start();
   const changes = [];
   list.addEventListener('df:stepper:change', (event) => changes.push(event.detail.current.key));
-  const [, previous, next, reset] = list.controls.children;
+  const [reset, previous, , next] = list.controls.children;
 
   assert.equal(stepper.get('trace').select('late'), true);
   assert.equal(stepper.get(list).select('late'), true);

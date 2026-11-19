@@ -326,7 +326,7 @@ test('one x-group playback clock gates independently sampled charts through sour
   assert.equal(group.set(1), false);
   const seen = [];
   playback.subscribe(({ x, state }) => seen.push([x, state, visible(plot), visible(other)]));
-  playback.next();
+  playback.play();
   assert.equal(frames.size, 1);
   advance(500);
   assert.equal(playback.snapshot().x, 2.25);
@@ -351,7 +351,7 @@ test('one x-group playback clock gates independently sampled charts through sour
   click(toggle);
   const rows = () => follower.host.querySelector('tbody').rows.map((row) => row.firstChild.textContent);
   assert.deepEqual(rows(), ['3']);
-  playback.next();
+  playback.play();
   advance(500);
   assert.equal(playback.snapshot().x, 6.25);
   assert.equal(follower.api.update(followerSpec), true);
@@ -373,7 +373,7 @@ test('one x-group playback clock gates independently sampled charts through sour
   const source = DocForm.data.source('readings');
   let observed;
   source.subscribe(() => { observed = [playback.snapshot().x, visible(plot), visible(other)]; });
-  playback.next();
+  playback.play();
   advance(200);
   assert.equal(source.update(data(12)), true);
   assert.deepEqual(observed, [8, 3, 2]);
@@ -382,7 +382,7 @@ test('one x-group playback clock gates independently sampled charts through sour
   assert.equal(chart.range(), null);
   assert.deepEqual([...follower.api.range()], [2, 9]);
   const marker = other.querySelector('.df-chart-checkpoint');
-  playback.next();
+  playback.play();
   assert.equal(display(marker), 'none');
   assert.equal(source.update(data(13)), true);
   assert.equal(playback.snapshot().x, 8);
@@ -419,7 +419,7 @@ test('configured group playback rejects incompatible charts and claims all membe
   assert.equal(playhead(b.plot), null);
   assert.equal(b.api.update(spec), true);
   const playback = api.mount(host, { xGroup: 'steps', checkpoints: [{ key: 'middle', x: 2 }] });
-  assert.equal(playback.next(), true);
+  assert.equal(playback.play(), true);
   assert.equal(playback.snapshot().x, 2);
   assert.equal(display(playhead(a.plot)), 'inline');
   assert.equal(display(playhead(b.plot)), 'inline');
@@ -430,7 +430,7 @@ test('guided playback reveals exact observations while clipping the same line ge
   const { chart, chartHost, playback, plot, controls, events, frames, advance, DocForm, host } = guided();
   const shape = () => ({ ...playback.snapshot() });
   const keys = () => plot.all().filter((el) => el.hasAttribute(KEY)).map((el) => el.getAttribute(KEY));
-  const button = (label) => controls.children.find((el) => el.textContent === label);
+  const button = (label) => controls.children.find((el) => el.getAttribute('aria-label') === label);
   const fire = (type, props) => plot.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), props));
   const line = plot.querySelector('.df-chart-line');
   const clip = plot.all().find((el) => el.tag === 'clipPath').firstChild;
@@ -440,14 +440,19 @@ test('guided playback reveals exact observations while clipping the same line ge
   assert.deepEqual(shape(), { x: 0, key: 'start', index: 0, total: 3, state: 'paused' });
   assert.equal(events[0].origin, 'init');
   assert.equal(events[0].previous, null);
-  assert.equal(button('Previous').getAttribute('aria-disabled'), 'true');
+  assert.deepEqual(controls.children.map((el) => el.getAttribute('aria-label')),
+    ['Reset', 'Previous checkpoint', null, 'Play to the next checkpoint', 'Next checkpoint']);
+  assert.equal(button('Previous checkpoint').getAttribute('aria-disabled'), 'true');
   assert.deepEqual(keys(), ['zero']);
   assert.equal(+clip.getAttribute('width'), 0);
   assert.equal(line.getAttribute('d').match(/M/g).length, 2);
 
-  button('Next').dispatchEvent(new Event('click'));
+  const toggle = button('Play to the next checkpoint');
+  toggle.dispatchEvent(new Event('click'));
   assert.equal(events.at(-1).origin, 'user');
-  assert.equal(playback.next(), true);
+  assert.equal(toggle.getAttribute('aria-label'), 'Pause', 'the same button pauses while playing');
+  assert.equal(button('Next checkpoint').getAttribute('aria-disabled'), 'false');
+  assert.equal(playback.play(), true);
   assert.equal(frames.size, 1);
   advance(500);
   assert.equal(shape().x, 2.25);
@@ -466,23 +471,24 @@ test('guided playback reveals exact observations while clipping the same line ge
   fire('keydown', { key: 'Enter' });
   assert.equal(DocForm.selection.group('trace').get(), 'two');
 
-  assert.equal(playback.pause(), true);
+  toggle.dispatchEvent(new Event('click'));
   advance(5000);
   assert.equal(shape().x, 2.25);
-  playback.next();
-  advance(500);
+  assert.equal(toggle.getAttribute('aria-label'), 'Play to the next checkpoint');
+  button('Next checkpoint').dispatchEvent(new Event('click'));
+  assert.equal(frames.size, 0, 'Next finishes the paused leg without animating');
   assert.deepEqual(shape(), { x: 4.5, key: 'gap', index: 1, total: 3, state: 'paused' });
-  assert.equal(controls.lastChild.textContent, 'Between readings');
+  assert.equal(controls.children[2].textContent, 'Between readings');
   assert.deepEqual(keys(), ['zero', 'two']);
 
   const table = chartHost.querySelector('.df-chart-table');
-  const toggle = chartHost.querySelector('.df-chart-toggle');
-  toggle.dispatchEvent(new Event('click'));
+  const tableToggle = chartHost.querySelector('.df-chart-toggle');
+  tableToggle.dispatchEvent(new Event('click'));
   assert.deepEqual(table.querySelector('tbody').rows.map((row) => row.firstChild.textContent), ['0', '2', '4']);
-  playback.next();
+  playback.play();
   advance(5000);
   assert.deepEqual(table.querySelector('tbody').rows.map((row) => row.firstChild.textContent), ['0', '2', '4', '6']);
-  toggle.dispatchEvent(new Event('click'));
+  tableToggle.dispatchEvent(new Event('click'));
   assert.equal(chart.setRange([1, 7]), true);
   assert.deepEqual([...chart.range()], [1, 7]);
   assert.equal(plot.querySelector('.df-chart-playhead').getAttribute('display'), 'none');
@@ -498,20 +504,22 @@ test('reduced motion reaches each stop immediately and chart replacement reconci
   const { chart, playback, controls, chartHost, DocForm, frames, events, data, warnings } = guided(true);
   const source = DocForm.data.source('readings');
   assert.equal(playback.select('unknown'), false);
-  assert.equal(playback.next(), true);
+  assert.equal(playback.play(), true);
   assert.equal(playback.snapshot().key, 'gap');
-  assert.equal(playback.next(), true);
+  assert.equal(playback.play(), true);
   assert.equal(playback.snapshot().key, 'later');
-  assert.equal(playback.next(), true);
+  assert.equal(playback.play(), true);
   assert.equal(playback.snapshot().state, 'ended');
   assert.equal(playback.snapshot().key, null);
-  assert.equal(playback.next(), true);
+  assert.equal(playback.play(), true);
   assert.equal(events.length, 4);
   assert.equal(frames.size, 0);
-  assert.equal(controls.children.find((el) => el.textContent === 'Next').getAttribute('aria-disabled'), 'true');
+  for (const label of ['Play to the next checkpoint', 'Next checkpoint']) {
+    assert.equal(controls.children.find((el) => el.getAttribute('aria-label') === label).getAttribute('aria-disabled'), 'true');
+  }
   playback.prev();
   const reached = playback.snapshot();
-  playback.next();
+  playback.play();
   assert.equal(source.update(data(11)), true);
   assert.deepEqual(playback.snapshot(), reached);
   assert.equal(source.update({ type: 'csv', text: 'bad,y\n12,3' }), false);
@@ -519,7 +527,7 @@ test('reduced motion reaches each stop immediately and chart replacement reconci
   assert.equal(source.update(data(7)), true);
   assert.equal(playback.snapshot().x, null);
   assert.equal(events.at(-1).origin, 'source');
-  assert.equal(playback.next(), false);
+  assert.equal(playback.play(), false);
   assert.match(warnings.at(-1), /Checkpoint "later"/);
   assert.equal(chartHost.querySelector('.df-chart-playhead'), null);
   assert.equal(source.update(data(12)), true);
@@ -533,7 +541,7 @@ test('replacement during a leg cancels its clock before source subscribers see t
   const { playback, DocForm, data, frames, advance, events } = guided();
   const source = DocForm.data.source('readings');
   playback.select('gap');
-  playback.next();
+  playback.play();
   advance(500);
   assert.equal(playback.snapshot().x, 6.25);
   let duringSource;
@@ -612,8 +620,8 @@ test('authored checkpoints reveal HTML and an off-sample marker and link to a co
   assert.equal(start.getAttribute('aria-current'), 'step');
   assert.equal(gap.hidden, true);
   assert.equal(detail.hidden, true);
-  assert.equal(controls.lastChild.getAttribute('role'), 'status');
-  playback.next();
+  assert.equal(controls.children[2].getAttribute('role'), 'status');
+  playback.play();
   advance(500);
   assert.equal(gap.hidden, true);
   assert.equal(plot.querySelector('.df-chart-checkpoint').getAttribute('display'), 'none');
@@ -629,7 +637,7 @@ test('authored checkpoints reveal HTML and an off-sample marker and link to a co
   assert.equal(start.hidden, true);
   assert.equal(detail.hidden, false);
   assert.equal(detail.firstChild.tag, 'em');
-  assert.equal(controls.lastChild.textContent, 'Schedule change');
+  assert.equal(controls.children[2].textContent, 'Schedule change');
   const marker = plot.querySelector('.df-chart-checkpoint');
   assert.equal(marker.getAttribute('display'), 'inline');
   assert.equal(marker.getAttribute('cx'), plot.querySelector('.df-chart-playhead').getAttribute('x1'));
@@ -642,7 +650,7 @@ test('authored checkpoints reveal HTML and an off-sample marker and link to a co
   group.clear();
   group.select('unknown');
   assert.equal(playback.snapshot().key, 'schedule');
-  playback.next();
+  playback.play();
   advance(1000);
   assert.equal(playback.snapshot().state, 'ended');
   assert.equal(group.get(), 'final');
@@ -727,7 +735,7 @@ test('line intervals split at chart gaps and advance within the playback and bru
   const fire = (key) => plot.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key }));
   fire('End');
   assert.match(plot.querySelector('.df-chart-tip').textContent, /90% interval \[0, 2\]/);
-  playback.next();
+  playback.play();
   advance(500);
   assert.ok(+bandClip().getAttribute('width') > 0);
   assert.equal(plot.querySelector('.df-chart-band-interval'), band);
@@ -1659,7 +1667,7 @@ test('a chart, stepper and passive markup follow the same seeded group without b
   assert.equal(click.defaultPrevented, true);
   assert.equal(group.get(), 'a1');
   assert.equal(list.children[0].getAttribute('aria-current'), 'step');
-  const next = list.parentNode.children.find(el => el.classList.contains('df-stepper-controls')).children[2];
+  const next = list.parentNode.children.find(el => el.classList.contains('df-stepper-controls')).children[3];
   next.dispatchEvent(new Event('click'));
   next.dispatchEvent(new Event('click'));
   assert.equal(group.get(), 'a2');

@@ -6,7 +6,7 @@
   gap: var(--df-space-2);
 }
 
-.df-scenarios-controls :is(select, button) {
+.df-scenarios-controls select {
   min-width: 0;
   max-width: 100%;
   padding: var(--df-space-1) var(--df-space-2);
@@ -16,15 +16,6 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
-}
-
-.df-scenarios-controls button[aria-disabled="true"] {
-  color: var(--df-text-muted);
-  cursor: default;
-}
-
-.df-scenarios-controls button[aria-disabled="false"]:hover {
-  background: var(--df-bg-hover);
 }
 
 .df-scenarios-key {

@@ -183,14 +183,17 @@
     var group = DocForm._selection && DocForm._selection.ensure(DocForm.data(host, 'selection-group'));
     var mode = group ? items.mode(host, feature) : 'both';
 
-    var controls = document.createElement('div');
-    controls.className = 'df-chart-playback-controls';
-    controls.setAttribute('role', 'group');
-    controls.setAttribute('aria-label', 'Chart playback');
-    var status = document.createElement('span');
-    status.setAttribute('role', 'status');
-    status.setAttribute('aria-atomic', 'true');
-    var buttons = {};
+    var controlIds = instance.chartHosts.concat(host).map(function (target) { return target.id; }).filter(Boolean);
+    var pill = DocForm._pill.create('df-chart-playback-controls', 'Chart playback', [
+      { name: 'reset', label: 'Reset', run: transport(reset, 'user') },
+      { name: 'previous', label: 'Previous checkpoint', run: transport(previous, 'user') },
+      'count',
+      { name: 'toggle', icon: 'play', label: 'Play to the next checkpoint', run: transport(toggle, 'user') },
+      { name: 'next', label: 'Next checkpoint', run: transport(next, 'user') }
+    ], controlIds.join(' '));
+    var controls = pill.element;
+    var status = pill.count;
+    var buttons = pill.buttons;
     var x = range[0];
     var state = 'paused';
     var lastReached = null;
@@ -202,7 +205,8 @@
     var events = component.signal(feature, host, snapshot);
     var api = {
       snapshot: snapshot, subscribe: events.subscribe,
-      next: transport(next), prev: transport(previous), pause: transport(pause), reset: transport(reset, 'reset'),
+      play: transport(play), pause: transport(pause), next: transport(next), prev: transport(previous),
+      reset: transport(reset, 'reset'),
       select: function (key) {
         key = items.key(key);
         var stop = stops.find(function (item) { return item.key === key; });
@@ -234,14 +238,17 @@
 
     function renderControls() {
       var disabled = {
-        Previous: !range || (x === range[0] && state !== 'playing'),
-        Next: !range || state !== 'paused',
-        Pause: state !== 'playing',
-        Reset: !range || (x === range[0] && state === 'paused' && !leg)
+        reset: !range || (x === range[0] && state === 'paused' && !leg),
+        previous: !range || (x === range[0] && state !== 'playing'),
+        toggle: !range || state === 'ended',
+        next: !range || state === 'ended'
       };
-      Object.keys(buttons).forEach(function (label) {
-        buttons[label].setAttribute('aria-disabled', String(disabled[label]));
+      Object.keys(buttons).forEach(function (name) {
+        buttons[name].setAttribute('aria-disabled', String(disabled[name]));
       });
+      // One button toggles, so focus stays put when playback starts or stops.
+      if (state === 'playing') DocForm._pill.icon(buttons.toggle, 'pause', 'Pause');
+      else DocForm._pill.icon(buttons.toggle, 'play', 'Play to the next checkpoint');
       var message = !range ? 'Playback unavailable.' : state === 'playing' ? 'Playing to ' + labelAt(leg.to) :
         leg ? 'Paused at ' + DocForm.chart.format(x, model.x) : labelAt(x);
       var active = checkpoint();
@@ -318,7 +325,7 @@
       frame = root.requestAnimationFrame(function (now) { tick(now, activeLeg, origin); });
     }
 
-    function next(origin) {
+    function play(origin) {
       if (state !== 'paused') return true;
       var stop = stops.find(function (item) { return item.x > x; });
       var to = leg ? leg.to : stop ? stop.x : range[1];
@@ -333,6 +340,17 @@
       renderControls();
       publish(before, origin);
       return true;
+    }
+
+    // Next skips the animation: it finishes a running leg or jumps to the following stop.
+    function next(origin) {
+      if (state === 'ended') return true;
+      var stop = stops.find(function (item) { return item.x > x; });
+      return jump(leg ? leg.to : stop ? stop.x : range[1], origin);
+    }
+
+    function toggle(origin) {
+      return state === 'playing' ? pause(origin) : play(origin);
     }
 
     function previous(origin) {
@@ -382,19 +400,6 @@
       issue(host, 'A target chart already has a playback controller.', 'Use one playback controller per chart or x-group.');
       return null;
     }
-    var controlIds = instance.chartHosts.concat(host).map(function (target) { return target.id; }).filter(Boolean);
-    [['Previous', previous], ['Next', next], ['Pause', pause], ['Reset', reset]].forEach(function (entry) {
-      var button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = entry[0];
-      if (controlIds.length) button.setAttribute('aria-controls', controlIds.join(' '));
-      button.addEventListener('click', function () {
-        if (button.getAttribute('aria-disabled') === 'false') transport(entry[1], 'user')();
-      });
-      controls.appendChild(button);
-      buttons[entry[0]] = button;
-    });
-    controls.appendChild(status);
     host.before(controls);
     stops.forEach(function (stop) {
       if (stop.item) controlledNotes.add(stop.item);

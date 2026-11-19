@@ -10,7 +10,7 @@ Use the [offline entry](include-order.md) and enable the features your page need
 | Animated figures and figure-step panels | `animation` and `figure-steps` as needed |
 | Full-screen figures and presentation tools | `zoom` or `zoom-tools` |
 | Scoped sliders, switches, and presets | `parameters` |
-| Charts, results tables, and scenario comparisons | `chart`, `results`, or `scenarios` |
+| Charts, guided playback, results tables, scenarios, and evaluation matrices | `chart`, `chart-playback`, `results`, `scenarios`, or `matrix` |
 | Named sources, raw views, and interactive trees | `data`, `data-view`, and `tree` as needed |
 | Local file pickers | `dropzone` and the target's feature |
 | Shared selection between keyed items | `selection` |
@@ -463,7 +463,7 @@ DocForm.ready(function (DF) {
 });
 ```
 
-The [Transformers prediction page](../examples/transformers/pages/prediction.html) shows two linked decoder sliders and an independent comparison with its own Reset button. See the [parameter reference](../docform/docs/interact/parameters.md) for definition types and controller methods.
+Use `"type": "multiselect"` for a checkbox group with several selected choices. Presets set these choices with an array, such as `{"runs":["r04"]}`. The [Transformer prediction page](../examples/transformers/pages/prediction.html) shows linked decoder sliders and a separate comparison with its own Reset button. The [parameter reference](../docform/docs/interact/parameters.md) lists the definition types and controller methods.
 
 ## Numbered figures and cross-references
 
@@ -626,6 +626,14 @@ Use `data-df-concept` on a table that compares definitions, roles, or other text
 ```
 
 See the [Transformer input comparison](../examples/transformers/index.html#input-representations) for a three-column example.
+
+## Evaluation walkthroughs
+
+- **Guide readers through training.** Enable `chart-playback` and put `data-df-chart-playback` on an ordered list. Point it at a numeric line chart with `data-df-target` and give each note a `data-df-key` and `data-df-x`. To advance several charts with the same x units, use the same `data-df-x-group` on the list and charts. Keep a table inside each chart host for reading with scripts off. [Guided training example](../examples/transformers/pages/diagnostics.html#guided-training)
+- **Plot grouped records and supplied intervals.** For a named chart, map `x` and `value` to fields and set `group.field` to the field that names each series. A loss estimate can carry lower and upper bounds, shown as bands on lines and whiskers on scatter and bar charts. A mapped results column can display the bounds alongside its estimate. [Chart mapping and interval reference](../docform/docs/data/charts.md#named-source)
+- **Share run filters.** Define a run choice in `parameterScopes`, then bind the chart and results instances to it with the same `filter`, for example `{"scope":"evaluation","fields":{"runs":"run"},"where":{"split":"test"}}`. The controls update both views. [Held-out results example](../examples/transformers/pages/diagnostics.html#heldout-results)
+- **Report paired effects.** In a named scenario outcome, map the supplied difference and the field containing the baseline key with `pairedDifference`. Give that difference its own bounds when available. [Paired-loss example](../examples/transformers/pages/diagnostics.html#paired-loss)
+- **Switch between counts and proportions.** Enable `matrix` and give a table `data-df-matrix` and a named source. Map actual and predicted classes to rows and columns and provide a measure for each numeric field. Supply the normalized values in the source and include both values in the authored fallback table. [Confusion matrix example](../examples/transformers/pages/diagnostics.html#token-confusion)
 
 ## Results tables
 

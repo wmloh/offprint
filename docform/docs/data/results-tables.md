@@ -21,6 +21,8 @@ Enable `results`. Use `table[data-df-results]` with a header and body. Enhanceme
 ## Named source
 
 - Set `data-df-source="name"` on the table and enable `data`. Map columns with `options.results.instances[id].mapping: {columns: [{field, label?}]}` or authored `data-df-field` headers. Keep styling, sort, threshold, and filter attributes on the headers. Field keys identify columns independently of labels. Existing sort, compatible filters, and enabled chips survive replacement.
+- An explicit column mapping accepts `interval: {lower, upper, label?, count?}` on the estimate column. Bounds and optional count name exact record fields, with two null bounds for an absent interval and null count for an omitted count. Read [interval validation](charts.md#supplied-uncertainty). Sorting, thresholds, heat, and best marks use the estimate.
+- Use instance `filter: {scope, fields, where?}` or `filter: {where}` to apply [shared record filters](data-blocks.md#record-filters) before table-local filters. Empty matches produce an empty result. Sort, filters, and chips retain compatible state through scope changes.
 - `update(records)` validates and installs a local row override. `reset()` restores the latest shared rows or the original authored table with its reader state. With `transformOutput: "spec"`, a source transform returns `{records, mapping}`.
 
 [Concept tables](concept-tables.md) · [Dropzone targets](dropzones.md) · [Wide wrappers](../layout/wide.md) · [Run filter example](../../../examples/transformers/pages/diagnostics.html#run-filters) · [Source](../../js/results.js)

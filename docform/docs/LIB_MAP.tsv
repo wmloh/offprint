@@ -33,8 +33,10 @@ Linked selection	Synchronize keyed controls, charts, and passive views	interact/
 Worked-example steppers	Step through an ordered example and its linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
 SVG charts	Draw line, bar, and scatter charts with interactive views	data/charts.md
+Guided chart playback	Reveal numeric line charts through keyed checkpoints and HTML notes	data/chart-playback.md
 Concept tables	Style semantic tables for text comparisons	data/concept-tables.md
 Results tables	Sort, shade, classify, and filter result rows	data/results-tables.md
+Evaluation matrices	Pivot named records into a table of supplied counts and normalized measures	data/matrix.md
 Named sources and data views	Share CSV, JSON, YAML, or typed values across mapped views and transforms	data/data-blocks.md
 Data file wrapper	Check and export local data as named offline sources	data/file-wrapper.md
 Data trees	Explore nested records and lists with collapsible branches	data/data-trees.md

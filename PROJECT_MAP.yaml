@@ -80,5 +80,5 @@ docform/: Copyable offline library folder
 docs/: Human-facing getting started guide, include order, manifest and component references, migration guide, and style guide
 examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
   pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and generated search
-  transformers/: Decoder-only guide with linked attention, decoding presets, figure zoom, and training diagnostics with shared runs, scenario comparisons, generated assets, and offline file replacement
+  transformers/: Decoder-only guide with linked attention, decoding presets, and training diagnostics with synchronized playback, uncertainty, shared filters, paired comparisons, matrices, and offline file replacement
 tests/: Built-in node:test checks of module logic

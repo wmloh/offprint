@@ -28,8 +28,9 @@ Use a classic assignment with a JSON object. Inline `script[data-df-site]` uses 
 | `options.math.macros` | KaTeX macro map. Use doubled backslashes in JS string literals, for example `'\\R': '\\mathbb{R}'`. [Math](../reading/math.md) |
 | `options.citations.entries` | Map of citation keys to strings or structured entries. [Citations](../reading/citations.md) |
 | `options.references` | `{equations?: 'all' \| 'labeled'}`. `all` makes every eligible display equation count. The default counts labeled or explicitly opted-in display equations. [References](../reading/references.md) |
+| `options[feature].instances[id]` | Instance options by plain host ID, including `mapping`, `transform`, and view-specific options. [Charts](../data/charts.md), [playback](../data/chart-playback.md), [results](../data/results-tables.md), [scenarios](../interact/scenarios.md), [matrix](../data/matrix.md). |
 | `selectionGroups` | Named group options `{initial?: string \| null, persist?: boolean}`. Site and page definitions merge by group and field. [Linked selection](../interact/linked-highlighting.md) |
-| `parameterScopes` | Named maps of parameter definitions. Site and page entries merge by scope, parameter, and field. [Parameters](../interact/parameters.md) |
+| `parameterScopes` | Named maps of parameter definitions. Site and page entries merge by scope, parameter, and field. Named charts and results can bind `select` and `multiselect` values through their instance filters. [Parameters](../interact/parameters.md) |
 | `assets.search` | `{output, include?}`. Manifest-relative classic search index. `include` replaces the default page list for generation. Page `options.search.index` can override the output with a page-relative path or clear with `null`. [Search index](../reading/search-index.md) |
 | `assets.data` | Map of source names to `{source, output, type?}` for generation. Paths are manifest-relative. The entry uses `output` to load wrapped scripts before setup if `data` is enabled. [Data wrappers](../data/file-wrapper.md) |
 

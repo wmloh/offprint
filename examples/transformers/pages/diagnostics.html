@@ -10,17 +10,92 @@
     {
       "features": {
         "data-view": true, "chart": true, "results": true, "scenarios": true, "dropzone": true,
+        "chart-playback": true, "parameters": true, "matrix": true,
         "code": true, "tree": true, "cards": true, "wide": true, "selection": true
       },
+      "parameterScopes": {
+        "heldout": {
+          "runs": {"type": "multiselect", "choices": [
+            {"value": "r01", "label": "Baseline r01"}, {"value": "r04", "label": "Candidate r04"}
+          ]}
+        }
+      },
       "options": {
-        "chart": { "instances": { "run-budget": {
+        "chart": { "instances": {
+        "validation-loss": {
+          "filter": {"where": {"split": "validation", "slice": "all", "metric": "loss"}},
+          "mapping": {
+            "x": "step", "value": "value",
+            "group": {"field": "run", "series": [
+              {"key": "r01", "label": "Baseline r01", "role": "context"},
+              {"key": "r04", "label": "Candidate r04", "role": "output"}
+            ]},
+            "interval": {"lower": "lo", "upper": "hi", "count": "count", "label": "95% interval"}
+          }
+        },
+        "validation-accuracy": {
+          "filter": {"where": {"split": "validation", "slice": "all", "metric": "accuracy"}},
+          "mapping": {
+            "x": "step", "value": "value",
+            "group": {"field": "run", "series": [
+              {"key": "r01", "label": "Baseline r01", "role": "context"},
+              {"key": "r04", "label": "Candidate r04", "role": "output"}
+            ]}
+          }
+        },
+        "heldout-chart": {
+          "filter": {"scope": "heldout", "fields": {"runs": "run"}, "where": {"split": "test", "slice": "all"}},
+          "mapping": {"x": "accuracy", "value": "loss", "group": {"field": "run", "series": [
+            {"key": "r01", "label": "Baseline r01", "role": "context"},
+            {"key": "r04", "label": "Candidate r04", "role": "output"}
+          ]}, "interval": {"lower": "lo", "upper": "hi", "count": "count", "label": "95% interval"}}
+        },
+        "run-budget": {
           "transform": "budget-margin",
           "mapping": {
             "x": {"field": "validation_loss", "label": "Validation loss (nats)"},
             "pointKey": "run", "series": [{"key": "margin", "field": "margin", "label": "Budget headroom"}]
           }
         }}},
-        "scenarios": { "instances": { "run-scenarios": {
+        "results": { "instances": { "heldout-table": {
+          "filter": {"scope": "heldout", "fields": {"runs": "run"}, "where": {"split": "test", "slice": "all"}},
+          "mapping": {"columns": [
+            {"field": "run", "label": "Run"}, {"field": "accuracy", "label": "Accuracy (%)"},
+            {"field": "loss", "label": "Loss (nats)",
+              "interval": {"lower": "lo", "upper": "hi", "count": "count", "label": "95% interval"}}
+          ]}
+        }}},
+        "matrix": { "instances": { "heldout-confusion": {
+          "mapping": {
+            "row": "actual", "column": "predicted",
+            "rows": [{"key": "common", "label": "Common"}, {"key": "rare", "label": "Rare"}],
+            "columns": [{"key": "common", "label": "Predicted common"}, {"key": "rare", "label": "Predicted rare"}],
+            "measures": [
+              {"key": "count", "field": "count", "label": "Count", "range": [0, 10]},
+              {"key": "share", "field": "share", "label": "Row share", "unit": "%", "range": [0, 100],
+                "normalization": "Share of the actual token class"}
+            ]
+          }
+        }}},
+        "scenarios": { "instances": {
+        "heldout-paired": {
+          "mapping": {
+            "recordKey": "run", "baselineKey": "r01", "variantKeys": ["r04"],
+            "labels": {"r01": "Baseline r01", "r04": "Candidate r04"},
+            "conditions": [
+              {"field": "lr", "label": "Learning rate"}, {"field": "batch", "label": "Batch size"}
+            ],
+            "outcomes": [{
+              "field": "loss", "label": "Test loss", "unit": "nats",
+              "interval": {"lower": "lo", "upper": "hi", "count": "count", "label": "95% interval"},
+              "pairedDifference": {
+                "field": "paired_loss", "baselineKeyField": "paired_baseline",
+                "interval": {"lower": "paired_lo", "upper": "paired_hi", "count": "count", "label": "95% paired interval"}
+              }
+            }]
+          }
+        },
+        "run-scenarios": {
           "mapping": {
             "recordKey": "run", "baselineKey": "r01", "variantKeys": ["r03", "r04"],
             "labels": {"r01": "Baseline r01", "r03": "Lowest loss r03", "r04": "Under budget r04"},
@@ -53,6 +128,106 @@
         sweep</a>. Look for low validation loss within a 25 ms decoding budget. The fixtures also exercise file
         replacement, parsing errors, and view limits in an offline document.</p>
     </header>
+
+    <h2 id="guided-training">Follow two validation metrics through training</h2>
+    <p>Use Next to advance both charts by training step. Focus either plot and use the arrow keys to inspect
+      a recorded point and see its step on the other chart. The loss bands show supplied synthetic 95% intervals
+      over 20 validation examples. Each metric has its own sampling schedule.</p>
+    <ol id="training-walkthrough" data-df-chart-playback data-df-x-group="validation-step">
+      <li data-df-key="initial" data-df-x="0"><strong data-df-step-label>Step 0 · Before training</strong>
+        Both runs start near 1.8 nats and match one in five validation tokens.</li>
+      <li data-df-key="schedule" data-df-x="400"><strong data-df-step-label>Step 400 · Candidate schedule changes</strong>
+        The candidate begins decaying its learning rate here. Neither metric was sampled at this step.</li>
+      <li data-df-key="final" data-df-x="1000"><strong data-df-step-label>Step 1000 · Final checkpoint</strong>
+        The candidate finishes at 0.57 nats and 95% accuracy, compared with the baseline's 0.72 nats and 85%.</li>
+    </ol>
+    <figure>
+      <div id="validation-loss" data-df-chart="line" data-df-source="training-observations"
+        data-df-x-group="validation-step" data-df-x-label="Training step" data-df-y-label="Validation loss (nats)" data-df-brush>
+        <table>
+          <thead><tr><th scope="col">Run</th><th scope="col">Step</th><th scope="col">Loss (nats)</th><th scope="col">95% interval</th></tr></thead>
+          <tbody>
+            <tr><td>r01</td><td>0</td><td>1.79</td><td>1.70–1.89</td></tr>
+            <tr><td>r01</td><td>350</td><td>1.18</td><td>1.09–1.29</td></tr>
+            <tr><td>r01</td><td>700</td><td>0.86</td><td>0.79–0.94</td></tr>
+            <tr><td>r01</td><td>1000</td><td>0.72</td><td>0.65–0.80</td></tr>
+            <tr><td>r04</td><td>0</td><td>1.76</td><td>1.67–1.86</td></tr>
+            <tr><td>r04</td><td>450</td><td>0.93</td><td>0.85–1.02</td></tr>
+            <tr><td>r04</td><td>800</td><td>0.67</td><td>0.60–0.76</td></tr>
+            <tr><td>r04</td><td>1000</td><td>0.57</td><td>0.51–0.65</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Validation loss and its supplied intervals.</figcaption>
+    </figure>
+    <figure>
+      <div id="validation-accuracy" data-df-chart="line" data-df-source="training-observations"
+        data-df-x-group="validation-step" data-df-x-label="Training step" data-df-y-label="Token accuracy (%)" data-df-brush>
+        <table>
+          <thead><tr><th scope="col">Run</th><th scope="col">Step</th><th scope="col">Accuracy (%)</th></tr></thead>
+          <tbody>
+            <tr><td>r01</td><td>0</td><td>20</td></tr><tr><td>r01</td><td>250</td><td>45</td></tr>
+            <tr><td>r01</td><td>750</td><td>75</td></tr><tr><td>r01</td><td>1000</td><td>85</td></tr>
+            <tr><td>r04</td><td>0</td><td>20</td></tr><tr><td>r04</td><td>550</td><td>75</td></tr>
+            <tr><td>r04</td><td>900</td><td>90</td></tr><tr><td>r04</td><td>1000</td><td>95</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Accuracy measured on the same validation set.</figcaption>
+    </figure>
+
+    <h2 id="heldout-results">Filter held-out results</h2>
+    <p>Select runs to update the scatter plot and the results table together. The table can also be sorted by
+      accuracy or loss.</p>
+    <div class="df-params" data-df-parameter-scope="heldout">
+      <div data-df-parameter="runs" data-df-parameter-label="Runs to show"></div>
+      <button type="button" data-df-preset='{"runs":["r04"]}'>Candidate only</button>
+      <button type="button" data-df-preset='{"runs":["r01","r04"]}'>Both runs</button>
+    </div>
+    <figure>
+      <div id="heldout-chart" data-df-chart="scatter" data-df-source="heldout-results"
+        data-df-x-label="Test accuracy (%)" data-df-y-label="Test loss (nats)">
+        <p>See the <a href="#heldout-table">test results table</a> for the recorded values.</p>
+      </div>
+      <figcaption>Held-out loss against accuracy. The whiskers show the supplied 95% loss intervals.</figcaption>
+    </figure>
+    <table id="heldout-table" data-df-results data-df-source="heldout-results">
+      <caption>Test results on 20 held-out examples</caption>
+      <thead><tr><th scope="col" data-df-field="run">Run</th>
+        <th scope="col" data-df-field="accuracy" data-df-best="max">Accuracy (%)</th>
+        <th scope="col" data-df-field="loss" data-df-best="min">Loss (nats)</th></tr></thead>
+      <tbody>
+        <tr><td>r01</td><td>85</td><td>0.73 (95% interval 0.66–0.81)</td></tr>
+        <tr><td>r04</td><td>95</td><td>0.58 (95% interval 0.52–0.65)</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="paired-loss">Compare paired test losses</h2>
+    <p>Both runs scored the same 20 test examples. This fixture supplies the candidate-minus-baseline loss
+      difference and a 95% interval computed from the paired scores.</p>
+    <table id="heldout-paired" data-df-scenarios="configurations" data-df-source="heldout-results">
+      <caption>Held-out loss compared with the baseline</caption>
+      <thead><tr><th scope="col">Measure</th><th scope="col">Unit</th>
+        <th scope="col">Baseline r01</th><th scope="col">Candidate r04</th></tr></thead>
+      <tbody>
+        <tr data-df-condition><th scope="row">Learning rate</th><td></td><td>0.0001</td><td>0.0003</td></tr>
+        <tr data-df-condition><th scope="row">Batch size</th><td></td><td>8</td><td>16</td></tr>
+        <tr><th scope="row">Test loss</th><td>nats</td><td>0.73</td><td>0.58</td></tr>
+      </tbody>
+    </table>
+    <noscript><p>The paired test-loss difference is −0.15 nats (95% interval −0.22 to −0.09).</p></noscript>
+
+    <h2 id="token-confusion">See which tokens the candidate confused</h2>
+    <p>Rows show the actual next-token class. Columns show the predicted class. In Row share, each row
+      uses its actual-class total as the denominator. The candidate classified one rare token as common.</p>
+    <table id="heldout-confusion" data-df-matrix data-df-source="token-confusion">
+      <caption>Candidate r04 on the held-out examples</caption>
+      <thead><tr><th scope="col">Actual class</th><th scope="col">Predicted common</th><th scope="col">Predicted rare</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Common</th><td>10 (100%)</td><td>0 (0%)</td></tr>
+        <tr><th scope="row">Rare</th><td>1 (10%)</td><td>9 (90%)</td></tr>
+      </tbody>
+    </table>
 
     <h2 id="run-filters">Filter the run log</h2>
     <p>Try the Under budget or Laptop candidates chips, a date range in the Started column, or a maximum in

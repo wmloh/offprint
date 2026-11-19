@@ -24,7 +24,19 @@ Enable `chart`. A `[data-df-chart]` host takes a direct `script[type="applicatio
 ## Named source
 
 - Set `data-df-source="name"` on a chart host and enable `data`. Put `mapping` under `options.chart.instances[id]`. Use `{x, series: [{key, field, label?, role?, color?}], pointKey?}`. `x` is a field or `{field, label?}`. Fields match exact column names. `pointKey` names the record field for keyed selection.
+- For grouped line or scatter observations, use `{x, value, group: {field, series?}, pointKey?}`. Each `group.field` value is a string series key. Optional `group.series: [{key, label?, role?, color?}]` orders and styles present groups. Other present groups follow in key order. The adapter sorts by normalized x within each series, preserves irregular sampling, and rejects duplicate x within a series. Use a record filter to select one metric and split before grouping. Grouped local file input uses the same mapping and rejects oversized input.
+- Add instance `filter: {scope, fields, where?}` to bind a named source to [scoped record filters](data-blocks.md#record-filters), or use `filter: {where}` for fixed predicates. A local record upload follows the filter. A full chart spec passed to `update(spec)` remains active until Reset, which uses the latest source and scope values.
 - Use an optional named `transform` to derive fields, or `transformOutput: "spec"` for a full spec. Keep series keys stable across label changes. Source-free series can derive keys from unique names.
 - `DocForm.chart.get(target)` accepts an ID or element. `update(spec)` installs a validated local spec. `reset()` restores the authored input or latest shared data and clears local chart controls. Shared replacement preserves hidden series by key, compatible ranges, and Table mode when supported. Include an authored table for a fallback with an inline or mapped spec.
 
-[Dropzone replacement and Reset](dropzones.md) · [Scenarios](../interact/scenarios.md) · [Worked examples](../interact/worked-examples.md) · [Log-scale example](../../../examples/transformers/pages/prediction.html#learning-rate-plot) · [Source](../../js/chart.js)
+## Supplied uncertainty
+
+- Point objects accept `interval: {lower, upper, label?, count?}`. Bounds are finite, ordered, in y units, and positive on log y. Count is a nonnegative integer when supplied. For named sources, set `interval: {lower, upper, label?, count?}` on each column-series descriptor or on the grouped mapping. Lower, upper, and count identify exact source fields and must supply numbers. Two null bounds omit the interval. A null count omits the count.
+- Bounds contribute to automatic y scales. Lines draw bands across contiguous bounded samples and whiskers for isolated intervals. Bars and scatter draw whiskers. Exact readings and table rows include supplied bounds, label, and count. Gaps, brush, and playback constrain the displayed geometry. Invalid updates preserve the last accepted chart.
+
+## Shared x position
+
+- Set `data-df-x-group="training-step"` on mounted continuous linear-x charts with common x units. Pointer inspection shares the position in data units and keyboard inspection shares the actual sample x. Followers show the cursor where their viewport includes it and keep their own brush and scale.
+- `DocForm.chart.xGroup(name)` returns the group's controller or `null`. Use `snapshot()` for `{x}` (null when clear), `set(finiteNumber)`, `clear()`, and `subscribe(fn, {immediate: true}?)`. `df:chart:x` on `document` carries `{group, current, previous, origin}`. A [playback controller](chart-playback.md) can drive the reveal across the group.
+
+[Dropzone replacement and Reset](dropzones.md) · [Scenarios](../interact/scenarios.md) · [Training example](../../../examples/transformers/pages/diagnostics.html#guided-training) · [Source](../../js/chart.js)

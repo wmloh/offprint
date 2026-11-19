@@ -88,7 +88,7 @@ window.DocFormSite = {
   },
   "assets": {
     "search": {
-      "output": "generated/search.js"
+      "output": "generated/evaluation/search.js"
     },
     "data": {
       "runs": {
@@ -98,6 +98,18 @@ window.DocFormSite = {
       "sweep": {
         "source": "sweep.yaml",
         "output": "generated/sweep.js"
+      },
+      "training-observations": {
+        "source": "training-observations.csv",
+        "output": "generated/evaluation/training-observations.js"
+      },
+      "heldout-results": {
+        "source": "heldout-results.json",
+        "output": "generated/evaluation/heldout-results.js"
+      },
+      "token-confusion": {
+        "source": "token-confusion.csv",
+        "output": "generated/evaluation/token-confusion.js"
       }
     }
   }

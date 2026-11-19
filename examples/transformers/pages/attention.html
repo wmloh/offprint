@@ -89,16 +89,28 @@
           <p><strong>Scaled dot products</strong></p>
           <p>Take each query–key dot product and divide by <span class="df-math">\sqrt{2}</span>, since a key has two
             coordinates.</p>
+          <dl class="df-fields">
+            <dt data-df-role="input">Input</dt><dd>Queries <span class="df-math">Q</span> and keys <span class="df-math">K</span></dd>
+            <dt>Output</dt><dd>A 3 × 3 grid of scaled scores</dd>
+          </dl>
         </div>
         <div id="attention-mask">
           <p><strong>Block keys beyond the query</strong></p>
           <p>The first query can use one key. The second can use two. The third can use all three. The upper triangle
             is excluded.</p>
+          <dl class="df-fields">
+            <dt data-df-role="input">Input</dt><dd>Scaled scores</dd>
+            <dt data-df-role="masked">Output</dt><dd>Scores with future keys set to negative infinity</dd>
+          </dl>
         </div>
         <div id="attention-normalize">
           <p><strong>Normalize each row</strong></p>
           <p>Softmax turns allowed scores into weights that sum to one per row. Use each row to mix the value vectors.
             The drawn weights are rounded.</p>
+          <dl class="df-fields">
+            <dt data-df-role="input">Input</dt><dd>Masked scores</dd>
+            <dt data-df-role="context">Output</dt><dd>Weights <span class="df-math">A</span>, one row per query</dd>
+          </dl>
         </div>
       </div>
     </div>

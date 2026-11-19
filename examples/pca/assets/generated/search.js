@@ -52,13 +52,13 @@ window.DocFormSearch = {
         "file": "pages/monitor.html",
         "path": "../pages/monitor.html",
         "title": "Choose a component count",
-        "sha256": "5074fbce2c603c599ac67026b0ab4a518151f4dd33ab4971ef8b82c8934b6848"
+        "sha256": "b301b1ad4af2809042305883fe6f390be8701ca75b89a0b6432251f32700fdec"
       },
       {
         "file": "pages/telemetry.html",
         "path": "../pages/telemetry.html",
         "title": "Investigate a telemetry incident",
-        "sha256": "57d3a821f3513a7968f2fd91ddbe27af870e138af2dab29f645d08ab9092a0d8"
+        "sha256": "5621b892f39581db063e414d0d82fc1e2d8a0b155ce397d463346e7500a170ab"
       },
       {
         "file": "pages/glossary.html",
@@ -178,7 +178,7 @@ window.DocFormSearch = {
           "id": "reconstruction",
           "title": "How a window becomes an alert",
           "level": 2,
-          "text": "Retain the first directions in . Reconstruct the standardized row and sum the squared residuals. Because the four directions form an orthonormal basis, the right side of gives the same score directly from the discarded components. Projection and residual, shown schematically. The reconstruction captures variation similar to the baseline. A large residual means the sensor combination departed from those learned directions. For this exercise, every rank uses the same threshold. Flag a window when in squared standardized units. See the live residual trace for an illustrative hour with a dropout and two windows above the threshold."
+          "text": "Retain the first directions in . Reconstruct the standardized row and sum the squared residuals. Because the four directions form an orthonormal basis, the right side of gives the same score directly from the discarded components. Projection and residual, shown schematically. The reconstruction captures variation similar to the baseline. A large residual means the sensor combination departed from those learned directions. Input Standardized window and retained basis Output Residual in squared standardized units Alert when , the same threshold for every rank in this exercise See the live residual trace for an illustrative hour with a dropout and two windows above the threshold."
         },
         {
           "id": "evaluation",
@@ -258,7 +258,7 @@ window.DocFormSearch = {
           "id": "",
           "title": "Investigate a telemetry incident",
           "level": 1,
-          "text": "Follow an hour of synthetic pump readings from the sensor gateway to the residual chart. The residual crosses the rank-two alert threshold after a telemetry gap."
+          "text": "Incident review Follow an hour of synthetic pump readings from the sensor gateway to the residual chart. The residual crosses the rank-two alert threshold after a telemetry gap. Source One pump, twelve five-minute windows relayed by the sensor gateway Model Rank two Frozen baseline scaler and PCA basis Alert rule Flag a window when its rank-two residual exceeds 0.80 First alert 13:45 UTC, two windows after a ten-minute telemetry gap"
         },
         {
           "id": "residual-trace",

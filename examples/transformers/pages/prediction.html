@@ -130,7 +130,8 @@
       <div data-df-parameter="temperature" data-df-parameter-label="Comparison temperature"></div>
       <p>At temperature <strong data-df-bind="temperature">2.00</strong>, the probability is
         <output id="comparison-probability" aria-live="polite">32.20%</output>.</p>
-      <button type="button" class="df-preset" id="reset-comparison" hidden>Reset comparison</button>
+      <button type="button" class="df-button" id="reset-comparison" hidden><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9L2.5 5.6"/><path d="M2.5 2.5v3.1h3.1"/></svg>Reset comparison</button>
     </div>
 
     <div class="df-callout" data-df-role="output">
@@ -148,7 +149,8 @@
         <button data-df-preset='{"temperature": 1, "rule": "greedy", "block_period": false}'>Deterministic</button>
         <button data-df-preset='{"temperature": 0.7, "rule": "top2", "block_period": true}'>Focused</button>
         <button data-df-preset='{"temperature": 1.5, "rule": "sample", "block_period": false}'>Exploratory</button>
-        <button type="button" class="df-preset" id="reset-decoder" hidden>Reset decoder</button>
+        <button type="button" class="df-button" id="reset-decoder" hidden><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9L2.5 5.6"/><path d="M2.5 2.5v3.1h3.1"/></svg>Reset decoder</button>
       </div>
       <div data-df-parameter="rule" data-df-parameter-label="Selection rule" data-df-role="output"></div>
       <div data-df-parameter="block_period" data-df-parameter-label="Block the period" data-df-role="input"></div>

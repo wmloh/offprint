@@ -51,19 +51,19 @@ window.DocFormSearch = {
         "file": "pages/attention.html",
         "path": "../pages/attention.html",
         "title": "Causal self-attention",
-        "sha256": "2667aed7d66ecacc32da14a55d5c212c98b7d29c8faea7f4554dbb4e08a250e3"
+        "sha256": "747bc5bb36d77e445d348c73d85776ab71b8c317dd97b94239b68ebd3bbfb5e0"
       },
       {
         "file": "pages/prediction.html",
         "path": "../pages/prediction.html",
         "title": "Next-token prediction",
-        "sha256": "3ee2ef14ce349b1ea6d9c270d3deeef551c2c092571441dd4f8e791160857ec7"
+        "sha256": "96a327223c20c58fef1db287e2e1a9eaea181a93f72c1b9995ff093f4f810bd4"
       },
       {
         "file": "pages/diagnostics.html",
         "path": "../pages/diagnostics.html",
         "title": "Inspect training runs",
-        "sha256": "b568e6c9ba34e52b85f2ab4dc475e3a9d9749399f2651c73ebd0723681a092af"
+        "sha256": "7a1b1fe622c76eca499f9bb7454e61e00a1d056865610c160df4ed3cfa69b636"
       }
     ]
   },
@@ -139,7 +139,7 @@ window.DocFormSearch = {
           "id": "causal-mask",
           "title": "Score, mask, normalize",
           "level": 2,
-          "text": "Queries and keys determine the weights. Values carry the information combined with those weights. This head uses identity projections, so . The causal mask sets the upper triangle to negative infinity before softmax. Scaled scores, the causal mask, and row-wise weights. Attention steps Score Mask Normalize Scaled dot products Take each query–key dot product and divide by , since a key has two coordinates. Block keys beyond the query The first query can use one key. The second can use two. The third can use all three. The upper triangle is excluded. Normalize each row Softmax turns allowed scores into weights that sum to one per row. Use each row to mix the value vectors. The drawn weights are rounded."
+          "text": "Queries and keys determine the weights. Values carry the information combined with those weights. This head uses identity projections, so . The causal mask sets the upper triangle to negative infinity before softmax. Scaled scores, the causal mask, and row-wise weights. Attention steps Score Mask Normalize Scaled dot products Take each query–key dot product and divide by , since a key has two coordinates. Input Queries and keys Output A 3 × 3 grid of scaled scores Block keys beyond the query The first query can use one key. The second can use two. The third can use all three. The upper triangle is excluded. Input Scaled scores Output Scores with future keys set to negative infinity Normalize each row Softmax turns allowed scores into weights that sum to one per row. Use each row to mix the value vectors. The drawn weights are rounded. Input Masked scores Output Weights , one row per query"
         },
         {
           "id": "trace-query",
@@ -271,7 +271,7 @@ window.DocFormSearch = {
           "id": "",
           "title": "Inspect training runs",
           "level": 1,
-          "text": "Compare synthetic follow-up runs for the learning-rate sweep. Look for low validation loss within a 25 ms decoding budget. The fixtures also exercise file replacement, parsing errors, and view limits in an offline document."
+          "text": "Synthetic fixtures Compare synthetic follow-up runs for the learning-rate sweep. Look for low validation loss within a 25 ms decoding budget. The fixtures also exercise file replacement, parsing errors, and view limits in an offline document. Runs r01 Baseline and r04 Candidate Goal Lowest validation loss Constraint Decoding latency within 25 ms"
         },
         {
           "id": "guided-training",

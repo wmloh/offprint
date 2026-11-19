@@ -140,6 +140,23 @@ Write TeX as-is, without dollar signs. Errors show in red with the message on ho
 <span class="df-tag" data-df-color="orange">draft</span>
 ```
 
+## Text roles
+
+An eyebrow is a short, muted line in small capitals that sets context just above a heading or block. Labelled fields line up short labels beside their values.
+
+```html
+<p class="df-eyebrow">Incident review</p>
+<h1>Investigate a telemetry incident</h1>
+
+<dl class="df-fields">
+  <dt>Input</dt><dd>Standardized window and retained basis</dd>
+  <dt>Output</dt><dd>Residual in squared standardized units</dd>
+  <dt data-df-role="alert">Alert when</dt><dd>The residual is above 0.80</dd>
+</dl>
+```
+
+Write eyebrows in normal sentence case; the style adds the capitals. Give an eyebrow, a label, or the whole list `data-df-color` or `data-df-role` to colour it. When a list is narrow, such as inside a split view or step details, each label moves above its value. Step counts in step controls use the eyebrow style too. The PCA [telemetry page](../examples/pca/pages/telemetry.html) and the Transformer [attention steps](../examples/transformers/pages/attention.html#causal-mask) show both.
+
 ## Buttons
 
 Give a button the `df-button` class for a soft, rounded action button. It takes its colour from `data-df-color` or `data-df-role` and is gray otherwise. An icon placed first inside it sits before the label.

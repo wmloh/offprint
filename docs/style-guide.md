@@ -63,4 +63,5 @@ Use `data-df-color` directly only for one-off highlights that carry no recurring
 - Put long proofs and optional detail in peek bubbles (`details`).
 - Give tooltips to the words a newcomer might not know, and put shared terms in the glossary so every page explains them the same way.
 - Caption every animation step in one short sentence.
+- Use an eyebrow for a few words of context above a heading, and labelled fields for short facts such as inputs and outputs. Keep both short; they guide the eye, not carry the argument.
 - Check each page in light and dark mode and at phone width.

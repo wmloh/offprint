@@ -55,8 +55,13 @@
       <div>
         <p>The reconstruction captures variation similar to the baseline. A large residual means the sensor
           combination departed from those learned directions.</p>
-        <p>For this exercise, every rank uses the same threshold. Flag a window when
-          <span class="df-math">Q_k &gt; 0.80</span> in squared standardized units.</p>
+        <dl class="df-fields">
+          <dt>Input</dt><dd>Standardized window <span class="df-math">z</span> and retained basis
+            <span class="df-math">W_k</span></dd>
+          <dt>Output</dt><dd>Residual <span class="df-math">Q_k</span> in squared standardized units</dd>
+          <dt data-df-role="alert">Alert when</dt><dd><span class="df-math">Q_k &gt; 0.80</span>, the same threshold
+            for every rank in this exercise</dd>
+        </dl>
       </div>
     </div>
 

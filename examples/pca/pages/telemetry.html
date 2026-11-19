@@ -22,10 +22,17 @@
 
   <main class="df-page">
     <header>
+      <p class="df-eyebrow">Incident review</p>
       <h1>Investigate a telemetry incident</h1>
       <p>Follow an hour of synthetic pump readings from the sensor gateway to the residual chart. The
         <span data-df-tip="For this incident, the squared energy in PC3 and PC4 of the current pump window.">residual</span>
         crosses the <a href="monitor.html#alert-thresholds">rank-two alert threshold</a> after a telemetry gap.</p>
+      <dl class="df-fields">
+        <dt>Source</dt><dd>One pump, twelve five-minute windows relayed by the sensor gateway</dd>
+        <dt>Model</dt><dd><span class="df-tag" data-df-role="projection">Rank two</span> Frozen baseline scaler and PCA basis</dd>
+        <dt>Alert rule</dt><dd>Flag a window when its rank-two residual exceeds 0.80</dd>
+        <dt data-df-role="alert">First alert</dt><dd>13:45 UTC, two windows after a ten-minute telemetry gap</dd>
+      </dl>
     </header>
 
     <h2 id="residual-trace">Inspect the residual trace</h2>

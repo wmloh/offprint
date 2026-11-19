@@ -3,10 +3,10 @@ docform/: Copyable offline library folder
   docform.css: Optional static reading-profile styles
   site.template.js: Starter JSON site manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
-    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, reading-column, figure-cap, and wide-block widths, section spacing and colour cycle, and eyebrow and field-label text roles via light-dark()
+    tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, reading-column and figure-cap widths, section spacing and colour cycle, and eyebrow and field-label text roles via light-dark()
     base.css: Centered reading column, typography, section heading spacing, links, figure and table width limits, concept tables, table hover, list markers, scrollbars, and data-df-color accents
     text.css: Muted small-caps eyebrows and aligned labelled-field lists for visual hierarchy
-    sections.css: Cycled h2 section colours and uniform left-margin section lines
+    sections.css: Cycled h2 section colours and uniform left-margin section lines in an unblurred overlay layer
     buttons.css: Shared soft tinted pill buttons with optional icons for author and module actions, and the frosted icon pill for step controls
     roles.css: Roles legend styles
     nav.css: Sidebar tree, collapsible outline, numbered subsection rail, resize handle, heading links, prev/next links, and drawer
@@ -23,7 +23,7 @@ docform/: Copyable offline library folder
     steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus an independently scrolling detail pane for standalone cards and figure steps and optional title-only side cards
     zoom.css: Frosted full-screen figure zoom view
     zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot and trail, ink, crosshair and ruler readouts
-    bubble.css: Tinted peek bubbles and the frosted side panel, blurred except while hovered
+    bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
     search.css: Frosted Ctrl+K search dialog with highlighted results
@@ -34,7 +34,6 @@ docform/: Copyable offline library folder
     highlight.css: Tinted highlight with a fading leading accent edge for selected items in linked views, tinted rows, and glowing SVG shapes
     stepper.css: Worked-example step pill spacing and linked view visibility
     scenarios.css: Variant chooser and changed comparison cells
-    wide.css: Wide-block margins and their glide when the sidebar moves
     data.css: Data-block parse errors, size notices, and show-more rows
     tree.css: Data-tree rows with disclosure arrows, typed values, and expand and collapse buttons
     dropzone.css: Dashed file drop area, status line with Reset, and the dropped file's view
@@ -42,7 +41,7 @@ docform/: Copyable offline library folder
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, data-df-max-width limits, the shared step-control pill builder, heading slugs, glossary term keys, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
-    nav.js: Sidebar tree and heading outlines with hover groups, subsection progress, resizing, heading and prev/next links, and a subscribable drawer
+    nav.js: Sidebar tree and heading outlines with delayed hover-open groups, subsection progress, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
     controls.js: Control pill with reading progress, focus mode, three saved sidebar modes, search and theme buttons, and shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
@@ -55,7 +54,7 @@ docform/: Copyable offline library folder
     steps.js: Standalone HTML card panels with optional titled groups, keyboard focus, and manual selection, plus figure steps selected by hover, focus, tap, or page controls, with keyed selection and inert details
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
     zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
-    bubble.js: Turns details into peek bubbles that open into stacked right-gutter panels near the viewport centre
+    bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
@@ -70,8 +69,7 @@ docform/: Copyable offline library folder
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
     glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
-    sections.js: h2 colour cycle from a token with attribute overrides, and continuous left-margin section lines kept clear of the section rail
-    wide.js: data-df-wide figures and table wrappers that grow beside the reading column, bounded by the sidebar, left-margin section lines, and right-margin notes or panels
+    sections.js: h2 colour cycle from a token with attribute overrides, and continuous left-margin section lines in a separate layer that focus blur never reaches, kept clear of the section rail
   tools/: Offline asset checker and exporter for manifest-configured search indexes and wrapped CSV, JSON, and YAML sources
     assets.html: Folder selection, asset status and diagnostics, and selective save, download, or copy
     asset-build.js: Manifest discovery, output planning, deterministic search and data serialization, and stale checks

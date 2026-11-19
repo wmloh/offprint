@@ -247,7 +247,7 @@ test('chart setup merges options and an invalid attribute preserves the configur
 
 test('mixed features load all shipped assets and register data before author setup', async () => {
   const features = Object.fromEntries(('animation cards chart code concept-tables data-view dropzone figure-steps ' +
-    'glossary math parameters peek-bubbles results reveals scenarios selection split-views stepper tabs tree wide zoom-tools')
+    'glossary math parameters peek-bubbles results reveals scenarios selection split-views stepper tabs tree zoom-tools')
     .split(' ').map(key => [key, true]));
   const p = page({ nested: true, site: { features, assets: { data: {
     runs: { source: 'examples/transformers/assets/runs.csv', output: 'examples/transformers/assets/generated/runs.js' }

@@ -6,4 +6,4 @@ Enable the `zoom` feature. Figures and images inside `.df-page` are triggers. Ad
 - Links, form controls, terms and tips, and animation controls are excluded from figure click activation. Chart plot clicks can open the figure unless handled by keyed selection or range brushing. Without JS the figure stays in the page.
 - `DocForm.zoom.open(idOrElement)` and `close()` return whether the request was accepted. `snapshot()` returns `{target, overlay, stage}` with live elements, or `null`. `subscribe(fn)` receives committed open and close states. On `document`, `df:zoom:closing` fires before restoration for teardown and `df:zoom:change` fires after each commit, with `{current, previous, origin}`.
 
-[Presentation tools](zoom-tools.md) · [Charts](../data/charts.md) · [Wide blocks](../layout/wide.md) · [Source](../../js/zoom.js)
+[Presentation tools](zoom-tools.md) · [Charts](../data/charts.md) · [Source](../../js/zoom.js)

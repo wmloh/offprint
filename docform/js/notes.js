@@ -12,7 +12,7 @@
   var GAP = 32;
   var EDGE = 16;
   // Notes inside these stay hover notes: a float there would cover a neighbouring pane or be clipped.
-  var INLINE_ONLY = '.df-split, table, figure, pre, .df-tabs, .df-figure-steps, .df-card-panel, .df-bubble-panel, .df-tooltip, .df-zoom';
+  var INLINE_ONLY = '.df-split, table, figure, pre, .df-tabs, .df-figure-steps, .df-card-panel, .df-bubble-sheet, .df-tooltip, .df-zoom';
 
   // Whether a sidenote column fits between the reading column's right edge and the window's right edge.
   function fits(viewWidth, columnRight, width, gap, edge) {

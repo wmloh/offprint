@@ -11,6 +11,6 @@ Use `table[data-df-concept]` inside `.df-page` for text comparisons. Link `docfo
 ```
 
 - Horizontal rules, subdued headings, and extra room for first-column labels. The first header cell targets 34% width with a minimum of `min(16ch, 28vw)`. Tags can wrap. Base table hover tints rows and columns.
-- Use semantic captions and scoped headers. For additional horizontal room place the table in a [wide wrapper](../layout/wide.md). Use [results tables](results-tables.md) for sorting, numeric heat, verdicts, and filters.
+- Use semantic captions and scoped headers. Tables wider than the column scroll sideways inside it. Use [results tables](results-tables.md) for sorting, numeric heat, verdicts, and filters.
 
 [Base tables](../layout/base.md) · [Transformer input example](../../../examples/transformers/index.html#input-representations) · [Styles](../../css/base.css)

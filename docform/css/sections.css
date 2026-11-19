@@ -1,6 +1,8 @@
 /* Section colours: each top-level h2 gets the next colour from --df-section-cycle, or its own data-df-color or
-   data-df-role. One thin line in the left margin marks the heading; with sections.js it continues at the same width
-   and colour down to the end of the section, past tables and figures. Heading text keeps its usual colour. */
+   data-df-role. One thin line in the left margin marks the heading. Without the script it is the heading's ::before,
+   at heading height. sections.js instead draws it in a separate .df-section-lines layer that runs at the same width
+   and colour to the end of the section, so blurring a heading or block (focus mode) never blurs the line.
+   Heading text keeps its usual colour. */
 .df-page:not(.df-bubble-body) > h2 {
   --df-section-color: var(--df-blue);
   --df-section-line: color-mix(in srgb, var(--df-section-color) var(--df-section-line-strength), transparent);
@@ -28,8 +30,31 @@
 }
 
 /* sections.js sets this while the numbered section rail covers the margin. */
-.df-page.df-sections-covered > h2::before {
+.df-page.df-sections-covered > h2::before,
+.df-page.df-sections-covered > .df-section-lines {
   display: none;
+}
+
+/* Lines drawn by sections.js, positioned against the page so they follow it as the sidebar slides. */
+.df-page.df-sections-drawn {
+  position: relative;
+
+  & > h2::before {
+    display: none;
+  }
+}
+
+.df-section-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.df-section-line {
+  position: absolute;
+  width: var(--df-section-line-width);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--df-section-color, var(--df-blue)) var(--df-section-line-strength), transparent);
 }
 
 @media (max-width: 860px), (any-hover: none) {
@@ -40,7 +65,13 @@
 
 /* Printed pages keep the heading-height mark only. */
 @media print {
-  .df-page:not(.df-bubble-body) > h2::before {
+  .df-section-lines {
+    display: none;
+  }
+
+  .df-page:not(.df-bubble-body) > h2::before,
+  .df-page.df-sections-drawn > h2::before {
+    display: block;
     height: calc(100% - 0.3em);
   }
 }

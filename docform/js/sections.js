@@ -1,7 +1,9 @@
 // Section lines: each top-level h2 of the page takes the next named colour from --df-section-cycle (data-df-color or
 // data-df-role on the heading wins), and a thin line in that colour runs down the left margin from the heading to the
-// end of its section, continuous past tables, figures, and wide blocks. It is measured again after resizes, reflows,
-// and content changes. Without the script, sections.css draws the same line at heading height in the default order.
+// end of its section, continuous past tables and figures. The lines live in their own overlay layer rather than on the
+// headings, so focus-mode blur or any other filter on a heading or block never reaches them. They are measured again
+// after resizes, reflows, and content changes. Without the script, sections.css draws the same line on each heading,
+// at heading height, in the default order.
 (function (root) {
   'use strict';
 
@@ -13,7 +15,7 @@
 
   var CYCLE = ['blue', 'green', 'purple', 'orange', 'pink', 'brown'];
   var RAIL_PAD = 8;
-  var SKIP = 'script, style, template, .df-pager';
+  var SKIP = 'script, style, template, .df-pager, .df-section-lines';
 
   // Named colours from a token value such as "blue green purple"; unknown names are dropped with a warning.
   function cycle(text) {
@@ -41,6 +43,22 @@
   function setup(page) {
     var html = document.documentElement;
     var pending = false;
+    var layer = document.createElement('div');
+    layer.className = 'df-section-lines';
+    layer.setAttribute('aria-hidden', 'true');
+    var lines = [];
+
+    // One line per heading, carrying the heading's colour attributes so data-df-color and data-df-role still apply.
+    function line(h, i, name) {
+      var el = lines[i] || (lines[i] = layer.appendChild(document.createElement('span')));
+      el.className = 'df-section-line';
+      ['data-df-color', 'data-df-role'].forEach(function (attr) {
+        if (h.hasAttribute(attr)) el.setAttribute(attr, h.getAttribute(attr));
+        else el.removeAttribute(attr);
+      });
+      el.style.setProperty('--df-section-color', name ? 'var(--df-' + name + ')' : 'var(--df-accent)');
+      return el;
+    }
 
     function layout() {
       pending = false;
@@ -51,7 +69,9 @@
         if (override(h)) h.style.removeProperty('--df-section-color');
         else h.style.setProperty('--df-section-color', 'var(--df-' + names[i % names.length] + ')');
       });
+      while (lines.length > headings.length) layer.removeChild(lines.pop());
       if (!headings.length) return;
+      if (layer.parentNode !== page) page.appendChild(layer);
 
       var first = headings[0];
       var column = first.getBoundingClientRect().left;
@@ -63,14 +83,19 @@
         rail.getBoundingClientRect().right > lineLeft - RAIL_PAD;
       page.classList.toggle('df-sections-covered', covered);
 
-      headings.forEach(function (h) {
+      var origin = page.getBoundingClientRect();
+      headings.forEach(function (h, i) {
         var top = h.getBoundingClientRect().top;
         var end = h.getBoundingClientRect().bottom;
         for (var index = children.indexOf(h) + 1; index < children.length && children[index].tagName !== 'H2'; index++) {
-          var el = children[index];
           if (visible(children[index])) end = Math.max(end, children[index].getBoundingClientRect().bottom);
         }
-        h.style.setProperty('--df-section-length', Math.max(0, Math.round(end - top)) + 'px');
+        var length = Math.max(0, Math.round(end - top));
+        h.style.setProperty('--df-section-length', length + 'px');
+        var el = line(h, i, override(h) ? null : names[i % names.length]);
+        el.style.top = Math.round(top - origin.top + 0.15 * px(h, 'font-size', 24)) + 'px';
+        el.style.left = (lineLeft - origin.left) + 'px';
+        el.style.height = length + 'px';
       });
     }
 
@@ -80,6 +105,7 @@
       root.requestAnimationFrame(layout);
     }
 
+    page.classList.add('df-sections-drawn');
     layout();
     root.addEventListener('resize', schedule);
     if (root.ResizeObserver) new root.ResizeObserver(schedule).observe(page);
@@ -91,7 +117,7 @@
         })) schedule();
       }).observe(page, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-df-color', 'data-df-role'] });
     }
-    // Wide blocks, reveals, and the sidebar settle through transitions without resizing the page.
+    // Reveals and the sidebar settle through transitions without resizing the page.
     document.addEventListener('transitionend', function (event) {
       var t = event.target;
       if (t === document.body || t.parentElement === page ||

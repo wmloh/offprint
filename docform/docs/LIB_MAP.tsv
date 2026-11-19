@@ -3,7 +3,6 @@ Include order	Select offline profiles and feature dependencies	setup/include-ord
 Site manifest	Configure pages, feature options, registries, and generated assets	setup/manifest.md
 Base layout	Style the reading column, typography, lists, tables, and figure width limits	layout/base.md
 Section lines	Space and colour h2 sections with margin bars and lines	layout/sections.md
-Wide blocks	Extend figures and tables into available side space	layout/wide.md
 Design tokens	Override colours, fonts, spacing, and widths	layout/tokens.md
 Colour roles	Assign semantic accents and render a legend	layout/roles.md
 Theme	Switch and persist light and dark modes	layout/theme.md

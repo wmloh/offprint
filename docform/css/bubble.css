@@ -1,11 +1,7 @@
-/* Peek bubbles from bubble.js: tinted bubbles in the text that open into frosted panels in the right gutter. */
-.df-bubble,
-.df-bubble-panel {
+/* Peek bubbles from bubble.js: tinted bubbles in the text that grow in place to show their content. */
+.df-bubble {
   --df-bubble-accent: var(--df-accent, var(--df-purple));
   --df-bubble-tint: var(--df-accent-bg, var(--df-purple-bg));
-}
-
-.df-bubble {
   display: flex;
   flex-direction: column;
   width: fit-content;
@@ -18,7 +14,8 @@
   color: var(--df-text);
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: opacity 0.35s ease, translate 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: opacity 0.35s ease, translate 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease,
+    background-color 0.42s ease;
 }
 
 .df-bubble:hover {
@@ -54,74 +51,30 @@
   margin: 0;
 }
 
-/* While its panel is out in the gutter, the bubble stays as a faint marker of where it belongs. */
-.df-bubble.is-away {
-  opacity: 0.5;
-  border-style: dashed;
-  box-shadow: none;
-}
-
-.df-bubble.is-away .df-bubble-title::after {
-  content: "↗";
-}
-
-/* The large frosted panel in the gutter beside the text column. bubble.js sets `top` and `max-height` so that
-   panels open at the same time stack vertically, centred as a group; they slide when one joins or leaves. */
-.df-bubble-panel {
-  position: fixed;
-  top: 10vh;
-  right: var(--df-bubble-right, var(--df-space-5));
-  z-index: 25;
-  display: flex;
-  flex-direction: column;
-  width: var(--df-bubble-width, 420px);
-  max-height: 80vh;
-  transform-origin: 0 0;
-  transition: top 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), max-height 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+/* Collapsed bubbles keep their content here, laid out at the column width but never shown. */
+.df-bubble-store {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(var(--df-content-width), 100vw);
+  height: 0;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--df-bubble-accent) 25%, var(--df-border));
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--df-bubble-tint) 60%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  backdrop-filter: blur(20px) saturate(1.5);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
-  color: var(--df-text);
-}
-
-.df-bubble-panel.is-entering {
-  transition: none;
-}
-
-.df-bubble-panel:not(.is-open) {
   visibility: hidden;
   pointer-events: none;
 }
 
-.df-bubble-panel-title {
-  flex: none;
-  padding: var(--df-space-4) var(--df-space-5) var(--df-space-3);
-  border-bottom: 1px solid color-mix(in srgb, var(--df-bubble-accent) 15%, transparent);
-  color: var(--df-bubble-accent);
-  font-weight: 600;
+/* bubble.js pauses scroll anchoring while it holds the text still under a shrinking bubble. */
+html.df-bubble-holding {
+  overflow-anchor: none;
 }
 
-/* The panel title is a copy of the bubble title; the arrow only belongs on the bubble in the text. */
-.df-bubble-panel-title .df-bubble-title::after {
-  display: none;
-}
-
-.df-bubble-panel-title > * > :is(h1, h2, h3, h4, h5, h6, p) {
-  display: inline;
-  margin: 0;
-}
-
-/* The sheet holds the content; it moves between the panel and an in-place bubble. */
+/* The sheet holds the content; it moves between the store and the open bubble. bubble.js animates its height. */
 .df-bubble-sheet {
   position: relative;
   display: flex;
-  flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .df-bubble-sheet > .df-bubble-body.df-page {
@@ -132,7 +85,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: var(--df-space-3) var(--df-space-5) var(--df-space-5);
+  padding: var(--df-space-3) 1.15em 0.7em;
   transition: filter 0.35s ease, opacity 0.35s ease;
 }
 
@@ -143,36 +96,34 @@
 .df-bubble-body > :first-child { margin-top: 0; }
 .df-bubble-body > :last-child { margin-bottom: 0; }
 
-/* Frosted except while the pointer is over it, focus is inside it, or after a tap. */
-.df-bubble-panel:not(.is-revealed) .df-bubble-body,
-.df-bubble.is-inline:not(.is-revealed) .df-bubble-body {
-  filter: blur(6px);
-  opacity: 0.7;
-  user-select: none;
-}
-
-/* Expanded in place when the gutter is too narrow for a panel. */
-.df-bubble.is-inline {
+/* Open: the bubble grows in place to the column width. The title keeps its spot, so only the size changes. */
+.df-bubble.is-open {
   width: auto;
   max-width: none;
-  padding: var(--df-space-3) 0 0;
-  border-radius: 22px;
+  padding-inline: 0;
   background: color-mix(in srgb, var(--df-bubble-tint) 70%, transparent);
   cursor: default;
 }
 
-.df-bubble.is-inline:hover {
+.df-bubble.is-open:hover {
   translate: none;
 }
 
-.df-bubble.is-inline > .df-bubble-title {
-  padding: 0 var(--df-space-5);
+.df-bubble.is-open > .df-bubble-title {
+  padding: 0 1.15em;
 }
 
-.df-bubble.is-inline > .df-bubble-title::after {
+.df-bubble.is-open > .df-bubble-title::after {
   display: none;
 }
 
-.df-bubble.is-inline .df-bubble-sheet {
+.df-bubble.is-open .df-bubble-sheet {
   max-height: 70vh;
+}
+
+/* Frosted except while the pointer is over it, focus is inside it, or after a tap. */
+.df-bubble.is-open:not(.is-revealed) .df-bubble-body {
+  filter: blur(6px);
+  opacity: 0.7;
+  user-select: none;
 }

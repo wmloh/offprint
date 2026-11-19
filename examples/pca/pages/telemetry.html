@@ -9,7 +9,7 @@
   <script type="application/json" data-df-page>
     {
       "features": {"chart": true, "selection": true, "stepper": true, "zoom": true,
-        "zoom-tools": true, "wide": true, "tabs": true, "code": true},
+        "zoom-tools": true, "tabs": true, "code": true},
       "selectionGroups": {"pump-incident": {"initial": "drift"}}
     }
   </script>
@@ -39,7 +39,7 @@
     <p>Hide either rank with the legend. Drag across the chart to zoom into a time range, then use Reset range to
       restore the hour. With the plot focused, <kbd>+</kbd> and <kbd>−</kbd> adjust the range. Select Table to see
       the readings in the current view. The plot aligns offset timestamps on a UTC axis.</p>
-    <figure id="telemetry-chart" data-df-wide>
+    <figure id="telemetry-chart">
       <div data-df-chart="line" data-df-x-type="time" data-df-gaps="break" data-df-brush data-df-rescale
         data-df-selection-group="pump-incident" data-df-height="250" data-df-y-label="Squared residual"
         data-df-reference-lines='[{"axis":"y","value":0.8,"label":"Rank-two alert threshold"},{"axis":"x","value":"2026-11-18T13:45:00Z","label":"First alert"}]'>

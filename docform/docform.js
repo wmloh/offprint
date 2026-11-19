@@ -51,7 +51,6 @@
     citations: { needs: ['tooltips'], css: ['refs'], script: 'refs', api: 'citations' },
     navigation: { needs: ['base'], css: ['nav'], script: 'nav', api: 'navigation' },
     sidenotes: { needs: ['base'], css: ['notes'], script: 'notes', api: 'sidenotes' },
-    wide: { needs: ['base'], css: ['wide'], script: 'wide', api: 'wide' },
     sections: { needs: ['base'], script: 'sections', api: 'sections' },
     controls: { needs: ['base'], css: ['controls'], script: 'controls', api: 'controls' },
     zoom: { needs: ['base'], css: ['zoom'], script: 'zoom', api: 'zoom' },

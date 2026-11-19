@@ -5,7 +5,7 @@ Use the [offline entry](include-order.md) and enable the features your page need
 | To add | Enable |
 | --- | --- |
 | TeX, syntax highlighting, or a site glossary | `math`, `code`, or `glossary` |
-| Peek bubbles, reveals, split views, or wide blocks | `peek-bubbles`, `reveals`, `split-views`, or `wide` |
+| Peek bubbles, reveals, or split views | `peek-bubbles`, `reveals`, or `split-views` |
 | Tabs, standalone cards, or worked-example controls | `tabs`, `cards`, or `stepper` |
 | Animated figures and figure-step panels | `animation` and `figure-steps` as needed |
 | Full-screen figures and presentation tools | `zoom` or `zoom-tools` |
@@ -29,13 +29,13 @@ Use the [offline entry](include-order.md) and enable the features your page need
 </body>
 ```
 
-The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open. Collapsed pages and sections open when the pointer rests on them and stay open until it leaves the sidebar. With a search index, other pages also list their sections this way. Clicking the arrow beside one keeps it open or closed until it is clicked again or the page reloads. Drag the sidebar's right edge to resize it and double-click to reset the width. The width is remembered across pages. On narrow screens and touch-only devices the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
+The sidebar lists the manifest's pages and an outline of the current page's `h2` and `h3` headings, highlighting the one in view. Only the `h3` list of the section in view stays open. Collapsed pages and sections open when the pointer rests on them for about a third of a second, and stay open until it leaves the sidebar. With a search index, other pages also list their sections this way. Clicking the arrow beside one keeps it open or closed until it is clicked again or the page reloads. Drag the sidebar's right edge to resize it and double-click to reset the width. The width is remembered across pages. On narrow screens and touch-only devices the sidebar becomes a drawer. Add `data-df-no-outline` to a heading (or a section around it) to leave it out, and `data-df-no-pager` on `main` to hide the previous and next links.
 
 Each outlined heading shows a link icon on hover that copies the URL of its section. Scrollbars in the sidebar, code blocks, and tables stay hidden until the pointer is on them.
 
 The reading column is up to 1,120px wide and keeps its width when you toggle navigation. It centers in the window when there is room and moves beside the open sidebar on tighter desktop screens. Use `--df-content-width` to change the maximum width and `--df-page-gutter` to change the side padding.
 
-Each `h2` directly in `main` starts a section with about 56px of space above it (32px before an `h3`), less when a heading follows another heading or opens the page. Sections take turns through calm named colours (blue, green, purple, orange, pink, brown). A thin line in that colour starts beside the heading in the left margin and continues at the same width down to the next `h2`, unbroken past tables and figures. Heading text keeps its usual colour. Put `data-df-color` or `data-df-role` on an `h2` to choose its section colour. Change the order with `--df-section-cycle` (for example `--df-section-cycle: green blue;`) and the spacing with `--df-space-h2` and `--df-space-h3`. Without scripts the line only spans the heading, in the default order.
+Each `h2` directly in `main` starts a section with about 56px of space above it (32px before an `h3`), less when a heading follows another heading or opens the page. Sections take turns through calm named colours (blue, green, purple, orange, pink, brown). A thin line in that colour starts beside the heading in the left margin and continues at the same width down to the next `h2`, unbroken past tables and figures. Focus mode never blurs it. Heading text keeps its usual colour. Put `data-df-color` or `data-df-role` on an `h2` to choose its section colour. Change the order with `--df-section-cycle` (for example `--df-section-cycle: green blue;`) and the spacing with `--df-space-h2` and `--df-space-h3`. Without scripts the line only spans the heading, in the default order.
 
 Standalone figures, tables, and their captions are centered in the reading column, with a little extra space above and below. Pointing at any table cell, headers included, lightly tints its row and column. Links are blue and underlined.
 
@@ -46,29 +46,7 @@ Figures, tables, charts, code blocks, animations, tabs, and split views never gr
 <div data-df-chart="line" data-df-max-width="80%">…</div>
 ```
 
-Only [wide blocks](#wide-blocks) grow past the column, and these limits do not apply to them. A zoomed figure uses the full zoom view.
-
-### Wide blocks
-
-A figure or table that needs more room than the reading column can grow into the space beside it. Mark a figure, or a `div` around a table, that sits directly inside `main`:
-
-```html
-<figure id="trace" data-df-wide>
-  <div data-df-chart="line">…</div>
-  <figcaption>A long trace that reads better wide.</figcaption>
-</figure>
-
-<div data-df-wide>
-  <table>
-    <caption>Scores for every scenario</caption>
-    …
-  </table>
-</div>
-```
-
-The block grows evenly on both sides, up to 1240px in total (set `--df-wide-width` on the page or the block to change it). It always stays a page gutter away from the sidebar and follows it when the sidebar is resized or hidden. While the page shows sidenotes or peek panels in the right margin, the block grows toward the sidebar side only. Prose keeps the reading width.
-
-When there is no spare room, as on narrow screens, the block keeps the reading width and a wide table scrolls sideways inside it instead of widening the page. Without the script, wide blocks also keep the reading width. The PCA case study has a [wide residual trace](../examples/pca/pages/telemetry.html#residual-trace) and a [wide scores table](../examples/pca/pages/monitor.html#evaluation).
+Nothing in the page grows past the column. A zoomed figure uses the full zoom view.
 
 ## Lists
 
@@ -188,7 +166,7 @@ The icon and title are optional. With `reveals` enabled, callouts in `.df-page` 
 </details>
 ```
 
-With `peek-bubbles` enabled, every `details` in the page becomes a small tinted bubble showing its title. As the reader scrolls it towards the middle of the screen, it flies into a large frosted panel in the empty space to the right of the text. When several bubbles are near the middle at once, their panels stack vertically. A panel's content is blurred except while the pointer is over it or keyboard focus is inside it; a tap clears it on touch screens. Each panel scrolls on its own. Once the reader scrolls past the bubble, the panel shrinks back into it. Clicking the bubble brings it to the middle and opens it right away; `Escape` closes it. When the space to the right is too narrow, the bubble expands in place instead.
+With `peek-bubbles` enabled, every `details` in the page becomes a small tinted bubble showing its title. As the reader scrolls it towards the middle of the screen, it smoothly grows where it stands into a larger bubble holding its content. The content is blurred except while the pointer is over it or keyboard focus is inside it; a tap clears it on touch screens. Long content scrolls inside the bubble. Once the reader scrolls past, the bubble smoothly shrinks back to its title without moving the text you are reading. Clicking the bubble brings it to the middle and opens it right away; `Escape` closes it.
 
 The tint is purple unless `data-df-color` or `data-df-role` says otherwise. Put `data-df-no-bubble` on a `details` (or a block around it) to leave it as a plain card. Without the script, each `details` shows as a tinted card.
 

@@ -9,10 +9,11 @@ Enable `peek-bubbles`. Author `details` with a direct `summary` for the label an
 </details>
 ```
 
-- On setup the script replaces the eligible `details` with a focusable bubble, transfers its content into a sheet, and creates a side panel under `body`. The default accent is purple. Without the script, `blocks` CSS (also in `docform.css`) supplies the tinted native disclosure style. Add `open` to start that native fallback expanded if needed.
-- Scrolling opens bubbles near the centre. Up to three closest bubbles share a vertical stack with independent scrolling. The gutter requires at least 280 px for the panel plus 24 px per side. The panel caps at 460 px. With less room, bubbles expand in place.
-- The bubble title ends with → (↗ while its panel is out); the panel heading and in-place expansion omit the arrow.
-- Click, Enter, or Space scrolls the bubble to centre and reveals its content. Hover, focus, or tap clears the panel blur. Escape closes the active bubble when focus is inside it and prevents it reopening until it leaves the scroll band.
-- `DocForm.peekBubbles.layout(viewportWidth, contentRight)` returns `{mode, width, right}`. `mode` is `panel` or `inline`. [Wide blocks](../layout/wide.md) use this to reserve gutter space.
+- On setup the script replaces each eligible `details` with a focusable bubble (`role=button`, `aria-controls` → sheet id) and moves its content into a `.df-bubble-sheet` holding a `.df-bubble-body.df-page`. Collapsed sheets wait in a hidden `div.df-bubble-store` under `body`, laid out at the column width, so page modules still find their content. The default accent is purple. Without the script, `blocks` CSS (also in `docform.css`) supplies the tinted native disclosure style. Add `open` to start that native fallback expanded if needed.
+- Scrolling opens bubbles in place: a bubble opens once its centre rises above 60% of the viewport height, stays open while its top is above 75%, and closes once its bottom passes 10%. At most the three closest to the centre are open. Opening adds `.is-open` and animates the bubble's width (title-width pill → column width) and the sheet's height and opacity (420 ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`). The sheet caps at 70vh and the body scrolls inside it.
+- Closing reverses the same animation. When the bubble sits above the viewport middle (scrolled past), the script scrolls by each frame's height change so text below stays still, and adds `html.df-bubble-holding` (`overflow-anchor: none`) meanwhile. Reopening mid-shrink grows from the current size. Without Web Animations support, sizes snap.
+- The bubble title ends with →; the open bubble omits it.
+- Click, Enter, or Space scrolls the bubble to centre and reveals its content. Hover, focus, or tap clears the content blur. Escape closes the bubble when focus is inside it and prevents it reopening until it leaves the scroll band.
+- `DocForm.peekBubbles` exposes `pick(boxes, viewportHeight, openIndexes)`, `band`, and `most`.
 
 [Block styles](../../css/blocks.css) · [Bubble source](../../js/bubble.js)

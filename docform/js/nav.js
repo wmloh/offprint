@@ -15,7 +15,8 @@
   var CARET_SMALL = SVG + ' width="10" height="10"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
   var MENU = SVG + ' width="18" height="18"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg>';
 
-  var HOVER_OPEN = 50;
+  // Hover intent: a collapsed group opens only after the pointer rests on it this long.
+  var HOVER_OPEN = 300;
   var HOVER_CLOSE = 50;
   var SLIDE_MS = 180;
   var SLIDE_EASE = 'cubic-bezier(0.2, 0, 0, 1)';

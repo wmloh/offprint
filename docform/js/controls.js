@@ -299,7 +299,7 @@
 
   function focusSections(main, headings) {
     var blocks = Array.prototype.filter.call(main.children, function (el) {
-      return !/^(SCRIPT|STYLE|TEMPLATE)$/.test(el.tagName) && !el.classList.contains('df-outline-sentinel');
+      return !/^(SCRIPT|STYLE|TEMPLATE)$/.test(el.tagName) && !el.matches('.df-outline-sentinel, .df-section-lines');
     });
     var inner = blocks.map(function () { return []; });
     headings.forEach(function (h, i) {

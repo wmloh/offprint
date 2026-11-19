@@ -1012,13 +1012,12 @@
       clipRect = svg('rect', { x: left, y: top - 3, width: plotW, height: height - bottom - top + 6 }, clip);
     }
     if (hasIntervals) {
+      // Whiskers keep their full caps and stroke at the plot edges; bands stay inside the exact bounds.
       var intervalClip = svg('clipPath', { id: chart.clip + '-interval' }, defs);
-      var bounds = { x: left, y: top, width: plotW, height: height - bottom - top };
-      svg('rect', bounds, intervalClip);
-      if (playback) {
-        var bandClip = svg('clipPath', { id: chart.clip + '-band' }, defs);
-        intervalRect = svg('rect', bounds, bandClip);
-      }
+      svg('rect', { x: left - 4, y: top - 1, width: plotW + 8, height: height - bottom - top + 2 }, intervalClip);
+      var bandClip = svg('clipPath', { id: chart.clip + '-band' }, defs);
+      var bandRect = svg('rect', { x: left, y: top, width: plotW, height: height - bottom - top }, bandClip);
+      if (playback) intervalRect = bandRect;
     }
 
     var grid = svg('g', { class: 'df-chart-grid' }, frame);
@@ -1109,8 +1108,7 @@
             addBand(bounded);
           });
           if (bandPath) {
-            var bandMark = svg('path', { class: 'df-chart-band-interval', d: bandPath }, intervals);
-            if (intervalRect) bandMark.setAttribute('clip-path', 'url(#' + chart.clip + '-band)');
+            svg('path', { class: 'df-chart-band-interval', d: bandPath, 'clip-path': 'url(#' + chart.clip + '-band)' }, intervals);
           }
         }
         var d = runs.map(function (run) {

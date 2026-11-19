@@ -281,7 +281,7 @@ body:has(> .df-sidebar) {
 
 /* Display blocks stay within the reading column; contents scale (media, charts) or scroll (tables, code) inside.
    --df-figure-max-width narrows every outermost block; data-df-max-width narrows one block (core.js validates it into
-   --df-max-width, and browsers with typed attr() read it directly). Only data-df-wide grows past the column. */
+   --df-max-width, and browsers with typed attr() read it directly). Nothing grows past the column. */
 @property --df-max-width {
   syntax: "*";
   inherits: false;
@@ -289,13 +289,13 @@ body:has(> .df-sidebar) {
 
 .df-page :where(figure, table, pre, .df-code, [data-df-chart], .df-figure, .df-anim, .df-tabs, [data-df-tabs],
   .df-split, .df-data, [data-df-data-view], .df-tree):not(:where(figure, table, pre, .df-code, [data-df-chart],
-  .df-figure, .df-anim, .df-tabs, [data-df-tabs], .df-split, .df-data, [data-df-data-view], .df-tree,
-  [data-df-wide]) *, [data-df-wide], [data-df-max-width]) {
+  .df-figure, .df-anim, .df-tabs, [data-df-tabs], .df-split, .df-data, [data-df-data-view], .df-tree) *,
+  [data-df-max-width]) {
   max-width: min(100%, var(--df-figure-max-width));
   margin-inline: auto;
 }
 
-.df-page [data-df-max-width]:not([data-df-wide]) {
+.df-page [data-df-max-width] {
   max-width: min(100%, var(--df-max-width, 100%));
   max-width: min(100%, attr(data-df-max-width type(<length-percentage>), var(--df-max-width, 100%)));
   margin-inline: auto;

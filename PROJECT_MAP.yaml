@@ -71,7 +71,7 @@ docform/: Copyable offline library folder
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
     glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
     sections.js: h2 colour cycle from a token with attribute overrides, and continuous left-margin section lines kept clear of the section rail
-    wide.js: data-df-wide figures and table wrappers that grow beside the reading column, bounded by the sidebar and right-margin notes or panels
+    wide.js: data-df-wide figures and table wrappers that grow beside the reading column, bounded by the sidebar, left-margin section lines, and right-margin notes or panels
   tools/: Offline asset checker and exporter for manifest-configured search indexes and wrapped CSV, JSON, and YAML sources
     assets.html: Folder selection, asset status and diagnostics, and selective save, download, or copy
     asset-build.js: Manifest discovery, output planning, deterministic search and data serialization, and stale checks

@@ -38,6 +38,11 @@ test('margin content lets a wide block use only the space between the column and
   assert.deepEqual(json(wide.span(page(1920, 480, { margin: true }))), { left: 0, right: 0 });
 });
 
+test('section lines keep a wide block from growing into the left margin', () => {
+  assert.deepEqual(json(wide.span({ ...page(1920, 260), rail: true })), { left: 0, right: 120 });
+  assert.deepEqual(json(wide.span({ ...page(1920, 260, { margin: true }), rail: true })), { left: 0, right: 0 });
+});
+
 test('wide blocks can use the room left by a hidden sidebar or a nearly full window', () => {
   assert.deepEqual(json(wide.span(page(1440, 260))), { left: 0, right: 12 });
   assert.deepEqual(json(wide.span(page(1366, 260))), { left: 0, right: 0 });
@@ -57,6 +62,8 @@ test('wide layout uses the desktop grid gutters when the page end margin reads a
   const pageLeft = () => Math.max(196, sidebarRight);
   const gridPage = {
     parentElement: body,
+    classList: { contains: () => false },
+    querySelector: () => null,
     getBoundingClientRect: () => ({ left: pageLeft(), right: pageLeft() + 1168 })
   };
   const document = { body, documentElement: { clientWidth: 1560 }, querySelector: () => gridPage, addEventListener() {} };

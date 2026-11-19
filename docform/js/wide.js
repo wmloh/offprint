@@ -1,6 +1,6 @@
 // Wide blocks: a top-level figure, table, or wrapper marked data-df-wide grows past the reading column into the free
-// space beside it, up to --df-wide-width. It stops a page gutter short of the sidebar, and keeps clear of the right
-// margin while the page shows sidenotes or peek panels there. Without room, or without the script, it keeps the
+// space beside it, up to --df-wide-width. It stops a page gutter short of the sidebar, keeps clear of the left margin
+// while section lines run there, and keeps clear of the right margin while the page shows sidenotes or peek panels. Without room, or without the script, it keeps the
 // reading width.
 (function (root) {
   'use strict';
@@ -16,9 +16,9 @@
 
   // Extra width on each side of the reading column. `left` and `right` are the column's content edges, `cellLeft` and
   // `cellRight` the edges of the space the page sits in (beside the sidebar). Growth is shared evenly while both sides
-  // have room; `margin` keeps the right side for margin content.
+  // have room; `rail` keeps the left side for section lines and `margin` keeps the right side for margin content.
   function span(o) {
-    var roomLeft = Math.max(0, o.left - o.cellLeft - o.edge);
+    var roomLeft = o.rail ? 0 : Math.max(0, o.left - o.cellLeft - o.edge);
     var roomRight = o.margin ? 0 : Math.max(0, o.cellRight - o.right - o.edge);
     var extra = Math.min(o.max - (o.right - o.left), roomLeft + roomRight);
     if (!(extra >= 1)) return { left: 0, right: 0 };
@@ -44,6 +44,15 @@
     return !!(bubble && bubble.layout && page.querySelector('.df-bubble') && bubble.layout(view, contentRight).mode === 'panel');
   }
 
+  // Whether top-level headings draw section lines in the left margin (sections.css), which wide blocks must not cross.
+  function railInUse(page) {
+    if (page.classList.contains('df-sections-covered')) return false;
+    var heading = page.querySelector(':scope > h2');
+    if (!heading) return false;
+    var line = root.getComputedStyle(heading, '::before');
+    return line.display !== 'none' && line.content !== 'none' && line.content !== 'normal';
+  }
+
   function setup(blocks, page) {
     var html = document.documentElement;
     var body = page.parentElement === document.body ? document.body : null;
@@ -67,6 +76,7 @@
         cellLeft: Math.max(sidebarRight, bodyRect ? bodyRect.left : rect.left - (parseFloat(style.marginLeft) || 0)),
         cellRight: Math.min(view, bodyRect ? bodyRect.right : rect.right + (parseFloat(style.marginRight) || 0)),
         edge: cssPx(html, '--df-page-gutter', EDGE),
+        rail: railInUse(page),
         margin: marginInUse(page, view, right)
       };
       blocks.forEach(function (el) {
@@ -95,6 +105,8 @@
     root.requestAnimationFrame(function () { html.classList.add('df-wide-ready'); });
     root.addEventListener('resize', schedule);
     if (root.ResizeObserver) new root.ResizeObserver(schedule).observe(page);
+    // sections.js toggles df-sections-covered as the numbered rail shows or hides.
+    if (root.MutationObserver) new root.MutationObserver(schedule).observe(page, { attributes: true, attributeFilter: ['class'] });
     // Hiding the navigation panel animates the page grid without a resize; lay out again once it settles.
     document.addEventListener('transitionend', function (event) {
       var t = event.target;

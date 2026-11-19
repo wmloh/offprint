@@ -44,14 +44,15 @@
 .df-page > header > .df-eyebrow:first-child:has(+ h1) { margin-top: calc(3.75 * var(--df-font-size)); }
 
 /* Labelled fields: muted labels in an aligned column beside their values, one row per label. Rows stack when the
-   list is narrow, such as in split views, cards, and phones. */
+   list is narrow, such as in split views, cards, and phones. Cells stretch to the row so the hairlines between rows
+   meet; the smaller label keeps the value's line box and padding, so first lines still share a baseline. */
 .df-fields {
   --df-fields-gap: var(--df-space-4);
   container-type: inline-size;
   display: grid;
   grid-template-columns: fit-content(var(--df-field-label-width)) minmax(0, 1fr);
   column-gap: 0;
-  align-items: first baseline;
+  align-items: stretch;
 }
 
 .df-page .df-fields {
@@ -62,15 +63,16 @@
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
-  align-items: first baseline;
+  align-items: stretch;
 }
 
 .df-fields dt {
+  --df-field-label-scale: 0.9;
   grid-column: 1;
   color: var(--df-text-label);
-  font-size: 0.9em;
+  font-size: calc(var(--df-field-label-scale) * 1em);
   font-weight: 600;
-  line-height: 1.45;
+  line-height: calc(var(--df-line-height) / var(--df-field-label-scale));
   overflow-wrap: anywhere;
   padding-inline-end: var(--df-fields-gap);
 }
@@ -95,6 +97,10 @@
   padding-block: 0.55em;
 }
 
+.df-fields dt {
+  padding-block: calc(0.55em / var(--df-field-label-scale));
+}
+
 .df-fields dd > :first-child { margin-top: 0; }
 .df-fields dd > :last-child { margin-bottom: 0; }
 
@@ -117,6 +123,11 @@
   padding-top: 0.15em;
 }
 
+.df-fields > dt:first-child,
+.df-fields > div:first-child > dt {
+  padding-top: calc(0.15em / var(--df-field-label-scale));
+}
+
 @container (width < 30em) {
   .df-fields dt,
   .df-fields dd {
@@ -134,5 +145,6 @@
   .df-fields dt {
     padding-bottom: 0;
     padding-inline-end: 0;
+    line-height: 1.45;
   }
 }

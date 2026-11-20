@@ -22,7 +22,9 @@ docform/: Copyable offline library folder
     anim.css: Figure frames, animation controls, and SVG paint utilities
     params.css: Parameter sliders, single and multiple choices, switches, preset buttons, and bound values
     reveal.css: Scroll reveals, two-way callout slides, and split views with side-gliding panes
-    steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus an independently scrolling detail pane for standalone cards and figure steps and optional title-only side cards
+    steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus the side-by-side detail layout for standalone cards and figure steps and optional title-only side cards
+    detail.css: Standalone detail panes with overlapping, independently scrolling details and the shared hover scrollbar
+    pipeline.css: Pipeline blocks with collapsing fields, curved line styles, moving dashes, edge labels, path tracing, step reveals, side or below detail panes, and a numbered-list fallback
     zoom.css: Frosted full-screen figure zoom view
     zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot and trail, ink, crosshair and ruler readouts
     bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered
@@ -55,7 +57,9 @@ docform/: Copyable offline library folder
     anim.js: Keyed SVG timeline controllers with playback, step subscriptions, and figure-step integration
     params.js: Named parameter scopes with multiple-choice controls, presets, text bindings, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
-    steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, and inert details
+    steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, and inert details, both usable as detail-pane sources
+    detail.js: Shared detail panes keyed to card panels, figure steps, pipelines, or selection groups, plus inert-detail and scrollbar helpers
+    pipeline.js: Pipeline block diagrams with structured fields and overrides, ranked half-row layout, curved routing with fork and merge stems, junctions, crossing gaps, path tracing, keyboard navigation, steps, and detail panes
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
     zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
     bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past

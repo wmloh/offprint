@@ -94,7 +94,7 @@
     max-block-size: var(--df-step-pane-max);
   }
 
-  .df-figure-steps-ready > .df-step-panel.df-step-scrollport,
+  .df-figure-steps-ready > .df-step-panel.df-scrollport,
   :is(.df-figure-steps-ready, .df-card-panel-ready) > .df-step-panel > .df-step-list {
     min-block-size: 0;
     overflow: hidden auto;
@@ -133,30 +133,6 @@
       overflow: hidden auto;
       scrollbar-gutter: stable;
     }
-  }
-}
-
-@supports not selector(::-webkit-scrollbar) {
-  .df-step-scrollport {
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-  }
-
-  .df-step-scrollport.df-step-scrollbar-hover {
-    scrollbar-color: var(--df-border-strong) transparent;
-  }
-}
-
-/* Native scrollbar hover also catches direct entry onto the thumb. */
-@supports selector(::-webkit-scrollbar) {
-  .df-step-scrollport::-webkit-scrollbar { width: 8px; }
-  .df-step-scrollport::-webkit-scrollbar-track { background: transparent; }
-  .df-step-scrollport::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
-
-  .df-step-scrollport.df-step-scrollbar-hover::-webkit-scrollbar-thumb,
-  .df-step-scrollport::-webkit-scrollbar-thumb:hover,
-  .df-step-scrollport::-webkit-scrollbar-thumb:active {
-    background: var(--df-border-strong);
   }
 }
 
@@ -245,7 +221,7 @@
 }
 
 .df-step-panel button:focus-visible,
-.df-step-scrollport:focus-visible {
+.df-scrollport:focus-visible {
   outline-offset: -2px;
 }
 

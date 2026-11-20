@@ -201,7 +201,7 @@ test('nested none profile clears inherited choices and loads playback after its 
   assert.equal(p.html.getAttribute('data-df-theme'), null);
   assert.deepEqual(p.loads, ['docform/js/core.js', 'docform/css/tokens.css', 'docform/css/base.css',
     'docform/css/text.css', 'docform/css/sections.css', 'docform/css/buttons.css', 'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
-    'docform/css/steps.css', 'docform/js/steps.js']);
+    'docform/css/detail.css', 'docform/js/detail.js', 'docform/css/steps.css', 'docform/js/steps.js']);
   assert.equal(typeof p.DF.chartPlayback.mount, 'function');
   assert.equal(p.DF.diagnostics.list().length, 0);
 });
@@ -247,7 +247,7 @@ test('chart setup merges options and an invalid attribute preserves the configur
 
 test('mixed features load all shipped assets and register data before author setup', async () => {
   const features = Object.fromEntries(('animation cards chart code concept-tables data-view dropdowns dropzone editable-text figure-steps ' +
-    'glossary math parameters peek-bubbles results reveals scenarios selection split-views stepper tabs tree zoom-tools')
+    'glossary math parameters peek-bubbles pipeline results reveals scenarios selection split-views stepper tabs tree zoom-tools')
     .split(' ').map(key => [key, true]));
   const p = page({ nested: true, site: { features, assets: { data: {
     runs: { source: 'examples/transformers/assets/runs.csv', output: 'examples/transformers/assets/generated/runs.js' }

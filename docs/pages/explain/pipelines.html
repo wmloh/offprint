@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pipeline diagrams · DocForm</title>
+  <link rel="stylesheet" href="../../../docform/docform.css">
+  <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "pipeline": true,
+        "cards": true
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../../../docform/css/detail.css">
+  <link rel="stylesheet" href="../../../docform/css/steps.css">
+  <link rel="stylesheet" href="../../../docform/css/pipeline.css">
+  <script src="../../../docform/docform.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <p class="df-eyebrow">Explain step by step</p>
+      <h1>Pipeline diagrams</h1>
+      <p>A <span data-df-term="pipeline diagram">pipeline diagram</span> shows the stages of a process as blocks joined by lines. Point at a block to trace where it comes from and where it leads, and read more about it in a detail pane.</p>
+      <dl class="df-fields">
+        <dt>Official name</dt><dd>Pipeline diagrams · Detail panes</dd>
+        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
+        <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
+        <dt>Works with</dt><dd><a href="cards.html">Card panels</a>, <a href="steppers.html">steppers</a>, and <a href="selection.html">linked selection</a></dd>
+        <dt>Good for</dt><dd>Data flows, build steps, and decision paths</dd>
+      </dl>
+    </header>
+
+    <h2 id="see-it">See it</h2>
+    <figure class="df-pipeline" id="publish-flow" data-df-detail-layout="side" data-df-block-width="11rem">
+      <ol class="df-pipe-blocks">
+        <li class="df-pipe-block" id="write" data-df-to="check-links check-terms" data-df-role="on-request">
+          <p class="df-pipe-eyebrow">Start</p>
+          <p class="df-pipe-headline">Write pages</p>
+          <p class="df-pipe-description">Plain HTML in a folder.</p>
+        </li>
+        <li class="df-pipe-block" id="check-links">
+          <p class="df-pipe-eyebrow">Check</p>
+          <p class="df-pipe-headline">Links</p>
+          <p class="df-pipe-links">Leads to <a class="df-pipe-link" href="#ready">the review point</a></p>
+        </li>
+        <li class="df-pipe-block" id="check-terms">
+          <p class="df-pipe-eyebrow"></p>
+          <p class="df-pipe-headline">Terms</p>
+          <p class="df-pipe-description">Every term has a definition.</p>
+          <p class="df-pipe-links">Leads to <a class="df-pipe-link" href="#ready" data-df-line="dashed">the review point</a></p>
+        </li>
+        <li class="df-pipe-junction" id="ready" data-df-to="index share"></li>
+        <li class="df-pipe-block" id="index">
+          <p class="df-pipe-eyebrow">Build</p>
+          <p class="df-pipe-headline">Search index</p>
+        </li>
+        <li class="df-pipe-block" id="share" data-df-role="default">
+          <p class="df-pipe-eyebrow">Finish</p>
+          <p class="df-pipe-headline">Share the folder</p>
+          <p class="df-pipe-description">Readers open it from disk.</p>
+          <p class="df-pipe-links">Back to <a class="df-pipe-link" href="#write" data-df-label="next edit" data-df-line="dotted" data-df-flow>writing</a></p>
+        </li>
+      </ol>
+      <div class="df-detail-pane">
+        <div data-df-key="write"><p>Each page is an ordinary HTML file. Nothing needs to be installed.</p></div>
+        <div data-df-key="check-links"><p>Broken links send readers nowhere, so they are checked before sharing.</p></div>
+        <div data-df-key="check-terms"><p>Terms that appear in the glossary get a dotted underline and a short definition.</p></div>
+        <div data-df-key="index"><p>The search index lets readers search every page, even offline.</p></div>
+        <div data-df-key="share"><p>Copy the folder anywhere. Readers open <code>index.html</code> in a browser.</p></div>
+      </div>
+      <figcaption>Two checks run side by side, meet at a junction, then split again. The dotted line loops back for the next round of edits.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Move your pointer over Terms. The lines and blocks before and after it stay bright while the rest fade, and the pane beside the diagram explains it. Tab into the diagram and use the arrow keys to follow the lines.</p>
+    <p>The Terms block has an empty eyebrow, so it simply leaves that line out. Blocks in the same column always share one height so they line up.</p>
+
+    <h2 id="steps">Reveal a pipeline in steps</h2>
+    <figure class="df-pipeline" id="request-flow" data-df-direction="down" data-df-block-width="13rem">
+      <ol class="df-pipe-blocks">
+        <li class="df-pipe-block" id="request" data-df-to="cache" data-df-step="1">
+          <p class="df-pipe-eyebrow">Step 1</p>
+          <p class="df-pipe-headline">A reader opens a page</p>
+        </li>
+        <li class="df-pipe-block" id="cache" data-df-step="2">
+          <p class="df-pipe-eyebrow">Step 2</p>
+          <p class="df-pipe-headline">Is it saved already?</p>
+          <p class="df-pipe-links">
+            <a class="df-pipe-link" href="#saved" data-df-label="yes" data-df-color="green">Yes: show the saved copy</a>
+            <a class="df-pipe-link" href="#load" data-df-label="no" data-df-color="orange">No: load the files</a>
+          </p>
+        </li>
+        <li class="df-pipe-block" id="saved" data-df-to="show" data-df-step="3">
+          <p class="df-pipe-headline">Use the saved copy</p>
+        </li>
+        <li class="df-pipe-block" id="load" data-df-to="show" data-df-step="3">
+          <p class="df-pipe-headline">Load the files</p>
+          <p class="df-pipe-description">From the same folder.</p>
+        </li>
+        <li class="df-pipe-block" id="show" data-df-step="4">
+          <p class="df-pipe-eyebrow">Step 4</p>
+          <p class="df-pipe-headline">Show the page</p>
+        </li>
+      </ol>
+      <figcaption>Press Next to add one stage at a time, or Play to watch the whole flow.</figcaption>
+    </figure>
+    <p>A pipeline can also follow a <a href="steppers.html">worked-example stepper</a>, so the diagram grows as the reader moves through the written steps.</p>
+
+    <h2 id="adjust">Adjust a block by hand</h2>
+    <p>Blocks are placed automatically, but you can pin one to a column or row, change its size, or give it a different look. A block with its own look still takes its words from the eyebrow, headline, and description, so editing those updates the picture too. When two lines have to cross, the line underneath gets a small gap.</p>
+    <figure class="df-pipeline" id="hand-tuned" data-df-block-width="10rem">
+      <ol class="df-pipe-blocks">
+        <li class="df-pipe-block" id="draft" data-df-to="figure" data-df-row="1">
+          <p class="df-pipe-headline">Draft</p>
+        </li>
+        <li class="df-pipe-block" id="data" data-df-to="text" data-df-row="2">
+          <p class="df-pipe-headline">Data</p>
+        </li>
+        <li class="df-pipe-block" id="text" data-df-row="1" data-df-color="purple">
+          <p class="df-pipe-eyebrow">Output</p>
+          <p class="df-pipe-headline">Text</p>
+          <div class="df-pipe-display">
+            <strong data-df-slot="headline"></strong> · <span data-df-slot="eyebrow"></span>
+          </div>
+        </li>
+        <li class="df-pipe-block" id="figure" data-df-row="2">
+          <p class="df-pipe-eyebrow">Output</p>
+          <p class="df-pipe-headline">Figure</p>
+        </li>
+      </ol>
+      <figcaption>Pinned rows force the two lines to cross. The Text block uses its own one-line look.</figcaption>
+    </figure>
+
+    <h2 id="detail-panes">Detail panes elsewhere on the page</h2>
+    <p>The detail pane is not tied to a diagram. Place one anywhere and point it at a pipeline, a card panel, or a figure with steps. It shows the detail whose name matches the selected item.</p>
+    <div class="df-card-panel" id="tool-cards">
+      <div class="df-step-panel" data-df-role="on-request">
+        <p class="df-step-heading" id="tool-cards-title">Tools</p>
+        <div class="df-step-list" aria-labelledby="tool-cards-title">
+          <button type="button" data-df-key="checker" data-df-detail="tool-checker">Asset checker</button>
+          <button type="button" data-df-key="viewer" data-df-detail="tool-viewer">Data viewer</button>
+        </div>
+      </div>
+      <div class="df-step-details">
+        <div id="tool-checker"><p>Lists every file a site needs and whether it is present.</p></div>
+        <div id="tool-viewer"><p>Opens a data file and shows it as a table.</p></div>
+      </div>
+    </div>
+    <div class="df-detail-pane" data-df-detail-for="tool-cards">
+      <div data-df-key="checker"><p><strong>Where to find it:</strong> the <code>tools</code> folder, file <code>assets.html</code>.</p></div>
+      <div data-df-key="viewer"><p><strong>Where to find it:</strong> any page with a data block shows a raw view.</p></div>
+    </div>
+
+    <h2 id="when-to-use">When to reach for it</h2>
+    <p>Use a pipeline diagram when order and connections matter: stages that split, run side by side, and come back together. For a single list of choices without connections, a <a href="cards.html">card panel</a> is simpler.</p>
+
+    <h2 id="for-every-reader">For every reader</h2>
+    <p>Point at, tap, or focus a block to select it. Arrow keys follow the lines forward and back, or move between blocks in the same column. Each block also says where it leads for screen readers. With scripts off, or when printed, the diagram becomes a numbered list and every detail is shown.</p>
+
+    <h2 id="related">Related</h2>
+    <ul>
+      <li><a href="cards.html">Card panels and figure steps</a></li>
+      <li><a href="steppers.html">Worked-example steppers</a></li>
+      <li><a href="../reference/features.html">Feature directory</a></li>
+    </ul>
+  </main>
+</body>
+</html>

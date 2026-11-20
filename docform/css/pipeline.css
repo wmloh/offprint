@@ -1,0 +1,299 @@
+/* Pipeline block diagrams. Without scripts and in print, blocks read as a numbered list. */
+.df-pipeline {
+  --df-pipe-block-width: 12rem;
+  --df-pipe-gap-x: 4.5rem;
+  --df-pipe-gap-y: 1.25rem;
+  --df-pipe-line: var(--df-text-faint);
+  --df-pipe-surface: var(--df-bg);
+  container-type: inline-size;
+}
+
+.df-pipe-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  box-sizing: border-box;
+}
+
+.df-pipe-block > :is(.df-pipe-eyebrow, .df-pipe-headline, .df-pipe-description) {
+  margin: 0;
+}
+
+.df-pipe-eyebrow {
+  color: var(--df-text-label);
+  font-size: var(--df-eyebrow-size);
+  font-weight: var(--df-eyebrow-weight);
+  letter-spacing: var(--df-eyebrow-tracking);
+  line-height: 1.4;
+  text-transform: var(--df-eyebrow-case);
+}
+
+.df-pipe-headline {
+  color: var(--df-text);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.df-pipe-description {
+  color: var(--df-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+/* A field's own colour overrides the role defaults above. */
+.df-pipe-block > :is(.df-pipe-eyebrow, .df-pipe-headline, .df-pipe-description):is([data-df-color], [data-df-role]) {
+  color: var(--df-accent);
+}
+
+/* Empty fields leave no gap behind. */
+:is(.df-pipe-eyebrow, .df-pipe-headline, .df-pipe-description, [data-df-slot]):is(:empty, [data-df-pipe-empty]),
+.df-pipe-display {
+  display: none;
+}
+
+.df-pipe-links {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
+.df-pipe-blocks > .df-pipe-junction:not(:has(.df-pipe-links)) {
+  display: none;
+}
+
+.df-pipe-sr,
+.df-pipeline-ready :is(.df-pipe-links, .df-pipe-block:has(> .df-pipe-display) > :is(.df-pipe-eyebrow, .df-pipe-headline, .df-pipe-description)) {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media screen {
+  .df-pipeline-ready {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--df-space-3);
+    align-items: start;
+  }
+
+  .df-pipeline-ready > :is(figcaption, .df-pipe-steps) {
+    grid-column: 1 / -1;
+  }
+
+  .df-pipeline-ready > .df-pipe-steps {
+    justify-self: end;
+  }
+
+  .df-pipeline-ready > .df-detail-pane {
+    margin: 0;
+  }
+
+  @container (min-width: 46rem) {
+    .df-pipeline-ready[data-df-detail-layout="side"] {
+      grid-template-columns: minmax(0, 1fr) minmax(15rem, 20rem);
+    }
+
+    .df-pipeline-ready[data-df-detail-layout="side"] > .df-detail-pane {
+      --df-detail-pane-max: min(30rem, 60svh);
+      position: sticky;
+      top: var(--df-space-4);
+    }
+  }
+
+  .df-pipe-scroll {
+    min-width: 0;
+    overflow: auto hidden;
+    overscroll-behavior-x: contain;
+  }
+
+  .df-pipe-stage {
+    position: relative;
+    column-gap: var(--df-pipe-gap-x);
+    row-gap: var(--df-pipe-gap-y);
+    margin-inline: auto;
+  }
+
+  .df-pipeline-ready .df-pipe-blocks {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .df-pipeline-ready :is(.df-pipe-block, .df-pipe-junction) {
+    position: absolute;
+    z-index: 1;
+    margin: 0;
+    transition: opacity 0.25s ease-out, visibility 0.25s, box-shadow 0.15s, border-color 0.15s, background-color 0.15s;
+  }
+
+  .df-pipeline-ready .df-pipe-block {
+    width: var(--df-pipe-block-width);
+    padding: var(--df-space-2) var(--df-space-3);
+    border: 1px solid var(--df-border);
+    border-radius: var(--df-radius-lg);
+    background: var(--df-pipe-surface);
+    color: var(--df-text);
+    cursor: default;
+    overflow-wrap: anywhere;
+  }
+
+  .df-pipeline-ready .df-pipe-block:is([data-df-color], [data-df-role]) {
+    border-color: color-mix(in srgb, var(--df-accent) 45%, var(--df-border));
+    background: color-mix(in srgb, var(--df-accent-bg) 55%, var(--df-pipe-surface));
+    box-shadow: inset 3px 0 0 var(--df-accent);
+  }
+
+  .df-pipeline-ready[data-df-direction="down"] .df-pipe-block:is([data-df-color], [data-df-role]) {
+    box-shadow: inset 0 3px 0 var(--df-accent);
+  }
+
+  .df-pipeline-ready .df-pipe-block:has(> .df-pipe-display) > .df-pipe-display {
+    display: block;
+  }
+
+  .df-pipeline-ready .df-pipe-block[aria-current="true"] {
+    border-color: var(--df-accent, var(--df-blue));
+    box-shadow: 0 0 0 1px var(--df-accent, var(--df-blue));
+  }
+
+  .df-pipeline-ready .df-pipe-block:focus-visible {
+    outline: 2px solid var(--df-focus);
+    outline-offset: 3px;
+  }
+
+  @media (hover: hover) {
+    .df-pipeline-ready .df-pipe-block:not([aria-current="true"]):hover {
+      border-color: var(--df-border-strong);
+    }
+  }
+
+  .df-pipeline-ready .df-pipe-junction {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--df-pipe-line);
+  }
+
+  .df-pipeline-ready .df-pipe-junction:is([data-df-color], [data-df-role]) {
+    background: var(--df-accent);
+  }
+
+  .df-pipe-lines {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .df-pipe-edge {
+    --df-pipe-stroke: var(--df-pipe-line);
+    transition: opacity 0.25s ease-out, visibility 0.25s;
+  }
+
+  .df-pipe-edge:is([data-df-color], [data-df-role]) {
+    --df-pipe-stroke: var(--df-accent);
+  }
+
+  .df-pipe-path {
+    fill: none;
+    stroke: var(--df-pipe-stroke);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+
+  .df-pipe-arrow {
+    fill: var(--df-pipe-stroke);
+  }
+
+  .df-pipe-line-dashed .df-pipe-path { stroke-dasharray: 6 5; }
+  .df-pipe-line-dotted .df-pipe-path { stroke-dasharray: 0.1 5; stroke-width: 2; }
+
+  .df-pipe-flow .df-pipe-path {
+    stroke-dasharray: 6 5;
+    animation: df-pipe-flow 0.9s linear infinite;
+  }
+
+  .df-pipe-flow.df-pipe-line-dotted .df-pipe-path {
+    stroke-dasharray: 0.1 5;
+    animation-duration: 0.7s;
+  }
+
+  .df-pipe-labels {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .df-pipe-label {
+    position: absolute;
+    padding: 0 0.35rem;
+    border-radius: var(--df-radius-sm);
+    background: var(--df-pipe-surface);
+    color: var(--df-text-muted);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.25s ease-out, visibility 0.25s;
+  }
+
+  .df-pipe-label:is([data-df-color], [data-df-role]) {
+    color: var(--df-accent);
+  }
+
+  /* Hovering or focusing a block keeps its upstream and downstream path in full colour. */
+  .df-pipe-tracing :is(.df-pipe-block, .df-pipe-junction, .df-pipe-edge, .df-pipe-label):not([data-df-pipe-trace]) {
+    opacity: 0.3;
+  }
+
+  .df-pipe-tracing .df-pipe-edge[data-df-pipe-trace] .df-pipe-path {
+    stroke-width: 2;
+  }
+
+  .df-pipeline-ready [data-df-pipe-hidden] {
+    opacity: 0 !important;
+    visibility: hidden;
+  }
+
+  .df-pipeline-ready .df-pipe-block[data-df-pipe-current] {
+    background: color-mix(in srgb, var(--df-accent-bg, var(--df-blue-bg)) 70%, var(--df-pipe-surface));
+  }
+}
+
+@keyframes df-pipe-flow {
+  from { stroke-dashoffset: 11; }
+  to { stroke-dashoffset: 0; }
+}
+
+@media print {
+  .df-pipeline :is(.df-pipe-lines, .df-pipe-labels, .df-pipe-steps) { display: none; }
+
+  .df-pipeline .df-pipe-stage {
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .df-pipeline .df-pipe-block {
+    position: static;
+    min-height: 0 !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .df-pipeline-ready :is(.df-pipe-links, .df-pipe-block > :is(.df-pipe-eyebrow, .df-pipe-headline, .df-pipe-description)) {
+    position: static !important;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}

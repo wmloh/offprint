@@ -9,32 +9,13 @@
   }
 
   var items = DocForm._items;
+  var detail = DocForm._detail;
+  if (!detail) {
+    if (typeof console !== 'undefined') console.warn('[docform] steps.js needs detail.js loaded before it.');
+    return;
+  }
   var figures = new WeakMap();
   var cards = new WeakMap();
-
-  function watchScrollbar(panel) {
-    panel.classList.add('df-step-scrollport');
-
-    function show(over) {
-      panel.classList.toggle('df-step-scrollbar-hover', over);
-    }
-
-    panel.addEventListener('pointermove', function (event) {
-      if (event.pointerType === 'touch' || panel.scrollHeight <= panel.clientHeight) {
-        show(false);
-        return;
-      }
-      var rect = panel.getBoundingClientRect();
-      var style = root.getComputedStyle(panel);
-      var leftBorder = parseFloat(style.borderLeftWidth) || 0;
-      var rightBorder = parseFloat(style.borderRightWidth) || 0;
-      var gutter = panel.offsetWidth - panel.clientWidth - leftBorder - rightBorder;
-      var left = gutter > 1 ? panel.clientLeft > Math.round(leftBorder) : style.direction === 'rtl';
-      var distance = left ? event.clientX - rect.left - leftBorder : rect.right - rightBorder - event.clientX;
-      show(distance >= 0 && distance <= Math.max(8, gutter));
-    }, { passive: true });
-    panel.addEventListener('pointerleave', function () { show(false); });
-  }
 
   function detailsIn(box) {
     var pane = box.querySelector(':scope > .df-step-details');
@@ -42,11 +23,7 @@
   }
 
   function detailById(details, id) {
-    return id && details.find(function (detail) { return detail.id === id; });
-  }
-
-  function showDetail(details, active) {
-    details.forEach(function (detail) { detail.inert = detail !== active; });
+    return id && details.find(function (child) { return child.id === id; });
   }
 
   function selectOnPointer(row, state, index) {
@@ -57,11 +34,7 @@
     });
   }
 
-  function uniqueId(base) {
-    var id = base;
-    for (var suffix = 2; document.getElementById(id); suffix++) id = base + '-' + suffix;
-    return id;
-  }
+  var uniqueId = detail.uniqueId;
 
   // A hidden bold copy in the same grid cell reserves the label's selected width.
   function wrapLabel(button) {
@@ -105,11 +78,8 @@
   }
 
   function setupPanes(list, details) {
-    watchScrollbar(list);
-    details.forEach(function (detail) {
-      if (detail.getAttribute('tabindex') === null) detail.setAttribute('tabindex', '0');
-      watchScrollbar(detail);
-    });
+    detail.scrollport(list);
+    return detail.panel(details);
   }
 
   function prepareFigure(box) {
@@ -141,6 +111,7 @@
     var list = prepared.list;
     var buttons = domain.items;
     var highlight = trackSelection(list, buttons);
+    var panes = setupPanes(list, prepared.details);
 
     function sync(current, origin) {
       if (!current.animationKey || !DocForm._animationStep) return null;
@@ -152,24 +123,24 @@
     }
 
     var state = items.controller('figure-steps', box, domain, function (index, key) {
-      var detail = prepared.targets[index];
+      var target = prepared.targets[index];
       return { key: key, index: index, animationKey: items.key(DocForm.data(buttons[index], 'animation-key')),
-        detailId: detail ? detail.id : null };
+        detailId: target ? target.id : null };
     }, function (current, previous, origin) {
       if (previous) buttons[previous.index].removeAttribute('aria-current');
       var button = buttons[current.index];
       button.setAttribute('aria-current', 'step');
       highlight(button);
-      showDetail(prepared.details, prepared.targets[current.index]);
+      panes.show(prepared.targets[current.index]);
       return sync(current, origin);
     });
 
     buttons.forEach(function (button, index) {
-      var detail = prepared.targets[index];
+      var target = prepared.targets[index];
       if (figure.id) button.setAttribute('aria-controls', figure.id);
-      if (detail) {
+      if (target) {
         var describedBy = button.getAttribute('aria-describedby');
-        button.setAttribute('aria-describedby', describedBy ? describedBy + ' ' + detail.id : detail.id);
+        button.setAttribute('aria-describedby', describedBy ? describedBy + ' ' + target.id : target.id);
       }
       var row = button.parentElement === list ? button : button.parentElement;
       function choose() { state.choose(index, 'user'); }
@@ -177,10 +148,10 @@
       button.addEventListener('focus', choose);
       button.addEventListener('click', choose);
     });
-    setupPanes(list, prepared.details);
     box.classList.add('df-figure-steps-ready');
     figure.classList.add('df-step-figure');
     figures.set(box, state.controller);
+    detail.source(box, state.controller);
     state.start();
     if (document.readyState !== 'complete' && !(DocForm.animation && DocForm.animation.get(figure))) {
       root.addEventListener('load', function () {
@@ -216,6 +187,7 @@
     var buttons = domain.items;
     var targets = prepared.targets;
     var highlight;
+    var panes;
 
     function setTabStop(index) {
       buttons.forEach(function (button, i) { button.tabIndex = i === index ? 0 : -1; });
@@ -231,14 +203,14 @@
         button.setAttribute('aria-selected', String(i === index));
       });
       highlight(buttons[index]);
-      showDetail(prepared.details, targets[index]);
+      panes.show(targets[index]);
     });
 
     list.setAttribute('role', 'tablist');
     list.setAttribute('aria-orientation', 'vertical');
     buttons.forEach(function (button, i) {
-      var detail = targets[i];
-      if (!button.id) button.id = uniqueId(detail.id + '-card');
+      var target = targets[i];
+      if (!button.id) button.id = uniqueId(target.id + '-card');
       var group = button.parentElement !== list && button.parentElement;
       // A tab list cannot own named groups, so each group title describes its cards instead.
       var groupHeading = group && group.querySelector(':scope > .df-step-group-heading');
@@ -250,9 +222,9 @@
         button.setAttribute('aria-describedby', describedBy ? describedBy + ' ' + groupHeading.id : groupHeading.id);
       }
       button.setAttribute('role', 'tab');
-      button.setAttribute('aria-controls', detail.id);
-      detail.setAttribute('role', 'tabpanel');
-      detail.setAttribute('aria-labelledby', button.id);
+      button.setAttribute('aria-controls', target.id);
+      target.setAttribute('role', 'tabpanel');
+      target.setAttribute('aria-labelledby', button.id);
       selectOnPointer(button, state, i);
       button.addEventListener('click', function () {
         state.choose(i, 'user');
@@ -276,10 +248,11 @@
       });
     });
 
-    setupPanes(list, prepared.details);
+    panes = setupPanes(list, prepared.details);
     highlight = trackSelection(list, buttons);
     box.classList.add('df-card-panel-ready');
     cards.set(box, state.controller);
+    detail.source(box, state.controller);
     state.start();
   }
 

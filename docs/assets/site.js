@@ -111,6 +111,10 @@ window.DocFormSite = {
           "path": "../pages/explain/cards.html"
         },
         {
+          "title": "Pipeline diagrams",
+          "path": "../pages/explain/pipelines.html"
+        },
+        {
           "title": "SVG animations",
           "path": "../pages/explain/animations.html"
         },
@@ -396,6 +400,9 @@ window.DocFormSite = {
         "tab panel": "One of several panels stacked in the same place, chosen by clicking its tab.",
         "card panel": "A set of cards; choosing one shows its details in a pane beside or below the cards.",
         "figure step": "One state of a figure that changes as the reader moves through a list of steps.",
+        "pipeline diagram": "A picture of a process as blocks joined by lines, showing which stages lead to which.",
+        "junction": "A small dot in a pipeline diagram where several lines meet before continuing.",
+        "detail pane": "A box that shows more about whichever card or block is currently selected.",
         "stepper": "A control with Previous and Next buttons that moves through an example one step at a time.",
         "worked example": "A problem solved step by step, showing the reasoning at each step.",
         "scroll reveal": "A block that glides or fades into view once as you scroll down to it.",

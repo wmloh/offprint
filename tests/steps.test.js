@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const core = fs.readFileSync(path.join(__dirname, '../docform/js/core.js'), 'utf8');
+const detail = fs.readFileSync(path.join(__dirname, '../docform/js/detail.js'), 'utf8');
 const source = fs.readFileSync(path.join(__dirname, '../docform/js/steps.js'), 'utf8');
 
 function element(attrs = {}, parentElement = null) {
@@ -49,6 +50,7 @@ function harness(document, all, report, globals = {}) {
   const context = vm.createContext({ DocForm, document, CustomEvent, ...globals });
   vm.runInContext(core, context);
   DocForm.all = all;
+  vm.runInContext(detail, context);
   return { context, DocForm, boot };
 }
 
@@ -167,7 +169,7 @@ test('a custom visualization can select a step by figure or id and share its sel
 
 test('an overflowing panel reveals its scrollbar at the track and hides it outside that area', () => {
   const { panel } = setup();
-  const visible = () => panel.classList.has('df-step-scrollbar-hover');
+  const visible = () => panel.classList.has('df-scrollbar-hover');
   pointer(panel, 'pointermove', 'mouse', 150);
   assert.equal(visible(), false);
   pointer(panel, 'pointermove', 'mouse', 215);
@@ -183,8 +185,8 @@ test('an overflowing panel reveals its scrollbar at the track and hides it outsi
 
 test('a headed selector and its active detail have separate scrollports', () => {
   const { panel, cardList, details, buttons } = setup({ headed: true, descriptions: true });
-  const visible = (el) => el.classList.has('df-step-scrollbar-hover');
-  assert.equal(panel.classList.has('df-step-scrollport'), false);
+  const visible = (el) => el.classList.has('df-scrollbar-hover');
+  assert.equal(panel.classList.has('df-scrollport'), false);
   assert.equal(details[0].getAttribute('tabindex'), '0');
 
   pointer(cardList, 'pointermove', 'mouse', 215);

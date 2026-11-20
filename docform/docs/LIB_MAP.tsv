@@ -27,6 +27,8 @@ Editable text	Edit native single-line and multiline text fields with optional li
 Tabs	Switch panels and synchronize choices by group	interact/tabs.md
 SVG animations	Play, scrub, and control a step timeline	interact/animations.md
 Card panels	Select details from standalone cards and groups	interact/card-panels.md
+Detail panes	Show one keyed detail at a time, driven by cards, pipelines, or a selection group	interact/detail-panes.md
+Pipeline diagrams	Lay out structured blocks joined by curved lines with forks, merges, junctions, steps, and hover details	interact/pipelines.md
 Figure steps	Select figure states and their accompanying details	interact/figure-steps.md
 Scroll reveals	Reveal marked blocks once as they enter view	interact/reveals.md
 Split views	Lay out responsive panes with staggered reveals	interact/split-views.md

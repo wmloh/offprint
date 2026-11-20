@@ -9,6 +9,7 @@
 // with + and -, and rescale: true fits the y axis to what is shown. Readouts and the table follow the view.
 // Motion is on by default: keyed marks morph between drawings and play an entrance the first time the chart
 // scrolls into view. motion: false or data-df-animate="false" turns it off; reduced motion and print skip it.
+// Bar charts lie horizontal with orientation: 'horizontal' and stack with stack: 'stacked' or 'percent'.
 // Add-on features register further chart types, scales, and legends with DocForm.chart.addon.
 (function (root) {
   'use strict';
@@ -579,8 +580,11 @@
       refs.forEach(function (r) { if (r.axis === 'x') instants.push(r.value); });
       xAxis.precision = timePrecision(instants);
     }
+    var bars = barOptions(spec, type, series, categories, errors);
     var model = {
       type: type,
+      orientation: bars.orientation,
+      stack: bars.stack,
       title: spec.title ? String(spec.title) : '',
       series: series,
       categories: categorical ? categories : null,
@@ -596,13 +600,127 @@
       motion: spec.motion !== false,
       x: xAxis,
       y: axisSpec(spec.y, false, yLog),
-      height: isNum(spec.height) && spec.height > 80 ? spec.height : 260
+      height: isNum(spec.height) && spec.height > 80 ? spec.height : bars.height
     };
+    if (model.stack === 'percent' && (model.y.min !== null || model.y.max !== null)) {
+      DocForm.warnOnce('chart-percent-bounds', 'Percent stacked bars always span 0–100%; y min and max are ignored.');
+      model.y.min = model.y.max = null;
+    }
     model.errors = errors.concat(logErrors(model, spec));
     if (new Set(series.map(function (item) { return item.key; })).size !== series.length) {
       model.errors.push('Each chart series needs a unique key or a unique name.');
     }
     return model;
+  }
+
+  // Bar layout options: orientation 'vertical' (default) or 'horizontal', and stack 'stacked' or 'percent' (null,
+  // false, or 'none' keep bars side by side). Horizontal bars without a set height get one row per category.
+  function barOptions(spec, type, series, categories, errors) {
+    var out = { orientation: 'vertical', stack: null, height: 260 };
+    var orientation = spec.orientation == null ? 'vertical' : spec.orientation;
+    var stack = spec.stack == null || spec.stack === false || spec.stack === 'none' ? null : spec.stack;
+    if (type !== 'bar') {
+      if (orientation !== 'vertical' || stack) {
+        DocForm.warnOnce('chart-bar-layout', 'Orientation and stacking apply to bar charts; other chart types ignore them.');
+      }
+      return out;
+    }
+    if (orientation === 'horizontal') out.orientation = orientation;
+    else if (orientation !== 'vertical') {
+      errors.push('Bar orientation must be "vertical" or "horizontal", not ' + JSON.stringify(orientation) + '.');
+    }
+    if (stack === 'stacked' || stack === 'percent') out.stack = stack;
+    else if (stack) errors.push('Bar stack must be "stacked", "percent", or "none", not ' + JSON.stringify(stack) + '.');
+    if (out.stack) {
+      series.forEach(function (s) {
+        s.points.forEach(function (p) {
+          var at = 'series ' + JSON.stringify(s.name || s.key) + ' at ' + JSON.stringify(String(p.x));
+          if (out.stack === 'percent' && p.y < 0) {
+            errors.push('Percent stacked bars need values of zero or more; ' + at + ' is ' + p.y + '.');
+          }
+          if (p.interval) errors.push('Stacked bars cannot show intervals; remove the interval from ' + at + '.');
+        });
+      });
+    }
+    if (out.orientation === 'horizontal') {
+      var rows = Math.max(1, (categories || []).length);
+      var row = out.stack || series.length < 2 ? 28 : Math.min(series.length, COLORS) * 10 + 12;
+      var labels = (axisSpec(spec.x).label ? 20 : 0) + (axisSpec(spec.y).label ? 20 : 0);
+      out.height = Math.max(120, 36 + labels + rows * row);
+    }
+    return out;
+  }
+
+  // Where each bar of a stacked chart runs, in value units: positive values stack up from zero and negative ones
+  // down, in series order; percent stacks scale each category's total to 100. The model's series are those shown.
+  // bars maps each point to { from, to, share, outer }, where outer marks the last bar in its direction.
+  function stackLayout(model) {
+    var bars = new Map();
+    var totals = new Map();
+    var percent = model.stack === 'percent';
+    var lo = 0;
+    var hi = 0;
+    model.series.forEach(function (s) {
+      s.points.forEach(function (p) {
+        var at = String(p.x);
+        var total = totals.get(at) || { sum: 0, pos: 0, neg: 0, up: 0, down: 0, last: [null, null] };
+        total.sum += p.y;
+        if (p.y < 0) total.neg += p.y;
+        else total.pos += p.y;
+        totals.set(at, total);
+      });
+    });
+    model.series.forEach(function (s) {
+      s.points.forEach(function (p) {
+        var total = totals.get(String(p.x));
+        var value = percent ? (total.pos ? p.y / total.pos * 100 : 0) : p.y;
+        var down = value < 0;
+        var from = down ? total.down : total.up;
+        var to = from + value;
+        if (down) total.down = to;
+        else total.up = to;
+        var bar = { from: from, to: to, share: percent ? (total.pos ? p.y / total.pos : null) : null, outer: false };
+        if (value) total.last[down ? 1 : 0] = bar;
+        bars.set(p, bar);
+        lo = Math.min(lo, to);
+        hi = Math.max(hi, to);
+      });
+    });
+    totals.forEach(function (total) {
+      total.last.forEach(function (bar) { if (bar) bar.outer = true; });
+      delete total.up;
+      delete total.down;
+      delete total.last;
+    });
+    return { bars: bars, totals: totals, lo: lo, hi: percent ? 100 : hi };
+  }
+
+  // A category label split into lines of at most `width` characters, breaking long words; past `max` lines the
+  // last one ends in an ellipsis and cut is true.
+  function wrapLabel(text, width, max) {
+    width = Math.max(2, width);
+    var lines = [];
+    var line = '';
+    String(text).trim().split(/\s+/).filter(Boolean).forEach(function (word) {
+      if (line && line.length + 1 + word.length <= width) {
+        line += ' ' + word;
+        return;
+      }
+      if (line) lines.push(line);
+      while (word.length > width) {
+        lines.push(word.slice(0, width));
+        word = word.slice(width);
+      }
+      line = word;
+    });
+    if (line || !lines.length) lines.push(line);
+    var cut = lines.length > max;
+    if (cut) {
+      lines = lines.slice(0, max);
+      var last = lines[max - 1];
+      lines[max - 1] = (last.length >= width ? last.slice(0, width - 1) : last) + '…';
+    }
+    return { lines: lines, cut: cut };
   }
 
   function normalizePie(spec) {
@@ -766,7 +884,8 @@
         var found = byX.get(String(x)) || [];
         found.forEach(function (f) {
           var mark = markOf(f.p) || {};
-          spots.push({ px: mark.px == null ? cx : mark.px, cx: cx, py: y(f.p.y), x: x, s: f.s, p: f.p, el: mark.el });
+          spots.push({ px: mark.px == null ? cx : mark.px, cx: cx, py: mark.py == null ? y(f.p.y) : mark.py, x: x, s: f.s,
+            p: f.p, el: mark.el });
         });
         if (!found.length) spots.push({ px: cx, cx: cx, x: x });
       });
@@ -778,7 +897,9 @@
   }
 
   // The spot nearest the pointer: closest x first, then the closest y among spots that share it.
-  function closest(spots, px, py) {
+  // Horizontal bars read along y first.
+  function closest(spots, px, py, horizontal) {
+    if (horizontal) return closest(spots.map(function (s) { return { px: s.py, py: s.px }; }), py, px);
     var i = nearest(spots.map(function (s) { return s.px; }), px);
     if (i < 0 || py == null) return i;
     var best = i;
@@ -825,6 +946,11 @@
       if (!model.categories && s.missing) xs.push.apply(xs, s.missing);
     });
     if (!count) { yLo = 0; yHi = 1; }
+    if (model.type === 'bar' && model.stack && count) {
+      var stacked = stackLayout(model);
+      yLo = stacked.lo;
+      yHi = stacked.hi;
+    }
     if (model.type === 'bar') { yLo = Math.min(yLo, 0); yHi = Math.max(yHi, 0); }
     if (model.y.min !== null) yLo = model.y.min;
     if (model.y.max !== null) yHi = model.y.max;
@@ -929,7 +1055,8 @@
   // The data position under a point (px, py) of the drawn plot, or null outside the plot area. Continuous values are
   // rounded to what one pixel can tell apart; categorical x gives the category of the band.
   function readAt(model, geom, px, py) {
-    if (!geom || !geom.y || !(px >= geom.left && px <= geom.right && py >= geom.top && py <= geom.bottom)) return null;
+    if (!geom || !(geom.y || geom.value) ||
+      !(px >= geom.left && px <= geom.right && py >= geom.top && py <= geom.bottom)) return null;
     var fine = function (scale, p, log) {
       var v = scale.invert(p);
       var step = Math.abs(scale.invert(p + 1) - v);
@@ -939,6 +1066,13 @@
       return +v.toFixed(d);
     };
     var x;
+    if (geom.horizontal) {
+      var rows = model.categories;
+      var row = Math.floor((py - geom.top) / Math.max(1e-9, geom.band));
+      x = rows[Math.max(0, Math.min(rows.length - 1, row))];
+      var value = fine(geom.value, px, false);
+      return { x: x, y: value, xText: String(x), yText: valueText(model, value) };
+    }
     if (model.categories) {
       var cats = model.categories;
       var i = Math.floor((px - geom.left) / Math.max(1e-9, geom.band));
@@ -950,8 +1084,13 @@
     return {
       x: x, y: y,
       xText: model.categories ? String(x) : format(x, model.x),
-      yText: format(y, model.y)
+      yText: valueText(model, y)
     };
+  }
+
+  // Positions on the value axis of a percent stacked chart are shares of each category, not values.
+  function valueText(model, v) {
+    return model.stack === 'percent' ? format(v) + '%' : format(v, model.y);
   }
 
   function refValue(model, r) {
@@ -963,13 +1102,15 @@
     return r.label ? r.label + ' (' + value + ')' : value;
   }
 
-  // A bar from baseline y0 to y1 with rounded corners only at the data end.
-  function barPath(x, w, y0, y1, r) {
-    var up = y1 <= y0;
+  // A bar w wide from x along its value axis, from baseline y0 to y1, with rounded corners only at the data end.
+  // Horizontal bars swap the axes: x and w run down the plot and y0 and y1 across it. Both orientations share one
+  // path shape, so a bar can morph from one to the other.
+  function barPath(x, w, y0, y1, r, horizontal) {
+    var pt = horizontal ? function (a, b) { return b + ',' + a; } : function (a, b) { return a + ',' + b; };
     r = Math.max(0, Math.min(r, w / 2, Math.abs(y1 - y0)));
-    var edge = up ? y1 + r : y1 - r;
-    return 'M' + x + ',' + y0 + 'V' + edge + 'Q' + x + ',' + y1 + ' ' + (x + r) + ',' + y1 + 'H' + (x + w - r) +
-      'Q' + (x + w) + ',' + y1 + ' ' + (x + w) + ',' + edge + 'V' + y0 + 'Z';
+    var edge = y1 <= y0 ? y1 + r : y1 - r;
+    return 'M' + pt(x, y0) + 'L' + pt(x, edge) + 'Q' + pt(x, y1) + ' ' + pt(x + r, y1) + 'L' + pt(x + w - r, y1) +
+      'Q' + pt(x + w, y1) + ' ' + pt(x + w, edge) + 'L' + pt(x + w, y0) + 'Z';
   }
 
   function svg(tag, attrs, parent) {
@@ -1012,13 +1153,40 @@
     }));
   }
 
-  function whisker(parent, interval, x, y) {
+  // An interval at position x across the value axis y; horizontal whiskers run across the plot instead.
+  function whisker(parent, interval, x, y, horizontal) {
     var lower = y(interval.lower);
     var upper = y(interval.upper);
-    return svg('path', { class: 'df-chart-whisker',
-      d: 'M' + x + ',' + lower + 'V' + upper +
-        'M' + (x - 3) + ',' + lower + 'h6M' + (x - 3) + ',' + upper + 'h6'
+    return svg('path', { class: 'df-chart-whisker', d: horizontal ?
+      'M' + lower + ',' + x + 'H' + upper + 'M' + lower + ',' + (x - 3) + 'v6M' + upper + ',' + (x - 3) + 'v6' :
+      'M' + x + ',' + lower + 'V' + upper + 'M' + (x - 3) + ',' + lower + 'h6M' + (x - 3) + ',' + upper + 'h6'
     }, parent);
+  }
+
+  // Bars of one series: side by side within each category band, or end to end when stacked. pos gives a category's
+  // centre across the bands and val a value's position on the value axis, in either orientation.
+  function barMarks(ctx, s, si, g) {
+    var groupW = ctx.count * ctx.thick + (ctx.count - 1) * ctx.gap;
+    s.points.forEach(function (p) {
+      var seg = ctx.layout && ctx.layout.bars.get(p);
+      var c0 = ctx.pos(p.x) + (seg ? -ctx.thick / 2 : si * (ctx.thick + ctx.gap) - groupW / 2);
+      var a = seg ? ctx.val(seg.from) : ctx.base;
+      var b = ctx.val(seg ? seg.to : p.y);
+      var r = !seg || seg.outer ? 4 : 0;
+      var bar = svg('path', { d: barPath(c0, ctx.thick, a, b, r, ctx.horizontal), class: 'df-chart-bar' }, g);
+      bar.setAttribute('data-df-x', p.x);
+      var mid = c0 + ctx.thick / 2;
+      var end = seg ? (a + b) / 2 : b;
+      ctx.place(p, bar, ctx.horizontal ? end : mid, ctx.horizontal ? mid : end);
+      var order = ctx.orderAt(mid);
+      addMark(ctx.markMap, markId(s.key, 'bar', p), { el: bar, order: order,
+        from: { d: barPath(c0, ctx.thick, ctx.base, ctx.base, r, ctx.horizontal) } });
+      if (p.interval) {
+        var cap = whisker(g, p.interval, mid, ctx.val, ctx.horizontal);
+        cap.setAttribute('clip-path', 'url(#' + ctx.clip + '-interval)');
+        addMark(ctx.markMap, markId(s.key, 'whisker', p), { el: cap, fade: true, order: order });
+      }
+    });
   }
 
   function revealInOrder(entries, show, hide) {
@@ -1506,6 +1674,178 @@
     if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
   }
 
+  function barThickness(band, count, gap, stacked) {
+    var m = Math.max(1, count);
+    return Math.max(2, Math.min(stacked ? 36 : 24, (band * 0.72 - gap * (m - 1)) / m));
+  }
+
+  function percentTicks(model, fmt) {
+    return model.stack === 'percent' ? function (v) { return fmt(v) + '%'; } : fmt;
+  }
+
+  var LINE = 13;
+
+  // Horizontal bars: categories run down the left, wrapped onto up to three lines, and values run across the plot.
+  // Reference lines on y mark values across the plot and those on x mark categories.
+  function drawHorizontal(chart, width, previous) {
+    var model = chart.view;
+    var height = model.height;
+    var series = model.series;
+    var cats = model.categories || [];
+    var layout = model.stack ? stackLayout(model) : null;
+    chart.stack = layout;
+    var span = extent(model);
+    var fit = model.rescale && span.count ? span : extent(chart.model);
+    var top = 10 + (model.x.label ? 20 : 0);
+    var bottom = 26 + (model.y.label ? 20 : 0);
+    var plotB = height - bottom;
+    var band = Math.max(1, plotB - top) / Math.max(1, cats.length);
+    var every = Math.max(1, Math.ceil(LINE / band));
+    var room = Math.max(6, Math.floor(width * 0.3 / CHAR));
+    var labels = cats.map(function (c) { return wrapLabel(c, room, Math.max(1, Math.min(3, Math.floor((band - 2) / LINE)))); });
+    var marker = model.markedCategories ? 10 : 0;
+    var labelW = Math.max.apply(null, labels.map(function (l) {
+      return Math.max.apply(null, l.lines.map(function (line) { return line.length; }));
+    }).concat([1])) * CHAR;
+    var left = 12 + marker + labelW;
+    var count = Math.max(2, Math.round((width - left) / 90));
+    var vInfo = ticks(fit.yLo, fit.yHi, count, model.y.min !== null, model.y.max !== null);
+    var vFmt = percentTicks(model, tickFormat(vInfo));
+    var right = Math.max(14, vFmt(vInfo.ticks[vInfo.ticks.length - 1]).length * CHAR / 2 + 4);
+    var plotW = Math.max(40, width - left - right);
+    var plotR = left + plotW;
+    var v = linear(vInfo.min, vInfo.max, left, plotR);
+    var pos = function (c) { return top + band * (cats.indexOf(String(c)) + 0.5); };
+
+    var frame = svg('svg', { viewBox: '0 0 ' + width + ' ' + height, width: width, height: height,
+      'aria-hidden': 'true', focusable: 'false' });
+    if (series.some(function (s) { return s.points.some(function (p) { return p.interval; }); })) {
+      var clip = svg('clipPath', { id: chart.clip + '-interval' }, svg('defs', {}, frame));
+      svg('rect', { x: left - 1, y: top - 4, width: plotW + 2, height: plotB - top + 8 }, clip);
+    }
+    var grid = svg('g', { class: 'df-chart-grid' }, frame);
+    vInfo.ticks.forEach(function (t) {
+      var px = Math.round(v(t)) + 0.5;
+      svg('line', { x1: px, x2: px, y1: top, y2: plotB, class: t === 0 && vInfo.min < 0 ? 'is-zero' : '' }, grid);
+      svg('text', { x: px, y: plotB + 16, 'text-anchor': 'middle', class: 'df-chart-tick' }, frame).textContent = vFmt(t);
+    });
+    var base = v(Math.max(vInfo.min, Math.min(0, vInfo.max)));
+    var baseX = Math.round(base) + 0.5;
+    svg('line', { x1: baseX, x2: baseX, y1: top, y2: plotB, class: 'df-chart-base' }, frame);
+    cats.forEach(function (c, i) {
+      var cy = pos(c);
+      if (model.markedCategories && model.markedCategories.has(c)) {
+        svg('text', { x: left - 6, y: cy, 'text-anchor': 'end', 'dominant-baseline': 'middle', class: 'df-chart-label' }, frame)
+          .textContent = '*';
+      }
+      if (i % every) return;
+      var lines = every > 1 ? wrapLabel(c, room, 1) : labels[i];
+      var text = svg('text', { x: left - 8 - marker, y: cy - (lines.lines.length - 1) * LINE / 2, 'text-anchor': 'end',
+        'dominant-baseline': 'middle', class: 'df-chart-tick df-chart-category' }, frame);
+      lines.lines.forEach(function (line, n) {
+        svg('tspan', { x: left - 8 - marker, dy: n ? LINE : 0 }, text).textContent = line;
+      });
+      if (lines.cut) svg('title', {}, text).textContent = c;
+    });
+    if (model.y.label) {
+      svg('text', { x: left + plotW / 2, y: height - 6, 'text-anchor': 'middle', class: 'df-chart-label' }, frame)
+        .textContent = model.y.label;
+    }
+    if (model.x.label) svg('text', { x: 0, y: 12, class: 'df-chart-label' }, frame).textContent = model.x.label;
+
+    var refLines = svg('g', { class: 'df-chart-refs' }, frame);
+    var marks = svg('g', { class: 'df-chart-marks' }, frame);
+    var gap = 2;
+    var thick = barThickness(band, layout ? 1 : series.length, gap, layout);
+    var markOf = new Map();
+    var markMap = new Map();
+    var plotH = Math.max(1, plotB - top);
+    var place = function (p, el, px, py) {
+      markOf.set(p, { el: el, px: px, py: py });
+      return tagKey(model, el, p);
+    };
+    series.forEach(function (s, si) {
+      var g = svg('g', { class: 'df-chart-series' }, marks);
+      paint(g, s);
+      barMarks({ layout: layout, count: series.length, thick: thick, gap: gap, pos: pos, val: v, base: base,
+        horizontal: true, place: place, markMap: markMap, clip: chart.clip,
+        orderAt: function (py) { return Math.max(0, Math.min(1, (py - top) / plotH)); } }, s, si, g);
+    });
+
+    var refLabels = svg('g', { class: 'df-chart-refs' }, frame);
+    model.referenceLines.forEach(function (r, i) {
+      var text = r.label || refValue(model, r);
+      var on = false;
+      if (r.axis === 'y') {
+        if (r.value >= vInfo.min && r.value <= vInfo.max) {
+          on = true;
+          var px = Math.round(v(r.value)) + 0.5;
+          var fits = px + 5 + text.length * 6.5 <= plotR;
+          svg('line', { x1: px, x2: px, y1: top, y2: plotB, class: 'df-chart-ref' }, refLines);
+          svg('text', { x: fits ? px + 5 : px - 5, y: top + 10, 'text-anchor': fits ? 'start' : 'end', class: 'df-chart-ref-label' },
+            refLabels).textContent = text;
+        }
+      } else if (cats.indexOf(r.value) >= 0) {
+        on = true;
+        var py = Math.round(pos(r.value)) + 0.5;
+        svg('line', { x1: left, x2: plotR, y1: py, y2: py, class: 'df-chart-ref' }, refLines);
+        svg('text', { x: plotR - 4, y: py - 5 < top + 10 ? py + 13 : py - 5, 'text-anchor': 'end', class: 'df-chart-ref-label' },
+          refLabels).textContent = text;
+      }
+      noteRef(chart, i, on, false);
+    });
+
+    var byX = new Map();
+    series.forEach(function (s) {
+      s.points.forEach(function (p) {
+        if (!byX.has(String(p.x))) byX.set(String(p.x), []);
+        byX.get(String(p.x)).push({ s: s, p: p, mark: markOf.get(p) });
+      });
+    });
+    var spots = [];
+    cats.forEach(function (c) {
+      var cy = pos(c);
+      var found = byX.get(c) || [];
+      if (model.selectionGroup && found.length) {
+        found.forEach(function (f) {
+          spots.push({ px: f.mark.px, py: f.mark.py, cy: cy, x: c, s: f.s, p: f.p, el: f.mark.el });
+        });
+      } else {
+        var far = found.reduce(function (end, f) {
+          var at = layout ? v(layout.bars.get(f.p).to) : v(f.p.y);
+          return Math.abs(at - base) > Math.abs(end - base) ? at : end;
+        }, base);
+        spots.push({ px: far, py: cy, cy: cy, x: c });
+      }
+    });
+    spots.sort(function (a, b) { return a.py - b.py || a.px - b.px; });
+    chart.spots = spots;
+    chart.geom = { left: left, right: plotR, top: top, bottom: plotB, band: band, horizontal: true, value: v, x: null, y: null };
+    chart.revealPlot = null;
+    chart.cursor = null;
+    chart.overlay = svg('g', { class: 'df-chart-hover' }, frame);
+    chart.marks = marks;
+
+    var empty = chart.model.noMatches ? EMPTY_FILTER : !series.length ? EMPTY_SERIES : '';
+    chart.empty.textContent = empty;
+    chart.empty.hidden = !empty;
+    chart.empty.style.left = left + 'px';
+    chart.empty.style.width = plotW + 'px';
+    chart.empty.style.top = top + 'px';
+    chart.empty.style.height = plotH + 'px';
+
+    mountFrame(chart, frame, markMap, previous);
+    if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
+  }
+
+  // Marks a reference line's legend item when its value is off the plot: outside the range or off scale.
+  function noteRef(chart, i, on, cut) {
+    var item = chart.refItems && chart.refItems[i];
+    if (!item) return;
+    item.classList.toggle('is-outside', !on);
+    item.lastChild.textContent = on ? '' : cut ? 'outside range' : 'off scale';
+  }
+
   // The y axis covers every series unless the chart rescales to the series and range shown.
   function draw(chart, animate) {
     var model = chart.view;
@@ -1514,10 +1854,12 @@
       motionAllowed(chart.model, motionEnv(chart)) ? chart.markMap : null;
     stopMotion(chart);
     chart.width = width;
+    chart.stack = null;
     if (!width) return;
     var def = addonOf(model);
     if (def && def.draw) return drawAddon(chart, width, previous, def);
     if (model.type === 'pie') return drawPie(chart, width, previous);
+    if (model.type === 'bar' && model.orientation === 'horizontal') return drawHorizontal(chart, width, previous);
     var height = model.height;
     var type = model.type;
     var series = model.series;
@@ -1538,7 +1880,7 @@
     var yLog = model.y.log;
     var yInfo = (yLog ? logTicks : ticks)(yLo, yHi, Math.max(2, Math.round((height - top - bottom) / 48)),
       model.y.min !== null, model.y.max !== null);
-    var yFmt = yLog ? logTickFormat() : tickFormat(yInfo);
+    var yFmt = yLog ? logTickFormat() : percentTicks(model, tickFormat(yInfo));
     var left = 12 + CHAR * Math.max.apply(null, yInfo.ticks.map(function (v) { return yFmt(v).length; }).concat([1]));
     var y = (yLog ? log : linear)(yInfo.min, yInfo.max, height - bottom, top);
 
@@ -1638,20 +1980,18 @@
 
     var refLines = svg('g', { class: 'df-chart-refs' }, frame);
     var marks = svg('g', { class: 'df-chart-marks' }, frame);
-    var thick = 0;
+    var layout = type === 'bar' && model.stack ? stackLayout(model) : null;
+    chart.stack = layout;
     var gap = 2;
-    if (type === 'bar') {
-      var m = Math.max(1, series.length);
-      thick = Math.max(2, Math.min(24, (band * 0.72 - gap * (m - 1)) / m));
-    }
+    var thick = type === 'bar' ? barThickness(band, layout ? 1 : series.length, gap, layout) : 0;
     var markOf = new Map();
     var markMap = new Map();
     var future = [];
     var plotW0 = Math.max(1, plotW);
     var orderAt = function (px) { return Math.max(0, Math.min(1, (px - left) / plotW0)); };
     // Keyed marks follow the shared selection after every redraw.
-    var place = function (p, el, px) {
-      markOf.set(p, { el: el, px: px });
+    var place = function (p, el, px, py) {
+      markOf.set(p, { el: el, px: px, py: py });
       if (playback) {
         el.setAttribute('display', 'none');
         if (px >= left && px <= left + plotW) future.push({ x: p.x, el: el, point: p });
@@ -1714,21 +2054,9 @@
           });
         });
       } else if (type === 'bar') {
-        var groupW = series.length * thick + (series.length - 1) * gap;
-        var y0 = y(Math.max(yInfo.min, Math.min(0, yInfo.max)));
-        s.points.forEach(function (p) {
-          var x0 = xAt(p.x) - groupW / 2 + si * (thick + gap);
-          var bar = svg('path', { d: barPath(x0, thick, y0, y(p.y), 4), class: 'df-chart-bar' }, g);
-          bar.setAttribute('data-df-x', p.x);
-          place(p, bar, x0 + thick / 2);
-          var order = orderAt(x0 + thick / 2);
-          addMark(markMap, markId(s.key, 'bar', p), { el: bar, from: { d: barPath(x0, thick, y0, y0, 4) }, order: order });
-          if (p.interval) {
-            var cap = whisker(g, p.interval, x0 + thick / 2, y);
-            cap.setAttribute('clip-path', 'url(#' + chart.clip + '-interval)');
-            addMark(markMap, markId(s.key, 'whisker', p), { el: cap, fade: true, order: order });
-          }
-        });
+        barMarks({ layout: layout, count: series.length, thick: thick, gap: gap, pos: xAt, val: y,
+          base: y(Math.max(yInfo.min, Math.min(0, yInfo.max))), horizontal: false, place: place, markMap: markMap,
+          orderAt: orderAt, clip: chart.clip }, s, si, g);
       } else {
         s.points.forEach(function (p) {
           var order = orderAt(xAt(p.x));
@@ -1775,12 +2103,7 @@
         svg('text', { x: fits ? px + 5 : px - 5, y: top + 10, 'text-anchor': fits ? 'start' : 'end', class: 'df-chart-ref-label' },
           refLabels).textContent = text;
       }
-      var item = chart.refItems && chart.refItems[i];
-      if (item) {
-        item.classList.toggle('is-outside', !on);
-        var cut = full && r.axis === 'x' && r.value >= full[0] && r.value <= full[1];
-        item.lastChild.textContent = on ? '' : cut ? 'outside range' : 'off scale';
-      }
+      noteRef(chart, i, on, full && r.axis === 'x' && r.value >= full[0] && r.value <= full[1]);
     });
 
     var spots = spotsFor(model, xAt, y, function (p) { return markOf.get(p); });
@@ -1878,9 +2201,9 @@
     } else {
       html('div', 'df-chart-tip-head', tip, (model.x.label && !model.categories ? model.x.label + ' ' : '') + xText(chart, spot.x));
       if (model.type === 'bar') {
-        svg('rect', {
-          x: spot.cx - g.band / 2, y: g.top, width: g.band, height: g.bottom - g.top, class: 'df-chart-band'
-        }, chart.overlay);
+        svg('rect', g.horizontal ?
+          { x: g.left, y: spot.cy - g.band / 2, width: g.right - g.left, height: g.band, class: 'df-chart-band' } :
+          { x: spot.cx - g.band / 2, y: g.top, width: g.band, height: g.bottom - g.top, class: 'df-chart-band' }, chart.overlay);
         chart.marks.parentNode.insertBefore(chart.overlay, chart.marks);
         if (spot.el) spot.el.classList.add('is-active');
         else DocForm.all('.df-chart-bar', chart.marks).forEach(function (el) {
@@ -1905,11 +2228,18 @@
           var dot = svg('circle', { cx: spot.cx, cy: g.y(p.y), r: 4.5, class: 'df-chart-ring' }, chart.overlay);
           paint(dot, s);
         }
-        var r = row(tip, s, format(p.y, model.y), model.type);
+        var share = chart.stack && model.stack === 'percent' ? pieShare(chart.stack.bars.get(p).share) : '';
+        var r = row(tip, s, format(p.y, model.y) + (share ? ' · ' + share : ''), model.type);
         intervalReadout(r, p, model.y);
         if (spot.p && spot.s === s && model.series.length > 1) r.classList.add('is-current');
       });
-      anchorY = pointerY == null ? g.top : pointerY;
+      var total = chart.stack && model.series.length > 1 && chart.stack.totals.get(String(spot.x));
+      if (total) {
+        var sum = html('div', 'df-chart-tip-row df-chart-tip-total', tip);
+        html('b', '', sum, format(total.sum, model.y));
+        html('span', 'df-chart-tip-series', sum, 'Total');
+      }
+      anchorY = g.horizontal ? spot.cy : pointerY == null ? g.top : pointerY;
     }
     if (spot.p && spot.p.key && spot.p.key === selectedKey(model)) html('div', 'df-chart-tip-note', tip, 'Selected');
 
@@ -1958,7 +2288,7 @@
       });
       show(chart, best, null);
     } else {
-      show(chart, closest(spots, px, py), py);
+      show(chart, closest(spots, px, py, g.horizontal), py);
     }
     if (chart.cursor) {
       var x = g.x.invert(px);
@@ -2041,8 +2371,10 @@
       });
       return table;
     }
+    var stacked = model.type === 'bar' && model.stack ? stackLayout(model) : null;
     html('th', '', head, xName(model, ''));
     model.series.forEach(function (s) { html('th', '', head, s.name || model.y.label || 'Value'); });
+    if (stacked) html('th', '', head, 'Total');
     var xs = model.categories || [];
     if (!model.categories) {
       var seen = new Set();
@@ -2063,9 +2395,12 @@
       html('th', '', tr, model.categories ? x : format(x, model.x)).setAttribute('scope', 'row');
       model.series.forEach(function (s, i) {
         var p = lookup[i].get(String(x));
-        var cell = tagKey(model, html('td', '', tr, p ? format(p.y, model.y) : ''), p);
+        var share = p && model.stack === 'percent' ? pieShare(stacked.bars.get(p).share) : '';
+        var cell = tagKey(model, html('td', '', tr, p ? format(p.y, model.y) + (share ? ' (' + share + ')' : '') : ''), p);
         if (p) intervalReadout(cell, p, model.y);
       });
+      var total = stacked && stacked.totals.get(String(x));
+      if (stacked) html('td', '', tr, total ? format(total.sum, model.y) : '');
       if (collectRow) collectRow({ x: x, row: tr, body: body });
     });
     return table;
@@ -2078,8 +2413,10 @@
     var keyed = DocForm.selection && model.selectionMode !== 'follow' && model.selectionGroup &&
       model.series.some(function (s) { return s.points.some(function (p) { return p.key; }); });
     var def = addonOf(model);
+    var type = model.type === 'bar' ? (model.stack === 'percent' ? '100% stacked ' : model.stack ? 'stacked ' : '') +
+      (model.orientation === 'horizontal' ? 'horizontal ' : '') + 'bar' : model.type;
     var kind = def && def.describe ? def.describe(model) :
-      model.type.charAt(0).toUpperCase() + model.type.slice(1) + ' chart' + (names.length ? ' of ' + names.join(', ') : '') + '.';
+      type.charAt(0).toUpperCase() + type.slice(1) + ' chart' + (names.length ? ' of ' + names.join(', ') : '') + '.';
     return (model.title ? model.title + '. ' : '') + kind +
       (model.x.time ? ' Times are in UTC.' : '') +
       (model.x.log || model.y.log ? ' The ' + (model.x.log && model.y.log ? 'x and y axes use' : (model.x.log ? 'x' : 'y') +
@@ -2165,8 +2502,13 @@
         if (DocForm._selection) DocForm.all('[' + GROUP + '][' + KEY + ']', entry.row).forEach(DocForm._selection.sync);
       }, function (entry) { entry.row.remove(); });
       chart.revealTable(chart.playhead);
-    } else if (chart.ownTable && chart.model.type !== 'pie' && !chart.range && !chart.view.hiddenCount) chart.table.appendChild(chart.sourceTable);
+    } else if (sourceShown(chart)) chart.table.appendChild(chart.sourceTable);
     else if (chart.plot.hidden) chart.table.appendChild(tableView(chart.view));
+  }
+
+  // An authored source table stands in for the table view while it shows the same values as the chart.
+  function sourceShown(chart) {
+    return chart.ownTable && chart.model.type !== 'pie' && !chart.model.stack && !chart.range && !chart.view.hiddenCount;
   }
 
   function setPlayhead(chart, x) {
@@ -2362,7 +2704,7 @@
     chart.sourceTable = sourceTable || null;
     chart.sourceSpec = useSourceTable ? spec : null;
     chart.ownTable = Boolean(sourceTable && useSourceTable);
-    if (sourceTable && chart.playhead === null) chart.table.appendChild(sourceTable);
+    if (sourceTable && chart.playhead === null && !model.stack) chart.table.appendChild(sourceTable);
     host.insertBefore(chart.table, host.firstChild);
     host.insertBefore(chart.plot, chart.table);
     host.insertBefore(head, chart.plot);
@@ -2563,9 +2905,12 @@
       var type = name.slice(3);
       if (/^is-/.test(name) && (Object.hasOwn(TYPES, type) || Object.hasOwn(addons, type))) host.classList.remove(name);
     });
+    host.classList.remove('is-horizontal', 'is-stacked');
     if (!model) return;
     host.classList.add('is-' + model.type);
     if (model.addon) host.classList.add('is-' + model.addon);
+    if (model.orientation === 'horizontal') host.classList.add('is-horizontal');
+    if (model.stack) host.classList.add('is-stacked');
   }
 
   function copyChart(value) {
@@ -2596,6 +2941,10 @@
     }
     var gaps = DocForm.data(host, 'gaps', null);
     if (gaps !== null) spec.gaps = gaps;
+    ['orientation', 'stack'].forEach(function (name) {
+      var value = DocForm.data(host, name, null);
+      if (value !== null) spec[name] = value.trim();
+    });
     var group = DocForm.data(host, 'selection-group', null);
     if (group !== null) spec.selectionGroup = group;
     ['brush', 'rescale', 'toggles'].forEach(function (name) {
@@ -3037,6 +3386,8 @@
   chart.format = format;
   chart.tickFormat = tickFormat;
   chart.barPath = barPath;
+  chart.stackLayout = stackLayout;
+  chart.wrapLabel = wrapLabel;
   chart.toNumber = toNumber;
   chart.toTime = toTime;
   chart.timeTicks = timeTicks;

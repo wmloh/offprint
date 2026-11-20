@@ -58,9 +58,66 @@ test('specs normalize into categorical or numeric series', () => {
   assert.deepEqual(fromTable.series.map((s) => [s.name, s.points.length]), [['loop', 2], ['numpy', 1]]);
 });
 
-test('bars round only their data end', () => {
-  assert.equal(chart.barPath(0, 10, 100, 40, 4), 'M0,100V44Q0,40 4,40H6Q10,40 10,44V100Z');
-  assert.equal(chart.barPath(0, 10, 100, 102, 4), 'M0,100V100Q0,102 2,102H8Q10,102 10,100V100Z');
+test('bars round only their data end and share one path shape in both orientations', () => {
+  assert.equal(chart.barPath(0, 10, 100, 40, 4), 'M0,100L0,44Q0,40 4,40L6,40Q10,40 10,44L10,100Z');
+  assert.equal(chart.barPath(0, 10, 100, 102, 4), 'M0,100L0,100Q0,102 2,102L8,102Q10,102 10,100L10,100Z');
+  assert.equal(chart.barPath(0, 10, 20, 80, 4, true), 'M20,0L76,0Q80,0 80,4L80,6Q80,10 76,10L20,10Z');
+  const shape = (d) => d.replace(/[-\d.]+/g, '#');
+  assert.equal(shape(chart.barPath(5, 8, 0, 30, 4, true)), shape(chart.barPath(5, 8, 100, 30, 4)), 'orientation morphs');
+});
+
+test('stacked bars run end to end per category and percent stacks scale each category to 100', () => {
+  const series = [
+    { name: 'A', data: [['x', 2], ['y', -1]] },
+    { name: 'B', data: [['x', 3], ['y', 4]] },
+    { name: 'C', data: [['x', -2], ['y', 0]] }
+  ];
+  const model = chart.normalize({ type: 'bar', stack: 'stacked', series });
+  const layout = chart.stackLayout(model);
+  const at = (si, i) => plain(layout.bars.get(model.series[si].points[i]));
+  assert.deepEqual([at(0, 0), at(1, 0), at(2, 0)].map((b) => [b.from, b.to, b.outer]),
+    [[0, 2, false], [2, 5, true], [0, -2, true]]);
+  assert.deepEqual([at(0, 1).to, at(1, 1).from, at(1, 1).to, at(2, 1).outer], [-1, 0, 4, false]);
+  assert.deepEqual(plain(layout.totals.get('x')), { sum: 3, pos: 5, neg: -2 });
+  assert.deepEqual(plain([layout.lo, layout.hi]), [-2, 5]);
+  const span = chart.extent(model);
+  assert.deepEqual([span.yLo, span.yHi], [-2, 5], 'the value axis covers the stacks, not single bars');
+
+  const shares = chart.normalize({ type: 'bar', stack: 'percent', y: { min: 10, max: 50 }, series: [
+    { name: 'A', data: [['x', 1], ['y', 0]] }, { name: 'B', data: [['x', 3], ['y', 0]] }
+  ] });
+  const pct = chart.stackLayout(shares);
+  const bar = (si, i) => pct.bars.get(shares.series[si].points[i]);
+  assert.deepEqual([bar(0, 0).to, bar(1, 0).from, bar(1, 0).to, bar(0, 0).share], [25, 25, 100, 0.25]);
+  assert.deepEqual([bar(1, 1).to, bar(1, 1).share], [0, null], 'an all-zero category stays empty');
+  assert.deepEqual([shares.y.min, chart.extent(shares).yHi], [null, 100], 'percent stacks ignore y bounds');
+  const visible = chart.stackLayout(chart.view(shares, { A: true }, null));
+  assert.equal(visible.bars.get(shares.series[1].points[0]).to, 100, 'hidden series leave the stack');
+});
+
+test('bar orientation and stacking validate their values and reject what they cannot draw', () => {
+  const ok = chart.normalize({ type: 'bar', orientation: 'horizontal', stack: 'none', series: [{ data: [['a', 1], ['b', 2]] }] });
+  assert.deepEqual([ok.orientation, ok.stack, ok.errors.length], ['horizontal', null, 0]);
+  assert.ok(ok.height >= 120 && ok.height < 260, 'horizontal bars size to their rows');
+  assert.equal(chart.normalize({ type: 'bar', orientation: 'horizontal', height: 400, data: [1] }).height, 400);
+  const errors = (spec) => chart.validate(Object.assign({ type: 'bar' }, spec)).join(' ');
+  assert.match(errors({ orientation: 'sideways', data: [1] }), /orientation must be "vertical" or "horizontal"/);
+  assert.match(errors({ stack: 'pile', data: [1] }), /stack must be "stacked", "percent", or "none"/);
+  assert.match(errors({ stack: 'percent', series: [{ name: 'Net', data: [['q1', 2], ['q2', -1]] }] }),
+    /Percent stacked bars need values of zero or more; series "Net" at "q2" is -1/);
+  assert.equal(errors({ stack: 'stacked', series: [{ data: [['q2', -1]] }] }), '', 'stacked bars allow negatives');
+  assert.match(errors({ stack: 'stacked', series: [{ data: [{ x: 'a', y: 2, interval: { lower: 1, upper: 3 } }] }] }),
+    /Stacked bars cannot show intervals/);
+  const line = chart.normalize({ orientation: 'horizontal', stack: 'stacked', data: [1, 2] });
+  assert.deepEqual([line.orientation, line.stack, line.errors.length], ['vertical', null, 0]);
+  assert.ok(warnings.some((w) => /Orientation and stacking apply to bar charts/.test(w)));
+});
+
+test('long category labels wrap at word breaks and end in an ellipsis past their line limit', () => {
+  assert.deepEqual(plain(chart.wrapLabel('Mean absolute error', 10, 3)), { lines: ['Mean', 'absolute', 'error'], cut: false });
+  assert.deepEqual(plain(chart.wrapLabel('Supercalifragilistic', 8, 3)), { lines: ['Supercal', 'ifragili', 'stic'], cut: false });
+  assert.deepEqual(plain(chart.wrapLabel('one two three four', 7, 2)), { lines: ['one two', 'three…'], cut: true });
+  assert.deepEqual(plain(chart.wrapLabel('', 5, 2)), { lines: [''], cut: false });
 });
 
 test('gap mode keeps explicit missing values and breaks lines at interior gaps', () => {

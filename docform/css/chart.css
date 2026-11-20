@@ -205,6 +205,12 @@
   transition: opacity 0.15s;
 }
 
+/* Stacked segments keep a hairline gap in the page colour so neighbouring series stay apart. */
+.df-chart.is-stacked .df-chart-bar:not([data-df-selection-active]) {
+  stroke: var(--df-bg);
+  stroke-width: 1;
+}
+
 /* A first drawing waiting for its entrance keeps its marks hidden; print and zoom-lens clones always show them. */
 .df-chart-await .df-chart-marks {
   visibility: hidden;
@@ -308,6 +314,13 @@
 
 .df-chart-tip-note {
   font-weight: 600;
+}
+
+/* A stacked readout ends with the category total under a hairline. */
+.df-chart-tip-total {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid var(--df-border);
 }
 
 .df-chart-table[hidden],

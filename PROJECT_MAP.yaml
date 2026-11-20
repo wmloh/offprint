@@ -66,7 +66,7 @@ docform/: Copyable offline library folder
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: S-key search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
-    chart.js: SVG line, bar, scatter, and pie charts with default-on keyed tweens and scroll entrances, add-on chart type, scale, and legend registration, named data mappings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
+    chart.js: SVG line, scatter, pie, and vertical or horizontal grouped, stacked, and percent bar charts with default-on keyed tweens and scroll entrances, add-on chart type, scale, and legend registration, named data mappings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
     chart-playback.js: Guided playback for individual numeric line charts and x-position groups with a Play/Pause step pill, authored checkpoint notes, and linked selection
     results.js: Source-mapped or authored tables with supplied intervals, sorting, heatmaps, thresholds, column filters, and saved state across replacements
     matrix.js: Named evaluation records pivoted into semantic tables with keyed axes, interchangeable measures, and static fallbacks

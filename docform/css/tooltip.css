@@ -13,6 +13,12 @@
   text-decoration-color: currentColor;
 }
 
+/* Tags keep their tooltips and help cursor but never show the dotted underline. */
+.df-tag:is(.df-tip, .df-term),
+.df-tag :is(.df-tip, .df-term) {
+  text-decoration: none;
+}
+
 .df-term-auto {
   text-decoration-color: var(--df-text-muted);
   text-decoration-thickness: 1.5px;

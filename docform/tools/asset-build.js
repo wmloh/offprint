@@ -190,6 +190,7 @@
     if (autoLink) roots = roots.concat(Array.from(doc.querySelectorAll('.df-page')).filter(function (el) {
       return DF._component.flag(el, 'autolink', 'tooltips', true);
     }));
+    DF.tooltips.linkTags(doc, terms);
     DF.tooltips.autoLink(roots, DF.tooltips.matcher(Object.keys(terms)));
   }
 

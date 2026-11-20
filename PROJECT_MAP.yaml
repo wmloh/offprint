@@ -14,7 +14,7 @@ docform/: Copyable offline library folder
     controls.css: Top-left frosted control pill, progress ring, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
     math.css: Display math layout and inline TeX error styles
     blocks.css: Inline tags, callouts, and the no-script tinted card look of details
-    tooltip.css: Tooltip box, hold-to-expand card with progress ring, and dotted term underlines (fainter for auto-linked terms)
+    tooltip.css: Tooltip box, hold-to-expand card with progress ring, and dotted term underlines (fainter for auto-linked terms, none on tags)
     code.css: Code block bar, copy button, token colours, highlighted lines, circled annotation markers, and diff rows
     editable-text.css: Inline and multiline text fields with a syntax colour layer
     dropdowns.css: Theme-aware popovers, expanded menu branches, and opening and closing transitions
@@ -47,9 +47,9 @@ docform/: Copyable offline library folder
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
-    controls.js: Control pill with reading progress, focus mode, three saved sidebar modes, search and theme buttons, and shortcuts
+    controls.js: Control pill with reading progress, focus mode, three saved sidebar modes with auto-hide carried across sidebar navigation, search and theme buttons, and shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
-    tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, opt-in automatic term linking, and lazy HTML cards for other modules
+    tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, glossary-labelled tags, opt-in automatic term linking, and lazy HTML cards for other modules
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     editable-text.js: Native text fields with optional live syntax highlighting
     dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches

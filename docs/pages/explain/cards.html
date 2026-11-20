@@ -58,17 +58,55 @@
           </div>
         </div>
         <div class="df-step-details">
-          <div id="card-outline"><p>The outline lists headings in the current page. Pick one to skip to that section.</p></div>
-          <div id="card-search"><p>Type a word in Search to see where it appears and jump to a match.</p></div>
-          <div id="card-focus"><p>Focus mode softens nearby sections so the current section stands out.</p></div>
-          <div id="card-theme"><p>Theme switches the page between light and dark colours.</p></div>
+          <div id="card-outline">
+            <p><strong>Outline</strong> <span class="df-tag" data-df-role="default">On by default</span></p>
+            <p>The <span data-df-term="outline">outline</span> lists the headings of the current page. Pick one to skip straight to that section.</p>
+            <figure class="df-figure" data-df-no-number data-df-no-zoom>
+              <svg viewBox="0 0 260 100" role="img" aria-label="An outline of three headings with the second one marked as the current section">
+                <rect class="df-fill-bg" data-df-role="on-request" x="8" y="38" width="244" height="24" rx="5"/>
+                <rect class="df-fill" data-df-role="on-request" x="8" y="38" width="4" height="24" rx="2"/>
+                <text x="24" y="25">1  Introduction</text>
+                <text x="24" y="55" data-df-role="on-request" font-weight="600">2  Setting up</text>
+                <text x="24" y="85">3  Next steps</text>
+              </svg>
+              <figcaption>The marked heading follows your place as you scroll.</figcaption>
+            </figure>
+          </div>
+          <div id="card-search">
+            <p><strong>Search</strong> <span class="df-tag" data-df-role="default">On by default</span></p>
+            <p>Press <kbd>S</kbd>, type a word, and pick a match to jump to it.</p>
+            <ol>
+              <li>Matches on <em>this page</em> come first.</li>
+              <li>Other pages follow when the site has a search index.</li>
+            </ol>
+            <p>Use <kbd>↑</kbd> and <kbd>↓</kbd> to move through results and <kbd>Esc</kbd> to close.</p>
+          </div>
+          <div id="card-focus">
+            <p><strong>Focus mode</strong> <span class="df-tag" data-df-role="try" data-df-tip="Press F anywhere outside a text field to switch focus mode on or off.">Shortcut F</span></p>
+            <p><span data-df-term="focus mode">Focus mode</span> softens nearby sections so the one you are reading <strong>stands out</strong>.</p>
+            <div class="df-callout" data-df-role="tip" data-df-icon="💡">Rest the pointer on a blurred block to read it clearly without leaving focus mode.</div>
+          </div>
+          <div id="card-theme">
+            <p><strong>Theme</strong> <span class="df-tag" data-df-role="try" data-df-tip="Press T anywhere outside a text field to switch between light and dark.">Shortcut T</span></p>
+            <p>Theme switches the page between <em>light</em> and <em>dark</em> colours. Your choice is remembered on every page of the site.</p>
+            <figure class="df-figure" data-df-no-number data-df-no-zoom>
+              <svg viewBox="0 0 260 74" role="img" aria-label="The same text shown on a light page and on a dark page">
+                <rect x="8" y="6" width="116" height="48" rx="6" style="fill: #ffffff; stroke: var(--df-border-strong)"/>
+                <rect x="136" y="6" width="116" height="48" rx="6" style="fill: #191919; stroke: var(--df-border-strong)"/>
+                <text x="66" y="35" text-anchor="middle" style="fill: #37352f">Aa</text>
+                <text x="194" y="35" text-anchor="middle" style="fill: #e3e2e0">Aa</text>
+                <text class="df-muted" x="66" y="70" text-anchor="middle" font-size="12">Light</text>
+                <text class="df-muted" x="194" y="70" text-anchor="middle" font-size="12">Dark</text>
+              </svg>
+            </figure>
+          </div>
         </div>
       </div>
       <figcaption>The group titles organise the choices, and the selected card controls the detail pane.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
     <p>Move your pointer over Search, then Theme. With a card focused, move with Up or Down and press Enter to open its detail.</p>
-    <p>Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane.</p>
+    <p>A detail can hold anything a page can: <a href="../write/text.html">tags</a>, emphasis, lists, keys, <a href="../write/callouts.html">callouts</a>, and small figures. Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane.</p>
 
     <h2 id="what-it-does">Figure steps</h2>
     <div class="df-figure-steps">

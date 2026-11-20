@@ -21,8 +21,9 @@
     'script', 'style', 'textarea', 'select', 'svg', 'math', 'nav', '[role="tooltip"]',
     '.df-math', '.katex', '.df-term', '.df-tip', '[data-df-term]', '[data-df-tip]',
     '[data-df-template]', '[data-df-bind]', '[data-df-param]', '[data-df-parameter]', '.df-sidebar', '.df-controls',
-    '.df-legend', '.df-bubble', '[data-df-autolink="false"]'
+    '.df-legend', '.df-bubble', '.df-tag', '[data-df-autolink="false"]'
   ].join(', ');
+  var TAG_SKIP = '[role="tooltip"], .df-tooltip, [data-df-template], [data-df-autolink="false"]';
   var RING = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle class="df-ring-track" cx="8" cy="8" r="6"/>' +
     '<circle class="df-ring-fill" cx="8" cy="8" r="6" pathLength="1"/></svg>';
   var count = 0;
@@ -165,6 +166,28 @@
         if (at < text.length) frag.appendChild(doc.createTextNode(text.slice(at)));
         node.parentNode.replaceChild(frag, node);
       });
+    });
+    return made;
+  }
+
+  // The glossary key a tag's whole label names, or null. Tags with their own tip or term, or containing one, keep it.
+  function tagTerm(el, keys) {
+    if (el.hasAttribute('data-df-term') || el.hasAttribute('data-df-tip') || el.closest(TAG_SKIP) ||
+      el.querySelector('[data-df-term], [data-df-tip]')) return null;
+    var key = termKey(el.textContent || '');
+    return key && keys.has(key) ? key : null;
+  }
+
+  // Makes each tag whose label is a glossary term that term's tooltip anchor, and returns those tags.
+  function linkTags(scope, terms) {
+    var keys = new Set(Object.keys(terms || {}).map(termKey));
+    var made = [];
+    if (!keys.size) return made;
+    DocForm.all('.df-tag', scope).forEach(function (el) {
+      var key = tagTerm(el, keys);
+      if (!key) return;
+      el.setAttribute('data-df-term', key);
+      made.push(el);
     });
     return made;
   }
@@ -452,6 +475,8 @@
     findTerms: findTerms,
     linkable: linkable,
     autoLink: autoLink,
+    tagTerm: tagTerm,
+    linkTags: linkTags,
     place: place,
     mixed: setMixed,
     rich: rich,
@@ -472,7 +497,7 @@
     if (autoLinkPages) roots = DocForm.all('.df-page').filter(function (el) {
       return !boot || component.flag(el, 'autolink', 'tooltips', true);
     }).concat(roots);
-    var auto = new Set(autoLink(roots, matcher(Object.keys(terms))));
+    var auto = new Set(linkTags(document, terms).concat(autoLink(roots, matcher(Object.keys(terms)))));
 
     DocForm.all('[data-df-tip]').forEach(function (el) {
       el.classList.add('df-tip');

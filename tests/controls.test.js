@@ -8,7 +8,7 @@ const read = (name) => fs.readFileSync(path.join(__dirname, '../docform/js', nam
 const core = read('core.js');
 const controls = read('controls.js');
 
-function load(stored = {}) {
+function load(stored = {}, session = null) {
   const store = new Map(Object.entries(stored));
   const classes = new Set();
   const window = {
@@ -16,6 +16,11 @@ function load(stored = {}) {
       getItem: (key) => (store.has(key) ? store.get(key) : null),
       setItem: (key, value) => store.set(key, String(value)),
       removeItem: (key) => store.delete(key)
+    },
+    sessionStorage: session && {
+      getItem: (key) => (session.has(key) ? session.get(key) : null),
+      setItem: (key, value) => session.set(key, String(value)),
+      removeItem: (key) => session.delete(key)
     },
     document: {
       documentElement: {
@@ -112,6 +117,24 @@ test('auto-hide persists with the sidebar initially closed and keeps the subsect
   assert.equal(next.controls.nearNavEdge(265, 260, true), false);
   assert.equal(next.controls.setNavMode('shown'), 'shown');
   assert.equal(next.store.has('docform-nav'), false);
+});
+
+test('a recent sidebar link click opens the next auto-hide page with the panel shown, once', () => {
+  const carried = new Map([['docform-nav-peek', String(Date.now())]]);
+  const next = load({ 'docform-nav': 'auto' }, carried);
+  assert.equal(next.controls.state().nav, true);
+  assert.equal(next.classes.has('df-nav-hidden'), false);
+  assert.equal(carried.size, 0);
+
+  const stale = load({ 'docform-nav': 'auto' }, new Map([['docform-nav-peek', String(Date.now() - 60000)]]));
+  assert.equal(stale.controls.state().nav, false);
+  const hidden = new Map([['docform-nav-peek', String(Date.now())]]);
+  assert.equal(load({ 'docform-nav': 'hidden' }, hidden).controls.state().nav, false);
+  assert.equal(hidden.size, 0);
+
+  const { controls } = load();
+  assert.equal(controls.leavesPage('file:///d/b.html#x', 'file:///d/a.html'), true);
+  assert.equal(controls.leavesPage('file:///d/a.html#x', 'file:///d/a.html#y'), false);
 });
 
 test('shortcuts dispatch single keys and ignore modifiers, handled events, and form fields', () => {

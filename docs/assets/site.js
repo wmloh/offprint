@@ -311,7 +311,7 @@ window.DocFormSite = {
         "tab order": "The order in which pressing the Tab key moves keyboard focus through the controls on a page.",
         "shortcut": {
           "text": "A key or key combination that performs an action quickly.",
-          "more": "<p>For example, <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>Cmd</kbd>+<kbd>K</kbd> on a Mac) opens search on any DocForm page.</p>"
+          "more": "<p>For example, <kbd>S</kbd> opens search on any DocForm page.</p>"
         },
         "dialog": "A box that opens over the page to ask or show something, and closes when you are done. Escape usually closes it.",
         "accessibility": "Making pages usable by everyone, including people who use a keyboard only, a screen reader, or a larger text size.",

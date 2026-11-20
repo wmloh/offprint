@@ -158,7 +158,7 @@ test('auto-linking only enters paragraphs and list items outside skipped context
   const skipped = [
     ['code'], ['a', { href: '#' }], ['span', { class: 'df-math' }], ['span', { class: 'katex' }],
     ['span', { 'data-df-term': '' }], ['span', { 'data-df-tip': 'x' }], ['span', { 'data-df-template': '{{a}}' }],
-    ['span', { 'data-df-no-autolink': '' }], ['div', { 'data-df-autolink': 'false' }]
+    ['span', { 'data-df-no-autolink': '' }], ['span', { class: 'df-tag' }], ['div', { 'data-df-autolink': 'false' }]
   ];
   for (const [tag, attrs] of skipped) {
     assert.equal(tip.linkable(text(el(tag, attrs, p)), page), false, tag + ' ' + JSON.stringify(attrs));
@@ -166,4 +166,21 @@ test('auto-linking only enters paragraphs and list items outside skipped context
   const outside = el('p', {}, el('aside'));
   assert.equal(tip.linkable(text(outside), page), false);
   assert.equal(tip.linkable({ parentElement: null }, page), false);
+});
+
+test('tags whose whole label is a glossary term become its anchor unless they carry their own tip', () => {
+  const { tip } = load();
+  const keys = new Set(['on request']);
+  const tag = (label, attrs = {}, { inside = null, nested = false } = {}) => ({
+    textContent: label,
+    hasAttribute: (name) => name in attrs,
+    closest: () => inside,
+    querySelector: () => (nested ? {} : null)
+  });
+  assert.equal(tip.tagTerm(tag(' On-request '), keys), 'on request');
+  assert.equal(tip.tagTerm(tag('On request soon'), keys), null);
+  assert.equal(tip.tagTerm(tag('On request', { 'data-df-tip': 'x' }), keys), null);
+  assert.equal(tip.tagTerm(tag('On request', { 'data-df-term': 'other' }), keys), null);
+  assert.equal(tip.tagTerm(tag('On request', {}, { nested: true }), keys), null);
+  assert.equal(tip.tagTerm(tag('On request', {}, { inside: {} }), keys), null);
 });

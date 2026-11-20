@@ -9,7 +9,7 @@
   }
 
   var DRAWER = '(max-width: 860px), (any-hover: none)';
-  var KEYS = { focus: 'docform-focus', nav: 'docform-nav' };
+  var KEYS = { focus: 'docform-focus', nav: 'docform-nav', peek: 'docform-nav-peek' };
   var NAV_MODES = { shown: 'hidden', hidden: 'auto', auto: 'shown' };
   var NAV_LABELS = {
     shown: 'Navigation shown. Select to hide',
@@ -17,6 +17,8 @@
     auto: 'Navigation auto-hide. Select to keep it open'
   };
   var NAV_EDGE = 8;
+  // Milliseconds after a sidebar link click within which the next page opens with the auto-hide panel still shown.
+  var PEEK_CARRY = 5000;
   var SHORTCUTS = { t: 'theme', f: 'focus', n: 'nav', j: 'next', k: 'prev' };
   var EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]';
   var JUMP_CHAIN = 1000;
@@ -54,6 +56,26 @@
     }
   }
 
+  // Reads and clears the sidebar-link click mark left by the previous page in this tab.
+  function takePeek() {
+    try {
+      var at = Number(root.sessionStorage.getItem(KEYS.peek));
+      root.sessionStorage.removeItem(KEYS.peek);
+      var age = Date.now() - at;
+      return at > 0 && age >= 0 && age <= PEEK_CARRY;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markPeek() {
+    try {
+      root.sessionStorage.setItem(KEYS.peek, String(Date.now()));
+    } catch (e) {
+      // Without storage the next page starts with the panel closed.
+    }
+  }
+
   function navMode(value) {
     return hasOwn.call(NAV_MODES, value) ? value : 'shown';
   }
@@ -68,10 +90,12 @@
   });
   var focus = load(KEYS.focus);
   var savedNav = load(KEYS.nav);
+  var startNav = hasOwn.call(NAV_MODES, savedNav) ? savedNav : initialNav;
+  var carriedPeek = takePeek();
   var state = {
     focus: focus === 'on' || (focus !== 'off' && initialFocus),
-    navMode: hasOwn.call(NAV_MODES, savedNav) ? savedNav : initialNav,
-    peeking: false
+    navMode: startNav,
+    peeking: startNav === 'auto' && carriedPeek
   };
 
   function navShown() {
@@ -213,8 +237,9 @@
     return x <= (open ? width + 4 : NAV_EDGE);
   }
 
+  // A page opened from the auto-hide panel starts with it shown; the next pointer move outside closes it.
   function watchAutoNav(sidebar, button, drawerMode, sync) {
-    var x = Infinity;
+    var x = state.peeking ? 0 : Infinity;
 
     function peek(open) {
       if (state.peeking === open) return;
@@ -265,6 +290,19 @@
       x = Infinity;
       peek(false);
     });
+    if (drawerMode && drawerMode.matches) peek(false);
+    // Pointer clicks on links to another page carry the open panel over to it.
+    sidebar.addEventListener('click', function (event) {
+      if (!state.peeking || !event.detail || event.defaultPrevented || event.button ||
+        event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      var link = event.target.closest && event.target.closest('a[href]');
+      if (!link || link.target && link.target !== '_self' || link.hasAttribute('download')) return;
+      if (leavesPage(link.href, root.location.href)) markPeek();
+    });
+  }
+
+  function leavesPage(href, current) {
+    return String(href).split('#')[0] !== String(current).split('#')[0];
   }
 
   function ring() {
@@ -467,6 +505,7 @@
     focusBand: FOCUS_BAND.slice(),
     stepHeading: stepHeading,
     nearNavEdge: nearNavEdge,
+    leavesPage: leavesPage,
     nearScrollbar: nearScrollbar,
     progress: progress,
     shortcut: shortcut,

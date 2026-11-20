@@ -205,6 +205,21 @@
   transition: opacity 0.15s;
 }
 
+/* A first drawing waiting for its entrance keeps its marks hidden; print and zoom-lens clones always show them. */
+.df-chart-await .df-chart-marks {
+  visibility: hidden;
+}
+
+.df-zoomtools-lens-view .df-chart-await .df-chart-marks {
+  visibility: visible;
+}
+
+@media print {
+  .df-chart-await .df-chart-marks {
+    visibility: visible;
+  }
+}
+
 .df-chart.is-hovering .df-chart-bar:not(.is-active, [data-df-selection-active]),
 .df-chart.is-hovering .df-chart-slice:not(.is-active, [data-df-selection-active]),
 .df-chart.is-hovering.is-scatter .df-chart-dot:not(.is-active, [data-df-selection-active]) {

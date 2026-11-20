@@ -320,3 +320,101 @@ test('readAt turns plot pixels into data values rounded to a pixel, bands into c
   const lg = geom(chart.linear(0, 1, 40, 440), chart.log(1, 1000, 210, 10));
   assert.equal(chart.readAt(logs, lg, 40, 110).y, 31.6, 'log values keep the digits a pixel can show');
 });
+
+test('motion tweens move numbers inside matching attribute text and blend colours, ending exactly on the target', () => {
+  const { between, ease, parseColor } = chart.motion;
+  const bar = between('M10,200V190Q10,180 14,180H26', 'M10,200V110Q10,100 14,100H26');
+  assert.equal(bar(0), 'M10,200V190Q10,180 14,180H26');
+  assert.equal(bar(0.5), 'M10,200V150Q10,140 14,140H26');
+  assert.equal(bar(1), 'M10,200V110Q10,100 14,100H26');
+  assert.equal(between('4', '4'), null);
+  assert.equal(between(null, '4'), null);
+  assert.equal(between('M0,0L1,1', 'M0,0L1,1L2,2'), null, 'paths with different commands cross-fade instead');
+  assert.deepEqual(plain(parseColor('#f80')), [255, 136, 0, 1]);
+  assert.deepEqual(plain(parseColor('rgb(10 20 30 / 50%)')), [10, 20, 30, 0.5]);
+  assert.equal(parseColor('var(--df-chart-1)'), null);
+  const tint = between('rgb(0, 0, 0)', '#ffffff');
+  assert.equal(tint(0.5), 'rgba(128, 128, 128, 1)');
+  assert.equal(tint(1), '#ffffff');
+  assert.deepEqual([ease(0), ease(1)], [0, 1]);
+  assert.ok(ease(0.5) > 0.5, 'eases out');
+});
+
+test('marks match across drawings by series, kind, and point key or x, with repeats kept apart', () => {
+  const { markId, addMark, match } = chart.motion;
+  assert.equal(markId('loss', 'dot', { key: 'r1', x: 3 }), markId('loss', 'dot', { key: 'r1', x: 9 }), 'keys win over x');
+  assert.notEqual(markId('loss', 'dot', { x: 3 }), markId('loss', 'bar', { x: 3 }));
+  assert.notEqual(markId('a', 'dot', { x: 3 }), markId('b', 'dot', { x: 3 }));
+  const before = new Map();
+  const after = new Map();
+  ['a', 'b', 'c'].forEach((x) => addMark(before, markId('s', 'bar', { x }), { el: x }));
+  ['c', 'a', 'd'].forEach((x) => addMark(after, markId('s', 'bar', { x }), { el: x }));
+  addMark(after, markId('s', 'bar', { x: 'd' }), { el: 'd again' });
+  assert.equal(after.size, 4, 'a repeated key is numbered rather than replaced');
+  const result = plain(match(before, after));
+  assert.deepEqual(result.kept.map((k) => before.get(k).el), ['c', 'a']);
+  assert.deepEqual(result.entering.map((k) => after.get(k).el), ['d', 'd again']);
+  assert.deepEqual(result.leaving.map((k) => before.get(k).el), ['b']);
+});
+
+test('motion opt-outs resolve from the attribute, then the spec, then configured layers, and bypass reduced motion and print', () => {
+  const { resolve, allowed } = chart.motion;
+  assert.equal(resolve(null, {}, []), true, 'on by default');
+  assert.equal(resolve(null, {}, [{ motion: false }]), false, 'site option');
+  assert.equal(resolve(null, {}, [{ motion: false }, { motion: true }]), true, 'later layers win');
+  assert.equal(resolve(null, { motion: true }, [{ motion: false }]), true, 'the spec wins over options');
+  assert.equal(resolve(false, { motion: true }, []), false, 'data-df-animate wins over everything');
+  assert.equal(resolve(null, { motion: 'no' }, [{ motion: 0 }]), true, 'non-boolean values are ignored');
+  assert.equal(chart.normalize({ motion: false, data: [1] }).motion, false);
+  assert.equal(chart.normalize({ type: 'pie', motion: false, data: [{ label: 'a', value: 1 }] }).motion, false);
+
+  const on = { motion: true };
+  const env = { reduced: false, print: false, zoomed: false, frames: true };
+  assert.equal(allowed(on, env), true);
+  for (const key of ['reduced', 'print', 'zoomed']) assert.equal(allowed(on, { ...env, [key]: true }), false, key);
+  assert.equal(allowed(on, { ...env, frames: false }), false, 'no frame scheduling');
+  assert.equal(allowed({ motion: false }, env), false);
+});
+
+test('add-ons register types on a core base, scales, and legends, and an unregistered add-on type names its feature', () => {
+  const lollipop = {
+    base: 'bar',
+    legend: 'swatch',
+    normalize(model, spec) {
+      if (spec.stem === false) throw new Error('Lollipops need stems.');
+      model.stem = true;
+      return model;
+    },
+    describe: () => 'Lollipop chart.'
+  };
+  assert.equal(chart.addon('test-lollipops', { types: { lollipop }, scales: { sqrt: () => {} }, legends: { swatch: () => {} } }), true);
+  const model = chart.normalize({ type: 'lollipop', series: [{ data: [['a', 1]] }] });
+  assert.deepEqual(plain([model.type, model.addon, model.stem, model.categories]), ['bar', 'lollipop', true, ['a']]);
+  assert.match(chart.validate({ type: 'lollipop', stem: false, data: [1] }).join(' '), /need stems/);
+  assert.equal(typeof chart.scale('sqrt'), 'function');
+  assert.equal(chart.scale('linear'), chart.linear);
+  assert.equal(chart.scale('nope'), null);
+  assert.deepEqual(Array.from(chart.addons()), ['test-lollipops']);
+
+  const rejected = [
+    ['test-lollipops', { types: {} }],
+    ['Bad ID', {}],
+    ['test-core', { types: { bar: { base: 'bar' } } }],
+    ['test-base', { types: { ring: { base: 'donut' } } }],
+    ['test-hook', { types: { ring: { base: 'pie', draw: 'yes' } } }],
+    ['test-legend', { types: { ring: { base: 'pie', legend: 'missing' } } }],
+    ['test-scale', { scales: { linear: () => {} } }]
+  ];
+  rejected.forEach(([id, parts]) => assert.equal(chart.addon(id, parts), false, id));
+  assert.equal(chart.scale('ring'), null);
+  assert.deepEqual(Array.from(chart.addons()), ['test-lollipops'], 'rejected add-ons register nothing');
+
+  context.DocForm._boot = { chartFeature: (type) => type === 'histogram' ? 'chart-histogram' : null };
+  try {
+    assert.match(chart.validate({ type: 'histogram', data: [1, 2] }).join(' '), /needs the "chart-histogram" feature/);
+    assert.equal(chart.addon('test-thief', { types: { histogram: { base: 'bar' } } }), false, 'types belong to their loader feature');
+    assert.equal(chart.normalize({ type: 'mystery', data: [1] }).type, 'line', 'unknown types still fall back to line');
+  } finally {
+    delete context.DocForm._boot;
+  }
+});

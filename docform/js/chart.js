@@ -7,6 +7,9 @@
 // validation is not drawn: the element keeps its own content, and an update keeps the last valid chart.
 // Legend buttons hide and show series; brush: true narrows the x range of numeric and time axes by dragging or
 // with + and -, and rescale: true fits the y axis to what is shown. Readouts and the table follow the view.
+// Motion is on by default: keyed marks morph between drawings and play an entrance the first time the chart
+// scrolls into view. motion: false or data-df-animate="false" turns it off; reduced motion and print skip it.
+// Add-on features register further chart types, scales, and legends with DocForm.chart.addon.
 (function (root) {
   'use strict';
 
@@ -34,6 +37,11 @@
   var charts = typeof WeakMap === 'function' ? new WeakMap() : null;
   var playbacks = new WeakMap();
   var xGroups = new Map();
+  var BASES = TYPES;
+  var addons = Object.create(null);
+  var addonFeatures = new Set();
+  var scales = Object.create(null);
+  var legends = Object.create(null);
 
   function linearX(model) {
     return model && !model.errors.length && !model.categories && !model.x.time && !model.x.log;
@@ -448,6 +456,14 @@
   // With x: { type: 'time' }, x values are timestamps (see toTime) and a point whose x is not one is skipped.
   function normalize(spec) {
     spec = spec || {};
+    var def = typeof spec.type === 'string' && Object.hasOwn(addons, spec.type) ? addons[spec.type] : null;
+    if (def) return normalizeAddon(spec, def);
+    var needs = typeof spec.type === 'string' && !Object.hasOwn(TYPES, spec.type) ? addonFeature(spec.type) : null;
+    if (needs) {
+      var missing = normalize(Object.assign({}, spec, { type: 'line' }));
+      missing.errors.push('Chart type ' + JSON.stringify(spec.type) + ' needs the "' + needs + '" feature; enable it in features.');
+      return missing;
+    }
     var type = Object.hasOwn(TYPES, spec.type) ? spec.type : 'line';
     if (type === 'pie') return normalizePie(spec);
     var breaks = type === 'line' && spec.gaps === 'break';
@@ -577,6 +593,7 @@
       toggles: spec.toggles === true && series.length > 1,
       brush: !!spec.brush && !categorical,
       rescale: !!spec.rescale,
+      motion: spec.motion !== false,
       x: xAxis,
       y: axisSpec(spec.y, false, yLog),
       height: isNum(spec.height) && spec.height > 80 ? spec.height : 260
@@ -603,13 +620,90 @@
     });
     var valueAxis = axisSpec(spec.y, false, false);
     var model = normalize({ type: 'bar', series: series, y: { label: valueAxis.label, unit: valueAxis.unit, digits: valueAxis.digits },
-      title: spec.title, height: spec.height, toggles: spec.toggles, table: spec.table, selectionGroup: spec.selectionGroup });
+      title: spec.title, height: spec.height, toggles: spec.toggles, table: spec.table, selectionGroup: spec.selectionGroup,
+      motion: spec.motion });
     model.type = 'pie';
     model.toggles = spec.toggles === true && series.length > 0;
     model.errors = errors.concat(model.errors.map(function (error) {
       return error.replace('chart series', 'pie slice');
     }));
     return model;
+  }
+
+  // An add-on type reads its spec as its core base type, then adjusts that model; model.addon names the type.
+  function normalizeAddon(spec, def) {
+    var model = normalize(Object.assign({}, spec, { type: def.base }));
+    model.addon = spec.type;
+    if (def.normalize) {
+      try { model = def.normalize(model, spec, kit) || model; }
+      catch (error) { model.errors.push(String(error && error.message || error)); }
+    }
+    return model;
+  }
+
+  // The loader feature that provides a chart type, when the type belongs to an add-on that is not registered.
+  function addonFeature(type) {
+    var boot = DocForm._boot;
+    return boot && typeof boot.chartFeature === 'function' ? boot.chartFeature(type) : null;
+  }
+
+  // Chart add-on features call DocForm.chart.addon(id, parts) as their script loads. parts.types maps new type names
+  // to definitions drawn on a core base type; parts.scales and parts.legends add named scale factories and legend
+  // renderers that any chart type can look up. Nothing is registered unless every part is valid.
+  var HOOKS = ['normalize', 'draw', 'readout', 'table', 'describe'];
+
+  function addon(feature, parts) {
+    var problem = addonProblem(feature, parts);
+    if (problem) {
+      DocForm.warnOnce('chart-addon:' + feature + ':' + problem, 'Chart add-on ' + JSON.stringify(feature) + ' was not registered: ' + problem);
+      return false;
+    }
+    var types = parts.types || {};
+    Object.keys(types).forEach(function (name) { addons[name] = Object.assign({ feature: feature }, types[name]); });
+    Object.keys(parts.scales || {}).forEach(function (name) { scales[name] = parts.scales[name]; });
+    Object.keys(parts.legends || {}).forEach(function (name) { legends[name] = parts.legends[name]; });
+    addonFeatures.add(feature);
+    return true;
+  }
+
+  function addonProblem(feature, parts) {
+    var plain = function (value) { return !!value && typeof value === 'object' && !Array.isArray(value); };
+    if (typeof feature !== 'string' || !/^[a-z][a-z0-9-]*$/.test(feature) || !plain(parts)) {
+      return 'use a lowercase feature ID and an object of types, scales, and legends.';
+    }
+    if (addonFeatures.has(feature)) return 'it is already registered.';
+    var groups = ['types', 'scales', 'legends'];
+    var bad = groups.find(function (group) { return parts[group] !== undefined && !plain(parts[group]); });
+    if (bad) return 'parts.' + bad + ' must be an object.';
+    var types = parts.types || {};
+    var newLegends = parts.legends || {};
+    for (var name of Object.keys(types)) {
+      var def = types[name];
+      var owner = addonFeature(name);
+      if (!/^[a-z][a-z0-9-]*$/.test(name) || Object.hasOwn(TYPES, name) || Object.hasOwn(addons, name)) {
+        return 'chart type ' + JSON.stringify(name) + ' is invalid or taken.';
+      }
+      if (owner && owner !== feature) return 'chart type ' + JSON.stringify(name) + ' belongs to "' + owner + '".';
+      if (!plain(def) || !Object.hasOwn(BASES, def.base)) {
+        return 'chart type ' + JSON.stringify(name) + ' needs a base of line, bar, scatter, or pie.';
+      }
+      var hook = HOOKS.find(function (h) { return def[h] !== undefined && typeof def[h] !== 'function'; });
+      if (hook) return 'chart type ' + JSON.stringify(name) + ' has a ' + hook + ' that is not a function.';
+      if (def.legend !== undefined && !Object.hasOwn(legends, def.legend) && !Object.hasOwn(newLegends, def.legend)) {
+        return 'chart type ' + JSON.stringify(name) + ' names an unknown legend ' + JSON.stringify(def.legend) + '.';
+      }
+    }
+    for (var group of ['scales', 'legends']) {
+      var taken = group === 'scales' ? scales : legends;
+      var items = parts[group] || {};
+      var clash = Object.keys(items).find(function (item) { return Object.hasOwn(taken, item) || typeof items[item] !== 'function'; });
+      if (clash) return group.slice(0, -1) + ' ' + JSON.stringify(clash) + ' is taken or not a function.';
+    }
+    return null;
+  }
+
+  function addonOf(model) {
+    return model && model.addon && Object.hasOwn(addons, model.addon) ? addons[model.addon] : null;
   }
 
   // Warns about a model that cannot be drawn; true when it can.
@@ -964,93 +1058,380 @@
     };
   }
 
+  // ---- Motion ----
+  // Marks are entries in a Map keyed by markId: { el, arc, shape, from, draw, fade, order, whole }. Between two
+  // drawings, entries with the same key morph from what is displayed; new ones fade in and departing ones fade out.
+  var TWEEN = 240;
+  var ENTRANCE = 700;
+  var STAGGER = 0.3;
+  var GEOMETRY = ['d', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'x2', 'y1', 'y2', 'width', 'height'];
   var svgNumber = /[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi;
-
-  // A series visibility change keeps the data and path commands of the surviving marks.
-  function interpolateMarks(before, after, changes) {
-    if (before.tagName !== after.tagName) return;
-    var attrs = after.tagName.toLowerCase() === 'path' ? ['d'] : ['cx', 'cy', 'x', 'y', 'x1', 'x2', 'y1', 'y2'];
-    attrs.forEach(function (name) {
-      var from = before.getAttribute(name);
-      var to = after.getAttribute(name);
-      if (from === null || to === null || from === to || from.replace(svgNumber, '#') !== to.replace(svgNumber, '#')) return;
-      var start = from.match(svgNumber).map(Number);
-      var end = to.match(svgNumber).map(Number);
-      changes.push(function (t) {
-        var i = 0;
-        after.setAttribute(name, t === 1 ? to : to.replace(svgNumber, function () {
-          var value = mix(start[i], end[i], t);
-          i++;
-          return value;
-        }));
-      });
-    });
-    if (before.children.length === after.children.length) {
-      Array.from(after.children).forEach(function (child, i) { interpolateMarks(before.children[i], child, changes); });
-    }
-  }
+  var moving = new Set();
+  var awaiting = new Set();
+  var entrances = null;
 
   function mix(from, to, t) { return from + (to - from) * t; }
+
+  function ease(p) { return 1 - Math.pow(1 - p, 3); }
+
+  // [r, g, b, a] from #rgb, #rrggbb, rgb(), or rgba() text, else null.
+  function parseColor(text) {
+    if (typeof text !== 'string') return null;
+    var t = text.trim().toLowerCase();
+    var hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/.exec(t);
+    if (hex) {
+      var h = hex[1].length === 3 ? hex[1].replace(/./g, '$&$&') : hex[1];
+      return [0, 2, 4].map(function (i) { return parseInt(h.slice(i, i + 2), 16); }).concat([1]);
+    }
+    var fn = /^rgba?\(([^)]*)\)$/.exec(t);
+    if (!fn) return null;
+    var parts = fn[1].split(/[\s,\/]+/).filter(Boolean);
+    if (parts.length < 3 || parts.length > 4) return null;
+    var out = parts.map(function (p, i) {
+      var v = parseFloat(p);
+      if (!isFinite(v)) return NaN;
+      return /%$/.test(p) ? (i < 3 ? v * 2.55 : v / 100) : v;
+    });
+    if (out.length === 3) out.push(1);
+    return out.every(isFinite) ? out : null;
+  }
+
+  function colorText(c) {
+    return 'rgba(' + c.slice(0, 3).map(function (v) { return Math.round(Math.max(0, Math.min(255, v))); }).join(', ') +
+      ', ' + +Math.max(0, Math.min(1, c[3])).toFixed(3) + ')';
+  }
+
+  // A function of t in [0, 1] from one attribute or colour value to another: numbers inside matching text move and
+  // colours blend. null when the values are equal or cannot be blended, such as paths with different commands.
+  function between(from, to) {
+    if (from == null || to == null) return null;
+    from = String(from);
+    to = String(to);
+    if (from === to) return null;
+    var a = parseColor(from);
+    var b = a && parseColor(to);
+    if (a && b) return function (t) { return t >= 1 ? to : colorText(a.map(function (v, i) { return mix(v, b[i], t); })); };
+    if (from.replace(svgNumber, '#') !== to.replace(svgNumber, '#')) return null;
+    var start = (from.match(svgNumber) || []).map(Number);
+    var end = (to.match(svgNumber) || []).map(Number);
+    if (!start.length) return null;
+    return function (t) {
+      if (t >= 1) return to;
+      var i = 0;
+      return to.replace(svgNumber, function () {
+        var v = mix(start[i], end[i], t);
+        i++;
+        return String(+v.toFixed(3));
+      });
+    };
+  }
+
+  // A mark's identity across drawings: its series, its kind, and its point key, else its x value.
+  function markId(series, kind, point) {
+    return String(series) + '\u0001' + (kind || '') + '\u0001' +
+      (point ? (point.key ? 'k:' + point.key : 'x:' + String(point.x)) : '');
+  }
+
+  // Adds an entry under key, numbering repeats so marks that share a key, such as scatter points at one x, stay apart.
+  function addMark(map, key, entry) {
+    var id = key;
+    for (var n = 2; map.has(id); n++) id = key + '#' + n;
+    map.set(id, entry);
+    return entry;
+  }
+
+  // Pairs entries by key: kept ones change in place, entering ones are new, and leaving ones are gone.
+  function matchMarks(previous, current) {
+    var out = { kept: [], entering: [], leaving: [] };
+    current.forEach(function (entry, key) { out[previous.has(key) ? 'kept' : 'entering'].push(key); });
+    previous.forEach(function (entry, key) { if (!current.has(key)) out.leaving.push(key); });
+    return out;
+  }
+
+  function media(query) {
+    try { return !!(root.matchMedia && root.matchMedia(query).matches); } catch (error) { return false; }
+  }
+
+  function motionEnv(chart) {
+    return {
+      reduced: media('(prefers-reduced-motion: reduce)'),
+      print: media('print'),
+      zoomed: !!(chart && chart.box.closest && chart.box.closest('.df-zoom')),
+      frames: typeof root.requestAnimationFrame === 'function' && typeof root.cancelAnimationFrame === 'function'
+    };
+  }
+
+  // Motion plays only when the chart allows it, the reader has not asked for reduced motion, the page is not being
+  // printed, the chart is not in the zoom view (whose lens clones it), and the browser can schedule frames.
+  function motionAllowed(model, env) {
+    return !!model && model.motion !== false && !env.reduced && !env.print && !env.zoomed && !!env.frames;
+  }
+
+  // data-df-animate on the chart (true, false, or null when absent) wins, then the spec's motion, then the last
+  // configured chart option layer that sets it. Motion is on by default.
+  function resolveMotion(attribute, spec, layers) {
+    if (typeof attribute === 'boolean') return attribute;
+    if (spec && typeof spec.motion === 'boolean') return spec.motion;
+    for (var i = (layers || []).length - 1; i >= 0; i--) {
+      if (layers[i] && typeof layers[i].motion === 'boolean') return layers[i].motion;
+    }
+    return true;
+  }
+
+  function opacityOf(entry) {
+    var own = entry.el.getAttribute('opacity');
+    var wrap = entry.wrap ? entry.wrap.getAttribute('opacity') : null;
+    return (own === null ? 1 : +own) * (wrap === null ? 1 : +wrap);
+  }
+
+  function fade(el, from, to) {
+    return function (t) {
+      if (t >= 1 && to === 1) el.removeAttribute('opacity');
+      else el.setAttribute('opacity', mix(from, to, t));
+    };
+  }
+
+  function arcTo(entry, start, end) {
+    return function (t) { entry.shape(mix(start[0], end[0], t), mix(start[1], end[1], t)); };
+  }
+
+  // Moves every geometry attribute of b from a's values, in b and its children alike; false when a path changes
+  // its commands, so the two marks cross-fade instead.
+  function morph(a, b, changes) {
+    if (a.tagName !== b.tagName) return false;
+    var d = [a.getAttribute('d'), b.getAttribute('d')];
+    if (d[0] !== null && d[1] !== null && d[0] !== d[1] && !between(d[0], d[1])) return false;
+    GEOMETRY.forEach(function (name) {
+      var f = between(a.getAttribute(name), b.getAttribute(name));
+      if (f) changes.push({ run: function (t) { b.setAttribute(name, f(t)); } });
+    });
+    if (a.children.length === b.children.length) {
+      Array.from(b.children).forEach(function (child, i) { morph(a.children[i], child, changes); });
+    }
+    return true;
+  }
+
+  function paintKey(el) {
+    var g = el && el.parentNode;
+    if (!g || !g.getAttribute) return '';
+    return [g.getAttribute('data-df-role'), g.getAttribute('data-df-color'), g.getAttribute('style')].join('|');
+  }
+
+  function tintOf(entry) {
+    return entry.whole ? entry.el.firstChild : entry.el;
+  }
+
+  function computedPaint(el) {
+    if (!el || typeof root.getComputedStyle !== 'function') return null;
+    var style = root.getComputedStyle(el);
+    return { fill: style.fill, stroke: style.stroke };
+  }
+
+  // Changes from the displayed marks to the new ones. Departing marks move into the new layer, wrapped in a copy of
+  // their series group so they keep its colour, and stay in `current` until they finish fading.
+  function plan(previous, current, layer) {
+    var changes = [];
+    var leaving = [];
+    var tints = [];
+    function exit(before, key) {
+      var target = before.el;
+      var wrap = null;
+      if (!before.whole && before.el.parentNode && before.el.parentNode.cloneNode) {
+        wrap = before.el.parentNode.cloneNode(false);
+        wrap.appendChild(before.el);
+        target = wrap;
+      }
+      var from = opacityOf(before);
+      before.el.removeAttribute('opacity');
+      if (layer) layer.insertBefore(target, layer.firstChild);
+      target.setAttribute('pointer-events', 'none');
+      [target].concat(DocForm.all('[' + GROUP + '][' + KEY + ']', target)).forEach(function (el) {
+        el.removeAttribute(GROUP);
+        el.removeAttribute(KEY);
+      });
+      var entry = Object.assign({}, before, { wrap: wrap, leaving: true });
+      current.set(key, entry);
+      leaving.push(key);
+      if (before.arc) changes.push({ run: arcTo(before, before.arc.slice(), [before.arc[0], before.arc[0]]) });
+      changes.push({ run: fade(target, from, 0) });
+    }
+    var match = matchMarks(previous, current);
+    match.kept.forEach(function (key) {
+      var before = previous.get(key);
+      var next = current.get(key);
+      var from = opacityOf(before);
+      if (before.arc && next.arc) changes.push({ run: arcTo(next, before.arc.slice(), next.arc.slice()) });
+      else if (before.arc || next.arc || !morph(before.el, next.el, changes)) {
+        if (!before.leaving) exit(before, key + '\u0002');
+        from = 0;
+      }
+      if (from !== 1) changes.push({ run: fade(next.el, from, 1) });
+      if (from && paintKey(tintOf(before)) !== paintKey(tintOf(next))) {
+        tints.push({ from: computedPaint(tintOf(before)), el: tintOf(next) });
+      }
+    });
+    match.entering.forEach(function (key) {
+      var next = current.get(key);
+      if (next.arc) changes.push({ run: arcTo(next, [next.arc[0], next.arc[0]], next.arc.slice()) });
+      changes.push({ run: fade(next.el, 0, 1) });
+    });
+    match.leaving.forEach(function (key) { exit(previous.get(key), key); });
+    return { changes: changes, leaving: leaving, tints: tints };
+  }
+
+  // Colours are read once both drawings are in the document, so blends start from the colour on screen.
+  function tintChanges(tints) {
+    var changes = [];
+    tints.forEach(function (tint) {
+      var to = computedPaint(tint.el);
+      if (!tint.from || !to) return;
+      ['fill', 'stroke'].forEach(function (prop) {
+        var f = between(tint.from[prop], to[prop]);
+        if (f) changes.push({ run: function (t) {
+          if (t >= 1) tint.el.style.removeProperty(prop);
+          else tint.el.style.setProperty(prop, f(t));
+        } });
+      });
+    });
+    return changes;
+  }
+
+  // Bars grow from their baseline, lines draw from their start, dots and slices pop in, and the rest fades in.
+  // Each mark's order in [0, 1] staggers it across the entrance.
+  function entranceChanges(current) {
+    var changes = [];
+    current.forEach(function (entry) {
+      var order = entry.order || 0;
+      if (entry.arc) {
+        var arc = entry.arc.slice();
+        changes.push({ order: 0, run: arcTo(entry, [0, 0], arc) });
+        return;
+      }
+      Object.keys(entry.from || {}).forEach(function (name) {
+        var f = between(entry.from[name], entry.el.getAttribute(name));
+        if (f) changes.push({ order: order, run: function (t) { entry.el.setAttribute(name, f(t)); } });
+      });
+      if (entry.draw) changes.push({ order: order, run: function (t) {
+        if (t >= 1) {
+          ['pathLength', 'stroke-dasharray', 'stroke-dashoffset'].forEach(function (name) { entry.el.removeAttribute(name); });
+          return;
+        }
+        entry.el.setAttribute('pathLength', '1');
+        entry.el.setAttribute('stroke-dasharray', '1 1');
+        entry.el.setAttribute('stroke-dashoffset', String(1 - t));
+      } });
+      if (entry.fade) changes.push({ order: order, run: fade(entry.el, 0, 1) });
+    });
+    return changes;
+  }
 
   function stopMotion(chart) {
     if (chart.motion !== undefined) root.cancelAnimationFrame(chart.motion);
     chart.motion = undefined;
+    chart.finishMotion = null;
+    moving.delete(chart);
   }
 
-  function animateMarks(chart, previous, current, marks) {
-    var changes = [];
-    var leaving = [];
-    function transition(before, next, from, to, target) {
-      var entry = next || before;
-      if (entry.arc) {
-        var start = before ? before.arc.slice() : [target[0], target[0]];
-        var end = next ? target : [start[0], start[0]];
-        changes.push(function (t) { entry.shape(mix(start[0], end[0], t), mix(start[1], end[1], t)); });
-      } else if (before && next) interpolateMarks(before.el, next.el, changes);
-      if (from !== to) changes.push(function (t) {
-        if (t === 1 && to === 1) entry.el.removeAttribute('opacity');
-        else entry.el.setAttribute('opacity', mix(from, to, t));
+  // Runs changes over duration ms with an ease-out curve, then calls done.
+  function play(chart, changes, duration, done) {
+    if (!changes.length) {
+      if (done) done();
+      return;
+    }
+    function frame(progress) {
+      changes.forEach(function (change) {
+        var local = change.order === undefined ? progress :
+          Math.max(0, Math.min(1, (progress - change.order * STAGGER) / (1 - STAGGER)));
+        change.run(local >= 1 ? 1 : ease(local));
       });
     }
-    current.forEach(function (next, key) {
-      var before = previous.get(key);
-      transition(before, next, before ? +(before.el.getAttribute('opacity') ?? 1) : 0, 1, next.arc);
-    });
-    previous.forEach(function (before, key) {
-      if (current.has(key)) return;
-      marks.insertBefore(before.el, marks.firstChild);
-      before.el.setAttribute('pointer-events', 'none');
-      DocForm.all('[' + GROUP + '][' + KEY + ']', before.el).forEach(function (el) {
-        el.removeAttribute(GROUP);
-        el.removeAttribute(KEY);
-      });
-      current.set(key, before);
-      leaving.push(key);
-      transition(before, null, +(before.el.getAttribute('opacity') ?? 1), 0);
-    });
-    if (!changes.length) return;
-    changes.forEach(function (change) { change(0); });
+    function finish() {
+      stopMotion(chart);
+      frame(1);
+      if (done) done();
+    }
+    frame(0);
     var start = null;
     function step(now) {
       if (start === null) start = now;
-      var progress = Math.min(1, (now - start) / 240);
-      var t = 1 - Math.pow(1 - progress, 3);
-      changes.forEach(function (change) { change(t); });
-      if (progress < 1) chart.motion = root.requestAnimationFrame(step);
-      else {
-        chart.motion = undefined;
-        leaving.forEach(function (key) { current.get(key).el.remove(); current.delete(key); });
-      }
+      var progress = Math.min(1, (now - start) / duration);
+      if (progress >= 1) return finish();
+      frame(progress);
+      chart.motion = root.requestAnimationFrame(step);
     }
+    chart.finishMotion = finish;
+    moving.add(chart);
     chart.motion = root.requestAnimationFrame(step);
   }
 
-  function mountFrame(chart, frame, seriesMarks, previous) {
-    if (previous) animateMarks(chart, previous, seriesMarks, chart.marks);
-    chart.seriesMarks = seriesMarks;
+  function mountFrame(chart, frame, markMap, previous) {
+    var motion = previous ? plan(previous, markMap, chart.marks) : null;
+    chart.markMap = markMap;
     if (chart.svg) chart.plot.replaceChild(frame, chart.svg);
     else chart.plot.insertBefore(frame, chart.plot.firstChild);
     chart.svg = frame;
+    if (motion) {
+      play(chart, motion.changes.concat(tintChanges(motion.tints)), TWEEN, function () {
+        motion.leaving.forEach(function (key) {
+          var entry = markMap.get(key);
+          if (!entry || !entry.leaving) return;
+          (entry.wrap || entry.el).remove();
+          markMap.delete(key);
+        });
+      });
+    }
+    if (chart.entrance) {
+      if (!motionAllowed(chart.model, motionEnv(chart))) cancelEntrance(chart);
+      else if (chart.seen) playEntrance(chart);
+    }
+  }
+
+  // The first drawing waits, with its marks hidden, until the chart scrolls into view or above it, then plays its
+  // entrance once. Without IntersectionObserver or motion, charts draw in place.
+  function awaitEntrance(chart) {
+    if (typeof root.IntersectionObserver !== 'function' || !motionAllowed(chart.model, motionEnv(chart))) return;
+    if (!entrances) {
+      entrances = new root.IntersectionObserver(function (list) {
+        list.forEach(function (item) {
+          if (!item.isIntersecting && !(item.boundingClientRect && item.boundingClientRect.bottom <= 0)) return;
+          entrances.unobserve(item.target);
+          var seen = charts.get(item.target);
+          if (!seen) return;
+          seen.seen = true;
+          playEntrance(seen);
+        });
+      }, { rootMargin: '0px 0px -10% 0px', threshold: 0 });
+    }
+    chart.entrance = true;
+    chart.seen = false;
+    awaiting.add(chart);
+    chart.box.classList.add('df-chart-await');
+    entrances.observe(chart.box);
+  }
+
+  function cancelEntrance(chart) {
+    chart.entrance = false;
+    awaiting.delete(chart);
+    chart.box.classList.remove('df-chart-await');
+    if (entrances) entrances.unobserve(chart.box);
+  }
+
+  function playEntrance(chart) {
+    if (!chart.entrance || !chart.svg) return;
+    var go = motionAllowed(chart.model, motionEnv(chart)) && chart.playhead === null && chart.motion === undefined;
+    cancelEntrance(chart);
+    if (go) play(chart, entranceChanges(chart.markMap), ENTRANCE);
+  }
+
+  // Printing and opening the zoom view show every chart as drawn: waiting charts appear and motion jumps to its end.
+  function settleMotion() {
+    Array.from(awaiting).forEach(cancelEntrance);
+    Array.from(moving).forEach(function (chart) { if (chart.finishMotion) chart.finishMotion(); });
+  }
+
+  if (typeof root.addEventListener === 'function') root.addEventListener('beforeprint', settleMotion);
+  if (root.document && typeof root.document.addEventListener === 'function') {
+    root.document.addEventListener('df:zoomopen', settleMotion);
   }
 
   var TURN = Math.PI * 2;
@@ -1070,8 +1451,8 @@
     var r = Math.max(0, Math.min(cx, cy) - 8);
     var frame = svg('svg', { viewBox: '0 0 ' + width + ' ' + height, width: width, height: height,
       'aria-hidden': 'true', focusable: 'false' });
-    var seriesMarks = new Map();
-    chart.marks = svg('g', {}, frame);
+    var markMap = new Map();
+    chart.marks = svg('g', { class: 'df-chart-marks' }, frame);
     chart.overlay = svg('g', { class: 'df-chart-hover' }, frame);
     chart.geom = { cx: cx, cy: cy, radius: r };
     chart.cursor = chart.revealPlot = null;
@@ -1086,14 +1467,14 @@
       var group = svg('g', { class: 'df-chart-series' }, chart.marks);
       paint(group, s);
       var path = tagKey(model, svg('path', { class: 'df-chart-slice' }, group), p);
-      var entry = { el: group, arc: [start, end], shape: function (a, b) {
+      var entry = { el: group, whole: true, arc: [start, end], shape: function (a, b) {
         entry.arc = [a, b];
         path.setAttribute('d', piePath(cx, cy, r, a, b));
         if (a === b) path.setAttribute('display', 'none');
         else path.removeAttribute('display');
       } };
       entry.shape(start, end);
-      seriesMarks.set(s.key, entry);
+      addMark(markMap, markId(s.key, 'slice'), entry);
       var middle = (start + end) / 2;
       return { p: p, s: s, el: path, part: part, entry: entry,
         px: cx + r * 0.65 * Math.sin(middle), py: cy - r * 0.65 * Math.cos(middle) };
@@ -1105,7 +1486,23 @@
     chart.empty.style.width = '100%';
     chart.empty.style.top = '0';
     chart.empty.style.height = height + 'px';
-    mountFrame(chart, frame, seriesMarks, previous);
+    mountFrame(chart, frame, markMap, previous);
+    if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
+  }
+
+  // An add-on type draws its own frame: def.draw(chart, width, kit) returns { frame, marks, layer, overlay, spots,
+  // geom, empty }, where marks is a markId-keyed Map of mark entries and layer the group that holds them.
+  function drawAddon(chart, width, previous, def) {
+    var out = def.draw(chart, width, kit) || {};
+    if (!out.frame) return;
+    chart.marks = out.layer || svg('g', { class: 'df-chart-marks' }, out.frame);
+    chart.overlay = out.overlay || svg('g', { class: 'df-chart-hover' }, out.frame);
+    chart.spots = out.spots || [];
+    chart.geom = out.geom || {};
+    chart.cursor = chart.revealPlot = null;
+    chart.empty.textContent = out.empty || '';
+    chart.empty.hidden = !out.empty;
+    mountFrame(chart, out.frame, out.marks || new Map(), previous);
     if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
   }
 
@@ -1113,11 +1510,13 @@
   function draw(chart, animate) {
     var model = chart.view;
     var width = Math.round(chart.plot.clientWidth);
-    var previous = animate && width === chart.width && root.requestAnimationFrame && root.cancelAnimationFrame &&
-      !(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) ? chart.seriesMarks : null;
+    var previous = animate && width === chart.width && chart.markMap && chart.playhead === null &&
+      motionAllowed(chart.model, motionEnv(chart)) ? chart.markMap : null;
     stopMotion(chart);
     chart.width = width;
     if (!width) return;
+    var def = addonOf(model);
+    if (def && def.draw) return drawAddon(chart, width, previous, def);
     if (model.type === 'pie') return drawPie(chart, width, previous);
     var height = model.height;
     var type = model.type;
@@ -1238,7 +1637,7 @@
     }
 
     var refLines = svg('g', { class: 'df-chart-refs' }, frame);
-    var marks = svg('g', {}, frame);
+    var marks = svg('g', { class: 'df-chart-marks' }, frame);
     var thick = 0;
     var gap = 2;
     if (type === 'bar') {
@@ -1246,8 +1645,10 @@
       thick = Math.max(2, Math.min(24, (band * 0.72 - gap * (m - 1)) / m));
     }
     var markOf = new Map();
-    var seriesMarks = new Map();
+    var markMap = new Map();
     var future = [];
+    var plotW0 = Math.max(1, plotW);
+    var orderAt = function (px) { return Math.max(0, Math.min(1, (px - left) / plotW0)); };
     // Keyed marks follow the shared selection after every redraw.
     var place = function (p, el, px) {
       markOf.set(p, { el: el, px: px });
@@ -1260,7 +1661,6 @@
     };
     series.forEach(function (s, si) {
       var g = svg('g', { class: 'df-chart-series' }, marks);
-      seriesMarks.set(s.key, { el: g });
       paint(g, s);
       var intervals = hasIntervals && type !== 'bar' ?
         svg('g', { 'clip-path': 'url(#' + chart.clip + '-interval)' }, g) : null;
@@ -1276,6 +1676,7 @@
               var px = xAt(p.x);
               if (px < left || px > left + plotW) return;
               var mark = whisker(intervals, p.interval, px, y);
+              addMark(markMap, markId(s.key, 'whisker', p), { el: mark, fade: true, order: orderAt(px) });
               if (playback) future.push({ x: p.x, el: mark });
               return;
             }
@@ -1291,7 +1692,8 @@
             addBand(bounded);
           });
           if (bandPath) {
-            svg('path', { class: 'df-chart-band-interval', d: bandPath, 'clip-path': 'url(#' + chart.clip + '-band)' }, intervals);
+            addMark(markMap, markId(s.key, 'band'), { fade: true, el: svg('path', { class: 'df-chart-band-interval', d: bandPath,
+              'clip-path': 'url(#' + chart.clip + '-band)' }, intervals) });
           }
         }
         var d = runs.map(function (run) {
@@ -1300,13 +1702,15 @@
         if (d) {
           var path = svg('path', { d: d, class: 'df-chart-line' }, g);
           if (clipRect) path.setAttribute('clip-path', 'url(#' + chart.clip + ')');
+          addMark(markMap, markId(s.key, 'line'), { el: path, draw: true });
         }
         // Isolated readings between gaps, and selectable points, keep a marker even on dense lines.
         runs.forEach(function (run) {
           run.forEach(function (p) {
             if (range && (p.x < range[0] || p.x > range[1])) return;
             if (s.points.length > 16 && run.length > 1 && !(model.selectionGroup && p.key)) return;
-            place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4, class: 'df-chart-dot' }, g), xAt(p.x));
+            var dot = place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4, class: 'df-chart-dot' }, g), xAt(p.x));
+            addMark(markMap, markId(s.key, 'dot', p), { el: dot, from: { r: 0 }, order: orderAt(xAt(p.x)) });
           });
         });
       } else if (type === 'bar') {
@@ -1317,13 +1721,22 @@
           var bar = svg('path', { d: barPath(x0, thick, y0, y(p.y), 4), class: 'df-chart-bar' }, g);
           bar.setAttribute('data-df-x', p.x);
           place(p, bar, x0 + thick / 2);
-          if (p.interval) whisker(g, p.interval, x0 + thick / 2, y)
-            .setAttribute('clip-path', 'url(#' + chart.clip + '-interval)');
+          var order = orderAt(x0 + thick / 2);
+          addMark(markMap, markId(s.key, 'bar', p), { el: bar, from: { d: barPath(x0, thick, y0, y0, 4) }, order: order });
+          if (p.interval) {
+            var cap = whisker(g, p.interval, x0 + thick / 2, y);
+            cap.setAttribute('clip-path', 'url(#' + chart.clip + '-interval)');
+            addMark(markMap, markId(s.key, 'whisker', p), { el: cap, fade: true, order: order });
+          }
         });
       } else {
         s.points.forEach(function (p) {
-          if (p.interval) whisker(intervals, p.interval, xAt(p.x), y);
-          place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4.5, class: 'df-chart-dot' }, g), xAt(p.x));
+          var order = orderAt(xAt(p.x));
+          if (p.interval) {
+            addMark(markMap, markId(s.key, 'whisker', p), { el: whisker(intervals, p.interval, xAt(p.x), y), fade: true, order: order });
+          }
+          var dot = place(p, svg('circle', { cx: xAt(p.x), cy: y(p.y), r: 4.5, class: 'df-chart-dot' }, g), xAt(p.x));
+          addMark(markMap, markId(s.key, 'dot', p), { el: dot, from: { r: 0 }, order: order });
         });
       }
     });
@@ -1392,7 +1805,7 @@
     chart.empty.style.top = top + 'px';
     chart.empty.style.height = Math.max(0, height - bottom - top) + 'px';
 
-    mountFrame(chart, frame, seriesMarks, previous);
+    mountFrame(chart, frame, markMap, previous);
     if (chart.revealPlot) chart.revealPlot(chart.playhead);
     paintCursor(chart);
     if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
@@ -1432,8 +1845,12 @@
     var tip = chart.tip;
     tip.textContent = '';
     var anchorY = g.top;
+    var def = addonOf(model);
 
-    if (model.type === 'pie') {
+    if (def && def.readout) {
+      var at = def.readout(chart, spot, tip, kit);
+      anchorY = isNum(at) ? at : isNum(spot.py) ? spot.py : g.top;
+    } else if (model.type === 'pie') {
       spot.el.classList.add('is-active');
       html('div', 'df-chart-tip-head', tip, spot.s.name);
       var share = pieShare(spot.part);
@@ -1590,6 +2007,8 @@
   }
 
   function buildTable(model, collectRow) {
+    var def = addonOf(model);
+    if (def && def.table) return def.table(model, kit);
     var table = document.createElement('table');
     var head = html('tr', '', html('thead', '', table));
     var body = html('tbody', '', table);
@@ -1658,8 +2077,10 @@
     var refs = model.referenceLines.map(function (r) { return refText(model, r); });
     var keyed = DocForm.selection && model.selectionMode !== 'follow' && model.selectionGroup &&
       model.series.some(function (s) { return s.points.some(function (p) { return p.key; }); });
-    return (model.title ? model.title + '. ' : '') + model.type.charAt(0).toUpperCase() + model.type.slice(1) + ' chart' +
-      (names.length ? ' of ' + names.join(', ') : '') + '.' +
+    var def = addonOf(model);
+    var kind = def && def.describe ? def.describe(model) :
+      model.type.charAt(0).toUpperCase() + model.type.slice(1) + ' chart' + (names.length ? ' of ' + names.join(', ') : '') + '.';
+    return (model.title ? model.title + '. ' : '') + kind +
       (model.x.time ? ' Times are in UTC.' : '') +
       (model.x.log || model.y.log ? ' The ' + (model.x.log && model.y.log ? 'x and y axes use' : (model.x.log ? 'x' : 'y') +
         ' axis uses') + ' a log scale.' : '') +
@@ -1701,6 +2122,8 @@
       html('span', 'df-chart-ref-note', item);
       return item;
     });
+    var def = addonOf(model);
+    if (def && def.legend) legends[def.legend](chart, chart.legend, kit);
     syncHead(chart);
   }
 
@@ -1816,7 +2239,7 @@
 
   function setRange(chart, range) {
     chart.range = range;
-    refresh(chart);
+    refresh(chart, true);
   }
 
   // A range survives an update when the x axis keeps its kind and the range still overlaps the new data.
@@ -1912,7 +2335,7 @@
     };
     chart.view = viewOf(model, chart.hidden, null);
     host.classList.add('df-chart');
-    host.classList.add('is-' + chart.model.type);
+    typeClasses(host, model);
 
     var head = html('div', 'df-chart-head');
     chart.legend = html('div', 'df-chart-legend', head);
@@ -2088,8 +2511,7 @@
       chart.spec = next;
       chart.view = viewOf(model, chart.hidden, chart.range);
       watch(chart);
-      host.classList.remove('is-line', 'is-bar', 'is-scatter', 'is-pie');
-      host.classList.add('is-' + chart.model.type);
+      typeClasses(host, chart.model);
       hide(chart);
       renderHead(chart);
       chart.toggle.hidden = !chart.model.table;
@@ -2100,7 +2522,7 @@
         setTable(chart, false);
       } else {
         fillTable(chart);
-        if (!chart.plot.hidden) draw(chart);
+        if (!chart.plot.hidden) draw(chart, true);
       }
       chart.updating = false;
       if (notifyPlayback) notifyPlayback();
@@ -2109,6 +2531,7 @@
     chart.replace = replace;
     chart.remove = function (origin) {
       stopMotion(chart);
+      cancelEntrance(chart);
       charts.delete(host);
       if (chart.xGroup) chart.xGroup.members.delete(host);
       var notifyPlayback = reconcilePlayhead(chart, origin);
@@ -2119,7 +2542,8 @@
       head.remove();
       chart.plot.remove();
       chart.table.remove();
-      host.classList.remove('df-chart', 'is-line', 'is-bar', 'is-scatter', 'is-pie', 'is-table');
+      typeClasses(host, null);
+      host.classList.remove('df-chart', 'is-table', 'df-chart-await');
       if (notifyPlayback) notifyPlayback();
     };
     charts.set(host, chart);
@@ -2127,9 +2551,21 @@
     var notifyPlayback = reconcilePlayhead(chart, origin);
     if (chart.playhead !== null) fillTable(chart);
     watch(chart);
+    awaitEntrance(chart);
     draw(chart);
     if (notifyPlayback) notifyPlayback();
     return chart.api;
+  }
+
+  // is-<type> classes for the base type and, for add-on types, the add-on type too; null removes them.
+  function typeClasses(host, model) {
+    String(host.getAttribute('class') || '').split(/\s+/).forEach(function (name) {
+      var type = name.slice(3);
+      if (/^is-/.test(name) && (Object.hasOwn(TYPES, type) || Object.hasOwn(addons, type))) host.classList.remove(name);
+    });
+    if (!model) return;
+    host.classList.add('is-' + model.type);
+    if (model.addon) host.classList.add('is-' + model.addon);
   }
 
   function copyChart(value) {
@@ -2147,7 +2583,7 @@
 
   function overrides(host, spec) {
     var type = DocForm.data(host, 'chart', '');
-    if (Object.hasOwn(TYPES, type)) spec.type = type;
+    if (Object.hasOwn(TYPES, type) || Object.hasOwn(addons, type) || addonFeature(type)) spec.type = type;
     var height = DocForm.data(host, 'height', null);
     if (height !== null) {
       if (DocForm._boot) {
@@ -2211,6 +2647,10 @@
         invalidOption(host, 'height', 'Use a finite chart height greater than 80.', value.height);
         delete value.height;
       }
+      if ('motion' in value && typeof value.motion !== 'boolean') {
+        invalidOption(host, 'motion', 'Use true or false.', value.motion);
+        delete value.motion;
+      }
       if ('referenceLines' in value && value.referenceLines !== null && !Array.isArray(value.referenceLines)) {
         invalidOption(host, 'referenceLines', 'Use an array of reference lines or null.', value.referenceLines);
         delete value.referenceLines;
@@ -2226,7 +2666,14 @@
   function chartModel(host, spec) {
     var model = normalize(spec);
     if (DocForm._items) model.selectionMode = DocForm._items.mode(host, 'chart');
+    model.motion = resolveMotion(animateAttribute(host), spec, DocForm._boot ? DocForm._boot.optionLayers('chart', host.id) : []);
     return model;
+  }
+
+  function animateAttribute(host) {
+    if (!host.hasAttribute || !host.hasAttribute('data-df-animate')) return null;
+    return DocForm._boot && DocForm._component ? DocForm._component.flag(host, 'animate', 'chart', true) :
+      DocForm.flag(host, 'animate');
   }
 
   function readMarkup(host, options) {
@@ -2594,6 +3041,24 @@
   chart.toTime = toTime;
   chart.timeTicks = timeTicks;
   chart.timeTickFormat = timeTickFormat;
+  chart.motion = {
+    between: between, ease: ease, parseColor: parseColor, markId: markId, addMark: addMark, match: matchMarks,
+    allowed: motionAllowed, resolve: resolveMotion, entrance: entranceChanges
+  };
+  chart.addon = addon;
+  chart.addons = function () { return Array.from(addonFeatures); };
+  chart.scale = function (name) { return Object.hasOwn(scales, name) ? scales[name] : null; };
+  chart.legend = function (name) { return Object.hasOwn(legends, name) ? legends[name] : null; };
+  scales.linear = linear;
+  scales.log = log;
+  scales.time = linear;
+  // Helpers handed to add-on hooks, so add-ons draw with the same scales, colours, keys, and readouts as the core.
+  var kit = {
+    svg: svg, html: html, paint: paint, legendKey: key, tagKey: tagKey, barPath: barPath, whisker: whisker,
+    ticks: ticks, logTicks: logTicks, timeTicks: timeTicks, tickFormat: tickFormat, logTickFormat: logTickFormat,
+    format: format, toNumber: toNumber, isNum: isNum, extent: extent, intervalReadout: intervalReadout,
+    markId: markId, addMark: addMark, scale: chart.scale, COLORS: COLORS
+  };
   chart.get = function (target) {
     var el = typeof target === 'string' ? document.getElementById(target) : target;
     var c = charts && charts.get(el);

@@ -245,6 +245,24 @@ test('chart setup merges options and an invalid attribute preserves the configur
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.code), ['chart-option']);
 });
 
+test('configured chart motion merges like other chart options and add-on chart types name their loader feature', async () => {
+  const p = page({
+    site: { profile: 'none', features: { chart: true }, options: { chart: { motion: false } } },
+    config: { options: { chart: { instances: { lively: { motion: true }, odd: { motion: 'slow' } } } } }
+  });
+  const hosts = ['calm', 'lively', 'odd', 'needs'].map(id => Object.assign(element('div'), { id }));
+  p.DF.setup(DF => {
+    assert.equal(DF.chart.mount(hosts[0], { data: [1, 2] }).model().motion, false);
+    assert.equal(DF.chart.mount(hosts[1], { data: [1, 2] }).model().motion, true);
+    assert.equal(DF.chart.mount(hosts[2], { data: [1, 2] }).model().motion, false, 'an invalid value keeps the site choice');
+    assert.equal(DF.chart.mount(hosts[3], { type: 'histogram', data: [1, 2] }), null);
+    assert.equal(DF._boot.chartFeature('heatmap'), 'chart-heatmap');
+    assert.equal(DF._boot.chartFeature('line'), null);
+  });
+  await p.start();
+  assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.code), ['chart-option']);
+});
+
 test('mixed features load all shipped assets and register data before author setup', async () => {
   const features = Object.fromEntries(('animation cards chart code concept-tables data-view dropdowns dropzone editable-text figure-steps ' +
     'glossary math parameters peek-bubbles pipeline results reveals scenarios selection split-views stepper tabs tree zoom-tools')

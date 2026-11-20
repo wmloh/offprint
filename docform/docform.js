@@ -37,6 +37,10 @@
     chart: { needs: ['base'], css: ['chart'], script: 'chart', api: 'chart' },
     dropzone: { needs: ['base', 'data'], css: ['dropzone', 'data'], script: 'dropzone', api: 'dropzone' },
     'chart-playback': { needs: ['chart'], css: ['chart-playback'], script: 'chart-playback', api: 'chartPlayback' },
+    // Chart add-ons register the chart types they list with DocForm.chart.addon as their script loads.
+    'chart-intervals': { needs: ['chart'], css: ['chart-intervals'], script: 'chart-intervals', chartTypes: ['interval'] },
+    'chart-histogram': { needs: ['chart'], css: ['chart-histogram'], script: 'chart-histogram', chartTypes: ['histogram'] },
+    'chart-heatmap': { needs: ['chart'], css: ['chart-heatmap'], script: 'chart-heatmap', chartTypes: ['heatmap'] },
     results: { needs: ['base'], css: ['results'], script: 'results', api: 'results' },
     matrix: { needs: ['base', 'data'], css: ['matrix'], script: 'matrix', api: 'matrix' },
     scenarios: { needs: ['chart'], css: ['scenarios'], script: 'scenarios' },
@@ -335,7 +339,10 @@
     }
     if (item.script) {
       var script = new URL('js/' + item.script + '.js', library).href;
-      if (!await load(script, false) || (item.api ? !DF[item.api] : !boot.registered(item.module || item.script))) {
+      var loaded = await load(script, false);
+      var present = item.chartTypes ? !!DF.chart && DF.chart.addons().indexOf(id) >= 0 :
+        item.api ? !!DF[item.api] : boot.registered(item.module || item.script);
+      if (!loaded || !present) {
         assetFailure(id, script);
         return false;
       }
@@ -439,6 +446,9 @@
       return false;
     },
     after: function (name, fn) { after.push({ name: name, fn: fn }); },
+    chartFeature: function (type) {
+      return Object.keys(catalog).find(function (id) { return (catalog[id].chartTypes || []).indexOf(type) >= 0; }) || null;
+    },
     load: function (url) { return load(url, false); },
     report: report,
     merge: merge,

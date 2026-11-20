@@ -1829,3 +1829,132 @@ test('tabs synchronize different labels and orders by key, with local follow-onl
   assert.equal(left.snapshot().key, 'python');
   assert.equal(right.snapshot().key, 'js');
 });
+
+function entranceClock(reduced = false) {
+  const clock = legendClock(reduced);
+  const watched = [];
+  let notify = null;
+  clock.animation.IntersectionObserver = class {
+    constructor(fn) { notify = fn; }
+    observe(el) { watched.push(el); }
+    unobserve(el) { if (watched.includes(el)) watched.splice(watched.indexOf(el), 1); }
+  };
+  clock.watched = watched;
+  clock.scrollTo = (el) => notify([{ target: el, isIntersecting: true }]);
+  return clock;
+}
+
+const barSpec = { type: 'bar', series: [{ name: 'Runs', data: [{ x: 'a', y: 2, key: 'a' }, { x: 'b', y: 6, key: 'b' }] }] };
+const awaiting = (c) => c.host.classList.contains('df-chart-await');
+const barOf = (c, x) => byClass(c, 'df-chart-bar').find((el) => el.getAttribute('data-df-x') === x && !el.parentNode.getAttribute('pointer-events'));
+const barD = (c, x) => barOf(c, x).getAttribute('d');
+
+test('the entrance waits until the chart scrolls into view, grows bars and draws lines once, then stays put', () => {
+  const clock = entranceClock();
+  const c = draw(barSpec, clock);
+  const final = barD(c, 'b');
+  assert.ok(awaiting(c), 'marks stay hidden until seen');
+  assert.equal(clock.frames.size, 0);
+  clock.scrollTo(c.host);
+  assert.ok(!awaiting(c));
+  assert.equal(clock.watched.length, 0, 'watched only once');
+  const start = barD(c, 'b');
+  const ys = [...start.matchAll(/(?:V|,)(-?[\d.]+)/g)].map((m) => +m[1]);
+  assert.equal(new Set(ys).size, 1, 'each bar starts flat on its baseline');
+  clock.tick(0);
+  clock.tick(350);
+  assert.ok(![start, final].includes(barD(c, 'b')), 'mid-growth');
+  clock.tick(700);
+  assert.equal(barD(c, 'b'), final);
+  assert.equal(clock.frames.size, 0);
+
+  const lineClock = entranceClock();
+  const line = draw({ series: [{ name: 'Loss', data: [[0, 3], [1, 2], [2, 1]] }] }, lineClock);
+  lineClock.scrollTo(line.host);
+  const path = byClass(line, 'df-chart-line')[0];
+  assert.equal(path.getAttribute('pathLength'), '1');
+  assert.equal(path.getAttribute('stroke-dashoffset'), '1', 'the line starts undrawn');
+  assert.equal(dotsOf(line)[0].getAttribute('r'), '0', 'dots pop in from nothing');
+  lineClock.tick(0);
+  lineClock.tick(700);
+  assert.equal(path.getAttribute('pathLength'), null);
+  assert.equal(dotsOf(line)[0].getAttribute('r'), '4');
+});
+
+test('data-df-animate="false", motion: false, and reduced motion draw in place without waiting or tweening', () => {
+  const clock = entranceClock();
+  const env = setup(clock);
+  const host = new Node('div');
+  host.setAttribute('data-df-animate', 'false');
+  env.document.body.appendChild(host);
+  const api = env.chart(host, barSpec);
+  assert.ok(!host.classList.contains('df-chart-await'));
+  assert.equal(api.model().motion, false);
+  api.update({ ...barSpec, series: [{ name: 'Runs', data: [{ x: 'a', y: 9, key: 'a' }] }] });
+  assert.equal(clock.frames.size, 0);
+  assert.equal(host.all().filter((el) => el.classList.contains('df-chart-bar')).length, 1, 'no departing bar lingers');
+
+  const spec = draw({ ...barSpec, motion: false }, entranceClock());
+  assert.ok(!awaiting(spec));
+  const reducedClock = entranceClock(true);
+  const reduced = draw(barSpec, reducedClock);
+  assert.ok(!awaiting(reduced));
+  reduced.api.update({ ...barSpec, series: [{ name: 'Runs', data: [{ x: 'a', y: 9, key: 'a' }] }] });
+  assert.equal(reducedClock.frames.size, 0);
+});
+
+test('data updates tween each keyed bar from where it was drawn, fade new bars in, and remove departing ones', () => {
+  const clock = legendClock();
+  const c = draw(barSpec, clock);
+  const oldB = barD(c, 'b');
+  const next = { type: 'bar', series: [{ name: 'Runs', data: [
+    { x: 'b', y: 3, key: 'b' }, { x: 'c', y: 4, key: 'c' }
+  ] }] };
+  assert.ok(c.api.update(next));
+  assert.equal(barD(c, 'b'), oldB, 'b starts where it was, though it moved to the first category');
+  assert.equal(barOf(c, 'c').getAttribute('opacity'), '0');
+  const leaving = byClass(c, 'df-chart-bar').filter((el) => el.parentNode.getAttribute('pointer-events') === 'none');
+  assert.deepEqual(leaving.map((el) => el.getAttribute('data-df-x')), ['a']);
+  assert.equal(leaving[0].getAttribute(KEY), null, 'departing marks leave the selection group');
+  clock.tick(0);
+  clock.tick(120);
+  assert.notEqual(barD(c, 'b'), oldB);
+  clock.tick(240);
+  assert.equal(barOf(c, 'c').getAttribute('opacity'), null);
+  assert.deepEqual(byClass(c, 'df-chart-bar').map((el) => el.getAttribute('data-df-x')), ['b', 'c']);
+  const settled = barD(c, 'b');
+  c.api.update(next);
+  assert.equal(clock.frames.size, 0, 'an unchanged redraw has nothing to move');
+  assert.equal(barD(c, 'b'), settled);
+});
+
+test('add-on types draw through the core with their own description, legend, readout, and table', () => {
+  const env = setup();
+  const lollipop = {
+    base: 'bar',
+    legend: 'note',
+    describe: (model) => 'Lollipop chart of ' + model.series.length + ' series.',
+    readout(chart, spot, tip, kit) { kit.html('div', 'df-chart-tip-head', tip, 'Lollipop ' + spot.x); },
+    table(model, kit) {
+      const table = kit.html('table');
+      model.series[0].points.forEach((p) => kit.html('td', '', kit.html('tr', '', table), p.x + '=' + p.y));
+      return table;
+    }
+  };
+  assert.ok(env.chart.addon('test-lollipops', { types: { lollipop }, legends: {
+    note(chart, legend, kit) { kit.html('span', 'df-test-note', legend, 'stems'); }
+  } }));
+  const host = new Node('div');
+  env.document.body.appendChild(host);
+  env.chart(host, { type: 'lollipop', series: [{ data: [['a', 1], ['b', 3]] }] });
+  assert.ok(host.classList.contains('is-bar') && host.classList.contains('is-lollipop'));
+  const plot = host.querySelector('.df-chart-plot');
+  assert.match(plot.getAttribute('aria-label'), /^Lollipop chart of 1 series\./);
+  assert.equal(host.querySelector('.df-test-note').textContent, 'stems');
+  plot.dispatchEvent(Object.assign(new Event('keydown'), { key: 'End' }));
+  assert.equal(host.querySelector('.df-chart-tip').textContent, 'Lollipop b');
+  host.querySelector('.df-chart-toggle').dispatchEvent(new Event('click'));
+  assert.equal(host.querySelector('.df-chart-table').textContent, 'a=1b=3');
+  env.chart(host, { type: 'bar', data: [1] });
+  assert.ok(!host.classList.contains('is-lollipop'));
+});

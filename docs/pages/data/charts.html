@@ -8,8 +8,11 @@
   <script src="../../assets/site.js" data-df-site></script>
   <script type="application/json" data-df-page>
     {
-      "features": {"chart": true, "chart-intervals": true, "results": true, "data": true, "parameters": true, "selection": true},
+      "features": {"chart": true, "chart-intervals": true, "chart-histogram": true, "results": true, "data": true, "parameters": true, "selection": true},
       "parameterScopes": {
+        "reading-times": {
+          "bins": {"type": "range", "min": 2, "max": 12, "step": 1, "default": 4}
+        },
         "module-filter": {
           "kinds": {
             "type": "multiselect",
@@ -291,6 +294,46 @@
       <figcaption>Illustrative reading times ranked by the first read. The dashed line marks the 30-second target.</figcaption>
     </figure>
     <p>Hide <strong>First read</strong> in the legend to see the remaining dots move to the middle of each row. Choose <strong>Table</strong> to see the remaining estimates and bounds.</p>
+    <h2 id="histograms">See how values are distributed</h2>
+    <p>A <span data-df-term="histogram">histogram</span> counts how many readings fall in each <span data-df-term="bin">bin</span>. Move the slider to see how wider or narrower bins change the shape. Use the legend to show either group on its own.</p>
+    <div class="df-params" data-df-parameter-scope="reading-times">
+      <div data-df-parameter="bins" data-df-parameter-label="Number of bins"></div>
+    </div>
+    <figure>
+      <div id="reading-time-distribution" data-df-chart="histogram" data-df-toggles>
+        <script type="application/json">
+          {
+            "bins": 4,
+            "x": "Reading time (seconds)",
+            "series": [
+              {"name": "Short passage", "data": [2, 3, 4, 4, 5, 6, 6, 7, 8, 10, 10, 11, 13, 18]},
+              {"name": "Long passage", "data": [5, 7, 8, 9, 10, 11, 12, 12, 13, 14, 14, 15, 16, 17, 18]}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Seconds</th><th scope="col">Short passage</th><th scope="col">Long passage</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">2 to under 6</th><td>5</td><td>1</td></tr>
+            <tr><th scope="row">6 to under 10</th><td>4</td><td>3</td></tr>
+            <tr><th scope="row">10 to under 14</th><td>4</td><td>5</td></tr>
+            <tr><th scope="row">14 to 18 inclusive</th><td>1</td><td>6</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative reading times for a short and a long passage.</figcaption>
+    </figure>
+    <script>
+      DocForm.ready(function () {
+        var chart = DocForm.chart?.get('reading-time-distribution');
+        var scope = DocForm.parameters?.scope('reading-times');
+        if (!chart || !scope) return;
+        scope.subscribe(function (values) {
+          chart.update(Object.assign(chart.spec(), { bins: values.bins }));
+        }, { keys: ['bins'] });
+      });
+    </script>
+    <p>Choose Table to see the exact bin boundaries and counts. A logarithmic horizontal axis can help when positive measurements span several orders of magnitude.</p>
     <h2 id="shared-position">Share a position between charts</h2>
     <p>Charts with a common linear horizontal scale can share an inspection cursor while keeping their own vertical scales and visible ranges. Try the two charts in <a href="playback.html#shared-position">Guided chart playback</a>.</p>
     <h2 id="when-to-use">When to reach for it</h2>

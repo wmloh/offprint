@@ -449,6 +449,8 @@ window.DocFormSite = {
           "more": "<p>A result of 0.82 with an interval from 0.79 to 0.85 means the true value is likely somewhere in that band.</p>"
         },
         "uncertainty": "How sure we can be about a measured value. More uncertainty means a wider interval.",
+        "histogram": "A chart that groups numeric observations into ranges and shows how many fall in each range.",
+        "bin": "A range of values grouped together in a histogram, such as reading times from 2 seconds up to 6 seconds.",
         "readout": "A small label that shows the exact values at the point under the pointer on a chart.",
         "playback": "Drawing a chart gradually over time, like a short film of the data.",
         "checkpoint": "A planned stop during playback, usually with a short note about what to notice.",

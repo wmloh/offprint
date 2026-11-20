@@ -1,0 +1,7 @@
+.df-chart.is-histogram:not(.is-stacked) .df-chart-histogram-bar {
+  fill-opacity: 0.65;
+}
+
+.df-chart.is-histogram:not(.is-stacked) .df-chart-histogram-bar:is(.is-active, [data-df-selection-active]) {
+  fill-opacity: 0.8;
+}

@@ -404,7 +404,7 @@
   }
 
   // Problems that would make a log axis misleading. Each one stops the chart from drawing (see report).
-  function logErrors(model, spec) {
+  function logErrors(model, spec, allowLogZeroY) {
     var errors = [];
     var rejected = function (name, values) {
       var bad = values.filter(function (v) { return !(v > 0); });
@@ -431,7 +431,9 @@
       }
       var values = [];
       model.series.forEach(function (s) {
-        s.points.forEach(function (p) { values.push(p[name]); });
+        s.points.forEach(function (p) {
+          if (!(allowLogZeroY && name === 'y' && p.y === 0)) values.push(p[name]);
+        });
         if (name === 'x') values.push.apply(values, s.missing);
       });
       rejected(name, values);
@@ -455,7 +457,7 @@
   // Bar charts and string x values give a categorical x axis in order of first appearance.
   // With gaps: 'break' on a line chart, a null or blank y keeps its x as a missing value instead of being dropped.
   // With x: { type: 'time' }, x values are timestamps (see toTime) and a point whose x is not one is skipped.
-  function normalize(spec) {
+  function normalize(spec, baseOptions) {
     spec = spec || {};
     var def = typeof spec.type === 'string' && Object.hasOwn(addons, spec.type) ? addons[spec.type] : null;
     if (def) return normalizeAddon(spec, def);
@@ -606,7 +608,7 @@
       DocForm.warnOnce('chart-percent-bounds', 'Percent stacked bars always span 0–100%; y min and max are ignored.');
       model.y.min = model.y.max = null;
     }
-    model.errors = errors.concat(logErrors(model, spec));
+    model.errors = errors.concat(logErrors(model, spec, baseOptions?.allowLogZeroY));
     if (new Set(series.map(function (item) { return item.key; })).size !== series.length) {
       model.errors.push('Each chart series needs a unique key or a unique name.');
     }
@@ -748,12 +750,20 @@
     return model;
   }
 
-  // An add-on type reads its spec as its core base type, then adjusts that model; model.addon names the type.
+  // An add-on can translate its input before base normalization and adjust the resulting model.
   function normalizeAddon(spec, def) {
-    var model = normalize(Object.assign({}, spec, { type: def.base }));
+    var prepared = spec;
+    var issue = null;
+    try { if (def.prepare) prepared = def.prepare(spec, kit); }
+    catch (error) {
+      issue = String(error && error.message || error);
+      prepared = {};
+    }
+    var model = normalize(Object.assign({}, prepared, { type: def.base }), def);
     model.addon = spec.type;
-    if (def.normalize) {
-      try { model = def.normalize(model, spec, kit) || model; }
+    if (issue) model.errors.push(issue);
+    else if (def.normalize) {
+      try { model = def.normalize(model, spec, kit, prepared) || model; }
       catch (error) { model.errors.push(String(error && error.message || error)); }
     }
     return model;
@@ -768,7 +778,7 @@
   // Chart add-on features call DocForm.chart.addon(id, parts) as their script loads. parts.types maps new type names
   // to definitions drawn on a core base type; parts.scales and parts.legends add named scale factories and legend
   // renderers that any chart type can look up. Nothing is registered unless every part is valid.
-  var HOOKS = ['normalize', 'draw', 'categoryMarks', 'readout', 'table', 'describe'];
+  var HOOKS = ['prepare', 'normalize', 'extent', 'draw', 'categoryMarks', 'continuousMarks', 'pick', 'readout', 'table', 'describe'];
 
   function addon(feature, parts) {
     var problem = addonProblem(feature, parts);
@@ -809,6 +819,9 @@
       if (hook) return 'chart type ' + JSON.stringify(name) + ' has a ' + hook + ' that is not a function.';
       if (def.categoryMarks && def.base !== 'bar') {
         return 'chart type ' + JSON.stringify(name) + ' needs a bar base to draw category marks.';
+      }
+      if (def.continuousMarks && def.base !== 'scatter') {
+        return 'chart type ' + JSON.stringify(name) + ' needs a scatter base to draw continuous marks.';
       }
       if (def.legend !== undefined && !Object.hasOwn(legends, def.legend) && !Object.hasOwn(newLegends, def.legend)) {
         return 'chart type ' + JSON.stringify(name) + ' names an unknown legend ' + JSON.stringify(def.legend) + '.';
@@ -866,13 +879,18 @@
   function spotsFor(model, xAt, y, markOf) {
     var spots = [];
     var cats = model.categories;
-    var xs = cats ? cats : extent(model).xs.slice().sort(function (a, b) { return a - b; })
+    var def = addonOf(model);
+    var xs = model.type === 'scatter' ? null : cats || extent(model).xs.slice().sort(function (a, b) { return a - b; })
       .filter(function (x, i, list) { return !i || x !== list[i - 1]; });
     if (model.type === 'scatter') {
       model.series.forEach(function (s) {
-        s.points.forEach(function (p) { spots.push({ px: xAt(p.x), py: y(p.y), s: s, p: p, el: (markOf(p) || {}).el }); });
+        s.points.forEach(function (p) {
+          var mark = markOf(p) || {};
+          if (def?.continuousMarks && !mark.el) return;
+          spots.push({ px: mark.px ?? xAt(p.x), py: mark.py ?? y(p.y), s: s, p: p, el: mark.el });
+        });
       });
-    } else if (model.selectionGroup || addonOf(model)?.categoryMarks) {
+    } else if (model.selectionGroup || def?.categoryMarks) {
       var byX = new Map();
       model.series.forEach(function (s) {
         s.points.forEach(function (p) {
@@ -957,9 +975,12 @@
       yLo = Math.min(yLo, 0);
       yHi = Math.max(yHi, 0);
     }
-    if (model.y.min !== null) yLo = model.y.min;
-    if (model.y.max !== null) yHi = model.y.max;
-    return { yLo: yLo, yHi: yHi, xs: xs, count: count };
+    var span = { yLo: yLo, yHi: yHi, xs: xs, count: count };
+    var def = addonOf(model);
+    if (def?.extent) def.extent(model, span);
+    if (model.y.min !== null) span.yLo = model.y.min;
+    if (model.y.max !== null) span.yHi = model.y.max;
+    return span;
   }
 
   // The x span of all the data, with fixed axis ends, or null on text axes and charts with a single x value.
@@ -1036,7 +1057,9 @@
     var off = hidden || {};
     var inside = function (x) { return x >= range[0] && x <= range[1]; };
     var series = model.series.filter(function (s) { return !off[s.key]; }).map(function (s) {
-      var points = range ? s.points.filter(function (p) { return inside(p.x); }) : s.points;
+      var points = range ? s.points.filter(function (p) {
+        return p.xSpan ? p.xSpan[0] < range[1] && p.xSpan[1] > range[0] : inside(p.x);
+      }) : s.points;
       var line = points;
       if (range && model.type === 'line') {
         var before = null;
@@ -1868,6 +1891,7 @@
     if (!width) return;
     var def = addonOf(model);
     var categoryMarks = def && def.categoryMarks;
+    var continuousMarks = def && def.continuousMarks;
     if (def && def.draw) return drawAddon(chart, width, previous, def);
     if (model.type === 'pie') return drawPie(chart, width, previous);
     if (model.type === 'bar' && model.orientation === 'horizontal') return drawHorizontal(chart, width, previous, categoryMarks);
@@ -1939,10 +1963,14 @@
     var clipRect;
     var intervalRect;
     var hasIntervals = series.some(function (s) { return s.line.some(function (p) { return p.interval; }); });
-    var defs = range || playback || hasIntervals || categoryMarks ? svg('defs', {}, frame) : null;
+    var defs = range || playback || hasIntervals || categoryMarks || continuousMarks ? svg('defs', {}, frame) : null;
     if (range || playback) {
       var clip = svg('clipPath', { id: chart.clip }, defs);
       clipRect = svg('rect', { x: left, y: top - 3, width: plotW, height: height - bottom - top + 6 }, clip);
+    }
+    if (continuousMarks) {
+      svg('rect', { x: left, y: top, width: plotW, height: height - bottom - top },
+        svg('clipPath', { id: chart.clip + '-plot' }, defs));
     }
     if (hasIntervals || categoryMarks) {
       // Whiskers keep their full caps and stroke at the plot edges; bands stay inside the exact bounds.
@@ -2013,7 +2041,16 @@
       }
       return tagKey(model, el, p);
     };
-    series.forEach(function (s, si) {
+    if (continuousMarks) continuousMarks({
+      pos: xAt, val: y, base: Math.max(yInfo.min, Math.min(0, yInfo.max)), left: left, right: left + plotW,
+      place: place, markMap: markMap, orderAt: orderAt,
+      group: function (s) {
+        var g = svg('g', { class: 'df-chart-series', 'clip-path': 'url(#' + chart.clip + '-plot)' }, marks);
+        paint(g, s);
+        return g;
+      }
+    }, model, kit);
+    else series.forEach(function (s, si) {
       var g = svg('g', { class: 'df-chart-series' }, marks);
       paint(g, s);
       var intervals = hasIntervals && type !== 'bar' ?
@@ -2121,6 +2158,9 @@
     });
 
     var spots = spotsFor(model, xAt, y, function (p) { return markOf.get(p); });
+    if (continuousMarks) spots = spots.filter(function (spot) {
+      return !spot.p.xSpan || (xAt(spot.p.xSpan[0]) < plotR && xAt(spot.p.xSpan[1]) > left);
+    });
     if (playback || chart.xGroup && linearX(model)) {
       spots = spots.filter(function (spot) { return spot.px >= left && spot.px <= plotR; });
     }
@@ -2279,6 +2319,7 @@
     var py = at.y;
     var g = chart.geom;
     var spots = chart.spots;
+    var def = addonOf(chart.model);
     if (chart.model.type === 'pie') {
       var dx = px - g.cx;
       var dy = py - g.cy;
@@ -2293,6 +2334,8 @@
     if (chart.cursor && (px < g.left || px > g.right || py < g.top || py > g.bottom)) return leaveInspection(chart);
     if (!spots.length || px < g.left - HIT || px > g.right + HIT || py < g.top - HIT || py > g.bottom + HIT) {
       hide(chart);
+    } else if (def?.pick) {
+      show(chart, def.pick(chart, px, py), py);
     } else if (chart.model.type === 'scatter') {
       var best = -1;
       var dist = HIT;
@@ -2524,7 +2567,8 @@
   function sourceShown(chart) {
     var model = chart.model;
     var def = addonOf(model);
-    return chart.ownTable && model.type !== 'pie' && !model.stack && !def?.categoryMarks && !chart.range && !chart.view.hiddenCount;
+    return chart.ownTable && model.type !== 'pie' && !model.stack && !def?.categoryMarks && !def?.table &&
+      !chart.range && !chart.view.hiddenCount;
   }
 
   function setPlayhead(chart, x) {
@@ -2678,7 +2722,8 @@
     chart.box.classList.toggle('is-table', on);
     chart.table.hidden = !on;
     chart.plot.hidden = on;
-    if (on && (chart.model.type === 'pie' || addonOf(chart.model)?.categoryMarks || !chart.table.firstChild)) fillTable(chart);
+    var def = addonOf(chart.model);
+    if (on && (chart.model.type === 'pie' || def?.categoryMarks || def?.table || !chart.table.firstChild)) fillTable(chart);
     chart.toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     chart.toggle.textContent = on ? 'Chart' : 'Table';
     if (!on) draw(chart);
@@ -2720,7 +2765,7 @@
     chart.sourceTable = sourceTable || null;
     chart.sourceSpec = useSourceTable ? spec : null;
     chart.ownTable = Boolean(sourceTable && useSourceTable);
-    if (sourceTable && chart.playhead === null && !model.stack) chart.table.appendChild(sourceTable);
+    if (sourceTable && chart.playhead === null && (!model.stack || addonOf(model)?.table)) chart.table.appendChild(sourceTable);
     host.insertBefore(chart.table, host.firstChild);
     host.insertBefore(chart.plot, chart.table);
     host.insertBefore(head, chart.plot);
@@ -3241,12 +3286,17 @@
   }
 
   function preparedChart(host, input) {
-    if (!input || typeof input !== 'object' || Array.isArray(input) ||
-        (!Array.isArray(input.data) && !Array.isArray(input.series)) ||
-        (input.series && !input.series.every(function (series) {
-          return series && Array.isArray(series.data) &&
-            (series.key === undefined || (typeof series.key === 'string' && series.key.trim()));
-        }))) throw new Error('Supply a chart spec with data or series containing data arrays.');
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Supply a chart spec object.');
+    var customInput = typeof input.type === 'string' && addons[input.type]?.prepare;
+    if (!customInput) {
+      var validSeries = Array.isArray(input.series) && input.series.every(function (series) {
+        return series && Array.isArray(series.data) &&
+          (series.key === undefined || (typeof series.key === 'string' && series.key.trim()));
+      });
+      if (input.series != null ? !validSeries : !Array.isArray(input.data)) {
+        throw new Error('Supply a chart spec with data or series containing data arrays.');
+      }
+    }
     var spec = copyChart(input);
     var model = chartModel(host, spec);
     if (model.errors.length) throw new Error('Chart update ignored; the last valid chart stays. ' + model.errors.join(' '));
@@ -3423,7 +3473,7 @@
   var kit = {
     svg: svg, html: html, paint: paint, legendKey: key, tagKey: tagKey, barPath: barPath, whisker: whisker,
     ticks: ticks, logTicks: logTicks, timeTicks: timeTicks, tickFormat: tickFormat, logTickFormat: logTickFormat,
-    format: format, toNumber: toNumber, isNum: isNum, extent: extent, intervalReadout: intervalReadout,
+    format: format, toNumber: toNumber, isNum: isNum, extent: extent, intervalReadout: intervalReadout, row: row,
     markId: markId, addMark: addMark, scale: chart.scale, COLORS: COLORS
   };
   chart.get = function (target) {

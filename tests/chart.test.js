@@ -11,6 +11,7 @@ context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('chart.js'), context);
 vm.runInContext(read('chart-intervals.js'), context);
+vm.runInContext(read('chart-histogram.js'), context);
 const chart = context.DocForm.chart;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -479,7 +480,7 @@ test('add-ons register types on a core base, scales, and legends, and an unregis
   assert.equal(typeof chart.scale('sqrt'), 'function');
   assert.equal(chart.scale('linear'), chart.linear);
   assert.equal(chart.scale('nope'), null);
-  assert.deepEqual(Array.from(chart.addons()), ['chart-intervals', 'test-lollipops']);
+  assert.deepEqual(Array.from(chart.addons()), ['chart-intervals', 'chart-histogram', 'test-lollipops']);
 
   const rejected = [
     ['test-lollipops', { types: {} }],
@@ -492,14 +493,84 @@ test('add-ons register types on a core base, scales, and legends, and an unregis
   ];
   rejected.forEach(([id, parts]) => assert.equal(chart.addon(id, parts), false, id));
   assert.equal(chart.scale('ring'), null);
-  assert.deepEqual(Array.from(chart.addons()), ['chart-intervals', 'test-lollipops'], 'rejected add-ons register nothing');
+  assert.deepEqual(Array.from(chart.addons()), ['chart-intervals', 'chart-histogram', 'test-lollipops'], 'rejected add-ons register nothing');
 
-  context.DocForm._boot = { chartFeature: (type) => type === 'histogram' ? 'chart-histogram' : null };
+  context.DocForm._boot = { chartFeature: (type) => type === 'heatmap' ? 'chart-heatmap' : null };
   try {
-    assert.match(chart.validate({ type: 'histogram', data: [1, 2] }).join(' '), /needs the "chart-histogram" feature/);
-    assert.equal(chart.addon('test-thief', { types: { histogram: { base: 'bar' } } }), false, 'types belong to their loader feature');
+    assert.match(chart.validate({ type: 'heatmap', data: [1, 2] }).join(' '), /needs the "chart-heatmap" feature/);
+    assert.equal(chart.addon('test-thief', { types: { heatmap: { base: 'bar' } } }), false, 'types belong to their loader feature');
     assert.equal(chart.normalize({ type: 'mystery', data: [1] }).type, 'line', 'unknown types still fall back to line');
   } finally {
     delete context.DocForm._boot;
   }
+});
+
+test('histogram rules derive common edges and count interior and final boundaries once', () => {
+  const spec = { type: 'histogram', data: [0, 1, 2, 3, 4, 5, 6, 7] };
+  const histogram = (bins, data = spec.data) => chart.normalize({ ...spec, data, bins });
+  const counts = (model) => Array.from(model.series[0].points, (point) => point.y);
+  assert.deepEqual(plain(histogram('fd').histogramEdges), [0, 3.5, 7]);
+  assert.deepEqual(counts(histogram('fd')), [4, 4]);
+  assert.deepEqual(plain(histogram('sturges').histogramEdges), [0, 1.75, 3.5, 5.25, 7]);
+  assert.deepEqual(counts(histogram('sturges')), [2, 2, 2, 2]);
+  assert.deepEqual(counts(histogram(2, [0, 2, 4])), [1, 2]);
+  assert.deepEqual(plain(histogram({ width: 3 }).histogramEdges), [0, 3, 6, 9]);
+  assert.deepEqual(counts(histogram({ edges: [0, 1, 6, 7] })), [1, 5, 2]);
+  assert.deepEqual(counts(histogram('fd', [0, 0, 0, 0, 8])), [4, 0, 0, 1], 'zero IQR uses Sturges');
+  assert.deepEqual(counts(histogram('fd', [5, 5, 5])), [3]);
+  assert.deepEqual(counts(histogram(3, [])), [0, 0, 0]);
+});
+
+test('log histogram bins use transformed spacing and a positive y floor while storing zeros', () => {
+  const spec = { type: 'histogram', bins: 3, x: { type: 'log' }, y: { type: 'log' }, data: [1, 8, 100, 1000] };
+  const model = chart.normalize(spec);
+  assert.deepEqual(plain(model.errors), []);
+  assert.deepEqual(plain(model.histogramEdges), [1, 10, 100, 1000]);
+  assert.deepEqual(plain(model.series[0].points.map((point) => point.y)), [2, 0, 2]);
+  assert.deepEqual(plain(chart.domain(model)), [1, 1000]);
+  assert.equal(chart.extent(model).yLo, 1);
+  const width = chart.normalize({ ...spec, data: [2, 200], bins: { width: 1 } });
+  width.histogramEdges.forEach((v, i) => assert.ok(Math.abs(v / (2 * 10 ** i) - 1) < 1e-12));
+  const edges = chart.normalize({ type: 'histogram', edges: [1, 2, 3], counts: [0, 0], y: { type: 'log' } });
+  assert.deepEqual([chart.extent(edges).yLo, chart.extent(edges).yHi], [0.5, 1]);
+  assert.match(chart.validate({ type: 'scatter', data: [[1, 0]], y: { type: 'log' } })[0], /positive/);
+});
+
+test('histogram density integrates over original widths and percent follows the selected layout', () => {
+  const spec = { type: 'histogram', edges: [1, 2, 10, 20], x: { type: 'log' },
+    series: [{ key: 'a', counts: [1, 0, 3] }, { key: 'b', counts: [1, 4, 1] }] };
+  const area = (series) => series.points.reduce((total, point) => total + point.y * (point.xSpan[1] - point.xSpan[0]), 0);
+  const overlay = chart.normalize({ ...spec, measure: 'density' });
+  const areas = (model) => Array.from(model.series, (series) => Number(area(series).toFixed(12)));
+  assert.deepEqual(areas(overlay), [1, 1]);
+  const stacked = chart.normalize({ ...spec, measure: 'density', stack: 'stacked' });
+  assert.deepEqual(areas(stacked), [0.4, 0.6]);
+  assert.equal(chart.extent(stacked).yHi, 0.2);
+  const percent = chart.normalize({ ...spec, measure: 'percent', stack: 'stacked' });
+  assert.deepEqual(Array.from(percent.series, (series) => series.points.reduce((sum, p) => sum + p.y, 0)), [40, 60]);
+  const visible = chart.view(percent, { a: true });
+  assert.equal(chart.extent(visible).yHi, 40);
+  assert.equal(visible.y.unit, '%');
+});
+
+test('histogram validation rejects malformed bins, counts and log inputs', () => {
+  const raw = { type: 'histogram', data: [1, 2] };
+  const preBinned = { type: 'histogram', edges: [1, 2, 3], counts: [1, 0] };
+  for (const [input, error] of [
+    [{ ...raw, bins: 0 }, /bins must/],
+    [{ ...raw, bins: 1.5 }, /bins must/],
+    [{ ...raw, bins: { width: 0 } }, /bins must/],
+    [{ ...raw, bins: { width: 0.001 } }, /more than 500/],
+    [{ ...raw, bins: { edges: [1.5, 3] } }, /cover every observation/],
+    [{ ...raw, data: [1, Infinity] }, /finite numbers/],
+    [{ ...raw, data: [0, 1], x: { type: 'log' } }, /log x.*positive/],
+    [{ ...raw, y: { type: 'log', min: 0 } }, /log y axis min/],
+    [{ ...preBinned, counts: [1] }, /integer per bin/],
+    [{ ...preBinned, counts: [-1, 1.5] }, /integer per bin/],
+    [{ ...preBinned, edges: [1, 1, 3] }, /strictly increasing/],
+    [{ ...preBinned, edges: [0, 1, 3], x: { type: 'log' } }, /positive histogram edges/],
+    [{ ...preBinned, bins: 2 }, /supplied edges/],
+    [{ ...raw, stack: 'percent' }, /stack must/],
+    [{ ...raw, measure: 'rate' }, /measure must/]
+  ]) assert.match(chart.validate(input)[0], error);
 });

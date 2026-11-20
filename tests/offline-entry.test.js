@@ -667,3 +667,14 @@ test('selection groups merge across configuration and an authored group is avail
     ['trace', 'page'], ['implicit', 'first']
   ]);
 });
+
+test('the offline loader enables histogram assets and registers the add-on after chart', async () => {
+  const p = page({ entryProfile: 'none', config: { features: { 'chart-histogram': true } } });
+  await p.start();
+  assert.deepEqual(p.loads.filter(path => path.includes('/chart')), [
+    'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-histogram.css', 'docform/js/chart-histogram.js'
+  ]);
+  assert.equal(p.DF._boot.chartFeature('histogram'), 'chart-histogram');
+  assert.equal(p.DF.chart.normalize({ type: 'histogram', data: [1, 2] }).addon, 'histogram');
+  assert.equal(p.DF.diagnostics.list().length, 0);
+});

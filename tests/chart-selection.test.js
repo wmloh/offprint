@@ -2149,3 +2149,85 @@ test('interval markup ranks the interactive table while retaining the authored f
   assert.equal(host.querySelector('.df-chart-table').textContent, 'GroupScoreBravo4Alpha2');
   assert.equal(table.textContent, 'GroupScoreAlpha2Bravo4');
 });
+
+test('log histogram renders zero bins empty and reads them by their actual edges in the plot and table', () => {
+  const c = draw({ type: 'histogram', x: { type: 'log' }, y: { type: 'log' },
+    edges: [1, 2, 100, 1000], counts: [2, 0, 4] }, { modules: ['chart-histogram', 'data'] });
+  const [first, zero, last] = byClass(c, 'df-chart-histogram-bar');
+  assert.equal(Number(zero.getAttribute('height')), 0);
+  assert.ok(Number(first.getAttribute('height')) > 0 && Number(last.getAttribute('height')) > 0);
+  const x = Number(zero.getAttribute('x')) + 2;
+  const y = Number(zero.getAttribute('y')) - 20;
+  c.fire('pointermove', { clientX: x, clientY: y });
+  assert.equal(c.tip().textContent, '[2, 100)0', 'the pointer enters the bin at its edge even far from its midpoint');
+  assert.ok(c.api.coords(x, y).y > 0);
+  click(c.host.querySelector('.df-chart-toggle'));
+  assert.deepEqual(c.host.querySelector('.df-chart-table').querySelectorAll('tr').map((row) => row.textContent),
+    ['BinCount', '[1, 2)2', '[2, 100)0', '[100, 1,000]4']);
+  assert.equal(c.api.update({ ...c.api.spec(), counts: [1, -2, 3] }), false);
+  assert.equal(c.api.update({ ...c.api.spec(), counts: [1, 0, 3] }), true);
+  assert.match(c.host.querySelector('.df-chart-table').textContent, /\[100, 1,000\]3$/);
+});
+
+test('a live bin slider tweens existing histogram slots and preserves exact-edge selection', () => {
+  const clock = legendClock();
+  let slider, scope;
+  const c = draw({ type: 'histogram', bins: 2, y: { max: 6 }, data: [0, 1, 2, 3, 4], selectionGroup: 'bins' }, {
+    ...clock, modules: ['chart-histogram', 'params', 'data'],
+    enhance(DF, document) {
+      scope = DF.parameters.define('histogram', { bins: { type: 'range', min: 1, max: 6, step: 1, default: 2 } });
+      const controls = document.body.appendChild(new Node('div'));
+      controls.setAttribute('data-df-parameter-scope', 'histogram');
+      controls.setAttribute('data-df-parameter', 'bins');
+      slider = controls;
+    }
+  });
+  scope.subscribe((values) => c.api.update({ ...c.api.spec(), bins: values.bins }), { keys: ['bins'] });
+  const first = () => byClass(c, 'df-chart-histogram-bar').find((bar) => bar.getAttribute('data-df-bin') === '0');
+  const width = () => Number(first().getAttribute('width'));
+  const before = width();
+  c.fire('keydown', { key: 'Home' });
+  c.fire('keydown', { key: 'Enter' });
+  assert.equal(c.selection.group('bins').get(), 'bin:0:2');
+  const input = slider.querySelector('input');
+  input.valueAsNumber = 4;
+  input.dispatchEvent(new Event('input'));
+  assert.equal(c.api.spec().bins, 4);
+  assert.equal(width(), before);
+  clock.tick(0);
+  clock.tick(120);
+  assert.ok(width() < before && width() > before / 2);
+  clock.tick(400);
+  assert.equal(width(), before / 2);
+  assert.equal(c.selection.group('bins').get(), 'bin:0:2');
+  assert.equal(c.marks().filter((el) => el.hasAttribute('data-df-selection-active')).length, 0);
+  input.valueAsNumber = 2;
+  input.dispatchEvent(new Event('input'));
+  clock.tick(400);
+  clock.tick(800);
+  assert.equal(byClass(c, 'df-chart-histogram-bar').length, 2);
+  assert.ok(first().hasAttribute('data-df-selection-active'));
+});
+
+test('stacked histogram bars restack and retain shared bin widths and counts after legend filtering', () => {
+  const c = draw({ type: 'histogram', stack: 'stacked', toggles: true, edges: [0, 1, 3],
+    series: [{ name: 'A', counts: [1, 1] }, { name: 'B', counts: [2, 2] }] }, { modules: ['chart-histogram'] });
+  const [a, , b] = byClass(c, 'df-chart-histogram-bar');
+  const coord = (el, attr) => Number(el.getAttribute(attr));
+  assert.equal(coord(a, 'width'), coord(b, 'width'));
+  assert.equal(coord(a, 'y'), coord(b, 'y') + coord(b, 'height'));
+  c.fire('keydown', { key: 'Home' });
+  assert.equal(c.tip().textContent, '[0, 1)1A2B');
+  c.fire('keydown', { key: 'ArrowRight' });
+  assert.equal(c.tip().textContent, '[1, 3]1A2B');
+  click(legendButton(c, 'A'));
+  const [visible, wider] = byClass(c, 'df-chart-histogram-bar');
+  assert.equal(coord(visible, 'y') + coord(visible, 'height'), coord(a, 'y') + coord(a, 'height'));
+  assert.ok(Math.abs(coord(wider, 'width') / coord(visible, 'width') - 2) < 1e-12);
+  click(c.host.querySelector('.df-chart-toggle'));
+  assert.deepEqual(c.host.querySelector('.df-chart-table').querySelectorAll('tr').map((row) => row.textContent),
+    ['BinB', '[0, 1)2', '[1, 3]2']);
+  assert.ok(c.api.setRange([2.5, 3]));
+  assert.deepEqual(c.host.querySelector('.df-chart-table').querySelectorAll('tr').map((row) => row.textContent),
+    ['BinB', '[1, 3]2'], 'narrowing into the edge of a bin keeps its original interval and count');
+});

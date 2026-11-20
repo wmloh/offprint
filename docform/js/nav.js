@@ -12,12 +12,8 @@
   var SVG = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" ' +
     'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   var CARET = SVG + ' width="12" height="12"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
-  var CARET_SMALL = SVG + ' width="10" height="10"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
   var MENU = SVG + ' width="18" height="18"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg>';
 
-  // Hover intent: a collapsed group opens only after the pointer rests on it this long.
-  var HOVER_OPEN = 300;
-  var HOVER_CLOSE = 50;
   var SLIDE_MS = 180;
   var SLIDE_EASE = 'cubic-bezier(0.2, 0, 0, 1)';
   var WIDTH_KEY = 'docform-nav-width';
@@ -72,31 +68,8 @@
     return limit > start ? Math.min(1, Math.max(0, (line - start) / (limit - start))) : 0;
   }
 
-  function outlineTree(items) {
-    var tree = [];
-    var parent = null;
-    items.forEach(function (item) {
-      var node = { item: item, children: [] };
-      if (item.level === 3 && parent) {
-        parent.children.push(node);
-      } else {
-        tree.push(node);
-        if (item.level === 2) parent = node;
-      }
-    });
-    return tree;
-  }
-
-  // A group follows the reader's caret choice once one is made; until then it is open for its own reason (the section
-  // in view, the manifest) or while the pointer rests on it.
-  function groupOpen(base, hovered, held) {
-    return held === null ? base || hovered : held;
-  }
-
-  // A caret click keeps a group that is open only under the pointer open; otherwise it flips what is shown.
-  function caretChoice(base, hovered, held) {
-    if (held === null && !base && hovered) return true;
-    return !groupOpen(base, hovered, held);
+  function outlineSections(items) {
+    return items.filter(function (item) { return item.level === 1 && item.id; });
   }
 
   function clampWidth(width, viewport) {
@@ -113,11 +86,16 @@
 
   function collectHeadings(scope) {
     var used = new Set(DocForm.all('[id]').map(function (el) { return el.id; }));
-    return DocForm.all('h2, h3', scope).filter(function (h) {
+    var headings = DocForm.all('h1, h2, h3', scope).filter(function (h) {
       return !h.closest('.df-sidebar') && !DocForm._component.closestFlag(h, 'no-outline', 'navigation');
-    }).map(function (h) {
+    });
+    // Keep generated h2 and h3 anchors compatible with existing links and search indexes.
+    headings.forEach(function (h) {
+      if (!h.id && h.tagName !== 'H1') h.id = uniqueSlug(slugify(h.textContent), used);
+    });
+    return headings.map(function (h) {
       if (!h.id) h.id = uniqueSlug(slugify(h.textContent), used);
-      return { level: h.tagName === 'H2' ? 2 : 3, id: h.id, text: h.textContent.trim(), el: h };
+      return { level: Number(h.tagName[1]), id: h.id, text: h.textContent.trim(), el: h };
     });
   }
 
@@ -160,31 +138,14 @@
     h.appendChild(button);
   }
 
-  // Outlines of other pages link to their URL and prefix list ids so they cannot clash with this page's.
-  function renderOutline(nodes, links, groups, href, idPrefix) {
-    href = href || '';
-    idPrefix = idPrefix || 'df-outline-';
+  function renderOutline(sections, href, links) {
     var list = make('ul', 'df-outline');
-    nodes.forEach(function (node) {
+    sections.forEach(function (section) {
       var li = make('li', 'df-outline-item');
-      var row = make('div', 'df-outline-row');
-      var link = make('a', 'df-outline-link', node.item.text);
-      link.href = href + '#' + encodeURIComponent(node.item.id);
-      links[node.item.id] = link;
-      row.appendChild(link);
-      li.appendChild(row);
-      if (node.children.length) {
-        var sub = renderOutline(node.children, links, groups, href, idPrefix);
-        var caret = make('button', 'df-outline-caret');
-        caret.type = 'button';
-        caret.innerHTML = CARET_SMALL;
-        caret.setAttribute('aria-label', 'Toggle ' + node.item.text);
-        sub.id = idPrefix + node.item.id;
-        caret.setAttribute('aria-controls', sub.id);
-        row.appendChild(caret);
-        li.appendChild(sub);
-        groups[node.item.id] = { li: li, caret: caret, list: sub };
-      }
+      var link = make('a', 'df-outline-link', section.text);
+      link.href = headingUrl(href, section.id);
+      if (links) links[section.id] = link;
+      li.appendChild(link);
       list.appendChild(li);
     });
     return list;
@@ -221,67 +182,20 @@
     };
   }
 
-  var peeks = [];
-
-  function disclosure(li, caret, list, base) {
-    var group = { base: base, held: null, hovered: false, shown: null };
-    var timer = 0;
-
-    group.render = function (animate) {
-      var open = groupOpen(group.base, group.hovered, group.held);
-      li.classList.toggle('is-peek', open && group.held === null && !group.base);
-      if (open === group.shown) return;
-      group.shown = open;
+  function disclosure(caret, list, open) {
+    function render(animate) {
       caret.setAttribute('aria-expanded', String(open));
       slide(list, open, animate);
-    };
-
-    group.toggle = function () {
-      clearTimeout(timer);
-      group.held = caretChoice(group.base, group.hovered, group.held);
-      group.render(true);
-    };
-
-    // Short delays let the pointer sweep across the tree without opening everything on its way.
-    function hover(value, delay) {
-      clearTimeout(timer);
-      timer = setTimeout(function () {
-        if (group.hovered === value) return;
-        group.hovered = value;
-        group.render(true);
-      }, delay);
     }
 
-    li.addEventListener('pointerenter', function (event) {
-      if (event.pointerType !== 'touch') hover(true, HOVER_OPEN);
-    });
-    // Groups opened under the pointer stay open, so their links are easy to reach, until it leaves the sidebar.
-    peeks.push(function () { hover(false, HOVER_CLOSE); });
-    caret.addEventListener('click', group.toggle);
-    group.render(false);
-    // Groups added after the pointer already rests on them, such as outlines of other pages, still open.
-    if (li.matches && li.matches(':hover')) hover(true, HOVER_OPEN);
-    return group;
-  }
+    function toggle() {
+      open = !open;
+      render(true);
+    }
 
-  function collapser(entries) {
-    var ids = Object.keys(entries);
-    var animate = false;
-    var active;
-    var groups = ids.map(function (id) {
-      var entry = entries[id];
-      return { id: id, group: disclosure(entry.li, entry.caret, entry.list, false) };
-    });
-
-    return function (id) {
-      if (id === active) return;
-      active = id;
-      groups.forEach(function (g) {
-        g.group.base = g.id === id;
-        g.group.render(animate);
-      });
-      animate = true;
-    };
+    caret.addEventListener('click', toggle);
+    render(false);
+    return toggle;
   }
 
   function pageCaret(title, box, ctx) {
@@ -319,8 +233,11 @@
         entry.box = make('div', 'df-nav-group');
         entry.box.appendChild(sub.list);
         var caret = pageCaret(page.title, entry.box, ctx);
-        var group = disclosure(li, caret, entry.box, !page.collapsed || isCurrent || sub.found);
-        if (!page.href) label.addEventListener('click', group.toggle);
+        var toggle = disclosure(caret, entry.box, !page.collapsed || isCurrent || sub.found);
+        if (!page.href) {
+          li.classList.add('df-nav-page-group');
+          label.addEventListener('click', toggle);
+        }
         row.appendChild(caret);
       } else {
         row.appendChild(make('span', 'df-nav-caret-space'));
@@ -336,20 +253,13 @@
     return { list: list, found: found };
   }
 
-  // Another page's h2 and h3 sections, from the search index, become a collapsed outline under its entry.
+  // Another page's indexed headings become a collapsed outline under its entry.
   function attachOutline(entry, sections, ctx) {
-    var items = sections.filter(function (s) {
-      return s.id && (s.level === 2 || s.level === 3);
-    }).map(function (s) {
-      return { level: s.level, id: s.id, text: s.title };
+    var items = outlineSections(sections).map(function (section) {
+      return { id: section.id, text: section.title };
     });
     if (!items.length) return;
-    var groups = {};
-    var href = entry.page.href.split('#')[0];
-    var outline = renderOutline(outlineTree(items), {}, groups, href, 'df-outline-' + (++ctx.groups) + '-');
-    Object.keys(groups).forEach(function (id) {
-      disclosure(groups[id].li, groups[id].caret, groups[id].list, false);
-    });
+    var outline = renderOutline(items, entry.page.href);
     if (entry.box) {
       entry.box.insertBefore(outline, entry.box.firstChild);
       return;
@@ -360,7 +270,7 @@
     var caret = pageCaret(entry.page.title, entry.box, ctx);
     entry.row.replaceChild(caret, entry.row.querySelector('.df-nav-caret-space'));
     entry.li.appendChild(entry.box);
-    disclosure(entry.li, caret, entry.box, false);
+    disclosure(caret, entry.box, false);
   }
 
   function outlineOthers(ctx) {
@@ -372,7 +282,7 @@
       indexed.forEach(function (page) { byKey[pageKey(page.href)] = page; });
       ctx.others.forEach(function (entry) {
         var page = byKey[pageKey(entry.page.href)];
-        if (page) attachOutline(entry, page.sections, ctx);
+        if (page) attachOutline(entry, page.outline, ctx);
       });
     });
   }
@@ -453,11 +363,16 @@
     else if (r.bottom > b.bottom - pad) box.scrollTop += r.bottom - b.bottom + pad;
   }
 
-  function spy(headings, links, sidebar, main, onActive) {
+  function spy(headings, links, sidebar, main) {
     if (!headings.length) return;
     var rail = renderRail(headings);
     var sentinel = main.appendChild(make('div', 'df-outline-sentinel'));
     sentinel.setAttribute('aria-hidden', 'true');
+    var section = null;
+    var sectionLinks = headings.map(function (h) {
+      if (h.level === 1) section = links[h.id] || null;
+      return section;
+    });
     var active = null;
     var pending = false;
 
@@ -471,9 +386,8 @@
       var line = max > 0 ? Math.max(height * SPY_LINE, height - remaining) : height * SPY_LINE;
       var tops = headings.map(function (h) { return h.el.getBoundingClientRect().top; });
       var index = pickActive(tops, line, atBottom);
-      var link = index >= 0 ? links[headings[index].id] : null;
+      var link = index >= 0 ? sectionLinks[index] : null;
       rail.update(index, sectionProgress(tops, index, line, sentinel.getBoundingClientRect().top, atBottom));
-      onActive(index >= 0 ? headings[index].id : null);
       if (link === active) return;
       if (active) {
         active.classList.remove('is-active');
@@ -706,9 +620,7 @@
     findCurrent: findCurrent,
     pickActive: pickActive,
     sectionProgress: sectionProgress,
-    outlineTree: outlineTree,
-    groupOpen: groupOpen,
-    caretChoice: caretChoice,
+    outlineSections: outlineSections,
     clampWidth: clampWidth,
     headingUrl: headingUrl,
     drawer: null
@@ -716,22 +628,16 @@
 
   DocForm.register('nav', function (site) {
     var main = document.querySelector('.df-page') || document.querySelector('main') || document.body;
-    var headings = collectHeadings(main);
-    headings.forEach(function (h) { linkHeading(h.el); });
+    var anchorHeadings = collectHeadings(main);
+    anchorHeadings.forEach(function (h) { linkHeading(h.el); });
+    var sections = outlineSections(anchorHeadings);
     var hasTree = site.provided && site.pages.length > 0;
     var sidebar = document.querySelector('.df-sidebar');
-    if (!hasTree && !headings.length && !sidebar) return;
+    if (!hasTree && !sections.length && !sidebar) return;
 
     var index = findCurrent(site.order, DocForm.page);
-    var links = {};
-    var groups = {};
-    var parents = {};
-    var tree = outlineTree(headings);
-    tree.forEach(function (node) {
-      node.children.forEach(function (child) { parents[child.item.id] = node.item.id; });
-    });
-    var outline = headings.length ? renderOutline(tree, links, groups) : null;
-    var activateGroup = collapser(groups);
+    var links = Object.create(null);
+    var outline = sections.length ? renderOutline(sections, '', links) : null;
 
     if (!sidebar) {
       sidebar = make('nav', 'df-sidebar');
@@ -762,14 +668,9 @@
       host.appendChild(outline);
     }
 
-    spy(headings, links, sidebar, main, function (id) {
-      activateGroup(id === null ? null : parents[id] || id);
-    });
+    spy(anchorHeadings.filter(function (h) { return h.level < 3; }), links, sidebar, main);
     renderPager(main, site.order, index);
     DocForm.nav.drawer = drawer(sidebar);
     resizer(sidebar);
-    sidebar.addEventListener('pointerleave', function (event) {
-      if (event.pointerType !== 'touch') peeks.forEach(function (close) { close(); });
-    });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

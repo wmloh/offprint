@@ -184,16 +184,12 @@
     var p = make('p', 'df-glossary-uses');
     p.appendChild(make('span', 'df-glossary-label', 'Used on'));
     p.appendChild(document.createTextNode(' '));
-    uses.forEach(function (group, i) {
-      if (i) p.appendChild(document.createTextNode('; '));
-      p.appendChild(link(group.href, group.title));
-      if (!group.sections.length) return;
-      p.appendChild(document.createTextNode(' ('));
-      group.sections.forEach(function (s, j) {
-        if (j) p.appendChild(document.createTextNode(', '));
-        p.appendChild(link(s.href, s.title));
-      });
-      p.appendChild(document.createTextNode(')'));
+    var targets = uses.flatMap(function (group) {
+      return group.intro || !group.sections.length ? [group].concat(group.sections) : group.sections;
+    });
+    targets.forEach(function (target, i) {
+      if (i) p.appendChild(document.createTextNode(' · '));
+      p.appendChild(link(target.href, target.title));
     });
     return p;
   }

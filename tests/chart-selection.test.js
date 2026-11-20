@@ -157,8 +157,8 @@ function setup({ groups, enhance, modules = [], animation = {} } = {}) {
   return { chart: DocForm.chart, selection: DocForm.selection, sets, warnings, document, DocForm, reads };
 }
 
-function draw(spec) {
-  const env = setup();
+function draw(spec, options) {
+  const env = setup(options);
   const host = new Node('div');
   env.document.body.appendChild(host);
   const api = env.chart(host, spec);
@@ -1450,6 +1450,7 @@ const click = (el) => el.dispatchEvent(new Event('click'));
 test('legend buttons hide series from the plot, readout, and table; rescale is opt-in; all hidden shows a message', () => {
   const spec = {
     type: 'line',
+    toggles: true,
     series: [{ name: 'Low', data: [[1, 1], [2, 2]] }, { name: 'High', data: [[1, 50], [2, 90]] }, { name: 'Mid', data: [[1, 5]] }]
   };
   const c = draw(spec);
@@ -1487,6 +1488,116 @@ test('legend buttons hide series from the plot, readout, and table; rescale is o
   assert.equal(empty.hidden, true);
   assert.equal(dotsOf(c).length, 1);
   assert.equal(c.api.visible('Nope', false), false);
+});
+
+function legendClock(reduced = false) {
+  const frames = new Map();
+  let id = 0;
+  return {
+    frames,
+    animation: {
+      matchMedia: () => ({ matches: reduced }),
+      requestAnimationFrame(fn) { frames.set(++id, fn); return id; },
+      cancelAnimationFrame(id) { frames.delete(id); }
+    },
+    tick(now) {
+      const pending = [...frames.values()];
+      frames.clear();
+      pending.forEach((fn) => fn(now));
+    }
+  };
+}
+
+test('legend transitions retarget surviving bars and remove departing bars after they fade', () => {
+  const spec = { type: 'bar', toggles: true, series: [
+    { name: 'First', data: [['A', 2]] }, { name: 'Second', data: [['A', 5]] }
+  ] };
+  const clock = legendClock();
+  const c = draw(spec, clock);
+  const bars = () => byClass(c, 'df-chart-bar');
+  const first = () => bars().at(-1).getAttribute('d');
+  const before = bars()[0].getAttribute('d');
+  click(legendButton(c, 'Second'));
+  assert.equal(first(), before);
+  clock.tick(0);
+  clock.tick(110);
+  const middle = first();
+  assert.notEqual(middle, before);
+  assert.ok(+bars()[0].parentNode.getAttribute('opacity') < 1);
+  click(legendButton(c, 'Second'));
+  assert.equal(bars()[0].getAttribute('d'), middle);
+  clock.tick(110);
+  clock.tick(350);
+  assert.equal(bars()[0].getAttribute('d'), before);
+  assert.equal(bars()[1].parentNode.getAttribute('opacity'), null);
+
+  click(legendButton(c, 'Second'));
+  clock.tick(400);
+  clock.tick(700);
+  assert.equal(bars().length, 1);
+
+  const still = legendClock(true);
+  const reduced = draw(spec, still);
+  click(legendButton(reduced, 'Second'));
+  assert.equal(byClass(reduced, 'df-chart-bar').length, 1);
+  assert.equal(still.frames.size, 0);
+});
+
+test('pie slices interpolate their angles and update the visible shares, with stable keys across updates', () => {
+  const clock = legendClock();
+  const spec = { type: 'pie', toggles: true, data: [
+    { label: 'North', value: 3, key: 'n' }, { label: 'South', value: 1, key: 's' }
+  ] };
+  const c = draw(spec, clock);
+  c.fire('pointermove', { clientX: 200, clientY: 50 });
+  assert.match(c.tip().textContent, /North.*75%/);
+  const pathOf = () => byClass(c, 'df-chart-slice').at(-1).getAttribute('d');
+  const north = byClass(c, 'df-chart-slice')[0].getAttribute('d');
+  click(legendButton(c, 'South'));
+  assert.equal(pathOf(), north);
+  clock.tick(0);
+  clock.tick(120);
+  const middle = pathOf();
+  assert.notEqual(middle, north);
+  clock.tick(240);
+  assert.notEqual(pathOf(), middle);
+  assert.equal(byClass(c, 'df-chart-slice').length, 1);
+  c.fire('keydown', { key: 'Home' });
+  assert.match(c.tip().textContent, /North.*100%/);
+  click(byClass(c, 'df-chart-toggle')[0]);
+  const table = byClass(c, 'df-chart-table')[0];
+  assert.match(table.textContent, /North3100%/);
+  assert.doesNotMatch(table.textContent, /South/);
+  assert.ok(c.api.update({ ...spec, data: [{ label: 'South updated', key: 's', value: 4 }] }));
+  assert.match(table.textContent, /Every slice is hidden/);
+  assert.equal(legendButton(c, 'South updated').getAttribute('aria-pressed'), 'false');
+});
+
+test('pie markup and mapped sources both use slice labels and opt-in legend controls', () => {
+  const authored = new Node('div');
+  const mapped = new Node('div');
+  mapped.id = 'mapped-pie';
+  mapped.setAttribute('data-df-source', 'counts');
+  for (const host of [authored, mapped]) host.setAttribute('data-df-chart', 'pie');
+  authored.setAttribute('data-df-toggles', '');
+  const table = new Node('table');
+  for (const values of [['Region', 'Count'], ['West', '1'], ['East', '3']]) {
+    const row = table.insertRow();
+    values.forEach((value) => { row.insertCell().textContent = value; });
+  }
+  authored.appendChild(table);
+  const env = setup({ modules: ['data'], enhance(df, document, boot) {
+    df.data.define('counts', { type: 'csv', text: 'area,count,code\nWest,1,w\nEast,3,e' });
+    boot.optionLayers = (feature, id) => feature === 'chart' && id === mapped.id ? [{
+      mapping: { x: 'area', series: [{ field: 'count', key: 'count', label: 'Count' }], pointKey: 'code' }
+    }] : [];
+    document.body.appendChild(authored);
+    document.body.appendChild(mapped);
+  } });
+  assert.equal(byClass({ host: authored }, 'df-chart-series-toggle').length, 2);
+  assert.equal(byClass({ host: mapped }, 'df-chart-series-toggle').length, 0);
+  assert.deepEqual(Array.from(env.chart.get(mapped).model().series, (s) => [s.key, s.name]), [['w', 'West'], ['e', 'East']]);
+  assert.equal(env.chart.get(mapped).model().y.label, 'Count');
 });
 
 const hour = 36e5;

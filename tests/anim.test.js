@@ -97,11 +97,11 @@ test('a mouse or pen crossing a stopped figure plays it unless paused or control
   assert.equal(anim.hoverPlays({ ...base, stepDriven: true }), false);
 });
 
-test('existing animations retain their timing; chart playback handles reduced motion', () => {
+test('only chart filtering and chart playback alter timing for reduced motion', () => {
   const root = path.join(__dirname, '../docform');
   for (const dir of ['js', 'css']) {
     for (const file of fs.readdirSync(path.join(root, dir))) {
-      if (dir === 'js' && file === 'chart-playback.js') continue;
+      if (dir === 'js' && ['chart.js', 'chart-playback.js'].includes(file)) continue;
       const source = fs.readFileSync(path.join(root, dir, file), 'utf8');
       assert.doesNotMatch(source, /prefers-reduced-motion|reducedMotion/, `${dir}/${file}`);
     }

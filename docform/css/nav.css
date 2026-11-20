@@ -1,5 +1,5 @@
 /* Sidebar page tree, page outline, previous and next links, and the narrow-screen drawer from nav.js. */
-.df-page :is(h2, h3) {
+.df-page :is(h1, h2, h3) {
   scroll-margin-top: var(--df-space-5);
 }
 
@@ -34,6 +34,16 @@ a.df-nav-title:hover {
 
 .df-nav-list .df-nav-list {
   padding-left: var(--df-space-3);
+}
+
+.df-nav-page-group {
+  margin-top: var(--df-space-2);
+  padding-top: var(--df-space-1);
+  border-top: 1px solid var(--df-border-strong);
+}
+
+.df-nav-page-group > .df-nav-row > .df-nav-label {
+  font-weight: 600;
 }
 
 .df-nav-row {
@@ -98,6 +108,10 @@ button.df-nav-label {
   cursor: pointer;
 }
 
+.df-nav-link {
+  font-weight: 550;
+}
+
 .df-nav-link[aria-current="page"] {
   color: var(--df-text);
   font-weight: 600;
@@ -114,20 +128,8 @@ button.df-nav-label {
   margin-left: var(--df-space-2);
 }
 
-.df-outline .df-outline {
-  margin: 0;
-  border-left: 0;
-}
-
-.df-outline-row {
-  display: flex;
-  align-items: center;
-}
-
 .df-outline-link {
   display: block;
-  flex: 1;
-  min-width: 0;
   margin-left: -1px;
   padding: 3.5px var(--df-space-2) 3.5px 10px;
   border-left: 2px solid transparent;
@@ -135,10 +137,6 @@ button.df-nav-label {
   line-height: 1.4;
   text-decoration: none;
   transition: color 0.15s, border-color 0.15s;
-}
-
-.df-outline .df-outline .df-outline-link {
-  padding-left: 22px;
 }
 
 .df-outline-link:hover {
@@ -150,38 +148,7 @@ button.df-nav-label {
   color: var(--df-text);
 }
 
-/* Subsection carets: only the section in view, and sections opened by hand, stay expanded. */
-.df-outline-caret {
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  margin-right: 2px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--df-radius-sm);
-  background: transparent;
-  color: var(--df-text-faint);
-  cursor: pointer;
-}
-
-.df-outline-caret:hover {
-  background: var(--df-bg-hover);
-  color: var(--df-text-muted);
-}
-
-.df-outline-caret[aria-expanded="true"] svg {
-  transform: rotate(90deg);
-}
-
-/* Groups opened only by the pointer resting on them show a fainter caret; a caret click holds them. */
-.is-peek > :is(.df-nav-row, .df-outline-row) > :is(.df-nav-caret, .df-outline-caret) {
-  opacity: 0.5;
-}
-
-.df-nav-caret svg,
-.df-outline-caret svg {
+.df-nav-caret svg {
   transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1);
 }
 
@@ -464,7 +431,7 @@ button.df-nav-label {
   }
 }
 
-/* Copy-link button after h2 and h3 text: shown while the heading is hovered or the button has focus. */
+/* Copy-link button shown while the heading is hovered or the button has focus. */
 .df-heading-link {
   display: inline-grid;
   place-items: center;
@@ -489,7 +456,7 @@ button.df-nav-label {
   height: 1em;
 }
 
-:is(h2, h3):hover > .df-heading-link,
+:is(h1, h2, h3):hover > .df-heading-link,
 .df-heading-link:focus-visible,
 .df-heading-link.is-done {
   opacity: 1;

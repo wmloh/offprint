@@ -233,6 +233,7 @@ test('log axes reject nonpositive values and bounds, and other charts ignore the
 test('views hide series by name and keep line readings just beyond a narrowed range', () => {
   const model = chart.normalize({
     gaps: 'break',
+    toggles: true,
     series: [{ name: 'A', data: [[1, 1], [2, 2], [3, null], [4, 4], [5, 5], [6, 6]] }, { name: 'B', data: [[1, 9], [6, 9]] }]
   });
   assert.equal(model.toggles, true);
@@ -246,7 +247,21 @@ test('views hide series by name and keep line readings just beyond a narrowed ra
   assert.deepEqual(plain(chart.segments(a.line, a.breaks, (x) => x).map((run) => run.map((p) => p.x))), [[2], [4, 5]]);
   assert.equal(chart.view(model, {}, null).series[1].points.length, 2);
   assert.equal(chart.normalize({ series: [{ data: [1, 2] }] }).toggles, false);
+  assert.equal(chart.normalize({ series: [{ data: [1] }, { data: [2] }] }).toggles, false);
   assert.equal(chart.normalize({ toggles: false, series: [{ data: [1] }, { data: [2] }] }).toggles, false);
+});
+
+test('pie tables and specs validate labels, keys, and finite nonnegative values', () => {
+  const spec = chart.fromTable([['Group', 'Count'], ['North', 3], ['South', '0']], 'pie');
+  const model = chart.normalize(spec);
+  assert.deepEqual(plain(model.errors), []);
+  assert.deepEqual(plain(model.series.map((s) => [s.key, s.points[0].y])), [['North', 3], ['South', 0]]);
+  assert.equal(model.y.label, 'Count');
+  assert.equal(model.toggles, false);
+  assert.equal(chart.domain(model), null);
+  assert.match(chart.validate({ type: 'pie', data: [{ label: 'A', value: '1e400' }] })[0], /finite value/);
+  assert.match(chart.validate({ type: 'pie', data: [{ label: 'A', value: -1 }] })[0], /nonnegative/);
+  assert.match(chart.validate({ type: 'pie', data: [{ label: 'A', value: 1 }, { label: 'A', value: 2 }] })[0], /unique/);
 });
 
 test('ranges clamp to the data, zoom around a value, and pan to the ends on linear, time, and log axes', () => {

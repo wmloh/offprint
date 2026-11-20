@@ -1,4 +1,4 @@
-// SVG line, bar, and scatter charts from inline data: a JSON script or a table inside a [data-df-chart] element, or
+// SVG line, bar, scatter, and pie charts from a JSON script or table inside a [data-df-chart] element, or
 // DocForm.chart(el, spec). Hovering or the arrow keys show a readout; the Table button swaps the plot for its data.
 // Line charts with gaps: 'break' end a segment at explicit missing values; referenceLines mark labelled values.
 // With a selection group, a click, Enter, or Space on a keyed point selects that key in DocForm.selection.
@@ -17,13 +17,15 @@
   }
 
   var NS = 'http://www.w3.org/2000/svg';
-  var TYPES = { line: true, bar: true, scatter: true };
+  var TYPES = { line: true, bar: true, scatter: true, pie: true };
   var COLORS = 6;
   var CHAR = 7;
   var HIT = 24;
   var DRAG = 5;
   var MIN_SPAN = 1e-3;
   var EMPTY_SERIES = 'Every series is hidden. Choose one in the legend to show it.';
+  var HIDDEN_PIE = 'Every slice is hidden. Choose one in the legend to show it.';
+  var EMPTY_PIE = 'No visible slices have a positive value.';
   var EMPTY_RANGE = 'No readings in this range.';
   var EMPTY_FILTER = 'No readings match these filters.';
   var clips = 0;
@@ -446,7 +448,8 @@
   // With x: { type: 'time' }, x values are timestamps (see toTime) and a point whose x is not one is skipped.
   function normalize(spec) {
     spec = spec || {};
-    var type = TYPES[spec.type] ? spec.type : 'line';
+    var type = Object.hasOwn(TYPES, spec.type) ? spec.type : 'line';
+    if (type === 'pie') return normalizePie(spec);
     var breaks = type === 'line' && spec.gaps === 'break';
     var time = axisType(spec.x) === 'time';
     if (time && type === 'bar') {
@@ -571,7 +574,7 @@
       selectionMode: 'both',
       selectionGroup: typeof spec.selectionGroup === 'string' && spec.selectionGroup.trim() ? spec.selectionGroup.trim() : null,
       table: spec.table !== false,
-      toggles: spec.toggles !== false && series.length > 1,
+      toggles: spec.toggles === true && series.length > 1,
       brush: !!spec.brush && !categorical,
       rescale: !!spec.rescale,
       x: xAxis,
@@ -582,6 +585,30 @@
     if (new Set(series.map(function (item) { return item.key; })).size !== series.length) {
       model.errors.push('Each chart series needs a unique key or a unique name.');
     }
+    return model;
+  }
+
+  function normalizePie(spec) {
+    var errors = [];
+    if (!Array.isArray(spec.data)) errors.push('Pie charts need a data array of slices.');
+    var series = (Array.isArray(spec.data) ? spec.data : []).map(function (slice, i) {
+      slice = slice || {};
+      var label = typeof slice.label === 'string' ? slice.label.trim() : '';
+      var value = toNumber(slice.value);
+      if (!label || !isNum(value) || value < 0) {
+        errors.push('Pie slice ' + (i + 1) + ' needs a label and a nonnegative finite value.');
+      }
+      return { name: label, key: slice.key, role: slice.role, color: slice.color,
+        data: [{ x: label, y: value, key: slice.key }] };
+    });
+    var valueAxis = axisSpec(spec.y, false, false);
+    var model = normalize({ type: 'bar', series: series, y: { label: valueAxis.label, unit: valueAxis.unit, digits: valueAxis.digits },
+      title: spec.title, height: spec.height, toggles: spec.toggles, table: spec.table, selectionGroup: spec.selectionGroup });
+    model.type = 'pie';
+    model.toggles = spec.toggles === true && series.length > 0;
+    model.errors = errors.concat(model.errors.map(function (error) {
+      return error.replace('chart series', 'pie slice');
+    }));
     return model;
   }
 
@@ -599,6 +626,11 @@
   function fromTable(rows, type, keys) {
     var head = rows[0] || [];
     var body = rows.slice(1);
+    if (type === 'pie') {
+      return { type: type, y: { label: head[1] || '' }, data: body.map(function (row, i) {
+        return { label: row[0] == null ? '' : String(row[0]), value: row[1], key: keys && keys[i + 1] && keys[i + 1][1] };
+      }) };
+    }
     return {
       type: type,
       x: { label: head[0] || '' },
@@ -932,12 +964,161 @@
     };
   }
 
-  // Draws chart.view. The y axis covers every series unless the chart rescales to the series and range shown.
-  function draw(chart) {
+  var svgNumber = /[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi;
+
+  // A series visibility change keeps the data and path commands of the surviving marks.
+  function interpolateMarks(before, after, changes) {
+    if (before.tagName !== after.tagName) return;
+    var attrs = after.tagName.toLowerCase() === 'path' ? ['d'] : ['cx', 'cy', 'x', 'y', 'x1', 'x2', 'y1', 'y2'];
+    attrs.forEach(function (name) {
+      var from = before.getAttribute(name);
+      var to = after.getAttribute(name);
+      if (from === null || to === null || from === to || from.replace(svgNumber, '#') !== to.replace(svgNumber, '#')) return;
+      var start = from.match(svgNumber).map(Number);
+      var end = to.match(svgNumber).map(Number);
+      changes.push(function (t) {
+        var i = 0;
+        after.setAttribute(name, t === 1 ? to : to.replace(svgNumber, function () {
+          var value = mix(start[i], end[i], t);
+          i++;
+          return value;
+        }));
+      });
+    });
+    if (before.children.length === after.children.length) {
+      Array.from(after.children).forEach(function (child, i) { interpolateMarks(before.children[i], child, changes); });
+    }
+  }
+
+  function mix(from, to, t) { return from + (to - from) * t; }
+
+  function stopMotion(chart) {
+    if (chart.motion !== undefined) root.cancelAnimationFrame(chart.motion);
+    chart.motion = undefined;
+  }
+
+  function animateMarks(chart, previous, current, marks) {
+    var changes = [];
+    var leaving = [];
+    function transition(before, next, from, to, target) {
+      var entry = next || before;
+      if (entry.arc) {
+        var start = before ? before.arc.slice() : [target[0], target[0]];
+        var end = next ? target : [start[0], start[0]];
+        changes.push(function (t) { entry.shape(mix(start[0], end[0], t), mix(start[1], end[1], t)); });
+      } else if (before && next) interpolateMarks(before.el, next.el, changes);
+      if (from !== to) changes.push(function (t) {
+        if (t === 1 && to === 1) entry.el.removeAttribute('opacity');
+        else entry.el.setAttribute('opacity', mix(from, to, t));
+      });
+    }
+    current.forEach(function (next, key) {
+      var before = previous.get(key);
+      transition(before, next, before ? +(before.el.getAttribute('opacity') ?? 1) : 0, 1, next.arc);
+    });
+    previous.forEach(function (before, key) {
+      if (current.has(key)) return;
+      marks.insertBefore(before.el, marks.firstChild);
+      before.el.setAttribute('pointer-events', 'none');
+      DocForm.all('[' + GROUP + '][' + KEY + ']', before.el).forEach(function (el) {
+        el.removeAttribute(GROUP);
+        el.removeAttribute(KEY);
+      });
+      current.set(key, before);
+      leaving.push(key);
+      transition(before, null, +(before.el.getAttribute('opacity') ?? 1), 0);
+    });
+    if (!changes.length) return;
+    changes.forEach(function (change) { change(0); });
+    var start = null;
+    function step(now) {
+      if (start === null) start = now;
+      var progress = Math.min(1, (now - start) / 240);
+      var t = 1 - Math.pow(1 - progress, 3);
+      changes.forEach(function (change) { change(t); });
+      if (progress < 1) chart.motion = root.requestAnimationFrame(step);
+      else {
+        chart.motion = undefined;
+        leaving.forEach(function (key) { current.get(key).el.remove(); current.delete(key); });
+      }
+    }
+    chart.motion = root.requestAnimationFrame(step);
+  }
+
+  function mountFrame(chart, frame, seriesMarks, previous) {
+    if (previous) animateMarks(chart, previous, seriesMarks, chart.marks);
+    chart.seriesMarks = seriesMarks;
+    if (chart.svg) chart.plot.replaceChild(frame, chart.svg);
+    else chart.plot.insertBefore(frame, chart.plot.firstChild);
+    chart.svg = frame;
+  }
+
+  var TURN = Math.PI * 2;
+
+  function piePath(cx, cy, r, start, end) {
+    function rim(a) { return (cx + r * Math.sin(a)) + ',' + (cy - r * Math.cos(a)); }
+    var arc = 'A' + r + ',' + r + ' 0 0 1 ';
+    if (end - start === TURN) return 'M' + rim(start) + arc + rim(start + Math.PI) + arc + rim(start) + 'Z';
+    return 'M' + cx + ',' + cy + 'L' + rim(start) + arc + rim((start + end) / 2) + arc + rim(end) + 'Z';
+  }
+
+  function drawPie(chart, width, previous) {
+    var model = chart.view;
+    var height = model.height;
+    var cx = width / 2;
+    var cy = height / 2;
+    var r = Math.max(0, Math.min(cx, cy) - 8);
+    var frame = svg('svg', { viewBox: '0 0 ' + width + ' ' + height, width: width, height: height,
+      'aria-hidden': 'true', focusable: 'false' });
+    var seriesMarks = new Map();
+    chart.marks = svg('g', {}, frame);
+    chart.overlay = svg('g', { class: 'df-chart-hover' }, frame);
+    chart.geom = { cx: cx, cy: cy, radius: r };
+    chart.cursor = chart.revealPlot = null;
+    var scale = pieTotal(model.series);
+    var summed = 0;
+    chart.spots = model.series.map(function (s) {
+      var p = s.points[0];
+      var part = scale.total ? p.y / scale.max / scale.total : null;
+      var start = scale.total ? summed / scale.total * TURN : 0;
+      summed += scale.max ? p.y / scale.max : 0;
+      var end = scale.total ? summed / scale.total * TURN : 0;
+      var group = svg('g', { class: 'df-chart-series' }, chart.marks);
+      paint(group, s);
+      var path = tagKey(model, svg('path', { class: 'df-chart-slice' }, group), p);
+      var entry = { el: group, arc: [start, end], shape: function (a, b) {
+        entry.arc = [a, b];
+        path.setAttribute('d', piePath(cx, cy, r, a, b));
+        if (a === b) path.setAttribute('display', 'none');
+        else path.removeAttribute('display');
+      } };
+      entry.shape(start, end);
+      seriesMarks.set(s.key, entry);
+      var middle = (start + end) / 2;
+      return { p: p, s: s, el: path, part: part, entry: entry,
+        px: cx + r * 0.65 * Math.sin(middle), py: cy - r * 0.65 * Math.cos(middle) };
+    });
+    chart.empty.textContent = model.noMatches ? EMPTY_FILTER : !model.series.length && model.hiddenCount ? HIDDEN_PIE :
+      !scale.total ? EMPTY_PIE : '';
+    chart.empty.hidden = !chart.empty.textContent;
+    chart.empty.style.left = '0';
+    chart.empty.style.width = '100%';
+    chart.empty.style.top = '0';
+    chart.empty.style.height = height + 'px';
+    mountFrame(chart, frame, seriesMarks, previous);
+    if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
+  }
+
+  // The y axis covers every series unless the chart rescales to the series and range shown.
+  function draw(chart, animate) {
     var model = chart.view;
     var width = Math.round(chart.plot.clientWidth);
+    var previous = animate && width === chart.width && root.requestAnimationFrame && root.cancelAnimationFrame &&
+      !(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) ? chart.seriesMarks : null;
+    stopMotion(chart);
     chart.width = width;
     if (!width) return;
+    if (model.type === 'pie') return drawPie(chart, width, previous);
     var height = model.height;
     var type = model.type;
     var series = model.series;
@@ -1065,6 +1246,7 @@
       thick = Math.max(2, Math.min(24, (band * 0.72 - gap * (m - 1)) / m));
     }
     var markOf = new Map();
+    var seriesMarks = new Map();
     var future = [];
     // Keyed marks follow the shared selection after every redraw.
     var place = function (p, el, px) {
@@ -1078,6 +1260,7 @@
     };
     series.forEach(function (s, si) {
       var g = svg('g', { class: 'df-chart-series' }, marks);
+      seriesMarks.set(s.key, { el: g });
       paint(g, s);
       var intervals = hasIntervals && type !== 'bar' ?
         svg('g', { 'clip-path': 'url(#' + chart.clip + '-interval)' }, g) : null;
@@ -1209,9 +1392,7 @@
     chart.empty.style.top = top + 'px';
     chart.empty.style.height = Math.max(0, height - bottom - top) + 'px';
 
-    if (chart.svg) chart.plot.replaceChild(frame, chart.svg);
-    else chart.plot.insertBefore(frame, chart.plot.firstChild);
-    chart.svg = frame;
+    mountFrame(chart, frame, seriesMarks, previous);
     if (chart.revealPlot) chart.revealPlot(chart.playhead);
     paintCursor(chart);
     if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
@@ -1252,7 +1433,13 @@
     tip.textContent = '';
     var anchorY = g.top;
 
-    if (model.type === 'scatter') {
+    if (model.type === 'pie') {
+      spot.el.classList.add('is-active');
+      html('div', 'df-chart-tip-head', tip, spot.s.name);
+      var share = pieShare(spot.part);
+      html('div', 'df-chart-tip-row', tip, format(spot.p.y, model.y) + (share ? ' · ' + share : ''));
+      anchorY = spot.py;
+    } else if (model.type === 'scatter') {
       spot.el.classList.add('is-active');
       var ring = svg('circle', { cx: spot.px, cy: spot.py, r: 7, class: 'df-chart-ring' }, chart.overlay);
       paint(ring, spot.s);
@@ -1331,6 +1518,16 @@
     var py = at.y;
     var g = chart.geom;
     var spots = chart.spots;
+    if (chart.model.type === 'pie') {
+      var dx = px - g.cx;
+      var dy = py - g.cy;
+      if (Math.hypot(dx, dy) > g.radius || !g.radius) return hide(chart);
+      var angle = (Math.atan2(dx, -dy) + TURN) % TURN;
+      var slice = spots.findIndex(function (spot) {
+        return angle >= spot.entry.arc[0] && angle < spot.entry.arc[1];
+      });
+      return show(chart, slice, null);
+    }
     if (chart.playhead !== null && px > g.x(chart.playhead)) return leaveInspection(chart);
     if (chart.cursor && (px < g.left || px > g.right || py < g.top || py > g.bottom)) return leaveInspection(chart);
     if (!spots.length || px < g.left - HIT || px > g.right + HIT || py < g.top - HIT || py > g.bottom + HIT) {
@@ -1380,10 +1577,36 @@
     return el;
   }
 
+  function pieShare(part) {
+    if (part === null) return '';
+    if (part > 0 && part < 0.001) return '<0.1%';
+    return (Math.round(part * 1000) / 10) + '%';
+  }
+
+  function pieTotal(series) {
+    var max = series.reduce(function (hi, s) { return Math.max(hi, s.points[0].y); }, 0);
+    var total = max ? series.reduce(function (sum, s) { return sum + s.points[0].y / max; }, 0) : 0;
+    return { max: max, total: total };
+  }
+
   function buildTable(model, collectRow) {
     var table = document.createElement('table');
     var head = html('tr', '', html('thead', '', table));
     var body = html('tbody', '', table);
+    if (model.type === 'pie') {
+      var scale = pieTotal(model.series);
+      ['Slice', model.y.label || 'Value', 'Share'].forEach(function (label) {
+        html('th', '', head, label).setAttribute('scope', 'col');
+      });
+      model.series.forEach(function (s) {
+        var p = s.points[0];
+        var tr = tagKey(model, html('tr', '', body), p);
+        html('th', '', tr, s.name).setAttribute('scope', 'row');
+        html('td', '', tr, format(p.y, model.y));
+        html('td', '', tr, pieShare(scale.total ? p.y / scale.max / scale.total : null));
+      });
+      return table;
+    }
     if (model.type === 'scatter') {
       var labels = model.series.some(function (s) { return s.points.some(function (p) { return p.label; }); });
       [model.series.length > 1 ? 'Series' : null, labels ? 'Label' : null, xName(model, 'x'), model.y.label || 'y']
@@ -1445,7 +1668,7 @@
       (keyed ? ' Enter or Space selects the point being read.' : '') +
       (model.brush ? ' Drag across the plot, or press plus and minus, to narrow or widen the x range; Shift with ' +
         'the left and right arrow keys moves it.' : '') +
-      (model.toggles ? ' The legend buttons hide and show series.' : '') +
+      (model.toggles ? ' The legend buttons hide and show ' + (model.type === 'pie' ? 'slices.' : 'series.') : '') +
       (model.table ? ' The Table button lists the values shown.' : '');
   }
 
@@ -1457,7 +1680,7 @@
     var model = chart.model;
     chart.legend.textContent = '';
     chart.seriesItems = [];
-    if (model.series.length > 1 || model.toggles) {
+    if (model.series.length > 1 || model.toggles || model.type === 'pie') {
       model.series.forEach(function (s) {
         var item = html(model.toggles ? 'button' : 'span', 'df-chart-legend-item', chart.legend);
         if (model.toggles) {
@@ -1498,7 +1721,8 @@
 
   function tableView(view) {
     if (view.noMatches) return html('p', 'df-chart-empty-note', null, EMPTY_FILTER);
-    return view.series.length ? buildTable(view) : html('p', 'df-chart-empty-note', null, EMPTY_SERIES);
+    return view.series.length ? buildTable(view) : html('p', 'df-chart-empty-note', null,
+      view.type === 'pie' ? (view.hiddenCount ? HIDDEN_PIE : EMPTY_PIE) : EMPTY_SERIES);
   }
 
   // The table view lists what the plot shows; a source table stands in while nothing is hidden or narrowed.
@@ -1518,7 +1742,7 @@
         if (DocForm._selection) DocForm.all('[' + GROUP + '][' + KEY + ']', entry.row).forEach(DocForm._selection.sync);
       }, function (entry) { entry.row.remove(); });
       chart.revealTable(chart.playhead);
-    } else if (chart.ownTable && !chart.range && !chart.view.hiddenCount) chart.table.appendChild(chart.sourceTable);
+    } else if (chart.ownTable && chart.model.type !== 'pie' && !chart.range && !chart.view.hiddenCount) chart.table.appendChild(chart.sourceTable);
     else if (chart.plot.hidden) chart.table.appendChild(tableView(chart.view));
   }
 
@@ -1569,12 +1793,12 @@
     return update.notify;
   }
 
-  function refresh(chart) {
+  function refresh(chart, animate) {
     chart.view = viewOf(chart.model, chart.hidden, chart.range);
     hide(chart);
     syncHead(chart);
     fillTable(chart);
-    if (!chart.plot.hidden) draw(chart);
+    if (!chart.plot.hidden) draw(chart, animate);
     if (typeof CustomEvent === 'function') {
       chart.box.dispatchEvent(new CustomEvent('df:chartview', {
         bubbles: true,
@@ -1587,7 +1811,7 @@
   function setVisible(chart, name, on) {
     if (on) delete chart.hidden[name];
     else chart.hidden[name] = true;
-    refresh(chart);
+    refresh(chart, true);
   }
 
   function setRange(chart, range) {
@@ -1673,7 +1897,7 @@
     chart.box.classList.toggle('is-table', on);
     chart.table.hidden = !on;
     chart.plot.hidden = on;
-    if (on && !chart.table.firstChild) fillTable(chart);
+    if (on && (chart.model.type === 'pie' || !chart.table.firstChild)) fillTable(chart);
     chart.toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     chart.toggle.textContent = on ? 'Chart' : 'Table';
     if (!on) draw(chart);
@@ -1854,7 +2078,7 @@
       }
       Object.keys(chart.hidden).forEach(function (name) {
         var compatible = model.filterSeries ? model.filterSeries.includes(name) :
-          model.series.length > 1 && model.series.some(function (s) { return s.key === name; });
+          (model.type === 'pie' || model.series.length > 1) && model.series.some(function (s) { return s.key === name; });
         if (!compatible) delete chart.hidden[name];
       });
       if (!model.noMatches) chart.range = keepRange(chart.range, chart.model, model);
@@ -1864,7 +2088,7 @@
       chart.spec = next;
       chart.view = viewOf(model, chart.hidden, chart.range);
       watch(chart);
-      host.classList.remove('is-line', 'is-bar', 'is-scatter');
+      host.classList.remove('is-line', 'is-bar', 'is-scatter', 'is-pie');
       host.classList.add('is-' + chart.model.type);
       hide(chart);
       renderHead(chart);
@@ -1884,6 +2108,7 @@
     }
     chart.replace = replace;
     chart.remove = function (origin) {
+      stopMotion(chart);
       charts.delete(host);
       if (chart.xGroup) chart.xGroup.members.delete(host);
       var notifyPlayback = reconcilePlayhead(chart, origin);
@@ -1894,7 +2119,7 @@
       head.remove();
       chart.plot.remove();
       chart.table.remove();
-      host.classList.remove('df-chart', 'is-line', 'is-bar', 'is-scatter', 'is-table');
+      host.classList.remove('df-chart', 'is-line', 'is-bar', 'is-scatter', 'is-pie', 'is-table');
       if (notifyPlayback) notifyPlayback();
     };
     charts.set(host, chart);
@@ -1922,7 +2147,7 @@
 
   function overrides(host, spec) {
     var type = DocForm.data(host, 'chart', '');
-    if (TYPES[type]) spec.type = type;
+    if (Object.hasOwn(TYPES, type)) spec.type = type;
     var height = DocForm.data(host, 'height', null);
     if (height !== null) {
       if (DocForm._boot) {
@@ -2018,9 +2243,10 @@
     } else if (table) {
       var cells = DocForm.all('tr', table).map(function (tr) { return DocForm.all('th, td', tr); });
       var keys = cells.map(function (r) { return r.map(function (cell) { return DocForm.data(cell, 'key', '').trim() || null; }); });
-      spec = fromTable(cells.map(function (r) { return r.map(cellText); }), null, keys);
+      var type = DocForm.data(host, 'chart', '') === 'pie' ? 'pie' : null;
+      spec = fromTable(cells.map(function (r) { return r.map(cellText); }), type, keys);
       var heads = DocForm.all('tr', table)[0];
-      (heads ? DocForm.all('th, td', heads) : []).slice(1).forEach(function (cell, i) {
+      (type !== 'pie' && heads ? DocForm.all('th, td', heads) : []).slice(1).forEach(function (cell, i) {
         var s = spec.series[i];
         if (!s) return;
         s.role = DocForm.data(cell, 'role', null);
@@ -2122,6 +2348,9 @@
     } else if (!mapping || !Array.isArray(mapping.series) || !mapping.series.length) {
       throw new Error('Chart mapping needs an x field and either column series or a value and group field.');
     }
+    if (base.type === 'pie' && mapping.series.length !== 1) {
+      throw new Error('Pie chart mapping needs one label field and one value column.');
+    }
     var x = typeof mapping.x === 'string' ? mapping.x : mapping.x && mapping.x.field;
     var fields = grouped ? [x, mapping.value, mapping.group.field] :
       [x].concat(mapping.series.map(function (s) { return s && s.field; }));
@@ -2137,6 +2366,20 @@
     axis.label = mapping.x && mapping.x.label !== undefined ? mapping.x.label : axis.label ?? keys[0];
     var spec = Object.assign({}, base, { x: axis });
     delete spec.data;
+
+    if (spec.type === 'pie') {
+      var label = mapping.series[0].label ?? keys[1];
+      spec.y = Object.assign({ label: label }, typeof base.y === 'string' ? { label: base.y } : base.y);
+      function sliceKey(record) {
+        return data.key(record[mapping.pointKey === undefined ? keys[0] : keys[2]]);
+      }
+      spec.data = rows.map(function (record) {
+        var key = sliceKey(record);
+        if (mapping.pointKey !== undefined && !key) throw new Error('Mapped pie slices need nonempty point keys.');
+        return { label: record[keys[0]], value: record[keys[1]], key: key };
+      });
+      return { spec: spec, rows: rows.length, filterSeries: filter ? value.map(sliceKey).filter(Boolean) : null };
+    }
 
     function readInterval(descriptor, field, at) {
       var interval = data.interval(value, descriptor, parsed, at);
@@ -2219,7 +2462,7 @@
       if (filter) {
         prepared.model.filterSeries = result.filterSeries || prepared.model.series.map(function (series) { return series.key; });
         prepared.model.noMatches = result.rows === 0;
-        if (prepared.grouped && result.spec.toggles !== false && prepared.model.series.length) prepared.model.toggles = true;
+        if (prepared.grouped && result.spec.toggles === true && prepared.model.series.length) prepared.model.toggles = true;
       }
       return prepared;
     }

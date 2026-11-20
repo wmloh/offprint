@@ -253,7 +253,8 @@
             var doc = parseHTML(contents[i].text);
             linkTerms(doc, job.config);
             var page = DF.search.extract(doc, input.title);
-            pages.push({ path: input.path, title: page.title || input.path, sections: page.sections, terms: page.terms });
+            pages.push({ path: input.path, title: page.title || input.path, sections: page.sections,
+              terms: page.terms, outline: page.outline });
           } catch (error) {
             job.errors.push('Cannot index ' + input.file + ' — ' + error.message);
           }

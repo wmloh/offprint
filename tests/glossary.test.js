@@ -25,10 +25,23 @@ function el(tag, attrs, children) {
     children: (children || []).map((c) => (typeof c === 'string' ? { nodeType: 3, nodeValue: c } : c)),
     get id() { return this.attrs.id || ''; },
     set id(value) { this.attrs.id = value; },
+    get className() { return this.attrs.class || ''; },
+    set className(value) { this.attrs.class = value; },
+    classList: { add: (name) => { node.className = `${node.className} ${name}`.trim(); } },
     getAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attrs, name) ? this.attrs[name] : null; },
     hasAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attrs, name); },
+    setAttribute(name, value) { this.attrs[name] = value; },
+    appendChild(child) {
+      this.children.push(child);
+      child.parent = this;
+      return child;
+    },
     get textContent() {
       return this.children.map((c) => (c.nodeType === 3 ? c.nodeValue : c.textContent)).join('');
+    },
+    set textContent(value) {
+      this.children = [];
+      if (value) this.appendChild({ nodeType: 3, nodeValue: value });
     },
     matches(selector) { return selector.split(',').some((part) => simple(this, part.trim())); },
     closest(selector) {
@@ -109,6 +122,24 @@ test('the extractor records tips and term uses once per section, with their sect
   assert.equal(data.sections[1].id, 'dot-product');
 });
 
+test('the extractor exports an h1/h2 outline while preserving existing search anchors', () => {
+  const { DocForm } = load();
+  const page = el('main', { class: 'df-page' }, [
+    el('h1', {}, ['Vectors']),
+    el('h2', {}, ['Vectors']),
+    el('h3', {}, ['Dot product']),
+    el('h2', { 'data-df-no-outline': '' }, ['Omitted']),
+    el('h1', {}, ['Matrices'])
+  ]);
+  const data = DocForm.search.extract(doc(page));
+  assert.deepEqual(json(data.outline), [
+    { id: 'vectors-2', title: 'Vectors', level: 1 },
+    { id: 'vectors', title: 'Vectors', level: 2 },
+    { id: 'matrices', title: 'Matrices', level: 1 }
+  ]);
+  assert.deepEqual(json(data.sections.map((section) => section.id)), ['', 'vectors', 'dot-product']);
+});
+
 const pages = [
   {
     href: 'file:///n/vectors.html', title: 'Vectors',
@@ -170,6 +201,31 @@ test('back-links group uses by page with section links, and unknown term names a
     { title: 'Matrices', href: 'file:///n/matrices.html', intro: true, sections: [] }
   ]);
   assert.equal(entries.some((e) => e.key === 'vectors'), false);
+});
+
+test('Used on lists heading links directly and includes the page title for introductory uses', () => {
+  const { DocForm, context } = load();
+  const holder = el('div');
+  context.document = {
+    querySelectorAll: () => [],
+    createElement: (tag) => el(tag),
+    createTextNode: (value) => ({ nodeType: 3, nodeValue: value })
+  };
+  DocForm.glossary.render(holder, DocForm.glossary.merge({}, [
+    {
+      title: 'Vectors', href: 'file:///n/vectors.html',
+      sections: [{ id: 'length', title: 'Length' }, { id: 'angles', title: 'Angles' }],
+      terms: ['length', 'angles'].map((section) => ({ section, text: 'norm', tip: 'A size measure.' }))
+    },
+    { title: 'Matrices', href: 'file:///n/matrices.html', terms: [{ text: 'norm', tip: 'A size measure.' }] }
+  ]));
+  const usedOn = holder.querySelector('.df-glossary-uses');
+  assert.equal(usedOn.textContent, 'Used on Length · Angles · Matrices');
+  assert.deepEqual(usedOn.querySelectorAll('a').map((a) => [a.textContent, a.href]), [
+    ['Length', 'file:///n/vectors.html#length'],
+    ['Angles', 'file:///n/vectors.html#angles'],
+    ['Matrices', 'file:///n/matrices.html']
+  ]);
 });
 
 test('letters group accented and non-Latin titles, put symbols last, and fill the jump bar', () => {

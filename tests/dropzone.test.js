@@ -90,6 +90,18 @@ test('a linked chart takes the file and Reset hands back its original spec', () 
   assert.equal(updates[2], original);
 });
 
+test('pie file replacements accept label and value tables or a full pie spec', () => {
+  const base = { type: 'pie', toggles: true, data: [{ label: 'North', value: 3, key: 'n', color: 'blue' }] };
+  const made = dropzone.chartSpec(dataset.parse('Label,Total\nNorth,5\nSouth,2', 'csv'), base, 2);
+  assert.deepEqual([made.rows, made.total], [2, 2]);
+  assert.equal(made.spec.y.label, 'Total');
+  assert.deepEqual(plain(made.spec.data[0]), { label: 'North', value: '5', key: 'n', color: 'blue' });
+  assert.deepEqual(plain(chart.validate(made.spec)), []);
+  const full = dropzone.chartSpec(dataset.parse('{"type":"pie","data":[{"label":"East","value":7}]}', 'json'), base);
+  assert.deepEqual(plain(full.spec.data), [{ label: 'East', value: 7 }]);
+  assert.equal(full.spec.toggles, true);
+});
+
 test('a linked data block shows the file and restores its own data', () => {
   dataset.add('curve', 'epoch,val\n1,0.5\n', 'csv');
   const block = context.document.createElement('div');

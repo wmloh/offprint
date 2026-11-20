@@ -66,6 +66,7 @@ a.df-glossary-jump:focus-visible {
 
 .df-glossary-entry {
   margin: var(--df-space-1) 0 0;
+  margin-inline-start: 1em;
 }
 
 .df-glossary-entry > * {

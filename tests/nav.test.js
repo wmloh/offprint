@@ -51,10 +51,18 @@ test('current page matches by path, ignoring index files, query, and hash', () =
   assert.equal(find('http://localhost:8000/notes/index.html'), -1);
 });
 
-test('outline nests h3 under the preceding h2 and scroll-spy picks the last heading above the line', () => {
+test('outline keeps every anchored h1 in order, even when titles match', () => {
   const { nav } = load();
-  const tree = nav.outlineTree([{ level: 3, id: 'a' }, { level: 2, id: 'b' }, { level: 3, id: 'c' }, { level: 2, id: 'd' }]);
-  assert.deepEqual(plain(tree.map((n) => [n.item.id, n.children.map((c) => c.item.id)])), [['a', []], ['b', ['c']], ['d', []]]);
+  const sections = nav.outlineSections([
+    { level: 1, id: '', title: 'Welcome' }, { level: 2, id: 'a' },
+    { level: 1, id: 'b', title: 'Welcome' }, { level: 2, id: 'c' },
+    { level: 3, id: 'd' }, { level: 4, id: 'e' }, { level: 1, id: 'f', title: 'Welcome' }
+  ]);
+  assert.deepEqual(plain(sections.map((section) => section.id)), ['b', 'f']);
+});
+
+test('scroll-spy picks the last heading above the line', () => {
+  const { nav } = load();
   assert.equal(nav.pickActive([50, 400, 900], 200, false), 0);
   assert.equal(nav.pickActive([250, 400], 200, false), -1);
   assert.equal(nav.pickActive([-500, 400, 900], 200, true), 2);
@@ -66,19 +74,6 @@ test('subsection progress spans the next heading or end of the page and complete
   assert.equal(nav.sectionProgress([100, 500], 0, 300, 800, false), 0.5);
   assert.equal(nav.sectionProgress([-300, 200], 1, 300, 600, false), 0.25);
   assert.equal(nav.sectionProgress([-300, 200], 1, 500, 600, true), 1);
-});
-
-test('groups open on their own or under the pointer until a caret click holds them open or closed', () => {
-  const { nav } = load();
-  assert.equal(nav.groupOpen(false, false, null), false);
-  assert.equal(nav.groupOpen(true, false, null), true);
-  assert.equal(nav.groupOpen(false, true, null), true);
-  assert.equal(nav.groupOpen(true, true, false), false);
-  assert.equal(nav.groupOpen(false, false, true), true);
-  assert.equal(nav.caretChoice(false, true, null), true);
-  assert.equal(nav.caretChoice(true, true, null), false);
-  assert.equal(nav.caretChoice(false, true, true), false);
-  assert.equal(nav.caretChoice(false, true, false), true);
 });
 
 test('sidebar width stays between 200px and the smaller of 480px and 40% of the viewport', () => {

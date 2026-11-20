@@ -9,7 +9,7 @@ docform/: Copyable offline library folder
     sections.css: Cycled h2 section colours and uniform left-margin section lines in an unblurred overlay layer
     buttons.css: Shared soft tinted pill buttons with optional icons for author and module actions, and the frosted icon pill for step controls
     roles.css: Roles legend styles
-    nav.css: Sidebar tree, collapsible outline, numbered subsection rail, resize handle, heading links, prev/next links, and drawer
+    nav.css: Sidebar tree with group dividers and section links, numbered subsection rail, resize handle, heading links, prev/next links, and drawer
     theme.css: Theme toggle button styles
     controls.css: Top-left frosted control pill, progress ring, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
     math.css: Display math layout and inline TeX error styles
@@ -27,7 +27,7 @@ docform/: Copyable offline library folder
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
     search.css: Frosted Ctrl+K search dialog with highlighted results
-    chart.css: Chart legend with series toggles, grid, thin marks, dashed reference lines, selected points, range brush and Reset, shared x cursor, hover readout, and table view
+    chart.css: Chart legend, opt-in series and slice toggles, plot marks, reference lines, selection, range brush, shared cursor, readout, and table view
     chart-playback.css: Guided playback pill spacing, playhead, checkpoint marker, and note visibility
     results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with a chip and row-count bar
     matrix.css: Evaluation matrix measure chooser, numeric cells, and shared color scale
@@ -41,7 +41,7 @@ docform/: Copyable offline library folder
   js/: Per-module classic scripts on a shared DocForm namespace
     core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, data-df-max-width limits, the shared step-control pill builder, heading slugs, glossary term keys, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables and data-df-legend rendering
-    nav.js: Sidebar tree and heading outlines with delayed hover-open groups, subsection progress, resizing, heading and prev/next links, and a subscribable drawer
+    nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
     controls.js: Control pill with reading progress, focus mode, three saved sidebar modes, search and theme buttons, and shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
@@ -58,7 +58,7 @@ docform/: Copyable offline library folder
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Ctrl+K search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
-    chart.js: SVG line, bar, and scatter charts with column and grouped observation mappings, supplied intervals, keyed series and points, shared x-position groups, interactive ranges, and table views
+    chart.js: SVG line, bar, scatter, and pie charts with animated legend filtering, named data mappings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
     chart-playback.js: Guided playback for individual numeric line charts and x-position groups with a Play/Pause step pill, authored checkpoint notes, and linked selection
     results.js: Source-mapped or authored tables with supplied intervals, sorting, heatmaps, thresholds, column filters, and saved state across replacements
     matrix.js: Named evaluation records pivoted into semantic tables with keyed axes, interchangeable measures, and static fallbacks

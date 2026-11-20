@@ -64,7 +64,18 @@
     var titleEl = doc.querySelector('title');
     var pageTitle = clean(title || (h1 && h1.textContent) || (titleEl && titleEl.textContent) || '');
     var sections = [{ id: '', title: pageTitle, level: 1, text: '' }];
-    if (component.closestFlag(main, 'no-search', 'search')) return { title: pageTitle, sections: sections, terms: [] };
+    var outline = [];
+    if (component.closestFlag(main, 'no-search', 'search')) {
+      return { title: pageTitle, sections: sections, terms: [], outline: outline };
+    }
+    Array.prototype.forEach.call(main.querySelectorAll('h1, h2'), function (h) {
+      if (h.closest(SKIP) || component.closestFlag(h, 'no-outline', 'search') ||
+          component.closestFlag(h, 'no-search', 'search')) return;
+      var text = clean(h.textContent);
+      if (!text) return;
+      if (!h.id) h.id = DocForm.uniqueSlug(DocForm.slug(h.textContent), used);
+      outline.push({ id: h.id, title: text, level: Number(h.tagName[1]) });
+    });
     var parts = [[]];
     var terms = [];
     var seen = {};
@@ -93,7 +104,8 @@
       var text = clean(parts[i].join(''));
       section.text = text.length > TEXT_CAP ? text.slice(0, TEXT_CAP).replace(/\s+\S*$/, '') : text;
     });
-    return { title: pageTitle, sections: sections.filter(function (s, i) { return i === 0 || s.title; }), terms: terms };
+    return { title: pageTitle, sections: sections.filter(function (s, i) { return i === 0 || s.title; }),
+      terms: terms, outline: outline };
   }
 
   function tokens(query) {
@@ -498,6 +510,7 @@
           href: DocForm.resolvePath(page.path, base()),
           title: page.title,
           sections: page.sections || [],
+          outline: page.outline || page.sections || [],
           terms: Array.isArray(page.terms) ? page.terms : null
         };
       }).filter(function (page) { return page.href; }));

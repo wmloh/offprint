@@ -373,6 +373,10 @@ body:has(> .df-sidebar) {
   padding: 0.65rem 0.75rem;
 }
 
+.df-page table[data-df-concept] > thead > tr:first-child > :is(th, td) {
+  border-block-start: 0;
+}
+
 .df-page table[data-df-concept] > :is(thead, tbody, tfoot) > tr > th {
   background-color: transparent;
   color: color-mix(in srgb, var(--df-gray) 85%, var(--df-text));

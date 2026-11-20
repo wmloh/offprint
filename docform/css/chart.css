@@ -199,12 +199,14 @@
   stroke-width: 2.5;
 }
 
-.df-chart-bar {
+.df-chart-bar,
+.df-chart-slice {
   fill: var(--df-series);
   transition: opacity 0.15s;
 }
 
 .df-chart.is-hovering .df-chart-bar:not(.is-active, [data-df-selection-active]),
+.df-chart.is-hovering .df-chart-slice:not(.is-active, [data-df-selection-active]),
 .df-chart.is-hovering.is-scatter .df-chart-dot:not(.is-active, [data-df-selection-active]) {
   opacity: 0.45;
 }

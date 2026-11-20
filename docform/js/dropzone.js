@@ -63,10 +63,9 @@
     return out;
   }
 
-  // A chart spec from parsed data on top of the chart's own spec, which keeps its type, axis types and labels,
-  // reference lines, and series colours by name. Tabular data gives one series per column after the first (x);
-  // a JSON or YAML object with "series" replaces the matching spec fields. Fixed axis bounds are dropped so the new
-  // data shows in full. Returns { spec, rows, total } or throws.
+  // Overlay parsed data on the authored chart spec. Cartesian tables give one series per value column and
+  // pie tables give one slice per row. Full specs replace matching fields. Fixed axis bounds are dropped to
+  // show the new data in full. Returns { spec, rows, total } or throws.
   function chartSpec(parsed, base, maxRows) {
     base = base || {};
     var next = {};
@@ -77,6 +76,15 @@
       if (grid.columns.length < 2) throw new Error('a chart needs an x column and at least one series column.');
       var cells = maxRows > 0 ? grid.cells.slice(0, maxRows) : grid.cells;
       var spec = DocForm.chart.fromTable([grid.columns].concat(cells), base.type);
+      if (spec.type === 'pie') {
+        var slices = new Map((base.data || []).map(function (slice) { return [slice.label, slice]; }));
+        next.data = spec.data.map(function (slice) {
+          var old = slices.get(slice.label);
+          return old ? Object.assign({}, old, { value: slice.value }) : slice;
+        });
+        next.y = axis(base.y, spec.y.label);
+        return { spec: next, rows: cells.length, total: grid.cells.length };
+      }
       var old = Array.isArray(base.series) ? base.series : [];
       spec.series.forEach(function (s) {
         var same = old.filter(function (o) { return o && o.name === s.name; })[0];
@@ -92,13 +100,15 @@
       next.y = axis(base.y, '');
       return { spec: next, rows: cells.length, total: grid.cells.length };
     }
-    if (value && typeof value === 'object' && !Array.isArray(value) && Array.isArray(value.series)) {
+    if (value && typeof value === 'object' && !Array.isArray(value) && (Array.isArray(value.series) ||
+        ((value.type || base.type) === 'pie' && Array.isArray(value.data)))) {
       Object.keys(value).forEach(function (k) { next[k] = value[k]; });
       if (!value.x) next.x = axis(base.x, '');
       if (!value.y) next.y = axis(base.y, '');
       return { spec: next, rows: null, total: null };
     }
-    throw new Error('a chart needs a table with an x column and one column per series, or a chart spec with "series".');
+    throw new Error(base.type === 'pie' ? 'a pie chart needs a table with label and value columns or a chart spec with "data".' :
+      'a chart needs a table with an x column and one column per series, or a chart spec with "series".');
   }
 
   function chartOf(el) {

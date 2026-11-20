@@ -200,10 +200,94 @@
   transition: transform 0.2s ease-out, width 0.2s ease-out, height 0.2s ease-out;
 }
 
+/* Optional number circle, label, and tag slot share one row; the label wraps between them. */
+.df-step-panel button[data-df-key]:has(> .df-step-label) {
+  grid-template-columns: auto minmax(min(6rem, 100%), 1fr) auto;
+  align-items: start;
+}
+
 /* Both copies share one cell, so the bold copy sets the width and rows never shift. */
 :is(.df-step-label, .df-step-label-bold) {
-  grid-area: 1 / 1;
+  grid-area: 1 / 2;
   min-width: 0;
+}
+
+.df-step-number {
+  grid-area: 1 / 1;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-inline-size: 1.7em;
+  block-size: 1.7em;
+  margin: 0.05em var(--df-space-2) 0 0;
+  padding: 0 0.4em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--df-accent, var(--df-gray)) 18%, transparent);
+  color: var(--df-accent, var(--df-text-muted));
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.df-step-tags {
+  grid-area: 1 / 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25em;
+  margin-inline-start: var(--df-space-2);
+}
+
+.df-step-tags > .df-tag {
+  vertical-align: baseline;
+}
+
+/* Without scripts, card tags sit right-aligned under the label. */
+.df-step-panel button[data-df-key] > .df-tag {
+  justify-self: end;
+}
+
+/* Inline filter box from data-df-search; it stays above the scrolling list. */
+.df-step-search {
+  flex: none;
+  padding: 0 0 var(--df-space-2);
+}
+
+.df-step-search-input {
+  box-sizing: border-box;
+  inline-size: 100%;
+  padding: calc(var(--df-space-1) + 1px) var(--df-space-3);
+  border: 0;
+  border-radius: var(--df-radius-lg);
+  background: var(--df-bg);
+  color: var(--df-text);
+  font: inherit;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.df-step-search-input::placeholder {
+  color: var(--df-text-faint);
+}
+
+.df-step-search-input:focus-visible {
+  outline: 2px solid var(--df-accent, var(--df-focus));
+  outline-offset: -2px;
+}
+
+.df-step-empty {
+  flex: none;
+  margin: 0;
+  padding: var(--df-space-2) var(--df-space-3);
+  color: var(--df-text-muted);
+  font-size: 0.85em;
+}
+
+.df-step-empty:empty,
+.df-step-filtered {
+  display: none !important;
 }
 
 .df-step-label {
@@ -227,4 +311,5 @@
 
 @media print {
   :is(.df-figure-steps, .df-card-panel) { display: block; }
+  .df-step-search { display: none; }
 }

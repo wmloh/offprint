@@ -204,17 +204,18 @@ test('a headed selector and its active detail have separate scrollports', () => 
   assert.equal(visible(details[1]), false);
 });
 
-function cardPanel(id) {
+function cardPanel(id, hostAttrs = {}) {
   const details = ['one', 'two', 'three'].map((name) => Object.assign(scrollport(), { id: `${id}-${name}` }));
   const list = scrollport({ 'aria-labelledby': `${id}-heading` });
   const buttons = details.map((detail) => element({ 'data-df-key': detail.id, 'data-df-detail': detail.id }, list));
-  const panel = { querySelector: (selector) => selector === ':scope > .df-step-list' ? list : null };
+  const panel = Object.assign(element(), { querySelector: (selector) => selector === ':scope > .df-step-list' ? list : null });
+  panel.insertBefore = (node) => panel.childNodes.unshift(node);
   const children = {
     ':scope > .df-step-panel': panel,
     ':scope > .df-step-details': { children: details }
   };
-  const box = Object.assign(element(), { querySelector: (selector) => children[selector] });
-  return { box, list, buttons, details };
+  const box = Object.assign(element(hostAttrs), { querySelector: (selector) => children[selector] });
+  return { box, panel, list, buttons, details, groups: [], tags: new Map() };
 }
 
 function setupCards(panels, tabSets = []) {
@@ -239,6 +240,8 @@ function setupCards(panels, tabSets = []) {
     if (selector === '.df-card-panel') return panels.map((panel) => panel.box);
     if (selector === '.df-tabs, [data-df-tabs]') return tabSets;
     if (selector === ':scope > [data-df-tab]') return scope.children.slice();
+    if (selector === ':scope > .df-step-group') return panels.find((panel) => panel.list === scope)?.groups ?? [];
+    if (selector === ':scope > .df-tag') return panels.map((panel) => panel.tags.get(scope)).find(Boolean) ?? [];
     return panels.find((panel) => panel.list === scope)?.buttons ?? [];
   }, (message) => warnings.push(message));
   vm.runInContext(source, context);
@@ -389,4 +392,66 @@ test('grouped cards keep one tab list, take their group title as a description, 
   assert.equal(marker.style.transform, 'translate(0px, 80px)');
   assert.equal(marker.style.height, '32px');
   assert.equal(marker.classList.has('df-step-indicator-glide'), true);
+});
+
+test('numbered cards move tags right and filter by label or tag without changing the selection', () => {
+  const panel = cardPanel('notes', { 'data-df-numbered': '', 'data-df-search': 'Find a note' });
+  const [first, second, third] = panel.buttons;
+  const group = Object.assign(element({}, panel.list), { querySelector: () => null });
+  panel.groups = [group];
+  third.parentElement = group;
+  second.setAttribute('data-df-number', '5');
+  [['Outline', 'Navigation'], ['Search', 'Navigation'], ['Theme', 'Display']].forEach(([label, tagText], i) => {
+    const button = panel.buttons[i];
+    const tag = Object.assign(element(), { text: tagText, parentNode: button });
+    button.childNodes = [{ text: label, parentNode: button }, tag];
+    button.textContent = `${label} ${tagText}`;
+    panel.tags.set(button, [tag]);
+  });
+  const { focus, focused } = setupCards([panel]);
+
+  const parts = (button) => button.childNodes.map((node) => node.className);
+  assert.deepEqual(parts(first), ['df-step-number', 'df-step-label', 'df-step-label-bold', 'df-step-tags']);
+  assert.deepEqual(panel.buttons.map((button) => button.childNodes[0].textContent), ['1', '5', '6']);
+  assert.equal(first.childNodes[0].getAttribute('aria-hidden'), 'true');
+  assert.deepEqual(first.childNodes[1].childNodes.map((node) => node.text), ['Outline']);
+  assert.deepEqual(first.childNodes[3].childNodes.map((node) => node.text), ['Navigation']);
+
+  const [search] = panel.panel.childNodes;
+  const [input] = search.childNodes;
+  const empty = panel.panel.childNodes.at(-1);
+  input.focus = () => focus(input);
+  assert.equal(input.placeholder, 'Find a note');
+  assert.equal(input.getAttribute('aria-label'), 'Find a note');
+  const type = (value) => { input.value = value; input.dispatchEvent(new Event('input')); };
+  const filtered = () => panel.buttons.map((button) => button.classList.has('df-step-filtered'));
+  const marker = panel.list.childNodes[0];
+
+  second.dispatchEvent(new Event('click'));
+  type('display');
+  assert.deepEqual(filtered(), [true, true, false]);
+  assert.equal(group.classList.has('df-step-filtered'), false);
+  assert.equal(second.getAttribute('aria-selected'), 'true');
+  assert.equal(marker.style.visibility, 'hidden');
+  assert.deepEqual(panel.buttons.map((button) => button.tabIndex), [-1, -1, 0]);
+
+  type('nav sea');
+  assert.deepEqual(filtered(), [true, false, true]);
+  assert.equal(group.classList.has('df-step-filtered'), true);
+  assert.equal(marker.style.visibility, '');
+  type('missing');
+  assert.equal(empty.textContent, 'No matching cards');
+
+  type('navigation');
+  assert.equal(empty.textContent, '');
+  assert.equal(keydown(input, 'ArrowDown'), true);
+  assert.equal(focused(), first);
+  keydown(first, 'ArrowDown');
+  assert.equal(focused(), second);
+  keydown(second, 'ArrowDown');
+  assert.equal(focused(), first);
+  keydown(first, 'ArrowUp');
+  assert.equal(focused(), input);
+  assert.equal(keydown(input, 'Escape'), true);
+  assert.deepEqual(filtered(), [false, false, false]);
 });

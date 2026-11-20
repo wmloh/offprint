@@ -433,7 +433,10 @@
       el.setAttribute('aria-describedby', ids.join(' '));
     }
     var tabindex = el.getAttribute('tabindex');
-    var addedTabindex = options.focusable !== false && !el.matches(FOCUSABLE);
+    // An anchor inside a button or link, such as a card tag, stays out of the tab order of its control.
+    var nested = el.parentElement && typeof el.parentElement.closest === 'function' &&
+      el.parentElement.closest('a[href], button');
+    var addedTabindex = options.focusable !== false && !el.matches(FOCUSABLE) && !nested;
     if (addedTabindex) el.tabIndex = 0;
 
     var later = function () {

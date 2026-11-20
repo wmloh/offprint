@@ -23,7 +23,7 @@ docform/: Copyable offline library folder
     choices.css: Shared choice fieldsets with eyebrow legends, borderless tinted chips, a sliding single-choice highlight, check marks, the restyled combobox, and the press ripple
     params.css: Unboxed parameter wrappers, sliders, switches, preset buttons, bound values, and show-when fades
     reveal.css: Two-way scroll reveals with entrance-only delays, two-way callout slides, and split views with side-gliding panes
-    steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus the side-by-side detail layout for standalone cards and figure steps and optional title-only side cards
+    steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus the side-by-side detail layout for standalone cards and figure steps, optional title-only side cards, number circles, right-aligned tags, and the inline filter box
     detail.css: Standalone detail panes with overlapping, independently scrolling details and the shared hover scrollbar
     pipeline.css: Pipeline blocks with collapsing fields, curved line styles, moving dashes, edge labels, path tracing, step reveals, side or below detail panes, and a numbered-list fallback
     zoom.css: Frosted full-screen figure zoom view
@@ -62,7 +62,7 @@ docform/: Copyable offline library folder
     choices.js: Shared builder for every single or multiple choice: authored or generated fieldset chips or a searchable combobox, keyboard support, and a press ripple
     params.js: Named parameter scopes with fieldset choice groups, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, data-df-reveal entrances that replay around the viewport centre (or once), and split panes
-    steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, and inert details, both usable as detail-pane sources
+    steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, inert details, optional numbering, tag slots, and label-and-tag filtering, both usable as detail-pane sources
     detail.js: Shared detail panes keyed to card panels, figure steps, pipelines, or selection groups, plus inert-detail and scrollbar helpers
     pipeline.js: Pipeline block diagrams with structured fields and overrides, ranked half-row layout, curved routing with fork and merge stems, junctions, crossing gaps, path tracing, keyboard navigation, steps, and detail panes
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions

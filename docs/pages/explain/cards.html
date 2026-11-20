@@ -108,8 +108,70 @@
     <p>Move your pointer over Search, then Theme. With a card focused, move with Up or Down and press Enter to open its detail.</p>
     <p>A detail can hold anything a page can: <a href="../write/text.html">tags</a>, emphasis, lists, keys, <a href="../write/callouts.html">callouts</a>, and small figures. Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane.</p>
 
+    <h2 id="numbers-tags-search">Numbers, tags, and search</h2>
+    <p>Long card lists can use three optional extras. You can turn each one on by itself:</p>
+    <ul>
+      <li><strong>Numbers</strong> appear in a shaded circle on the left of each card and count through every group. You can give any card its own number, and later cards continue from it.</li>
+      <li><strong>Tags</strong> sit on the right of a card. A tag can use one of the site's colour roles, such as <span class="df-tag" data-df-role="default">On by default</span>, or be a custom tag with its own colour and tooltip, such as <span class="df-tag" data-df-color="orange" data-df-tip="A custom tag: its colour and tooltip are written on the tag itself.">Chart add-on</span>.</li>
+      <li><strong>Search</strong> adds a filter box above the list that matches card titles and their tags.</li>
+    </ul>
+    <figure id="extras-demo">
+      <div class="df-card-panel" data-df-numbered data-df-search="Filter features">
+        <div class="df-step-panel" data-df-role="on-request">
+          <p class="df-step-heading" id="feature-finder-title">Feature finder</p>
+          <div class="df-step-list" aria-labelledby="feature-finder-title">
+            <div class="df-step-group">
+              <p class="df-step-group-heading">Write</p>
+              <button type="button" data-df-key="callouts" data-df-detail="find-callouts">Callouts <span class="df-tag" data-df-role="default">On by default</span></button>
+              <button type="button" data-df-key="code" data-df-detail="find-code">Code <span class="df-tag" data-df-role="on-request">On request</span></button>
+              <button type="button" data-df-key="math" data-df-detail="find-math">TeX math <span class="df-tag" data-df-role="on-request">On request</span></button>
+              <button type="button" data-df-key="notes" data-df-detail="find-notes">Sidenotes and peek bubbles <span class="df-tag" data-df-role="default">On by default</span></button>
+              <button type="button" data-df-key="terms" data-df-detail="find-terms">Tooltips and glossary <span class="df-tag" data-df-role="default">On by default</span></button>
+            </div>
+            <div class="df-step-group">
+              <p class="df-step-group-heading">Explain</p>
+              <button type="button" data-df-key="tabs" data-df-detail="find-tabs">Tabs <span class="df-tag" data-df-role="on-request">On request</span></button>
+              <button type="button" data-df-key="animations" data-df-detail="find-animations">SVG animations <span class="df-tag" data-df-role="on-request">On request</span></button>
+              <button type="button" data-df-key="pipelines" data-df-detail="find-pipelines">Pipeline diagrams <span class="df-tag" data-df-role="on-request">On request</span></button>
+              <button type="button" data-df-key="reveals" data-df-detail="find-reveals">Scroll reveals <span class="df-tag" data-df-role="on-request">On request</span></button>
+              <button type="button" data-df-key="steppers" data-df-detail="find-steppers">Worked-example steppers <span class="df-tag" data-df-role="on-request">On request</span></button>
+            </div>
+            <div class="df-step-group">
+              <p class="df-step-group-heading">Show data</p>
+              <button type="button" data-df-key="charts" data-df-detail="find-charts">SVG charts <span class="df-tag" data-df-role="on-request">On request</span></button>
+              <button type="button" data-df-key="heatmaps" data-df-detail="find-heatmaps">Heatmaps <span class="df-tag" data-df-color="orange" data-df-tip="Loads alongside SVG charts as an extra chart type.">Chart add-on</span></button>
+              <button type="button" data-df-key="playback" data-df-detail="find-playback">Guided chart playback <span class="df-tag" data-df-color="orange" data-df-tip="Loads alongside SVG charts to play a chart through its states.">Chart add-on</span></button>
+              <button type="button" data-df-key="tables" data-df-detail="find-tables">Concept tables <span class="df-tag" data-df-role="default">On by default</span></button>
+              <button type="button" data-df-key="trees" data-df-detail="find-trees">Data trees <span class="df-tag" data-df-role="on-request">On request</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="df-step-details">
+          <div id="find-callouts"><p>Coloured boxes for tips, warnings, and side remarks. See <a href="../write/callouts.html">Callouts</a>.</p></div>
+          <div id="find-code"><p>Highlighted code with a copy button, marked lines, and numbered notes. See <a href="../write/code.html">Code</a>.</p></div>
+          <div id="find-math"><p>Equations written in TeX, drawn without an internet connection. See <a href="../write/math.html">TeX math</a>.</p></div>
+          <div id="find-notes"><p>Side remarks in the margin, and short asides that open where you are reading. See <a href="../write/notes.html">Sidenotes and peek bubbles</a>.</p></div>
+          <div id="find-terms"><p>Hover explanations for words, collected into a site glossary. See <a href="../write/terms.html">Tooltips and glossary</a>.</p></div>
+          <div id="find-tabs"><p>Several versions of the same content, one visible at a time. See <a href="tabs.html">Tabs</a>.</p></div>
+          <div id="find-animations"><p>Diagrams that move through named moments with play controls. See <a href="animations.html">SVG animations</a>.</p></div>
+          <div id="find-pipelines"><p>Block diagrams of connected steps, with details for each block. See <a href="pipelines.html">Pipeline diagrams</a>.</p></div>
+          <div id="find-reveals"><p>Blocks that ease into view as you scroll to them. See <a href="reveals.html">Scroll reveals</a>.</p></div>
+          <div id="find-steppers"><p>A worked example shown one step at a time with Previous and Next. See <a href="steppers.html">Worked-example steppers</a>.</p></div>
+          <div id="find-charts"><p>Line, bar, scatter, and pie charts that respond to the pointer. See <a href="../data/charts.html">SVG charts</a>.</p></div>
+          <div id="find-heatmaps"><p>Grids of shaded cells with a colour scale and optional contour lines. See <a href="../data/heatmaps.html">Heatmaps</a>.</p></div>
+          <div id="find-playback"><p>A chart that plays through its states with notes along the way. See <a href="../data/playback.html">Guided chart playback</a>.</p></div>
+          <div id="find-tables"><p>Plain tables for comparing ideas side by side. See <a href="../data/tables.html">Concept and results tables</a>.</p></div>
+          <div id="find-trees"><p>Nested data shown as a tree you can open and close. See <a href="../data/trees.html">Data trees</a>.</p></div>
+        </div>
+      </div>
+      <figcaption>Fifteen numbered feature cards. Each one carries a colour-role tag or a custom tag, and the filter box searches titles and tags.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Type <em>chart</em> or <em>add-on</em> in the filter box. Groups with no matches disappear. The open detail stays where it is until you point at a card that is still showing. Press Down to move from the box into the list, and press Esc to clear the filter. Rest the pointer on a tag to read its tooltip.</p>
+    <p>Figure steps can use the same extras. The steps in the next section are numbered.</p>
+
     <h2 id="what-it-does">Figure steps</h2>
-    <div class="df-figure-steps">
+    <div class="df-figure-steps" data-df-numbered>
       <figure class="df-figure" id="page-parts">
         <svg viewBox="0 0 380 145" role="img" aria-label="A page schematic with an outline and a reading area">
           <rect class="df-grid" x="36" y="15" width="308" height="112" rx="8"/>
@@ -164,7 +226,7 @@
     <p>Use grouped card panels for related options with explanations of their own. Use figure steps when the same diagram should change as readers move from one labelled state to another. Short labels leave space for the picture and details.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>Point at or tap a card to select it. Up, Down, Home and End move keyboard focus, and Enter or Space selects the focused card. Figure steps select as soon as they receive focus. On a narrow screen, the panes stack. Print and pages opened with scripts off show all the written details.</p>
+    <p>Point at or tap a card to select it. Up, Down, Home and End move keyboard focus, and Enter or Space selects the focused card. Figure steps select as soon as they receive focus. A filter box has its own label, and a short message announces when nothing matches. Up from the first card returns to the box. On a narrow screen, the panes stack. Print and pages opened with scripts off show all the written details. Without scripts, tags sit under each card title, and numbers and the filter box are left out.</p>
 
 
     <h2 id="related">Related</h2>

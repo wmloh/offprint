@@ -30,21 +30,24 @@
 
   var TERMS = '[data-df-tip], [data-df-term]';
 
-  // One inline tip or glossary-term use: { text, tip, section } or { text, term, section }, keyed by the underlined
-  // text (or data-df-term). Repeats on a page are recorded once.
+  // One inline tip or glossary-term use: { text, tip, tags, section } or { text, term, section }, keyed by the
+  // underlined text (or data-df-term). Only running-text tips are glossary entries; tags are glossary tag keys.
+  // Repeats on a page are recorded once.
   function noteTerm(el, section, list, seen) {
     var text = clean(el.textContent);
     var record = null;
     if (el.hasAttribute('data-df-tip')) {
       var tip = clean(el.getAttribute('data-df-tip'));
-      if (text && tip) record = { text: text, tip: tip, section: section };
+      if (text && tip && DocForm.glossaryTip(el)) {
+        record = { text: text, tip: tip, tags: DocForm.tagKeys(el.getAttribute('data-df-tip-tags')), section: section };
+      }
     } else {
       var name = el.getAttribute('data-df-term');
       var key = DocForm.termKey(name && name.trim() ? name : text);
       if (text && key) record = { text: text, term: key, section: section };
     }
     if (!record) return;
-    var id = JSON.stringify([record.text, record.tip || '', record.term || '', section]);
+    var id = JSON.stringify([record.text, record.tip || '', record.term || '', record.tags || [], section]);
     if (seen[id]) return;
     seen[id] = true;
     list.push(record);

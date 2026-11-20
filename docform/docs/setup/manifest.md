@@ -25,7 +25,9 @@ Use one `window.DocFormSite = <JSON object>;` assignment. The asset tool require
 | `profile`, `features` | `"reading"` or `"none"` starting profile and a map of feature IDs to booleans. Pages can override site settings. [Feature IDs and dependencies](include-order.md) |
 | `options.roles.colors` | Map of role names to named colours. Trimmed, lowercased keys must match `^[a-z0-9][a-z0-9_-]*$`. Invalid entries warn and are ignored. [Roles](../layout/roles.md) |
 | `options.roles.tips` | Map of role names to nonempty hover text. Tags and legend entries of that role without their own tip show it. Tips for unknown roles or blank text warn and are ignored. [Roles](../layout/roles.md) |
-| `options.tooltips.terms` | Map of terms to definition strings or `{text, title?, more?}`. `more` is author HTML and `text` is plain text with optional inline TeX. [Tooltips](../reading/tooltips.md) |
+| `options.tags.glossary` | Map of glossary tag labels to nonempty tips or `{tip, color?, role?}`. Circle-shaped term types; every term and running-text tip needs one. [Tags](../reading/tags.md) |
+| `options.tags.classes` | Map of class names to `{shape, label?, tags?: [labels]}`. One non-circle shape per class; a label belongs to one class. [Tags](../reading/tags.md) |
+| `options.tooltips.terms` | Map of terms to definition strings or `{text, title?, more?, tags?}`. `more` is author HTML and `text` is plain text with optional inline TeX. `tags` lists glossary tag labels; strings are untagged and warn. [Tooltips](../reading/tooltips.md) |
 | `options.tooltips` | `{autoLink?: boolean, hold?: number}`. Auto-link is off unless `true`. Hold defaults to 600 ms. [Tooltips](../reading/tooltips.md) |
 | `options.math.macros` | KaTeX macro map. Use doubled backslashes in JS string literals, for example `'\\R': '\\mathbb{R}'`. [Math](../reading/math.md) |
 | `options.citations.entries` | Map of citation keys to strings or structured entries. [Citations](../reading/citations.md) |
@@ -37,7 +39,7 @@ Use one `window.DocFormSite = <JSON object>;` assignment. The asset tool require
 | `assets.data` | Map of source names to `{source, output, type?}` for generation. Paths are manifest-relative. `source` identifies the raw input for generation. The entry uses `output` to load wrapped scripts before setup if `data` is enabled. [Data wrappers](../data/file-wrapper.md) |
 
 - `pages[].path`, `glossaryPage`, and `assets.search.output` resolve via `new URL(path, base)`. The base is the `src` URL of the first `script[data-df-site]`, or the page URL if that script or its `src` is missing. Index entries use the base of the configuration that supplies the index path. Ordinary HTML asset URLs still resolve from the page.
-- `DocForm.site` contains `provided`, `base`, normalized `pages`, flattened navigable `order`, and the resolved `glossaryPage` and `search` URLs (or `null`). The offline entry adds merged `options`, `selectionGroups`, and `parameterScopes` and resolved `assets`. A normalized page node has `{title, path, href, collapsed, pages}`. Arrays and objects are optional and default to empty. Unknown fields are omitted.
+- `DocForm.site` contains `provided`, `base`, normalized `pages`, flattened navigable `order`, the resolved `glossaryPage` and `search` URLs (or `null`), and `tags: {glossary: {key: {label, tip, color, role}}, classes: {name: {shape, label, tags: [keys]}}, labels: {key: class | 'glossary'}}` (keys are term keys). The offline entry adds merged `options`, `selectionGroups`, and `parameterScopes` and resolved `assets`. A normalized page node has `{title, path, href, collapsed, pages}`. Arrays and objects are optional and default to empty. Unknown fields are omitted.
 - Assign explicit IDs to headings linked across pages if their text may change. Build the search index again after page or manifest changes that affect indexed content or paths.
 
 [Navigation](../layout/navigation.md) · [Core source](../../js/core.js)

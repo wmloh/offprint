@@ -35,8 +35,8 @@ test('glossary keeps titles, accepts objects, and warns about bad or colliding e
     noText: { title: 'X' }
   });
   assert.deepEqual(json(terms), {
-    'dot product': { title: 'Dot product', text: 'Sum of products $a \\cdot b$.', more: '' },
-    span: { title: 'Span', text: 'All linear combinations.', more: '' }
+    'dot product': { title: 'Dot product', text: 'Sum of products $a \\cdot b$.', more: '', tags: [] },
+    span: { title: 'Span', text: 'All linear combinations.', more: '', tags: [] }
   });
   assert.equal(warnings.length, 3);
   assert.match(warnings.join('\n'), /collide/);
@@ -214,4 +214,58 @@ test('every tag gets a tooltip: own tip or term kept, role tip inherited, otherw
   assert.ok(missing.every((el) => el.classes.includes('df-tag-untipped')));
   assert.equal(warnings.length, 2);
   assert.match(warnings[0], /Tag "Try it" has no tooltip.*options\.roles\.tips\["try"\]/);
+});
+
+test('glossary entries keep known tags, drop unknown ones, and one warning lists untagged entries', () => {
+  const { tip, warnings } = load();
+  const registry = { glossary: { web: { label: 'Web' }, basics: { label: 'Basics' } } };
+  const terms = tip.glossary({
+    browser: { text: 'Shows pages.', tags: ['Web', 'Basics', 'web'] },
+    file: { text: 'Saved item.', tags: ['Storage'] },
+    folder: 'Holds files.'
+  }, registry);
+  assert.deepEqual(json([terms.browser.tags, terms.file.tags, terms.folder.tags]), [['web', 'basics'], [], []]);
+  assert.equal(warnings.length, 2);
+  assert.match(warnings[0], /Glossary entry "file" names unknown glossary tag "storage"/);
+  assert.match(warnings[1], /^\[docform\] 2 glossary entries have no tags.*: file, folder\.$/);
+});
+
+test('tags take their class shape from data-df-tag-class or a listed label, else a warned dashed fallback', () => {
+  const { tip, warnings } = load();
+  const tag = (label, attrs = {}, cls = []) => {
+    const node = {
+      textContent: label,
+      attrs: { ...attrs },
+      classes: new Set(cls),
+      getAttribute(name) { return name in this.attrs ? this.attrs[name] : null; },
+      setAttribute(name, value) { this.attrs[name] = value; },
+      closest: () => null
+    };
+    node.classList = {
+      contains: (name) => node.classes.has(name),
+      toggle: (name, on) => (on ? node.classes.add(name) : node.classes.delete(name))
+    };
+    return node;
+  };
+  const tags = [
+    tag('On request'),
+    tag('Blue', { 'data-df-tag-class': 'Swatch' }),
+    tag('Basics'),
+    tag('Draft'),
+    tag('Web', { 'data-df-tag-class': 'glossary' }),
+    tag('Web', {}, ['df-tag-glossary'])
+  ];
+  const site = {
+    tags: {
+      glossary: { basics: {} },
+      classes: { availability: { shape: 'triangle' }, swatch: { shape: 'square' } },
+      labels: { 'on request': 'availability', basics: 'glossary' }
+    }
+  };
+  const missing = tip.classifyTags({ querySelectorAll: () => tags }, site);
+  assert.deepEqual(tags.map((el) => el.attrs['data-df-shape'] ?? null), ['triangle', 'square', 'circle', 'none', 'none', null]);
+  assert.deepEqual([...missing], [tags[3], tags[4]]);
+  assert.ok(missing.every((el) => el.classes.has('df-tag-unclassified')));
+  assert.match(warnings.join('\n'), /Tag "Web" names unknown tag class "glossary"; glossary tags are matched by their label/);
+  assert.match(warnings.join('\n'), /Tag "Draft" has no tag class/);
 });

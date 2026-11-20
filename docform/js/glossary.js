@@ -10,6 +10,7 @@
   }
 
   var OTHER = '#';
+  var UNTAGGED = '';
   var hasOwn = Object.prototype.hasOwnProperty;
 
   function clean(text) {
@@ -40,26 +41,35 @@
     return String(page.href || '').split('#')[0];
   }
 
-  // Merges the normalized manifest glossary ({ key: { title, text, more } }) with indexed pages
+  // Merges the normalized manifest glossary ({ key: { title, text, more, tags } }) with indexed pages
   // ([{ href, title, sections, terms }], or null without an index) into sorted entries:
-  // { key, title, text, more, manifest, variants: [{ text, pages: [{ title, href }] }],
+  // { key, title, text, more, manifest, tags, variants: [{ text, tags, pages: [{ title, href }] }],
   //   uses: [{ title, href, intro, sections: [{ id, title, href }] }] }.
   // Inline tips are keyed by their underlined text, case-insensitively. A manifest definition always comes first;
   // an inline-only term takes the first definition found. Other differing definitions become variants.
+  // An entry's tags are every tag given anywhere for it, manifest tags first; a variant also keeps its own.
   function merge(terms, pages) {
     var byKey = {};
     var list = [];
 
     function entry(key, title) {
       if (!hasOwn.call(byKey, key)) {
-        byKey[key] = { key: key, title: title, text: '', more: '', manifest: false, variants: [], uses: [], norm: null };
+        byKey[key] = { key: key, title: title, text: '', more: '', manifest: false, tags: [], variants: [], uses: [],
+          norm: null };
         list.push(byKey[key]);
       }
       return byKey[key];
     }
 
-    function define(e, text, page) {
+    function addTags(list, tags) {
+      (tags || []).forEach(function (tag) {
+        if (list.indexOf(tag) < 0) list.push(tag);
+      });
+    }
+
+    function define(e, text, page, tags) {
       var norm = same(text);
+      addTags(e.tags, tags);
       if (e.norm === null) {
         e.text = clean(text);
         e.norm = norm;
@@ -70,7 +80,8 @@
       for (var i = 0; i < e.variants.length; i++) {
         if (same(e.variants[i].text) === norm) variant = e.variants[i];
       }
-      if (!variant) e.variants.push(variant = { text: clean(text), pages: [] });
+      if (!variant) e.variants.push(variant = { text: clean(text), tags: [], pages: [] });
+      addTags(variant.tags, tags);
       var href = pageHref(page);
       if (!variant.pages.some(function (p) { return p.href === href; })) variant.pages.push({ title: page.title, href: href });
     }
@@ -99,17 +110,20 @@
       var e = entry(key, source.title);
       e.manifest = true;
       e.more = source.more || '';
-      define(e, source.text, null);
+      define(e, source.text, null, source.tags);
     });
 
     (pages || []).forEach(function (page) {
       (page.terms || []).forEach(function (record) {
         if (!record || typeof record.text !== 'string') return;
+        // An index built before glossary tags has no tags on tips and still holds tips on tags and controls, which
+        // are not glossary entries; its tips are skipped until it is rebuilt.
         if (typeof record.tip === 'string') {
+          if (!Array.isArray(record.tags)) return;
           var key = DocForm.termKey(record.text);
           if (!key) return;
           var e = entry(key, clean(record.text));
-          define(e, record.tip, page);
+          define(e, record.tip, page, record.tags.map(DocForm.termKey));
           use(e, page, record.section || '');
         } else if (typeof record.term === 'string') {
           // data-df-term only reads the manifest, so a use of any other name is a missing term.
@@ -155,6 +169,13 @@
       return 'Showing the manifest glossary only: the search index has no glossary data. Build it again with ' +
         'docform/tools/assets.html to add definitions written on pages and links to where each term is used.';
     }
+    var untaggedIndex = pages.some(function (p) {
+      return (p.terms || []).some(function (r) { return r && typeof r.tip === 'string' && !Array.isArray(r.tags); });
+    });
+    if (untaggedIndex) {
+      return 'Showing the manifest glossary and term uses only: the search index was built before glossary tags, so ' +
+        'definitions written on pages are left out. Build it again with docform/tools/assets.html to add them.';
+    }
     return null;
   }
 
@@ -194,13 +215,17 @@
     return p;
   }
 
-  function variantsBlock(variants) {
+  function variantsBlock(variants, chip) {
     var box = make('div', 'df-glossary-variants');
     box.appendChild(make('span', 'df-glossary-label', 'Also defined as'));
     var ul = make('ul');
     variants.forEach(function (v) {
       var li = make('li');
       mixed(li.appendChild(make('span', 'df-glossary-variant')), v.text);
+      if (chip && v.tags.length) {
+        var line = li.appendChild(make('span', 'df-glossary-tags'));
+        v.tags.forEach(function (key) { line.appendChild(chip(key)); });
+      }
       li.appendChild(document.createTextNode(' on '));
       v.pages.forEach(function (page, i) {
         if (i) li.appendChild(document.createTextNode(', '));
@@ -212,9 +237,101 @@
     return box;
   }
 
-  function render(el, entries, message) {
+  // A circle tag with its registry tip as a tooltip; one shared tooltip box per tag.
+  function tagWithTip(key, registry, cards, tagName) {
+    var tooltip = DocForm.tooltips;
+    var chip = tooltip.tagChip(key === UNTAGGED ? null : key, registry, tagName);
+    var tag = key === UNTAGGED ? null : registry.glossary[key];
+    var tip = tag ? tag.tip : 'No glossary tag yet. Give the term tags in the site settings or with data-df-tip-tags.';
+    if (!cards[key]) cards[key] = tooltip.card('', tip, '');
+    tooltip.attach(chip, '', tip, { card: cards[key], focusable: tagName !== 'button' ? false : undefined });
+    return chip;
+  }
+
+  // The tag keys of entries the registry knows, with unknown keys (from an index built with older settings) dropped.
+  function entryTags(entries, registry) {
+    var known = registry.glossary;
+    entries.forEach(function (e) {
+      [e].concat(e.variants).forEach(function (item) {
+        item.tags = (item.tags || []).filter(function (key) {
+          if (hasOwn.call(known, key)) return true;
+          DocForm.warnOnce('glossary-tag:' + key, 'Glossary tag "' + key + '" is not in options.tags.glossary; hiding it.');
+          return false;
+        });
+      });
+    });
+  }
+
+  // Whether an entry passes the tag filter: any selected tag, or "Untagged" for an entry without tags.
+  function matches(entry, selected) {
+    if (!selected.size) return true;
+    if (!entry.tags.length) return selected.has(UNTAGGED);
+    return entry.tags.some(function (tag) { return selected.has(tag); });
+  }
+
+  // Filter tags in registry order, with a count of matching entries each, plus "Untagged" when any entry has none.
+  function filterTags(entries, registry) {
+    var counts = Object.create(null);
+    var untagged = 0;
+    entries.forEach(function (e) {
+      if (!e.tags.length) untagged++;
+      e.tags.forEach(function (tag) { counts[tag] = (counts[tag] || 0) + 1; });
+    });
+    var out = Object.keys(registry.glossary).filter(function (key) { return counts[key]; })
+      .map(function (key) { return { key: key, count: counts[key] }; });
+    if (untagged) out.push({ key: UNTAGGED, count: untagged });
+    return out;
+  }
+
+  function filterBar(el, entries, registry, cards, apply) {
+    var tags = filterTags(entries, registry);
+    if (!tags.length) return;
+    var bar = el.appendChild(make('div', 'df-glossary-filter'));
+    bar.setAttribute('role', 'group');
+    bar.setAttribute('aria-label', 'Filter terms by tag');
+    bar.appendChild(make('span', 'df-glossary-label', 'Filter by tag'));
+    var selected = new Set();
+    var buttons = [];
+    var status = make('span', 'df-glossary-status');
+    status.setAttribute('aria-live', 'polite');
+    var clear = make('button', 'df-glossary-clear', 'Show all');
+    clear.type = 'button';
+    clear.hidden = true;
+    var update = function () {
+      buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(selected.has(b._dfTag))); });
+      var shown = apply(selected);
+      clear.hidden = !selected.size;
+      status.textContent = selected.size ? 'Showing ' + shown + ' of ' + entries.length + ' terms' : '';
+    };
+    tags.forEach(function (t) {
+      var button = tagWithTip(t.key, registry, cards, 'button');
+      button.type = 'button';
+      button.classList.add('df-glossary-chip');
+      button._dfTag = t.key;
+      button.appendChild(make('span', 'df-glossary-count', String(t.count)));
+      button.addEventListener('click', function () {
+        if (selected.has(t.key)) selected.delete(t.key);
+        else selected.add(t.key);
+        update();
+      });
+      buttons.push(bar.appendChild(button));
+    });
+    clear.addEventListener('click', function () {
+      selected.clear();
+      update();
+    });
+    bar.appendChild(clear);
+    bar.appendChild(status);
+    update();
+  }
+
+  function render(el, entries, message, registry) {
     if (typeof el === 'string') el = DocForm._component.target(el, 'glossary', true);
     if (!el) return;
+    registry = registry || (DocForm.site && DocForm.site.tags) || { glossary: {} };
+    var tagged = !!DocForm.tooltips && !!DocForm.tooltips.tagChip;
+    if (tagged) entryTags(entries, registry);
+    var cards = Object.create(null);
     var used = new Set(DocForm.all('[id]').filter(function (node) { return !el.contains(node); })
       .map(function (node) { return node.id; }));
     el.classList.add('df-glossary');
@@ -235,12 +352,39 @@
       ids[g.letter] = DocForm.uniqueSlug('glossary-' + (g.letter === OTHER ? 'other' : DocForm.slug(g.letter) || 'letter'), used);
     });
 
+    var rows = [];
+    var sections = {};
+    var letters = {};
+    if (tagged) filterBar(el, entries, registry, cards, function (selected) {
+      var shown = 0;
+      var visible = {};
+      rows.forEach(function (row) {
+        var on = matches(row.entry, selected);
+        row.dt.hidden = row.dd.hidden = !on;
+        if (on) {
+          shown++;
+          visible[row.letter] = true;
+        }
+      });
+      Object.keys(sections).forEach(function (l) {
+        sections[l].hidden = !visible[l];
+        var jump = letters[l];
+        if (!jump) return;
+        jump.classList.toggle('is-empty', !visible[l]);
+        if (visible[l]) jump.removeAttribute('tabindex');
+        else jump.tabIndex = -1;
+        jump.setAttribute('aria-disabled', String(!visible[l]));
+      });
+      return shown;
+    });
+
     var bar = el.appendChild(make('nav', 'df-glossary-jumps'));
     bar.setAttribute('aria-label', 'Glossary letters');
     jumps(list).forEach(function (j) {
       if (j.present) {
         var a = bar.appendChild(link('#' + ids[j.letter], j.letter));
         a.className = 'df-glossary-jump';
+        letters[j.letter] = a;
         if (j.letter === OTHER) a.setAttribute('aria-label', 'Other terms');
       } else {
         var span = bar.appendChild(make('span', 'df-glossary-jump is-empty', j.letter));
@@ -249,17 +393,25 @@
     });
 
     list.forEach(function (g) {
-      var section = el.appendChild(make('section', 'df-glossary-group'));
+      var section = sections[g.letter] = el.appendChild(make('section', 'df-glossary-group'));
       var heading = section.appendChild(make('h2', 'df-glossary-letter', g.letter === OTHER ? 'Other' : g.letter));
       heading.id = ids[g.letter];
       var dl = section.appendChild(make('dl', 'df-glossary-list'));
       g.entries.forEach(function (e) {
-        var dt = mixed(dl.appendChild(make('dt', 'df-glossary-term')), e.title);
+        var dt = dl.appendChild(make('dt', 'df-glossary-term'));
+        mixed(dt.appendChild(make('span', 'df-glossary-title')), e.title);
         dt.id = DocForm.uniqueSlug('term-' + (DocForm.slug(e.key) || 'entry'), used);
+        if (tagged) {
+          var tagLine = dt.appendChild(make('span', 'df-glossary-tags'));
+          (e.tags.length ? e.tags : [UNTAGGED]).forEach(function (key) { tagLine.appendChild(tagWithTip(key, registry, cards)); });
+        }
         var dd = dl.appendChild(make('dd', 'df-glossary-entry'));
+        rows.push({ entry: e, dt: dt, dd: dd, letter: g.letter });
         mixed(dd.appendChild(make('p', 'df-glossary-text')), e.text);
         if (e.more && DocForm.tooltips && DocForm.tooltips.rich) DocForm.tooltips.rich(dd.appendChild(make('div', 'df-glossary-more')), e.more);
-        if (e.variants.length) dd.appendChild(variantsBlock(e.variants));
+        if (e.variants.length) {
+          dd.appendChild(variantsBlock(e.variants, tagged && function (key) { return tagWithTip(key, registry, cards); }));
+        }
         if (e.uses.length) dd.appendChild(usesLine(e.uses));
       });
     });
@@ -270,6 +422,8 @@
     groups: groups,
     jumps: jumps,
     letter: letter,
+    matches: matches,
+    filterTags: filterTags,
     notice: notice,
     render: render
   };
@@ -280,11 +434,11 @@
     });
     if (!holders.length) return;
     if (!DocForm.tooltips) DocForm.warnOnce('glossary-tooltip', 'glossary.js needs tooltip.js for the manifest glossary.');
-    var terms = DocForm.tooltips ? DocForm.tooltips.glossary(site.glossary) : {};
+    var terms = DocForm.tooltips ? DocForm.tooltips.glossary(site.glossary, site.tags) : {};
     var draw = function (pages) {
       var entries = merge(terms, pages);
       var message = notice(pages);
-      holders.forEach(function (el) { render(el, entries, message); });
+      holders.forEach(function (el) { render(el, entries, message, site.tags); });
       // A link to a letter or term arrives before the list exists, so the browser could not scroll to it.
       var target = null;
       try {

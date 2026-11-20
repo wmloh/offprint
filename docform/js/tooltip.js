@@ -30,22 +30,28 @@
   var hasOwn = Object.prototype.hasOwnProperty;
 
   var termKey = DocForm.termKey;
+  var GLOSSARY_SHAPE = DocForm.tagShapes[0];
   var boot = DocForm._boot;
   var component = DocForm._component;
 
-  // Normalizes manifest glossary entries to { key: { title, text, more } }. Entries are strings or { title, text, more }.
-  function glossary(raw) {
+  // Normalizes manifest glossary entries to { key: { title, text, more, tags } }. Entries are strings or
+  // { title, text, more, tags }. With the site's tag registry, tags must name glossary tags and every entry needs one:
+  // unknown tags are dropped and untagged entries are listed in one warning.
+  function glossary(raw, registry) {
     var out = {};
+    var untagged = [];
     Object.keys(raw || {}).forEach(function (name) {
       var value = raw[name];
       var key = termKey(name);
       var entry = null;
-      if (typeof value === 'string') entry = { title: name.trim(), text: value, more: '' };
+      if (typeof value === 'string') entry = { title: name.trim(), text: value, more: '', tags: [] };
       else if (value && typeof value === 'object' && typeof value.text === 'string') {
         entry = {
           title: typeof value.title === 'string' ? value.title : name.trim(),
           text: value.text,
-          more: typeof value.more === 'string' ? value.more.trim() : ''
+          more: typeof value.more === 'string' ? value.more.trim() : '',
+          tags: registry ? knownTags(DocForm.tagKeys(value.tags), registry, 'Glossary entry "' + name.trim() + '"') :
+            DocForm.tagKeys(value.tags)
         };
         if (value.more != null && typeof value.more !== 'string') {
           DocForm.warnOnce('glossary-more:' + name, 'Glossary entry "' + name + '" has a non-text "more"; ignoring it.');
@@ -60,8 +66,66 @@
         return;
       }
       out[key] = entry;
+      if (!entry.tags.length) untagged.push(entry.title);
     });
+    if (registry && untagged.length) {
+      DocForm.warnOnce('glossary-untagged', untagged.length + ' glossary ' + (untagged.length === 1 ? 'entry has' : 'entries have') +
+        ' no tags; give each a "tags" array of options.tags.glossary labels: ' + untagged.slice(0, 8).join(', ') +
+        (untagged.length > 8 ? ', …' : '') + '.');
+    }
     return out;
+  }
+
+  // The glossary tag keys the registry knows, warning once about any other names.
+  function knownTags(keys, registry, owner) {
+    var known = (registry && registry.glossary) || {};
+    return keys.filter(function (key) {
+      if (hasOwn.call(known, key)) return true;
+      DocForm.warnOnce('tag-unknown:' + owner + ':' + key, owner + ' names unknown glossary tag "' + key +
+        '"; add it to options.tags.glossary.');
+      return false;
+    });
+  }
+
+  // A circle glossary tag for a tooltip, glossary row, or filter, or the dashed "Untagged" fallback for a null key.
+  function tagChip(key, registry, tagName) {
+    var el = document.createElement(tagName || 'span');
+    var tag = key === null ? null : registry.glossary[key];
+    el.className = 'df-tag df-tag-glossary' + (tag ? '' : ' df-tag-untagged');
+    el.setAttribute('data-df-shape', tag ? GLOSSARY_SHAPE : 'none');
+    if (tag && tag.role) el.setAttribute('data-df-role', tag.role);
+    else if (tag && tag.color) el.setAttribute('data-df-color', tag.color);
+    el.textContent = tag ? tag.label : 'Untagged';
+    return el;
+  }
+
+  // Classifies every author tag by its class shape: data-df-tag-class names a class, else the label is listed in one.
+  // Unclassified tags warn and get the dashed fallback marker. Returns the unclassified tags.
+  function classifyTags(scope, site) {
+    var registry = (site && site.tags) || { glossary: {}, classes: {}, labels: {} };
+    var missing = [];
+    DocForm.all('.df-tag', scope).forEach(function (el) {
+      if (el.closest('.df-tooltip') || el.classList.contains('df-tag-glossary')) return;
+      var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      var named = el.getAttribute('data-df-tag-class');
+      var owner = null;
+      if (named !== null) {
+        owner = named.trim().toLowerCase();
+        if (!hasOwn.call(registry.classes, owner)) {
+          DocForm.warnOnce('tag-class-unknown:' + owner, 'Tag "' + text + '" names unknown tag class "' + named.trim() + '"' +
+            (owner === 'glossary' ? '; glossary tags are matched by their label' : '; add it to options.tags.classes') + '.', el);
+          owner = null;
+        }
+      } else owner = registry.labels[termKey(text)] || null;
+      var shape = owner === 'glossary' ? GLOSSARY_SHAPE : owner ? registry.classes[owner].shape : 'none';
+      el.setAttribute('data-df-shape', shape);
+      el.classList.toggle('df-tag-unclassified', !owner);
+      if (owner) return;
+      DocForm.warnOnce('tag-class:' + text, 'Tag "' + text + '" has no tag class; list it in options.tags.classes.<name>.tags ' +
+        'or set data-df-tag-class.', el);
+      missing.push(el);
+    });
+    return missing;
   }
 
   // Looks up a term from data-df-term, or from the element text when the attribute is empty.
@@ -193,7 +257,7 @@
   }
 
   // Every tag and role-legend entry must have a hover tooltip. One without its own tip, term, or glossary match
-  // takes its role's manifest tip; otherwise it warns and falls back to its role name or label, and is returned.
+  // takes its glossary tag's tip, then its role's manifest tip; otherwise it warns and falls back to its role name or label, and is returned.
   var TAGS = '.df-tag, .df-legend-item';
   function tipTags(scope, site) {
     var tips = (site && site.roleTips) || {};
@@ -201,6 +265,11 @@
     DocForm.all(TAGS, scope).forEach(function (el) {
       if (el.hasAttribute('data-df-term') || el.hasAttribute('data-df-tip') ||
         el.querySelector('[data-df-term], [data-df-tip]')) return;
+      var glossaryTag = site && site.tags && site.tags.glossary[termKey(el.textContent || '')];
+      if (glossaryTag && el.classList.contains('df-tag')) {
+        el.setAttribute('data-df-tip', glossaryTag.tip);
+        return;
+      }
       var role = (el.getAttribute('data-df-role') || '').trim().toLowerCase();
       if (role && hasOwn.call(tips, role)) {
         el.setAttribute('data-df-tip', tips[role]);
@@ -257,6 +326,7 @@
   }
 
   // options.content (a function returning a node or HTML) fills the body lazily on first show instead of `text`.
+  // options.tags (glossary tag keys, with options.registry) adds a line of circle tags, or "Untagged" when empty.
   function card(title, text, more, options) {
     options = options || {};
     var box = document.createElement('div');
@@ -283,6 +353,13 @@
     body.className = 'df-tooltip-body';
     if (!options.content) setMixed(body, text);
     box.appendChild(body);
+    if (options.tags) {
+      var line = document.createElement('div');
+      line.className = 'df-tooltip-tags';
+      var registry = options.registry || { glossary: {} };
+      (options.tags.length ? options.tags : [null]).forEach(function (key) { line.appendChild(tagChip(key, registry)); });
+      box.appendChild(line);
+    }
     var moreEl = null;
     if (more) {
       moreEl = document.createElement('div');
@@ -506,6 +583,10 @@
     tagTerm: tagTerm,
     linkTags: linkTags,
     tipTags: tipTags,
+    knownTags: knownTags,
+    tagChip: tagChip,
+    classifyTags: classifyTags,
+    card: card,
     place: place,
     mixed: setMixed,
     rich: rich,
@@ -514,7 +595,8 @@
   };
 
   DocForm.register('tooltip', function (site) {
-    var terms = glossary(site.glossary);
+    var registry = site.tags || { glossary: {}, classes: {}, labels: {} };
+    var terms = glossary(site.glossary, registry);
     var options = site.terms || {};
 
     var roots = DocForm.all('[data-df-autolink]').filter(function (el) {
@@ -527,11 +609,23 @@
       return !boot || component.flag(el, 'autolink', 'tooltips', true);
     }).concat(roots);
     var auto = new Set(linkTags(document, terms).concat(autoLink(roots, matcher(Object.keys(terms)))));
+    classifyTags(document, site);
     tipTags(document, site);
 
+    // Tips in running text are glossary entries and need at least one glossary tag from data-df-tip-tags.
     DocForm.all('[data-df-tip]').forEach(function (el) {
       el.classList.add('df-tip');
-      attach(el, '', el.getAttribute('data-df-tip'));
+      var tags = null;
+      if (DocForm.glossaryTip(el)) {
+        var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+        tags = knownTags(DocForm.tagKeys(el.getAttribute('data-df-tip-tags')), registry, 'Tip "' + text + '"');
+        if (!tags.length) {
+          DocForm.warnOnce('tip-untagged:' + text, 'Tip "' + text + '" has no glossary tag; add data-df-tip-tags with ' +
+            'labels from options.tags.glossary.', el);
+          el.classList.add('df-tip-untagged');
+        }
+      }
+      attach(el, '', el.getAttribute('data-df-tip'), { tags: tags, registry: registry });
     });
 
     // Terms that share an entry and extended text share one tooltip box.
@@ -546,7 +640,7 @@
       var more = extended(entry, el);
       var byMore = shared.get(entry);
       if (!byMore) shared.set(entry, byMore = Object.create(null));
-      if (!hasOwn.call(byMore, more)) byMore[more] = card(entry.title, entry.text, more);
+      if (!hasOwn.call(byMore, more)) byMore[more] = card(entry.title, entry.text, more, { tags: entry.tags, registry: registry });
       attach(el, entry.title, entry.text, {
         card: byMore[more],
         hold: holdTime(el, site),

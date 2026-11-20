@@ -13,8 +13,8 @@ docform/: Copyable offline library folder
     theme.css: Theme toggle button styles
     controls.css: Top-left frosted control pill, progress ring, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
     math.css: Display math layout and inline TeX error styles
-    blocks.css: Inline tags, callouts, and the no-script tinted card look of details
-    tooltip.css: Tooltip box, hold-to-expand card with progress ring, and dotted term underlines (fainter for auto-linked terms, none on tags)
+    blocks.css: Inline tags with class-shape markers and unclassified outlines, callouts, and the no-script tinted card look of details
+    tooltip.css: Tooltip box with a glossary tag line, hold-to-expand card with progress ring, and dotted term underlines (fainter for auto-linked terms, red for untagged tips, none on tags)
     code.css: Code block bar, copy button, token colours, highlighted lines, circled annotation markers, and diff rows
     editable-text.css: Inline and multiline text fields with a syntax colour layer
     dropdowns.css: Theme-aware popovers, expanded menu branches, and opening and closing transitions
@@ -45,15 +45,15 @@ docform/: Copyable offline library folder
     data.css: Data-block parse errors, size notices, and show-more rows
     tree.css: Data-tree rows with disclosure arrows, typed values, and expand and collapse buttons
     dropzone.css: Dashed file drop area, status line with Reset, and the dropped file's view
-    glossary.css: Glossary page letter jumps, letter groups, definitions, variant definitions, and used-on links
+    glossary.css: Glossary page tag filter chips, letter jumps, letter groups, definitions with tags, variant definitions, and used-on links
   js/: Per-module classic scripts on a shared DocForm namespace
-    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, data-df-max-width limits, the shared step-control pill builder, heading slugs, glossary term keys, manifest normalization including the glossary page entry
+    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, data-df-max-width limits, the shared step-control pill builder, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
     controls.js: Control pill with reading progress, focus mode, three saved sidebar modes with auto-hide carried across sidebar navigation, search and theme buttons, and shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
-    tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, glossary-labelled tags, required tag tooltips with role-tip and warned fallbacks, opt-in automatic term linking, and lazy HTML cards for other modules
+    tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text and required glossary tags, glossary-labelled tags, required tag classes and tooltips with warned fallbacks, opt-in automatic term linking, and lazy HTML cards for other modules
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     editable-text.js: Native text fields with optional live syntax highlighting
     dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches, with a shared positioning helper
@@ -84,7 +84,7 @@ docform/: Copyable offline library folder
     data.js: Transactional named sources with record transforms, scoped chart and results filters, and raw views
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
-    glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
+    glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with merged glossary tags, an any-tag filter, variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
     sections.js: h2 colour cycle from a token with attribute overrides, and continuous left-margin section lines in a separate layer that focus blur never reaches, kept clear of the section rail
   tools/: Offline asset checker and exporter for manifest-configured search indexes and wrapped CSV, JSON, and YAML sources
     assets.html: Folder selection, asset status and diagnostics, and selective save, download, or copy

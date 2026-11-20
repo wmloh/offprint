@@ -31,6 +31,7 @@ test('missing manifest normalizes to empty defaults', () => {
     glossaryPage: null,
     roles: {},
     roleTips: {},
+    tags: { glossary: {}, classes: {}, labels: {} },
     glossary: {},
     terms: {},
     macros: {},
@@ -141,4 +142,37 @@ test('max-width attributes accept positive lengths and percentages only', () => 
   assert.equal(parse('.5em'), '0.5em');
   assert.equal(parse('42rem'), '42rem');
   for (const bad of [null, '', '0px', '720', '-10px', 'calc(100% - 2em)', '10 px', 'wide']) assert.equal(parse(bad), null);
+});
+
+test('tag classes own one shape each, the circle stays with glossary tags, and a label has one class', () => {
+  const { DocForm, warnings } = load();
+  const tags = DocForm._normalizeTags({
+    glossary: { Basics: 'Everyday words.', ' Web ': { tip: 'Web words.', color: 'blue' }, Empty: '', Odd: { tip: 'x', role: 'nope' } },
+    classes: {
+      availability: { shape: 'Triangle', label: 'Availability', tags: ['On by default', 'on-request', 'basics'] },
+      clash: { shape: 'triangle' },
+      round: { shape: 'circle' },
+      glossary: { shape: 'star' },
+      odd: { shape: 'hexagon' },
+      swatch: { shape: 'square' }
+    }
+  }, {});
+  assert.deepEqual(plain(tags), {
+    glossary: {
+      basics: { label: 'Basics', tip: 'Everyday words.', color: null, role: null },
+      web: { label: 'Web', tip: 'Web words.', color: 'blue', role: null },
+      odd: { label: 'Odd', tip: 'x', color: null, role: null }
+    },
+    classes: {
+      availability: { shape: 'triangle', label: 'Availability', tags: ['on by default', 'on request'] },
+      swatch: { shape: 'square', label: 'swatch', tags: [] }
+    },
+    labels: { basics: 'glossary', web: 'glossary', odd: 'glossary', 'on by default': 'availability', 'on request': 'availability' }
+  });
+  const text = warnings.join('\n');
+  for (const re of [/"Empty" needs a nonempty tip/, /unknown role "nope"/, /"basics" is listed in both "glossary" and "availability"/,
+    /"clash": class "availability" already uses the triangle/, /"round": the circle is reserved/, /"glossary" is reserved/,
+    /"odd": its shape must be one of triangle, star, square, heart, spades, diamond, clubs/]) assert.match(text, re);
+  assert.deepEqual(plain(DocForm.tagKeys(' Basics, web ,, BASICS ')), ['basics', 'web']);
+  assert.deepEqual(plain(DocForm.tagKeys(['Web', 3])), ['web']);
 });

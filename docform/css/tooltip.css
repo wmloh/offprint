@@ -45,6 +45,23 @@ html.df-term-holding * {
   cursor: default;
 }
 
+/* A running-text tip without a glossary tag. */
+.df-tip-untagged {
+  text-decoration-color: var(--df-red);
+}
+
+/* The term's glossary tags under its definition. */
+.df-tooltip-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--df-space-1);
+  margin-top: var(--df-space-2);
+}
+
+.df-tooltip-tags .df-tag {
+  font-size: 0.75rem;
+}
+
 .df-tooltip {
   --df-tooltip-bg: light-dark(#ffffff, #252525);
   position: fixed;

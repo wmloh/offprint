@@ -111,3 +111,75 @@ a.df-glossary-jump:focus-visible {
 .df-glossary-variant::after {
   content: '\201D';
 }
+
+/* Glossary tags beside each term and in variants, and the tag filter bar. */
+.df-glossary-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--df-space-1);
+  margin-inline-start: var(--df-space-2);
+  font-size: 0.85rem;
+  font-weight: 400;
+  vertical-align: 0.1em;
+}
+
+.df-glossary-tags .df-tag {
+  font-size: 0.8rem;
+}
+
+.df-glossary-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--df-space-2);
+  margin: var(--df-space-4) 0 0;
+  font-size: 0.9em;
+}
+
+.df-glossary-chip {
+  border: 0;
+  font: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+
+.df-glossary-chip:hover,
+.df-glossary-chip:focus-visible {
+  opacity: 1;
+}
+
+.df-glossary-chip[aria-pressed="true"] {
+  opacity: 1;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
+.df-glossary-count {
+  margin-inline-start: 0.4em;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.df-glossary-clear {
+  padding: 0 var(--df-space-2);
+  border: 0;
+  border-radius: var(--df-radius-sm);
+  background: none;
+  color: var(--df-link, var(--df-blue));
+  font: inherit;
+  cursor: pointer;
+}
+
+.df-glossary-clear:hover,
+.df-glossary-clear:focus-visible {
+  background: var(--df-bg-hover);
+}
+
+.df-glossary-status {
+  color: var(--df-text-muted);
+}
+
+a.df-glossary-jump.is-empty {
+  pointer-events: none;
+}

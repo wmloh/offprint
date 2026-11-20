@@ -28,6 +28,7 @@ function el(tag, attrs, children) {
     get className() { return this.attrs.class || ''; },
     set className(value) { this.attrs.class = value; },
     classList: { add: (name) => { node.className = `${node.className} ${name}`.trim(); } },
+    addEventListener() {},
     getAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attrs, name) ? this.attrs[name] : null; },
     hasAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attrs, name); },
     setAttribute(name, value) { this.attrs[name] = value; },
@@ -102,7 +103,9 @@ test('the extractor records tips and term uses once per section, with their sect
   const { DocForm } = load();
   const page = el('main', { class: 'df-page' }, [
     el('h1', {}, ['Vectors']),
-    el('p', {}, ['A ', el('span', { 'data-df-term': '' }, ['Vector']), ' has a ', el('span', { 'data-df-tip': 'Its length.' }, ['norm']), '.']),
+    el('p', {}, ['A ', el('span', { 'data-df-term': '' }, ['Vector']), ' has a ',
+      el('span', { 'data-df-tip': 'Its length.', 'data-df-tip-tags': 'Geometry, geometry,Size' }, ['norm']), '.']),
+    el('p', {}, [el('span', { class: 'df-tag', 'data-df-tip': 'A tag explains itself.' }, ['Draft'])]),
     el('h2', {}, ['Dot  product']),
     el('p', {}, [
       el('span', { 'data-df-term': 'dot-product' }, ['dot products']), ' and ',
@@ -115,9 +118,9 @@ test('the extractor records tips and term uses once per section, with their sect
   const data = DocForm.search.extract(doc(page));
   assert.deepEqual(json(data.terms), [
     { text: 'Vector', term: 'vector', section: '' },
-    { text: 'norm', tip: 'Its length.', section: '' },
+    { text: 'norm', tip: 'Its length.', tags: ['geometry', 'size'], section: '' },
     { text: 'dot products', term: 'dot product', section: 'dot-product' },
-    { text: 'norm', tip: 'Its length.', section: 'dot-product' }
+    { text: 'norm', tip: 'Its length.', tags: [], section: 'dot-product' }
   ]);
   assert.equal(data.sections[1].id, 'dot-product');
 });
@@ -146,9 +149,9 @@ const pages = [
     sections: [{ id: '', title: 'Vectors' }, { id: 'length', title: 'Length' }, { id: 'angles', title: 'Angles' }],
     terms: [
       { text: 'vector', term: 'vector', section: '' },
-      { text: 'Norm', tip: 'The length of a vector.', section: 'length' },
-      { text: 'Vector', tip: 'An arrow   from the origin.', section: 'length' },
-      { text: 'norm', tip: 'the length of a vector.', section: 'angles' },
+      { text: 'Norm', tip: 'The length of a vector.', tags: [], section: 'length' },
+      { text: 'Vector', tip: 'An arrow   from the origin.', tags: [], section: 'length' },
+      { text: 'norm', tip: 'the length of a vector.', tags: [], section: 'angles' },
       { text: 'vectors', term: 'vectors', section: 'angles' },
       { text: 'Vector', term: 'vector', section: 'angles' }
     ]
@@ -157,11 +160,11 @@ const pages = [
     href: 'file:///n/matrices.html#top', title: 'Matrices',
     sections: [{ id: '', title: 'Matrices' }],
     terms: [
-      { text: 'norm', tip: 'A size measure.', section: '' },
-      { text: 'Vector', tip: 'A list of numbers, such as $(2, 1)$.', section: '' },
-      { text: 'Vector', tip: 'an arrow from the origin.', section: '' },
-      { text: 'Ω-limit', tip: 'Where orbits end.', section: '' },
-      { text: '2-norm', tip: 'Euclidean length.', section: '' }
+      { text: 'norm', tip: 'A size measure.', tags: [], section: '' },
+      { text: 'Vector', tip: 'A list of numbers, such as $(2, 1)$.', tags: [], section: '' },
+      { text: 'Vector', tip: 'an arrow from the origin.', tags: [], section: '' },
+      { text: 'Ω-limit', tip: 'Where orbits end.', tags: [], section: '' },
+      { text: '2-norm', tip: 'Euclidean length.', tags: [], section: '' }
     ]
   }
 ];
@@ -179,11 +182,12 @@ test('merging keeps manifest definitions first, folds inline tips by underlined 
   assert.equal(vector.text, 'A list of numbers, such as $(2, 1)$.');
   assert.deepEqual(json(vector.variants), [{
     text: 'An arrow from the origin.',
+    tags: [],
     pages: [{ title: 'Vectors', href: 'file:///n/vectors.html' }, { title: 'Matrices', href: 'file:///n/matrices.html' }]
   }]);
   const norm = entries.find((e) => e.key === 'norm');
   assert.equal(norm.text, 'The length of a vector.');
-  assert.deepEqual(json(norm.variants), [{ text: 'A size measure.', pages: [{ title: 'Matrices', href: 'file:///n/matrices.html' }] }]);
+  assert.deepEqual(json(norm.variants), [{ text: 'A size measure.', tags: [], pages: [{ title: 'Matrices', href: 'file:///n/matrices.html' }] }]);
   assert.equal(entries.find((e) => e.key === 'basis').more, '<p>More.</p>');
 });
 
@@ -207,6 +211,7 @@ test('Used on lists heading links directly and includes the page title for intro
   const { DocForm, context } = load();
   const holder = el('div');
   context.document = {
+    body: el('body'),
     querySelectorAll: () => [],
     createElement: (tag) => el(tag),
     createTextNode: (value) => ({ nodeType: 3, nodeValue: value })
@@ -215,9 +220,9 @@ test('Used on lists heading links directly and includes the page title for intro
     {
       title: 'Vectors', href: 'file:///n/vectors.html',
       sections: [{ id: 'length', title: 'Length' }, { id: 'angles', title: 'Angles' }],
-      terms: ['length', 'angles'].map((section) => ({ section, text: 'norm', tip: 'A size measure.' }))
+      terms: ['length', 'angles'].map((section) => ({ section, text: 'norm', tip: 'A size measure.', tags: [] }))
     },
-    { title: 'Matrices', href: 'file:///n/matrices.html', terms: [{ text: 'norm', tip: 'A size measure.' }] }
+    { title: 'Matrices', href: 'file:///n/matrices.html', terms: [{ text: 'norm', tip: 'A size measure.', tags: [] }] }
   ]));
   const usedOn = holder.querySelector('.df-glossary-uses');
   assert.equal(usedOn.textContent, 'Used on Length · Angles · Matrices');
@@ -250,16 +255,22 @@ test('without an index, or with an index built before glossary data, only manife
   assert.match(notice(null), /no search index/);
   assert.match(notice([{ title: 'Old', href: 'file:///a.html', sections: [], terms: null }]), /no glossary data/);
   assert.equal(notice(pages), null);
+  const legacy = [{
+    title: 'Old', href: 'file:///a.html', sections: [],
+    terms: [{ text: 'Blue', tip: 'A colour sample.', section: '' }, { text: 'vector', term: 'vector', section: '' }]
+  }];
+  assert.match(notice(legacy), /built before glossary tags/);
+  assert.deepEqual(json(merge(terms, legacy).map((e) => [e.title, e.uses.length])), [['vector', 1]]);
   assert.equal(notice([]), null);
 });
 
 test('indexed pages pass their recorded terms on, or null for an older index', () => {
   const { DocForm, context } = load();
   context.DocForm.site = { provided: true, base: 'file:///n/' };
-  context.DocFormSearch = { pages: [{ path: 'a.html', title: 'A', terms: [{ text: 'x', tip: 'y', section: '' }] }, { path: 'b.html', title: 'B' }] };
+  context.DocFormSearch = { pages: [{ path: 'a.html', title: 'A', terms: [{ text: 'x', tip: 'y', tags: [], section: '' }] }, { path: 'b.html', title: 'B' }] };
   let result;
   DocForm.search.pages((list) => { result = list; });
-  assert.deepEqual(json(result.map((p) => p.terms)), [[{ text: 'x', tip: 'y', section: '' }], null]);
+  assert.deepEqual(json(result.map((p) => p.terms)), [[{ text: 'x', tip: 'y', tags: [], section: '' }], null]);
 });
 
 test('the glossaryPage setting adds the page last in the tree unless it is already listed', () => {
@@ -279,4 +290,29 @@ test('the glossaryPage setting adds the page last in the tree unless it is alrea
   assert.equal(listed.pages.length, 1);
   assert.equal(DocForm.normalizeSite({ glossaryPage: 5 }, 'file:///n/site.js').glossaryPage, null);
   assert.equal(warnings.length, 1);
+});
+
+test('entry tags are a union with manifest tags first, variants keep their own, and the filter matches any tag', () => {
+  const { DocForm } = load();
+  const registry = { glossary: { maths: {}, geometry: {}, computing: {} } };
+  const terms = DocForm.tooltip.glossary({ norm: { text: 'A length.', tags: ['Maths'] }, rank: 'Independent columns.' });
+  const entries = DocForm.glossary.merge(terms, [{
+    href: 'file:///n/a.html', title: 'A', sections: [],
+    terms: [
+      { text: 'norm', tip: 'a length.', tags: ['geometry', 'maths'], section: '' },
+      { text: 'norm', tip: 'A vector size.', tags: ['Computing'], section: '' }
+    ]
+  }]);
+  const norm = entries.find((e) => e.key === 'norm');
+  assert.deepEqual(json(norm.tags), ['maths', 'geometry', 'computing']);
+  assert.deepEqual(json(norm.variants.map((v) => v.tags)), [['computing']]);
+  const { matches, filterTags } = DocForm.glossary;
+  const rank = entries.find((e) => e.key === 'rank');
+  assert.deepEqual(json(filterTags(entries, registry)),
+    [{ key: 'maths', count: 1 }, { key: 'geometry', count: 1 }, { key: 'computing', count: 1 }, { key: '', count: 1 }]);
+  assert.equal(matches(norm, new Set()), true);
+  assert.equal(matches(norm, new Set(['computing', 'other'])), true);
+  assert.equal(matches(norm, new Set([''])), false);
+  assert.equal(matches(rank, new Set([''])), true);
+  assert.equal(matches(rank, new Set(['maths'])), false);
 });

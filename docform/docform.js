@@ -396,6 +396,12 @@
       return typeof value === 'string' && DF.colors.includes(value.trim().toLowerCase());
     });
     optionMap('roles', 'tips', function (value) { return typeof value === 'string' && value.trim() !== ''; });
+    optionMap('tags', 'glossary', function (value) {
+      return typeof value === 'string' ? value.trim() !== '' : object(value) && typeof value.tip === 'string';
+    });
+    optionMap('tags', 'classes', function (value) {
+      return object(value) && typeof value.shape === 'string' && (!own(value, 'tags') || Array.isArray(value.tags));
+    });
     optionMap('math', 'macros', function (value) { return typeof value === 'string'; });
     optionMap('tooltips', 'terms', function (value) {
       return typeof value === 'string' || (object(value) && typeof value.text === 'string' &&

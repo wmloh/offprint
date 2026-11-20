@@ -9,6 +9,8 @@
 
   var COLORS = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];
   var NAME_RE = /^[a-z0-9][a-z0-9_-]*$/;
+  var SHAPES = ['circle', 'triangle', 'star', 'square', 'heart', 'spades', 'diamond', 'clubs'];
+  var GLOSSARY_SHAPE = 'circle';
   var hasOwn = Object.prototype.hasOwnProperty;
   var modules = [];
   var warned = {};
@@ -454,6 +456,91 @@
     return tips;
   }
 
+  // options.tags: { glossary: { label: tip | { tip, color | role } }, classes: { name: { shape, label, tags } } }.
+  // Glossary tags classify tooltip terms and alone use the circle; each other class owns one other shape, and a tag
+  // label belongs to at most one class. `labels` maps each label's term key to its class, or "glossary".
+  function normalizeTags(value, roles) {
+    var source = plainObject(value, 'tags');
+    var out = { glossary: {}, classes: {}, labels: {} };
+    function claim(label, owner) {
+      var key = termKey(label);
+      if (!key) return null;
+      if (hasOwn.call(out.labels, key)) {
+        warnOnce('tag-label:' + key, 'Tag "' + String(label).trim() + '" is listed in both "' + out.labels[key] + '" and "' +
+          owner + '"; keeping "' + out.labels[key] + '".');
+        return null;
+      }
+      out.labels[key] = owner;
+      return key;
+    }
+    var glossary = plainObject(source.glossary, 'tags.glossary');
+    Object.keys(glossary).forEach(function (label) {
+      var item = typeof glossary[label] === 'string' ? { tip: glossary[label] } : glossary[label];
+      var tip = isObject(item) && typeof item.tip === 'string' ? item.tip.trim() : '';
+      if (!tip) {
+        warnOnce('tag-glossary:' + label, 'Glossary tag "' + label + '" needs a nonempty tip; ignoring it.');
+        return;
+      }
+      var key = claim(label, 'glossary');
+      if (!key) return;
+      var role = typeof item.role === 'string' ? item.role.trim().toLowerCase() : null;
+      if (role && !hasOwn.call(roles, role)) {
+        warnOnce('tag-role:' + label, 'Glossary tag "' + label + '" names unknown role "' + role + '"; ignoring the role.');
+        role = null;
+      }
+      out.glossary[key] = { label: label.trim(), tip: tip, color: item.color == null ? null : color(item.color), role: role };
+    });
+    var owners = {};
+    var classes = plainObject(source.classes, 'tags.classes');
+    Object.keys(classes).forEach(function (name) {
+      var key = name.trim().toLowerCase();
+      var item = classes[name];
+      var shape = isObject(item) && typeof item.shape === 'string' ? item.shape.trim().toLowerCase() : '';
+      var problem = !NAME_RE.test(key) ? 'use letters, digits, hyphens, or underscores in its name' :
+        key === 'glossary' ? '"glossary" is reserved for glossary tags' :
+        shape === GLOSSARY_SHAPE ? 'the circle is reserved for glossary tags' :
+        SHAPES.indexOf(shape) < 0 ? 'its shape must be one of ' + SHAPES.slice(1).join(', ') :
+        hasOwn.call(owners, shape) ? 'class "' + owners[shape] + '" already uses the ' + shape : '';
+      if (problem) {
+        warnOnce('tag-class:' + name, 'Ignoring tag class "' + name + '": ' + problem + '.');
+        return;
+      }
+      if (item.tags != null && !Array.isArray(item.tags)) {
+        warnOnce('tag-class-tags:' + key, 'Tag class "' + key + '" tags must be an array of labels; ignoring them.');
+      }
+      owners[shape] = key;
+      var tags = [];
+      (Array.isArray(item.tags) ? item.tags : []).forEach(function (label) {
+        var tag = typeof label === 'string' ? claim(label, key) : null;
+        if (tag) tags.push(tag);
+      });
+      out.classes[key] = {
+        shape: shape,
+        label: typeof item.label === 'string' && item.label.trim() ? item.label.trim() : key.replace(/[-_]+/g, ' '),
+        tags: tags
+      };
+    });
+    return out;
+  }
+
+  // A manifest tags array or data-df-tip-tags text (comma-separated) as distinct term keys.
+  function tagKeys(value) {
+    var list = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [];
+    var out = [];
+    list.forEach(function (item) {
+      var key = typeof item === 'string' ? termKey(item) : '';
+      if (key && out.indexOf(key) < 0) out.push(key);
+    });
+    return out;
+  }
+
+  // Only tips in running text are glossary entries. Tips on tags, legend entries, and controls explain that element.
+  var NOT_GLOSSARY = '.df-tag, .df-legend-item, .df-tooltip, a[href], button, input, select, textarea, label, summary, ' +
+    'svg, [role="button"], [role="tab"], .df-controls, .df-sidebar';
+  function glossaryTip(el) {
+    return el.hasAttribute('data-df-tip') && !el.closest(NOT_GLOSSARY);
+  }
+
   // glossaryPage: a path or { path, title } listed last in the page tree, unless the tree already has that page.
   function addGlossaryPage(value, pages, base, order) {
     if (value == null) return null;
@@ -496,6 +583,7 @@
       glossaryPage: addGlossaryPage(source.glossaryPage, pages, base, order),
       roles: roles,
       roleTips: normalizeRoleTips(options.roles && options.roles.tips, roles),
+      tags: normalizeTags(options.tags, roles),
       glossary: plainObject(tooltips.terms === undefined ? source.glossary : tooltips.terms, 'glossary'),
       terms: terms,
       macros: plainObject(options.math && options.math.macros !== undefined ? options.math.macros : source.macros, 'macros'),
@@ -735,6 +823,10 @@
     slug: slug,
     uniqueSlug: uniqueSlug,
     termKey: termKey,
+    tagShapes: SHAPES.slice(),
+    _normalizeTags: normalizeTags,
+    tagKeys: tagKeys,
+    glossaryTip: glossaryTip,
     copyText: copyText,
     warnOnce: warnOnce,
     _component: {

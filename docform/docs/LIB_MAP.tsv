@@ -34,7 +34,7 @@ Scroll reveals	Reveal marked blocks once as they enter view	interact/reveals.md
 Split views	Lay out responsive panes with staggered reveals	interact/split-views.md
 Figure zoom	Move a live figure into a full-screen dialog	interact/figure-zoom.md
 Zoom tools	Magnify, point, draw, and measure in the zoom dialog	interact/zoom-tools.md
-Parameters	Share parameter definitions and connect scoped controls, presets, bindings, show conditions, chart bindings, selection groups, and callbacks	interact/parameters.md
+Parameters	Share parameter definitions and connect scoped controls with chip and combobox choices, presets, bindings, show conditions, chart bindings, selection groups, and callbacks	interact/parameters.md
 Linked selection	Synchronize keyed controls, parameters, charts, and passive views with a tinted highlight	interact/linked-highlighting.md
 Worked-example steppers	Step through an ordered example and its linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md

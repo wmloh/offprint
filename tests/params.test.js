@@ -306,7 +306,7 @@ test('scoped batches validate before publication and notify filtered subscribers
 
 test('scoped multiple choices use ordered immutable arrays in controls, presets and subscriptions', () => {
   const attrs = { 'data-df-parameter': 'runs', 'data-df-parameter-label': 'Runs to show' };
-  const generated = new FakeElement('div', attrs);
+  const generated = new FakeElement('div', { ...attrs, 'data-df-parameter-style': 'native' });
   const native = new FakeElement('select', { ...attrs, multiple: '' });
   const preset = new FakeElement('button', { 'data-df-preset': '{"runs":["b","a"]}' });
   const { parameters, events } = page({ scoped: [generated, native], presets: [preset], setup(params) {

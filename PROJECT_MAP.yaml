@@ -20,7 +20,7 @@ docform/: Copyable offline library folder
     dropdowns.css: Theme-aware popovers, expanded menu branches, and opening and closing transitions
     tabs.css: Tab list and panels with a no-JS fallback
     anim.css: Figure frames, animation controls, and SVG paint utilities
-    params.css: Parameter sliders, single and multiple choices, switches, preset buttons, bound values, and show-when fades
+    params.css: Parameter sliders, chip choices with a sliding highlight, searchable comboboxes with removable chips, switches, preset buttons, bound values, and show-when fades
     reveal.css: Scroll reveals, two-way callout slides, and split views with side-gliding panes
     steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus the side-by-side detail layout for standalone cards and figure steps and optional title-only side cards
     detail.css: Standalone detail panes with overlapping, independently scrolling details and the shared hover scrollbar
@@ -55,10 +55,10 @@ docform/: Copyable offline library folder
     tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, glossary-labelled tags, opt-in automatic term linking, and lazy HTML cards for other modules
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     editable-text.js: Native text fields with optional live syntax highlighting
-    dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches
+    dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches, with a shared positioning helper
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
     anim.js: Keyed SVG timeline controllers with playback, step subscriptions, and figure-step integration
-    params.js: Named parameter scopes with multiple-choice controls, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
+    params.js: Named parameter scopes with chip and searchable combobox choice controls, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
     steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, and inert details, both usable as detail-pane sources
     detail.js: Shared detail panes keyed to card panels, figure steps, pipelines, or selection groups, plus inert-detail and scrollbar helpers

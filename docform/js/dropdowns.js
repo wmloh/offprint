@@ -8,6 +8,46 @@
   var gutter = 8;
   var gap = 6;
 
+  // Places an open top-layer panel below its trigger, or above when there is more room; false when the
+  // trigger is out of view.
+  function place(trigger, panel) {
+    var viewport = document.documentElement;
+    var rect = trigger.getBoundingClientRect();
+    var width = viewport.clientWidth;
+    var height = viewport.clientHeight;
+    if (!trigger.getClientRects().length || rect.bottom <= 0 || rect.top >= height) return false;
+    var above = rect.top - gap - gutter;
+    var below = height - rect.bottom - gap - gutter;
+    var upwards = below < 240 && above > below;
+    var rtl = root.getComputedStyle(trigger).direction === 'rtl';
+    var left = rtl ? rect.right - panel.offsetWidth : rect.left;
+    panel.style.left = Math.max(gutter, Math.min(left, width - panel.offsetWidth - gutter)) + 'px';
+    panel.style.top = upwards ? 'auto' : Math.max(gutter, rect.bottom + gap) + 'px';
+    panel.style.bottom = upwards ? Math.max(gutter, height - rect.top + gap) + 'px' : 'auto';
+    panel.style.maxHeight = Math.max(0, upwards ? above : below) + 'px';
+    panel.classList.toggle('df-dropdown-up', upwards);
+    return true;
+  }
+
+  // Keeps an open popover panel at its trigger through scrolling and resizing, and hides it once the trigger
+  // leaves the viewport. Returns a function that stops following.
+  function follow(trigger, panel) {
+    function update() {
+      if (!place(trigger, panel) && panel.matches(':popover-open')) panel.hidePopover();
+    }
+    var resize = root.ResizeObserver && new root.ResizeObserver(update);
+    panel.classList.add('df-dropdown-positioned');
+    root.addEventListener('scroll', update, true);
+    root.addEventListener('resize', update);
+    if (resize) resize.observe(panel);
+    update();
+    return function () {
+      root.removeEventListener('scroll', update, true);
+      root.removeEventListener('resize', update);
+      if (resize) resize.disconnect();
+    };
+  }
+
   function mount(target) {
     var host = component.target(target, 'dropdowns', true);
     if (!host) return null;
@@ -20,48 +60,22 @@
       return null;
     }
     if (typeof panel.showPopover !== 'function') return null;
-    var resize = root.ResizeObserver && new root.ResizeObserver(place);
-
-    function place() {
-      var viewport = document.documentElement;
-      var rect = trigger.getBoundingClientRect();
-      var width = viewport.clientWidth;
-      var height = viewport.clientHeight;
-      if (!trigger.getClientRects().length || rect.bottom <= 0 || rect.top >= height) {
-        panel.hidePopover();
-        return;
-      }
-      var above = rect.top - gap - gutter;
-      var below = height - rect.bottom - gap - gutter;
-      var upwards = below < 240 && above > below;
-      var rtl = root.getComputedStyle(trigger).direction === 'rtl';
-      var left = rtl ? rect.right - panel.offsetWidth : rect.left;
-      panel.style.left = Math.max(gutter, Math.min(left, width - panel.offsetWidth - gutter)) + 'px';
-      panel.style.top = upwards ? 'auto' : Math.max(gutter, rect.bottom + gap) + 'px';
-      panel.style.bottom = upwards ? Math.max(gutter, height - rect.top + gap) + 'px' : 'auto';
-      panel.style.maxHeight = Math.max(0, upwards ? above : below) + 'px';
-      panel.classList.toggle('df-dropdown-up', upwards);
-    }
+    var stop = null;
 
     panel.addEventListener('beforetoggle', function (event) {
       if (event.newState === 'open') {
         panel.querySelectorAll('details[open]').forEach(function (branch) { branch.open = false; });
         // Position before the first paint, once the popover has an intrinsic width.
         root.requestAnimationFrame(function () {
-          if (panel.matches(':popover-open')) place();
+          if (panel.matches(':popover-open')) place(trigger, panel);
         });
-      } else {
-        root.removeEventListener('scroll', place, true);
-        root.removeEventListener('resize', place);
-        if (resize) resize.disconnect();
+      } else if (stop) {
+        stop();
+        stop = null;
       }
     });
     panel.addEventListener('toggle', function () {
-      if (!panel.matches(':popover-open')) return;
-      root.addEventListener('scroll', place, true);
-      root.addEventListener('resize', place);
-      if (resize) resize.observe(panel);
-      place();
+      if (panel.matches(':popover-open') && !stop) stop = follow(trigger, panel);
     });
     panel.addEventListener('click', function (event) {
       if (event.target.closest('a[href], button:not(:disabled)') && panel.matches(':popover-open')) {
@@ -83,7 +97,7 @@
     return panel;
   }
 
-  DocForm.dropdowns = { mount: mount };
+  DocForm.dropdowns = { mount: mount, follow: follow };
   DocForm.register('dropdowns', function () {
     DocForm.all('.df-dropdown').forEach(mount);
   });

@@ -47,6 +47,11 @@ window.DocFormSearch = {
           "text": "DocForm finding glossary words in the text by itself and giving them a faint underline and a tooltip.",
           "more": "<p>Auto-linked words stay quiet: the underline is fainter than a chosen term, and they are skipped in headings, links, code, and controls.</p>"
         },
+        "autoplay": {
+          "title": "autoplay",
+          "text": "Starting a figure or chart animation automatically when it comes into view.",
+          "more": ""
+        },
         "axis": {
           "title": "axis",
           "text": "One of the scaled lines along the edge of a chart, usually horizontal (x) and vertical (y), with values marked along it.",
@@ -72,9 +77,19 @@ window.DocFormSearch = {
           "text": "One page open inside a browser window. Several tabs can sit side by side along the top of the window.",
           "more": ""
         },
+        "byte": {
+          "title": "byte",
+          "text": "A small unit used to measure how much space a file takes up.",
+          "more": ""
+        },
         "callout": {
           "title": "callout",
           "text": "A tinted box that sets one important note apart from the surrounding text.",
+          "more": ""
+        },
+        "caption": {
+          "title": "caption",
+          "text": "A short line of text beside or below a picture, chart, or table that tells you what it shows.",
           "more": ""
         },
         "card panel": {
@@ -102,6 +117,16 @@ window.DocFormSearch = {
           "text": "A box that shows program text in a fixed-width font with its line breaks kept.",
           "more": ""
         },
+        "commit": {
+          "title": "commit",
+          "text": "One saved set of changes in a project's history.",
+          "more": ""
+        },
+        "concept table": {
+          "title": "concept table",
+          "text": "A table of words that compares ideas, often with extra space for labels in the first column.",
+          "more": ""
+        },
         "contrast": {
           "title": "contrast",
           "text": "The difference between two things, such as dark text on a light background or a large heading above small text. More contrast means more attention.",
@@ -117,6 +142,11 @@ window.DocFormSearch = {
           "text": "A link to a numbered figure, table, or equation elsewhere, such as \"see Figure 2\", that shows a preview on hover.",
           "more": ""
         },
+        "crosshair": {
+          "title": "crosshair",
+          "text": "Two guide lines that cross at the pointer, making it easier to read the values at that spot on a chart.",
+          "more": ""
+        },
         "css": {
           "title": "CSS",
           "text": "The language that describes how a web page looks: colours, fonts, sizes, and spacing.",
@@ -127,9 +157,19 @@ window.DocFormSearch = {
           "text": "A plain text format for tables: one row per line, with values separated by commas.",
           "more": "<p>A first line of column names, then one line per row:</p><p><em>page, words</em><br><em>Welcome, 640</em><br><em>Tour, 910</em></p>"
         },
+        "cumulative count": {
+          "title": "cumulative count",
+          "text": "A running total that includes everything counted up to that point.",
+          "more": ""
+        },
         "dark mode": {
           "title": "dark mode",
           "text": "A colour scheme with light text on a dark background, easier on the eyes in dim rooms.",
+          "more": ""
+        },
+        "data file wrapper": {
+          "title": "data file wrapper",
+          "text": "A prepared copy of a data file that DocForm can open from a local folder.",
           "more": ""
         },
         "data source": {
@@ -167,6 +207,11 @@ window.DocFormSearch = {
           "text": "A block that hides its content until you open it, usually by clicking a small summary line.",
           "more": ""
         },
+        "display math": {
+          "title": "display math",
+          "text": "A formula drawn on its own line, with room for taller symbols.",
+          "more": ""
+        },
         "download": {
           "title": "download",
           "text": "To copy a file from the internet, or from a web page, onto your own computer.",
@@ -195,6 +240,11 @@ window.DocFormSearch = {
         "emphasis": {
           "title": "emphasis",
           "text": "Making a word or block stand out so readers notice it first, for example with weight, colour, or size.",
+          "more": ""
+        },
+        "evaluation matrix": {
+          "title": "evaluation matrix",
+          "text": "A grid that compares results across two categories, such as groups and measures.",
           "more": ""
         },
         "eyebrow": {
@@ -227,6 +277,11 @@ window.DocFormSearch = {
           "text": "A single saved item on a computer, such as a document, a picture, or a web page. Each file has a name.",
           "more": "<p>The end of a file name, after the dot, hints at its kind: <em>photo.jpg</em> is a picture and <em>index.html</em> is a web page.</p>"
         },
+        "filter": {
+          "title": "filter",
+          "text": "A choice that shows only items matching a rule.",
+          "more": ""
+        },
         "filter chip": {
           "title": "filter chip",
           "text": "A small removable label showing an active filter on a table, with a button to clear it.",
@@ -234,7 +289,7 @@ window.DocFormSearch = {
         },
         "focus mode": {
           "title": "focus mode",
-          "text": "A reading mode that blurs everything except the part of the page you are reading.",
+          "text": "A reading mode that blurs text away from the section you are reading. Rest the pointer on a blurred block to see it clearly.",
           "more": ""
         },
         "folder": {
@@ -286,6 +341,11 @@ window.DocFormSearch = {
           "title": "HTML",
           "text": "The language that describes what is on a web page: headings, paragraphs, pictures, links, and so on.",
           "more": "<p>You will not need to write HTML to use these docs. An agent writes it for you; these pages show what the result looks like.</p>"
+        },
+        "inline math": {
+          "title": "inline math",
+          "text": "A formula drawn inside a line of ordinary text.",
+          "more": ""
         },
         "interval": {
           "title": "interval",
@@ -404,12 +464,12 @@ window.DocFormSearch = {
         },
         "on by default": {
           "title": "on by default",
-          "text": "Already turned on for every DocForm page, with nothing to ask for.",
+          "text": "Turned on as part of a standard DocForm page. Some tools still need content to work with, such as a word and its definition.",
           "more": ""
         },
         "on request": {
           "title": "on request",
-          "text": "Available, but turned on only for pages that ask for it, so other pages stay light.",
+          "text": "Available to add to pages that need it.",
           "more": ""
         },
         "outline": {
@@ -420,6 +480,11 @@ window.DocFormSearch = {
         "page settings": {
           "title": "page settings",
           "text": "Settings that apply to one page only, such as the extra features it turns on. They override the site settings for that page.",
+          "more": ""
+        },
+        "page tree": {
+          "title": "page tree",
+          "text": "A list of pages arranged into groups that can be opened or folded away.",
           "more": ""
         },
         "pager": {
@@ -507,6 +572,11 @@ window.DocFormSearch = {
           "text": "One item in a data source, such as one row of a table, made of named fields.",
           "more": ""
         },
+        "reduced motion": {
+          "title": "reduced motion",
+          "text": "A device preference that asks apps and pages to use less movement.",
+          "more": ""
+        },
         "reference line": {
           "title": "reference line",
           "text": "A dashed line across a chart at an important value, such as a target or a threshold.",
@@ -517,9 +587,19 @@ window.DocFormSearch = {
           "text": "To build a prepared file again, such as the search index, so it matches the latest pages.",
           "more": ""
         },
+        "repository": {
+          "title": "repository",
+          "text": "The collection of a project's files and the saved record of changes to them.",
+          "more": ""
+        },
         "responsive": {
           "title": "responsive",
           "text": "Able to rearrange itself to fit any screen, from a wide monitor to a phone.",
+          "more": ""
+        },
+        "results table": {
+          "title": "results table",
+          "text": "A table for comparing results that can sort, filter, or highlight its rows and values.",
           "more": ""
         },
         "role": {
@@ -532,9 +612,19 @@ window.DocFormSearch = {
           "text": "Reading quickly by jumping between headings, labels, and highlights instead of reading every word. Most readers scan first.",
           "more": ""
         },
+        "scatter chart": {
+          "title": "scatter chart",
+          "text": "A chart that shows each item as a dot, placing it by two numbers.",
+          "more": ""
+        },
         "scenario": {
           "title": "scenario",
           "text": "One version of a situation, set up to compare its outcome with others.",
+          "more": ""
+        },
+        "scenario comparison": {
+          "title": "scenario comparison",
+          "text": "A view of how changing one or more conditions affects the outcomes compared with a starting case.",
           "more": ""
         },
         "screen reader": {
@@ -567,9 +657,19 @@ window.DocFormSearch = {
           "text": "A prepared summary of every page's text that lets search find words across the whole site, even offline.",
           "more": ""
         },
+        "search palette": {
+          "title": "search palette",
+          "text": "The box that opens over a page to let you type a search and choose a result.",
+          "more": ""
+        },
+        "section cycle": {
+          "title": "section cycle",
+          "text": "The order in which DocForm repeats colours from one main section to the next.",
+          "more": ""
+        },
         "section rail": {
           "title": "section rail",
-          "text": "A row of numbered marks at the page edge, one per section, shown when the sidebar is hidden.",
+          "text": "A vertical set of numbered marks beside the text on a wide screen. Each mark leads to a heading when the sidebar is out of view.",
           "more": ""
         },
         "selection key": {
@@ -612,6 +712,16 @@ window.DocFormSearch = {
           "text": "A control you drag along a track to pick a number.",
           "more": ""
         },
+        "snapshot": {
+          "title": "snapshot",
+          "text": "A copy or set of measurements taken at one point in time.",
+          "more": ""
+        },
+        "spacing scale": {
+          "title": "spacing scale",
+          "text": "A set of sizes reused for gaps so the spaces on a page feel consistent.",
+          "more": ""
+        },
         "split view": {
           "title": "split view",
           "text": "Two blocks placed side by side, such as a picture and its explanation.",
@@ -640,6 +750,11 @@ window.DocFormSearch = {
         "svg": {
           "title": "SVG",
           "text": "A kind of picture made of shapes rather than dots, so it stays sharp at any size and its parts can move.",
+          "more": ""
+        },
+        "swatch": {
+          "title": "swatch",
+          "text": "A small sample of a colour so you can see how it looks.",
           "more": ""
         },
         "syntax highlighting": {
@@ -675,6 +790,11 @@ window.DocFormSearch = {
         "text editor": {
           "title": "text editor",
           "text": "A simple program for writing and changing plain text files, such as Notepad or TextEdit. Web pages are plain text files.",
+          "more": ""
+        },
+        "theme": {
+          "title": "theme",
+          "text": "The set of colours a page uses. In DocForm, a reader can switch between light and dark themes.",
           "more": ""
         },
         "threshold": {
@@ -751,6 +871,11 @@ window.DocFormSearch = {
           "title": "YAML",
           "text": "A plain text format for structured data that uses indentation instead of brackets, popular for settings files.",
           "more": "<p>Each line is a name, a colon, and a value; indented lines belong to the line above them.</p>"
+        },
+        "zip file": {
+          "title": "ZIP file",
+          "text": "One file that packs several files or folders together. Extract it to get the original files and folders back.",
+          "more": ""
         }
       },
       "autoLink": true
@@ -760,259 +885,259 @@ window.DocFormSearch = {
         "file": "index.html",
         "path": "../index.html",
         "title": "Welcome to DocForm",
-        "sha256": "ea405acce2c77102a9a182b1034ad2698139a0601e2827eb4e84f90a0d231516"
+        "sha256": "dff4aa97598303e9195dd12c0e05e2f102cfb814159deb1454922fb0dcc9046e"
       },
       {
         "file": "pages/start/open-a-site.html",
         "path": "../pages/start/open-a-site.html",
         "title": "Open a DocForm site",
-        "sha256": "e0e6dd425bc724ec5c0f5dd6b62bd5dd1a736bf5e620f7d56f5c9bdac58337ed"
+        "sha256": "c1c6e4ae5230a9d37452d390391c77f5e6e05d0ae921f32726815b02f3e66a19"
       },
       {
         "file": "pages/start/tour.html",
         "path": "../pages/start/tour.html",
         "title": "Tour the reading interface",
-        "sha256": "7b00e9e653a173705f7c966ec3dbd9228ab55bcb1c09a676dc6ad1a0204d4a2d"
+        "sha256": "a50ac0ea277cefe8883f7ef73d1f41e34730d0e5c4d143930a056abac30df7a0"
       },
       {
         "file": "pages/start/how-these-docs-work.html",
         "path": "../pages/start/how-these-docs-work.html",
         "title": "How these docs work",
-        "sha256": "f75034e2a61e43042adca1ef6a0e7adec59f1b43e13d1282c506e3e7a7a214c7"
+        "sha256": "11cd015f17da60ffc601939059b41ff1449b5534d35176bca7732e0ce39e6a48"
       },
       {
         "file": "pages/start/working-with-an-agent.html",
         "path": "../pages/start/working-with-an-agent.html",
         "title": "Making pages with an agent",
-        "sha256": "fd03182c1af0e6bfc1b74376837ced0b6c0f3d7f364d298d8ab633c19ab81465"
+        "sha256": "c2917a75a50306a8c45b4bd4dd9abae6b7ab3b1383690b4e3eb9752e79925764"
       },
       {
         "file": "pages/hierarchy/guiding-the-eye.html",
         "path": "../pages/hierarchy/guiding-the-eye.html",
         "title": "Visual hierarchy: guiding the eye",
-        "sha256": "67813c2aa1f967ababd99055a0bc557020f9f3030bcb9c8183c8babd2cdfc5b6"
+        "sha256": "cf4de9fbd8a64abc7e2f892bd1bffd82cc32d83963abc1ddd1a69ba678c0f3c7"
       },
       {
         "file": "pages/hierarchy/signal-ladder.html",
         "path": "../pages/hierarchy/signal-ladder.html",
         "title": "The signal ladder",
-        "sha256": "4b9cac947aedeeaa6b08f678607b01c9cce5c31f398c170f06d732a565294fdd"
+        "sha256": "8d7db12a17972416efb3c8fd6a428dcf2b6c86fd66f7b1fe218ffb9a5ccb0053"
       },
       {
         "file": "pages/write/text.html",
         "path": "../pages/write/text.html",
         "title": "Base layout, text roles, tags, buttons",
-        "sha256": "4d972c0ebf4d241251ae8cdf6555dfd6f3b0536a9108041e4fe692f84addf56c"
+        "sha256": "cfd79b1e2f2db40df1cc7383af1291d4b427f1e6156700278aba0d1b3dd760b6"
       },
       {
         "file": "pages/write/callouts.html",
         "path": "../pages/write/callouts.html",
         "title": "Callouts",
-        "sha256": "a3c4b7e9bdf2c24d979fd987498e009f953098eed41830b8df64c1c955d008b8"
+        "sha256": "aacecd98df3ccdba476093662edd6632c5995d7c2a48175be0a6274029faf496"
       },
       {
         "file": "pages/write/math.html",
         "path": "../pages/write/math.html",
         "title": "TeX math",
-        "sha256": "c1f6891782376704eaadfba7accf1f660ba9938dd76644fa6b98e392361366fd"
+        "sha256": "c3ac3e3c5f89ff1c5d74aa9e95befcb07b0cac8bddb4cd95e78a84af5fff5ce9"
       },
       {
         "file": "pages/write/code.html",
         "path": "../pages/write/code.html",
         "title": "Code",
-        "sha256": "7e95679aa9a98ac3732b5ac379b030b1f02d24c2d6b5df3f483eceae0f81f423"
+        "sha256": "5b857f336074f0e2c485bb87ba4ff359cf38426d0e0a7f22bda471fb81b97089"
       },
       {
         "file": "pages/write/notes.html",
         "path": "../pages/write/notes.html",
         "title": "Sidenotes and peek bubbles",
-        "sha256": "90297a4b6398cd52b8a70b8c461e750dda08c4d24d39fc8744785ec1e47d7b34"
+        "sha256": "b3b329580e5946501c73a1b66dde9a16a61b707a8abbff92558d8e585f8f446a"
       },
       {
         "file": "pages/write/terms.html",
         "path": "../pages/write/terms.html",
         "title": "Tooltips and glossary",
-        "sha256": "b8397c6ade57365f74e24086b5d433967fbe4fbc2c7c673edba52a5416cf378e"
+        "sha256": "4e4c05d6533ed587b763def076e04bc54e685bb350d2070406ffebfb54187f59"
       },
       {
         "file": "pages/write/sources.html",
         "path": "../pages/write/sources.html",
         "title": "Cross-references and citations",
-        "sha256": "586945625e411c98ba4ff6846173be7377d8d33f13791c5dd8410e0e05373000"
+        "sha256": "68e33054cecb6c3186b043b540b2a8c4cf1c2e659d34a8f192d7a51394f5f845"
       },
       {
         "file": "pages/shape/layout.html",
         "path": "../pages/shape/layout.html",
         "title": "Section lines and split views",
-        "sha256": "f79443553a6c4ebf076d9f583370f8010cae7f464c1197f0ec0a2ef5a4c0960a"
+        "sha256": "544403f187e23669f0e6617e5c5fefb737f915c105a3cd6f1fe0fdeade34e347"
       },
       {
         "file": "pages/shape/colour.html",
         "path": "../pages/shape/colour.html",
         "title": "Colour, roles, and theme",
-        "sha256": "528c3116fa1520212b8f4c1d6d39856b12a3687e0f213cefc0de5a07fb1a2653"
+        "sha256": "93280795f03625e1fc5f7dd457db4aae0d4a191545af2be59745fbd7b713b8d0"
       },
       {
         "file": "pages/shape/navigation.html",
         "path": "../pages/shape/navigation.html",
         "title": "Navigation and reading controls",
-        "sha256": "eeba1095677619bf5ea7757d5179241104ea9c768a3cd02223d4cbe4b3dab350"
+        "sha256": "37b45631558bfd6551468297e268acf19acb59f5dc9c5820e09f2f39ec926b8f"
       },
       {
         "file": "pages/shape/search.html",
         "path": "../pages/shape/search.html",
         "title": "Search",
-        "sha256": "d19437388136ea2b5f42573ebb72dda8b3be2b4b225e2eaf96dcbd0d4a5c59b7"
+        "sha256": "2ecab1c584fec29f6c0d2dbee8a511576d993de22777ffed627d618cfcd1c528"
       },
       {
         "file": "pages/shape/customize.html",
         "path": "../pages/shape/customize.html",
         "title": "Design tokens",
-        "sha256": "98a4b93b6eeb46a49f3471d114cbffca8c49fa73f6b9383f853b5e0872efb013"
+        "sha256": "f66d2ce40fd5487cb536adef6fea2a4ae3691455142f00f1c954cb9fcd1ce49c"
       },
       {
         "file": "pages/explain/tabs.html",
         "path": "../pages/explain/tabs.html",
         "title": "Tabs",
-        "sha256": "4c925d3fb5d3b6593bbe1c9964f3d3a3b3778a00902c5af6aa742203c0adf315"
+        "sha256": "82dea7d1b24b52d743555363243fe9c089cd161bb81a5c16b361cfc94a71ffbd"
       },
       {
         "file": "pages/explain/cards.html",
         "path": "../pages/explain/cards.html",
         "title": "Card panels and figure steps",
-        "sha256": "bdf3df52828ce4aa835e5439da8a420e120ec451fd9bb0612613d08c0295dd25"
+        "sha256": "76a359d8fba796a17d41c4c7bab1b0ffe99565bb97676f53890c6b581a4626fa"
       },
       {
         "file": "pages/explain/animations.html",
         "path": "../pages/explain/animations.html",
         "title": "SVG animations",
-        "sha256": "32f82c38ff75b5649cf0f1c7fd6093ffa7dd3e7c49deea093f6d2a353109c132"
+        "sha256": "bfd76901e3eddf3e43866d192cfc79b208636579e24edf3bf69d4e7d20277315"
       },
       {
         "file": "pages/explain/steppers.html",
         "path": "../pages/explain/steppers.html",
         "title": "Worked-example steppers",
-        "sha256": "1b7357747d217648b89bca2862a4170226a89014034c4b0ad2e2f875d59bb406"
+        "sha256": "5a981e8266ab58d0c0ce509f9931022f67e5df42763a8222df35232346cf665a"
       },
       {
         "file": "pages/explain/reveals.html",
         "path": "../pages/explain/reveals.html",
         "title": "Scroll reveals",
-        "sha256": "056811c75e77d04c8915a53dee5793d68bc01fa29d6463c1b35d36a66fbb2f43"
+        "sha256": "406d48a1d1d610fbc2d5e5809e4403c297d355765a60190bd4cf95555a02d1c7"
       },
       {
         "file": "pages/explain/selection.html",
         "path": "../pages/explain/selection.html",
         "title": "Linked selection",
-        "sha256": "0f7e20430ce87d05b85273fbefa24a9372177a809a4a42ec5ab9ab8768816db5"
+        "sha256": "ccafe76b6dc643fac683ef0567ee4489ea15a89517fd06cc5c51078d18023cf1"
       },
       {
         "file": "pages/explain/parameters.html",
         "path": "../pages/explain/parameters.html",
         "title": "Parameters and presets",
-        "sha256": "3e105eaf518113df953dc51fed15dbcd51c0ea42c3f90c617273be19c0a0b815"
+        "sha256": "d1b30d3c71649a00adee100ddfcc7622648de79154af9913214b77c9247bef73"
       },
       {
         "file": "pages/explain/zoom.html",
         "path": "../pages/explain/zoom.html",
         "title": "Figure zoom and zoom tools",
-        "sha256": "e570b36cefdcb38c85190db5c8bc84ef116142a3f8e2efcde8a4eea1553154ce"
+        "sha256": "252e761b771b1e4babf68deff3adf74530faafffd1f20a03d26a145cec29e10a"
       },
       {
         "file": "pages/data/sources.html",
         "path": "../pages/data/sources.html",
         "title": "Named data sources and data views",
-        "sha256": "956868644472c9ff80cb487ab40da7ea3f33100816d82140eb31c7b49a0de0d2"
+        "sha256": "36ccddb38b7eec6f83d5ac0b02b2dbf756211da7bf90674778aed5eae8ca3f53"
       },
       {
         "file": "pages/data/trees.html",
         "path": "../pages/data/trees.html",
         "title": "Data trees",
-        "sha256": "4b569a3b65a7f719a58a23869358262c072b4ed5a82ba84b18af7389527e01db"
+        "sha256": "5203ac8bbb2254d90b08217a7ea1d195776d679c51c11017b46e0c01c2a62a5d"
       },
       {
         "file": "pages/data/charts.html",
         "path": "../pages/data/charts.html",
         "title": "SVG charts",
-        "sha256": "b9c5ad1e67ef160941129eefada2d1d1065409f73afe203a44feeb16b3ca94c7"
+        "sha256": "4fb70a7dcd762ab8d8b49cd7f6af973f78e71c6f0452a295493aca298eb11a4d"
       },
       {
         "file": "pages/data/playback.html",
         "path": "../pages/data/playback.html",
         "title": "Guided chart playback",
-        "sha256": "286c1aeb972ce40b4cc73137df0df15ba54c1e5d806c084a009c1eebd4bf66e7"
+        "sha256": "554928c992c8704d61cba9f6e39f9afddca894892083a2898a656ac6d6d6a9af"
       },
       {
         "file": "pages/data/tables.html",
         "path": "../pages/data/tables.html",
         "title": "Concept tables and results tables",
-        "sha256": "09d51b6bcaed8318d9a957a9c3fd01e4c12a442ad55c3e8fd9811977c11b531f"
+        "sha256": "1c84f8823d75090b7cdd453e457cf98df0aa28ded4eac50561d53374fc9ac0db"
       },
       {
         "file": "pages/data/comparisons.html",
         "path": "../pages/data/comparisons.html",
         "title": "Evaluation matrices and scenario comparisons",
-        "sha256": "85955cbbba85346b3dda7aaa4bf87776b80773dd698ace49a8311183893bd0dc"
+        "sha256": "8ebcc2bfbe04b3efa7edbe87f83d3bc89570c2e1e774003b1f79584128b7fefc"
       },
       {
         "file": "pages/data/dropzones.html",
         "path": "../pages/data/dropzones.html",
         "title": "Local file dropzones",
-        "sha256": "f802adc96cd76a0dfbacbbff9559a921e403a1473b0b3afbf34a14b35fb3a479"
+        "sha256": "463639b7358df38f4938dbbbbacf8abab615e9d7dd2a4141cb0eaf9ef7e292ed"
       },
       {
         "file": "pages/recipes/teach-a-concept.html",
         "path": "../pages/recipes/teach-a-concept.html",
         "title": "Teach a concept",
-        "sha256": "5e432720f3d40ee43baee27657db27875188673dfa4663a6e9c27dc88439c2a6"
+        "sha256": "14737c24ac56148b046f195671e817c8abf93175988600f89629fe527b9deeec"
       },
       {
         "file": "pages/recipes/walk-through-a-process.html",
         "path": "../pages/recipes/walk-through-a-process.html",
         "title": "Walk through a process",
-        "sha256": "8f21b9860d4d3b9b625b5fb7826ef97f1ff9dc05771d11c387102d0603b83a55"
+        "sha256": "084320b5fd051505cf0a0aceb4a92047f50017815b16fb52d15fd0070d50d0a6"
       },
       {
         "file": "pages/recipes/report-results.html",
         "path": "../pages/recipes/report-results.html",
         "title": "Report results",
-        "sha256": "bbac5410825b530c2bcec0bba2f27267425c698d22c9eb6245ab0da0a5b46ff4"
+        "sha256": "ac9d4dee5a28c84fc30fd0d82aa5c440c239ba7c1063bd78895344292fb48347"
       },
       {
         "file": "pages/recipes/present-and-publish.html",
         "path": "../pages/recipes/present-and-publish.html",
         "title": "Present and publish a site",
-        "sha256": "861f6b5385def2270e6493a48cb86e05db0c7598f204715289fb8f7454c35dfe"
+        "sha256": "8a43cb37f8f3ae430b38f01222a97315e5814e73e7834851c8fe68b82c61b40b"
       },
       {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "742799a2b620a76aa0d354ebd7588a030ae16e806671dc83e6f209021d1302ae"
+        "sha256": "65a4d27d01ca69be057a6459ef68bea3ebe9d9d85260801473cad3183291e6b6"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
         "path": "../pages/reference/behind-the-scenes.html",
         "title": "Behind the scenes",
-        "sha256": "c38652c1aba7da83cd8993be6c23c532d356b6895a0407bd8e51ebd9e7b162aa"
+        "sha256": "941f6e60275abbb338764f8927280d7b513113e540afd0a7ca23cd22cda728f1"
       },
       {
         "file": "pages/reference/offline-tools.html",
         "path": "../pages/reference/offline-tools.html",
         "title": "Offline tools",
-        "sha256": "819c2b9feead8d9efe5f3fef54aa2daa4a322ce04a84989736877a7ab35b02e2"
+        "sha256": "228e85b7afbfa33aa27e640bf295eb7c6c0fd13d5071b3f708bba82eb2f301c6"
       },
       {
         "file": "pages/reference/troubleshooting.html",
         "path": "../pages/reference/troubleshooting.html",
         "title": "When something looks wrong",
-        "sha256": "cb8c2d3735cd970b065f0f2c5234991dd45fd8f86ae7e48b3dd416aa3fa16af9"
+        "sha256": "75e1756950e0a52abacf9783bf56dbaebf11554f3a7a94b4dea72ee5c538942d"
       },
       {
         "file": "pages/glossary.html",
         "path": "../pages/glossary.html",
         "title": "Glossary",
-        "sha256": "d5c428dd0e415ab6fd9f00a20bff28ef293785fc4fa9b948b9d1b015a2371f65"
+        "sha256": "13e8cd464b568fd66b302f7ca808f2167379ebf727a080c4c13ee91336e8e1a0"
       }
     ]
   },
@@ -1025,43 +1150,79 @@ window.DocFormSearch = {
           "id": "",
           "title": "Welcome to DocForm",
           "level": 1,
-          "text": "Start here DocForm turns plain web pages into calm, interactive documents that work from a folder on your computer. This page explains what you can make with it and how these docs are laid out. Reading time About 5 minutes You will Know what DocForm is and where to go next"
+          "text": "Start here DocForm gives documents a clear layout and lets readers do things like look up a word, step through an example, or explore a chart. These docs are a DocForm site you can explore in your browser without an internet connection. Reading time About 5 minutes You will Know what DocForm is and where to go next"
         },
         {
           "id": "what-docform-is",
           "title": "What DocForm is",
           "level": 2,
-          "text": "What DocForm is and why its pages work without the internet."
+          "text": "A DocForm site is a set of web pages that readers open in a browser, the app they use to view web pages. The pages and the files that give them their appearance and controls can all live on the reader’s computer. That’s how the site works offline."
         },
         {
           "id": "what-you-can-make",
           "title": "What you can make",
           "level": 2,
-          "text": "A short gallery of the kinds of documents DocForm is good for."
+          "text": "Study notes that explain unfamiliar words as readers meet them. A lesson or walkthrough that lets a reader go through one step at a time. A report with charts and tables readers can explore to answer their own questions. A reference site where readers can browse or search for the page they need."
         },
         {
           "id": "how-these-docs-are-organized",
           "title": "How these docs are organized",
           "level": 2,
-          "text": "The groups in the sidebar and what each colour means in these docs."
+          "text": "The sidebar is the panel that lists the pages. Start here helps you open a site and use its reading tools. Design with hierarchy shows how to guide a reader’s attention through a page. The feature guides are grouped by what you want to do, from writing clearly to showing data. The Recipes put several features together for one goal. Use Reference to look up a feature by name and the Glossary to look up a word."
+        },
+        {
+          "id": "colour-roles",
+          "title": "Colour roles",
+          "level": 3,
+          "text": "Each colour below has a job. This key, called a legend, shows the labels you’ll see throughout the docs. Green marks tools included in a standard DocForm page. Blue marks tools you can choose to add. Purple marks something to try on the page, yellow marks a tip, and red marks a caution."
         },
         {
           "id": "start-with-hierarchy",
           "title": "Start with hierarchy",
           "level": 2,
-          "text": "Why the hierarchy pages come before the feature guides."
+          "text": "Notice how your eye lands on the page title, then on the section headings, and then on the text beneath them. That order is called visual hierarchy. DocForm uses size, spacing, and colour to make it easy to see where to start and what belongs together. After the orientation, visit Visual hierarchy: guiding the eye and The signal ladder in Design with hierarchy before browsing the feature guides. Those pages show how to give each page a clear starting point and make the most important parts stand out."
         }
       ],
       "terms": [
         {
-          "text": "folder",
-          "term": "folder",
+          "text": "chart",
+          "term": "chart",
           "section": ""
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": ""
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "what-docform-is"
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "what-docform-is"
         },
         {
           "text": "sidebar",
           "term": "sidebar",
           "section": "how-these-docs-are-organized"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "how-these-docs-are-organized"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "colour-roles"
+        },
+        {
+          "text": "visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "start-with-hierarchy"
         },
         {
           "text": "feature",
@@ -1078,43 +1239,38 @@ window.DocFormSearch = {
           "id": "",
           "title": "Open a DocForm site",
           "level": 1,
-          "text": "Start here A DocForm site is a folder of files you open in your browser, with no website or internet needed. This page walks through opening one, step by step. Reading time About 5 minutes You will Open these docs from your own computer"
+          "text": "Start here You can open a DocForm site straight from your computer. Follow these steps to find the first page and open it in the same app you use to view websites. Reading time About 5 minutes You will Open these docs from your own computer"
         },
         {
           "id": "files-and-folders",
           "title": "Files and folders",
           "level": 2,
-          "text": "What a DocForm site looks like inside its folder."
+          "text": "A file is one saved item, such as a page or picture. A folder holds files and can hold other folders, too. A DocForm site comes with page files and supporting files that provide things like pictures, colours, and controls. Keep the entire set together, with each file in its original folder. If you received it as a ZIP file, a single file packed with other files, use your computer’s Extract or Unzip command first, then open the unpacked copy."
         },
         {
           "id": "open-a-page",
           "title": "Open a page from disk",
           "level": 2,
-          "text": "Opening the first page in a browser, step by step."
+          "text": "Open the app you use to browse files and folders, such as File Explorer on Windows or Finder on a Mac. Find the unpacked site where you saved it. Find the starting page inside the site. It is often called index.html, or just index if your computer hides the end of file names. For this guide, choose the starting page inside the documentation folder. Double-click the starting page. If it opens in a text editor, right-click the file, choose Open with, and select your browser, such as Chrome, Edge, Firefox, or Safari. Look for the page title and the navigation panel. The address bar, the box near the top of the browser window, will usually show a local file address. The browser opened a saved file on your own computer, which is what from disk means."
         },
         {
           "id": "working-offline",
           "title": "Working offline",
           "level": 2,
-          "text": "Why the site keeps working without the internet."
+          "text": "Offline means without an internet connection. The browser reads each page and its supporting files directly from your computer, so you can still follow links between the saved pages and use their DocForm controls. A link to an outside website still needs a connection."
         },
         {
           "id": "unstyled-page",
           "title": "When a page looks unstyled",
           "level": 2,
-          "text": "What plain black-and-white text means and how to fix it."
+          "text": "If you see plain text with little spacing or colour, or the reading controls are missing, the page may be missing some of its supporting files. Open the page from inside the unpacked folder. Opening it inside a ZIP preview or copying out just the page can leave its supporting files behind. If you moved or renamed files, try opening a fresh copy of the complete site with its folders arranged as supplied. Reopen the starting page in your browser. If the controls are still missing, check whether the browser allows scripts, the small programs that make the controls work. If the settings are managed for you, ask the site’s author or your agent to help check the copy you received."
         }
       ],
       "terms": [
         {
-          "text": "folder",
-          "term": "folder",
-          "section": ""
-        },
-        {
-          "text": "browser",
-          "term": "browser",
-          "section": ""
+          "text": "file",
+          "term": "file",
+          "section": "files-and-folders"
         },
         {
           "text": "folder",
@@ -1122,9 +1278,74 @@ window.DocFormSearch = {
           "section": "files-and-folders"
         },
         {
+          "text": "ZIP file",
+          "term": "zip file",
+          "section": "files-and-folders"
+        },
+        {
+          "text": "File",
+          "term": "file",
+          "section": "open-a-page"
+        },
+        {
+          "text": "html",
+          "term": "html",
+          "section": "open-a-page"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "open-a-page"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "open-a-page"
+        },
+        {
+          "text": "text editor",
+          "term": "text editor",
+          "section": "open-a-page"
+        },
+        {
           "text": "browser",
           "term": "browser",
           "section": "open-a-page"
+        },
+        {
+          "text": "from disk",
+          "term": "from disk",
+          "section": "open-a-page"
+        },
+        {
+          "text": "Offline",
+          "term": "offline",
+          "section": "working-offline"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "working-offline"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "working-offline"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "unstyled-page"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "unstyled-page"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "unstyled-page"
         }
       ]
     },
@@ -1136,49 +1357,76 @@ window.DocFormSearch = {
           "id": "",
           "title": "Tour the reading interface",
           "level": 1,
-          "text": "Start here Every DocForm site shares the same reading tools, so you only learn them once. Try each one right here on this page as you read. Reading time About 10 minutes You will Use every reading tool at least once"
+          "text": "Start here Use the reading tools on this page to find your place, change what’s on screen, and jump to another section. On a phone or a narrow window, the page list opens over the text. Reading time About 10 minutes You will Use every reading tool at least once"
         },
         {
           "id": "sidebar-and-outline",
           "title": "The sidebar and outline",
           "level": 2,
-          "text": "Live demo coming soon. The page tree, the section outline, and resizing the sidebar. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Try it If the left panel is out of view, use the navigation button in the top-left bar to show it. Choose the arrow beside Design with hierarchy to fold its list of pages, then choose it again to unfold the list. Under Tour the reading interface, choose Search to jump to that section. Come back to this heading using the same list. The left panel is the sidebar. Its page tree groups related pages. The headings under the current page form its outline. As you scroll, the outline highlights the heading you’re reading. On a wide screen, drag the divider at the right edge of the sidebar to change its width. You can also press Tab until the divider has keyboard focus, then use the left or right arrow keys. Double-click the divider to reset the width."
         },
         {
           "id": "moving-between-pages",
           "title": "Moving between pages",
           "level": 2,
-          "text": "The pager, copy-link icons, and the section rail."
+          "text": "Try it Rest the pointer over this heading or move to its link button with Tab. Choose the chain icon to copy a link that opens the page at this section. Paste it into a note to see what was copied. If your browser blocks copying, look for the section link in the address bar. On a wide screen, use the sidebar button in the top-left control bar until the sidebar is set to hidden. The numbered section rail appears beside the text. Rest the pointer on a number or reach it with Tab to see its heading, then choose it to jump there. At the bottom of this page, choose Previous to revisit the opening guide. Its Next link brings you back here. Together those links form the pager, which follows the site’s reading order."
         },
         {
           "id": "control-pill",
           "title": "The control pill",
           "level": 2,
-          "text": "Reading progress, focus mode, sidebar modes, and the theme switch."
+          "text": "The rounded bar in the top-left corner is the control pill. It holds the reading controls used on this tour. Try it Scroll down a few sections and back up. Watch the ring fill and empty as your position changes. Then turn on focus mode with its button or F. Notice how text around the section you’re reading softens. Rest the pointer on a softened block to bring it into focus, then press F again for the regular view."
+        },
+        {
+          "id": "sidebar-modes",
+          "title": "Sidebar modes",
+          "level": 3,
+          "text": "On a wide screen, click the sidebar button or press N to cycle through shown, hidden, and auto. In auto, move the pointer to the far left edge to reveal the sidebar and move back into the page to let it tuck away. Try all three, then leave it in the mode you like."
+        },
+        {
+          "id": "theme-switch",
+          "title": "Theme switch",
+          "level": 3,
+          "text": "Choose the sun or moon button, or press T. The theme changes between a light background and a dark background. Switch again if you prefer the first appearance."
         },
         {
           "id": "search",
           "title": "Search",
           "level": 2,
-          "text": "Opening the search palette and jumping to a result."
+          "text": "Try it Choose the magnifying glass in the control pill, or press Ctrl+K (Cmd+K on a Mac). Type sidebar modes and choose the matching heading on this page. You can also move through results with the arrow keys and press Enter to open one. The box that opens over the page is the search palette. It shows matching headings and a little of the text around your search words. Press Esc to close it without choosing a result."
         },
         {
           "id": "on-a-phone",
           "title": "On a phone",
           "level": 2,
-          "text": "How the sidebar becomes a drawer on narrow screens."
+          "text": "Try it Open this page on a phone or make your computer’s browser window narrow until the sidebar disappears. Choose the navigation button in the control pill. The sidebar opens over the page as a drawer. Choose a heading to jump to it and close the drawer. Open it again and tap outside it, or press Esc, to close it while staying where you are."
         }
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "sidebar",
+          "term": "sidebar",
           "section": "sidebar-and-outline"
         },
         {
-          "text": "pager",
-          "term": "pager",
-          "section": "moving-between-pages"
+          "text": "page tree",
+          "term": "page tree",
+          "section": "sidebar-and-outline"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "sidebar-and-outline"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
+          "section": "sidebar-and-outline"
+        },
+        {
+          "text": "keyboard focus",
+          "term": "keyboard focus",
+          "section": "sidebar-and-outline"
         },
         {
           "text": "link",
@@ -1186,9 +1434,34 @@ window.DocFormSearch = {
           "section": "moving-between-pages"
         },
         {
+          "text": "browser",
+          "term": "browser",
+          "section": "moving-between-pages"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "moving-between-pages"
+        },
+        {
           "text": "section rail",
           "term": "section rail",
           "section": "moving-between-pages"
+        },
+        {
+          "text": "pager",
+          "term": "pager",
+          "section": "moving-between-pages"
+        },
+        {
+          "text": "control pill",
+          "term": "control pill",
+          "section": "control-pill"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
+          "section": "control-pill"
         },
         {
           "text": "focus mode",
@@ -1198,16 +1471,41 @@ window.DocFormSearch = {
         {
           "text": "sidebar",
           "term": "sidebar",
-          "section": "control-pill"
+          "section": "sidebar-modes"
         },
         {
-          "text": "palette",
-          "term": "palette",
+          "text": "theme",
+          "term": "theme",
+          "section": "theme-switch"
+        },
+        {
+          "text": "control pill",
+          "term": "control pill",
           "section": "search"
         },
         {
           "text": "sidebar",
           "term": "sidebar",
+          "section": "search"
+        },
+        {
+          "text": "search palette",
+          "term": "search palette",
+          "section": "search"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "on-a-phone"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "on-a-phone"
+        },
+        {
+          "text": "control pill",
+          "term": "control pill",
           "section": "on-a-phone"
         },
         {
@@ -1225,43 +1523,124 @@ window.DocFormSearch = {
           "id": "",
           "title": "How these docs work",
           "level": 1,
-          "text": "Start here These docs explain new words right where they appear, so you never need to leave the page. This page shows the study aids you will meet everywhere else. Reading time About 5 minutes You will Know how to look up any unfamiliar word"
+          "text": "Start here Look up a word or read an extra explanation without losing your place. This page lets you try the study aids you’ll meet throughout the docs. Reading time About 5 minutes You will Look up a word and open extra detail"
         },
         {
           "id": "tips-and-cards",
           "title": "Hover tips and cards",
           "level": 2,
-          "text": "Live demo coming soon. Hovering for a short explanation and holding for a longer card. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "A heading and the text below it work together to create visual hierarchy. Both underlined terms have a short explanation. Visual hierarchy also has a longer card. Try it Rest the pointer over either underlined term, or reach it with Tab, to see its tooltip. Then press and hold visual hierarchy until the small ring fills and its hold-to-expand card opens. You can hold Enter or Space while the term has keyboard focus. Press Esc to close the card."
         },
         {
           "id": "faint-terms",
           "title": "Faint linked terms",
           "level": 2,
-          "text": "Why some words have a faint underline."
+          "text": "Adding contrast can make the title easier to spot. Notice how lightly the word contrast is underlined. Try it Rest the pointer over contrast in the example sentence to see its definition. DocForm recognised the word from the glossary and added the underline automatically. These auto-linked words stay faint and are skipped when you move through the page with Tab."
         },
         {
           "id": "the-glossary",
           "title": "The glossary",
           "level": 2,
-          "text": "Where every explained word is collected."
+          "text": "The Glossary brings definitions together on one page. Use the letter links at the top to find a word. When a definition lists where it’s used, those links take you to examples in the docs. Try it Open the glossary and jump to C to find contrast. Use your browser’s Back button to return here."
         },
         {
-          "id": "notes-and-bubbles",
-          "title": "Sidenotes and peek bubbles",
+          "id": "sidenotes",
+          "title": "Sidenotes",
           "level": 2,
-          "text": "Extra detail kept in the margin or folded away."
+          "text": "The opening sentence under a title tells you what you’ll get from the page.That opening is called the lead paragraph. This page’s lead tells you that you’ll learn to look up words and open extra explanations. Try it Find the small number after the sentence above. When there’s room, the sidenote sits beside the main text. Click the number to see the note briefly light up. On a narrow screen, rest the pointer on the number, tap it, or move to it with Tab to read the note there."
+        },
+        {
+          "id": "peek-bubbles",
+          "title": "Peek bubbles",
+          "level": 2,
+          "text": "Where to put an extra explanation Keep the idea readers need in the main text. A sidenote can explain a phrase in one short sentence. A peek bubble can hold a longer example that some readers will want to skip. Try it Scroll until the titled block above is near the middle of the screen. The peek bubble grows open in place. Choose its title to bring it into view, then rest the pointer on it, tap it, or move keyboard focus to it to read the text clearly. Keep scrolling to see it fold away."
         }
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "heading",
+          "tip": "A heading names a section and tells you what it covers.",
           "section": "tips-and-cards"
         },
         {
-          "text": "margin",
-          "term": "margin",
-          "section": "notes-and-bubbles"
+          "text": "visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "tips-and-cards"
+        },
+        {
+          "text": "tooltip",
+          "term": "tooltip",
+          "section": "tips-and-cards"
+        },
+        {
+          "text": "hold-to-expand card",
+          "term": "hold to expand card",
+          "section": "tips-and-cards"
+        },
+        {
+          "text": "keyboard focus",
+          "term": "keyboard focus",
+          "section": "tips-and-cards"
+        },
+        {
+          "text": "contrast",
+          "term": "contrast",
+          "section": "faint-terms"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "faint-terms"
+        },
+        {
+          "text": "auto-linked",
+          "term": "auto link",
+          "section": "faint-terms"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "the-glossary"
+        },
+        {
+          "text": "contrast",
+          "term": "contrast",
+          "section": "the-glossary"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "the-glossary"
+        },
+        {
+          "text": "lead paragraph",
+          "term": "lead paragraph",
+          "section": "sidenotes"
+        },
+        {
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "sidenotes"
+        },
+        {
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "peek-bubbles"
+        },
+        {
+          "text": "peek bubble",
+          "term": "peek bubble",
+          "section": "peek-bubbles"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
+          "section": "peek-bubbles"
+        },
+        {
+          "text": "keyboard focus",
+          "term": "keyboard focus",
+          "section": "peek-bubbles"
         }
       ]
     },
@@ -1273,25 +1652,25 @@ window.DocFormSearch = {
           "id": "",
           "title": "Making pages with an agent",
           "level": 1,
-          "text": "Start here You describe the page you want and an agent builds it for you. Knowing each feature by its official name makes that conversation quick and precise. Reading time About 5 minutes You will Know how to ask for the features you want"
+          "text": "Start here You decide how readers should use your page, and an agent builds it from your description. These guides give you the names of DocForm’s tools so you can choose the ones that fit. Reading time About 5 minutes You will Know how to ask for the features you want"
         },
         {
           "id": "official-names",
           "title": "Features have official names",
           "level": 2,
-          "text": "Why every feature in these docs has one exact name."
+          "text": "An agent is an AI assistant that can create and edit pages for you. Each DocForm tool has an official name you and the agent can use to refer to the same thing. For example, Tooltips show a quick explanation beside a word. Peek bubbles open a block of optional detail inside the page. Naming the tool makes it clear where and how the reader should see the explanation. Use the Feature directory to find a tool’s name."
         },
         {
           "id": "default-or-request",
           "title": "On by default or on request",
           "level": 2,
-          "text": "Which features every page already has and which ones a page asks for."
+          "text": "On by default A standard DocForm page comes with Base layout, Text roles, Buttons, Tags, Callouts, Section lines, Colour roles, Theme, Navigation, Reading controls, Tooltips, Cross-references, Citations, Sidenotes, and Search. The agent still supplies the content they act on, such as which words need a tooltip. On request The agent turns on extra tools where you want them. Examples include Peek bubbles, TeX math, Code, Tabs, SVG charts, and Figure zoom. The tags on the feature guides tell you which choice applies. Some tools work together. The agent can set up what a tool needs to work."
         },
         {
           "id": "describe-the-result",
           "title": "Describe the result",
           "level": 2,
-          "text": "Talking about what readers should see, and letting the agent handle the rest."
+          "text": "Start with who will read the page and what they should be able to do. Gather the words, pictures, or data they need. Decide what readers should see first, what they should be able to explore, and what they can skip. Choose a DocForm tool when it helps a reader do one of those things. Give the agent its official name and describe the result you want to see. The agent writes the page and sets up the tools. Open the finished page in your browser and try it the way a reader would."
         }
       ],
       "terms": [
@@ -1301,18 +1680,43 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "feature",
-          "term": "feature",
-          "section": ""
+          "text": "agent",
+          "term": "agent",
+          "section": "official-names"
+        },
+        {
+          "text": "Tooltips",
+          "term": "tooltip",
+          "section": "official-names"
+        },
+        {
+          "text": "Peek bubbles",
+          "term": "peek bubble",
+          "section": "official-names"
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": "default-or-request"
         },
         {
           "text": "feature",
           "term": "feature",
-          "section": "official-names"
+          "section": "default-or-request"
         },
         {
           "text": "agent",
           "term": "agent",
+          "section": "default-or-request"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "describe-the-result"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
           "section": "describe-the-result"
         }
       ]
@@ -1331,25 +1735,31 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. The same content shown as a flat page and as a structured page. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "The same words twice. Flat, every sentence looks equally important. Structured, a label, a short summary, numbered steps, and one red warning tell you where to start and what to remember. Try it Read the Flat tab and find the warning about moving pages. Then switch to Structured with a click, or with the arrow keys once a tab has keyboard focus. Notice how much faster your eye finds the same warning, and the steps, the second time. Nothing was added except structure. The flat version makes you read every word to learn what matters. The structured version answers three questions at a glance: what this is, what to do, and what could go wrong. That is the whole job of visual hierarchy."
         },
         {
           "id": "the-levers",
           "title": "The levers",
           "level": 2,
-          "text": "Size, weight, colour, contrast, space, position, and grouping, each shown with DocForm."
+          "text": "Every page sets its order with the same handful of levers. Each one makes something either louder or quieter than its neighbours, and DocForm already sets them for you in a calm, consistent way. Lever What it tells the reader Where to see it here Size Bigger things are read first and matter more. The page title, then the section headings, then this text. Weight Bold words are the key words in a sentence. The bold step names in the structured demo. Colour A colour marks meaning, and the same colour always means the same thing. The purple Try it labels always mean something to try. Contrast Strong differences pull the eye; soft ones step back. Muted labels in the fields under the title, beside darker values. Space A wide gap starts a new topic; a narrow gap keeps things together. The extra room above each section heading. Position What comes first, and what sits at the left edge, is read first. The short summary right under the title. Grouping Things that sit together, look alike, or share a box belong together. The coloured line beside each section, and the box around each demo. Grouping works in three ways. Proximity means nearness: a label sits close to its value. Similarity means a shared look: every tag in one colour has one meaning. Enclosure means a shared box: a callout or figure holds its contents apart from the text around it. A lever only works by contrast with what surrounds it. One bold word in a sentence stands out; a paragraph of bold words stands out from nothing. That is why DocForm keeps most of the page quiet, so the few loud things can lead."
         },
         {
           "id": "how-readers-scan",
           "title": "How readers scan",
           "level": 2,
-          "text": "Where eyes land first on a page and why."
+          "text": "Most readers do not read a page from top to bottom at first. They scan: the eye jumps to the title, runs down the headings, catches the first words of lines along the left edge, and stops at anything that looks different. Only then does a reader choose a section to read closely.Eye-tracking studies of people reading the web describe this as reading the headings first, like the layers of a cake, and reading less of each line further down the page. A structured page feeds that habit. Short headings say what each section holds, the first sentence of each section carries its point, and labels and steps break the text into pieces the eye can land on. The outline in the sidebar works the same way: it is the page’s headings, ready to scan. A flat page has no landing spots. The reader has to hold everything in mind while searching for the one sentence they need, which is slow and tiring. When every part looks equally important, nothing looks important. Try it Scroll back to the top and read only the headings and the bold words on this page. You should still be able to say what the page teaches."
         },
         {
           "id": "squint-test",
           "title": "The squint test",
           "level": 2,
-          "text": "Live demo coming soon. Using focus mode's blur to see what still stands out. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "The squint test checks a page’s hierarchy by blurring it. Squint until the words turn fuzzy, and only the strongest signals survive. If the title, the headings, and one or two key blocks still show through, the page leads the eye. If everything melts into the same grey, nothing does. Focus mode can do the squinting for you. It softens blocks near the top and bottom edges of the screen that belong to other sections, while the section you are reading stays sharp. Try it Turn on focus mode with its button in the control pill or by pressing F. Scroll until the two small pages below just rise above the bottom edge of the screen and turn soft. Keep the pointer away from them, because resting on a block brings it back into focus. Which side still shows where to start? Press F again to return to the regular view."
+        },
+        {
+          "id": "squint-pages",
+          "title": "Two pages, out of focus",
+          "level": 3,
+          "text": "Flat on the left, structured on the right. Blurred, the right side still shows a label, a title, and a red warning; the left side is one even grey block. Run the same test on any page you make. The parts that survive the blur should be the parts you most want read. If a decoration survives and the main point does not, make the decoration quieter before making the point louder."
         }
       ],
       "terms": [
@@ -1359,9 +1769,34 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "keyboard focus",
+          "term": "keyboard focus",
           "section": "see-it"
+        },
+        {
+          "text": "visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "see-it"
+        },
+        {
+          "text": "Grouping",
+          "term": "grouping",
+          "section": "the-levers"
+        },
+        {
+          "text": "Proximity",
+          "term": "proximity",
+          "section": "the-levers"
+        },
+        {
+          "text": "tag",
+          "term": "tag",
+          "section": "the-levers"
+        },
+        {
+          "text": "callout",
+          "term": "callout",
+          "section": "the-levers"
         },
         {
           "text": "contrast",
@@ -1369,13 +1804,48 @@ window.DocFormSearch = {
           "section": "the-levers"
         },
         {
-          "text": "grouping",
-          "term": "grouping",
-          "section": "the-levers"
+          "text": "scan",
+          "term": "scanning",
+          "section": "how-readers-scan"
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "outline",
+          "term": "outline",
+          "section": "how-readers-scan"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "how-readers-scan"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
+          "section": "how-readers-scan"
+        },
+        {
+          "text": "squint test",
+          "term": "squint test",
+          "section": "squint-test"
+        },
+        {
+          "text": "Focus mode",
+          "term": "focus mode",
+          "section": "squint-test"
+        },
+        {
+          "text": "focus mode",
+          "term": "focus mode",
+          "section": "squint-test"
+        },
+        {
+          "text": "control pill",
+          "term": "control pill",
+          "section": "squint-test"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
           "section": "squint-test"
         }
       ]
@@ -1391,34 +1861,58 @@ window.DocFormSearch = {
           "text": "Design with hierarchy Every DocForm feature pulls the eye with a different strength, from loud to quiet. This ladder ranks them so you can choose what to spend attention on. Reading time About 10 minutes You will Know how loud each feature is and when to use loud ones"
         },
         {
+          "id": "rungs",
+          "title": "Four rungs",
+          "level": 2,
+          "text": "A feature’s signal strength is how hard it pulls the eye away from everything else. The ladder has four rungs. Each feature guide names its rung in the Signal strength line near the top, and that line links back here. Rung How it pulls the eye How often to use it Loud Colour and tint that jump out before anything is read Rarely: about one per section Strong Large blocks and headings that shape the page A few per page, each with a clear job Medium Small labels and marks that guide while you read Freely, wherever they help Quiet Text and tools that wait until you need them Everywhere; most of a page is quiet Some features change their rung with use. A table is strong, but shading its cells by value makes those cells loud. A glossary term you mark on purpose is medium, while the same word underlined automatically is quiet."
+        },
+        {
           "id": "loud",
           "title": "Loud",
           "level": 2,
-          "text": "Features that grab attention first. Spend them sparingly."
+          "text": "Loud features use colour, tint, or a box to catch the eye before anything else is read. They are the page’s alarms and highlights, and they only work while they are rare. On by default On request Try the squint test One loud thing per section If two warnings sit side by side, each gets about half the attention. Two tags, a button, and a callout. Each one is noticed before the sentence around it. Feature What is loud Callouts A tinted box with a coloured title Tags A tinted label on a word or phrase Buttons A tinted pill that invites a click Linked selection The tinted highlight on the item chosen right now Results tables Cells shaded by value, and pass or fail marks Evaluation matrices Cells shaded on a shared colour scale Zoom tools Pen, highlighter, and laser pointer marks"
         },
         {
           "id": "strong",
           "title": "Strong",
           "level": 2,
-          "text": "Structure that shapes the page: headings, figures, tables, and interactive blocks."
+          "text": "Strong features are the landmarks of a page: its title, its section headings, and the big blocks a reader stops to look at. They shape the page more than they decorate it. Library reference group Features described Setup 3 Layout 7 Reading 13 Interaction 13 Data 9 A small table with real counts from DocForm’s own reference. Its grid and header row stand out as one block, even before you read a number. Try it Look at the left margin beside this section. The coloured section line and the heading above it are strong signals too: together they tell you where this section starts and ends. Feature What is strong Base layout The page title, its opening summary, and section headings Section lines The coloured line beside each section Split views Blocks placed side by side Concept tables and results tables Rows and columns of facts SVG charts Lines, bars, and points Guided chart playback A chart drawn step by step with notes SVG animations A moving diagram with play controls Code A shaded block of program text TeX math A formula shown on its own line Tabs Panels that share one place Card panels and figure steps Choices that change a detail or a figure Worked-example steppers An example shown one step at a time Evaluation matrices and scenario comparisons Grids and charts that compare outcomes Named data sources and data views Data shown as a table or list Data trees Nested data with branches that open and close"
         },
         {
           "id": "medium",
           "title": "Medium",
           "level": 2,
-          "text": "Labels and supporting signals that guide without competing."
+          "text": "Medium features are small signals that guide you while you read. They label, number, and point, without competing with the landmarks around them. Step 2 of 4 Rung Medium Good for Labels, numbers, and pointers A link to the glossary and a chosen term sit inside ordinary text without breaking it up. An eyebrow, labelled fields, a link, and a marked term. This caption is a medium signal too. Feature What is medium Text roles Eyebrows and labelled fields Base layout Smaller headings inside a section, and links Buttons The small step pill with Previous and Next Cross-references Figure, table, and equation numbers, captions, and link previews Citations Source numbers in the text Colour roles The legend and the accents it explains TeX math Formulas inside a sentence Tooltips Terms marked on purpose Parameters Sliders, switches, and preset choices Scroll reveals A gentle entrance as a block comes into view File dropzones A dashed area that accepts a file"
         },
         {
           "id": "quiet",
           "title": "Quiet",
           "level": 2,
-          "text": "Text and tools that stay out of the way until needed."
+          "text": "Quiet features are the calm background of a page: the text itself, and tools that stay out of the way until you reach for them. Most of every page should be quiet. Good whitespace and gentle contrast keep body text calm, so the squint test finds only the parts you meant to stand out. Ordinary text with faint automatic underlines. They are there when you need them and easy to ignore when you don’t. Try it Rest the pointer on one of the faintly underlined words above to see its meaning. Then press and hold squint test until its longer card opens. A sidenote is quiet as well: it waits in the margin until you want it.Sidenotes, peek bubbles, and hold-to-expand cards move detail out of the main text, so the main text can stay short. Feature What is quiet Base layout Body text and lists Tooltips Automatic underlines and hold-to-expand cards Glossary A page of definitions, kept apart from the text Sidenotes Notes in the margin Peek bubbles Extra detail folded under a title Navigation The sidebar, outline, and page links at the bottom Reading controls The control pill, progress ring, and focus mode Theme The light and dark switch Search A search box that opens only when asked Figure zoom Opening a figure full screen A few features have no signal of their own because they work behind the scenes. Design tokens tune the look of every rung at once. Setup, the site and page settings, and the offline tools for search and data, explained in Behind the scenes and Offline tools, never appear on the page at all."
         },
         {
           "id": "accent-budget",
           "title": "Spend loud signals sparingly",
           "level": 2,
-          "text": "How many loud signals a section can carry and what to quiet down beside a chart."
+          "text": "Think of loud signals as a small budget. Every loud element competes with every other one, so each extra one makes the rest weaker. An accent budget keeps them strong. The budget in one line At most one callout per section, colour only when it carries a meaning, and nothing loud right beside a chart or demo."
+        },
+        {
+          "id": "when-to-spend",
+          "title": "When to spend a loud signal",
+          "level": 3,
+          "text": "Something must not be missed, such as a warning that prevents lost work. Something needs an action, such as a button that runs a demo. A meaning repeats across the page, such as one colour for one status or one chosen item highlighted in every view. Skip loud signals for decoration, for things that are merely interesting, and for repeating what a heading already says. A sidenote or a peek bubble is usually the better home for an aside."
+        },
+        {
+          "id": "per-section",
+          "title": "How much one section can carry",
+          "level": 3,
+          "text": "One callout per section at most. If you want a second, one of the two belongs in the text or in a sidenote. Tags only where each one names a meaning the reader has learned, such as “On by default”. Colours from the site’s roles, so each colour keeps the same meaning on every page. Medium signals first. An eyebrow, a bold word, or a labelled field often does the job without colour."
+        },
+        {
+          "id": "beside-a-demo",
+          "title": "Quiet down beside a chart or demo",
+          "level": 3,
+          "text": "A chart, animation, or interactive demo is already the strongest thing in its section, and its own colours are already loud. Let it lead. Put what to notice in the caption, not in a callout next to the figure. Keep one short “Try it” prompt, not several. Leave tags out of the heading above the figure. Move side remarks into a sidenote or a peek bubble. Try it Run the squint test on this page with focus mode. The section lines never blur. The headings, the tables, and the two yellow callouts should still show through; the lists and paragraphs should not."
         }
       ],
       "terms": [
@@ -1428,9 +1922,164 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "feature",
+          "term": "feature",
+          "section": "rungs"
+        },
+        {
+          "text": "signal strength",
+          "term": "signal strength",
+          "section": "rungs"
+        },
+        {
+          "text": "Signal strength",
+          "term": "signal strength",
+          "section": "rungs"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "rungs"
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
+          "section": "loud"
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": "loud"
+        },
+        {
+          "text": "margin",
+          "term": "margin",
+          "section": "strong"
+        },
+        {
+          "text": "chosen term",
+          "tip": "A word marked on purpose so its explanation appears when you rest the pointer on it.",
+          "section": "medium"
+        },
+        {
+          "text": "whitespace",
+          "term": "whitespace",
+          "section": "quiet"
+        },
+        {
+          "text": "contrast",
+          "term": "contrast",
+          "section": "quiet"
+        },
+        {
+          "text": "squint test",
+          "term": "squint test",
+          "section": "quiet"
+        },
+        {
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "quiet"
+        },
+        {
+          "text": "margin",
+          "term": "margin",
+          "section": "quiet"
+        },
+        {
+          "text": "peek bubbles",
+          "term": "peek bubble",
+          "section": "quiet"
+        },
+        {
+          "text": "page settings",
+          "term": "page settings",
+          "section": "quiet"
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "quiet"
+        },
+        {
+          "text": "element",
+          "term": "element",
+          "section": "accent-budget"
+        },
+        {
+          "text": "accent budget",
+          "term": "accent budget",
+          "section": "accent-budget"
+        },
+        {
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "when-to-spend"
+        },
+        {
+          "text": "peek bubble",
+          "term": "peek bubble",
+          "section": "when-to-spend"
+        },
+        {
+          "text": "callout",
+          "term": "callout",
+          "section": "per-section"
+        },
+        {
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "per-section"
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
+          "section": "per-section"
+        },
+        {
+          "text": "eyebrow",
+          "term": "eyebrow",
+          "section": "per-section"
+        },
+        {
+          "text": "field",
+          "term": "field",
+          "section": "per-section"
+        },
+        {
           "text": "chart",
           "term": "chart",
-          "section": "accent-budget"
+          "section": "beside-a-demo"
+        },
+        {
+          "text": "animation",
+          "term": "animation",
+          "section": "beside-a-demo"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "beside-a-demo"
+        },
+        {
+          "text": "callout",
+          "term": "callout",
+          "section": "beside-a-demo"
+        },
+        {
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "beside-a-demo"
+        },
+        {
+          "text": "peek bubble",
+          "term": "peek bubble",
+          "section": "beside-a-demo"
+        },
+        {
+          "text": "focus mode",
+          "term": "focus mode",
+          "section": "beside-a-demo"
         }
       ]
     },
@@ -1442,31 +2091,61 @@ window.DocFormSearch = {
           "id": "",
           "title": "Base layout, text roles, tags, buttons",
           "level": 1,
-          "text": "Write clearly Every DocForm page starts with a calm reading column, clear headings, and tidy lists and tables. Small labels, tags, and buttons add context and actions without shouting. Official name Base layout · Text roles · Tags · Buttons Turned on On by default Signal strength Strong (headings) · Medium (eyebrows and labelled fields) · Loud (tags and buttons) Works with Nothing extra; every page has these Good for Any page that should be easy to read"
+          "text": "Write clearly Every DocForm page starts with a calm reading column, clear headings, and tidy lists and tables. Labels organise quick facts, tags mark status, and buttons make actions easy to find. Official name Base layout · Text roles · Tags · Buttons Turned on On by default Signal strength Strong (headings) · Medium (eyebrows and labelled fields) · Loud (tags and buttons) Works with Nothing extra; every page has these Good for Any page that should be easy to read"
         },
         {
           "id": "see-it",
-          "title": "See it",
+          "title": "The reading column",
           "level": 2,
-          "text": "Live demo coming soon. Base layout, text roles, tags, buttons in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "At a glance Page title Open a DocForm site Group Start here This demo has its own width limit. Notice how it stays centred inside the reading column. Try it Compare the demo’s width with the space available to this paragraph. Then make your browser window narrower and watch the labels move above their values as space runs out. The reading column keeps lines short enough to follow. DocForm also keeps figures, tables, and code within that column. You can cap one block at a narrower width. Pictures can shrink to fit, and wide tables and code blocks can scroll sideways."
         },
         {
-          "id": "what-it-does",
-          "title": "What it does",
+          "id": "headings-and-labels",
+          "title": "Headings and labels",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": ""
+        },
+        {
+          "id": "section-details",
+          "title": "Section details",
+          "level": 3,
+          "text": "Compare this page’s title, the section heading above, and the smaller “Section details” heading. Each size tells you how much of the page the heading covers. In the demo, “At a glance” is an eyebrow, a short label that introduces a block. The aligned pairs underneath are labelled fields. Use them for a handful of named facts a reader can scan."
+        },
+        {
+          "id": "lists",
+          "title": "List markers",
+          "level": 2,
+          "text": "Find a page by its title. Open it from the sidebar. Page title Section heading Number badges show order. Dots group items that can be read in any order. Try it Point at each item to see its marker react. The markers take their tint from the surrounding colour role. A list can also keep the browser’s plain markers. Example with a plain browser marker"
+        },
+        {
+          "id": "table-hover",
+          "title": "Reading across a table",
+          "level": 2,
+          "text": "Move over a cell to see its row and column together. Reading aid Where it appears What it shows Sidebar Beside the page Pages in this site Outline In the sidebar Headings on this page Pager At the end Previous and next pages Try it Point at “Previous and next pages”. Follow the tinted row to “Pager” and the tinted column up to its heading. Very wide tables tint columns only in the first twelve cell positions."
+        },
+        {
+          "id": "tags-and-buttons",
+          "title": "Tags and buttons",
+          "level": 2,
+          "text": "DocForm groups Tags and Callouts under the name Blocks. Both come with the reading profile."
+        },
+        {
+          "id": "examples-of-status",
+          "title": "Reading aids On by default",
+          "level": 3,
+          "text": "The same status tag works next to prose, in a heading, or inside a table. Feature Availability TeX math On request Sidenotes are On by default. A tag names a status in a few words. A button gives the reader an action. Its tint can use the same colour roles as tags, and an icon can sit beside its label. Open TeX math Title Find out what the page covers. Section heading Find the part you need. The step pill groups the arrow buttons and the step counter. Try it Move to the next step with the right arrow button. Use Tab to reach a button and Enter to use it."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Let headings and space do most of the work. Save tinted tags for statuses readers need to spot and prominent buttons for actions they’re likely to take."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Headings, lists, tags, and ordinary buttons retain their styling with scripts off. The step example shows both steps. On phones and in print, row and column headings still make a table readable without its hover tint."
         },
         {
           "id": "related",
@@ -1482,18 +2161,78 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "browser",
+          "term": "browser",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
-          "section": "for-every-reader"
+          "text": "reading column",
+          "term": "reading column",
+          "section": "see-it"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "code blocks",
+          "term": "code block",
+          "section": "see-it"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
+          "section": "see-it"
+        },
+        {
+          "text": "eyebrow",
+          "term": "eyebrow",
+          "section": "section-details"
+        },
+        {
+          "text": "labelled fields",
+          "term": "labelled fields",
+          "section": "section-details"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "lists"
+        },
+        {
+          "text": "role",
+          "term": "role",
+          "section": "lists"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "lists"
+        },
+        {
+          "text": "Pager",
+          "term": "pager",
+          "section": "table-hover"
+        },
+        {
+          "text": "profile",
+          "term": "profile",
+          "section": "tags-and-buttons"
+        },
+        {
+          "text": "Sidenotes",
+          "term": "sidenote",
+          "section": "examples-of-status"
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
+          "section": "examples-of-status"
+        },
+        {
+          "text": "tag",
+          "term": "tag",
+          "section": "examples-of-status"
+        },
+        {
+          "text": "hover",
+          "term": "hover",
           "section": "for-every-reader"
         }
       ]
@@ -1510,27 +2249,33 @@ window.DocFormSearch = {
         },
         {
           "id": "see-it",
-          "title": "See it",
+          "title": "A tip in motion",
           "level": 2,
-          "text": "Live demo coming soon. Callouts in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Tip for offline reading Keep the site’s files together so the pages can find their styles and pictures. The icon marks the box. The title names the tip and the tinted background separates it from the surrounding text. Try it Scroll slowly to move the box through the middle of the screen. If it’s already visible, scroll past it and then come back to see it slide in from the right. This box is a callout. Its slide comes from the optional Scroll reveals feature. The box stays visible near the start or end of a page where there’s less room to scroll."
         },
         {
-          "id": "what-it-does",
-          "title": "What it does",
+          "id": "stationary",
+          "title": "A stationary caution",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Caution when moving a page Moving just one page can break its links to the rest of the site. This callout stays still as it passes through the middle of the screen. Try it Compare this caution with the tip above. The title and icon give you a clue before you read the body. The tint comes from a colour role, a named meaning such as tip or caution that can be reused across the site."
+        },
+        {
+          "id": "scripts-off",
+          "title": "The scripts-off look",
+          "level": 2,
+          "text": "Keep a copy of a site before making large changes. This plain box uses the built-in styling available with scripts off. An icon and a title are optional. Try it Look for the thin border and quiet background on the plain box. With scripts off, the boxes still show their text and any authored icons and titles. A colour assigned through a site role needs scripts."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a callout for a tip, caution, or decision someone might miss while scanning. Give it room to stand out. One callout in a section is usually enough, especially beside a figure or chart."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Use a title or opening words that carry the meaning in either theme, in print, and at phone width. Print shows the box in place. Choose a stationary callout when readers need to refer back to it while they scroll."
         },
         {
           "id": "related",
@@ -1546,9 +2291,59 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Scroll",
+          "term": "scroll",
           "section": "see-it"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
+          "section": "see-it"
+        },
+        {
+          "text": "callout",
+          "term": "callout",
+          "section": "see-it"
+        },
+        {
+          "text": "Scroll reveals",
+          "term": "scroll reveal",
+          "section": "see-it"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "see-it"
+        },
+        {
+          "text": "role",
+          "term": "role",
+          "section": "stationary"
+        },
+        {
+          "text": "role",
+          "term": "role",
+          "section": "scripts-off"
+        },
+        {
+          "text": "callout",
+          "term": "callout",
+          "section": "when-to-use"
+        },
+        {
+          "text": "scanning",
+          "term": "scanning",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
+          "section": "for-every-reader"
         },
         {
           "text": "phone width",
@@ -1556,8 +2351,13 @@ window.DocFormSearch = {
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "callout",
+          "term": "callout",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
           "section": "for-every-reader"
         }
       ]
@@ -1574,27 +2374,39 @@ window.DocFormSearch = {
         },
         {
           "id": "see-it",
-          "title": "See it",
+          "title": "A formula in a sentence",
           "level": 2,
-          "text": "Live demo coming soon. TeX math in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Two section headings and three subheadings make entries in this example outline. The calculation sits on the same line as the sentence. Try it Read the sentence aloud. The calculation is inline math. It fits between the words without interrupting their flow."
         },
         {
-          "id": "what-it-does",
-          "title": "What it does",
+          "id": "display",
+          "title": "A formula on its own line",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Display math gives the fraction room to stack. Here the reader has covered two of five sections. Try it Find the line separating the top and bottom of each fraction. Display math gives taller symbols enough space to read at a glance. These numbers are illustrative."
+        },
+        {
+          "id": "macros",
+          "title": "Symbols that stay consistent",
+          "level": 2,
+          "text": "is the number of sections read. is the total number of sections. Notice that the letters in the sentence match the ones in the displayed fraction. Try it Compare the letters with the formula above. A macro is a reusable shorthand for a symbol or piece of a formula. A page or an entire site can share shorthand so the same idea looks the same wherever it appears."
+        },
+        {
+          "id": "math-in-tooltips",
+          "title": "Math inside a tooltip",
+          "level": 2,
+          "text": "The fraction read tells you how far you are through a guide. The brief definition contains a typeset fraction. Try it Rest the pointer over “fraction read” or reach it with Tab. Notice how the formula appears inside the definition."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use inline math for a short expression the reader needs mid-sentence. Give a formula its own line when readers will stop to study it, and explain its symbols nearby."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "DocForm includes KaTeX, the tool that draws the formulas, so math works offline. With scripts off, the original TeX notation stays visible. Put any essential explanation in the page text so it’s available in print and without opening a tooltip."
         },
         {
           "id": "related",
@@ -1605,18 +2417,73 @@ window.DocFormSearch = {
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "formulas",
+          "term": "formula",
+          "section": ""
+        },
+        {
+          "text": "outline",
+          "term": "outline",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "inline math",
+          "term": "inline math",
+          "section": "see-it"
+        },
+        {
+          "text": "Display math",
+          "term": "display math",
+          "section": "display"
+        },
+        {
+          "text": "formula",
+          "term": "formula",
+          "section": "macros"
+        },
+        {
+          "text": "macro",
+          "term": "macro",
+          "section": "macros"
+        },
+        {
+          "text": "fraction read",
+          "tip": "With $r$ sections read out of $t$ total, the fraction read is $\\frac{r}{t}$.",
+          "section": "math-in-tooltips"
+        },
+        {
+          "text": "formula",
+          "term": "formula",
+          "section": "math-in-tooltips"
+        },
+        {
+          "text": "inline math",
+          "term": "inline math",
+          "section": "when-to-use"
+        },
+        {
+          "text": "formula",
+          "term": "formula",
+          "section": "when-to-use"
+        },
+        {
+          "text": "KaTeX",
+          "term": "katex",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "offline",
+          "term": "offline",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "TeX",
+          "term": "tex",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "tooltip",
+          "term": "tooltip",
           "section": "for-every-reader"
         }
       ]
@@ -1629,31 +2496,43 @@ window.DocFormSearch = {
           "id": "",
           "title": "Code",
           "level": 1,
-          "text": "Write clearly Code blocks show program text with colours, a copy button, and highlighted lines. They can also number notes on single lines and show what changed between two versions. Official name Code Turned on On request Signal strength Strong Works with Linked selection, which connects notes with their lines Good for Program text readers will study or copy"
+          "text": "Write clearly Code blocks show program text with colours, a copy button, and highlighted lines. They can also number notes on single lines and show what changed between two versions. Official name Code Turned on On request Signal strength Strong Works with Tooltips for annotation cards · Tabs for the language samples Good for Program text readers will study or copy"
         },
         {
           "id": "see-it",
-          "title": "See it",
+          "title": "Highlights and notes",
           "level": 2,
-          "text": "Live demo coming soon. Code in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Try it Point at a circled number or reach it with Tab. Its annotation, a numbered note about the line, lights up below and appears in a small card. Choose the number to jump to its note. Use Copy to copy the text without the annotation markers. The background of the second line is a line highlight. It stays in place so readers can spot the line before they interact with it."
         },
         {
-          "id": "what-it-does",
-          "title": "What it does",
+          "id": "languages",
+          "title": "Language colours",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Try it Choose Python, then JSON. Look at how quoted words and numbers pick up different colours. With a tab focused, use the left and right arrow keys to see more languages. These colours help separate parts of the program text, a feature called syntax highlighting."
+        },
+        {
+          "id": "diffs",
+          "title": "Changes between versions",
+          "level": 2,
+          "text": "Try it Find the line that stayed the same in each example. A diff is a view of what changed. Copying a diff includes kept and added lines, so you get the newer text."
+        },
+        {
+          "id": "plain-blocks",
+          "title": "Plain blocks",
+          "level": 2,
+          "text": "A language outside the nine built-in highlighters can still use the code toolbar and Copy. The plain-block option shown here leaves the toolbar off too."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a code block when the exact text matters. Pick a few lines to highlight so readers can see where to begin. Use a diff when the change itself is the story."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "On narrow screens, wide blocks can scroll sideways. Write annotations in a numbered list so the explanations remain available in print and with scripts off. With scripts off, the original text stays visible and every language panel is shown."
         },
         {
           "id": "related",
@@ -1664,18 +2543,53 @@ window.DocFormSearch = {
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Code blocks",
+          "term": "code block",
+          "section": ""
+        },
+        {
+          "text": "annotation",
+          "term": "annotation",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
-          "section": "for-every-reader"
+          "text": "line highlight",
+          "term": "line highlight",
+          "section": "see-it"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "JSON",
+          "term": "json",
+          "section": "languages"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "languages"
+        },
+        {
+          "text": "syntax highlighting",
+          "term": "syntax highlighting",
+          "section": "languages"
+        },
+        {
+          "text": "diff",
+          "term": "diff",
+          "section": "diffs"
+        },
+        {
+          "text": "code block",
+          "term": "code block",
+          "section": "when-to-use"
+        },
+        {
+          "text": "diff",
+          "term": "diff",
+          "section": "when-to-use"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
           "section": "for-every-reader"
         }
       ]
@@ -1688,31 +2602,43 @@ window.DocFormSearch = {
           "id": "",
           "title": "Sidenotes and peek bubbles",
           "level": 1,
-          "text": "Write clearly Sidenotes put small asides in the page margin, and peek bubbles keep optional detail folded until a reader wants it. Both keep the main text short without hiding anything. Official name Sidenotes · Peek bubbles Turned on Sidenotes On by default · Peek bubbles On request Signal strength Quiet Works with Tooltips, which show sidenotes when the margin is too narrow Good for Detail only some readers need"
+          "text": "Write clearly Sidenotes put small asides in the page margin, and peek bubbles keep optional detail folded until a reader wants it. Both keep extra explanation close to the text it supports. Official name Sidenotes · Peek bubbles Turned on Sidenotes On by default · Peek bubbles On request Signal strength Quiet Works with Tooltips, which show sidenotes when the margin is too narrow Good for Detail only some readers need"
         },
         {
           "id": "see-it",
-          "title": "See it",
+          "title": "A note in the margin",
           "level": 2,
-          "text": "Live demo coming soon. Sidenotes and peek bubbles in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "A DocForm page starts with a title and a short lead paragraph.The lead gives readers a reason to keep going. On this page, it tells you where you’ll find extra detail. Try it Find the small number at the end of the sentence. On a wide screen, look for the same number beside the reading column. Click the number in the sentence to make its note flash. This numbered aside is a sidenote. DocForm places it in the right margin, the space outside the reading column, when there’s enough room."
         },
         {
-          "id": "what-it-does",
-          "title": "What it does",
+          "id": "note-fallback",
+          "title": "The note when space is tight",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "The words under a figure give the reader something to look for.These words are called a caption. The note in this figure uses a small card even on a wide screen. Try it Hover over the number in the figure or reach it with Tab. If you narrow your browser window, the first note uses the same kind of card. DocForm keeps notes in figures and other contained areas beside their marker even when the page margin is free."
+        },
+        {
+          "id": "bubble",
+          "title": "An explanation that opens in place",
+          "level": 2,
+          "text": "Why the lead comes before the labelled fields The lead tells you what you can learn here. Once you know why the page matters, the labelled fields give you quick facts such as which features are on by default. Try it Scroll toward the titled panel until it’s near the middle of the screen. It opens in the reading column. Point at it to clear the blur, or choose the title to bring it into view. Scroll on to see it fold away. This is a peek bubble. It gives a longer aside its own space while keeping the page easy to scan."
+        },
+        {
+          "id": "plain-disclosure",
+          "title": "A disclosure you open yourself",
+          "level": 2,
+          "text": "What a section heading tells you A section heading names one topic. Short headings also make the outline easier to scan. Try it Scroll this panel past the centre of the screen, then choose its title. This disclosure, a block with a title that opens or closes its contents, has opted out of the peek effect. It stays in the reading column and opens only when you choose it."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Give a short aside to a sidenote and a longer optional explanation to a peek bubble or disclosure. Put any idea everyone needs in the main text."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Use Enter or Space on a bubble’s title to bring it into view. Focus or tap to clear the blur, and press Esc while focused on the bubble to close it. With scripts off, sidenotes read as asides in parentheses and peek bubbles work as ordinary disclosures."
         },
         {
           "id": "related",
@@ -1723,24 +2649,119 @@ window.DocFormSearch = {
       ],
       "terms": [
         {
+          "text": "Sidenotes",
+          "term": "sidenote",
+          "section": ""
+        },
+        {
           "text": "margin",
           "term": "margin",
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "peek bubbles",
+          "term": "peek bubble",
+          "section": ""
+        },
+        {
+          "text": "lead paragraph",
+          "term": "lead paragraph",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
-          "section": "for-every-reader"
+          "text": "reading column",
+          "term": "reading column",
+          "section": "see-it"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
-          "section": "for-every-reader"
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "see-it"
+        },
+        {
+          "text": "margin",
+          "term": "margin",
+          "section": "see-it"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "note-fallback"
+        },
+        {
+          "text": "Hover",
+          "term": "hover",
+          "section": "note-fallback"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "note-fallback"
+        },
+        {
+          "text": "margin",
+          "term": "margin",
+          "section": "note-fallback"
+        },
+        {
+          "text": "labelled fields",
+          "term": "labelled fields",
+          "section": "bubble"
+        },
+        {
+          "text": "on by default",
+          "term": "on by default",
+          "section": "bubble"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
+          "section": "bubble"
+        },
+        {
+          "text": "reading column",
+          "term": "reading column",
+          "section": "bubble"
+        },
+        {
+          "text": "peek bubble",
+          "term": "peek bubble",
+          "section": "bubble"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "plain-disclosure"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
+          "section": "plain-disclosure"
+        },
+        {
+          "text": "disclosure",
+          "term": "disclosure",
+          "section": "plain-disclosure"
+        },
+        {
+          "text": "reading column",
+          "term": "reading column",
+          "section": "plain-disclosure"
+        },
+        {
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "when-to-use"
+        },
+        {
+          "text": "peek bubble",
+          "term": "peek bubble",
+          "section": "when-to-use"
+        },
+        {
+          "text": "disclosure",
+          "term": "disclosure",
+          "section": "when-to-use"
         }
       ]
     },
@@ -1752,31 +2773,43 @@ window.DocFormSearch = {
           "id": "",
           "title": "Tooltips and glossary",
           "level": 1,
-          "text": "Write clearly Tooltips explain a word when a reader hovers over it, and holding it opens a longer card. The glossary collects every explained word on one page, with links back to where each is used. Official name Tooltips · Glossary Turned on Tooltips On by default · Glossary On request Signal strength Medium (chosen terms) · Quiet (auto-linked terms and cards) Works with The search index, for the glossary's used-on links; TeX math inside definitions Good for Explaining jargon in place"
+          "text": "Write clearly Tooltips explain words in place, and some open a longer card when you hold them. The glossary brings those definitions together so you can look them up by letter. Official name Tooltips · Glossary Turned on Tooltips On by default · Glossary On request Signal strength Medium (chosen terms) · Quiet (auto-linked terms and cards) Works with The search index, for the glossary's used-on links; TeX math inside definitions Good for Explaining jargon in place"
         },
         {
           "id": "see-it",
-          "title": "See it",
+          "title": "A quick definition",
           "level": 2,
-          "text": "Live demo coming soon. Tooltips and glossary in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "A section marker helps readers move around a page while preserving its visual hierarchy. The first underline has a definition written for this sentence. The second draws its definition from the site’s glossary. Try it Point at “section marker” and then “visual hierarchy”, or reach each one with Tab. A tooltip is the small box that appears over the page. A shared glossary term uses the same explanation wherever it appears."
         },
         {
-          "id": "what-it-does",
-          "title": "What it does",
+          "id": "hold-cards",
+          "title": "A longer explanation",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Compare visual hierarchy with signal strength. Both terms open longer cards. The ring fills more slowly for “signal strength” in this example. Try it Press and hold the first term, or hold Enter or Space with the term focused. The ring fills in about six tenths of a second, the default wait. The second term is set to take 1.2 seconds. Release early or move the pointer away to cancel, and press Esc to dismiss the open hold-to-expand card. A site can set its own wait, and an individual term can override it. Hold works when the term has a longer explanation available."
+        },
+        {
+          "id": "auto-linking",
+          "title": "Faint underlines",
+          "level": 2,
+          "text": "Contrast makes a heading stand out. Read about contrast in visual hierarchy. Contrast also makes a section line easier to spot. The first “Contrast” gets a definition. The ordinary link keeps its destination, and the second line has opted out. Try it Point at the first “Contrast”, then try the same word on the second line. With auto-linking turned on, DocForm finds whole terms in paragraphs and list items, even when their capital letters differ. It skips headings, links and buttons, code, formulas, and text that already has a tooltip. A page can also exclude an entire passage. An explicitly marked term with no matching definition looks like this example. Its missing definition has no card."
+        },
+        {
+          "id": "glossary-page",
+          "title": "The generated glossary",
+          "level": 2,
+          "text": "Open the Glossary to browse the site’s definitions. DocForm groups them by first letter. With the offline search index available, it can also collect tips written on individual pages, show different definitions of the same term, and link to the sections that use it. Section marker is defined again in this sentence. Distinct definitions like these appear as variants after the index is refreshed. A definition shared by the site takes precedence. Try it Use V in the glossary’s letter row and look for visual hierarchy. Use your browser’s Back button to return here."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a short tooltip to unblock a sentence and a longer card for an example readers might want next. Put a definition used across several pages in the glossary so it stays consistent."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Explicit tooltip terms can receive keyboard focus. Automatically underlined words keep the tab order short, so use the glossary page for keyboard lookup. Write essential definitions in the page text so they’re available in print and with scripts off."
         },
         {
           "id": "related",
@@ -1787,23 +2820,133 @@ window.DocFormSearch = {
       ],
       "terms": [
         {
+          "text": "Tooltips",
+          "term": "tooltip",
+          "section": ""
+        },
+        {
           "text": "glossary",
           "term": "glossary",
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "section marker",
+          "tip": "A small button in the heading rail that takes you to another section.",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "see-it"
+        },
+        {
+          "text": "tooltip",
+          "term": "tooltip",
+          "section": "see-it"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "see-it"
+        },
+        {
+          "text": "visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "hold-cards"
+        },
+        {
+          "text": "signal strength",
+          "term": "signal strength",
+          "section": "hold-cards"
+        },
+        {
+          "text": "hold-to-expand card",
+          "term": "hold to expand card",
+          "section": "hold-cards"
+        },
+        {
+          "text": "Contrast",
+          "term": "contrast",
+          "section": "auto-linking"
+        },
+        {
+          "text": "formulas",
+          "term": "formula",
+          "section": "auto-linking"
+        },
+        {
+          "text": "tooltip",
+          "term": "tooltip",
+          "section": "auto-linking"
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "glossary-page"
+        },
+        {
+          "text": "search index",
+          "term": "search index",
+          "section": "glossary-page"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "glossary-page"
+        },
+        {
+          "text": "Section marker",
+          "tip": "A marker next to the reading column that jumps to a section.",
+          "section": "glossary-page"
+        },
+        {
+          "text": "variants",
+          "term": "variant",
+          "section": "glossary-page"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "glossary-page"
+        },
+        {
+          "text": "visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "glossary-page"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "glossary-page"
+        },
+        {
+          "text": "tooltip",
+          "term": "tooltip",
+          "section": "when-to-use"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "when-to-use"
+        },
+        {
+          "text": "tooltip",
+          "term": "tooltip",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "keyboard focus",
+          "term": "keyboard focus",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "tab order",
+          "term": "tab order",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
           "section": "for-every-reader"
         }
       ]
@@ -1820,50 +2963,133 @@ window.DocFormSearch = {
         },
         {
           "id": "see-it",
-          "title": "See it",
+          "title": "Numbers for figures, tables, and equations",
           "level": 2,
-          "text": "Live demo coming soon. Cross-references and citations in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Reading order Title → Section heading → Caption Three landmarks to look for when scanning a page. Illustrative counts for a page outline. Kind of heading Count Sections 3 Subsections 2 Follow the links to the scanning figure, the heading counts, or the total equation. The same figure has an automatically labelled link here: . Try it Point at one of these links or reach it with Tab for a preview. Then choose it and watch the linked item briefly light up. A cross-reference points to another part of the document. DocForm counts figures, tables, and equations separately on each page and can fill in the link text with the right number."
         },
         {
-          "id": "what-it-does",
-          "title": "What it does",
+          "id": "numbering-options",
+          "title": "Choosing what to number",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Read the title. Scan the headings. Stop at the section you need. This reminder has a caption and has opted out of numbering. Try it Compare this caption with the one above. A figure or table with a caption or a link target can be numbered automatically. By default, display equations are numbered when they have a link target or are marked for numbering. A page can also number all its display equations."
+        },
+        {
+          "id": "cross-page-previews",
+          "title": "A look at another page",
+          "level": 2,
+          "text": "For a look at how readers scan a page, visit Visual hierarchy: guiding the eye. Try it Pause over the link or reach it with Tab before opening it. The preview draws its title and a little text from the offline search index. If the index is unavailable, the card shows the link’s address."
+        },
+        {
+          "id": "citations",
+          "title": "Giving credit",
+          "level": 2,
+          "text": "Start with a title and a few landmarks the eye can find easily (Visual hierarchy: guiding the eye). Save the strongest colour accents for things that need immediate attention (The signal ladder). Both guides cover ways to direct attention (Visual hierarchy: guiding the eye and The signal ladder). Try it Pause over a bracketed number or reach it with Tab to see the full source in a card. Choose the number to jump to the source list, then use its return arrow to go back to the first mention. A citation credits a source. DocForm numbers sources in the order you first mention them, reuses the number on later mentions, and builds a bibliography, the list of cited sources."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use cross-references when readers may want to inspect a figure or equation again. Use citations when a claim comes from a source readers may want to look up."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Give each figure and table a caption that makes sense in print and on a narrow screen. With scripts off, the source titles stay in the paragraphs and the bibliography still gives their names."
+        },
+        {
+          "id": "bibliography",
+          "title": "Bibliography",
+          "level": 2,
+          "text": "Visual hierarchy: guiding the eye. DocForm guide. The signal ladder. DocForm guide."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Teach a concept, a recipe that uses it Feature directory"
+          "text": "The signal ladder Teach a concept, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Citations",
+          "term": "citation",
+          "section": ""
+        },
+        {
+          "text": "Caption",
+          "term": "caption",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "link",
+          "term": "link",
+          "section": "see-it"
+        },
+        {
+          "text": "cross-reference",
+          "term": "cross reference",
+          "section": "see-it"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "numbering-options"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "numbering-options"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "cross-page-previews"
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "cross-page-previews"
+        },
+        {
+          "text": "search index",
+          "term": "search index",
+          "section": "cross-page-previews"
+        },
+        {
+          "text": "Visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "citations"
+        },
+        {
+          "text": "accents",
+          "term": "accent",
+          "section": "citations"
+        },
+        {
+          "text": "citation",
+          "term": "citation",
+          "section": "citations"
+        },
+        {
+          "text": "bibliography",
+          "term": "bibliography",
+          "section": "citations"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "bibliography",
+          "term": "bibliography",
           "section": "for-every-reader"
+        },
+        {
+          "text": "Visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "bibliography"
         }
       ]
     },
@@ -1881,25 +3107,37 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Section lines and split views in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Main pane Read the title to learn what the page offers. Scan the headings to find the part you need. Follow the line beside a heading to see where its section ends. Companion pane The line groups a heading with its content. The wider pane holds the steps. The shorter pane is centred vertically beside them. Try it On a wide screen, reload at the top and scroll until this example enters view. The wider pane glides in from the left, followed by its companion from the right."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "How the layout works",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": ""
+        },
+        {
+          "id": "section-lines",
+          "title": "Section lines",
+          "level": 3,
+          "text": "Look along the left margin beside the main headings on this page. Each line runs from a main heading to the end of its section. Smaller headings, like the one above, belong to the same section and share its line. In focus mode the line stays sharp even when nearby text softens. The default sequence is blue, green, purple, orange, pink, and brown, then blue again. This page uses the site’s tip role on the next main heading to show a single override. That heading still takes its place in the sequence, so the section after it gets orange."
+        },
+        {
+          "id": "pane-shares",
+          "title": "Split views",
+          "level": 3,
+          "text": "First pane Find a page using the sidebar. Second pane Find a section using the outline. The default gives both panes equal width, aligns them at the top, and can stay still as you scroll. Shares describe how the available width is divided after the gap. Two to one gives the first pane twice as much room as the second. Vertical centring lines up the middle of each pane, which helps when one is much shorter. With scroll reveals enabled, the panes enter once per visit, one after another. That entrance can be turned off for individual splits."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use section lines on long pages where readers need to see where one idea ends and the next begins. Give a heading its own role colour when the words also explain what the reader should notice. Use a split when readers need to see two related blocks together, such as a diagram and its explanation. Keep both panes short enough to take in at a glance, and give extra width to the pane that needs it."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "On a narrow screen the panes stack in reading order. The numbered section rail takes priority if it overlaps the section lines. In print the lines shorten to marks beside headings and the panes print fully visible. With scripts off, the section marks stay at heading height and the panes stay visible in equal columns or stack on a narrow screen."
         },
         {
           "id": "related",
@@ -1915,18 +3153,53 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Split views",
+          "term": "split view",
+          "section": ""
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
-          "section": "for-every-reader"
+          "text": "margin",
+          "term": "margin",
+          "section": "section-lines"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "focus mode",
+          "term": "focus mode",
+          "section": "section-lines"
+        },
+        {
+          "text": "role",
+          "term": "role",
+          "section": "section-lines"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "pane-shares"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "pane-shares"
+        },
+        {
+          "text": "scroll reveals",
+          "term": "scroll reveal",
+          "section": "pane-shares"
+        },
+        {
+          "text": "role",
+          "term": "role",
+          "section": "when-to-use"
+        },
+        {
+          "text": "section rail",
+          "term": "section rail",
           "section": "for-every-reader"
         }
       ]
@@ -1939,31 +3212,43 @@ window.DocFormSearch = {
           "id": "",
           "title": "Colour, roles, and theme",
           "level": 1,
-          "text": "Shape pages and sites DocForm uses nine named colours, and roles give each colour a single meaning across a whole site. Readers can switch between light and dark themes, and the page remembers their choice. Official name Colour roles · Theme Turned on On by default Signal strength Medium (legends and accents) Works with Tags, callouts, headings, and charts, which take on role colours Good for Colour that means the same thing everywhere"
+          "text": "Shape pages and sites DocForm uses nine named colours, and roles give each colour a single meaning across a whole site. Readers can switch between light and dark themes, and the page remembers their choice. Official name Colour roles · Theme Turned on On by default Signal strength Medium (legends and accents) · Quiet (the theme switch) Works with Tags, callouts, headings, and charts, which take on role colours Good for Colour that means the same thing everywhere"
         },
         {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Colour, roles, and theme in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Gray Brown Orange Yellow Green Blue Purple Pink Red Each named colour pairs a text shade with a softer background tint. Both shades adapt when you switch themes. Try it Choose the theme button above or press T. Compare the swatches against the new background. Reload the page to see whether your browser saved your choice, then switch back if you prefer."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Colours, meanings, and themes",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": ""
+        },
+        {
+          "id": "role-legend",
+          "title": "Colour roles and the legend",
+          "level": 3,
+          "text": "Green means on by default, blue means on request, purple marks an action to try, yellow marks a tip, and red marks a caution. Tip Check a page in both themes before sharing it. The legend lists this site’s roles. The tip tag picks up the same yellow used in the legend. A role gives a colour a job. In these docs, purple labels always introduce something to try. A site can reuse one role on tags, callouts, headings, and figures that support accents. Change the role’s colour once and the items that use it follow. The legend is the key readers use to learn these meanings."
+        },
+        {
+          "id": "theme-preference",
+          "title": "Which theme opens first?",
+          "level": 3,
+          "text": "A theme sets the appearance of the page, including its background and text shades. On a first visit, DocForm can follow your device’s light or dark setting, called the system preference. A site can also choose a light or dark starting theme. Once you use a theme button, your saved choice comes first if the browser allows the page to remember it."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Keep most text in the regular text colour and give accents a consistent meaning. Start with a small set of roles that readers can learn quickly. Put a legend near the first use of the roles, and keep the same meanings on every page. Use words such as Caution as well as colour so the message survives printing in gray."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Reach the theme button with Tab and press Enter to switch. The swatches wrap on narrow screens and keep their names in print. With scripts off, the palette still follows the device’s appearance and the legend above has a text version."
         },
         {
           "id": "related",
@@ -1974,18 +3259,78 @@ window.DocFormSearch = {
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "theme",
+          "term": "theme",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "browser",
+          "term": "browser",
+          "section": "see-it"
+        },
+        {
+          "text": "on by default",
+          "term": "on by default",
+          "section": "role-legend"
+        },
+        {
+          "text": "on request",
+          "term": "on request",
+          "section": "role-legend"
+        },
+        {
+          "text": "role",
+          "term": "role",
+          "section": "role-legend"
+        },
+        {
+          "text": "callouts",
+          "term": "callout",
+          "section": "role-legend"
+        },
+        {
+          "text": "accents",
+          "term": "accent",
+          "section": "role-legend"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "role-legend"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
+          "section": "theme-preference"
+        },
+        {
+          "text": "system preference",
+          "term": "system preference",
+          "section": "theme-preference"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "theme-preference"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "when-to-use"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "palette",
+          "term": "palette",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
           "section": "for-every-reader"
         }
       ]
@@ -2004,31 +3349,49 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Navigation and reading controls in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Find a page Choose a group in the sidebar to see the pages it contains. Find a section Open this page’s outline and choose Sidebar modes. Keep your place Scroll and watch the top-left progress ring fill while the outline marks your current heading. The sidebar tracks your place in the site and on the page. The ring tracks how far you’ve scrolled. Try it In the sidebar, choose the arrow beside Write clearly to open that group, then choose it again to close it. On a computer you can also rest the pointer on a closed group to peek at its contents. On a phone, open the sidebar with the navigation button first."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Ways to move around",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": ""
+        },
+        {
+          "id": "page-tree",
+          "title": "Page groups and outlines",
+          "level": 3,
+          "text": "The sidebar lists pages in groups. A group can start collapsed, with only its name showing. The group containing the page you’re reading opens so you can see your place. The current page’s outline lists its main and smaller headings, and updates as you scroll. On a wide screen, drag the sidebar divider to resize it, or reach the divider with Tab and use the arrow keys. Double-click the divider to reset it."
+        },
+        {
+          "id": "sidebar-modes",
+          "title": "Sidebar modes",
+          "level": 3,
+          "text": "Shown The page list stays open on the left. Hidden The page list tucks away. A numbered section rail beside the text lets you jump to headings. Auto Move the pointer to the far left edge to peek at the list. It tucks away when you move back into the page. Try it On a wide screen, use the navigation button in the control pill or press N to cycle through the three modes. In Hidden, point to a rail number or reach it with Tab to see the heading it leads to. DocForm remembers your mode when browser storage is available."
+        },
+        {
+          "id": "heading-and-page-links",
+          "title": "Heading links and the pager",
+          "level": 3,
+          "text": "Point at a heading or reach its chain button with Tab to copy a link that opens the page there. The pager shows Previous and Next links at the bottom of a page, in the site’s reading order. Visit Colour, roles, and theme and use its Next link to come back. A page can hide its pager, as this page does. Authors can also leave individual headings out of the outline and section rail. The heading below remains visible in the text. Optional outline detail Try it Look for Optional outline detail under Ways to move around in the sidebar. The heading is omitted there, so the outline stays shorter."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Group pages when readers need to choose among several topics. Keep headings short so the outline works as a quick map. Use the pager when a reading order helps, and hide it on a page that ends with its own set of choices. The rounded control bar also offers focus mode (F) to soften nearby text, and J and K to jump forward and back through headings. The theme and search buttons appear when those features are available."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "At phone width, the sidebar opens over the page as a drawer. Choose a link, tap outside it, or press Esc to close it. When scripts are off, use the ordinary links in the text to keep moving."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Present and publish a site, a recipe that uses it Feature directory"
+          "text": "Search, the next guide Tour the reading interface Present and publish a site, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -2058,9 +3421,79 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "sidebar",
+          "term": "sidebar",
           "section": "see-it"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "page-tree"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "page-tree"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
+          "section": "page-tree"
+        },
+        {
+          "text": "control pill",
+          "term": "control pill",
+          "section": "sidebar-modes"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "sidebar-modes"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "heading-and-page-links"
+        },
+        {
+          "text": "pager",
+          "term": "pager",
+          "section": "heading-and-page-links"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "heading-and-page-links"
+        },
+        {
+          "text": "section rail",
+          "term": "section rail",
+          "section": "heading-and-page-links"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "heading-and-page-links"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "when-to-use"
+        },
+        {
+          "text": "pager",
+          "term": "pager",
+          "section": "when-to-use"
+        },
+        {
+          "text": "focus mode",
+          "term": "focus mode",
+          "section": "when-to-use"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
+          "section": "when-to-use"
         },
         {
           "text": "phone width",
@@ -2068,8 +3501,18 @@ window.DocFormSearch = {
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "drawer",
+          "term": "drawer",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "link",
+          "term": "link",
           "section": "for-every-reader"
         }
       ]
@@ -2088,25 +3531,43 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Search in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Reading landmarks are the headings, figures, and labels that help you find your place on a page. This sentence is part of the live page. Its words can turn up in a search as soon as the page opens. Try it"
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "What gets searched",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": ""
+        },
+        {
+          "id": "live-page-and-site-index",
+          "title": "Live page and offline site index",
+          "level": 3,
+          "text": "DocForm reads the text on the open page directly. For other pages, it looks in a prepared search index, a collection of page titles, headings, and text saved with the site. That lets it find matches across the site without the internet. With the search box empty, it lists pages in reading order. Once you type, a match needs to contain every word you entered, and headings and titles rank ahead of matches in ordinary paragraphs. When pages change, the offline asset tool can rebuild the index. Until then, other-page results can still show older text. Search can find words on the open page even when the index is missing."
+        },
+        {
+          "id": "excluded-areas",
+          "title": "Excluded areas",
+          "level": 3,
+          "text": "Authors can skip a visible block, for example when an exercise repeats the same text several times. Try it Search also skips hidden areas, navigation, most controls, and typeset formulas. A heading left out of the outline can still contribute words to the surrounding section’s results."
+        },
+        {
+          "id": "other-page-outlines",
+          "title": "Other-page outlines and previews",
+          "level": 3,
+          "text": "Pause over Visual hierarchy: guiding the eye, or reach that link with Tab. The preview offers a title and an extract from the index. Find the same page under Design with hierarchy in the sidebar and open the arrow beside its name to see its indexed headings. You can jump straight to a heading from there. Try it The index also supplies the Used on links in the Glossary, so you can go from a definition to a page that uses it."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use search to jump to a topic you can name. Use the sidebar when you want to see how topics are grouped. Clear, specific headings help readers recognize the right result, especially when several pages use the same word."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Use the up and down arrow keys to move among results, Enter to open one, and Esc to close the search box. You can use the magnifying glass on a phone. With scripts off, the browser’s Find command can still look through the open page, and the links below still work."
         },
         {
           "id": "related",
@@ -2127,18 +3588,43 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
-          "section": "see-it"
+          "text": "search index",
+          "term": "search index",
+          "section": "live-page-and-site-index"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
-          "section": "for-every-reader"
+          "text": "offline asset tool",
+          "term": "offline asset tool",
+          "section": "live-page-and-site-index"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "formulas",
+          "term": "formula",
+          "section": "excluded-areas"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "excluded-areas"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "other-page-outlines"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "other-page-outlines"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "when-to-use"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
           "section": "for-every-reader"
         }
       ]
@@ -2151,31 +3637,55 @@ window.DocFormSearch = {
           "id": "",
           "title": "Design tokens",
           "level": 1,
-          "text": "Shape pages and sites Design tokens are the named settings behind every colour, font, size, and space in DocForm. Changing one token changes the whole site consistently. Official name Design tokens Turned on On by default Signal strength Every rung (tokens tune every rung) Works with Every other feature, since all of them read the tokens Good for Fitting a site to a brand or an audience"
+          "text": "Shape pages and sites Design tokens are named settings for details like text colour, spacing, and width. Change a shared token and the parts of the site that use it change together. Official name Design tokens Turned on On by default Signal strength Every rung (tokens tune every rung) Works with Every other feature, since all of them read the tokens Good for Fitting a site to a brand or an audience"
         },
         {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Design tokens in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Default colours Find your place Scan the headings for the topic you need. Tuned colours Find your place Scan the headings for the topic you need. The second sample sets colours for the heading, bold word, and italic word separately. Try it Switch themes in the control pill or press T. Watch the sample heading on the tuned side change between blue and purple. A design token can have a value for each theme."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "What tokens can change",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": ""
+        },
+        {
+          "id": "type-and-space",
+          "title": "Fonts, spacing, and corners",
+          "level": 3,
+          "text": "Default Following a page Use the outline to see the main ideas. Follow a heading link to jump to a section. Roomier Following a page Use the outline to see the main ideas. Follow a heading link to jump to a section. The roomier sample uses larger lettering with small strokes at the ends, more space between lines and blocks, and rounder corners. The font settings choose the shape and size of letters and the space between lines. The spacing scale is a set of repeatable gaps. Corner radius sets how rounded a corner is. Eyebrow and labelled-field settings also control the size and weight of small labels and how much room they get."
+        },
+        {
+          "id": "reading-and-figure-widths",
+          "title": "Reading and figure widths",
+          "level": 3,
+          "text": "Full available width A short lead tells readers what a page offers before they start scanning its sections. Sample figure Narrower reading column and figure A short lead tells readers what a page offers before they start scanning its sections. Sample figure The shaded area marks the reading column. The bordered figure can have a smaller width limit inside it. Reading width limits the length of a line of text. A figure width limit can make large blocks like figures and tables narrower inside that column. Separate settings set the gap at the sides of the page and the starting width of the sidebar."
+        },
+        {
+          "id": "section-cycle",
+          "title": "Section cycle and line",
+          "level": 3,
+          "text": "Default cycle Blue Green Purple Orange Pink Brown This page’s cycle Purple Blue Green The default takes six sections to repeat. This page repeats every three, with slightly thicker lines. Try it Trace the lines beside the main headings on this page, then compare them with the section lines guide. The cycle picks the order. Separate settings control how thick the line is, how strong its colour looks, and how far it sits from the text."
+        },
+        {
+          "id": "other-swatches",
+          "title": "Surfaces, links, and chart colours",
+          "level": 3,
+          "text": "Page Sidebar Subtle fill Ordinary link · Figure link 1 2 3 4 5 6 Neutral fills are close in shade. Links use their own text colours. The six brighter swatches show the default colours for sets of values in a chart. The colour guide shows the nine named text-and-background pairs that roles use. Text, borders, and interactive details like the outline around a focused control have their own settings too."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Tune tokens when several pages need to share one look, or when readers need more legible text or shorter lines. Make the change where it belongs. A shared setting suits the whole site, while a local setting suits a single sample or section. Keep the shades of headings, bold words, and italics close enough to the main text colour that role colours can still stand out."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Check both themes, a narrow screen, and a printed page when you change the look. The samples stack on narrow screens. Their colours, type, spacing, and widths still show with scripts off. The custom section cycle needs scripts, so the short heading marks then use the default cycle."
         },
         {
           "id": "related",
@@ -2186,18 +3696,83 @@ window.DocFormSearch = {
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Design tokens",
+          "term": "design token",
+          "section": ""
+        },
+        {
+          "text": "control pill",
+          "term": "control pill",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
-          "section": "for-every-reader"
+          "text": "design token",
+          "term": "design token",
+          "section": "see-it"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "theme",
+          "term": "theme",
+          "section": "see-it"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "type-and-space"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "type-and-space"
+        },
+        {
+          "text": "spacing scale",
+          "term": "spacing scale",
+          "section": "type-and-space"
+        },
+        {
+          "text": "Eyebrow",
+          "term": "eyebrow",
+          "section": "type-and-space"
+        },
+        {
+          "text": "field",
+          "term": "field",
+          "section": "type-and-space"
+        },
+        {
+          "text": "scanning",
+          "term": "scanning",
+          "section": "reading-and-figure-widths"
+        },
+        {
+          "text": "reading column",
+          "term": "reading column",
+          "section": "reading-and-figure-widths"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "reading-and-figure-widths"
+        },
+        {
+          "text": "Sidebar",
+          "term": "sidebar",
+          "section": "other-swatches"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "other-swatches"
+        },
+        {
+          "text": "role",
+          "term": "role",
+          "section": "when-to-use"
+        },
+        {
+          "text": "section cycle",
+          "term": "section cycle",
           "section": "for-every-reader"
         }
       ]
@@ -2216,47 +3791,77 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Tabs in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Follow the headings to see how the page is organised. Open Search to jump to a word you want to find. Type a word and choose a result to jump to it. Choose a heading in the outline to jump to its section. The reading choices above and their matching tips below switch together, even though their labels and order differ. Try it Choose Explore in the upper set. The lower set jumps to Search palette. Then choose Section outline below and watch the upper set return to Read."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Starting tabs and groups",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Open a page group in the sidebar and choose a page. Pick a heading in the current page’s outline. This independent set starts on its second tab and stays put when the paired sets above change. Each tab panel holds its own content. The first tab normally opens at the start. The author can choose a different starting tab, as in this set. Sets in the same linked selection group match equivalent choices even when their labels differ. A group can also remember a choice between pages."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use tabs for short alternatives that answer the same question, such as different ways to find a section. Put facts everyone needs in the surrounding text so they are visible whichever panel is open."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Press Tab to reach the selected tab. Use Left and Right to move and select, or Home and End to jump to the ends. Press Tab again to continue into the selected panel. On narrow screens the tab strip can scroll sideways. The underline and weight mark the choice in either theme. With scripts off, all panel contents appear together. Print the selected panel, then switch and print again if you need another."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Walk through a process, a recipe that uses it Feature directory"
+          "text": "See this group remember your choice between pages Walk through a process Feature directory"
         }
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Tabs",
+          "tip": "A label you choose to show one panel in a shared space.",
+          "section": ""
+        },
+        {
+          "text": "outline",
+          "term": "outline",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "Search palette",
+          "term": "search palette",
+          "section": "see-it"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "what-it-does"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "what-it-does"
+        },
+        {
+          "text": "tab panel",
+          "term": "tab panel",
+          "section": "what-it-does"
+        },
+        {
+          "text": "linked selection",
+          "term": "linked selection",
+          "section": "what-it-does"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         }
       ]
@@ -2275,48 +3880,104 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Card panels and figure steps in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Reader tools Find your place Outline Search Read comfortably Focus mode Theme The outline lists headings in the current page. Pick one to skip to that section. Type a word in Search to see where it appears and jump to a match. Focus mode softens nearby sections so the current section stands out. Theme switches the page between light and dark colours. The group titles organise the choices, and the selected card controls the detail pane. Try it Choose Search, then Theme. With a card focused, move with Up or Down and press Enter to open its detail. Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Figure steps",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Each figure step outlines a different part of the page and shows its explanation below. Parts of a page Whole page Outline Reading area The outline and the reading area give you two ways to move through the same page. Use the outline to locate a heading. Read the explanation under the heading you chose. Try it Move over a step, focus it with Tab, or tap it. A figure step can point to a named moment in the animation. Whole page returns to the opening view."
+        },
+        {
+          "id": "side-layout",
+          "title": "Cards beside a figure",
+          "level": 3,
+          "text": "Choose Jump to heading to draw the route. This compact layout places the titles beside the figure on a wide screen. Reading route Open the page Jump to heading"
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use grouped card panels for related options with explanations of their own. Use figure steps when the same diagram should change as readers move from one labelled state to another. Short labels leave space for the picture and details."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "In a card panel, Up, Down, Home and End move focus. Enter or Space selects the card. Figure steps select as soon as they receive focus. On a narrow screen, the panes stack. The highlight and labels identify the current choice in either theme. Print and pages opened with scripts off show all the written details."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Walk through a process, a recipe that uses it Feature directory"
+          "text": "SVG animations, for a diagram with its own playback controls Walk through a process Feature directory"
         }
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Card panels",
+          "term": "card panel",
+          "section": ""
+        },
+        {
+          "text": "Figure steps",
+          "term": "figure step",
+          "section": ""
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "outline",
+          "term": "outline",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "Focus mode",
+          "term": "focus mode",
+          "section": "see-it"
+        },
+        {
+          "text": "Theme",
+          "term": "theme",
+          "section": "see-it"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
+          "section": "see-it"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "what-it-does"
+        },
+        {
+          "text": "figure step",
+          "term": "figure step",
+          "section": "what-it-does"
+        },
+        {
+          "text": "animation",
+          "term": "animation",
+          "section": "what-it-does"
+        },
+        {
+          "text": "card panel",
+          "term": "card panel",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
+          "section": "related"
         }
       ]
     },
@@ -2334,31 +3995,37 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. SVG animations in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Follow a search from the place you type a word to the heading you can open. Try it Press Play and watch the line draw, the heading label fade in, the dot move and the ring grow. Pause, then drag the timeline backwards. Scrubbing means dragging to any moment in the animation."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Four ways to change a picture",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Draw Reveal a line along its length to show a route. Fade Change how visible a shape or label is. Move Slide a shape to a new position. Attribute Change a property of a shape, such as the radius of the green ring. SVG pictures are built from shapes, so they stay sharp when enlarged. A single step can combine several changes or stagger their starts. The caption beneath the controls changes with the current step. Previous and Next jump between steps."
+        },
+        {
+          "id": "autoplay",
+          "title": "Start when the figure comes into view",
+          "level": 3,
+          "text": "Scroll until about half of the next figure is visible. Keep the pointer outside it to see playback start on its own. The arrow appears when this figure enters view. Its playback controls stay available afterwards."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use an animation when the order or movement explains something a still picture would leave unclear. Keep the opening picture readable and put one observation in each step caption. Leave autoplay off when nearby prose needs the reader’s attention first."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Use Tab to reach the buttons and timeline. The arrow keys move the focused timeline. The labels stay legible at narrow widths and use the page’s light or dark colours. Pause at the frame you want before printing. With scripts off, the drawings and their regular captions remain visible."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Teach a concept, a recipe that uses it Feature directory"
+          "text": "Figure steps, for jumping to named moments from a card list Walk through a process Feature directory"
         }
       ],
       "terms": [
@@ -2373,18 +4040,53 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "timeline",
+          "term": "timeline",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
-          "section": "for-every-reader"
+          "text": "animation",
+          "term": "animation",
+          "section": "see-it"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "SVG",
+          "term": "svg",
+          "section": "what-it-does"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "what-it-does"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
+          "section": "autoplay"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
+          "section": "autoplay"
+        },
+        {
+          "text": "animation",
+          "term": "animation",
+          "section": "when-to-use"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "when-to-use"
+        },
+        {
+          "text": "autoplay",
+          "term": "autoplay",
+          "section": "when-to-use"
+        },
+        {
+          "text": "timeline",
+          "term": "timeline",
           "section": "for-every-reader"
         }
       ]
@@ -2403,31 +4105,31 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Worked-example steppers in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Start with setup. Count the 3 setup references. Add layout. Add 7 layout references to get 10. Add reading. Add 13 reading references to get 23. Running total: 3. Running total: 3 + 7 = 10. Running total: 10 + 13 = 23. Group added References so far Setup 3 Layout 10 Reading 23 Group References added Setup 3 Layout 7 Reading 13 The worked example adds counts from three groups of DocForm’s reference library. The chart shows the running total, while the table shows each group’s contribution. Try it Press Next. The calculation changes, and the Layout point and row are highlighted. Click the Reading point to jump straight to that step. Use Reset to return to the opening step."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "One step, several views",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "The stepper shows one item of an ordered example and reports where you are, such as Step 2 of 3. Previous and Next move in order. Reset restores the author’s chosen starting step, which is the first step here. The companion calculation switches with the current step. The chart and table use linked selection to mark the same item. All the rows and points stay visible, so readers can compare the selected value with the others."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a worked-example stepper when each operation builds on the last. Keep a shared chart or table in sight when the reader needs the whole sequence for context. Put any instructions that apply to every step before the controls."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Use Tab to reach Reset, Previous and Next. The ends keep keyboard focus and prevent further movement. On the focused chart, move between points with the arrow keys and press Enter or Space to choose one. Use the chart’s Table button to read the same values as rows. The views stack on a narrow screen and use the page’s theme. The printed example shows the current step. With scripts off, the complete ordered list, companion calculations, and chart data table are visible."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Walk through a process, a recipe that uses it Feature directory"
+          "text": "Linked selection, for keeping different views in sync Walk through a process Feature directory"
         }
       ],
       "terms": [
@@ -2442,18 +4144,48 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
-          "section": "see-it"
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "stepper",
+          "term": "stepper",
+          "section": "what-it-does"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "what-it-does"
+        },
+        {
+          "text": "worked-example",
+          "term": "worked example",
+          "section": "when-to-use"
+        },
+        {
+          "text": "stepper",
+          "term": "stepper",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "keyboard focus",
+          "term": "keyboard focus",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "chart",
+          "term": "chart",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         }
       ]
@@ -2472,52 +4204,62 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Scroll reveals in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Rise from below. This is the default entrance. Slide from the left after a short wait. Slide from the right after a longer wait. Fade in place after the longest wait. Four entrances show the available directions and how a short delay can stagger neighbouring items. Try it Reload at the top and watch the list as it comes into view. Scroll away and back. The items stay visible once they have appeared."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Add a pause or keep a block still",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "A scroll reveal waits until the reader reaches a block. The block can rise, enter from either side, or fade in place. A delay waits a little longer after the block reaches that point. In the first demo, the delays are 0, 160, 320 and 480 milliseconds. Keep the goal visible. This line opts out of its entrance. Bring in the supporting detail. This line fades in after 350 milliseconds. The first line stays still while the second gently appears beside the explanation. Try it Scroll slowly into the second example. The first line is readable as soon as you reach it."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a short entrance to lead the eye from one idea to the next. Keep core instructions stationary so fast readers and people jumping between headings can start reading straight away. Fade in place when sideways movement would compete with the text."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Reveals follow scrolling, including when you move through the page with the keyboard. The same content stays readable at narrow widths and in either theme. Print and pages opened with scripts off show every block immediately, including blocks you have yet to scroll to."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Walk through a process, a recipe that uses it Feature directory"
+          "text": "Split views, for paired panes with a staggered entrance Callouts, which can slide as they enter view Walk through a process Feature directory"
         }
       ],
       "terms": [
         {
-          "text": "Scroll",
-          "term": "scroll",
+          "text": "Scroll reveals",
+          "term": "scroll reveal",
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Scroll",
+          "term": "scroll",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "scroll reveal",
+          "term": "scroll reveal",
+          "section": "what-it-does"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
+          "section": "what-it-does"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "scroll",
+          "term": "scroll",
           "section": "for-every-reader"
         }
       ]
@@ -2536,31 +4278,43 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Linked selection in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Publish only. This set sends the Outline choice. Publish only. This set sends the Search choice. Follow only. The outline lists headings on this page. Follow only. The search palette finds a word or phrase. Both. This set sends and receives the Outline choice. Both. This set sends and receives the Search choice. Use the outline when you know the heading. Use search when you know a word. Three sets of tabs share a group. The two lines below stay in view and highlight the group’s current choice. Try it Choose Search in the first set. Both sets below follow. Choose Outline in the third set. The middle set and the highlight follow, while the first set stays on Search. Change the middle set by itself to see that it sends no choice back."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "How a group shares choices",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Publish Send your choice to the group and keep control of your own view. Follow Receive the group’s choices. Your own local changes stay local. Both Send and receive choices. This is the default for linked controls. A selection key is the shared name for an item. It lets a tab, point or row refer to the same thing even when their visible labels differ. Prose, rows and shapes can simply highlight the choice without becoming controls."
+        },
+        {
+          "id": "startup-seeds",
+          "title": "Pick a starting choice",
+          "level": 3,
+          "text": "A startup seed is a control’s offer to start the group on its current item. The publish-only set above offers Outline, so the other sets start there. An explicit group starting choice takes priority. Otherwise a remembered choice that still belongs to the group takes priority over a seed. With none of these, the group starts clear."
+        },
+        {
+          "id": "remembered-choices",
+          "title": "Remember a choice across pages",
+          "level": 3,
+          "text": "Use headings and links to read at your own pace. Use Search to jump to a topic as it comes to mind. This group is also on the Tabs page and is set up to remember your choice. Try it Pick Explore here, then open the Tabs demo. Its matching choice should be open if your browser lets these pages share saved settings."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use linked selection when the reader needs to recognise the same item in several views. Follow mode works for companion views. Keep groups separate when their choices refer to different things."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "The demo tabs respond to Tab and the arrow keys. The highlighted line stays in the same place on a narrow screen and uses the page’s theme colours. Printed and script-free pages keep the item labels so readers can match them without live highlighting."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Walk through a process, a recipe that uses it Feature directory"
+          "text": "Tabs, for showing alternate panels in one place Worked-example steppers, for linking steps, points and rows Walk through a process Feature directory"
         }
       ],
       "terms": [
@@ -2570,18 +4324,53 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "charts",
+          "term": "chart",
+          "section": ""
+        },
+        {
+          "text": "Outline",
+          "term": "outline",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "outline",
+          "term": "outline",
+          "section": "see-it"
+        },
+        {
+          "text": "search palette",
+          "term": "search palette",
+          "section": "see-it"
+        },
+        {
+          "text": "selection key",
+          "term": "selection key",
+          "section": "what-it-does"
+        },
+        {
+          "text": "Outline",
+          "term": "outline",
+          "section": "startup-seeds"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "remembered-choices"
+        },
+        {
+          "text": "linked selection",
+          "term": "linked selection",
+          "section": "when-to-use"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "script",
+          "term": "script",
           "section": "for-every-reader"
         }
       ]
@@ -2594,53 +4383,94 @@ window.DocFormSearch = {
           "id": "",
           "title": "Parameters and presets",
           "level": 1,
-          "text": "Explain step by step Parameters are sliders, menus, and switches that change the values a page shows. Presets set several of them at once with one click. Official name Parameters Turned on On request Signal strength Medium Works with Charts and results tables fed by named data sources Good for Letting readers explore what-ifs"
+          "text": "Explain step by step Parameters are values readers can change with sliders, menus, and switches. Presets set several of them at once with one click. Official name Parameters Turned on On request Signal strength Medium Works with Charts and results tables fed by named data sources Good for Letting readers explore what-ifs"
         },
         {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Parameters in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Pages to read: 2 Reading pace: Quick Include a review: Off Tools to practise: Outline Plan: 2 pages, 4 minutes. Tools selected: 1. Illustrative fixed value: 2 minutes per page at the quick pace. Controls change an illustrative reading plan. Each preset sets several choices at once and the plan updates to match. Try it Move the slider, choose a pace, switch on review and check both tools. Watch the sentence update. Pick Slow study, then Quick tour to return to the starting values."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Controls and live text",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Slider Move along a range of numbers. This slider picks a whole number of pages. Single choice Pick one reading pace from a list. Toggle switch Turn review on or off. Multiple choice Check any number of tools, including none. Number Use a numeric value in a calculation, like this plan’s minutes per page. It has no reader control of its own. A live value can show a single setting or calculation. A live text template keeps the surrounding words and fills several places with current values. The fixed-value line above uses a single value, and the plan sentence uses a template. A preset changes its listed settings together and is marked when those values are active."
+        },
+        {
+          "id": "scopes",
+          "title": "Share settings within a scope",
+          "level": 3,
+          "text": "Pages in the reading plan: 2 Pages in a separate plan: 4 The first slider repeats the reading plan’s page count. The other slider controls a separate plan. Try it Move the first slider and check the reading plan above. Now move the other slider. The reading plan stays as it was. A scope is a named set of parameter definitions and their current values. A definition gives a setting its type, starting value and any bounds or choices. The same setting can appear in several places within a scope. Separate scopes can use the same setting name for independent values."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use parameters to let readers change one assumption and see its effect. Presets give them useful starting combinations without asking them to set every control first. Put the changing value near its controls when the connection matters."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Use Tab to reach each control. Arrow keys move the slider and choose a pace. Space toggles a switch or checkbox. The controls can wrap on a narrow screen and follow the page’s theme. In print the plan sentence shows the current values. With scripts off it shows the written starting values."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Report results, a recipe that uses it Feature directory"
+          "text": "Named data sources and data views, for views that share settings Walk through a process Feature directory"
         }
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "Parameters",
+          "term": "parameter",
+          "section": ""
+        },
+        {
+          "text": "Presets",
+          "term": "preset",
+          "section": ""
+        },
+        {
+          "text": "slider",
+          "term": "slider",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "live text template",
+          "tip": "A sentence pattern with spaces the page fills using current values.",
+          "section": "what-it-does"
+        },
+        {
+          "text": "preset",
+          "term": "preset",
+          "section": "what-it-does"
+        },
+        {
+          "text": "slider",
+          "term": "slider",
+          "section": "scopes"
+        },
+        {
+          "text": "scope",
+          "tip": "A named set of settings that several controls can share.",
+          "section": "scopes"
+        },
+        {
+          "text": "parameter",
+          "term": "parameter",
+          "section": "scopes"
+        },
+        {
+          "text": "slider",
+          "term": "slider",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         }
       ]
@@ -2653,43 +4483,60 @@ window.DocFormSearch = {
           "id": "",
           "title": "Figure zoom and zoom tools",
           "level": 1,
-          "text": "Explain step by step Figure zoom opens any picture full screen and returns it to its place afterwards. Zoom tools add a magnifier, a laser pointer, pens, and a ruler for presenting. Official name Figure zoom · Zoom tools Turned on On request Signal strength Quiet (zooming) · Loud (pen and highlighter ink) Works with SVG charts, which gain a crosshair in the zoom view Good for Presenting and studying detailed figures"
+          "text": "Explain step by step Figure zoom opens a picture or chart in a full-screen view and returns it to its place afterwards. Zoom tools add a magnifier, a laser pointer, pens, and a ruler for presenting. Official name Figure zoom · Zoom tools Turned on On request Signal strength Quiet (zooming) · Loud (pen, highlighter, and laser marks) Works with SVG charts, which gain a crosshair in the zoom view Good for Presenting and studying detailed figures"
         },
         {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Figure zoom and zoom tools in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Open the page sketch to inspect or mark its three reading areas. Figures like this are zoomable automatically. Try it Click the sketch, or focus it with Tab and press Enter or Space. Press M and move the lens over a label. Press Escape to close the enlarged view and return to your place on the page."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Which blocks can open",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Images and figures in the reading area open automatically when Figure zoom is enabled. A page can also opt a plain block in or keep a figure in place. Try these two examples. Opted-in block. Click or focus this reading tip to enlarge it. Use the outline to return to a section. This small outline sketch opts out. Clicking it leaves it in place."
+        },
+        {
+          "id": "zoom-tools",
+          "title": "Tools and shortcut keys",
+          "level": 3,
+          "text": "Tool Key What it does Cursor V Use the figure’s own controls as usual. Magnifier M Move a circular lens over the figure. It starts at 2.5×. Scroll or use [ and ] to adjust between 1.5× and 6×. Laser pointer L Move a glowing dot with a trail that fades. Pen P Drag to draw a thin line. Highlighter H Drag to draw a wide, translucent mark. Crosshair or ruler C Read chart coordinates under the pointer, or drag a ruler on a picture. Hold Shift to constrain the ruler’s direction. Pen and Highlighter have red, blue, green, yellow and purple swatches. Each remembers its own colour while the view is open. Use Undo (Ctrl+Z or Cmd+Z) for the last mark or Clear ink for all marks. Closing the view clears the marks and measurements."
+        },
+        {
+          "id": "chart-crosshair",
+          "title": "Measure on a chart",
+          "level": 3,
+          "text": "Groups counted References 1 3 2 10 3 23 The cumulative reference counts cover Setup, Layout and Reading. The crosshair reads the horizontal and vertical values at the pointer. Try it Open the chart and press C. Move the pointer over the plotted line to read its coordinates. Try C on the sketch above to drag a ruler, which reports distance in picture units or image pixels."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use figure zoom when a chart’s labels or a diagram’s details need more room, or when several people are viewing the same screen. Use the laser for a quick cue and ink for marks you want to keep in view while discussing the figure."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Tab moves through controls inside the enlarged view. Escape, the Close button or clicking outside the figure closes it and returns focus. The same live figure moves back to the page with its own settings, such as the chart’s table view. Drawings and the ruler use a pointer. The controls follow the theme, and the figure fits the available space. Close the enlarged view before printing the page. With scripts off, the figures stay in the reading column."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Present and publish a site, a recipe that uses it Feature directory"
+          "text": "SVG charts, for interactive data views Present and publish a site Feature directory"
         }
       ],
       "terms": [
         {
           "text": "Figure zoom",
           "term": "figure zoom",
+          "section": ""
+        },
+        {
+          "text": "chart",
+          "term": "chart",
           "section": ""
         },
         {
@@ -2703,19 +4550,59 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
-          "section": "see-it"
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "crosshair",
+          "term": "crosshair",
+          "section": ""
+        },
+        {
+          "text": "Figure zoom",
+          "term": "figure zoom",
+          "section": "what-it-does"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "what-it-does"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "chart-crosshair"
+        },
+        {
+          "text": "figure zoom",
+          "term": "figure zoom",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
+        },
+        {
+          "text": "reading column",
+          "term": "reading column",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "data views",
+          "term": "data view",
+          "section": "related"
         }
       ]
     },
@@ -2733,31 +4620,43 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Named sources and data views in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Group References setup 3 layout 7 reading 13 interact 13 data 9 Repository reference counts by group. The table starts with two rows. Try it Choose Show more to add the next rows. The same five records feed the two views below."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Three ways to read the same data",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "A named source holds the records, or individual entries. Each view reads that source and chooses how to display it. A table lines up fields for comparison. A code view keeps the original text, including commas and line breaks. A tree opens each record to show its fields. The plain-text view opens with scripts on. The record tree opens with scripts on. The same counts in their original CSV text and as a list of expandable records. Try it Open the first branch in the tree and find the group name and count in both views. Sources can come from CSV (a table stored as text), JSON or YAML (text that can hold lists and nested fields), or values supplied directly to the page. In automatic mode, rows with matching fields appear as a table. Nested values appear as text unless the author asks for a tree."
+        },
+        {
+          "id": "limits-and-errors",
+          "title": "Limits and unreadable data",
+          "level": 3,
+          "text": "A size cap can hold back a large preview until you choose Show anyway. A row cap loads a table in batches. A parse error means DocForm could not read the structure of the data. In a raw view, the error appears next to the original text. This preview uses a deliberately low size cap. This example deliberately leaves a number out. The first view offers to open data past its preview limit. The second points out an illustrative missing value. Try it Choose Show anyway, then find the spot where the broken example leaves the reference count blank."
+        },
+        {
+          "id": "local-overrides",
+          "title": "Replace one view",
+          "level": 3,
+          "text": "A local override changes just its target. Reset brings that view back to the latest shared source. A shared replacement updates all its views together when each can read the incoming records. If any view rejects the replacement, the previous data stays in place. Replace only the first table with the reading and data sample. Use the same columns with fewer rows to see how a local override behaves. Try it Load the sample and return to the first table to see the two replacement rows. Compare it with the unchanged text view, then choose Reset at the dropzone."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a named source when readers need several views of the same records. When a chart carries the story, put the raw view below it so readers can check exact values at their own pace."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Tab reaches Show more and the file picker. On a phone, wide tables can scroll sideways within the reading column. The table uses the page theme and the original counts remain readable in the first table with scripts off. Load all the rows you want before printing."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Report results, a recipe that uses it Feature directory"
+          "text": "Data trees Local file dropzones Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -2767,23 +4666,88 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "Data views",
+          "term": "data view",
+          "section": ""
+        },
+        {
           "text": "tree",
           "term": "tree",
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "Repository",
+          "term": "repository",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "records",
+          "term": "record",
+          "section": "see-it"
+        },
+        {
+          "text": "fields",
+          "term": "field",
+          "section": "what-it-does"
+        },
+        {
+          "text": "tree",
+          "term": "tree",
+          "section": "what-it-does"
+        },
+        {
+          "text": "record",
+          "term": "record",
+          "section": "what-it-does"
+        },
+        {
+          "text": "CSV",
+          "term": "csv",
+          "section": "what-it-does"
+        },
+        {
+          "text": "JSON",
+          "term": "json",
+          "section": "what-it-does"
+        },
+        {
+          "text": "YAML",
+          "term": "yaml",
+          "section": "what-it-does"
+        },
+        {
+          "text": "dropzone",
+          "term": "dropzone",
+          "section": "local-overrides"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "file",
+          "term": "file",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "scroll",
+          "term": "scroll",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "reading column",
+          "term": "reading column",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         }
       ]
@@ -2802,31 +4766,31 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Data trees in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "The reading profile starts with 12 feature requests and loads 15 features, including ones those requests need. The empty profile starts with an empty list. A snapshot of the reading and empty profiles from DocForm’s repository. Open the reading profile’s lists to see what it requests and what it loads. Try it Open loads under reading, then choose Show more inside that list to reveal the next group of features."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "What opens and what stays folded",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Tree depth is the number of levels that start open. This tree opens one level, so you can see the lists under each profile. Press Expand all to open the visible branches, or Collapse all to fold them back to the top level. The cap applies to each list separately. For example, an open list in the first tree shows four children at first. Show more adds another batch in that list. The reference counts are also available in the source table. A CSV table appears as a numbered list of records. Each branch holds the fields from one row. Try it Expand the first numbered branch to find its group and reference count. Collapse all to close it again."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a tree when the nesting matters, as it does for settings and their lists. Start with a shallow depth so readers see the main branches before the details."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Use the up and down arrow keys to move through rows, and the right and left arrow keys to open and close branches or move between levels. On narrow screens, open the branch you need. The tree follows the page theme. Expand the lists you want before printing. With scripts off, the summary and source table links remain readable."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Report results, a recipe that uses it Feature directory"
+          "text": "Named data sources and data views Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -2836,18 +4800,63 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "profile",
+          "term": "profile",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "feature",
+          "term": "feature",
+          "section": "see-it"
+        },
+        {
+          "text": "snapshot",
+          "term": "snapshot",
+          "section": "see-it"
+        },
+        {
+          "text": "profiles",
+          "term": "profile",
+          "section": "see-it"
+        },
+        {
+          "text": "repository",
+          "term": "repository",
+          "section": "see-it"
+        },
+        {
+          "text": "Tree",
+          "term": "tree",
+          "section": "what-it-does"
+        },
+        {
+          "text": "tree",
+          "term": "tree",
+          "section": "what-it-does"
+        },
+        {
+          "text": "profile",
+          "term": "profile",
+          "section": "what-it-does"
+        },
+        {
+          "text": "CSV",
+          "term": "csv",
+          "section": "what-it-does"
+        },
+        {
+          "text": "tree",
+          "term": "tree",
+          "section": "when-to-use"
+        },
+        {
+          "text": "tree",
+          "term": "tree",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         }
       ]
@@ -2866,34 +4875,68 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. SVG charts in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Date (UTC) Total so far Commits per day 2026-11-17 8 8 2026-11-18 33 Omitted for demo 2026-11-19 34 1 Repository commits by date. Dates use UTC. One daily count is deliberately omitted to show a gap. Try it Hover for exact values, toggle Total so far in the legend, then drag across part of the chart to narrow the dates. Open Table to see only the visible values. Choose Reset range to restore the full span."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Time, ranges, and gaps",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "A time axis spaces points by elapsed time. This chart’s daily series breaks at an explicitly missing value. The dashed guide marks a reference value of 10 commits. This demo also rescales the vertical axis to the visible values as you hide a series or narrow the date range. Authors can keep the original vertical scale instead."
+        },
+        {
+          "id": "categories",
+          "title": "Compare categories with bars",
+          "level": 2,
+          "text": "Group References setup 3 layout 7 reading 13 interact 13 data 9 Bar height shows the reference count for each group. The asterisk picks out the data group. Try it Inspect the marked bar and compare its count with the reading group."
+        },
+        {
+          "id": "shared-filter",
+          "title": "Compare file sizes with a scatter chart",
+          "level": 2,
+          "text": "A scatter chart puts one dot at the intersection of two numbers. Here, each dot uses the size and line count of a repository file, and the series group the records by kind. A linear axis adds the same amount over equal distances. The horizontal log scale here multiplies by ten at each major step and takes only positive values. Module file Kind Bytes Lines js/anim.js script 22858 608 js/chart.js script 109152 2438 css/anim.css style 2276 98 css/chart.css style 7422 376 Each dot is a library file. Both the plot and the results table use the same file-kind filter. Try it Clear Stylesheets above the plot and watch the plot. Open Show the file table to see the same filtered rows. Use the button to highlight the chart file’s dot, or click the dot itself to toggle its selection. Show the file table Files shown by the shared filter (four examples with scripts off) Module file Kind Bytes Lines js/anim.js script 22858 608 js/chart.js script 109152 2438 css/anim.css style 2276 98 css/chart.css style 7422 376"
+        },
+        {
+          "id": "intervals",
+          "title": "Show uncertainty with intervals",
+          "level": 2,
+          "text": "Run Time (seconds) Example bounds (seconds) Count 1 30 26–34 8 2 27 22–31 8 3 24 20–28 8 Illustrative reading times with supplied lower and upper bounds. The shaded band joins the bounds across successive runs. Try it Inspect the middle point and switch to Table to read the estimate, bounds, and count. Bars and scatter points show supplied intervals as whiskers. A line chart can also use a whisker where only one point has bounds."
+        },
+        {
+          "id": "shared-position",
+          "title": "Share a position between charts",
+          "level": 2,
+          "text": "Charts with a common linear horizontal scale can share an inspection cursor while keeping their own vertical scales and visible ranges. Try the two charts in Guided chart playback."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a line to show change in order, bars to compare separate categories, and dots to see how two measurements relate. Give the chart room and keep the nearby prose short."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Tab to the plot and use the arrow keys or Home and End to inspect values. In a chart with a range brush, + and − change the range and Shift with the left or right arrow pans it. Use Table for exact values on a small screen or in print. The charts follow the page theme, and static tables give readers values with scripts off."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Report results, a recipe that uses it Feature directory"
+          "text": "Concept tables and results tables Guided chart playback Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
+        {
+          "text": "charts",
+          "term": "chart",
+          "section": ""
+        },
+        {
+          "text": "filter",
+          "term": "filter",
+          "section": ""
+        },
         {
           "text": "chart",
           "term": "chart",
@@ -2910,18 +4953,138 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "Repository",
+          "term": "repository",
+          "section": "see-it"
+        },
+        {
+          "text": "commits",
+          "term": "commit",
+          "section": "see-it"
+        },
+        {
+          "text": "UTC",
+          "tip": "A shared time standard. Using it keeps the dates the same across time zones.",
+          "section": "see-it"
+        },
+        {
+          "text": "Hover",
           "term": "hover",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "legend",
+          "term": "legend",
+          "section": "see-it"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "see-it"
+        },
+        {
+          "text": "time axis",
+          "term": "time axis",
+          "section": "what-it-does"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "what-it-does"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "what-it-does"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "what-it-does"
+        },
+        {
+          "text": "scatter chart",
+          "term": "scatter chart",
+          "section": "shared-filter"
+        },
+        {
+          "text": "repository",
+          "term": "repository",
+          "section": "shared-filter"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "shared-filter"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "shared-filter"
+        },
+        {
+          "text": "records",
+          "term": "record",
+          "section": "shared-filter"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "shared-filter"
+        },
+        {
+          "text": "log scale",
+          "term": "log scale",
+          "section": "shared-filter"
+        },
+        {
+          "text": "Stylesheets",
+          "term": "stylesheet",
+          "section": "shared-filter"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "shared-filter"
+        },
+        {
+          "text": "intervals",
+          "term": "interval",
+          "section": "intervals"
+        },
+        {
+          "text": "whiskers",
+          "tip": "Short lines that show the lower and upper ends of a range around a value.",
+          "section": "intervals"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "intervals"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "range brush",
+          "term": "range brush",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         }
       ]
@@ -2934,37 +5097,37 @@ window.DocFormSearch = {
           "id": "",
           "title": "Guided chart playback",
           "level": 1,
-          "text": "Show data Playback draws a line chart over time and pauses at checkpoints with short notes. It turns a chart into a guided story. Official name Guided chart playback Turned on On request Signal strength Strong Works with SVG charts and linked selection Good for Narrating how a result unfolded"
+          "text": "Show data Playback reveals a line chart in stages and pauses at chosen points. A short note at each stop explains what changed. Official name Guided chart playback Turned on On request Signal strength Strong Works with SVG charts and linked selection Good for Narrating how a result unfolded"
         },
         {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Guided chart playback in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "First day The snapshot starts with eight commits on November 17. Busiest day Another 25 commits on November 18 bring the total to 33. Last day in the snapshot One more commit on November 19 brings the total to 34. Date Total commits 2026-11-17 8 2026-11-18 33 2026-11-19 34 A cumulative count of repository commits. Each checkpoint reveals another part of the line. Date Daily commits 2026-11-17 8 2026-11-18 25 2026-11-19 1 The second chart shows daily counts on the same horizontal scale. Both lines advance together. Try it Press Play and pause it partway. Resume to reach the next note, or use Next to jump there. Use Previous or Reset to go back."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Stops, notes, and timing",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "A checkpoint is a stop at a chosen horizontal value, even between measurements. Each can have a note. Here, from one stop to the next takes 1.8 seconds. The axes hold steady while the line grows, and the readout and Table show measurements that playback has reached. Try it Jump to the busiest day, then move over a reached point in either plot. Both plots show the shared position. Reaching a checkpoint also highlights its matching chart point through linked selection."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use playback when readers benefit from seeing a few events in order. Give each stop one short note and let the chart show the change."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Tab reaches the playback controls and the status announces each stop. Playback jumps straight to the stop when reduced motion is on. On a phone, use the checkpoint controls to move through the chart. The charts follow the page theme, and the notes and tables are readable with scripts off. Advance to the last checkpoint to print the full charts."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Report results, a recipe that uses it Feature directory"
+          "text": "SVG charts Linked selection Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -2979,18 +5142,103 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "snapshot",
+          "term": "snapshot",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "commits",
+          "term": "commit",
+          "section": "see-it"
+        },
+        {
+          "text": "commit",
+          "term": "commit",
+          "section": "see-it"
+        },
+        {
+          "text": "cumulative count",
+          "term": "cumulative count",
+          "section": "see-it"
+        },
+        {
+          "text": "repository",
+          "term": "repository",
+          "section": "see-it"
+        },
+        {
+          "text": "checkpoint",
+          "term": "checkpoint",
+          "section": "what-it-does"
+        },
+        {
+          "text": "axes",
+          "term": "axis",
+          "section": "what-it-does"
+        },
+        {
+          "text": "readout",
+          "term": "readout",
+          "section": "what-it-does"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
+          "section": "what-it-does"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "what-it-does"
+        },
+        {
+          "text": "linked selection",
+          "term": "linked selection",
+          "section": "what-it-does"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "Playback",
+          "term": "playback",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "reduced motion",
+          "term": "reduced motion",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "checkpoint",
+          "term": "checkpoint",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
           "section": "for-every-reader"
         }
       ]
@@ -3003,53 +5251,115 @@ window.DocFormSearch = {
           "id": "",
           "title": "Concept tables and results tables",
           "level": 1,
-          "text": "Show data Concept tables compare ideas in words, and results tables sort, shade, and filter numbers. Both keep the reader's eye on what matters most. Official name Concept tables · Results tables Turned on On request Signal strength Strong (tables) · Loud (heatmap cells and pass or fail marks) Works with Named data sources and parameters Good for Comparing items side by side"
+          "text": "Show data Concept tables compare ideas in words, and results tables sort, shade, and filter numbers. Both keep the reader's eye on what matters most. Official name Concept tables · Results tables Turned on Concept table styling On by default · Results tables On request Signal strength Strong (tables) · Loud (heatmap cells and pass or fail marks) Works with Named data sources and parameters Good for Comparing items side by side"
         },
         {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Concept tables and results tables in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Three ways to help a reader check a value Reader’s goal What to use What they see Find an exact count Data view One row per group Compare sizes Bar chart One bar per group Find counts above a cutoff Results table Values, filters, and a labelled verdict Try it Scan down the first column to pick a goal, then read across that row for an answer."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Compare words in a concept table",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "A concept table gives the first column extra room for row labels. Light rules and subdued headings keep attention on the words. Move over a cell to see its row and column together."
+        },
+        {
+          "id": "results",
+          "title": "Sort and shade results",
+          "level": 2,
+          "text": "Repository reference counts with an example cutoff of nine Group References setup 3 layout 7 reading 13 interact 13 data 9 Try it Choose the References heading to sort largest first, then choose it again to reverse the order. Choose it a third time to restore the starting order. Look for both groups tied for the best count. A heatmap uses tint strength to show magnitude. Here, the fixed scale runs from zero to 15, so a count keeps its shade even when you filter the rows. A relative scale adjusts to the visible values. The tint colour is also configurable. The threshold gives every qualifying number a Pass label and every lower number a Fail label."
+        },
+        {
+          "id": "filters",
+          "title": "Narrow the rows",
+          "level": 2,
+          "text": "The filter button beside each heading opens choices for that column. Group offers a checklist and References offers minimum and maximum values. A date column can offer a from and to range. A filter chip applies a named rule in one press. The table shows rows that meet every active rule and reports how many are visible. Try it Turn on At least nine, then set the References maximum to 12. The data group is the only match. Choose Clear to restore all the rows."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Choose a concept table when readers compare descriptions and a results table when they need to order, narrow, or judge measurements. Reserve shading for a column readers should scan first, and keep its numbers visible."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Tab reaches the sort buttons, filter buttons, and chips. Rows keep their text labels in light and dark themes. On a phone, scroll a wide table sideways. For print, clear filters if you want all rows. With scripts off, both tables still show their starting values."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Report results, a recipe that uses it Feature directory"
+          "text": "Named data sources and data views Evaluation matrices and scenario comparisons Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
-          "section": "see-it"
+          "text": "Concept tables",
+          "term": "concept table",
+          "section": ""
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "results tables",
+          "term": "results table",
+          "section": ""
+        },
+        {
+          "text": "filter",
+          "term": "filter",
+          "section": ""
+        },
+        {
+          "text": "concept table",
+          "term": "concept table",
+          "section": "what-it-does"
+        },
+        {
+          "text": "heatmap",
+          "term": "heatmap",
+          "section": "results"
+        },
+        {
+          "text": "filter",
+          "term": "filter",
+          "section": "results"
+        },
+        {
+          "text": "threshold",
+          "term": "threshold",
+          "section": "results"
+        },
+        {
+          "text": "filter",
+          "term": "filter",
+          "section": "filters"
+        },
+        {
+          "text": "filter chip",
+          "term": "filter chip",
+          "section": "filters"
+        },
+        {
+          "text": "concept table",
+          "term": "concept table",
+          "section": "when-to-use"
+        },
+        {
+          "text": "results table",
+          "term": "results table",
+          "section": "when-to-use"
+        },
+        {
+          "text": "filter",
+          "term": "filter",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "scroll",
+          "term": "scroll",
           "section": "for-every-reader"
         }
       ]
@@ -3068,42 +5378,53 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. Evaluation matrices and scenario comparisons in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Repository files by kind and size File kind Under 10,000 bytes 10,000 bytes or more Scripts 10 21 Stylesheets 33 2 Try it Switch from File count to Share of file kind. Each number is now a percentage of its own row."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Read a matrix on one colour scale",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Each cell combines one row and one column. A shared colour scale means the same shade represents the same value anywhere in the grid for the selected measure. In the percentage view, every cell uses the same zero to 100 scale. In the count view, the scale follows the smallest and largest counts in the grid. The source supplies the counts and percentages. A missing value is labelled Missing, while zero is shown as a number. A cell cap keeps very large grids from opening all at once. When a grid exceeds its cap, DocForm keeps the readable starting table."
+        },
+        {
+          "id": "scenarios",
+          "title": "Compare a change against the baseline",
+          "level": 2,
+          "text": "Illustrative reading times with different navigation settings Measure Unit Full contents Short contents Short contents with outline off Table of contents Full Short Short Outline On On Off Time to find a section seconds 30 25 23 Try it Choose Next variant to compare a short contents list with the outline off. The summary names both changed conditions. Look for the estimated time, its bounds, and the paired change from the baseline. The baseline is the starting setup. A variant changes one condition, or several when comparing whole configurations. The selected variant and baseline share a chart scale for each unit, and that scale holds when you switch variants. An interval gives lower and upper bounds for an outcome estimate. A paired difference measures a change using matched cases, such as the same readers trying each setup. Here, the example data supplies that difference and its own bounds. A negative change in seconds means a shorter time."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a matrix to scan many combinations at once. Use a scenario comparison to explain what changed from a specific starting point. Let the matrix shading or the comparison bars carry the emphasis in its section."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Use Tab to reach the measure and variant menus. Numeric labels and the change summary remain readable in either theme. Wide tables scroll sideways on a phone. Print the selected measure or variant you want to share. With scripts off, the starting tables show the counts and all three setups."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Report results, a recipe that uses it Feature directory"
+          "text": "SVG charts Concept tables and results tables Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
         {
-          "text": "matrix",
-          "term": "matrix",
+          "text": "evaluation matrix",
+          "term": "evaluation matrix",
           "section": ""
         },
         {
-          "text": "scenario",
-          "term": "scenario",
+          "text": "scenario comparison",
+          "term": "scenario comparison",
+          "section": ""
+        },
+        {
+          "text": "variants",
+          "term": "variant",
           "section": ""
         },
         {
@@ -3112,18 +5433,78 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "File",
+          "term": "file",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "file",
+          "term": "file",
+          "section": "see-it"
+        },
+        {
+          "text": "variant",
+          "term": "variant",
+          "section": "scenarios"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "scenarios"
+        },
+        {
+          "text": "baseline",
+          "term": "baseline",
+          "section": "scenarios"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "scenarios"
+        },
+        {
+          "text": "interval",
+          "term": "interval",
+          "section": "scenarios"
+        },
+        {
+          "text": "paired difference",
+          "term": "paired difference",
+          "section": "scenarios"
+        },
+        {
+          "text": "matrix",
+          "term": "matrix",
+          "section": "when-to-use"
+        },
+        {
+          "text": "scenario comparison",
+          "term": "scenario comparison",
+          "section": "when-to-use"
+        },
+        {
+          "text": "emphasis",
+          "term": "emphasis",
+          "section": "when-to-use"
+        },
+        {
+          "text": "variant",
+          "term": "variant",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "theme",
+          "term": "theme",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
           "section": "for-every-reader"
         }
       ]
@@ -3142,31 +5523,43 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Live demo coming soon. File dropzones in action. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Drop a file here to open a separate tree. Try the reading profile sample (JSON) or the reference counts sample (YAML). This dropzone owns its preview. Choosing another file replaces that preview, and Reset removes it. Try it Download the reading profile, then drop it into the box or use Choose a file. Open a branch, then load the YAML sample to replace the tree. Choose Reset to remove it."
         },
         {
           "id": "what-it-does",
-          "title": "What it does",
+          "title": "Change one view or the shared source",
           "level": 2,
-          "text": "Each behaviour and variation, with a small demo of its own."
+          "text": "Both tables below start from the same repository reference counts. The first dropzone replaces one table. The second dropzone changes the source used by both. Group References setup 3 layout 7 reading 13 interact 13 data 9 Preview A can show a file of its own or follow the shared source. Group References setup 3 layout 7 reading 13 interact 13 data 9 Preview B always follows the shared source."
+        },
+        {
+          "id": "one-view",
+          "title": "Replace Preview A",
+          "level": 3,
+          "text": "Load reading and data counts (CSV) into Preview A. Try it Load the sample and compare the two tables. Preview A shows two rows and Preview B still shows five. Leave the override in place for the next step."
+        },
+        {
+          "id": "shared-source",
+          "title": "Replace the shared counts",
+          "level": 3,
+          "text": "Load setup and layout counts (CSV) into the shared source. Try it Load the shared sample and check Preview B. Press Reset at the first CSV dropzone so Preview A rejoins the shared counts. Press Reset at the second CSV dropzone to restore the original five rows in both tables. Each box lists its accepted file types and size limit. Dropzones can read CSV, JSON, and YAML, with narrower choices where a view needs a specific format. If a file is rejected, the status explains why and any previous accepted data stays in place."
         },
         {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "What this competes with for attention, and what to quiet down when you use it."
+          "text": "Use a standalone preview to inspect a file, an override to try it in one view, or a shared replacement when several views should update together. Label the destination next to the file picker so readers can predict which views will change."
         },
         {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts."
+          "text": "Choose a file and Reset are keyboard-accessible alternatives to dragging. A phone’s picker can open a file saved on the device. The controls follow the page theme, and the starter tables and download links stay visible with scripts off. Print the view after loading the file you want to show."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Report results, a recipe that uses it Feature directory"
+          "text": "Named data sources and data views Data trees Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -3181,18 +5574,83 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "file",
+          "term": "file",
           "section": "see-it"
         },
         {
-          "text": "phone width",
-          "term": "phone width",
+          "text": "tree",
+          "term": "tree",
+          "section": "see-it"
+        },
+        {
+          "text": "Download",
+          "term": "download",
+          "section": "see-it"
+        },
+        {
+          "text": "profile",
+          "term": "profile",
+          "section": "see-it"
+        },
+        {
+          "text": "YAML",
+          "term": "yaml",
+          "section": "see-it"
+        },
+        {
+          "text": "repository",
+          "term": "repository",
+          "section": "what-it-does"
+        },
+        {
+          "text": "dropzone",
+          "term": "dropzone",
+          "section": "what-it-does"
+        },
+        {
+          "text": "CSV",
+          "term": "csv",
+          "section": "shared-source"
+        },
+        {
+          "text": "dropzone",
+          "term": "dropzone",
+          "section": "shared-source"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "shared-source"
+        },
+        {
+          "text": "JSON",
+          "term": "json",
+          "section": "shared-source"
+        },
+        {
+          "text": "YAML",
+          "term": "yaml",
+          "section": "shared-source"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "when-to-use"
+        },
+        {
+          "text": "file",
+          "term": "file",
           "section": "for-every-reader"
         },
         {
-          "text": "dark mode",
-          "term": "dark mode",
+          "text": "theme",
+          "term": "theme",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "download",
+          "term": "download",
           "section": "for-every-reader"
         }
       ]
@@ -3211,37 +5669,130 @@ window.DocFormSearch = {
           "id": "the-goal",
           "title": "The goal",
           "level": 2,
-          "text": "What the finished page should do for its reader."
+          "text": "Teach a reader how a page outline is built. By the end, they should be able to count the entries in a simple outline and tell where each entry belongs. An outline turns the headings on a page into a list you can follow (Visual hierarchy: guiding the eye). Try it Point at the underlined word “outline” to see its definition. Pause over the source number to see which guide explains the idea."
         },
         {
           "id": "build-it-up",
-          "title": "Build it up",
+          "title": "Show where the entries come from",
           "level": 2,
-          "text": "Live demo coming soon. The page assembled one feature at a time. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "This illustrative outline has two section headings and one smaller heading tucked under its parent. Build the outline Count sections Add the smaller heading Two section headings make two outline entries. “Find a section” belongs under “Read a page” and makes a third entry. Try it Move over the figure steps, focus them with Tab, or tap them. Watch the little heading appear under its parent. Use Play on the figure to see the reveal in motion. Use Figure steps to let readers pause on either state. The SVG animation, a moving drawing made from shapes and text, shows exactly where the new entry goes."
+        },
+        {
+          "id": "count-the-entries",
+          "title": "Give the pattern a formula",
+          "level": 2,
+          "text": "The two section entries and the one smaller entry make three. Compare the count in the equation with the entries in the outline figure.This example counts headings in the outline. The page title labels the page. Try it Pause over either link or reach it with Tab to preview what it points to. Choose the small note number to find the sidenote. Use TeX math to lay out the calculation and Cross-references to let readers return to the picture or the equation when they need it."
+        },
+        {
+          "id": "optional-detail",
+          "title": "Make room for a second question",
+          "level": 2,
+          "text": "Why does the smaller heading move to the right? That extra space shows which section the smaller heading belongs to. Someone looking for “Find a section” can scan for “Read a page” first, then look underneath it. Try it Scroll the panel near the middle of the screen and point at it, or choose its title. This peek bubble keeps the extra explanation within reach."
         },
         {
           "id": "features-used",
           "title": "Features used",
           "level": 2,
-          "text": "Links to the page for each feature in this recipe."
+          "text": "Tooltips explain a term where it first matters. Figure steps and SVG animations show how the picture changes. TeX math expresses the pattern, and Cross-references and citations let readers check the picture and the source. Sidenotes and peek bubbles give short and long asides their own space."
+        },
+        {
+          "id": "bibliography",
+          "title": "Source",
+          "level": 2,
+          "text": "Visual hierarchy: guiding the eye. DocForm guide. Read the guide on visual hierarchy for more about why outlines help people scan."
         },
         {
           "id": "hierarchy-walkthrough",
           "title": "Hierarchy walkthrough",
           "level": 2,
-          "text": "The page's loud, strong, and quiet elements, and why each one earns its place."
+          "text": "Loud The selected figure step draws the eye to the part of the idea being explained now. Strong The outline drawing and the displayed equation give readers a picture to inspect and a count to check. Quiet The inline definition, sidenote marker, and folded peek bubble offer detail at the point of need and leave the main explanation easy to scan."
         }
       ],
       "terms": [
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "formulas",
+          "term": "formula",
+          "section": ""
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "the-goal"
+        },
+        {
+          "text": "outline",
+          "tip": "A list of the headings on the current page. Choosing an entry takes you to its section.",
+          "section": "the-goal"
+        },
+        {
+          "text": "Visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "the-goal"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
           "section": "build-it-up"
         },
         {
-          "text": "feature",
-          "term": "feature",
-          "section": "features-used"
+          "text": "figure steps",
+          "term": "figure step",
+          "section": "build-it-up"
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": "build-it-up"
+        },
+        {
+          "text": "animation",
+          "term": "animation",
+          "section": "build-it-up"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "count-the-entries"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "count-the-entries"
+        },
+        {
+          "text": "sidenote",
+          "term": "sidenote",
+          "section": "count-the-entries"
+        },
+        {
+          "text": "TeX",
+          "term": "tex",
+          "section": "count-the-entries"
+        },
+        {
+          "text": "Cross-references",
+          "term": "cross reference",
+          "section": "count-the-entries"
+        },
+        {
+          "text": "Scroll",
+          "term": "scroll",
+          "section": "optional-detail"
+        },
+        {
+          "text": "peek bubble",
+          "term": "peek bubble",
+          "section": "optional-detail"
+        },
+        {
+          "text": "Visual hierarchy",
+          "term": "visual hierarchy",
+          "section": "bibliography"
         }
       ]
     },
@@ -3259,41 +5810,102 @@ window.DocFormSearch = {
           "id": "the-goal",
           "title": "The goal",
           "level": 2,
-          "text": "What the finished page should do for its reader."
+          "text": "Take a reader through revising the headings of a sample DocForm page. The finished outline should tell someone where to start, how to move around, and how to find a section."
         },
         {
           "id": "build-it-up",
-          "title": "Build it up",
+          "title": "Follow the revision",
           "level": 2,
-          "text": "Live demo coming soon. The page assembled one feature at a time. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Read the draft. Check what each heading promises. Review the changes. Look for a more useful name for the middle section. Read the finished outline. Check that the three headings still make sense in order. This heading names the reader’s first action. The reader has to open this section to discover that it explains how to move around the site. Open a site Move around the site Find a section Each step opens the matching view of an illustrative DocForm outline. The draft has numbered notes, and Changes marks the heading that was replaced. Try it Point at a circled number in Draft or focus it with Tab to see its annotation, a note about that line. Press Next and find the minus and plus in Changes. That view is a diff, which shows what was removed or added. Choose Finished outline directly and watch the stepper catch up. The worked-example stepper sets the order. Tabs let readers jump straight to a view they want to revisit. Linked selection keeps both controls on the same stage. The Code feature displays the exact draft text, annotations, and changes. Here it displays heading text from the example."
+        },
+        {
+          "id": "review-checks",
+          "title": "Keep reusable checks nearby",
+          "level": 2,
+          "text": "Checks for any heading Name the action Check the order Say what the reader will do or find under the heading. “Move around the site” gives a clearer promise than “More things”. Read the headings as a list. Put “Open a site” ahead of any action that needs the site to be open. These checks apply to any draft, so the card panel stays available at every stage. Try it Choose Check the order and compare it with the finished outline above. The procedure stays where you left it."
         },
         {
           "id": "features-used",
           "title": "Features used",
           "level": 2,
-          "text": "Links to the page for each feature in this recipe."
+          "text": "Worked-example steppers, Tabs, and Linked selection connect each stage with its view. Code shows the draft with annotations and the changes in a diff. Card panels keep reusable checks close to the worked example."
         },
         {
           "id": "hierarchy-walkthrough",
           "title": "Hierarchy walkthrough",
           "level": 2,
-          "text": "The page's loud, strong, and quiet elements, and why each one earns its place."
+          "text": "Loud The active tab and the lines marked added or removed show the reader where to look for the current change. Strong The stepper, tab panels, and code blocks give each stage a stable place. The separate card panel groups the checks that apply throughout. Quiet Short directions and captions explain how to read each view and leave room for the draft and its changes."
         }
       ],
       "terms": [
+        {
+          "text": "steppers",
+          "term": "stepper",
+          "section": ""
+        },
+        {
+          "text": "card panels",
+          "term": "card panel",
+          "section": ""
+        },
         {
           "text": "linked selection",
           "term": "linked selection",
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "outline",
+          "term": "outline",
+          "section": "the-goal"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "build-it-up"
+        },
+        {
+          "text": "annotation",
+          "term": "annotation",
+          "section": "build-it-up"
+        },
+        {
+          "text": "diff",
+          "term": "diff",
+          "section": "build-it-up"
+        },
+        {
+          "text": "stepper",
+          "term": "stepper",
+          "section": "build-it-up"
+        },
+        {
+          "text": "worked-example",
+          "term": "worked example",
+          "section": "build-it-up"
+        },
+        {
+          "text": "Linked selection",
+          "term": "linked selection",
           "section": "build-it-up"
         },
         {
           "text": "feature",
           "term": "feature",
+          "section": "build-it-up"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "review-checks"
+        },
+        {
+          "text": "diff",
+          "term": "diff",
+          "section": "features-used"
+        },
+        {
+          "text": "worked example",
+          "term": "worked example",
           "section": "features-used"
         }
       ]
@@ -3312,41 +5924,174 @@ window.DocFormSearch = {
           "id": "the-goal",
           "title": "The goal",
           "level": 2,
-          "text": "What the finished page should do for its reader."
+          "text": "Show how the 45 references in a snapshot of DocForm’s library are distributed across five groups. A reader should be able to check a count, compare groups, and see how much a shorter reading plan would cover."
         },
         {
           "id": "build-it-up",
-          "title": "Build it up",
+          "title": "Start with counts readers can check",
           "level": 2,
-          "text": "Live demo coming soon. The page assembled one feature at a time. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "Group References Setup 3 Layout 7 Reading 13 Interaction 13 Data 9 Exact counts for the visible groups Group References Setup 3 Layout 7 Reading 13 Interaction 13 Data 9 Reading and Interaction were tied at 13 references each in this snapshot. The chart shows relative size, and the table gives exact values. Try it Clear Reading and Interaction in Groups to show. Their bars and rows disappear together. Sort the table by References to compare the remaining groups, then select all five again. Use Named sources and data views to give several views one named set of records. Here, the SVG chart and Results table both read Reference counts. Parameters let the reader change a setting, in this case which groups both views show."
+        },
+        {
+          "id": "tell-the-story",
+          "title": "Show how the total builds",
+          "level": 2,
+          "text": "Start with Setup. The first group covers 3 references. Continue through Reading. Layout and Reading take the running total to 23. Cover all five groups. Interaction and Data bring the total to 45. Groups included References so far 1 3 2 10 3 23 4 36 5 45 Each point adds the next group’s references. The horizontal scale counts groups in reading order. Try it Use Play to watch the count build, or use Next to move between notes one at a time. Guided chart playback gives each note a point where it can explain what changed."
+        },
+        {
+          "id": "compare-coverage",
+          "title": "Compare three reading plans",
+          "level": 2,
+          "text": "References included and remaining for each reading plan Coverage Setup and Layout Through Reading All groups Included 10 23 45 Still to cover 35 22 0 What each reading plan includes and how many references it covers Measure Unit Setup and Layout Through Reading All groups Groups included Setup and Layout Setup, Layout, and Reading Setup, Layout, Reading, Interaction, and Data References covered 10 23 45 Try it In the Evaluation matrix, change Reference count to Share of all references. In the Scenario comparison, choose All groups to compare it with the starting plan, Setup and Layout. The matrix shows proportions at a glance. The comparison tells you which groups account for the difference."
+        },
+        {
+          "id": "replace-the-counts",
+          "title": "Load a different set of counts",
+          "level": 2,
+          "text": "Choose or drop a CSV file, a small table saved as plain text. Try it Download the Setup and Layout sample, then choose it in the File dropzone. The chart and results table both show just those two groups, subject to the selections above. Press Reset beside the file chooser to restore the original counts. The dropzone replaces the shared source for the current page. The playback and plan comparisons use the original snapshot so their notes and totals stay together."
         },
         {
           "id": "features-used",
           "title": "Features used",
           "level": 2,
-          "text": "Links to the page for each feature in this recipe."
+          "text": "Named sources and data views feed the SVG chart and Results table. Parameters filter both. Guided chart playback shows how each group contributes to the total. Evaluation matrices and scenario comparisons show what each plan covers. File dropzones let readers supply their own data."
         },
         {
           "id": "hierarchy-walkthrough",
           "title": "Hierarchy walkthrough",
           "level": 2,
-          "text": "The page's loud, strong, and quiet elements, and why each one earns its place."
+          "text": "Loud The best-value emphasis and matrix shading mark the numbers worth comparing first. Strong Charts give shape to the counts, and tables hold the values readers may want to check. Quiet Captions and short notes explain what the views count and which figures come from the fixed snapshot."
         }
       ],
       "terms": [
+        {
+          "text": "charts",
+          "term": "chart",
+          "section": ""
+        },
         {
           "text": "playback",
           "term": "playback",
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
+          "text": "results tables",
+          "term": "results table",
+          "section": ""
+        },
+        {
+          "text": "parameters",
+          "term": "parameter",
+          "section": ""
+        },
+        {
+          "text": "dropzones",
+          "term": "dropzone",
+          "section": ""
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "snapshot",
+          "term": "snapshot",
+          "section": "the-goal"
+        },
+        {
+          "text": "data views",
+          "term": "data view",
           "section": "build-it-up"
         },
         {
-          "text": "feature",
-          "term": "feature",
+          "text": "records",
+          "term": "record",
+          "section": "build-it-up"
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": "build-it-up"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "build-it-up"
+        },
+        {
+          "text": "Results table",
+          "term": "results table",
+          "section": "build-it-up"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "tell-the-story"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
+          "section": "tell-the-story"
+        },
+        {
+          "text": "Evaluation matrix",
+          "term": "evaluation matrix",
+          "section": "compare-coverage"
+        },
+        {
+          "text": "Scenario comparison",
+          "term": "scenario comparison",
+          "section": "compare-coverage"
+        },
+        {
+          "text": "matrix",
+          "term": "matrix",
+          "section": "compare-coverage"
+        },
+        {
+          "text": "CSV",
+          "term": "csv",
+          "section": "replace-the-counts"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "replace-the-counts"
+        },
+        {
+          "text": "File",
+          "term": "file",
+          "section": "replace-the-counts"
+        },
+        {
+          "text": "dropzone",
+          "term": "dropzone",
+          "section": "replace-the-counts"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "replace-the-counts"
+        },
+        {
+          "text": "results table",
+          "term": "results table",
+          "section": "replace-the-counts"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
+          "section": "replace-the-counts"
+        },
+        {
+          "text": "snapshot",
+          "term": "snapshot",
+          "section": "replace-the-counts"
+        },
+        {
+          "text": "filter",
+          "term": "filter",
           "section": "features-used"
         }
       ]
@@ -3365,25 +6110,43 @@ window.DocFormSearch = {
           "id": "the-goal",
           "title": "The goal",
           "level": 2,
-          "text": "What the finished page should do for its reader."
+          "text": "Share a DocForm site that readers can explore on their own and that you can present from a single screen. An offline copy opens on the reader’s device without an internet connection."
         },
         {
           "id": "build-it-up",
-          "title": "Build it up",
+          "title": "Give readers a route through the site",
           "level": 2,
-          "text": "Live demo coming soon. The page assembled one feature at a time. The caption will say what to notice. Try it A short prompt will say what to hover, click, or press here."
+          "text": "These docs put orientation first, group the feature guides by goal, and collect worked examples under Recipes. The Navigation sidebar at the left lets you move between pages. The outline, a list of headings on the current page, gets you to the right section. Try it Give pages names that will make sense out of context in search results. Add terms to the glossary when readers will meet them on several pages."
+        },
+        {
+          "id": "appearance",
+          "title": "Keep meaning consistent",
+          "level": 2,
+          "text": "Green means on by default, blue means on request, purple marks an action to try, yellow marks a tip, and red marks a caution. The Colour roles legend explains what accents mean across the docs. A Theme changes the page’s appearance, including the background and text shades. Try it Switch between light and dark. Check whether the role labels and the figure below still read clearly. A role gives a colour a job, and the label carries that meaning in either theme."
+        },
+        {
+          "id": "present-a-figure",
+          "title": "Show one figure on the big screen",
+          "level": 2,
+          "text": "Three stops in the docs’ reading order. Open the figure to point out where a new reader should begin. Try it Open the drawing with a click, or focus it and press Enter. In Figure zoom, try the laser pointer to indicate Start here, or use the magnifier to enlarge a label. Press Esc to return to this section. Zoom tools give the presenter a way to point, enlarge, mark, or measure a detail while the figure fills the screen. Keep the caption useful for someone reading on their own."
+        },
+        {
+          "id": "prepare-the-offline-copy",
+          "title": "Prepare the offline copy",
+          "level": 2,
+          "text": "The offline asset tool checks the prepared files a site needs. A search index is a saved list of page titles, headings, and text that search can use across the whole site. The tool also prepares separate data files so charts and tables can open their data offline, a feature called Data file wrapper. Open the tool in a browser that supports choosing a site folder. A folder is the container that holds the site’s pages and supporting files. Choose the folder and check the report. Current means the prepared file is up to date. Missing means it has yet to be created. Stale means a page or data file has changed since it was prepared. A blocked item needs the issue shown beside it resolved first. Rebuild missing or stale items, then reopen the site and check a search result on another page and a figure that uses prepared data. Share the pages, supporting files, and DocForm library together, keeping their folders in the same arrangement. Have the reader open the welcome page from the copy on their device. Try it Open the asset tool and find its folder chooser. If you have a site folder handy, choose it to inspect the report before deciding whether anything needs rebuilding."
         },
         {
           "id": "features-used",
           "title": "Features used",
           "level": 2,
-          "text": "Links to the page for each feature in this recipe."
+          "text": "Navigation, Search, and the Glossary help readers find pages, passages, and definitions. Colour roles and Theme keep the site readable and its accents consistent. Figure zoom and Zoom tools give a presenter room to work with a figure. The offline asset tool prepares the Search index and data files for sharing."
         },
         {
           "id": "hierarchy-walkthrough",
           "title": "Hierarchy walkthrough",
           "level": 2,
-          "text": "The page's loud, strong, and quiet elements, and why each one earns its place."
+          "text": "Loud The laser or ink marks draw attention to one place while the presenter talks about it. Strong The section headings and the site-plan drawing give readers clear landmarks for finding, presenting, and sharing the site. Quiet The sidebar, outline, search button, and theme switch stay within reach while the content occupies the reading column."
         }
       ],
       "terms": [
@@ -3398,13 +6161,133 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "hover",
-          "term": "hover",
-          "section": "build-it-up"
+          "text": "offline",
+          "term": "offline",
+          "section": "the-goal"
         },
         {
           "text": "feature",
           "term": "feature",
+          "section": "build-it-up"
+        },
+        {
+          "text": "worked examples",
+          "term": "worked example",
+          "section": "build-it-up"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "build-it-up"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "build-it-up"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "build-it-up"
+        },
+        {
+          "text": "on by default",
+          "term": "on by default",
+          "section": "appearance"
+        },
+        {
+          "text": "on request",
+          "term": "on request",
+          "section": "appearance"
+        },
+        {
+          "text": "role",
+          "term": "role",
+          "section": "appearance"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
+          "section": "appearance"
+        },
+        {
+          "text": "Figure zoom",
+          "term": "figure zoom",
+          "section": "present-a-figure"
+        },
+        {
+          "text": "laser pointer",
+          "term": "laser pointer",
+          "section": "present-a-figure"
+        },
+        {
+          "text": "magnifier",
+          "term": "magnifier",
+          "section": "present-a-figure"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "present-a-figure"
+        },
+        {
+          "text": "search index",
+          "term": "search index",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "charts",
+          "term": "chart",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "Data file wrapper",
+          "term": "data file wrapper",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "Stale",
+          "term": "stale",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "stale",
+          "term": "stale",
+          "section": "prepare-the-offline-copy"
+        },
+        {
+          "text": "accents",
+          "term": "accent",
+          "section": "features-used"
+        },
+        {
+          "text": "Search index",
+          "term": "search index",
           "section": "features-used"
         }
       ]
@@ -3423,13 +6306,43 @@ window.DocFormSearch = {
           "id": "how-to-read",
           "title": "How to read the directory",
           "level": 2,
-          "text": "What each column of the directory means."
+          "text": "“On by default” means included with the standard reading setup. “On request” means added for a site or a page when needed. Features still need something to work with, such as the data for a chart. The signal ladder explains how strongly each feature draws the eye. “Needs” lists what must be in place and names a few extras that add abilities. The profiles guide explains how DocForm brings in required features."
         },
         {
           "id": "all-features",
           "title": "All features",
           "level": 2,
-          "text": "The full list, grouped as in the sidebar."
+          "text": "Find features by the same groups as the sidebar. The last group covers tools and settings that work behind the scenes."
+        },
+        {
+          "id": "write-clearly",
+          "title": "Write clearly",
+          "level": 3,
+          "text": "Feature Availability Signal strength Needs Purpose Base layout On by default Strong · Medium · Quiet Design tokens Lay out the reading column, headings, and body text. Blocks On by default Loud Tags and Callouts Turn on Tags and Callouts together. Buttons On by default Loud · Medium Base layout Make actions easy to spot or step through a sequence. Callouts On by default Loud Base layout Set an important note apart in a tinted box. Citations On by default Medium Tooltips and source details Credit sources in the text and list them at the end. Code On request Strong Base layout Colour, annotate, copy, and compare program text. Cross-references On by default Medium Base layout; Tooltips for previews Number figures, tables, and equations and link to them. Glossary On request Quiet Tooltips; Search index for usage links Collect definitions and show where terms are used. Peek bubbles On request Quiet Base layout Fold extra detail into a panel that opens in place. Sidenotes On by default Quiet Base layout Set short notes beside the sentences they explain. Tags On by default Loud Base layout Mark a short phrase with a tinted label. TeX math On request Medium · Strong Base layout and bundled KaTeX Display neatly spaced mathematical formulas. Text roles On by default Medium Base layout Give context with eyebrows and align labels with their values. Tooltips On by default Medium · Quiet Base layout Explain a word while the reader stays on the page."
+        },
+        {
+          "id": "shape-pages-and-sites",
+          "title": "Shape pages and sites",
+          "level": 3,
+          "text": "Feature Availability Signal strength Needs Purpose Colour roles On by default Medium Base layout and named colour meanings Give the same colour the same meaning across pages. Design tokens On by default Every rung A design value to share across the page Set shared colours, type sizes, and spacing. Navigation On by default Quiet Base layout and site settings for page links Move among pages and jump to their sections. Reading controls On by default Quiet Base layout; Navigation, Theme, and Search for their buttons Show reading progress and keep common controls close. Search On by default Quiet Base layout; Search index for other pages Find words in this page or across the site. Section lines On by default Strong Base layout Mark the start and length of sections in the margin. Split views On request Strong Base layout; Scroll reveals for movement Place related blocks side by side when there is room. Theme On by default Quiet Design tokens Switch between light and dark and remember the choice."
+        },
+        {
+          "id": "explain-step-by-step",
+          "title": "Explain step by step",
+          "level": 3,
+          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Base layout Choose a card to see its details beside or below it. Figure steps On request Strong Base layout; SVG animations for moving steps Show the state of a figure that matches each step. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change Let readers change values or choose saved combinations. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Tabs On request Strong Base layout Switch among related panels in the same space. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
+        },
+        {
+          "id": "show-data",
+          "title": "Show data",
+          "level": 3,
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale Draw a chart gradually and show notes at chosen points. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, bars, or dots. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+        },
+        {
+          "id": "reference",
+          "title": "Reference",
+          "level": 3,
+          "text": "Feature Availability Signal strength Needs Purpose Data file wrapper On request None Offline asset tool and a CSV, JSON, or YAML file Prepare a data file for a page to open offline. Include order On by default None Offline setup and the chosen features Prepare each feature after the things it needs. Offline setup On by default None The DocForm library folder beside the site Get a page and its features ready without the internet. Search index On request None Offline asset tool and the pages to include Prepare page text, headings, and term uses for offline lookup. Site manifest On request None A shared site settings file Set the page list, shared features, definitions, and sources."
         }
       ],
       "terms": [
@@ -3444,9 +6357,64 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On by default",
+          "term": "on by default",
+          "section": "how-to-read"
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": "how-to-read"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "how-to-read"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "how-to-read"
+        },
+        {
           "text": "sidebar",
           "term": "sidebar",
           "section": "all-features"
+        },
+        {
+          "text": "KaTeX",
+          "term": "katex",
+          "section": "write-clearly"
+        },
+        {
+          "text": "site settings",
+          "term": "site settings",
+          "section": "shape-pages-and-sites"
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": "explain-step-by-step"
+        },
+        {
+          "text": "Offline asset tool",
+          "term": "offline asset tool",
+          "section": "reference"
+        },
+        {
+          "text": "CSV",
+          "term": "csv",
+          "section": "reference"
+        },
+        {
+          "text": "JSON",
+          "term": "json",
+          "section": "reference"
+        },
+        {
+          "text": "YAML",
+          "term": "yaml",
+          "section": "reference"
         }
       ]
     },
@@ -3464,37 +6432,37 @@ window.DocFormSearch = {
           "id": "profiles",
           "title": "Profiles and dependencies",
           "level": 2,
-          "text": "How features are bundled and how one feature brings in another."
+          "text": "A profile is a starting set of features. Starting choice What the reader gets Reading profile The standard reading features, including the sidebar, search, and theme switch on this page. Empty profile A starting point with no features selected. The agent chooses what to add. Empty profile with Zoom tools requested Zoom tools, Figure zoom, and the basic page styles they need. Two starting choices and an example of one request bringing in several features. The reading profile is the usual choice. Your agent can add or turn off features to suit a page. A feature that another one needs is called a dependency. DocForm automatically includes dependencies, so asking for Zoom tools also brings in Figure zoom. See the feature directory for the reading defaults and what each feature needs."
         },
         {
           "id": "settings",
           "title": "Site and page settings",
           "level": 2,
-          "text": "What is set once for the whole site and what each page can change."
+          "text": "The site settings, also called the manifest, hold shared choices. They give the site its title and page order, choose a glossary page, and keep lists of terms, sources, and reusable controls. They also describe which prepared search and data files the site uses and where those files belong. Page settings apply to a single page. This page adds TeX math for the formula below. The other reference pages use the same site settings and keep their own feature choices."
         },
         {
           "id": "startup",
           "title": "Startup and ready stages",
           "level": 2,
-          "text": "The order in which a page gets ready."
+          "text": "Load. DocForm reads the settings and opens the selected features and prepared data from the site folder. Set up. The page can supply its own material, such as the values that will feed a chart. Build. DocForm applies the features to the page, for instance by drawing the chart and adding its controls. Ready. The page can now use the finished chart, for example to read which series it displays. DocForm reaches this stage even when it can recover from a problem along the way."
         },
         {
           "id": "problem-reports",
           "title": "Problem reports",
           "level": 2,
-          "text": "How DocForm reports a mistake on a page."
+          "text": "Feature Tooltips Problem A word marked for a definition is missing from the shared list. Correction Add a definition to the site settings. An illustrative problem report. Notice how it gives the agent a place to start and a suggested correction. DocForm collects problem reports as the page opens and as readers use it. It also lets the page know when each report arrives. Your agent can inspect the collected reports. Some features show a message right beside the problem, as in the unreadable data example."
         },
         {
           "id": "bundled-readers",
           "title": "Bundled maths and data readers",
           "level": 2,
-          "text": "The helpers included so maths and data work offline."
+          "text": "KaTeX draws the formula using files included with DocForm. TeX math comes with KaTeX to lay out formulas. DocForm also includes js-yaml to read YAML, a way of saving named values and lists in a text file. Both helpers work offline. The file dropzones guide has a YAML sample you can open on the page."
         },
         {
           "id": "starter-settings",
           "title": "Starter settings",
           "level": 2,
-          "text": "The ready-made settings file new sites start from."
+          "text": "The starter settings template gives your agent a shared settings file to copy and adapt. It includes the reading profile, a sample page list, and examples of colour roles, definitions, and sources. Your agent replaces the examples with your site's title, pages, and content."
         }
       ],
       "terms": [
@@ -3504,9 +6472,114 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "profile",
+          "term": "profile",
+          "section": "profiles"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "profiles"
+        },
+        {
           "text": "feature",
           "term": "feature",
           "section": "profiles"
+        },
+        {
+          "text": "dependency",
+          "term": "dependency",
+          "section": "profiles"
+        },
+        {
+          "text": "Figure zoom",
+          "term": "figure zoom",
+          "section": "profiles"
+        },
+        {
+          "text": "site settings",
+          "term": "site settings",
+          "section": "settings"
+        },
+        {
+          "text": "manifest",
+          "term": "site settings",
+          "section": "settings"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "settings"
+        },
+        {
+          "text": "Page settings",
+          "term": "page settings",
+          "section": "settings"
+        },
+        {
+          "text": "TeX",
+          "term": "tex",
+          "section": "settings"
+        },
+        {
+          "text": "formula",
+          "term": "formula",
+          "section": "settings"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "settings"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "startup"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "startup"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "startup"
+        },
+        {
+          "text": "problem reports",
+          "term": "problem report",
+          "section": "problem-reports"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "problem-reports"
+        },
+        {
+          "text": "KaTeX",
+          "term": "katex",
+          "section": "bundled-readers"
+        },
+        {
+          "text": "TeX",
+          "term": "tex",
+          "section": "bundled-readers"
+        },
+        {
+          "text": "js-yaml",
+          "tip": "The helper DocForm uses to read YAML data from local files.",
+          "section": "bundled-readers"
+        },
+        {
+          "text": "YAML",
+          "term": "yaml",
+          "section": "bundled-readers"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "bundled-readers"
         },
         {
           "text": "offline",
@@ -3514,8 +6587,23 @@ window.DocFormSearch = {
           "section": "bundled-readers"
         },
         {
+          "text": "agent",
+          "term": "agent",
+          "section": "starter-settings"
+        },
+        {
           "text": "file",
           "term": "file",
+          "section": "starter-settings"
+        },
+        {
+          "text": "profile",
+          "term": "profile",
+          "section": "starter-settings"
+        },
+        {
+          "text": "colour roles",
+          "term": "role",
           "section": "starter-settings"
         }
       ]
@@ -3534,25 +6622,25 @@ window.DocFormSearch = {
           "id": "what-it-does",
           "title": "What the asset tool does",
           "level": 2,
-          "text": "Checking each prepared file and rebuilding the ones that are out of date."
+          "text": "Open the offline asset tool, a page for checking and rebuilding your prepared files. Choose the folder containing your site. The tool reads the site settings, finds the pages and data they name, and compares each prepared file with the version it would make from those inputs today. Current The prepared file matches the current inputs. Missing The prepared file has yet to be saved where the site expects it. Stale The saved file is out of date and can be rebuilt. Blocked The tool needs a correction first, such as restoring a missing source file. Choose the files to regenerate. Where the browser offers save access, the tool can save them into the site folder. Otherwise it downloads them and shows where each belongs. The files stay on your device."
         },
         {
           "id": "search-index",
           "title": "The search index",
           "level": 2,
-          "text": "How site-wide search and the glossary's used-on links are prepared."
+          "text": "The search index collects written page text, headings, term uses, and definitions attached to words on individual pages. Search reads the index to find matches on other pages. Navigation and link previews use it too, and the glossary uses it to show where terms were used. Search can still read the current page directly. This explains why a new heading may appear in search while you are on that page and be missing when you search from another page."
         },
         {
           "id": "data-files",
           "title": "Offline data files",
           "level": 2,
-          "text": "How data files are packaged so pages can read them offline."
+          "text": "The Data file wrapper packages a CSV, JSON, or YAML source so a local page can read it. The tool checks that the source can be read and prepares it under the site's chosen name. The site can then use it in charts, tables, and other views. A reader can still open a file temporarily with File dropzones. That choice affects the current page. The prepared file stays as it was."
         },
         {
           "id": "when-to-rerun",
           "title": "When to run it again",
           "level": 2,
-          "text": "The changes that make prepared files stale."
+          "text": "Ask for the search index to be checked after writing, renaming, moving, adding, or removing pages. Check it after changing headings, definitions, or the list of pages included in search. Ask for the data file wrappers to be checked after updating a source file or changing which source a page loads. Before handing the site to someone else, ask for a check of all prepared files. Files marked Missing or Stale are ready to rebuild. Files marked Blocked need the cause fixed first."
         }
       ],
       "terms": [
@@ -3562,9 +6650,39 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "folder",
+          "term": "folder",
+          "section": "what-it-does"
+        },
+        {
+          "text": "site settings",
+          "term": "site settings",
+          "section": "what-it-does"
+        },
+        {
           "text": "file",
           "term": "file",
           "section": "what-it-does"
+        },
+        {
+          "text": "regenerate",
+          "term": "regenerate",
+          "section": "what-it-does"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "what-it-does"
+        },
+        {
+          "text": "search index",
+          "term": "search index",
+          "section": "search-index"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "search-index"
         },
         {
           "text": "glossary",
@@ -3572,12 +6690,47 @@ window.DocFormSearch = {
           "section": "search-index"
         },
         {
-          "text": "offline",
-          "term": "offline",
+          "text": "Data file wrapper",
+          "term": "data file wrapper",
           "section": "data-files"
         },
         {
-          "text": "stale",
+          "text": "CSV",
+          "term": "csv",
+          "section": "data-files"
+        },
+        {
+          "text": "JSON",
+          "term": "json",
+          "section": "data-files"
+        },
+        {
+          "text": "YAML",
+          "term": "yaml",
+          "section": "data-files"
+        },
+        {
+          "text": "charts",
+          "term": "chart",
+          "section": "data-files"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "data-files"
+        },
+        {
+          "text": "search index",
+          "term": "search index",
+          "section": "when-to-rerun"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "when-to-rerun"
+        },
+        {
+          "text": "Stale",
           "term": "stale",
           "section": "when-to-rerun"
         }
@@ -3591,34 +6744,79 @@ window.DocFormSearch = {
           "id": "",
           "title": "When something looks wrong",
           "level": 1,
-          "text": "Reference Most problems on a DocForm page have a simple cause and a quick fix. This page lists common symptoms and what to ask for. Use it to Match a symptom to its fix Reading time About 5 minutes"
+          "text": "Reference Find a symptom you recognise and see what you or your agent can check. Use it to Match a symptom to its fix Reading time About 5 minutes"
         },
         {
           "id": "symptoms",
           "title": "Common symptoms",
           "level": 2,
-          "text": "Unstyled pages, missing features, and blank figures."
+          "text": "Start with what you can see. If you have the page as a file, open it in a browser from the original site folder so it can find the files beside it. What you see What to check Plain text and default-looking headings Make sure the site folder has been unpacked and the DocForm library folder came with it. See opening a site. Text looks right, but the controls do nothing Open the original page in a browser rather than a file preview. Ask the agent to check whether the browser ran the page's scripts. A single feature is missing Check the feature directory to see whether the feature is on request and what it needs. Ask the agent to check the page settings. A chart or figure is blank Ask the agent to check that its image or data is present, the data can be read, and any prepared copy is current. If a file dropzone changed the view, try Reset."
         },
         {
           "id": "reading-problem-reports",
           "title": "Problem reports",
           "level": 2,
-          "text": "Where DocForm says what went wrong."
+          "text": "A problem report may appear beside a broken view. Copy the wording or take a picture of it. Include the page title, the section, and what you did just before it happened. Some reports are recorded in the browser console. If the page shows no message, give your agent the same details and ask for the recorded reports to be checked. See what a report can contain."
         },
         {
           "id": "stale-search",
           "title": "Stale search or glossary",
           "level": 2,
-          "text": "When search or the glossary misses recent changes."
+          "text": "If search finds a new phrase on its own page but misses it from other pages, the site search index may be stale. A glossary entry can also show its shared definition while its Used on links miss new pages or still point at renamed sections. Ask your agent to regenerate the search index with the offline asset tool. Then reopen the page and try again. See how the tool prepares the index. If a shared definition itself is wrong, ask the agent to check the site settings too."
         },
         {
           "id": "older-pages",
           "title": "Pages from older DocForm versions",
           "level": 2,
-          "text": "How an agent can bring older pages up to date."
+          "text": "Older pages may have been built for a different version of DocForm. If a feature stops working after the library is replaced, ask your agent to update the page and its settings to work with the new version. Give them the original site folder and an example of what changed so they can check the result against the original."
         }
       ],
       "terms": [
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": ""
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "symptoms"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "symptoms"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "symptoms"
+        },
+        {
+          "text": "problem report",
+          "term": "problem report",
+          "section": "reading-problem-reports"
+        },
+        {
+          "text": "browser console",
+          "tip": "A panel in the browser that shows messages from the current page.",
+          "section": "reading-problem-reports"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "reading-problem-reports"
+        },
+        {
+          "text": "search index",
+          "term": "search index",
+          "section": "stale-search"
+        },
+        {
+          "text": "stale",
+          "term": "stale",
+          "section": "stale-search"
+        },
         {
           "text": "glossary",
           "term": "glossary",
@@ -3627,6 +6825,36 @@ window.DocFormSearch = {
         {
           "text": "agent",
           "term": "agent",
+          "section": "stale-search"
+        },
+        {
+          "text": "regenerate",
+          "term": "regenerate",
+          "section": "stale-search"
+        },
+        {
+          "text": "offline asset tool",
+          "term": "offline asset tool",
+          "section": "stale-search"
+        },
+        {
+          "text": "site settings",
+          "term": "site settings",
+          "section": "stale-search"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "older-pages"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "older-pages"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
           "section": "older-pages"
         }
       ]
@@ -3639,10 +6867,28 @@ window.DocFormSearch = {
           "id": "",
           "title": "Glossary",
           "level": 1,
-          "text": "Reference Every word these docs explain, in one place. The links under each term lead back to the sections that use it."
+          "text": "Reference Look up a word from these docs or follow a definition back to an example."
+        },
+        {
+          "id": "find-a-term",
+          "title": "Find a term",
+          "level": 2,
+          "text": "Choose a letter to jump to that group of words. When a term has a Used on list, follow a link to see it in context. Some terms have a second definition because a page gives the word a more specific meaning. You can also read a definition without leaving a page. Rest your pointer on an underlined word. Words with a stronger underline can also be reached by pressing Tab. See Tooltips and glossary for examples."
+        },
+        {
+          "id": "definitions",
+          "title": "Definitions",
+          "level": 2,
+          "text": ""
         }
       ],
-      "terms": []
+      "terms": [
+        {
+          "text": "link",
+          "term": "link",
+          "section": "find-a-term"
+        }
+      ]
     }
   ]
 };

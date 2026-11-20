@@ -1,6 +1,6 @@
-Offline setup	Use the offline entry and author lifecycle hooks	setup/setup.md
-Include order	Select offline profiles and feature dependencies	setup/include-order.md
-Site manifest	Configure pages, feature options, registries, and generated assets	setup/manifest.md
+Offline setup	Use the offline entry and author lifecycle hooks or migrate per-file includes	setup/setup.md
+Include order	Select offline profiles and feature dependencies including the blocks aggregate	setup/include-order.md
+Site manifest	Configure pages, feature options, registries, and generated assets with strict JSON	setup/manifest.md
 Base layout	Style the reading column, typography, lists, tables, and figure width limits	layout/base.md
 Section lines	Space and colour h2 sections with margin bars and lines	layout/sections.md
 Design tokens	Override colours, fonts, spacing, and widths	layout/tokens.md
@@ -15,7 +15,7 @@ Peek bubbles	Expand native disclosures into reading-gutter panels	reading/peek-b
 TeX math	Render offline KaTeX formulas with shared macros	reading/math.md
 Tooltips	Attach inline tips, glossary terms, and hold-to-expand cards	reading/tooltips.md
 Glossary	Collect definitions, variants, and links to term uses	reading/glossary.md
-Code	Highlight, annotate, copy, and compare code blocks	reading/code.md
+Code	Highlight, annotate with data-df-annotate or a list ID, copy, and compare code blocks	reading/code.md
 Cross-references	Number figures, tables, and equations and preview links	reading/references.md
 Citations	Number sources and generate a bibliography per page	reading/citations.md
 Sidenotes	Show inline notes in the margin or at their markers	reading/sidenotes.md

@@ -14,6 +14,7 @@ count += 1
 ```
 
 - `data-df-lines` takes one-based line numbers and ranges separated by spaces or commas. Set `data-df-annotation-list="plain-id"` to the ID of an `ol`. The highlighter extracts trailing marker-only comments such as `# (1)` or `// (2) (3)` from code and copied text. Numbering respects `ol[start]`.
+- Use boolean `data-df-annotate` on the `pre` to infer the immediately following sibling `ol`. An explicit `data-df-annotation-list` takes precedence.
 - A marker and its list item highlight together on hover/focus. Clicking a marker scrolls to its note. Enable `tooltips` for marker previews. List item `data-df-selection-group` and `data-df-key` are copied to its markers for linked views.
 
 ```html

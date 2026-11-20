@@ -182,7 +182,7 @@
 .df-step-panel button[data-df-key] {
   display: grid;
   width: 100%;
-  padding: var(--df-space-2) var(--df-space-3);
+  padding: calc((var(--df-space-1) + var(--df-space-2)) / 2) var(--df-space-3);
   border: 0;
   border-radius: var(--df-radius-lg);
   background: transparent;

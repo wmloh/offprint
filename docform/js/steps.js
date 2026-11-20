@@ -49,6 +49,14 @@
     details.forEach(function (detail) { detail.inert = detail !== active; });
   }
 
+  function selectOnPointer(row, state, index) {
+    // Scrolling can move a row under a stationary pointer and dispatch pointerenter.
+    row.addEventListener('pointermove', function (event) {
+      if ((event.pointerType === 'mouse' || event.pointerType === 'pen') &&
+          state.controller.snapshot().index !== index) state.choose(index, 'user');
+    });
+  }
+
   function uniqueId(base) {
     var id = base;
     for (var suffix = 2; document.getElementById(id); suffix++) id = base + '-' + suffix;
@@ -165,11 +173,7 @@
       }
       var row = button.parentElement === list ? button : button.parentElement;
       function choose() { state.choose(index, 'user'); }
-      // Scrolling can move a row under a stationary pointer and dispatch pointerenter.
-      row.addEventListener('pointermove', function (event) {
-        if ((event.pointerType === 'mouse' || event.pointerType === 'pen') &&
-            state.controller.snapshot().index !== index) choose();
-      });
+      selectOnPointer(row, state, index);
       button.addEventListener('focus', choose);
       button.addEventListener('click', choose);
     });
@@ -221,7 +225,8 @@
       return { key: key, index: index, detailId: targets[index].id };
     }, function (current) {
       var index = current.index;
-      setTabStop(index);
+      var focused = buttons.indexOf(document.activeElement);
+      setTabStop(focused < 0 ? index : focused);
       buttons.forEach(function (button, i) {
         button.setAttribute('aria-selected', String(i === index));
       });
@@ -248,6 +253,7 @@
       button.setAttribute('aria-controls', detail.id);
       detail.setAttribute('role', 'tabpanel');
       detail.setAttribute('aria-labelledby', button.id);
+      selectOnPointer(button, state, i);
       button.addEventListener('click', function () {
         state.choose(i, 'user');
       });

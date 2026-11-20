@@ -389,7 +389,9 @@
       if (event.target === dialog) close();
     });
     dialog.addEventListener('close', function () {
-      if (state.opener && state.opener.focus && document.contains(state.opener)) state.opener.focus({ preventScroll: true });
+      if (!dialog.open && state.opener && state.opener.focus && document.contains(state.opener)) {
+        state.opener.focus({ preventScroll: true });
+      }
     });
     return state;
   }
@@ -419,7 +421,12 @@
       }
       return;
     }
-    root.location.href = item.href;
+    var exit = state.dialog.getAnimations && state.dialog.getAnimations().find(function (animation) {
+      return animation.transitionProperty === 'opacity';
+    });
+    function navigate() { root.location.href = item.href; }
+    if (exit) exit.finished.then(navigate, navigate);
+    else navigate();
   }
 
   // With an empty query, the palette lists the manifest's pages, or this page's sections without a manifest.

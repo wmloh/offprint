@@ -1,5 +1,8 @@
 /* S-key search palette from search.js: a frosted dialog with a results list. */
 .df-search {
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
   width: min(640px, calc(100vw - 32px));
   max-height: min(560px, calc(100vh - 96px));
   margin: 12vh auto auto;
@@ -14,24 +17,34 @@
   font-family: var(--df-font);
   font-size: 15px;
   overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.16s ease, display 0.16s allow-discrete, overlay 0.16s allow-discrete;
 }
 
 .df-search[open] {
   display: flex;
-  flex-direction: column;
-  animation: df-search-in 0.16s ease-out;
+  opacity: 1;
 }
 
 .df-search::backdrop {
   background: light-dark(rgba(15, 15, 15, 0.18), rgba(0, 0, 0, 0.45));
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.16s ease, display 0.16s allow-discrete, overlay 0.16s allow-discrete;
 }
 
-@keyframes df-search-in {
-  from {
+.df-search[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .df-search[open] {
     opacity: 0;
-    transform: translateY(-6px) scale(0.99);
+  }
+
+  .df-search[open]::backdrop {
+    opacity: 0;
   }
 }
 

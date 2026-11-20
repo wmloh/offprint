@@ -16,6 +16,8 @@ docform/: Copyable offline library folder
     blocks.css: Inline tags, callouts, and the no-script tinted card look of details
     tooltip.css: Tooltip box, hold-to-expand card with progress ring, and dotted term underlines (fainter for auto-linked terms)
     code.css: Code block bar, copy button, token colours, highlighted lines, circled annotation markers, and diff rows
+    editable-text.css: Inline and multiline text fields with a syntax colour layer
+    dropdowns.css: Theme-aware popovers, expanded menu branches, and opening and closing transitions
     tabs.css: Tab list and panels with a no-JS fallback
     anim.css: Figure frames, animation controls, and SVG paint utilities
     params.css: Parameter sliders, single and multiple choices, switches, preset buttons, and bound values
@@ -26,7 +28,7 @@ docform/: Copyable offline library folder
     bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
-    search.css: Frosted S-key search dialog with highlighted results
+    search.css: Animated frosted S-key search dialog with highlighted results
     chart.css: Chart legend, opt-in series and slice toggles, plot marks, reference lines, selection, range brush, shared cursor, readout, and table view
     chart-playback.css: Guided playback pill spacing, playhead, checkpoint marker, and note visibility
     results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with a chip and row-count bar
@@ -47,11 +49,13 @@ docform/: Copyable offline library folder
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
     tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text, opt-in automatic term linking, and lazy HTML cards for other modules
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
+    editable-text.js: Native text fields with optional live syntax highlighting
+    dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
     anim.js: Keyed SVG timeline controllers with playback, step subscriptions, and figure-step integration
     params.js: Named parameter scopes with multiple-choice controls, presets, text bindings, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
-    steps.js: Standalone HTML card panels with optional titled groups, keyboard focus, and manual selection, plus figure steps selected by hover, focus, tap, or page controls, with keyed selection and inert details
+    steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, and inert details
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
     zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
     bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past

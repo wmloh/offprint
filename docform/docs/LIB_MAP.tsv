@@ -22,6 +22,8 @@ Sidenotes	Show inline notes in the margin or at their markers	reading/sidenotes.
 Search	Search live page text and an offline site index	reading/search.md
 Search index	Check and export the offline page and glossary index	reading/search-index.md
 Buttons	Style author and module actions as tinted pills and step controls as a frosted icon pill	interact/buttons.md
+Dropdowns	Open animated lists of links and actions with nested branches	interact/dropdowns.md
+Editable text	Edit native single-line and multiline text fields with optional live syntax colours	interact/editable-text.md
 Tabs	Switch panels and synchronize choices by group	interact/tabs.md
 SVG animations	Play, scrub, and control a step timeline	interact/animations.md
 Card panels	Select details from standalone cards and groups	interact/card-panels.md

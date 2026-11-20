@@ -60,7 +60,7 @@
 
 /* Peek-bubble candidates show their content before enhancement. Explicit opt-outs and nested disclosures
    keep the browser's disclosure marker and open/closed behaviour. */
-.df-page details {
+.df-page details:not(:where(.df-dropdown-panel *)) {
   margin: var(--df-space-4) 0;
   padding: 0.8em 1.15em;
   border-radius: var(--df-radius-lg);

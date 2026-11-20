@@ -19,7 +19,7 @@ Enable `cards`. Place the selector and details directly inside `.df-card-panel`.
 ```
 
 - The list can mix direct buttons with `.df-step-group` wrappers containing direct buttons and an optional `.df-step-group-heading`. Group labels describe their tabs. Mark the local start with `data-df-initial` or use the default first card.
-- Up, Down, Home, and End move focus across all groups. Click, Enter, or Space commits the focused card. The generated vertical tablist and tabpanels retain inactive details in the DOM as inert, preserving the state of nested widgets.
+- Moving a mouse or pen over a card selects it. Click or tap also selects. Up, Down, Home, and End move focus across all groups. Enter or Space selects the focused card. The generated vertical tablist and tabpanels retain inactive details in the DOM as inert, preserving the state of nested widgets.
 - At a container width of 33rem or more, selector and details scroll independently under `--df-step-pane-max` (default `min(22rem, 38svh)`). Below 33rem, the active detail flows below the selector. All details appear with JS disabled and in print. Invalid pairings leave the authored layout and warn.
 - `DocForm.cards.get(idOrHost)` returns the [item controller](linked-highlighting.md) or `null`. Snapshot `{key, index, detailId}` uses a zero-based index. `df:cards:change` bubbles from the host with `{current, previous, origin}`.
 

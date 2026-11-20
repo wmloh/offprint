@@ -29,6 +29,8 @@
     animation: { needs: ['base'], css: ['anim'], script: 'anim', api: 'animation' },
     parameters: { needs: ['base'], css: ['params'], script: 'params', api: 'parameters' },
     code: { needs: ['base'], css: ['code'], script: 'code', api: 'code' },
+    'editable-text': { needs: ['base'], css: ['editable-text'], script: 'editable-text', api: 'editableText' },
+    dropdowns: { needs: ['base'], css: ['dropdowns'], script: 'dropdowns', api: 'dropdowns' },
     tree: { needs: ['base'], css: ['tree'], script: 'tree', api: 'tree' },
     data: { vendor: ['vendor/js-yaml/js-yaml.min.js', 'jsyaml'], script: 'data', api: 'data' },
     'data-view': { needs: ['base', 'data'], css: ['data'] },

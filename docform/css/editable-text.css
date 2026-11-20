@@ -1,0 +1,100 @@
+:is(input, textarea)[data-df-editable] {
+  box-sizing: border-box;
+  max-inline-size: 100%;
+  padding: var(--df-space-1) var(--df-space-2);
+  border: 1px solid var(--df-border-strong);
+  border-radius: var(--df-radius);
+  background: var(--df-bg-sidebar);
+  color: var(--df-text);
+  font: inherit;
+  line-height: 1.5;
+}
+
+textarea[data-df-editable] {
+  display: block;
+  inline-size: 100%;
+  resize: vertical;
+}
+
+:is(input, textarea)[data-df-editable]:focus-visible {
+  outline: 2px solid var(--df-accent, var(--df-focus));
+  outline-offset: 1px;
+}
+
+.df-editor {
+  position: relative;
+  display: inline-block;
+  max-inline-size: 100%;
+  border-radius: var(--df-radius);
+  background: var(--df-bg-sidebar);
+  color: var(--df-text);
+}
+
+.df-editor-block {
+  display: block;
+}
+
+.df-editor > [data-df-editable],
+.df-editor-mirror {
+  padding: var(--df-space-1) var(--df-space-2);
+  font-family: var(--df-font-mono);
+  font-size: inherit;
+  font-variant-ligatures: none;
+  line-height: 1.5;
+  tab-size: 4;
+}
+
+.df-editor > [data-df-editable] {
+  position: relative;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--df-text);
+}
+
+.df-editor > [data-df-editable]::selection {
+  background: var(--df-selection);
+  color: transparent;
+}
+
+.df-editor > [data-df-editable]::placeholder {
+  color: var(--df-text-muted);
+}
+
+.df-editor-mirror {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: none;
+  white-space: pre;
+}
+
+.df-editor:not(.df-editor-block) > .df-editor-mirror {
+  clip-path: inset(0 var(--df-space-2));
+}
+
+.df-editor-block:not(:has(textarea[wrap="off"])) .df-editor-mirror {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.df-editor-mirror > span {
+  display: block;
+}
+
+.df-editor-mirror .df-tok-comment {
+  font-style: normal;
+}
+
+.df-editor-composing > [data-df-editable] {
+  color: var(--df-text);
+}
+
+.df-editor-composing > .df-editor-mirror {
+  visibility: hidden;
+}
+
+@media (forced-colors: active) {
+  .df-editor-mirror { display: none; }
+  .df-editor > [data-df-editable] { color: FieldText; }
+  .df-editor > [data-df-editable]::selection { color: HighlightText; }
+}

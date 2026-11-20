@@ -37,6 +37,19 @@
   margin-inline-start: -0.2em;
 }
 
+/* Text glyph icons: center the glyph in the icon box rather than letting the button line height push it down. */
+.df-button > .df-button-icon {
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+
+/* Link buttons keep the button colour and no underline inside prose that styles plain links. */
+.df-page a.df-button {
+  color: var(--df-button-accent);
+  text-decoration: none;
+}
+
 .df-button:hover:not(:disabled, [aria-disabled="true"]) {
   translate: 0 -1px;
   background: color-mix(in srgb, var(--df-button-accent) 7%, var(--df-button-tint));

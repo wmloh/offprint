@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
   <script type="application/json" data-df-page>
-    {"features": {"code": true, "tabs": true}}
+    {"features": {"code": true, "editable-text": true, "tabs": true}}
   </script>
   <script src="../../../docform/docform.js"></script>
 </head>
@@ -95,6 +95,20 @@ sections = 3</pre>
       <figcaption>A block can keep its original spacing and plain styling, with no toolbar.</figcaption>
     </figure>
     <p>A language outside the nine built-in highlighters can still use the code toolbar and Copy. The plain-block option shown here leaves the toolbar off too.</p>
+
+    <h2 id="editable-text">Editable text</h2>
+    <p>Use an editable field when readers need to change a value or try out a snippet. Turn on Code for live syntax colours.</p>
+    <p>
+      <label>Page title <input data-df-editable value="Reading guide"></label>
+      <label>Section count <input data-df-editable data-df-lang="js" value="3 + 2" spellcheck="false"></label>
+    </p>
+    <p><label for="edit-notes">Draft notes</label></p>
+    <textarea id="edit-notes" data-df-editable rows="2">Add a short introduction.</textarea>
+    <p><label for="edit-config">Page settings</label></p>
+    <textarea id="edit-config" data-df-editable data-df-lang="yaml" rows="3" spellcheck="false">title: Reading guide
+sections: 3
+showOutline: true</textarea>
+    <p>Change the section count or edit the page settings to see the colours update as you type. Edits in these examples last until you reload the page.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
     <p>Use a code block when the exact text matters. Pick a few lines to highlight so readers can see where to begin. Use a diff when the change itself is the story.</p>

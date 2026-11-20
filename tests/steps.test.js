@@ -232,6 +232,7 @@ function setupCards(panels, tabSets = []) {
       return Object.assign(element(), { children, appendChild: (child) => children.push(child) });
     }
   });
+  Object.defineProperty(document, 'activeElement', { get: () => focused });
   const { context, boot } = harness(document, (selector, scope) => {
     if (selector === '.df-card-panel') return panels.map((panel) => panel.box);
     if (selector === '.df-tabs, [data-df-tabs]') return tabSets;
@@ -268,6 +269,13 @@ test('standalone cards move focus separately from selection and leave activation
 
   first.focus();
   pointer(second, 'pointermove', 'mouse');
+  assert.equal(focused(), first);
+  assert.equal(second.getAttribute('aria-selected'), 'true');
+  assert.deepEqual(panel.buttons.map((button) => button.tabIndex), [0, -1, -1]);
+  pointer(third, 'pointermove', 'touch');
+  assert.equal(second.getAttribute('aria-selected'), 'true');
+  pointer(first, 'pointermove', 'pen');
+  assert.equal(first.getAttribute('aria-selected'), 'true');
   assert.equal(keydown(first, 'ArrowUp'), true);
   assert.equal(focused(), third);
   assert.equal(keydown(third, 'ArrowDown'), true);

@@ -29,20 +29,37 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Search in action. The caption will say what to notice.</figcaption>
+      <p><strong>Reading landmarks</strong> are the headings, figures, and labels that help you find your place on a page.</p>
+      <figcaption>This sentence is part of the live page. Its words can turn up in a search as soon as the page opens.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p data-df-no-search>Choose the magnifying glass in the control pill or press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>Cmd</kbd>+<kbd>K</kbd> on a Mac). Type <strong>reading landmarks</strong> and choose the result under <strong>See it</strong>. Notice the short extract with the matching words highlighted.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">What gets searched</h2>
+    <h3 id="live-page-and-site-index">Live page and offline site index</h3>
+    <p>DocForm reads the text on the open page directly. For other pages, it looks in a prepared <strong>search index</strong>, a collection of page titles, headings, and text saved with the site. That lets it find matches across the site without the internet. With the search box empty, it lists pages in reading order. Once you type, a match needs to contain every word you entered, and headings and titles rank ahead of matches in ordinary paragraphs.</p>
+    <p>When pages change, the offline asset tool can rebuild the index. Until then, other-page results can still show older text. Search can find words on the open page even when the index is missing.</p>
+
+    <h3 id="excluded-areas">Excluded areas</h3>
+    <figure id="excluded-demo">
+      <p data-df-no-search><strong>Quiet margin sample</strong> is visible here and deliberately left out of search.</p>
+      <figcaption>Authors can skip a visible block, for example when an exercise repeats the same text several times.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p data-df-no-search>Open search again and type <strong>quiet margin sample</strong>. The visible example does not appear in the results.</p>
+    <p>Search also skips hidden areas, navigation, most controls, and typeset formulas. A heading left out of the outline can still contribute words to the surrounding section’s results.</p>
+
+    <h3 id="other-page-outlines">Other-page outlines and previews</h3>
+    <p>Pause over <a href="../hierarchy/guiding-the-eye.html">Visual hierarchy: guiding the eye</a>, or reach that link with <kbd>Tab</kbd>. The preview offers a title and an extract from the index. Find the same page under <strong>Design with hierarchy</strong> in the sidebar and open the arrow beside its name to see its indexed headings. You can jump straight to a heading from there.</p>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p data-df-no-search>Type <strong>squint test</strong> in the search box and choose <strong>The squint test</strong> under <strong>Visual hierarchy: guiding the eye</strong>. The result opens another page at the matching heading.</p>
+    <p>The index also supplies the <strong>Used on</strong> links in the <a href="../glossary.html">Glossary</a>, so you can go from a definition to a page that uses it.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use search to jump to a topic you can name. Use the sidebar when you want to see how topics are grouped. Clear, specific headings help readers recognize the right result, especially when several pages use the same word.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Use the up and down arrow keys to move among results, <kbd>Enter</kbd> to open one, and <kbd>Esc</kbd> to close the search box. You can use the magnifying glass on a phone. With scripts off, the browser’s Find command can still look through the open page, and the links below still work.</p>
 
     <h2 id="related">Related</h2>
     <ul>

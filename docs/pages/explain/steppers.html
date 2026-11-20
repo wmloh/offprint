@@ -6,6 +6,20 @@
   <title>Worked-example steppers · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "stepper": true,
+        "selection": true,
+        "chart": true
+      },
+      "selectionGroups": {
+        "reference-count-steps": {
+          "initial": "setup"
+        }
+      }
+    }
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -29,24 +43,53 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Worked-example steppers in action. The caption will say what to notice.</figcaption>
+      <ol id="reference-count" data-df-stepper data-df-selection-group="reference-count-steps">
+        <li data-df-key="setup"><strong data-df-step-label>Start with setup.</strong> Count the 3 setup references.</li>
+        <li data-df-key="layout"><strong data-df-step-label>Add layout.</strong> Add 7 layout references to get 10.</li>
+        <li data-df-key="reading"><strong data-df-step-label>Add reading.</strong> Add 13 reading references to get 23.</li>
+      </ol>
+      <p data-df-stepper-view="reference-count" data-df-key="setup">Running total: 3.</p>
+      <p data-df-stepper-view="reference-count" data-df-key="layout">Running total: 3 + 7 = 10.</p>
+      <p data-df-stepper-view="reference-count" data-df-key="reading">Running total: 10 + 13 = 23.</p>
+      <div data-df-chart="line" data-df-height="220" data-df-y-label="Running total" data-df-selection-group="reference-count-steps">
+        <table>
+          <thead><tr><th scope="col">Group added</th><th scope="col" data-df-role="on-request">References so far</th></tr></thead>
+          <tbody>
+            <tr><td>Setup</td><td data-df-key="setup">3</td></tr>
+            <tr><td>Layout</td><td data-df-key="layout">10</td></tr>
+            <tr><td>Reading</td><td data-df-key="reading">23</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <table>
+        <thead><tr><th scope="col">Group</th><th scope="col">References added</th></tr></thead>
+        <tbody data-df-role="on-request">
+          <tr data-df-selection-group="reference-count-steps" data-df-key="setup"><th scope="row">Setup</th><td>3</td></tr>
+          <tr data-df-selection-group="reference-count-steps" data-df-key="layout"><th scope="row">Layout</th><td>7</td></tr>
+          <tr data-df-selection-group="reference-count-steps" data-df-key="reading"><th scope="row">Reading</th><td>13</td></tr>
+        </tbody>
+      </table>
+      <figcaption>The worked example adds counts from three groups of DocForm’s reference library. The chart shows the running total, while the table shows each group’s contribution.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Press Next. The calculation changes, and the Layout point and row are highlighted. Click the Reading point to jump straight to that step. Use Reset to return to the opening step.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">One step, several views</h2>
+    <p>The stepper shows one item of an ordered example and reports where you are, such as Step 2 of 3. Previous and Next move in order. Reset restores the author’s chosen starting step, which is the first step here.</p>
+    <p>The companion calculation switches with the current step. The chart and table use <a href="selection.html">linked selection</a> to mark the same item. All the rows and points stay visible, so readers can compare the selected value with the others.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use a worked-example stepper when each operation builds on the last. Keep a shared chart or table in sight when the reader needs the whole sequence for context. Put any instructions that apply to every step before the controls.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Use Tab to reach Reset, Previous and Next. The ends keep keyboard focus and prevent further movement. On the focused chart, move between points with the arrow keys and press Enter or Space to choose one. Use the chart’s Table button to read the same values as rows.</p>
+    <p>The views stack on a narrow screen and use the page’s theme. The printed example shows the current step. With scripts off, the complete ordered list, companion calculations, and chart data table are visible.</p>
+
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a>, a recipe that uses it</li>
+      <li><a href="selection.html">Linked selection</a>, for keeping different views in sync</li>
+      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a></li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

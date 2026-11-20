@@ -6,6 +6,79 @@
   <title>Evaluation matrices and scenario comparisons · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"matrix": true, "scenarios": true},
+      "options": {
+        "matrix": {
+          "instances": {
+            "size-matrix": {
+              "mapping": {
+                "row": "kind",
+                "column": "bucket",
+                "rows": [
+                  {"key": "script", "label": "Scripts"},
+                  {"key": "style", "label": "Stylesheets"}
+                ],
+                "columns": [
+                  {"key": "small", "label": "Under 10,000 bytes"},
+                  {"key": "large", "label": "10,000 bytes or more"}
+                ],
+                "measures": [
+                  {"key": "count", "field": "count", "label": "File count"},
+                  {
+                    "key": "share",
+                    "field": "share",
+                    "label": "Share of file kind",
+                    "unit": "%",
+                    "range": [0, 100],
+                    "normalization": "Percentage of files in that row"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "scenarios": {
+          "instances": {
+            "reading-scenario": {
+              "mapping": {
+                "recordKey": "version",
+                "baselineKey": "baseline",
+                "variantKeys": ["short", "compact"],
+                "labels": {
+                  "baseline": "Full contents",
+                  "short": "Short contents",
+                  "compact": "Short contents with outline off"
+                },
+                "conditions": [
+                  {"field": "contents", "label": "Table of contents"},
+                  {"field": "outline", "label": "Outline"}
+                ],
+                "outcomes": [
+                  {
+                    "field": "time",
+                    "label": "Time to find a section",
+                    "unit": "seconds",
+                    "interval": {"lower": "lo", "upper": "hi", "label": "Example bounds"},
+                    "pairedDifference": {
+                      "field": "delta",
+                      "baselineKeyField": "against",
+                      "interval": {
+                        "lower": "delta_lo",
+                        "upper": "delta_hi",
+                        "label": "Example paired bounds"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -28,24 +101,100 @@
     </header>
 
     <h2 id="see-it">See it</h2>
-    <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Evaluation matrices and scenario comparisons in action. The caption will say what to notice.</figcaption>
-    </figure>
+
+    <script type="application/json" data-df-source="Size categories">
+      [
+        {"kind": "script", "bucket": "small", "count": 10, "share": 32.3},
+        {"kind": "script", "bucket": "large", "count": 21, "share": 67.7},
+        {"kind": "style", "bucket": "small", "count": 33, "share": 94.3},
+        {"kind": "style", "bucket": "large", "count": 2, "share": 5.7}
+      ]
+    </script>
+
+    <div id="see-it-demo">
+    <table id="size-matrix" data-df-matrix data-df-source="Size categories">
+      <caption>Repository files by kind and size</caption>
+      <thead><tr><th scope="col">File kind</th><th scope="col">Under 10,000 bytes</th><th scope="col">10,000 bytes or more</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Scripts</th><td>10</td><td>21</td></tr>
+        <tr><th scope="row">Stylesheets</th><td>33</td><td>2</td></tr>
+      </tbody>
+    </table>
+    </div>
+
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Switch from <strong>File count</strong> to <strong>Share of file kind</strong>. Each number is now a percentage of its own row.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Read a matrix on one colour scale</h2>
+    <p>Each cell combines one row and one column. A shared colour scale means the same shade represents the same value anywhere in the grid for the selected measure. In the percentage view, every cell uses the same zero to 100 scale. In the count view, the scale follows the smallest and largest counts in the grid.</p>
+    <p>The source supplies the counts and percentages. A missing value is labelled <strong>Missing</strong>, while zero is shown as a number. A cell cap keeps very large grids from opening all at once. When a grid exceeds its cap, DocForm keeps the readable starting table.</p>
+    <h2 id="scenarios">Compare a change against the baseline</h2>
 
+    <script type="application/json" data-df-source="Example reading times">
+      [
+        {
+          "version": "baseline",
+          "contents": "Full",
+          "outline": "On",
+          "time": 30,
+          "lo": 27,
+          "hi": 33,
+          "delta": null,
+          "delta_lo": null,
+          "delta_hi": null,
+          "against": null
+        },
+        {
+          "version": "short",
+          "contents": "Short",
+          "outline": "On",
+          "time": 25,
+          "lo": 22,
+          "hi": 29,
+          "delta": -5,
+          "delta_lo": -8,
+          "delta_hi": -2,
+          "against": "baseline"
+        },
+        {
+          "version": "compact",
+          "contents": "Short",
+          "outline": "Off",
+          "time": 23,
+          "lo": 20,
+          "hi": 27,
+          "delta": -7,
+          "delta_lo": -11,
+          "delta_hi": -3,
+          "against": "baseline"
+        }
+      ]
+    </script>
+
+    <table id="reading-scenario" data-df-scenarios="configurations" data-df-source="Example reading times">
+      <caption>Illustrative reading times with different navigation settings</caption>
+      <thead><tr><th scope="col">Measure</th><th scope="col">Unit</th><th scope="col">Full contents</th><th scope="col">Short contents</th><th scope="col">Short contents with outline off</th></tr></thead>
+      <tbody>
+        <tr data-df-condition><th scope="row">Table of contents</th><td></td><td>Full</td><td>Short</td><td>Short</td></tr>
+        <tr data-df-condition><th scope="row">Outline</th><td></td><td>On</td><td>On</td><td>Off</td></tr>
+        <tr><th scope="row">Time to find a section</th><td>seconds</td><td>30</td><td>25</td><td>23</td></tr>
+      </tbody>
+    </table>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Choose <strong>Next variant</strong> to compare a short contents list with the outline off. The summary names both changed conditions. Look for the estimated time, its bounds, and the paired change from the baseline.</p>
+
+    <p>The baseline is the starting setup. A variant changes one condition, or several when comparing whole configurations. The selected variant and baseline share a chart scale for each unit, and that scale holds when you switch variants.</p>
+    <p>An interval gives lower and upper bounds for an outcome estimate. A paired difference measures a change using matched cases, such as the same readers trying each setup. Here, the example data supplies that difference and its own bounds. A negative change in seconds means a shorter time.</p>
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
-
+    <p>Use a matrix to scan many combinations at once. Use a scenario comparison to explain what changed from a specific starting point. Let the matrix shading or the comparison bars carry the emphasis in its section.</p>
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Use <kbd>Tab</kbd> to reach the measure and variant menus. Numeric labels and the change summary remain readable in either theme. Wide tables scroll sideways on a phone. Print the selected measure or variant you want to share. With scripts off, the starting tables show the counts and all three setups.</p>
 
     <h2 id="related">Related</h2>
     <ul>
+      <li><a href="charts.html">SVG charts</a></li>
+      <li><a href="tables.html">Concept tables and results tables</a></li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>

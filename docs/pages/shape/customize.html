@@ -1,11 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="--df-section-cycle: purple blue green; --df-section-line-width: 3px">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Design tokens · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
+  <link rel="stylesheet" href="../../../docform/css/reveal.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"split-views": true}}
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -17,7 +21,7 @@
     <header>
       <p class="df-eyebrow">Shape pages and sites</p>
       <h1>Design tokens</h1>
-      <p>Design tokens are the named settings behind every colour, font, size, and space in DocForm. Changing one token changes the whole site consistently.</p>
+      <p>Design tokens are named settings for details like text colour, spacing, and width. Change a shared token and the parts of the site that use it change together.</p>
       <dl class="df-fields">
         <dt>Official name</dt><dd>Design tokens</dd>
         <dt>Turned on</dt><dd><span class="df-tag" data-df-role="default">On by default</span></dd>
@@ -29,20 +33,114 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Design tokens in action. The caption will say what to notice.</figcaption>
+      <div class="df-split">
+        <div>
+          <p class="df-eyebrow">Default colours</p>
+          <p style="color: var(--df-h2); font-size: 1.5em; font-weight: 600">Find your place</p>
+          <p>Scan the <strong>headings</strong> for the topic you <em>need</em>.</p>
+        </div>
+        <div style="--df-h2: light-dark(var(--df-blue), var(--df-purple)); --df-strong: light-dark(var(--df-green), var(--df-blue)); --df-em: light-dark(var(--df-brown), var(--df-green))">
+          <p class="df-eyebrow">Tuned colours</p>
+          <p style="color: var(--df-h2); font-size: 1.5em; font-weight: 600">Find your place</p>
+          <p>Scan the <strong>headings</strong> for the topic you <em>need</em>.</p>
+        </div>
+      </div>
+      <figcaption>The second sample sets colours for the heading, bold word, and italic word separately.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Switch themes in the control pill or press <kbd>T</kbd>. Watch the sample heading on the tuned side change between blue and purple. A token can have a value for each theme.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">What tokens can change</h2>
+    <h3 id="type-and-space">Fonts, spacing, and corners</h3>
+    <figure>
+      <div class="df-split">
+        <div>
+          <p class="df-eyebrow">Default</p>
+          <details open>
+            <summary>Following a page</summary>
+            <p>Use the outline to see the main ideas. Follow a heading link to jump to a section.</p>
+          </details>
+        </div>
+        <div style="--df-font: var(--df-font-serif); --df-font-size: 1.125rem; --df-line-height: 1.7; --df-space-4: 32px; --df-radius-lg: 24px">
+          <p class="df-eyebrow">Roomier</p>
+          <details open style="font: var(--df-font-size)/var(--df-line-height) var(--df-font)">
+            <summary>Following a page</summary>
+            <p>Use the outline to see the main ideas. Follow a heading link to jump to a section.</p>
+          </details>
+        </div>
+      </div>
+      <figcaption>The roomier sample uses larger lettering with small strokes at the ends, more space between lines and blocks, and rounder corners.</figcaption>
+    </figure>
+    <p>The font settings choose the shape and size of letters and the space between lines. The spacing scale is a set of repeatable gaps. Corner radius sets how rounded a corner is. Eyebrow and labelled-field settings also control the size and weight of small labels and how much room they get.</p>
+
+    <h3 id="reading-and-figure-widths">Reading and figure widths</h3>
+    <figure>
+      <div class="df-split">
+        <div>
+          <p class="df-eyebrow">Full available width</p>
+          <div class="df-page" style="padding: var(--df-space-3); background: var(--df-bg-subtle)">
+            <p>A short lead tells readers what a page offers before they start scanning its sections.</p>
+            <figure style="max-width: min(100%, var(--df-figure-max-width)); margin-inline: auto; background: var(--df-bg-sidebar); border: 1px solid var(--df-border-strong)">
+              <figcaption>Sample figure</figcaption>
+            </figure>
+          </div>
+        </div>
+        <div style="--df-content-width: 16rem; --df-figure-max-width: 75%">
+          <p class="df-eyebrow">Narrower reading column and figure</p>
+          <div class="df-page" style="padding: var(--df-space-3); background: var(--df-bg-subtle)">
+            <p>A short lead tells readers what a page offers before they start scanning its sections.</p>
+            <figure style="max-width: min(100%, var(--df-figure-max-width)); margin-inline: auto; background: var(--df-bg-sidebar); border: 1px solid var(--df-border-strong)">
+              <figcaption>Sample figure</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+      <figcaption>The shaded area marks the reading column. The bordered figure can have a smaller width limit inside it.</figcaption>
+    </figure>
+    <p>Reading width limits the length of a line of text. A figure width limit can make large blocks like figures and tables narrower inside that column. Separate settings set the gap at the sides of the page and the starting width of the sidebar.</p>
+
+    <h3 id="section-cycle">Section cycle and line</h3>
+    <figure>
+      <div class="df-split">
+        <div>
+          <p class="df-eyebrow">Default cycle</p>
+          <p><span class="df-tag" data-df-color="blue">Blue</span> <span class="df-tag" data-df-color="green">Green</span> <span class="df-tag" data-df-color="purple">Purple</span> <span class="df-tag" data-df-color="orange">Orange</span> <span class="df-tag" data-df-color="pink">Pink</span> <span class="df-tag" data-df-color="brown">Brown</span></p>
+        </div>
+        <div>
+          <p class="df-eyebrow">This page’s cycle</p>
+          <p><span class="df-tag" data-df-color="purple">Purple</span> <span class="df-tag" data-df-color="blue">Blue</span> <span class="df-tag" data-df-color="green">Green</span></p>
+        </div>
+      </div>
+      <figcaption>The default takes six sections to repeat. This page repeats every three, with slightly thicker lines.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Trace the lines beside the main headings on this page, then compare them with the <a href="layout.html">section lines guide</a>. The cycle picks the order. Separate settings control how thick the line is, how strong its colour looks, and how far it sits from the text.</p>
+
+    <h3 id="other-swatches">Surfaces, links, and chart colours</h3>
+    <figure>
+      <p>
+        <span class="df-tag" style="--df-accent-bg: var(--df-bg); box-shadow: inset 0 0 0 1px var(--df-border-strong)">Page</span>
+        <span class="df-tag" style="--df-accent-bg: var(--df-bg-sidebar)">Sidebar</span>
+        <span class="df-tag" style="--df-accent-bg: var(--df-bg-subtle)">Subtle fill</span>
+        <a href="colour.html">Ordinary link</a> · <a href="#see-it-demo">Figure link</a>
+      </p>
+      <p>
+        <span class="df-tag" style="--df-accent-bg: var(--df-chart-1); --df-accent: white">1</span>
+        <span class="df-tag" style="--df-accent-bg: var(--df-chart-2); --df-accent: black">2</span>
+        <span class="df-tag" style="--df-accent-bg: var(--df-chart-3); --df-accent: white">3</span>
+        <span class="df-tag" style="--df-accent-bg: var(--df-chart-4); --df-accent: black">4</span>
+        <span class="df-tag" style="--df-accent-bg: var(--df-chart-5); --df-accent: black">5</span>
+        <span class="df-tag" style="--df-accent-bg: var(--df-chart-6); --df-accent: black">6</span>
+      </p>
+      <figcaption>Neutral fills are close in shade. Links use their own text colours. The six brighter swatches show the default colours for sets of values in a chart.</figcaption>
+    </figure>
+    <p>The <a href="colour.html#see-it">colour guide</a> shows the nine named text-and-background pairs that roles use. Text, borders, and interactive details like the outline around a focused control have their own settings too.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Tune tokens when several pages need to share one look, or when readers need more legible text or shorter lines. Make the change where it belongs. A shared setting suits the whole site, while a local setting suits a single sample or section. Keep the shades of headings, bold words, and italics close enough to the main text colour that role colours can still stand out.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Check both themes, a narrow screen, and a printed page when you change the look. The samples stack on narrow screens. Their colours, type, spacing, and widths still show with scripts off. The custom section cycle needs scripts, so the short heading marks then use the default cycle.</p>
 
     <h2 id="related">Related</h2>
     <ul>

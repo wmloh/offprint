@@ -6,6 +6,9 @@
   <title>Callouts · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"reveals": true}}
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -27,22 +30,42 @@
       </dl>
     </header>
 
-    <h2 id="see-it">See it</h2>
+    <h2 id="see-it">A tip in motion</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Callouts in action. The caption will say what to notice.</figcaption>
+      <div class="df-callout" data-df-role="tip" data-df-icon="✦">
+        <strong class="df-callout-title">Tip for offline reading</strong>
+        Keep the site’s files together so the pages can find their styles and pictures.
+      </div>
+      <figcaption>The icon marks the box. The title names the tip and the tinted background separates it from the surrounding text.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Scroll slowly to move the box through the middle of the screen. If it’s already visible, scroll past it and then come back to see it slide in from the right.</p>
+    <p>This box is a <strong>callout</strong>. Its slide comes from the optional <strong>Scroll reveals</strong> feature. The box stays visible near the start or end of a page where there’s less room to scroll.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="stationary">A stationary caution</h2>
+    <figure>
+      <div class="df-callout" data-df-role="caution" data-df-icon="⚠" data-df-no-reveal>
+        <strong class="df-callout-title">Caution when moving a page</strong>
+        Moving just one page can break its links to the rest of the site.
+      </div>
+      <figcaption>This callout stays still as it passes through the middle of the screen.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Compare this caution with the tip above. The title and icon give you a clue before you read the body. The tint comes from a <strong>colour role</strong>, a named meaning such as tip or caution that can be reused across the site.</p>
+
+    <h2 id="scripts-off">The scripts-off look</h2>
+    <figure>
+      <div class="df-callout" data-df-no-reveal>Keep a copy of a site before making large changes.</div>
+      <figcaption>This plain box uses the built-in styling available with scripts off. An icon and a title are optional.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Look for the thin border and quiet background on the plain box. With scripts off, the boxes still show their text and any authored icons and titles. A colour assigned through a site role needs scripts.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use a callout for a tip, caution, or decision someone might miss while scanning. Give it room to stand out. One callout in a section is usually enough, especially beside a figure or chart.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Use a title or opening words that carry the meaning in either theme, in print, and at phone width. Print shows the box in place. Choose a stationary callout when readers need to refer back to it while they scroll.</p>
 
     <h2 id="related">Related</h2>
     <ul>

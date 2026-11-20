@@ -6,6 +6,9 @@
   <title>Local file dropzones · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"dropzone": true, "data-view": true, "tree": true}}
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -28,24 +31,78 @@
     </header>
 
     <h2 id="see-it">See it</h2>
+
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>File dropzones in action. The caption will say what to notice.</figcaption>
+      <div data-df-dropzone data-df-data-view="tree">
+        <p>Drop a file here to open a separate tree. Try the <a href="../../assets/samples/reading-profile.json" download>reading profile sample (JSON)</a> or the <a href="../../assets/samples/reference-counts.yaml" download>reference counts sample (YAML)</a>.</p>
+      </div>
+      <figcaption>This dropzone owns its preview. Choosing another file replaces that preview, and Reset removes it.</figcaption>
     </figure>
+
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Download the reading profile, then drop it into the box or use <strong>Choose a file</strong>. Open a branch, then load the YAML sample to replace the tree. Choose <strong>Reset</strong> to remove it.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Change one view or the shared source</h2>
+    <p>Both tables below start from the same repository reference counts. The first dropzone replaces one table. The second dropzone changes the source used by both.</p>
 
+    <figure>
+      <div id="drop-preview" data-df-source="Reference counts" data-df-data-view="table">
+        <table>
+          <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>
+          <tbody>
+            <tr><td>setup</td><td>3</td></tr>
+            <tr><td>layout</td><td>7</td></tr>
+            <tr><td>reading</td><td>13</td></tr>
+            <tr><td>interact</td><td>13</td></tr>
+            <tr><td>data</td><td>9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Preview A can show a file of its own or follow the shared source.</figcaption>
+    </figure>
+
+    <figure>
+      <div data-df-source="Reference counts" data-df-data-view="table">
+        <table>
+          <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>
+          <tbody>
+            <tr><td>setup</td><td>3</td></tr>
+            <tr><td>layout</td><td>7</td></tr>
+            <tr><td>reading</td><td>13</td></tr>
+            <tr><td>interact</td><td>13</td></tr>
+            <tr><td>data</td><td>9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Preview B always follows the shared source.</figcaption>
+    </figure>
+
+    <h3 id="one-view">Replace Preview A</h3>
+    <div data-df-dropzone data-df-accept="csv" data-df-target="drop-preview">
+      <p>Load <a href="../../assets/samples/reading-and-data.csv" download>reading and data counts (CSV)</a> into Preview A.</p>
+    </div>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Load the sample and compare the two tables. Preview A shows two rows and Preview B still shows five. Leave the override in place for the next step.</p>
+
+    <h3 id="shared-source">Replace the shared counts</h3>
+    <div data-df-dropzone data-df-accept="csv" data-df-target-source="Reference counts">
+      <p>Load <a href="../../assets/samples/setup-and-layout.csv" download>setup and layout counts (CSV)</a> into the shared source.</p>
+    </div>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Load the shared sample and check Preview B. Press <strong>Reset</strong> at the first CSV dropzone so Preview A rejoins the shared counts. Press <strong>Reset</strong> at the second CSV dropzone to restore the original five rows in both tables.</p>
+
+    <p>Each box lists its accepted file types and size limit. Dropzones can read CSV, JSON, and YAML, with narrower choices where a view needs a specific format. If a file is rejected, the status explains why and any previous accepted data stays in place.</p>
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
-
+    <p>Use a standalone preview to inspect a file, an override to try it in one view, or a shared replacement when several views should update together. Label the destination next to the file picker so readers can predict which views will change.</p>
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Choose a file and Reset are keyboard-accessible alternatives to dragging. A phone’s picker can open a file saved on the device. The controls follow the page theme, and the starter tables and download links stay visible with scripts off. Print the view after loading the file you want to show.</p>
 
     <h2 id="related">Related</h2>
     <ul>
+      <li><a href="sources.html">Named data sources and data views</a></li>
+      <li><a href="trees.html">Data trees</a></li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>

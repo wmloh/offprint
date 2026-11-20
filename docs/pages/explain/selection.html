@@ -6,6 +6,20 @@
   <title>Linked selection · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "selection": true,
+        "tabs": true
+      },
+      "selectionGroups": {
+        "explain-reading-view": {
+          "persist": true
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../../../docform/css/tabs.css">
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -29,24 +43,61 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Linked selection in action. The caption will say what to notice.</figcaption>
+      <div class="df-tabs" data-df-selection-group="reading-tools-modes" data-df-selection-mode="publish" data-df-selection-seed>
+        <div data-df-tab="Outline" data-df-key="outline"><p>Publish only. This set sends the Outline choice.</p></div>
+        <div data-df-tab="Search" data-df-key="search"><p>Publish only. This set sends the Search choice.</p></div>
+      </div>
+      <div class="df-tabs" data-df-selection-group="reading-tools-modes" data-df-selection-mode="follow">
+        <div data-df-tab="Outline" data-df-key="outline"><p>Follow only. The outline lists headings on this page.</p></div>
+        <div data-df-tab="Search" data-df-key="search"><p>Follow only. The search palette finds a word or phrase.</p></div>
+      </div>
+      <div class="df-tabs" data-df-selection-group="reading-tools-modes" data-df-selection-mode="both">
+        <div data-df-tab="Outline" data-df-key="outline"><p>Both. This set sends and receives the Outline choice.</p></div>
+        <div data-df-tab="Search" data-df-key="search"><p>Both. This set sends and receives the Search choice.</p></div>
+      </div>
+      <ul data-df-role="on-request">
+        <li data-df-selection-group="reading-tools-modes" data-df-key="outline">Use the outline when you know the heading.</li>
+        <li data-df-selection-group="reading-tools-modes" data-df-key="search">Use search when you know a word.</li>
+      </ul>
+      <figcaption>Three sets of tabs share a group. The two lines below stay in view and highlight the group’s current choice.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Choose Search in the first set. Both sets below follow. Choose Outline in the third set. The middle set and the highlight follow, while the first set stays on Search. Change the middle set by itself to see that it sends no choice back.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">How a group shares choices</h2>
+    <dl class="df-fields">
+      <dt>Publish</dt><dd>Send your choice to the group and keep control of your own view.</dd>
+      <dt>Follow</dt><dd>Receive the group’s choices. Your own local changes stay local.</dd>
+      <dt>Both</dt><dd>Send and receive choices. This is the default for linked controls.</dd>
+    </dl>
+    <p>A <span data-df-term="selection key">selection key</span> is the shared name for an item. It lets a tab, point or row refer to the same thing even when their visible labels differ. Prose, rows and shapes can simply highlight the choice without becoming controls.</p>
+
+    <h3 id="startup-seeds">Pick a starting choice</h3>
+    <p>A startup seed is a control’s offer to start the group on its current item. The publish-only set above offers Outline, so the other sets start there. An explicit group starting choice takes priority. Otherwise a remembered choice that still belongs to the group takes priority over a seed. With none of these, the group starts clear.</p>
+
+    <h3 id="remembered-choices">Remember a choice across pages</h3>
+    <figure>
+      <div class="df-tabs" data-df-selection-group="explain-reading-view">
+        <div data-df-tab="Read" data-df-key="read"><p>Use headings and links to read at your own pace.</p></div>
+        <div data-df-tab="Explore" data-df-key="explore"><p>Use Search to jump to a topic as it comes to mind.</p></div>
+      </div>
+      <figcaption>This group is also on the Tabs page and is set up to remember your choice.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Pick Explore here, then <a href="tabs.html#see-it">open the Tabs demo</a>. Its matching choice should be open if your browser lets these pages share saved settings.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use linked selection when the reader needs to recognise the same item in several views. Follow mode works for companion views. Keep groups separate when their choices refer to different things.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>The demo tabs respond to Tab and the arrow keys. The highlighted line stays in the same place on a narrow screen and uses the page’s theme colours. Printed and script-free pages keep the item labels so readers can match them without live highlighting.</p>
+
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a>, a recipe that uses it</li>
+      <li><a href="tabs.html">Tabs</a>, for showing alternate panels in one place</li>
+      <li><a href="steppers.html">Worked-example steppers</a>, for linking steps, points and rows</li>
+      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a></li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

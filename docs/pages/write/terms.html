@@ -17,7 +17,7 @@
     <header>
       <p class="df-eyebrow">Write clearly</p>
       <h1>Tooltips and glossary</h1>
-      <p>Tooltips explain a word when a reader hovers over it, and holding it opens a longer card. The glossary collects every explained word on one page, with links back to where each is used.</p>
+      <p>Tooltips explain words in place, and some open a longer card when you hold them. The glossary brings those definitions together so you can look them up by letter.</p>
       <dl class="df-fields">
         <dt>Official name</dt><dd>Tooltips · Glossary</dd>
         <dt>Turned on</dt><dd>Tooltips <span class="df-tag" data-df-role="default">On by default</span> · Glossary <span class="df-tag" data-df-role="on-request">On request</span></dd>
@@ -27,22 +27,44 @@
       </dl>
     </header>
 
-    <h2 id="see-it">See it</h2>
+    <h2 id="see-it">A quick definition</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Tooltips and glossary in action. The caption will say what to notice.</figcaption>
+      <p>A <span data-df-tip="A small button in the heading rail that takes you to another section.">section marker</span> helps readers move around a page while preserving its <span data-df-term>visual hierarchy</span>.</p>
+      <figcaption>The first underline has a definition written for this sentence. The second draws its definition from the site’s glossary.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Point at “section marker” and then “visual hierarchy”, or reach each one with <kbd>Tab</kbd>. A <strong>tooltip</strong> is the small box that appears over the page. A shared <strong>glossary term</strong> uses the same explanation wherever it appears.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="hold-cards">A longer explanation</h2>
+    <figure>
+      <p>Compare <span data-df-term>visual hierarchy</span> with <span data-df-term data-df-hold="1200">signal strength</span>.</p>
+      <figcaption>Both terms open longer cards. The ring fills more slowly for “signal strength” in this example.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Press and hold the first term, or hold <kbd>Enter</kbd> or <kbd>Space</kbd> with the term focused. The ring fills in about six tenths of a second, the default wait. The second term is set to take 1.2 seconds. Release early or move the pointer away to cancel, and press <kbd>Esc</kbd> to dismiss the open <strong>hold-to-expand card</strong>.</p>
+    <p>A site can set its own wait, and an individual term can override it. Hold works when the term has a longer explanation available.</p>
+
+    <h2 id="auto-linking">Faint underlines</h2>
+    <figure>
+      <p>Contrast makes a heading stand out. Read about <a href="../hierarchy/guiding-the-eye.html">contrast in visual hierarchy</a>.</p>
+      <p data-df-no-autolink>Contrast also makes a section line easier to spot.</p>
+      <figcaption>The first “Contrast” gets a definition. The ordinary link keeps its destination, and the second line has opted out.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Point at the first “Contrast”, then try the same word on the second line. With <strong>auto-linking</strong> turned on, DocForm finds whole terms in paragraphs and list items, even when their capital letters differ. It skips headings, links and buttons, code, formulas, and text that already has a tooltip. A page can also exclude an entire passage.</p>
+    <p>An explicitly marked term with no matching definition looks like <span class="df-term df-term-missing">this example</span>. Its missing definition has no card.</p>
+
+    <h2 id="glossary-page">The generated glossary</h2>
+    <p>Open the <a href="../glossary.html">Glossary</a> to browse the site’s definitions. DocForm groups them by first letter. With the offline search index available, it can also collect tips written on individual pages, show different definitions of the same term, and link to the sections that use it.</p>
+    <p><span data-df-tip="A marker next to the reading column that jumps to a section.">Section marker</span> is defined again in this sentence. Distinct definitions like these appear as variants after the index is refreshed. A definition shared by the site takes precedence.</p>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Use <strong>V</strong> in the glossary’s letter row and look for <strong>visual hierarchy</strong>. Use your browser’s Back button to return here.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use a short tooltip to unblock a sentence and a longer card for an example readers might want next. Put a definition used across several pages in the glossary so it stays consistent.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Explicit tooltip terms can receive keyboard focus. Automatically underlined words keep the tab order short, so use the glossary page for keyboard lookup. Write essential definitions in the page text so they’re available in print and with scripts off.</p>
 
     <h2 id="related">Related</h2>
     <ul>

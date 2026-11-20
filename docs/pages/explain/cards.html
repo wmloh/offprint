@@ -6,7 +6,19 @@
   <title>Card panels and figure steps · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "cards": true,
+        "figure-steps": true,
+        "animation": true
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../../../docform/css/steps.css">
+  <link rel="stylesheet" href="../../../docform/css/anim.css">
   <script src="../../../docform/docform.js"></script>
+  <script src="../../assets/cards.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
@@ -29,24 +41,98 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Card panels and figure steps in action. The caption will say what to notice.</figcaption>
+      <div class="df-card-panel">
+        <div class="df-step-panel" data-df-role="on-request">
+          <p class="df-step-heading" id="reader-tools-title">Reader tools</p>
+          <div class="df-step-list" aria-labelledby="reader-tools-title">
+            <div class="df-step-group">
+              <p class="df-step-group-heading">Find your place</p>
+              <button type="button" data-df-key="outline" data-df-detail="card-outline">Outline</button>
+              <button type="button" data-df-key="search" data-df-detail="card-search">Search</button>
+            </div>
+            <div class="df-step-group">
+              <p class="df-step-group-heading">Read comfortably</p>
+              <button type="button" data-df-key="focus" data-df-detail="card-focus">Focus mode</button>
+              <button type="button" data-df-key="theme" data-df-detail="card-theme">Theme</button>
+            </div>
+          </div>
+        </div>
+        <div class="df-step-details">
+          <div id="card-outline"><p>The outline lists headings in the current page. Pick one to skip to that section.</p></div>
+          <div id="card-search"><p>Type a word in Search to see where it appears and jump to a match.</p></div>
+          <div id="card-focus"><p>Focus mode softens nearby sections so the current section stands out.</p></div>
+          <div id="card-theme"><p>Theme switches the page between light and dark colours.</p></div>
+        </div>
+      </div>
+      <figcaption>The group titles organise the choices, and the selected card controls the detail pane.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Choose Search, then Theme. With a card focused, move with Up or Down and press Enter to open its detail.</p>
+    <p>Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Figure steps</h2>
+    <div class="df-figure-steps">
+      <figure class="df-figure" id="page-parts">
+        <svg viewBox="0 0 380 145" role="img" aria-label="A page schematic with an outline and a reading area">
+          <rect class="df-grid" x="36" y="15" width="308" height="112" rx="8"/>
+          <rect class="df-fill-bg" data-df-role="on-request" x="47" y="26" width="100" height="90" rx="5"/>
+          <rect class="df-fill-bg" data-df-role="default" x="155" y="26" width="178" height="90" rx="5"/>
+          <rect id="page-outline-border" class="df-stroke" data-df-role="on-request" x="47" y="26" width="100" height="90" rx="5" stroke-width="3"/>
+          <rect id="page-reading-border" class="df-stroke" data-df-role="default" x="155" y="26" width="178" height="90" rx="5" stroke-width="3"/>
+          <text x="97" y="76" text-anchor="middle">Outline</text>
+          <text x="244" y="76" text-anchor="middle">Reading area</text>
+        </svg>
+        <figcaption>Each figure step outlines a different part of the page and shows its explanation below.</figcaption>
+      </figure>
+      <div class="df-step-panel" role="group" aria-labelledby="page-parts-title" data-df-role="on-request">
+        <p class="df-step-heading" id="page-parts-title">Parts of a page</p>
+        <div class="df-step-list">
+          <button type="button" data-df-key="whole-page" data-df-animation-key="start" data-df-detail="whole-page-detail">Whole page</button>
+          <button type="button" data-df-key="outline" data-df-animation-key="outline" data-df-detail="outline-detail">Outline</button>
+          <button type="button" data-df-key="reading-area" data-df-animation-key="reading" data-df-detail="reading-detail">Reading area</button>
+        </div>
+      </div>
+      <div class="df-step-details">
+        <div id="whole-page-detail"><p>The outline and the reading area give you two ways to move through the same page.</p></div>
+        <div id="outline-detail"><p>Use the outline to locate a heading.</p></div>
+        <div id="reading-detail"><p>Read the explanation under the heading you chose.</p></div>
+      </div>
+    </div>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Move over a step, focus it with Tab, or tap it. A figure step can point to a named moment in the animation. Whole page returns to the opening view.</p>
+
+    <h3 id="side-layout">Cards beside a figure</h3>
+    <div class="df-figure-steps" data-df-step-layout="side">
+      <figure class="df-figure" id="reading-route">
+        <svg viewBox="0 0 230 92" role="img" aria-label="A route from the start of a page to a heading">
+          <path id="reading-route-line" class="df-stroke" data-df-role="on-request" d="M 42 34 H 186" pathLength="1" stroke-width="3"/>
+          <circle class="df-fill" data-df-role="on-request" cx="42" cy="34" r="5"/>
+          <circle class="df-fill" data-df-role="on-request" cx="186" cy="34" r="5"/>
+          <text x="42" y="65" text-anchor="middle">Start</text>
+          <text x="186" y="65" text-anchor="middle">Heading</text>
+        </svg>
+        <figcaption>Choose Jump to heading to draw the route. This compact layout places the titles beside the figure on a wide screen.</figcaption>
+      </figure>
+      <div class="df-step-panel" role="group" aria-labelledby="reading-route-title" data-df-role="on-request">
+        <p class="df-step-heading" id="reading-route-title">Reading route</p>
+        <div class="df-step-list">
+          <button type="button" data-df-key="start" data-df-animation-key="start">Open the page</button>
+          <button type="button" data-df-key="jump" data-df-animation-key="jump">Jump to heading</button>
+        </div>
+      </div>
+    </div>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use grouped card panels for related options with explanations of their own. Use figure steps when the same diagram should change as readers move from one labelled state to another. Short labels leave space for the picture and details.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>In a card panel, Up, Down, Home and End move focus. Enter or Space selects the card. Figure steps select as soon as they receive focus. On a narrow screen, the panes stack. The highlight and labels identify the current choice in either theme. Print and pages opened with scripts off show all the written details.</p>
+
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a>, a recipe that uses it</li>
+      <li><a href="animations.html">SVG animations</a>, for a diagram with its own playback controls</li>
+      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a></li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

@@ -6,6 +6,9 @@
   <title>Base layout, text roles, tags, buttons · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"stepper": true}}
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -17,7 +20,7 @@
     <header>
       <p class="df-eyebrow">Write clearly</p>
       <h1>Base layout, text roles, tags, buttons</h1>
-      <p>Every DocForm page starts with a calm reading column, clear headings, and tidy lists and tables. Small labels, tags, and buttons add context and actions without shouting.</p>
+      <p>Every DocForm page starts with a calm reading column, clear headings, and tidy lists and tables. Labels organise quick facts, tags mark status, and buttons make actions easy to find.</p>
       <dl class="df-fields">
         <dt>Official name</dt><dd>Base layout · Text roles · Tags · Buttons</dd>
         <dt>Turned on</dt><dd><span class="df-tag" data-df-role="default">On by default</span></dd>
@@ -27,22 +30,78 @@
       </dl>
     </header>
 
-    <h2 id="see-it">See it</h2>
-    <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Base layout, text roles, tags, buttons in action. The caption will say what to notice.</figcaption>
+    <h2 id="see-it">The reading column</h2>
+    <figure id="see-it-demo" data-df-max-width="60%">
+      <p class="df-eyebrow">At a glance</p>
+      <dl class="df-fields">
+        <dt>Page title</dt><dd>Open a DocForm site</dd>
+        <dt>Group</dt><dd>Start here</dd>
+      </dl>
+      <figcaption>This demo has its own width limit. Notice how it stays centred inside the reading column.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Compare the demo’s width with the space available to this paragraph. Then make your browser window narrower and watch the labels move above their values as space runs out.</p>
+    <p>The <strong>reading column</strong> keeps lines short enough to follow. DocForm also keeps figures, tables, and code within that column. You can cap one block at a narrower width. Pictures can shrink to fit, and wide tables and code blocks can scroll sideways.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="headings-and-labels">Headings and labels</h2>
+    <h3 id="section-details">Section details</h3>
+    <p>Compare this page’s title, the section heading above, and the smaller “Section details” heading. Each size tells you how much of the page the heading covers. In the demo, “At a glance” is an <strong>eyebrow</strong>, a short label that introduces a block. The aligned pairs underneath are <strong>labelled fields</strong>. Use them for a handful of named facts a reader can scan.</p>
+
+    <h2 id="lists">List markers</h2>
+    <figure data-df-role="try">
+      <ol>
+        <li>Find a page by its title.</li>
+        <li>Open it from the sidebar.</li>
+      </ol>
+      <ul>
+        <li>Page title</li>
+        <li>Section heading</li>
+      </ul>
+      <figcaption>Number badges show order. Dots group items that can be read in any order.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Point at each item to see its marker react. The markers take their tint from the surrounding colour role. A list can also keep the browser’s plain markers.</p>
+    <ul data-df-no-list-style>
+      <li>Example with a plain browser marker</li>
+    </ul>
+
+    <h2 id="table-hover">Reading across a table</h2>
+    <table>
+      <caption>Move over a cell to see its row and column together.</caption>
+      <thead><tr><th scope="col">Reading aid</th><th scope="col">Where it appears</th><th scope="col">What it shows</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Sidebar</th><td>Beside the page</td><td>Pages in this site</td></tr>
+        <tr><th scope="row">Outline</th><td>In the sidebar</td><td>Headings on this page</td></tr>
+        <tr><th scope="row">Pager</th><td>At the end</td><td>Previous and next pages</td></tr>
+      </tbody>
+    </table>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Point at “Previous and next pages”. Follow the tinted row to “Pager” and the tinted column up to its heading. Very wide tables tint columns only in the first twelve cell positions.</p>
+
+    <h2 id="tags-and-buttons">Tags and buttons</h2>
+    <h3 id="examples-of-status">Reading aids <span class="df-tag" data-df-role="default">On by default</span></h3>
+    <table>
+      <caption>The same status tag works next to prose, in a heading, or inside a table.</caption>
+      <thead><tr><th scope="col">Feature</th><th scope="col">Availability</th></tr></thead>
+      <tbody><tr><th scope="row">TeX math</th><td><span class="df-tag" data-df-role="on-request">On request</span></td></tr></tbody>
+    </table>
+    <p>Sidenotes are <span class="df-tag" data-df-role="default">On by default</span>. A <strong>tag</strong> names a status in a few words. A <strong>button</strong> gives the reader an action. Its tint can use the same colour roles as tags, and an icon can sit beside its label.</p>
+    <p><a class="df-button" data-df-role="on-request" href="math.html"><span class="df-button-icon" aria-hidden="true">→</span> Open TeX math</a></p>
+    <figure>
+      <ol id="reading-order" data-df-stepper>
+        <li data-df-key="title"><strong data-df-step-label>Title</strong> Find out what the page covers.</li>
+        <li data-df-key="heading"><strong data-df-step-label>Section heading</strong> Find the part you need.</li>
+      </ol>
+      <figcaption>The step pill groups the arrow buttons and the step counter.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Move to the next step with the right arrow button. Use <kbd>Tab</kbd> to reach a button and <kbd>Enter</kbd> to use it.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Let headings and space do most of the work. Save tinted tags for statuses readers need to spot and prominent buttons for actions they’re likely to take.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Headings, lists, tags, and ordinary buttons retain their styling with scripts off. The step example shows both steps. On phones and in print, row and column headings still make a table readable without its hover tint.</p>
 
     <h2 id="related">Related</h2>
     <ul>

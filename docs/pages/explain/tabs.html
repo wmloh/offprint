@@ -6,6 +6,20 @@
   <title>Tabs · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "tabs": true,
+        "selection": true
+      },
+      "selectionGroups": {
+        "explain-reading-view": {
+          "persist": true
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../../../docform/css/tabs.css">
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -29,24 +43,49 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Tabs in action. The caption will say what to notice.</figcaption>
+      <div class="df-tabs" data-df-selection-group="explain-reading-view">
+        <div data-df-tab="Read" data-df-key="read" data-df-initial>
+          <p>Follow the headings to see how the page is organised.</p>
+        </div>
+        <div data-df-tab="Explore" data-df-key="explore">
+          <p>Open Search to jump to a word you want to find.</p>
+        </div>
+      </div>
+      <div class="df-tabs" data-df-selection-group="explain-reading-view">
+        <div data-df-tab="Search palette" data-df-key="explore">
+          <p>Type a word and choose a result to jump to it.</p>
+        </div>
+        <div data-df-tab="Section outline" data-df-key="read" data-df-initial>
+          <p>Choose a heading in the outline to jump to its section.</p>
+        </div>
+      </div>
+      <figcaption>The reading choices above and their matching tips below switch together, even though their labels and order differ.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Choose Explore in the upper set. The lower set jumps to Search palette. Then choose Section outline below and watch the upper set return to Read.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Starting tabs and groups</h2>
+    <figure>
+      <div class="df-tabs">
+        <div data-df-tab="Find a page"><p>Open a page group in the sidebar and choose a page.</p></div>
+        <div data-df-tab="Find a section" data-df-initial><p>Pick a heading in the current page’s outline.</p></div>
+      </div>
+      <figcaption>This independent set starts on its second tab and stays put when the paired sets above change.</figcaption>
+    </figure>
+    <p>Each <span data-df-term="tab panel">tab panel</span> holds its own content. The first tab normally opens at the start. The author can choose a different starting tab, as in this set. Sets in the same linked selection group match equivalent choices even when their labels differ. A group can also remember a choice between pages.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use tabs for short alternatives that answer the same question, such as different ways to find a section. Put facts everyone needs in the surrounding text so they are visible whichever panel is open.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Press Tab to reach the selected tab. Use Left and Right to move and select, or Home and End to jump to the ends. Press Tab again to continue into the selected panel. On narrow screens the tab strip can scroll sideways. The underline and weight mark the choice in either theme.</p>
+    <p>With scripts off, all panel contents appear together. Print the selected panel, then switch and print again if you need another.</p>
+
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a>, a recipe that uses it</li>
+      <li><a href="selection.html#remembered-choices">See this group remember your choice between pages</a></li>
+      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a></li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

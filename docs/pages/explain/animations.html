@@ -6,7 +6,16 @@
   <title>SVG animations · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "animation": true
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../../../docform/css/anim.css">
   <script src="../../../docform/docform.js"></script>
+  <script src="../../assets/animations.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
@@ -28,25 +37,53 @@
     </header>
 
     <h2 id="see-it">See it</h2>
-    <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>SVG animations in action. The caption will say what to notice.</figcaption>
+    <figure id="see-it-demo" class="df-figure">
+      <svg viewBox="0 0 480 124" role="img" aria-label="A path leads from a search box to a matching heading">
+        <path id="search-route" class="df-stroke" data-df-role="on-request" d="M 104 51 H 366" pathLength="1" stroke-width="3"/>
+        <circle id="search-marker" class="df-fill" data-df-role="try" cx="104" cy="51" r="6"/>
+        <circle id="heading-ring" class="df-stroke" data-df-role="default" cx="366" cy="51" r="15" stroke-width="3"/>
+        <circle class="df-fill" data-df-role="default" cx="366" cy="51" r="5"/>
+        <text x="104" y="93" text-anchor="middle">Search</text>
+        <text id="matching-heading" x="366" y="93" text-anchor="middle">Matching heading</text>
+      </svg>
+      <figcaption>Follow a search from the place you type a word to the heading you can open.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Press Play and watch the line draw, the heading label fade in, the dot move and the ring grow. Pause, then drag the timeline backwards. Scrubbing means dragging to any moment in the animation.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Four ways to change a picture</h2>
+    <dl class="df-fields">
+      <dt>Draw</dt><dd>Reveal a line along its length to show a route.</dd>
+      <dt>Fade</dt><dd>Change how visible a shape or label is.</dd>
+      <dt>Move</dt><dd>Slide a shape to a new position.</dd>
+      <dt>Attribute</dt><dd>Change a property of a shape, such as the radius of the green ring.</dd>
+    </dl>
+    <p>SVG pictures are built from shapes, so they stay sharp when enlarged. A single step can combine several changes or stagger their starts. The caption beneath the controls changes with the current step. Previous and Next jump between steps.</p>
+
+    <h3 id="autoplay">Start when the figure comes into view</h3>
+    <p>Scroll until about half of the next figure is visible. Keep the pointer outside it to see playback start on its own.</p>
+    <figure id="autoplay-outline" class="df-figure" data-df-animation-autoplay>
+      <svg viewBox="0 0 480 114" role="img" aria-label="The outline points to a section of the page">
+        <rect class="df-fill-bg" data-df-role="on-request" x="68" y="32" width="104" height="46" rx="7"/>
+        <rect class="df-fill-bg" data-df-role="default" x="308" y="32" width="104" height="46" rx="7"/>
+        <text x="120" y="60" text-anchor="middle">Outline</text>
+        <text x="360" y="60" text-anchor="middle">Section</text>
+        <path id="outline-route" class="df-stroke" data-df-role="on-request" d="M 173 55 H 306 M 297 47 L 306 55 L 297 63" pathLength="1" stroke-width="3"/>
+      </svg>
+      <figcaption>The arrow appears when this figure enters view. Its playback controls stay available afterwards.</figcaption>
+    </figure>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use an animation when the order or movement explains something a still picture would leave unclear. Keep the opening picture readable and put one observation in each step caption. Leave autoplay off when nearby prose needs the reader’s attention first.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Use Tab to reach the buttons and timeline. The arrow keys move the focused timeline. The labels stay legible at narrow widths and use the page’s light or dark colours. Pause at the frame you want before printing. With scripts off, the drawings and their regular captions remain visible.</p>
+
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="../recipes/teach-a-concept.html">Teach a concept</a>, a recipe that uses it</li>
+      <li><a href="cards.html#what-it-does">Figure steps</a>, for jumping to named moments from a card list</li>
+      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a></li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

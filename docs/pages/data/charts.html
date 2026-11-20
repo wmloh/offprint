@@ -6,6 +6,46 @@
   <title>SVG charts · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"chart": true, "results": true, "data": true, "parameters": true, "selection": true},
+      "parameterScopes": {
+        "module-filter": {
+          "kinds": {
+            "type": "multiselect",
+            "choices": [
+              {"value": "script", "label": "Scripts"},
+              {"value": "style", "label": "Stylesheets"}
+            ]
+          }
+        }
+      },
+      "options": {
+        "chart": {
+          "instances": {
+            "module-scatter": {
+              "mapping": {
+                "x": "bytes",
+                "value": "lines",
+                "group": {
+                  "field": "kind",
+                  "series": [
+                    {"key": "script", "label": "Scripts"},
+                    {"key": "style", "label": "Stylesheets"}
+                  ]
+                },
+                "pointKey": "file"
+              },
+              "filter": {"scope": "module-filter", "fields": {"kinds": "kind"}}
+            }
+          }
+        },
+        "results": {
+          "instances": {"module-table": {"filter": {"scope": "module-filter", "fields": {"kinds": "kind"}}}}
+        }
+      }
+    }
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -28,24 +68,187 @@
     </header>
 
     <h2 id="see-it">See it</h2>
+
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>SVG charts in action. The caption will say what to notice.</figcaption>
+      <div data-df-chart="line" data-df-brush data-df-rescale>
+        <script type="application/json">
+          {
+            "x": {"type": "time", "label": "Date (UTC)"},
+            "y": {"label": "Commits", "min": 0},
+            "gaps": "break",
+            "referenceLines": [{"axis": "y", "value": 10, "label": "Example guide at 10"}],
+            "series": [
+              {
+                "name": "Total so far",
+                "data": [
+                  ["2026-11-17T00:00:00Z", 8],
+                  ["2026-11-18T00:00:00Z", 33],
+                  ["2026-11-19T00:00:00Z", 34]
+                ]
+              },
+              {
+                "name": "Commits per day",
+                "data": [
+                  ["2026-11-17T00:00:00Z", 8],
+                  ["2026-11-18T00:00:00Z", null],
+                  ["2026-11-19T00:00:00Z", 1]
+                ]
+              }
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Date (UTC)</th><th scope="col">Total so far</th><th scope="col">Commits per day</th></tr></thead>
+          <tbody>
+            <tr><td>2026-11-17</td><td>8</td><td>8</td></tr>
+            <tr><td>2026-11-18</td><td>33</td><td>Omitted for demo</td></tr>
+            <tr><td>2026-11-19</td><td>34</td><td>1</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Repository commits by date. One daily count is deliberately omitted to show a gap.</figcaption>
     </figure>
+
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Hover for exact values, toggle <strong>Total so far</strong> in the legend, then drag across part of the chart to narrow the dates. Open <strong>Table</strong> to see only the visible values. Choose <strong>Reset range</strong> to restore the full span.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Time, ranges, and gaps</h2>
+    <p>A time axis spaces points by elapsed time. This chart’s daily series breaks at an explicitly missing value. The dashed guide marks a reference value of 10 commits. This demo also rescales the vertical axis to the visible values as you hide a series or narrow the date range. Authors can keep the original vertical scale instead.</p>
+    <h2 id="categories">Compare categories with bars</h2>
 
+    <figure>
+      <div data-df-chart="bar">
+        <script type="application/json">
+          {
+            "x": "Reference group",
+            "y": "Number of references",
+            "markedCategories": ["data"],
+            "series": [
+              {
+                "name": "References",
+                "data": [["setup", 3], ["layout", 7], ["reading", 13], ["interact", 13], ["data", 9]]
+              }
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>
+          <tbody>
+            <tr><td>setup</td><td>3</td></tr>
+            <tr><td>layout</td><td>7</td></tr>
+            <tr><td>reading</td><td>13</td></tr>
+            <tr><td>interact</td><td>13</td></tr>
+            <tr><td>data</td><td>9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Bar height shows the reference count for each group. The asterisk picks out the data group.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Inspect the marked bar and compare its count with the reading group.</p>
+
+    <h2 id="shared-filter">Compare file sizes with a scatter chart</h2>
+    <p>A scatter chart puts one dot at the intersection of two numbers. Here, each dot uses the size and line count of a repository file, and the series group the records by kind. A linear axis adds the same amount over equal distances. The horizontal log scale here multiplies by ten at each major step and takes only positive values.</p>
+    <div class="df-params" data-df-parameter-scope="module-filter">
+      <div data-df-parameter="kinds" data-df-parameter-label="File kinds to show"></div>
+    </div>
+
+    <figure>
+      <div id="module-scatter" data-df-chart="scatter" data-df-source="Module sizes"
+        data-df-x-type="log" data-df-x-label="File size (bytes, log scale)" data-df-y-label="Lines"
+        data-df-selection-group="module-point">
+        <table>
+        <thead><tr><th scope="col">Module file</th><th scope="col">Kind</th><th scope="col">Bytes</th><th scope="col">Lines</th></tr></thead>
+          <tbody>
+            <tr><td>js/anim.js</td><td>script</td><td>22858</td><td>608</td></tr>
+            <tr><td>js/chart.js</td><td>script</td><td>109152</td><td>2438</td></tr>
+            <tr><td>css/anim.css</td><td>style</td><td>2276</td><td>98</td></tr>
+            <tr><td>css/chart.css</td><td>style</td><td>7422</td><td>376</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Each dot is a library file. Both the plot and the results table use the same file-kind filter.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Clear <strong>Stylesheets</strong> above the plot and watch the plot. Open <strong>Show the file table</strong> to see the same filtered rows. Use the button to highlight the chart module’s dot, or click the dot itself to toggle its selection.</p>
+
+    <p><button type="button" class="df-button" data-df-selection-group="module-point" data-df-key="js/chart.js">Highlight the chart module</button></p>
+
+    <details data-df-no-bubble>
+      <summary>Show the file table</summary>
+      <table id="module-table" data-df-results data-df-source="Module sizes">
+        <caption>Files shown by the shared filter (four examples with scripts off)</caption>
+        <thead><tr><th scope="col" data-df-field="file">Module file</th><th scope="col" data-df-field="kind">Kind</th><th scope="col" data-df-field="bytes">Bytes</th><th scope="col" data-df-field="lines">Lines</th></tr></thead>
+        <tbody>
+        <tr><td>js/anim.js</td><td>script</td><td>22858</td><td>608</td></tr>
+        <tr><td>js/chart.js</td><td>script</td><td>109152</td><td>2438</td></tr>
+        <tr><td>css/anim.css</td><td>style</td><td>2276</td><td>98</td></tr>
+        <tr><td>css/chart.css</td><td>style</td><td>7422</td><td>376</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <h2 id="intervals">Show uncertainty with intervals</h2>
+
+    <figure>
+      <div data-df-chart="line">
+        <script type="application/json">
+          {
+            "x": "Run",
+            "y": "Reading time (seconds)",
+            "series": [
+              {
+                "name": "Reading time",
+                "data": [
+                  {
+                    "x": 1,
+                    "y": 30,
+                    "interval": {"lower": 26, "upper": 34, "label": "Example bounds", "count": 8}
+                  },
+                  {
+                    "x": 2,
+                    "y": 27,
+                    "interval": {"lower": 22, "upper": 31, "label": "Example bounds", "count": 8}
+                  },
+                  {
+                    "x": 3,
+                    "y": 24,
+                    "interval": {"lower": 20, "upper": 28, "label": "Example bounds", "count": 8}
+                  }
+                ]
+              }
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Run</th><th scope="col">Time (seconds)</th><th scope="col">Example bounds (seconds)</th><th scope="col">Count</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>30</td><td>26–34</td><td>8</td></tr>
+            <tr><td>2</td><td>27</td><td>22–31</td><td>8</td></tr>
+            <tr><td>3</td><td>24</td><td>20–28</td><td>8</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative reading times with supplied lower and upper bounds. The shaded band joins the bounds across successive runs.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Inspect the middle point and switch to Table to read the estimate, bounds, and count.</p>
+
+    <p>Bars and scatter points show supplied intervals as whiskers. A line chart can also use a whisker where only one point has bounds.</p>
+    <h2 id="shared-position">Share a position between charts</h2>
+    <p>Charts with a common linear horizontal scale can share an inspection cursor while keeping their own vertical scales and visible ranges. Try the two charts in <a href="playback.html#shared-position">Guided chart playback</a>.</p>
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
-
+    <p>Use a line to show change in order, bars to compare separate categories, and dots to see how two measurements relate. Give the chart room and keep the nearby prose short.</p>
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p><kbd>Tab</kbd> to the plot and use the arrow keys or <kbd>Home</kbd> and <kbd>End</kbd> to inspect values. In a chart with a range brush, <kbd>+</kbd> and <kbd>−</kbd> change the range and <kbd>Shift</kbd> with the left or right arrow pans it. Use Table for exact values on a small screen or in print. The charts follow the page theme, and static tables give readers values with scripts off.</p>
 
     <h2 id="related">Related</h2>
     <ul>
+      <li><a href="tables.html">Concept tables and results tables</a></li>
+      <li><a href="playback.html">Guided chart playback</a></li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>

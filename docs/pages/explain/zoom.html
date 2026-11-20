@@ -6,6 +6,16 @@
   <title>Figure zoom and zoom tools · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "zoom-tools": true,
+        "chart": true,
+        "animation": true
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../../../docform/css/anim.css">
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -17,7 +27,7 @@
     <header>
       <p class="df-eyebrow">Explain step by step</p>
       <h1>Figure zoom and zoom tools</h1>
-      <p>Figure zoom opens any picture full screen and returns it to its place afterwards. Zoom tools add a magnifier, a laser pointer, pens, and a ruler for presenting.</p>
+      <p>Figure zoom opens a picture or chart in a full-screen view and returns it to its place afterwards. Zoom tools add a magnifier, a laser pointer, pens, and a ruler for presenting.</p>
       <dl class="df-fields">
         <dt>Official name</dt><dd>Figure zoom · Zoom tools</dd>
         <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
@@ -28,25 +38,73 @@
     </header>
 
     <h2 id="see-it">See it</h2>
-    <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Figure zoom and zoom tools in action. The caption will say what to notice.</figcaption>
+    <figure id="see-it-demo" class="df-figure">
+      <svg viewBox="0 0 480 190" role="img" aria-label="A page sketch showing the sidebar, reading column, and section outline">
+        <rect class="df-grid" x="28" y="20" width="424" height="150" rx="9"/>
+        <rect class="df-fill-bg" data-df-role="on-request" x="39" y="31" width="97" height="128" rx="6"/>
+        <rect class="df-fill-bg" data-df-role="default" x="146" y="31" width="188" height="128" rx="6"/>
+        <rect class="df-fill-bg" data-df-role="try" x="344" y="31" width="97" height="128" rx="6"/>
+        <text x="87" y="62" text-anchor="middle">Sidebar</text>
+        <text x="240" y="62" text-anchor="middle">Reading column</text>
+        <text x="393" y="62" text-anchor="middle">Outline</text>
+        <path class="df-grid" d="M 57 86 h 60 m -60 18 h 43 m -43 18 h 56 M 171 86 h 137 m -137 18 h 104 m -104 18 h 128 M 359 86 h 65 m -65 18 h 51 m -51 18 h 58"/>
+      </svg>
+      <figcaption>Open the page sketch to inspect or mark its three reading areas. Figures like this are zoomable automatically.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Click the sketch, or focus it with Tab and press Enter or Space. Press M and move the lens over a label. Press Escape to close the enlarged view and return to your place on the page.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Which blocks can open</h2>
+    <p>Images and figures in the reading area open automatically when Figure zoom is enabled. A page can also opt a plain block in or keep a figure in place. Try these two examples.</p>
+    <div class="df-callout" data-df-role="tip" data-df-no-reveal data-df-zoom>
+      <p><strong>Opted-in block.</strong> Click or focus this reading tip to enlarge it. Use the outline to return to a section.</p>
+    </div>
+    <figure id="excluded-sketch" class="df-figure" data-df-no-zoom>
+      <svg viewBox="0 0 420 85" role="img" aria-label="Three lines represent a compact section outline">
+        <path class="df-stroke" data-df-role="on-request" stroke-width="3" d="M 126 24 h 168 M 146 43 h 128 M 146 62 h 98"/>
+      </svg>
+      <figcaption>This small outline sketch opts out. Clicking it leaves it in place.</figcaption>
+    </figure>
+
+    <h3 id="zoom-tools">Tools and shortcut keys</h3>
+    <table>
+      <thead><tr><th scope="col">Tool</th><th scope="col">Key</th><th scope="col">What it does</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Cursor</th><td>V</td><td>Use the figure’s own controls as usual.</td></tr>
+        <tr><th scope="row">Magnifier</th><td>M</td><td>Move a circular lens over the figure. It starts at 2.5×. Scroll or use [ and ] to adjust between 1.5× and 6×.</td></tr>
+        <tr><th scope="row">Laser pointer</th><td>L</td><td>Move a glowing dot with a trail that fades.</td></tr>
+        <tr><th scope="row">Pen</th><td>P</td><td>Drag to draw a thin line.</td></tr>
+        <tr><th scope="row">Highlighter</th><td>H</td><td>Drag to draw a wide, translucent mark.</td></tr>
+        <tr><th scope="row">Crosshair or ruler</th><td>C</td><td>Read chart coordinates under the pointer, or drag a ruler on a picture. Hold Shift to constrain the ruler’s direction.</td></tr>
+      </tbody>
+    </table>
+    <p>Pen and Highlighter have red, blue, green, yellow and purple swatches. Each remembers its own colour while the view is open. Use Undo (Ctrl+Z or Cmd+Z) for the last mark or Clear ink for all marks. Closing the view clears the marks and measurements.</p>
+
+    <h3 id="chart-crosshair">Measure on a chart</h3>
+    <figure>
+      <div data-df-chart="line" data-df-height="205" data-df-x-label="Reference groups counted" data-df-y-label="Running total">
+        <table>
+          <thead><tr><th scope="col">Groups counted</th><th scope="col" data-df-role="on-request">References</th></tr></thead>
+          <tbody><tr><td>1</td><td>3</td></tr><tr><td>2</td><td>10</td></tr><tr><td>3</td><td>23</td></tr></tbody>
+        </table>
+      </div>
+      <figcaption>The cumulative reference counts cover Setup, Layout and Reading. The crosshair reads the horizontal and vertical values at the pointer.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Open the chart and press C. Move the pointer over the plotted line to read its coordinates. Try C on the sketch above to drag a ruler, which reports distance in picture units or image pixels.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use figure zoom when a chart’s labels or a diagram’s details need more room, or when several people are viewing the same screen. Use the laser for a quick cue and ink for marks you want to keep in view while discussing the figure.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Tab moves through controls inside the enlarged view. Escape, the Close button or clicking outside the figure closes it and returns focus. The same live figure moves back to the page with its own settings, such as the chart’s table view. Drawings and the ruler use a pointer. The controls follow the theme, and the figure fits the available space.</p>
+    <p>Close the enlarged view before printing the page. With scripts off, the figures stay in the reading column.</p>
+
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="../recipes/present-and-publish.html">Present and publish a site</a>, a recipe that uses it</li>
+      <li><a href="../data/charts.html">SVG charts</a>, for interactive data views</li>
+      <li><a href="../recipes/present-and-publish.html">Present and publish a site</a></li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

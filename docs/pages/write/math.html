@@ -6,6 +6,12 @@
   <title>TeX math · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"math": true},
+      "options": {"math": {"macros": {"\\dfRead": "r", "\\dfTotal": "t"}}}
+    }
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -27,22 +33,43 @@
       </dl>
     </header>
 
-    <h2 id="see-it">See it</h2>
+    <h2 id="see-it">A formula in a sentence</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>TeX math in action. The caption will say what to notice.</figcaption>
+      <p>Two section headings and three subheadings make <span class="df-math">2 + 3 = 5</span> entries in this example outline.</p>
+      <figcaption>The calculation sits on the same line as the sentence.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Read the sentence aloud. The calculation is <strong>inline math</strong>. It fits between the words without interrupting their flow.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="display">A formula on its own line</h2>
+    <figure>
+      <div class="df-math" data-df-display">\frac{\dfRead}{\dfTotal} = \frac{2}{5}</div>
+      <figcaption>Display math gives the fraction room to stack. Here the reader has covered two of five sections.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Find the line separating the top and bottom of each fraction. <strong>Display math</strong> gives taller symbols enough space to read at a glance. These numbers are illustrative.</p>
+
+    <h2 id="macros">Symbols that stay consistent</h2>
+    <figure>
+      <p><span class="df-math">\dfRead</span> is the number of sections read. <span class="df-math">\dfTotal</span> is the total number of sections.</p>
+      <figcaption>Notice that the letters in the sentence match the ones in the displayed fraction.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Compare the letters with the formula above. A <strong>macro</strong> is a reusable shorthand for a symbol or piece of a formula. A page or an entire site can share shorthand so the same idea looks the same wherever it appears.</p>
+
+    <h2 id="math-in-tooltips">Math inside a tooltip</h2>
+    <figure>
+      <p>The <span data-df-tip="With $r$ sections read out of $t$ total, the fraction read is $\frac{r}{t}$.">fraction read</span> tells you how far you are through a guide.</p>
+      <figcaption>The brief definition contains a typeset fraction.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Rest the pointer over “fraction read” or reach it with <kbd>Tab</kbd>. Notice how the formula appears inside the definition.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use inline math for a short expression the reader needs mid-sentence. Give a formula its own line when readers will stop to study it, and explain its symbols nearby.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>DocForm includes KaTeX, the tool that draws the formulas, so math works offline. With scripts off, the original TeX notation stays visible. Put any essential explanation in the page text so it’s available in print and without opening a tooltip.</p>
 
     <h2 id="related">Related</h2>
     <ul>

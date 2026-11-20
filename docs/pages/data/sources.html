@@ -6,6 +6,9 @@
   <title>Named data sources and data views · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"data-view": true, "tree": true, "code": true, "dropzone": true}}
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -28,24 +31,74 @@
     </header>
 
     <h2 id="see-it">See it</h2>
-    <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Named sources and data views in action. The caption will say what to notice.</figcaption>
-    </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <figure id="see-it-demo">
+      <div id="reference-preview" data-df-source="Reference counts" data-df-data-view="table" data-df-max-rows="2">
+        <table>
+          <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>
+          <tbody>
+            <tr><td>setup</td><td>3</td></tr>
+            <tr><td>layout</td><td>7</td></tr>
+            <tr><td>reading</td><td>13</td></tr>
+            <tr><td>interact</td><td>13</td></tr>
+            <tr><td>data</td><td>9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Repository reference counts by group. The table starts with two rows.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Choose <strong>Show more</strong> to add the next rows. The same five records feed the two views below.</p>
+
+    <h2 id="what-it-does">Three ways to read the same data</h2>
+    <p>A named source holds the records, or individual entries. Each view reads that source and chooses how to display it. A table lines up fields for comparison. A code view keeps the original text, including commas and line breaks. A tree opens each record to show its fields.</p>
+
+    <figure>
+      <div data-df-source="Reference counts" data-df-data-view="code"><p>The plain-text view opens with scripts on.</p></div>
+      <div data-df-source="Reference counts" data-df-data-view="tree" data-df-tree-depth="0"><p>The record tree opens with scripts on.</p></div>
+      <figcaption>The same counts in their original CSV text and as a list of expandable records.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Open the first branch in the tree and find the group name and count in both views.</p>
+
+    <p>Sources can come from CSV (a table stored as text), JSON or YAML (text that can hold lists and nested fields), or values supplied directly to the page. In automatic mode, rows with matching fields appear as a table. Nested values appear as text unless the author asks for a tree.</p>
+    <h3 id="limits-and-errors">Limits and unreadable data</h3>
+    <p>A size cap can hold back a large preview until you choose <strong>Show anyway</strong>. A row cap loads a table in batches. A parse error means DocForm could not read the structure of the data. In a raw view, the error appears next to the original text.</p>
+
+    <figure>
+      <div data-df-source="Reference counts" data-df-data-view="table" data-df-max-size="32"><p>This preview uses a deliberately low size cap.</p></div>
+      <script type="application/json" data-df-source="Broken example">{"references": }</script>
+      <div data-df-source="Broken example" data-df-data-view="auto"><p>This example deliberately leaves a number out.</p></div>
+      <figcaption>The first view offers to open data past its preview limit. The second points out an illustrative missing value.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Choose <strong>Show anyway</strong>, then find the spot where the broken example leaves the reference count blank.</p>
+
+    <h3 id="local-overrides">Replace one view</h3>
+    <p>A local override changes just its target. <strong>Reset</strong> brings that view back to the latest shared source. A shared replacement updates all its views together when each can read the incoming records. If any view rejects the replacement, the previous data stays in place.</p>
+
+    <figure>
+      <div data-df-dropzone data-df-accept="csv" data-df-target="reference-preview">
+        <p>Replace only the first table with the <a href="../../assets/samples/reading-and-data.csv" download>reading and data sample</a>.</p>
+      </div>
+      <figcaption>Use the same columns with fewer rows to see how a local override behaves.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Load the sample and return to the first table to see the two replacement rows. Compare it with the unchanged text view, then choose <strong>Reset</strong> at the dropzone.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
-
+    <p>Use a named source when readers need several views of the same records. When a chart carries the story, put the raw view below it so readers can check exact values at their own pace.</p>
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p><kbd>Tab</kbd> reaches Show more and the file picker. On a phone, wide tables can scroll sideways within the reading column. The table uses the page theme and the original counts remain readable in the first table with scripts off. Load all the rows you want before printing.</p>
 
     <h2 id="related">Related</h2>
     <ul>
+      <li><a href="trees.html">Data trees</a></li>
+      <li><a href="dropzones.html">Local file dropzones</a></li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>

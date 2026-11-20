@@ -82,7 +82,7 @@ docform/: Copyable offline library folder
 docs/: Human-facing beginner DocForm site with a Start here orientation beside the legacy Markdown guides
   index.html: Welcome page
   pages/: Start here, hierarchy, feature guide, recipe, and reference pages in group folders, plus the glossary page
-  assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data; generated search index
+  assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index
 examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
   pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and generated search
   transformers/: Decoder-only guide with linked attention, decoding presets, and training diagnostics with synchronized playback, uncertainty, shared filters, paired comparisons, matrices, and offline file replacement

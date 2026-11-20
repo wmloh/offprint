@@ -6,6 +6,10 @@
   <title>Section lines and split views · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"split-views": true, "reveals": true}}
+  </script>
+  <link rel="stylesheet" href="../../../docform/css/reveal.css">
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -29,20 +33,46 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Section lines and split views in action. The caption will say what to notice.</figcaption>
+      <div class="df-split" data-df-split="2:1" data-df-align="center">
+        <div>
+          <p class="df-eyebrow">Main pane</p>
+          <ol>
+            <li>Read the title to learn what the page offers.</li>
+            <li>Scan the headings to find the part you need.</li>
+            <li>Follow the line beside a heading to see where its section ends.</li>
+          </ol>
+        </div>
+        <div>
+          <p class="df-eyebrow">Companion pane</p>
+          <p>The line groups a heading with its content.</p>
+        </div>
+      </div>
+      <figcaption>The wider pane holds the steps. The shorter pane is centred vertically beside them.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>On a wide screen, reload at the top and scroll until this example enters view. The wider pane glides in from the left, followed by its companion from the right.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">How the layout works</h2>
+    <h3 id="section-lines">Section lines</h3>
+    <p>Look along the left margin beside the main headings on this page. Each line runs from a main heading to the end of its section. Smaller headings, like the one above, belong to the same section and share its line. In focus mode the line stays sharp even when nearby text softens.</p>
+    <p>The default sequence is blue, green, purple, orange, pink, and brown, then blue again. This page uses the site’s tip role on the next main heading to show a single override. That heading still takes its place in the sequence, so the section after it gets orange.</p>
 
-    <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <h3 id="pane-shares">Split views</h3>
+    <figure>
+      <div class="df-split" data-df-no-reveal>
+        <div><p class="df-eyebrow">First pane</p><p>Find a page using the sidebar.</p></div>
+        <div><p class="df-eyebrow">Second pane</p><p>Find a section using the outline.</p></div>
+      </div>
+      <figcaption>The default gives both panes equal width, aligns them at the top, and can stay still as you scroll.</figcaption>
+    </figure>
+    <p>Shares describe how the available width is divided after the gap. Two to one gives the first pane twice as much room as the second. Vertical centring lines up the middle of each pane, which helps when one is much shorter. With scroll reveals enabled, the panes enter once per visit, one after another. That entrance can be turned off for individual splits.</p>
+
+    <h2 id="when-to-use" data-df-role="tip">When to reach for it</h2>
+    <p>Use section lines on long pages where readers need to see where one idea ends and the next begins. Give a heading its own role colour when the words also explain what the reader should notice.</p>
+    <p>Use a split when readers need to see two related blocks together, such as a diagram and its explanation. Keep both panes short enough to take in at a glance, and give extra width to the pane that needs it.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>On a narrow screen the panes stack in reading order. The numbered section rail takes priority if it overlaps the section lines. In print the lines shorten to marks beside headings and the panes print fully visible. With scripts off, the section marks stay at heading height and the panes stay visible in equal columns or stack on a narrow screen.</p>
 
     <h2 id="related">Related</h2>
     <ul>

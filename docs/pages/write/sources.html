@@ -6,6 +6,19 @@
   <title>Cross-references and citations · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"math": true},
+      "options": {
+        "citations": {
+          "entries": {
+            "guiding-the-eye": {"title": "Visual hierarchy: guiding the eye", "venue": "DocForm guide", "note": "Shows how readers scan a page."},
+            "signal-ladder": {"title": "The signal ladder", "venue": "DocForm guide", "note": "Groups page features by how strongly they draw attention."}
+          }
+        }
+      }
+    }
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -27,25 +40,65 @@
       </dl>
     </header>
 
-    <h2 id="see-it">See it</h2>
-    <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Cross-references and citations in action. The caption will say what to notice.</figcaption>
+    <h2 id="see-it">Numbers for figures, tables, and equations</h2>
+    <figure id="outline-figure">
+      <p class="df-eyebrow">Reading order</p>
+      <p><strong>Title → Section heading → Caption</strong></p>
+      <figcaption>Three landmarks to look for when scanning a page.</figcaption>
+    </figure>
+    <table id="outline-table">
+      <caption>Illustrative counts for a page outline.</caption>
+      <thead><tr><th scope="col">Kind of heading</th><th scope="col">Count</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Sections</th><td>3</td></tr>
+        <tr><th scope="row">Subsections</th><td>2</td></tr>
+      </tbody>
+    </table>
+    <div class="df-math" id="outline-equation" data-df-display>3 + 2 = 5</div>
+    <p>Follow the links to the <a href="#outline-figure">scanning figure</a>, the <a href="#outline-table">heading counts</a>, or the <a href="#outline-equation">total equation</a>.</p>
+    <p>The same figure has an automatically labelled link here: <a href="#outline-figure" aria-label="Figure 1, landmarks in reading order"></a><noscript>the scanning figure</noscript>.</p>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Point at one of these links or reach it with <kbd>Tab</kbd> for a preview. Then choose it and watch the linked item briefly light up.</p>
+    <noscript><p>Numbers and previews appear when scripts are on. The figure, table, and equation are shown just above.</p></noscript>
+    <p>A <strong>cross-reference</strong> points to another part of the document. DocForm counts figures, tables, and equations separately on each page and can fill in the link text with the right number.</p>
+
+    <h2 id="numbering-options">Choosing what to number</h2>
+    <figure data-df-no-number>
+      <p>Read the title. Scan the headings. Stop at the section you need.</p>
+      <figcaption>This reminder has a caption and has opted out of numbering.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Compare this caption with the one above. A figure or table with a caption or a link target can be numbered automatically. By default, display equations are numbered when they have a link target or are marked for numbering. A page can also number all its display equations.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="cross-page-previews">A look at another page</h2>
+    <p>For a look at how readers scan a page, visit <a href="../hierarchy/guiding-the-eye.html">Visual hierarchy: guiding the eye</a>.</p>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Pause over the link or reach it with <kbd>Tab</kbd> before opening it. The preview draws its title and a little text from the offline search index. If the index is unavailable, the card shows the link’s address.</p>
+
+    <h2 id="citations">Giving credit</h2>
+    <p>Start with a title and a few landmarks the eye can find easily <cite data-df-cite="guiding-the-eye">(Visual hierarchy: guiding the eye)</cite>. Save the strongest colour accents for things that need immediate attention <cite data-df-cite="signal-ladder">(The signal ladder)</cite>.</p>
+    <p>Both guides cover ways to direct attention <cite data-df-cite="guiding-the-eye, signal-ladder">(Visual hierarchy: guiding the eye and The signal ladder)</cite>.</p>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Pause over a bracketed number or reach it with <kbd>Tab</kbd> to see the full source in a card. Choose the number to jump to the source list, then use its return arrow to go back to the first mention.</p>
+    <p>A <strong>citation</strong> credits a source. DocForm numbers sources in the order you first mention them, reuses the number on later mentions, and builds a <strong>bibliography</strong>, the list of cited sources.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use cross-references when readers may want to inspect a figure or equation again. Use citations when a claim comes from a source readers may want to look up.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Give each figure and table a caption that makes sense in print and on a narrow screen. With scripts off, the source titles stay in the paragraphs and the bibliography still gives their names.</p>
+
+    <h2 id="bibliography">Bibliography</h2>
+    <div data-df-bibliography>
+      <ol>
+        <li>Visual hierarchy: guiding the eye. DocForm guide.</li>
+        <li>The signal ladder. DocForm guide.</li>
+      </ol>
+    </div>
 
     <h2 id="related">Related</h2>
     <ul>
+      <li><a href="../hierarchy/signal-ladder.html">The signal ladder</a></li>
       <li><a href="../recipes/teach-a-concept.html">Teach a concept</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>

@@ -6,6 +6,69 @@
   <title>Parameters and presets · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "parameters": true
+      },
+      "parameterScopes": {
+        "practice": {
+          "pages": {
+            "type": "range",
+            "min": 1,
+            "max": 5,
+            "step": 1,
+            "default": 2
+          },
+          "pace": {
+            "type": "select",
+            "choices": [
+              {
+                "value": "quick",
+                "label": "Quick"
+              },
+              {
+                "value": "careful",
+                "label": "Careful"
+              }
+            ]
+          },
+          "review": {
+            "type": "toggle"
+          },
+          "tools": {
+            "type": "multiselect",
+            "choices": [
+              {
+                "value": "outline",
+                "label": "Outline"
+              },
+              {
+                "value": "search",
+                "label": "Search"
+              }
+            ],
+            "default": [
+              "outline"
+            ]
+          },
+          "minutesPerPage": {
+            "type": "number",
+            "default": 2
+          }
+        },
+        "comparison": {
+          "pages": {
+            "type": "range",
+            "min": 1,
+            "max": 5,
+            "step": 1,
+            "default": 4
+          }
+        }
+      }
+    }
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -28,25 +91,59 @@
     </header>
 
     <h2 id="see-it">See it</h2>
-    <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Parameters in action. The caption will say what to notice.</figcaption>
+    <figure id="see-it-demo" data-df-parameter-scope="practice">
+      <div class="df-params">
+        <div data-df-parameter="pages" data-df-parameter-label="Pages to read"><p>Pages to read: 2</p></div>
+        <div data-df-parameter="pace" data-df-parameter-label="Reading pace"><p>Reading pace: Quick</p></div>
+        <div data-df-parameter="review" data-df-parameter-label="Include a review"><p>Include a review: Off</p></div>
+        <div data-df-parameter="tools" data-df-parameter-label="Tools to practise"><p>Tools to practise: Outline</p></div>
+      </div>
+      <p data-df-template="Plan: {{pages}} pages, {{pages * minutesPerPage * (pace === 'careful' ? 2 : 1) + (review ? 3 : 0)}} minutes. Tools selected: {{tools.length}}.">Plan: 2 pages, 4 minutes. Tools selected: 1.</p>
+      <p>Illustrative fixed value: <span data-df-bind="minutesPerPage">2</span> minutes per page at the quick pace.</p>
+      <div class="df-params">
+        <button type="button" data-df-preset='{"pages":2,"pace":"quick","review":false,"tools":["outline"]}'>Quick tour</button>
+        <button type="button" data-df-preset='{"pages":4,"pace":"careful","review":true,"tools":["outline","search"]}'>Slow study</button>
+      </div>
+      <figcaption>Controls change an illustrative reading plan. Each preset sets several choices at once and the plan updates to match.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Move the slider, choose a pace, switch on review and check both tools. Watch the sentence update. Pick Slow study, then Quick tour to return to the starting values.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Controls and live text</h2>
+    <dl class="df-fields">
+      <dt>Slider</dt><dd>Move along a range of numbers. This slider picks a whole number of pages.</dd>
+      <dt>Single choice</dt><dd>Pick one reading pace from a list.</dd>
+      <dt>Toggle switch</dt><dd>Turn review on or off.</dd>
+      <dt>Multiple choice</dt><dd>Check any number of tools, including none.</dd>
+      <dt>Number</dt><dd>Use a numeric value in a calculation, like this plan’s minutes per page. It has no reader control of its own.</dd>
+    </dl>
+    <p>A live value can show a single setting or calculation. A live text template keeps the surrounding words and fills several places with current values. The fixed-value line above uses a single value, and the plan sentence uses a template. A preset changes its listed settings together and is marked when those values are active.</p>
+
+    <h3 id="scopes">Share settings within a scope</h3>
+    <figure>
+      <div class="df-params" data-df-parameter-scope="practice">
+        <div data-df-parameter="pages" data-df-parameter-label="Pages in the reading plan"><p>Pages in the reading plan: 2</p></div>
+      </div>
+      <div class="df-params" data-df-parameter-scope="comparison">
+        <div data-df-parameter="pages" data-df-parameter-label="Pages in a separate plan"><p>Pages in a separate plan: 4</p></div>
+      </div>
+      <figcaption>The first slider repeats the reading plan’s page count. The other slider controls a separate plan.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Move the first slider and check the reading plan above. Now move the other slider. The reading plan stays as it was.</p>
+    <p>A scope is a named set of parameter definitions and their current values. A definition gives a setting its type, starting value and any bounds or choices. The same setting can appear in several places within a scope. Separate scopes can use the same setting name for independent values.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use parameters to let readers change one assumption and see its effect. Presets give them useful starting combinations without asking them to set every control first. Put the changing value near its controls when the connection matters.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Use Tab to reach each control. Arrow keys move the slider and choose a pace. Space toggles a switch or checkbox. The controls can wrap on a narrow screen and follow the page’s theme. In print the plan sentence shows the current values. With scripts off it shows the written starting values.</p>
+
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
+      <li><a href="../data/sources.html">Named data sources and data views</a>, for views that share settings</li>
+      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a></li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

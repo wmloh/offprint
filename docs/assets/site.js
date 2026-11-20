@@ -476,6 +476,11 @@ window.DocFormSite = {
     }
   },
   "assets": {
+    "data": {
+      "Reference counts": {"source": "data/feature-groups.csv", "output": "generated/reference-counts.js"},
+      "Profile features": {"source": "data/profiles.json", "output": "generated/profile-features.js"},
+      "Module sizes": {"source": "data/modules.csv", "output": "generated/module-sizes.js"}
+    },
     "search": {
       "output": "generated/search.js"
     }

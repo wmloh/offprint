@@ -6,6 +6,14 @@
   <title>Scroll reveals · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {
+        "reveals": true
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../../../docform/css/reveal.css">
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -29,24 +37,40 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Scroll reveals in action. The caption will say what to notice.</figcaption>
+      <ol>
+        <li data-df-reveal>Rise from below. This is the default entrance.</li>
+        <li data-df-reveal="left" data-df-reveal-delay="160">Slide from the left after a short wait.</li>
+        <li data-df-reveal="right" data-df-reveal-delay="320">Slide from the right after a longer wait.</li>
+        <li data-df-reveal="fade" data-df-reveal-delay="480">Fade in place after the longest wait.</li>
+      </ol>
+      <figcaption>Four entrances show the available directions and how a short delay can stagger neighbouring items.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Reload at the top and watch the list as it comes into view. Scroll away and back. The items stay visible once they have appeared.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Add a pause or keep a block still</h2>
+    <p>A scroll reveal waits until the reader reaches a block. The block can rise, enter from either side, or fade in place. A delay waits a little longer after the block reaches that point. In the first demo, the delays are 0, 160, 320 and 480 milliseconds.</p>
+
+    <figure>
+      <p data-df-reveal="left" data-df-no-reveal><strong>Keep the goal visible.</strong> This line opts out of its entrance.</p>
+      <p data-df-reveal="fade" data-df-reveal-delay="350"><strong>Bring in the supporting detail.</strong> This line fades in after 350 milliseconds.</p>
+      <figcaption>The first line stays still while the second gently appears beside the explanation.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Scroll slowly into the second example. The first line is readable as soon as you reach it.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Use a short entrance to lead the eye from one idea to the next. Keep core instructions stationary so fast readers and people jumping between headings can start reading straight away. Fade in place when sideways movement would compete with the text.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Reveals follow scrolling, including when you move through the page with the keyboard. The same content stays readable at narrow widths and in either theme. Print and pages opened with scripts off show every block immediately, including blocks you have yet to scroll to.</p>
+
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a>, a recipe that uses it</li>
+      <li><a href="../shape/layout.html#pane-shares">Split views</a>, for paired panes with a staggered entrance</li>
+      <li><a href="../write/callouts.html">Callouts</a>, which can slide as they enter view</li>
+      <li><a href="../recipes/walk-through-a-process.html">Walk through a process</a></li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

@@ -1,0 +1,35 @@
+{
+  "reading": {
+    "roots": [
+      "base",
+      "blocks",
+      "theme",
+      "roles",
+      "navigation",
+      "controls",
+      "tooltips",
+      "references",
+      "citations",
+      "sidenotes",
+      "search",
+      "sections"
+    ],
+    "loads": [
+      "tokens",
+      "base",
+      "tags",
+      "callouts",
+      "blocks",
+      "theme",
+      "roles",
+      "tooltips",
+      "search",
+      "references",
+      "citations",
+      "navigation",
+      "sidenotes",
+      "sections",
+      "controls"
+    ]
+  }
+}

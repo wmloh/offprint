@@ -6,6 +6,9 @@
   <title>Data trees · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"data-view": true, "tree": true}}
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -28,24 +31,39 @@
     </header>
 
     <h2 id="see-it">See it</h2>
-    <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Data trees in action. The caption will say what to notice.</figcaption>
-    </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <figure id="see-it-demo">
+      <div data-df-source="Profile features" data-df-data-view="tree" data-df-tree-depth="1" data-df-max-rows="4">
+        <p>The reading profile starts with 12 feature requests and loads 15 features, including ones those requests need. The none profile starts with an empty list.</p>
+      </div>
+      <figcaption>A repository snapshot of the reading and none profiles. Open the reading profile’s lists to see what it requests and what it loads.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Open <strong>loads</strong> under <strong>reading</strong>, then choose <strong>Show more</strong> inside that list to reveal the next group of features.</p>
+
+    <h2 id="what-it-does">What opens and what stays folded</h2>
+    <p>Tree depth is the number of levels that start open. This tree opens one level, so you can see the lists under each profile. Press <strong>Expand all</strong> to open the visible branches, or <strong>Collapse all</strong> to fold them back to the top level.</p>
+    <p>The cap applies to each list separately. For example, an open list in the first tree shows four children at first. Show more adds another batch in that list.</p>
+
+    <figure>
+      <div data-df-source="Reference counts" data-df-data-view="tree" data-df-tree-depth="0">
+        <p>The reference counts are also available in <a href="sources.html#see-it">the source table</a>.</p>
+      </div>
+      <figcaption>A CSV table appears as a numbered list of records. Each branch holds the fields from one row.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Expand the first numbered branch to find its group and reference count. Collapse all to close it again.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
-
+    <p>Use a tree when the nesting matters, as it does for settings and their lists. Start with a shallow depth so readers see the main branches before the details.</p>
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>Use the up and down arrow keys to move through rows, and the right and left arrow keys to open and close branches or move between levels. On narrow screens, open the branch you need. The tree follows the page theme. Expand the lists you want before printing. With scripts off, the summary and source table links remain readable.</p>
 
     <h2 id="related">Related</h2>
     <ul>
+      <li><a href="sources.html">Named data sources and data views</a></li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>

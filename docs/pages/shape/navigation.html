@@ -13,7 +13,7 @@
     <div data-df-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="df-page" data-df-no-pager>
     <header>
       <p class="df-eyebrow">Shape pages and sites</p>
       <h1>Navigation and reading controls</h1>
@@ -29,23 +29,48 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>Navigation and reading controls in action. The caption will say what to notice.</figcaption>
+      <dl class="df-fields">
+        <dt>Find a page</dt><dd>Choose a group in the sidebar to see the pages it contains.</dd>
+        <dt>Find a section</dt><dd>Open this page’s outline and choose <a href="#sidebar-modes">Sidebar modes</a>.</dd>
+        <dt>Keep your place</dt><dd>Scroll and watch the top-left progress ring fill while the outline marks your current heading.</dd>
+      </dl>
+      <figcaption>The sidebar tracks your place in the site and on the page. The ring tracks how far you’ve scrolled.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>In the sidebar, choose the arrow beside <strong>Write clearly</strong> to open that group, then choose it again to close it. On a computer you can also rest the pointer on a closed group to peek at its contents. On a phone, open the sidebar with the navigation button first.</p>
 
-    <h2 id="what-it-does">What it does</h2>
-    <p>Each behaviour and variation, with a small demo of its own.</p>
+    <h2 id="what-it-does">Ways to move around</h2>
+    <h3 id="page-tree">Page groups and outlines</h3>
+    <p>The sidebar lists pages in groups. A group can start collapsed, with only its name showing. The group containing the page you’re reading opens so you can see your place. The current page’s outline lists its main and smaller headings, and updates as you scroll. On a wide screen, drag the sidebar divider to resize it, or reach the divider with <kbd>Tab</kbd> and use the arrow keys. Double-click the divider to reset it.</p>
+
+    <h3 id="sidebar-modes">Sidebar modes</h3>
+    <dl class="df-fields">
+      <dt>Shown</dt><dd>The page list stays open on the left.</dd>
+      <dt>Hidden</dt><dd>The page list tucks away. A numbered section rail beside the text lets you jump to headings.</dd>
+      <dt>Auto</dt><dd>Move the pointer to the far left edge to peek at the list. It tucks away when you move back into the page.</dd>
+    </dl>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>On a wide screen, use the navigation button in the control pill or press <kbd>N</kbd> to cycle through the three modes. In Hidden, point to a rail number or reach it with <kbd>Tab</kbd> to see the heading it leads to. DocForm remembers your mode when browser storage is available.</p>
+
+    <h3 id="heading-and-page-links">Heading links and the pager</h3>
+    <p>Point at a heading or reach its chain button with <kbd>Tab</kbd> to copy a link that opens the page there. The <strong>pager</strong> shows Previous and Next links at the bottom of a page, in the site’s reading order. Visit <a href="colour.html">Colour, roles, and theme</a> and use its Next link to come back.</p>
+    <p>A page can hide its pager, as this page does. Authors can also leave individual headings out of the outline and section rail. The heading below remains visible in the text.</p>
+
+    <h3 id="outline-example" data-df-no-outline>Optional outline detail</h3>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Look for <strong>Optional outline detail</strong> under <strong>Ways to move around</strong> in the sidebar. The heading is omitted there, so the outline stays shorter.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>What this competes with for attention, and what to quiet down when you use it.</p>
+    <p>Group pages when readers need to choose among several topics. Keep headings short so the outline works as a quick map. Use the pager when a reading order helps, and hide it on a page that ends with its own set of choices.</p>
+    <p>The rounded control bar also offers focus mode (<kbd>F</kbd>) to soften nearby text, and <kbd>J</kbd> and <kbd>K</kbd> to jump forward and back through headings. The theme and search buttons appear when those features are available.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p>How it behaves with a keyboard, at phone width, in dark mode, in print, and without scripts.</p>
+    <p>At phone width, the sidebar opens over the page as a drawer. Choose a link, tap outside it, or press <kbd>Esc</kbd> to close it. When scripts are off, use the ordinary links in the text to keep moving.</p>
 
     <h2 id="related">Related</h2>
     <ul>
+      <li><a href="search.html">Search</a>, the next guide</li>
+      <li><a href="../start/tour.html">Tour the reading interface</a></li>
       <li><a href="../recipes/present-and-publish.html">Present and publish a site</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>

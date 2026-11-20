@@ -768,7 +768,7 @@
   // Chart add-on features call DocForm.chart.addon(id, parts) as their script loads. parts.types maps new type names
   // to definitions drawn on a core base type; parts.scales and parts.legends add named scale factories and legend
   // renderers that any chart type can look up. Nothing is registered unless every part is valid.
-  var HOOKS = ['normalize', 'draw', 'readout', 'table', 'describe'];
+  var HOOKS = ['normalize', 'draw', 'categoryMarks', 'readout', 'table', 'describe'];
 
   function addon(feature, parts) {
     var problem = addonProblem(feature, parts);
@@ -807,6 +807,9 @@
       }
       var hook = HOOKS.find(function (h) { return def[h] !== undefined && typeof def[h] !== 'function'; });
       if (hook) return 'chart type ' + JSON.stringify(name) + ' has a ' + hook + ' that is not a function.';
+      if (def.categoryMarks && def.base !== 'bar') {
+        return 'chart type ' + JSON.stringify(name) + ' needs a bar base to draw category marks.';
+      }
       if (def.legend !== undefined && !Object.hasOwn(legends, def.legend) && !Object.hasOwn(newLegends, def.legend)) {
         return 'chart type ' + JSON.stringify(name) + ' names an unknown legend ' + JSON.stringify(def.legend) + '.';
       }
@@ -858,8 +861,7 @@
     };
   }
 
-  // Readout positions after the marks are drawn. Scatter charts, and line or bar charts with a selection group,
-  // get one spot per point so marks that share an x can each be read and selected; other charts get one per x.
+  // Scatter charts, categorical add-on marks, and charts with a selection group get a spot per point.
   // markOf maps a point to its drawn mark as { el, px }, if any.
   function spotsFor(model, xAt, y, markOf) {
     var spots = [];
@@ -870,7 +872,7 @@
       model.series.forEach(function (s) {
         s.points.forEach(function (p) { spots.push({ px: xAt(p.x), py: y(p.y), s: s, p: p, el: (markOf(p) || {}).el }); });
       });
-    } else if (model.selectionGroup) {
+    } else if (model.selectionGroup || addonOf(model)?.categoryMarks) {
       var byX = new Map();
       model.series.forEach(function (s) {
         s.points.forEach(function (p) {
@@ -951,7 +953,10 @@
       yLo = stacked.lo;
       yHi = stacked.hi;
     }
-    if (model.type === 'bar') { yLo = Math.min(yLo, 0); yHi = Math.max(yHi, 0); }
+    if (model.type === 'bar' && model.zeroBaseline !== false) {
+      yLo = Math.min(yLo, 0);
+      yHi = Math.max(yHi, 0);
+    }
     if (model.y.min !== null) yLo = model.y.min;
     if (model.y.max !== null) yHi = model.y.max;
     return { yLo: yLo, yHi: yHi, xs: xs, count: count };
@@ -1154,12 +1159,15 @@
   }
 
   // An interval at position x across the value axis y; horizontal whiskers run across the plot instead.
-  function whisker(parent, interval, x, y, horizontal) {
+  function whisker(parent, interval, x, y, horizontal, cap) {
     var lower = y(interval.lower);
     var upper = y(interval.upper);
-    return svg('path', { class: 'df-chart-whisker', d: horizontal ?
-      'M' + lower + ',' + x + 'H' + upper + 'M' + lower + ',' + (x - 3) + 'v6M' + upper + ',' + (x - 3) + 'v6' :
-      'M' + x + ',' + lower + 'V' + upper + 'M' + (x - 3) + ',' + lower + 'h6M' + (x - 3) + ',' + upper + 'h6'
+    var w = cap === undefined ? 3 : cap;
+    var pt = horizontal ? function (a, b) { return b + ',' + a; } : function (a, b) { return a + ',' + b; };
+    return svg('path', { class: 'df-chart-whisker',
+      d: 'M' + pt(x, lower) + 'L' + pt(x, upper) +
+        'M' + pt(x - w, lower) + 'L' + pt(x + w, lower) +
+        'M' + pt(x - w, upper) + 'L' + pt(x + w, upper)
     }, parent);
   }
 
@@ -1687,7 +1695,7 @@
 
   // Horizontal bars: categories run down the left, wrapped onto up to three lines, and values run across the plot.
   // Reference lines on y mark values across the plot and those on x mark categories.
-  function drawHorizontal(chart, width, previous) {
+  function drawHorizontal(chart, width, previous, categoryMarks) {
     var model = chart.view;
     var height = model.height;
     var series = model.series;
@@ -1711,7 +1719,8 @@
     var count = Math.max(2, Math.round((width - left) / 90));
     var vInfo = ticks(fit.yLo, fit.yHi, count, model.y.min !== null, model.y.max !== null);
     var vFmt = percentTicks(model, tickFormat(vInfo));
-    var right = Math.max(14, vFmt(vInfo.ticks[vInfo.ticks.length - 1]).length * CHAR / 2 + 4);
+    var lastTick = vInfo.ticks[vInfo.ticks.length - 1] ?? vInfo.max;
+    var right = Math.max(14, vFmt(lastTick).length * CHAR / 2 + 4);
     var plotW = Math.max(40, width - left - right);
     var plotR = left + plotW;
     var v = linear(vInfo.min, vInfo.max, left, plotR);
@@ -1719,9 +1728,10 @@
 
     var frame = svg('svg', { viewBox: '0 0 ' + width + ' ' + height, width: width, height: height,
       'aria-hidden': 'true', focusable: 'false' });
-    if (series.some(function (s) { return s.points.some(function (p) { return p.interval; }); })) {
+    if (categoryMarks || series.some(function (s) { return s.points.some(function (p) { return p.interval; }); })) {
       var clip = svg('clipPath', { id: chart.clip + '-interval' }, svg('defs', {}, frame));
-      svg('rect', { x: left - 1, y: top - 4, width: plotW + 2, height: plotB - top + 8 }, clip);
+      var pad = categoryMarks ? 7 : 1;
+      svg('rect', { x: left - pad, y: top - 4, width: plotW + pad * 2, height: plotB - top + 8 }, clip);
     }
     var grid = svg('g', { class: 'df-chart-grid' }, frame);
     vInfo.ticks.forEach(function (t) {
@@ -1730,7 +1740,7 @@
       svg('text', { x: px, y: plotB + 16, 'text-anchor': 'middle', class: 'df-chart-tick' }, frame).textContent = vFmt(t);
     });
     var base = v(Math.max(vInfo.min, Math.min(0, vInfo.max)));
-    var baseX = Math.round(base) + 0.5;
+    var baseX = Math.round(model.zeroBaseline === false ? left : base) + 0.5;
     svg('line', { x1: baseX, x2: baseX, y1: top, y2: plotB, class: 'df-chart-base' }, frame);
     cats.forEach(function (c, i) {
       var cy = pos(c);
@@ -1767,9 +1777,9 @@
     series.forEach(function (s, si) {
       var g = svg('g', { class: 'df-chart-series' }, marks);
       paint(g, s);
-      barMarks({ layout: layout, count: series.length, thick: thick, gap: gap, pos: pos, val: v, base: base,
+      (categoryMarks || barMarks)({ layout: layout, count: series.length, thick: thick, gap: gap, band: band, pos: pos, val: v, base: base,
         horizontal: true, place: place, markMap: markMap, clip: chart.clip,
-        orderAt: function (py) { return Math.max(0, Math.min(1, (py - top) / plotH)); } }, s, si, g);
+        orderAt: function (py) { return Math.max(0, Math.min(1, (py - top) / plotH)); } }, s, si, g, model, kit);
     });
 
     var refLabels = svg('g', { class: 'df-chart-refs' }, frame);
@@ -1806,7 +1816,7 @@
     cats.forEach(function (c) {
       var cy = pos(c);
       var found = byX.get(c) || [];
-      if (model.selectionGroup && found.length) {
+      if ((model.selectionGroup || categoryMarks) && found.length) {
         found.forEach(function (f) {
           spots.push({ px: f.mark.px, py: f.mark.py, cy: cy, x: c, s: f.s, p: f.p, el: f.mark.el });
         });
@@ -1857,9 +1867,10 @@
     chart.stack = null;
     if (!width) return;
     var def = addonOf(model);
+    var categoryMarks = def && def.categoryMarks;
     if (def && def.draw) return drawAddon(chart, width, previous, def);
     if (model.type === 'pie') return drawPie(chart, width, previous);
-    if (model.type === 'bar' && model.orientation === 'horizontal') return drawHorizontal(chart, width, previous);
+    if (model.type === 'bar' && model.orientation === 'horizontal') return drawHorizontal(chart, width, previous, categoryMarks);
     var height = model.height;
     var type = model.type;
     var series = model.series;
@@ -1928,15 +1939,17 @@
     var clipRect;
     var intervalRect;
     var hasIntervals = series.some(function (s) { return s.line.some(function (p) { return p.interval; }); });
-    var defs = range || playback || hasIntervals ? svg('defs', {}, frame) : null;
+    var defs = range || playback || hasIntervals || categoryMarks ? svg('defs', {}, frame) : null;
     if (range || playback) {
       var clip = svg('clipPath', { id: chart.clip }, defs);
       clipRect = svg('rect', { x: left, y: top - 3, width: plotW, height: height - bottom - top + 6 }, clip);
     }
-    if (hasIntervals) {
+    if (hasIntervals || categoryMarks) {
       // Whiskers keep their full caps and stroke at the plot edges; bands stay inside the exact bounds.
       var intervalClip = svg('clipPath', { id: chart.clip + '-interval' }, defs);
-      svg('rect', { x: left - 4, y: top - 1, width: plotW + 8, height: height - bottom - top + 2 }, intervalClip);
+      var intervalPad = categoryMarks ? 7 : 1;
+      svg('rect', { x: left - 4, y: top - intervalPad, width: plotW + 8,
+        height: height - bottom - top + intervalPad * 2 }, intervalClip);
       var bandClip = svg('clipPath', { id: chart.clip + '-band' }, defs);
       var bandRect = svg('rect', { x: left, y: top, width: plotW, height: height - bottom - top }, bandClip);
       if (playback) intervalRect = bandRect;
@@ -1949,7 +1962,8 @@
       svg('text', { x: left - 8, y: py, 'text-anchor': 'end', 'dominant-baseline': 'middle', class: 'df-chart-tick' }, frame)
         .textContent = yFmt(v);
     });
-    var baseY = Math.round(type === 'bar' ? y(Math.max(yInfo.min, Math.min(0, yInfo.max))) : height - bottom) + 0.5;
+    var baseY = Math.round(type === 'bar' && model.zeroBaseline !== false ?
+      y(Math.max(yInfo.min, Math.min(0, yInfo.max))) : height - bottom) + 0.5;
     svg('line', { x1: left, x2: left + plotW, y1: baseY, y2: baseY, class: 'df-chart-base' }, frame);
 
     var tickY = height - bottom + 16 + markerSpace;
@@ -2054,9 +2068,9 @@
           });
         });
       } else if (type === 'bar') {
-        barMarks({ layout: layout, count: series.length, thick: thick, gap: gap, pos: xAt, val: y,
+        (categoryMarks || barMarks)({ layout: layout, count: series.length, thick: thick, gap: gap, band: band, pos: xAt, val: y,
           base: y(Math.max(yInfo.min, Math.min(0, yInfo.max))), horizontal: false, place: place, markMap: markMap,
-          orderAt: orderAt, clip: chart.clip }, s, si, g);
+          orderAt: orderAt, clip: chart.clip }, s, si, g, model, kit);
       } else {
         s.points.forEach(function (p) {
           var order = orderAt(xAt(p.x));
@@ -2229,7 +2243,7 @@
           paint(dot, s);
         }
         var share = chart.stack && model.stack === 'percent' ? pieShare(chart.stack.bars.get(p).share) : '';
-        var r = row(tip, s, format(p.y, model.y) + (share ? ' · ' + share : ''), model.type);
+        var r = row(tip, s, format(p.y, model.y) + (share ? ' · ' + share : ''), def?.categoryMarks ? 'dot' : model.type);
         intervalReadout(r, p, model.y);
         if (spot.p && spot.s === s && model.series.length > 1) r.classList.add('is-current');
       });
@@ -2436,6 +2450,7 @@
 
   function renderHead(chart) {
     var model = chart.model;
+    var def = addonOf(model);
     chart.legend.textContent = '';
     chart.seriesItems = [];
     if (model.series.length > 1 || model.toggles || model.type === 'pie') {
@@ -2446,7 +2461,7 @@
           item.classList.add('df-chart-series-toggle');
           item.addEventListener('click', function () { setVisible(chart, s.key, !!chart.hidden[s.key]); });
         }
-        key(model.type === 'line' ? 'line' : model.type === 'bar' ? 'bar' : 'dot', s, item);
+        key(model.type === 'line' ? 'line' : model.type === 'bar' && !def?.categoryMarks ? 'bar' : 'dot', s, item);
         html('span', '', item, s.name);
         chart.seriesItems.push({ el: item, key: s.key, name: s.name });
       });
@@ -2459,7 +2474,6 @@
       html('span', 'df-chart-ref-note', item);
       return item;
     });
-    var def = addonOf(model);
     if (def && def.legend) legends[def.legend](chart, chart.legend, kit);
     syncHead(chart);
   }
@@ -2508,7 +2522,9 @@
 
   // An authored source table stands in for the table view while it shows the same values as the chart.
   function sourceShown(chart) {
-    return chart.ownTable && chart.model.type !== 'pie' && !chart.model.stack && !chart.range && !chart.view.hiddenCount;
+    var model = chart.model;
+    var def = addonOf(model);
+    return chart.ownTable && model.type !== 'pie' && !model.stack && !def?.categoryMarks && !chart.range && !chart.view.hiddenCount;
   }
 
   function setPlayhead(chart, x) {
@@ -2662,7 +2678,7 @@
     chart.box.classList.toggle('is-table', on);
     chart.table.hidden = !on;
     chart.plot.hidden = on;
-    if (on && (chart.model.type === 'pie' || !chart.table.firstChild)) fillTable(chart);
+    if (on && (chart.model.type === 'pie' || addonOf(chart.model)?.categoryMarks || !chart.table.firstChild)) fillTable(chart);
     chart.toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     chart.toggle.textContent = on ? 'Chart' : 'Table';
     if (!on) draw(chart);

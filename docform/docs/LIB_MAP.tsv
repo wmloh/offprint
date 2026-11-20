@@ -39,6 +39,7 @@ Linked selection	Synchronize keyed controls, charts, and passive views with a ti
 Worked-example steppers	Step through an ordered example and its linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
 SVG charts	Draw line, bar (horizontal, stacked, percent), scatter, and pie charts with default-on keyed motion, entrance, opt-outs, and add-on chart type registration	data/charts.md
+Dot and interval plots	Rank categories with dots, lollipop stems, and supplied bounds in either orientation	data/chart-intervals.md
 Guided chart playback	Reveal numeric line charts through keyed checkpoints and HTML notes	data/chart-playback.md
 Concept tables	Style semantic tables for text comparisons	data/concept-tables.md
 Results tables	Sort, shade, classify, and filter result rows	data/results-tables.md

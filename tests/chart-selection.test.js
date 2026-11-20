@@ -2078,3 +2078,74 @@ test('data-df-orientation and data-df-stack lay out bars from markup and leave t
   host.querySelector('.df-chart-toggle').dispatchEvent(new Event('click'));
   assert.equal(host.querySelector('.df-chart-table').textContent, 'RunTrainEvalTotala213b347');
 });
+
+test('interval plots dodge, draw bounds and references in both orientations, and keep selection through tweens', () => {
+  const clock = legendClock();
+  const spec = { type: 'interval', orientation: 'horizontal', mark: 'lollipop', selectionGroup: 'interval-demo',
+    x: 'Group', y: 'Score', toggles: true, referenceLines: [{ axis: 'y', value: 5 }, { axis: 'x', value: 'Alpha' }],
+    series: [
+      { name: 'Baseline', data: [{ x: 'Alpha', y: 3, key: 'a' }, { x: 'Bravo', y: 8, key: 'b',
+        interval: { lower: 7, upper: 9, label: 'Example bounds', count: 12 } }] },
+      { name: 'Follow-up', data: [{ x: 'Bravo', y: 8, key: 'b-follow' }] }
+    ] };
+  const c = draw(spec, { ...clock, modules: ['chart-intervals'] });
+  const at = (key, coordinate) => Number(c.mark(key).getAttribute(coordinate));
+  assert.match(c.plot.getAttribute('aria-label'), /^Horizontal lollipop plot/);
+  assert.equal(at('b', 'cx'), at('b-follow', 'cx'));
+  assert.ok(at('b', 'cy') < at('b-follow', 'cy') && at('b-follow', 'cy') < at('a', 'cy'));
+  const bound = () => byClass(c, 'df-chart-whisker')[0].getAttribute('d');
+  const horizontal = bound();
+  const [lowerX, lowerY, upperX, upperY] = nums(horizontal);
+  assert.equal(lowerY, upperY);
+  assert.ok(lowerX < at('b', 'cx') && upperX > at('b', 'cx'));
+  assert.equal(byClass(c, 'df-chart-interval-stem').length, 3);
+  const valueRef = () => byClass(c, 'df-chart-ref')[0];
+  assert.equal(valueRef().getAttribute('x1'), valueRef().getAttribute('x2'));
+  c.point(c.mark('b'), 'pointermove');
+  assert.match(c.tip().textContent, /Bravo.*Example bounds \[7, 9\] \(n = 12\)/);
+  c.fire('keydown', { key: 'Enter' });
+  assert.equal(c.selection.group('interval-demo').get(), 'b');
+  const oldX = at('b', 'cx');
+  assert.ok(c.api.update({ ...spec, orientation: 'vertical' }));
+  assert.equal(at('b', 'cx'), oldX);
+  assert.equal(bound(), horizontal, 'the whisker starts from its horizontal coordinates');
+  clock.tick(0);
+  clock.tick(120);
+  assert.notEqual(bound(), horizontal, 'the whisker moves with the dot');
+  clock.tick(400);
+  assert.equal(at('b', 'cy'), at('b-follow', 'cy'));
+  assert.ok(at('b', 'cx') < at('b-follow', 'cx') && at('b-follow', 'cx') < at('a', 'cx'));
+  assert.equal(valueRef().getAttribute('y1'), valueRef().getAttribute('y2'));
+  assert.ok(c.mark('b').hasAttribute('data-df-selection-active'));
+  const before = at('b', 'cx');
+  click(legendButton(c, 'Follow-up'));
+  assert.equal(at('b', 'cx'), before);
+  clock.tick(400);
+  clock.tick(800);
+  assert.ok(at('b', 'cx') > before, 'the remaining series recentres');
+  assert.equal(c.mark('b-follow'), undefined);
+  click(c.host.querySelector('.df-chart-toggle'));
+  const table = c.host.querySelector('.df-chart-table');
+  assert.deepEqual(table.querySelectorAll('tr').map((row) => row.textContent), [
+    'GroupBaseline', 'Bravo8Example bounds [7, 9] (n = 12)', 'Alpha3'
+  ]);
+  assert.ok(table.querySelector('[data-df-key="b"]').hasAttribute('data-df-selection-active'));
+});
+
+test('interval markup ranks the interactive table while retaining the authored fallback', () => {
+  const env = setup({ modules: ['chart-intervals'] });
+  const host = env.document.body.appendChild(new Node('div'));
+  host.setAttribute('data-df-chart', 'interval');
+  const table = host.appendChild(new Node('table'));
+  [['Group', 'Score'], ['Alpha', '2'], ['Bravo', '4']].forEach((cells) => {
+    const tr = table.appendChild(new Node('tr'));
+    cells.forEach((text) => Object.assign(tr.appendChild(new Node('td')), { text }));
+  });
+  const api = env.chart.mount(host);
+  assert.equal(api.model().intervalMark, 'dot');
+  assert.equal(host.querySelectorAll('.df-chart-dot').length, 2);
+  assert.equal(host.querySelectorAll('.df-chart-interval-stem').length, 0);
+  click(host.querySelector('.df-chart-toggle'));
+  assert.equal(host.querySelector('.df-chart-table').textContent, 'GroupScoreBravo4Alpha2');
+  assert.equal(table.textContent, 'GroupScoreAlpha2Bravo4');
+});

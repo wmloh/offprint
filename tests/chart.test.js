@@ -10,8 +10,36 @@ const context = vm.createContext({ URL, console: { warn: (message) => warnings.p
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('chart.js'), context);
+vm.runInContext(read('chart-intervals.js'), context);
 const chart = context.DocForm.chart;
 const plain = (value) => JSON.parse(JSON.stringify(value));
+
+test('interval plots rank by estimate or label with stable ties and missing values last', () => {
+  const spec = { type: 'interval', categories: ['Zulu', 'Alpha', 'Bravo', 'Missing'], series: [
+    { key: 'first', data: [['Alpha', -2], ['Bravo', 4], ['Zulu', 4]] },
+    { key: 'second', data: [['Missing', 8], ['Alpha', 5]] }
+  ] };
+  const labels = (options) => plain(chart.normalize({ ...spec, ...options }).categories);
+  assert.deepEqual(labels(), ['Zulu', 'Bravo', 'Alpha', 'Missing']);
+  assert.deepEqual(labels({ sortSeries: 'second' }), ['Missing', 'Alpha', 'Zulu', 'Bravo']);
+  assert.deepEqual(labels({ sort: 'label' }), ['Alpha', 'Bravo', 'Missing', 'Zulu']);
+  assert.deepEqual(labels({ sort: 'none' }), spec.categories);
+  assert.match(chart.validate({ ...spec, sortSeries: 'unknown' })[0], /series key/);
+});
+
+test('interval plots validate supplied bounds and include them on the value axis', () => {
+  const spec = { type: 'interval', data: [{ x: 'A', y: 4, interval: { lower: 5, upper: 8, count: 0 } }] };
+  const span = chart.extent(chart.normalize(spec));
+  assert.deepEqual([span.yLo, span.yHi], [4, 8], 'bounds may be disjoint from the estimate');
+  assert.equal(chart.extent(chart.normalize({ ...spec, mark: 'lollipop' })).yLo, 0);
+  assert.equal(chart.validate(spec).length, 0);
+  for (const interval of [{ lower: 8, upper: 5 }, { lower: 1, upper: Infinity }, { lower: 1, upper: 8, count: -1 }]) {
+    assert.match(chart.validate({ ...spec, data: [{ x: 'A', y: 4, interval }] })[0], /interval (bounds|count)/);
+  }
+  assert.match(chart.validate({ ...spec, data: [['A', 1], ['A', 2]] })[0], /more than one value/);
+  assert.match(chart.validate({ ...spec, mark: 'line' })[0], /mark must be/);
+  assert.match(chart.validate({ ...spec, sort: 'random' })[0], /sort must be/);
+});
 
 test('ticks are round, cover the data, and keep fixed ends', () => {
   assert.deepEqual(plain(chart.ticks(3, 97, 5)), { min: 0, max: 100, step: 20, ticks: [0, 20, 40, 60, 80, 100] });
@@ -451,7 +479,7 @@ test('add-ons register types on a core base, scales, and legends, and an unregis
   assert.equal(typeof chart.scale('sqrt'), 'function');
   assert.equal(chart.scale('linear'), chart.linear);
   assert.equal(chart.scale('nope'), null);
-  assert.deepEqual(Array.from(chart.addons()), ['test-lollipops']);
+  assert.deepEqual(Array.from(chart.addons()), ['chart-intervals', 'test-lollipops']);
 
   const rejected = [
     ['test-lollipops', { types: {} }],
@@ -464,7 +492,7 @@ test('add-ons register types on a core base, scales, and legends, and an unregis
   ];
   rejected.forEach(([id, parts]) => assert.equal(chart.addon(id, parts), false, id));
   assert.equal(chart.scale('ring'), null);
-  assert.deepEqual(Array.from(chart.addons()), ['test-lollipops'], 'rejected add-ons register nothing');
+  assert.deepEqual(Array.from(chart.addons()), ['chart-intervals', 'test-lollipops'], 'rejected add-ons register nothing');
 
   context.DocForm._boot = { chartFeature: (type) => type === 'histogram' ? 'chart-histogram' : null };
   try {

@@ -498,6 +498,8 @@ window.DocFormSite = {
         "commit": "One saved set of changes in a project's history.",
         "byte": "A small unit used to measure how much space a file takes up.",
         "scatter chart": "A chart that shows each item as a dot, placing it by two numbers.",
+        "dot plot": "A chart that uses dots to compare estimates across categories. Whiskers can show the bounds around each estimate.",
+        "lollipop plot": "A dot plot with a stem that connects each dot to the baseline.",
         "filter": "A choice that shows only items matching a rule.",
         "evaluation matrix": "A grid that compares results across two categories, such as groups and measures.",
         "scenario comparison": "A view of how changing one or more conditions affects the outcomes compared with a starting case.",

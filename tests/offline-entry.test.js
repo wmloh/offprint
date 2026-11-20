@@ -263,6 +263,17 @@ test('configured chart motion merges like other chart options and add-on chart t
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.code), ['chart-option']);
 });
 
+test('the offline loader enables interval plots and loads their chart dependency first', async () => {
+  const p = page({ entryProfile: 'none', config: { features: { 'chart-intervals': true } } });
+  await p.start();
+  assert.deepEqual(p.loads.filter(path => path.includes('/chart')), [
+    'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-intervals.css', 'docform/js/chart-intervals.js'
+  ]);
+  assert.equal(p.DF._boot.chartFeature('interval'), 'chart-intervals');
+  assert.equal(p.DF.chart.normalize({ type: 'interval', data: [['A', 3]] }).addon, 'interval');
+  assert.equal(p.DF.diagnostics.list().length, 0);
+});
+
 test('mixed features load all shipped assets and register data before author setup', async () => {
   const features = Object.fromEntries(('animation cards chart code concept-tables data-view dropdowns dropzone editable-text figure-steps ' +
     'glossary math parameters peek-bubbles pipeline results reveals scenarios selection split-views stepper tabs tree zoom-tools')

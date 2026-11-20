@@ -8,7 +8,7 @@
   <script src="../../assets/site.js" data-df-site></script>
   <script type="application/json" data-df-page>
     {
-      "features": {"chart": true, "results": true, "data": true, "parameters": true, "selection": true},
+      "features": {"chart": true, "chart-intervals": true, "results": true, "data": true, "parameters": true, "selection": true},
       "parameterScopes": {
         "module-filter": {
           "kinds": {
@@ -256,6 +256,41 @@
     <p>Inspect the middle point and switch to Table to read the estimate, bounds, and count.</p>
 
     <p>Bars and scatter points show supplied <span data-df-term="interval">intervals</span> as <span data-df-tip="Short lines that show the lower and upper ends of a range around a value.">whiskers</span>. A line chart can also use a whisker where only one point has bounds.</p>
+    <h2 id="interval-plots">Rank categories with dot and interval plots</h2>
+    <p>A <span data-df-term="dot plot">dot plot</span> ranks categories by their estimates. When you supply bounds, whiskers show the range around each dot. You can put categories down the left or along the bottom, and add stems to make a <span data-df-term="lollipop plot">lollipop plot</span>.</p>
+    <figure>
+      <div data-df-chart="interval" data-df-orientation="horizontal" data-df-toggles>
+        <script type="application/json">
+          {
+            "x": "Reading group",
+            "y": {"label": "Reading time (seconds)", "unit": " s"},
+            "referenceLines": [{"axis": "y", "value": 30, "label": "30-second target"}],
+            "series": [
+              {"name": "First read", "data": [
+                {"x": "North", "y": 30, "interval": {"lower": 26, "upper": 34}},
+                {"x": "Central", "y": 35, "interval": {"lower": 31, "upper": 39}},
+                {"x": "South", "y": 27, "interval": {"lower": 22, "upper": 32}}
+              ]},
+              {"name": "Second read", "data": [
+                {"x": "North", "y": 24, "interval": {"lower": 20, "upper": 28}},
+                {"x": "Central", "y": 29, "interval": {"lower": 25, "upper": 32}},
+                {"x": "South", "y": 23, "interval": {"lower": 19, "upper": 27}}
+              ]}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Reading group</th><th scope="col">First read (s)</th><th scope="col">Second read (s)</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Central</th><td>35 (31–39)</td><td>29 (25–32)</td></tr>
+            <tr><th scope="row">North</th><td>30 (26–34)</td><td>24 (20–28)</td></tr>
+            <tr><th scope="row">South</th><td>27 (22–32)</td><td>23 (19–27)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative reading times ranked by the first read. The dashed line marks the 30-second target.</figcaption>
+    </figure>
+    <p>Hide <strong>First read</strong> in the legend to see the remaining dots move to the middle of each row. Choose <strong>Table</strong> to see the remaining estimates and bounds.</p>
     <h2 id="shared-position">Share a position between charts</h2>
     <p>Charts with a common linear horizontal scale can share an inspection cursor while keeping their own vertical scales and visible ranges. Try the two charts in <a href="playback.html#shared-position">Guided chart playback</a>.</p>
     <h2 id="when-to-use">When to reach for it</h2>

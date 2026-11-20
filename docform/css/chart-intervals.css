@@ -1,0 +1,14 @@
+.df-chart-interval-stem {
+  stroke: var(--df-series);
+  stroke-width: 1.5;
+  stroke-opacity: 0.55;
+  pointer-events: none;
+}
+
+.df-chart.is-bar.is-interval .df-chart-whisker {
+  stroke: var(--df-series);
+}
+
+.df-chart.is-interval.is-hovering .df-chart-dot:not(.is-active, [data-df-selection-active]) {
+  opacity: 0.45;
+}

@@ -7,7 +7,21 @@
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
   <script type="application/json" data-df-page>
-    {"features": {"chart-playback": true, "selection": true, "split-views": true}}
+    {
+      "features": {"chart-playback": true, "selection": true, "split-views": true, "parameters": true},
+      "parameterScopes": {
+        "size-tour": {
+          "layout": {
+            "type": "select",
+            "choices": [
+              {"value": "stacked", "label": "Sizes"},
+              {"value": "percent", "label": "Shares"}
+            ],
+            "default": "stacked"
+          }
+        }
+      }
+    }
   </script>
   <script src="../../../docform/docform.js"></script>
 </head>
@@ -20,12 +34,12 @@
     <header>
       <p class="df-eyebrow">Show data</p>
       <h1>Guided chart playback</h1>
-      <p>Playback reveals a line chart in stages and pauses at chosen points. A short note at each stop explains what changed.</p>
+      <p>Playback reveals a line chart in stages, or steps any other chart through a series of prepared views. A short note at each stop explains what changed.</p>
       <dl class="df-fields">
         <dt>Official name</dt><dd>Guided chart playback</dd>
         <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
-        <dt>Works with</dt><dd><span data-df-term="SVG">SVG</span> charts and linked selection</dd>
+        <dt>Works with</dt><dd><span data-df-term="SVG">SVG</span> charts, linked selection, and parameters</dd>
         <dt>Good for</dt><dd>Narrating how a result unfolded</dd>
       </dl>
     </header>
@@ -113,8 +127,63 @@
     <p class="df-eyebrow" data-df-role="try">Try it</p>
     <p>Jump to the busiest day, then move over a reached point in either plot. Both plots show the shared position. Reaching a checkpoint also highlights its matching chart point through linked selection.</p>
 
+    <h2 id="state-checkpoints">Step through chart states</h2>
+    <p>Bar, pie, scatter, histogram, heatmap, and dot charts have no line to grow. Instead, each <span data-df-term="state checkpoint">state checkpoint</span> sets what the chart shows: which series are visible, which item is highlighted, the visible range, or the value of a linked control. The marks glide from one state to the next.</p>
+
+    <ol id="size-tour" data-df-chart-playback="state" data-df-target="size-chart" data-df-scope="size-tour" data-df-duration="1200">
+      <li data-df-key="scripts" data-df-state='{"series": ["script"]}'><strong data-df-step-label>Scripts only</strong>
+        Hiding the stylesheets shows that scripts make up most of each feature’s size.</li>
+      <li data-df-key="shares" data-df-state='{"series": null, "params": {"layout": "percent"}}'><strong data-df-step-label>Shares instead of sizes</strong>
+        Stretching every bar to 100% shows the stylesheet share. Linked selection has the largest share.</li>
+      <li data-df-key="largest" data-df-state='{"select": "chart"}'><strong data-df-step-label>The largest feature</strong>
+        SVG charts is highlighted. In sizes, it is more than twice as large as any other feature here.</li>
+    </ol>
+
+    <figure>
+      <div class="df-params" data-df-parameter-scope="size-tour">
+        <div data-df-parameter="layout" data-df-parameter-label="Show"><p>Show: Sizes</p></div>
+      </div>
+      <div id="size-chart" data-df-chart="bar" data-df-orientation="horizontal" data-df-toggles
+        data-df-selection-group="size-feature" data-df-scope="size-tour" data-df-chart-bind='{"stack": "layout"}'>
+        <script type="application/json">
+          {
+            "x": "Feature",
+            "y": "Download size (kB)",
+            "series": [
+              {"key": "script", "name": "Script", "data": [
+                {"x": "SVG charts", "y": 109.2, "key": "chart"},
+                {"x": "Results tables", "y": 44.9, "key": "results"},
+                {"x": "Parameters", "y": 34.1, "key": "parameters"},
+                {"x": "Linked selection", "y": 9.4, "key": "selection"}
+              ]},
+              {"key": "style", "name": "Stylesheet", "data": [
+                {"x": "SVG charts", "y": 7.4, "key": "chart"},
+                {"x": "Results tables", "y": 6.8, "key": "results"},
+                {"x": "Parameters", "y": 3.3, "key": "parameters"},
+                {"x": "Linked selection", "y": 2.0, "key": "selection"}
+              ]}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Feature</th><th scope="col">Script (kB)</th><th scope="col">Stylesheet (kB)</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">SVG charts</th><td>109.2</td><td>7.4</td></tr>
+            <tr><th scope="row">Results tables</th><td>44.9</td><td>6.8</td></tr>
+            <tr><th scope="row">Parameters</th><td>34.1</td><td>3.3</td></tr>
+            <tr><th scope="row">Linked selection</th><td>9.4</td><td>2.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Download size of four features in an earlier library snapshot. Each checkpoint changes the visible series, the Show choice, or the highlighted bar.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Press <strong>Play</strong> and follow the three stops. Watch the <strong>Show</strong> choice switch to Shares at the second stop. Press <strong>Reset</strong> to return the chart to its starting view.</p>
+    <p>Each checkpoint changes only what it names, and later stops keep earlier changes. Previous and Reset restore earlier views exactly, so readers can step back without losing their place.</p>
+
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>Use playback when readers benefit from seeing a few events in order. Give each stop one short note and let the chart show the change.</p>
+    <p>Use playback when readers benefit from seeing a few events in order. Use state checkpoints to guide readers through a few views of one chart. Give each stop one short note and let the chart show the change.</p>
     <h2 id="for-every-reader">For every reader</h2>
     <p><kbd>Tab</kbd> reaches the playback controls and the status announces each stop. Playback jumps straight to the stop when reduced motion is on. On a phone, use the checkpoint controls to move through the chart. The charts follow the page theme, and the notes and tables are readable with scripts off. Advance to the last checkpoint to print the full charts.</p>
 

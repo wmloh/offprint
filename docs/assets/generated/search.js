@@ -67,6 +67,11 @@ window.DocFormSearch = {
           "text": "The full list of sources a page cites, usually at the end of the page.",
           "more": ""
         },
+        "bin": {
+          "title": "bin",
+          "text": "A range of values grouped together in a histogram, such as reading times from 2 seconds up to 6 seconds.",
+          "more": ""
+        },
         "browser": {
           "title": "browser",
           "text": "The program you use to view web pages, such as Chrome, Edge, Firefox, or Safari.",
@@ -107,6 +112,11 @@ window.DocFormSearch = {
           "text": "A planned stop during playback, usually with a short note about what to notice.",
           "more": ""
         },
+        "choice chip": {
+          "title": "choice chip",
+          "text": "A small rounded button for one option in a short list. The chosen chips are filled in.",
+          "more": ""
+        },
         "citation": {
           "title": "citation",
           "text": "A short marker in the text that credits a source, such as a book or paper, listed in full at the end.",
@@ -115,6 +125,16 @@ window.DocFormSearch = {
         "code block": {
           "title": "code block",
           "text": "A box that shows program text in a fixed-width font with its line breaks kept.",
+          "more": ""
+        },
+        "colour scale": {
+          "title": "colour scale",
+          "text": "The key that matches colours to values in a heatmap or shaded table, usually a strip from low to high.",
+          "more": ""
+        },
+        "combobox": {
+          "title": "combobox",
+          "text": "A text field with a list of choices below it. Typing narrows the list, which helps when there are many options.",
           "more": ""
         },
         "commit": {
@@ -126,6 +146,11 @@ window.DocFormSearch = {
           "title": "concept table",
           "text": "A table of words that compares ideas, often with extra space for labels in the first column.",
           "more": ""
+        },
+        "contour line": {
+          "title": "contour line",
+          "text": "A line that joins places with the same value, like the height lines on a hiking map.",
+          "more": "<p>Rings of contour lines mark a peak or a dip. Lines packed close together mark a steep change; lines far apart mark a gentle one.</p>"
         },
         "contrast": {
           "title": "contrast",
@@ -192,6 +217,11 @@ window.DocFormSearch = {
           "text": "A named setting for one design value, such as a colour, a font, or a spacing size, used everywhere that value appears.",
           "more": "<p>Because every heading reads the same heading-colour token, changing that one token recolours every heading on the site at once.</p>"
         },
+        "detail pane": {
+          "title": "detail pane",
+          "text": "A box that shows more about whichever card or block is currently selected.",
+          "more": ""
+        },
         "dialog": {
           "title": "dialog",
           "text": "A box that opens over the page to ask or show something, and closes when you are done. Escape usually closes it.",
@@ -210,6 +240,16 @@ window.DocFormSearch = {
         "display math": {
           "title": "display math",
           "text": "A formula drawn on its own line, with room for taller symbols.",
+          "more": ""
+        },
+        "diverging colour scale": {
+          "title": "diverging colour scale",
+          "text": "A colour scale with two colours that meet at a neutral middle value, so values above and below it read as opposites.",
+          "more": "<p>Use one when the middle means something, such as zero change or a target. Gains and losses then look like opposites instead of more and less of the same thing.</p>"
+        },
+        "dot plot": {
+          "title": "dot plot",
+          "text": "A chart that uses dots to compare estimates across categories. Whiskers can show the bounds around each estimate.",
           "more": ""
         },
         "download": {
@@ -324,8 +364,13 @@ window.DocFormSearch = {
         },
         "heatmap": {
           "title": "heatmap",
-          "text": "Shading table cells by their value, so high and low values show up as stronger and lighter colour.",
+          "text": "A grid or table whose cells are coloured by their value, so high and low values show up as stronger and lighter colour.",
           "more": "<p>Heatmaps let a reader spot the extremes in a grid of numbers at a glance, before reading a single figure.</p>"
+        },
+        "histogram": {
+          "title": "histogram",
+          "text": "A chart that groups numeric observations into ranges and shows how many fall in each range.",
+          "more": ""
         },
         "hold to expand card": {
           "title": "hold-to-expand card",
@@ -361,6 +406,11 @@ window.DocFormSearch = {
           "title": "JSON",
           "text": "A plain text format for structured data, made of named values and lists in curly and square brackets.",
           "more": "<p>Spreadsheet-like tables become lists of records, each record a set of named values such as a name and a count.</p>"
+        },
+        "junction": {
+          "title": "junction",
+          "text": "A small dot in a pipeline diagram where several lines meet before continuing.",
+          "more": ""
         },
         "katex": {
           "title": "KaTeX",
@@ -421,6 +471,11 @@ window.DocFormSearch = {
           "title": "log scale",
           "text": "An axis where equal distances mean equal multiples, such as 1, 10, 100, 1000.",
           "more": "<p>Log scales make very small and very large values readable on one chart, and turn steady percentage growth into a straight line.</p>"
+        },
+        "lollipop plot": {
+          "title": "lollipop plot",
+          "text": "A dot plot with a stem that connects each dot to the baseline.",
+          "more": ""
         },
         "macro": {
           "title": "macro",
@@ -520,6 +575,11 @@ window.DocFormSearch = {
         "phone width": {
           "title": "phone width",
           "text": "A narrow screen, roughly the width of a phone held upright. DocForm switches some layouts when the screen gets this narrow.",
+          "more": ""
+        },
+        "pipeline diagram": {
+          "title": "pipeline diagram",
+          "text": "A picture of a process as blocks joined by lines, showing which stages lead to which.",
           "more": ""
         },
         "playback": {
@@ -677,6 +737,11 @@ window.DocFormSearch = {
           "text": "The shared name that ties matching items together in linked selection, so picking one highlights the others.",
           "more": ""
         },
+        "sequential colour scale": {
+          "title": "sequential colour scale",
+          "text": "A colour scale that runs from pale to strong in one colour, for values that only go from low to high.",
+          "more": ""
+        },
         "series": {
           "title": "series",
           "text": "One set of related values drawn together on a chart, such as one line, usually with its own colour.",
@@ -685,7 +750,7 @@ window.DocFormSearch = {
         "shortcut": {
           "title": "shortcut",
           "text": "A key or key combination that performs an action quickly.",
-          "more": "<p>For example, <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>Cmd</kbd>+<kbd>K</kbd> on a Mac) opens search on any DocForm page.</p>"
+          "more": "<p>For example, <kbd>S</kbd> opens search on any DocForm page.</p>"
         },
         "sidebar": {
           "title": "sidebar",
@@ -732,9 +797,19 @@ window.DocFormSearch = {
           "text": "Blurring your view of a page, by squinting or with focus mode, to see which elements still stand out.",
           "more": "<p>If the title, section headings, and one or two key blocks still show through the blur, the page has a clear hierarchy. If everything turns into the same grey, nothing is leading the eye.</p>"
         },
+        "stacked bar": {
+          "title": "stacked bar",
+          "text": "A bar built from several coloured segments, one per series, so its length shows their total. A percent bar stretches every total to 100% to compare shares.",
+          "more": ""
+        },
         "stale": {
           "title": "stale",
           "text": "Out of date: built from an older version of the pages than the one you have now.",
+          "more": ""
+        },
+        "state checkpoint": {
+          "title": "state checkpoint",
+          "text": "A playback stop that sets what a chart shows, such as its visible series, highlighted item, or a linked choice, instead of growing a line.",
           "more": ""
         },
         "stepper": {
@@ -897,7 +972,7 @@ window.DocFormSearch = {
         "file": "pages/start/tour.html",
         "path": "../pages/start/tour.html",
         "title": "Tour the reading interface",
-        "sha256": "a50ac0ea277cefe8883f7ef73d1f41e34730d0e5c4d143930a056abac30df7a0"
+        "sha256": "9f8eba1b5c9494576449eea0297728976b3cbb1925c2081bb4f2cd9a14a857bf"
       },
       {
         "file": "pages/start/how-these-docs-work.html",
@@ -921,13 +996,13 @@ window.DocFormSearch = {
         "file": "pages/hierarchy/signal-ladder.html",
         "path": "../pages/hierarchy/signal-ladder.html",
         "title": "The signal ladder",
-        "sha256": "8d7db12a17972416efb3c8fd6a428dcf2b6c86fd66f7b1fe218ffb9a5ccb0053"
+        "sha256": "999780f5c8611b9f55f3717e97f4ecaf711de5283c2ba2163d60ac35504ef3b1"
       },
       {
         "file": "pages/write/text.html",
         "path": "../pages/write/text.html",
         "title": "Base layout, text roles, tags, buttons",
-        "sha256": "cfd79b1e2f2db40df1cc7383af1291d4b427f1e6156700278aba0d1b3dd760b6"
+        "sha256": "fe57e00cddfe3334b2bac51bfbbb1c9aeb8d2d1de18c1e661bf0353379092680"
       },
       {
         "file": "pages/write/callouts.html",
@@ -945,7 +1020,7 @@ window.DocFormSearch = {
         "file": "pages/write/code.html",
         "path": "../pages/write/code.html",
         "title": "Code",
-        "sha256": "5b857f336074f0e2c485bb87ba4ff359cf38426d0e0a7f22bda471fb81b97089"
+        "sha256": "e3fea166a85b7f90c0878518b9135a8f36e4841051350b60cb01b674fee280f7"
       },
       {
         "file": "pages/write/notes.html",
@@ -975,25 +1050,25 @@ window.DocFormSearch = {
         "file": "pages/shape/colour.html",
         "path": "../pages/shape/colour.html",
         "title": "Colour, roles, and theme",
-        "sha256": "93280795f03625e1fc5f7dd457db4aae0d4a191545af2be59745fbd7b713b8d0"
+        "sha256": "4d34aabf8989cf45c7691e3919ba95ada85c785bc9181f6b3f951195ac8a8f89"
       },
       {
         "file": "pages/shape/navigation.html",
         "path": "../pages/shape/navigation.html",
         "title": "Navigation and reading controls",
-        "sha256": "37b45631558bfd6551468297e268acf19acb59f5dc9c5820e09f2f39ec926b8f"
+        "sha256": "bf89f367619171f04b0afedaca3b82fc35df2c6eb7ede12a774436f71cd4926c"
       },
       {
         "file": "pages/shape/search.html",
         "path": "../pages/shape/search.html",
         "title": "Search",
-        "sha256": "2ecab1c584fec29f6c0d2dbee8a511576d993de22777ffed627d618cfcd1c528"
+        "sha256": "b145a8a44841c6e37fe6c51f76be1fb8280a9fddaa4588d7a02185da25ddd6c6"
       },
       {
         "file": "pages/shape/customize.html",
         "path": "../pages/shape/customize.html",
         "title": "Design tokens",
-        "sha256": "f66d2ce40fd5487cb536adef6fea2a4ae3691455142f00f1c954cb9fcd1ce49c"
+        "sha256": "0725500273488d8ff24236d52d14dcc54ee4002e5702faaee92af919ed5270b6"
       },
       {
         "file": "pages/explain/tabs.html",
@@ -1005,7 +1080,13 @@ window.DocFormSearch = {
         "file": "pages/explain/cards.html",
         "path": "../pages/explain/cards.html",
         "title": "Card panels and figure steps",
-        "sha256": "76a359d8fba796a17d41c4c7bab1b0ffe99565bb97676f53890c6b581a4626fa"
+        "sha256": "40c414186a33439dcfb13d0ff46d1a421e887774d979bd1d217ae0601430f84c"
+      },
+      {
+        "file": "pages/explain/pipelines.html",
+        "path": "../pages/explain/pipelines.html",
+        "title": "Pipeline diagrams",
+        "sha256": "2d6851d56dc2be9b2b50c95a8f8ae4cd051a94eaf0524c8c2ea4ed1dc0b1fbd1"
       },
       {
         "file": "pages/explain/animations.html",
@@ -1035,7 +1116,7 @@ window.DocFormSearch = {
         "file": "pages/explain/parameters.html",
         "path": "../pages/explain/parameters.html",
         "title": "Parameters and presets",
-        "sha256": "d1b30d3c71649a00adee100ddfcc7622648de79154af9913214b77c9247bef73"
+        "sha256": "5dd4f9529fbd9398844aeb500c9963d5ce63daf6509dbe8c24f5813c41445c05"
       },
       {
         "file": "pages/explain/zoom.html",
@@ -1059,13 +1140,19 @@ window.DocFormSearch = {
         "file": "pages/data/charts.html",
         "path": "../pages/data/charts.html",
         "title": "SVG charts",
-        "sha256": "4fb70a7dcd762ab8d8b49cd7f6af973f78e71c6f0452a295493aca298eb11a4d"
+        "sha256": "8daf1701623d8b727f3ba3343de540a1a548926d8c32be662ec221d5901ba9bc"
+      },
+      {
+        "file": "pages/data/heatmaps.html",
+        "path": "../pages/data/heatmaps.html",
+        "title": "Heatmaps",
+        "sha256": "b5133d5ee32d39d0d6e8ba6b1ecf3b3e37a4aa2f06f55e4f792da81936c04716"
       },
       {
         "file": "pages/data/playback.html",
         "path": "../pages/data/playback.html",
         "title": "Guided chart playback",
-        "sha256": "554928c992c8704d61cba9f6e39f9afddca894892083a2898a656ac6d6d6a9af"
+        "sha256": "4afbd19bb5532ec8dd9749a8c989516be1bb54338446e8e50f871966a577765d"
       },
       {
         "file": "pages/data/tables.html",
@@ -1107,13 +1194,13 @@ window.DocFormSearch = {
         "file": "pages/recipes/present-and-publish.html",
         "path": "../pages/recipes/present-and-publish.html",
         "title": "Present and publish a site",
-        "sha256": "8a43cb37f8f3ae430b38f01222a97315e5814e73e7834851c8fe68b82c61b40b"
+        "sha256": "12665d1dd7f5321941ae5d5a496a468ce3bb09c7066896d7457c8ac1d957d311"
       },
       {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "65a4d27d01ca69be057a6459ef68bea3ebe9d9d85260801473cad3183291e6b6"
+        "sha256": "a13cfa80296021f13a1554a683e871f1cda9b4ab3dd76deab88429340272fb53"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -1228,6 +1315,33 @@ window.DocFormSearch = {
           "text": "feature",
           "term": "feature",
           "section": "start-with-hierarchy"
+        }
+      ],
+      "outline": [
+        {
+          "id": "welcome-to-docform",
+          "title": "Welcome to DocForm",
+          "level": 1
+        },
+        {
+          "id": "what-docform-is",
+          "title": "What DocForm is",
+          "level": 2
+        },
+        {
+          "id": "what-you-can-make",
+          "title": "What you can make",
+          "level": 2
+        },
+        {
+          "id": "how-these-docs-are-organized",
+          "title": "How these docs are organized",
+          "level": 2
+        },
+        {
+          "id": "start-with-hierarchy",
+          "title": "Start with hierarchy",
+          "level": 2
         }
       ]
     },
@@ -1347,6 +1461,33 @@ window.DocFormSearch = {
           "term": "agent",
           "section": "unstyled-page"
         }
+      ],
+      "outline": [
+        {
+          "id": "open-a-docform-site",
+          "title": "Open a DocForm site",
+          "level": 1
+        },
+        {
+          "id": "files-and-folders",
+          "title": "Files and folders",
+          "level": 2
+        },
+        {
+          "id": "open-a-page",
+          "title": "Open a page from disk",
+          "level": 2
+        },
+        {
+          "id": "working-offline",
+          "title": "Working offline",
+          "level": 2
+        },
+        {
+          "id": "unstyled-page",
+          "title": "When a page looks unstyled",
+          "level": 2
+        }
       ]
     },
     {
@@ -1393,7 +1534,7 @@ window.DocFormSearch = {
           "id": "search",
           "title": "Search",
           "level": 2,
-          "text": "Try it Choose the magnifying glass in the control pill, or press Ctrl+K (Cmd+K on a Mac). Type sidebar modes and choose the matching heading on this page. You can also move through results with the arrow keys and press Enter to open one. The box that opens over the page is the search palette. It shows matching headings and a little of the text around your search words. Press Esc to close it without choosing a result."
+          "text": "Try it Choose the magnifying glass in the control pill, or press S. Type sidebar modes and choose the matching heading on this page. You can also move through results with the arrow keys and press Enter to open one. The box that opens over the page is the search palette. It shows matching headings and a little of the text around your search words. Press Esc to close it without choosing a result."
         },
         {
           "id": "on-a-phone",
@@ -1512,6 +1653,38 @@ window.DocFormSearch = {
           "text": "drawer",
           "term": "drawer",
           "section": "on-a-phone"
+        }
+      ],
+      "outline": [
+        {
+          "id": "tour-the-reading-interface",
+          "title": "Tour the reading interface",
+          "level": 1
+        },
+        {
+          "id": "sidebar-and-outline",
+          "title": "The sidebar and outline",
+          "level": 2
+        },
+        {
+          "id": "moving-between-pages",
+          "title": "Moving between pages",
+          "level": 2
+        },
+        {
+          "id": "control-pill",
+          "title": "The control pill",
+          "level": 2
+        },
+        {
+          "id": "search",
+          "title": "Search",
+          "level": 2
+        },
+        {
+          "id": "on-a-phone",
+          "title": "On a phone",
+          "level": 2
         }
       ]
     },
@@ -1642,6 +1815,38 @@ window.DocFormSearch = {
           "term": "keyboard focus",
           "section": "peek-bubbles"
         }
+      ],
+      "outline": [
+        {
+          "id": "how-these-docs-work",
+          "title": "How these docs work",
+          "level": 1
+        },
+        {
+          "id": "tips-and-cards",
+          "title": "Hover tips and cards",
+          "level": 2
+        },
+        {
+          "id": "faint-terms",
+          "title": "Faint linked terms",
+          "level": 2
+        },
+        {
+          "id": "the-glossary",
+          "title": "The glossary",
+          "level": 2
+        },
+        {
+          "id": "sidenotes",
+          "title": "Sidenotes",
+          "level": 2
+        },
+        {
+          "id": "peek-bubbles",
+          "title": "Peek bubbles",
+          "level": 2
+        }
       ]
     },
     {
@@ -1695,6 +1900,16 @@ window.DocFormSearch = {
           "section": "official-names"
         },
         {
+          "text": "On by default",
+          "term": "on by default",
+          "section": "default-or-request"
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": "default-or-request"
+        },
+        {
           "text": "SVG",
           "term": "svg",
           "section": "default-or-request"
@@ -1718,6 +1933,28 @@ window.DocFormSearch = {
           "text": "browser",
           "term": "browser",
           "section": "describe-the-result"
+        }
+      ],
+      "outline": [
+        {
+          "id": "making-pages-with-an-agent",
+          "title": "Making pages with an agent",
+          "level": 1
+        },
+        {
+          "id": "official-names",
+          "title": "Features have official names",
+          "level": 2
+        },
+        {
+          "id": "default-or-request",
+          "title": "On by default or on request",
+          "level": 2
+        },
+        {
+          "id": "describe-the-result",
+          "title": "Describe the result",
+          "level": 2
         }
       ]
     },
@@ -1848,6 +2085,33 @@ window.DocFormSearch = {
           "term": "scroll",
           "section": "squint-test"
         }
+      ],
+      "outline": [
+        {
+          "id": "visual-hierarchy-guiding-the-eye",
+          "title": "Visual hierarchy: guiding the eye",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "the-levers",
+          "title": "The levers",
+          "level": 2
+        },
+        {
+          "id": "how-readers-scan",
+          "title": "How readers scan",
+          "level": 2
+        },
+        {
+          "id": "squint-test",
+          "title": "The squint test",
+          "level": 2
+        }
       ]
     },
     {
@@ -1870,19 +2134,19 @@ window.DocFormSearch = {
           "id": "loud",
           "title": "Loud",
           "level": 2,
-          "text": "Loud features use colour, tint, or a box to catch the eye before anything else is read. They are the page’s alarms and highlights, and they only work while they are rare. On by default On request Try the squint test One loud thing per section If two warnings sit side by side, each gets about half the attention. Two tags, a button, and a callout. Each one is noticed before the sentence around it. Feature What is loud Callouts A tinted box with a coloured title Tags A tinted label on a word or phrase Buttons A tinted pill that invites a click Linked selection The tinted highlight on the item chosen right now Results tables Cells shaded by value, and pass or fail marks Evaluation matrices Cells shaded on a shared colour scale Zoom tools Pen, highlighter, and laser pointer marks"
+          "text": "Loud features use colour, tint, or a box to catch the eye before anything else is read. They are the page’s alarms and highlights, and they only work while they are rare. On by default On request Try the squint test One loud thing per section If two warnings sit side by side, each gets about half the attention. Two tags, a button, and a callout. Each one is noticed before the sentence around it. Feature What is loud Callouts A tinted box with a coloured title Tags A tinted label on a word or phrase Buttons A tinted pill that invites a click Linked selection The tinted highlight on the item chosen right now Results tables Cells shaded by value, and pass or fail marks Evaluation matrices Cells shaded on a shared colour scale Heatmaps A whole grid of cells coloured by value Zoom tools Pen, highlighter, and laser pointer marks"
         },
         {
           "id": "strong",
           "title": "Strong",
           "level": 2,
-          "text": "Strong features are the landmarks of a page: its title, its section headings, and the big blocks a reader stops to look at. They shape the page more than they decorate it. Library reference group Features described Setup 3 Layout 7 Reading 13 Interaction 13 Data 9 A small table with real counts from DocForm’s own reference. Its grid and header row stand out as one block, even before you read a number. Try it Look at the left margin beside this section. The coloured section line and the heading above it are strong signals too: together they tell you where this section starts and ends. Feature What is strong Base layout The page title, its opening summary, and section headings Section lines The coloured line beside each section Split views Blocks placed side by side Concept tables and results tables Rows and columns of facts SVG charts Lines, bars, and points Guided chart playback A chart drawn step by step with notes SVG animations A moving diagram with play controls Code A shaded block of program text TeX math A formula shown on its own line Tabs Panels that share one place Card panels and figure steps Choices that change a detail or a figure Worked-example steppers An example shown one step at a time Evaluation matrices and scenario comparisons Grids and charts that compare outcomes Named data sources and data views Data shown as a table or list Data trees Nested data with branches that open and close"
+          "text": "Strong features are the landmarks of a page: its title, its section headings, and the big blocks a reader stops to look at. They shape the page more than they decorate it. Library reference group Features described Setup 3 Layout 7 Reading 13 Interaction 13 Data 9 A small table with real counts from DocForm’s own reference. Its grid and header row stand out as one block, even before you read a number. Try it Look at the left margin beside this section. The coloured section line and the heading above it are strong signals too: together they tell you where this section starts and ends. Feature What is strong Base layout The page title, its opening summary, and section headings Section lines The coloured line beside each section Split views Blocks placed side by side Concept tables and results tables Rows and columns of facts SVG charts Lines, bars, and points Dot and interval plots Ranked dots with whiskers Histograms Bars that show how values spread Guided chart playback A chart drawn step by step with notes SVG animations A moving diagram with play controls Code A shaded block of program text TeX math A formula shown on its own line Tabs Panels that share one place Card panels and figure steps Choices that change a detail or a figure Worked-example steppers An example shown one step at a time Evaluation matrices and scenario comparisons Grids and charts that compare outcomes Named data sources and data views Data shown as a table or list Data trees Nested data with branches that open and close"
         },
         {
           "id": "medium",
           "title": "Medium",
           "level": 2,
-          "text": "Medium features are small signals that guide you while you read. They label, number, and point, without competing with the landmarks around them. Step 2 of 4 Rung Medium Good for Labels, numbers, and pointers A link to the glossary and a chosen term sit inside ordinary text without breaking it up. An eyebrow, labelled fields, a link, and a marked term. This caption is a medium signal too. Feature What is medium Text roles Eyebrows and labelled fields Base layout Smaller headings inside a section, and links Buttons The small step pill with Previous and Next Cross-references Figure, table, and equation numbers, captions, and link previews Citations Source numbers in the text Colour roles The legend and the accents it explains TeX math Formulas inside a sentence Tooltips Terms marked on purpose Parameters Sliders, switches, and preset choices Scroll reveals A gentle entrance as a block comes into view File dropzones A dashed area that accepts a file"
+          "text": "Medium features are small signals that guide you while you read. They label, number, and point, without competing with the landmarks around them. Step 2 of 4 Rung Medium Good for Labels, numbers, and pointers A link to the glossary and a chosen term sit inside ordinary text without breaking it up. An eyebrow, labelled fields, a link, and a marked term. This caption is a medium signal too. Feature What is medium Text roles Eyebrows and labelled fields Base layout Smaller headings inside a section, and links Buttons The small step pill with Previous and Next Cross-references Figure, table, and equation numbers, captions, and link previews Citations Source numbers in the text Colour roles The legend and the accents it explains TeX math Formulas inside a sentence Tooltips Terms marked on purpose Parameters Sliders, switches, choice chips, searchable lists, and preset choices Scroll reveals A gentle entrance as a block comes into view File dropzones A dashed area that accepts a file"
         },
         {
           "id": "quiet",
@@ -2081,6 +2345,43 @@ window.DocFormSearch = {
           "term": "focus mode",
           "section": "beside-a-demo"
         }
+      ],
+      "outline": [
+        {
+          "id": "the-signal-ladder",
+          "title": "The signal ladder",
+          "level": 1
+        },
+        {
+          "id": "rungs",
+          "title": "Four rungs",
+          "level": 2
+        },
+        {
+          "id": "loud",
+          "title": "Loud",
+          "level": 2
+        },
+        {
+          "id": "strong",
+          "title": "Strong",
+          "level": 2
+        },
+        {
+          "id": "medium",
+          "title": "Medium",
+          "level": 2
+        },
+        {
+          "id": "quiet",
+          "title": "Quiet",
+          "level": 2
+        },
+        {
+          "id": "accent-budget",
+          "title": "Spend loud signals sparingly",
+          "level": 2
+        }
       ]
     },
     {
@@ -2133,7 +2434,13 @@ window.DocFormSearch = {
           "id": "examples-of-status",
           "title": "Reading aids On by default",
           "level": 3,
-          "text": "The same status tag works next to prose, in a heading, or inside a table. Feature Availability TeX math On request Sidenotes are On by default. A tag names a status in a few words. A button gives the reader an action. Its tint can use the same colour roles as tags, and an icon can sit beside its label. Open TeX math Title Find out what the page covers. Section heading Find the part you need. The step pill groups the arrow buttons and the step counter. Try it Move to the next step with the right arrow button. Use Tab to reach a button and Enter to use it."
+          "text": "The same status tag works next to prose, in a heading, or inside a table. Feature Availability TeX math On request Sidenotes are On by default. A tag names a status in a few words. Rest the pointer on a tag to see what it means. A button gives the reader an action. Its tint can use the same colour roles as tags, and an icon can sit beside its label. Open TeX math Title Find out what the page covers. Section heading Find the part you need. The step pill groups the arrow buttons and the step counter. Try it Move to the next step with the right arrow button. Use Tab to reach a button and Enter to use it."
+        },
+        {
+          "id": "dropdowns",
+          "title": "Dropdowns",
+          "level": 2,
+          "text": "Group related links and actions under one button. An entry can open another level of choices inside the menu. Open Page actions, then More writing guides. Use Tab to move through the open choices and Esc to step back out."
         },
         {
           "id": "when-to-use",
@@ -2158,6 +2465,11 @@ window.DocFormSearch = {
         {
           "text": "reading column",
           "term": "reading column",
+          "section": ""
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
           "section": ""
         },
         {
@@ -2216,6 +2528,11 @@ window.DocFormSearch = {
           "section": "tags-and-buttons"
         },
         {
+          "text": "On request",
+          "term": "on request",
+          "section": "examples-of-status"
+        },
+        {
           "text": "Sidenotes",
           "term": "sidenote",
           "section": "examples-of-status"
@@ -2234,6 +2551,58 @@ window.DocFormSearch = {
           "text": "hover",
           "term": "hover",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "base-layout-text-roles-tags-buttons",
+          "title": "Base layout, text roles, tags, buttons",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "The reading column",
+          "level": 2
+        },
+        {
+          "id": "headings-and-labels",
+          "title": "Headings and labels",
+          "level": 2
+        },
+        {
+          "id": "lists",
+          "title": "List markers",
+          "level": 2
+        },
+        {
+          "id": "table-hover",
+          "title": "Reading across a table",
+          "level": 2
+        },
+        {
+          "id": "tags-and-buttons",
+          "title": "Tags and buttons",
+          "level": 2
+        },
+        {
+          "id": "dropdowns",
+          "title": "Dropdowns",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -2288,6 +2657,11 @@ window.DocFormSearch = {
         {
           "text": "callout",
           "term": "callout",
+          "section": ""
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
           "section": ""
         },
         {
@@ -2360,6 +2734,43 @@ window.DocFormSearch = {
           "term": "scroll",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "callouts",
+          "title": "Callouts",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "A tip in motion",
+          "level": 2
+        },
+        {
+          "id": "stationary",
+          "title": "A stationary caution",
+          "level": 2
+        },
+        {
+          "id": "scripts-off",
+          "title": "The scripts-off look",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -2419,6 +2830,11 @@ window.DocFormSearch = {
         {
           "text": "formulas",
           "term": "formula",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -2486,6 +2902,48 @@ window.DocFormSearch = {
           "term": "tooltip",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "tex-math",
+          "title": "TeX math",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "A formula in a sentence",
+          "level": 2
+        },
+        {
+          "id": "display",
+          "title": "A formula on its own line",
+          "level": 2
+        },
+        {
+          "id": "macros",
+          "title": "Symbols that stay consistent",
+          "level": 2
+        },
+        {
+          "id": "math-in-tooltips",
+          "title": "Math inside a tooltip",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -2502,7 +2960,7 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "Highlights and notes",
           "level": 2,
-          "text": "Try it Point at a circled number or reach it with Tab. Its annotation, a numbered note about the line, lights up below and appears in a small card. Choose the number to jump to its note. Use Copy to copy the text without the annotation markers. The background of the second line is a line highlight. It stays in place so readers can spot the line before they interact with it."
+          "text": "Use inline code for a short value in prose, such as sections. It appears in a monospaced font on a softly tinted, rounded background. Try it Point at a circled number or reach it with Tab. Its annotation, a numbered note about the line, lights up below and appears in a small card. Choose the number to jump to its note. Use Copy to copy the text without the annotation markers. The background of the second line is a line highlight. It stays in place so readers can spot the line before they interact with it."
         },
         {
           "id": "languages",
@@ -2521,6 +2979,12 @@ window.DocFormSearch = {
           "title": "Plain blocks",
           "level": 2,
           "text": "A language outside the nine built-in highlighters can still use the code toolbar and Copy. The plain-block option shown here leaves the toolbar off too."
+        },
+        {
+          "id": "editable-text",
+          "title": "Editable text",
+          "level": 2,
+          "text": "Use an editable field when readers need to change a value or try out a snippet. Turn on Code for live syntax colours. Page title Section count Draft notes Page settings Change the section count or edit the page settings to see the colours update as you type. Edits in these examples last until you reload the page."
         },
         {
           "id": "when-to-use",
@@ -2545,6 +3009,11 @@ window.DocFormSearch = {
         {
           "text": "Code blocks",
           "term": "code block",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -2578,6 +3047,16 @@ window.DocFormSearch = {
           "section": "diffs"
         },
         {
+          "text": "field",
+          "term": "field",
+          "section": "editable-text"
+        },
+        {
+          "text": "page settings",
+          "term": "page settings",
+          "section": "editable-text"
+        },
+        {
           "text": "code block",
           "term": "code block",
           "section": "when-to-use"
@@ -2591,6 +3070,53 @@ window.DocFormSearch = {
           "text": "scroll",
           "term": "scroll",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "code",
+          "title": "Code",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "Highlights and notes",
+          "level": 2
+        },
+        {
+          "id": "languages",
+          "title": "Language colours",
+          "level": 2
+        },
+        {
+          "id": "diffs",
+          "title": "Changes between versions",
+          "level": 2
+        },
+        {
+          "id": "plain-blocks",
+          "title": "Plain blocks",
+          "level": 2
+        },
+        {
+          "id": "editable-text",
+          "title": "Editable text",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -2661,6 +3187,16 @@ window.DocFormSearch = {
         {
           "text": "peek bubbles",
           "term": "peek bubble",
+          "section": ""
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -2763,6 +3299,48 @@ window.DocFormSearch = {
           "term": "disclosure",
           "section": "when-to-use"
         }
+      ],
+      "outline": [
+        {
+          "id": "sidenotes-and-peek-bubbles",
+          "title": "Sidenotes and peek bubbles",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "A note in the margin",
+          "level": 2
+        },
+        {
+          "id": "note-fallback",
+          "title": "The note when space is tight",
+          "level": 2
+        },
+        {
+          "id": "bubble",
+          "title": "An explanation that opens in place",
+          "level": 2
+        },
+        {
+          "id": "plain-disclosure",
+          "title": "A disclosure you open yourself",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -2827,6 +3405,16 @@ window.DocFormSearch = {
         {
           "text": "glossary",
           "term": "glossary",
+          "section": ""
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -2949,6 +3537,48 @@ window.DocFormSearch = {
           "term": "glossary",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "tooltips-and-glossary",
+          "title": "Tooltips and glossary",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "A quick definition",
+          "level": 2
+        },
+        {
+          "id": "hold-cards",
+          "title": "A longer explanation",
+          "level": 2
+        },
+        {
+          "id": "auto-linking",
+          "title": "Faint underlines",
+          "level": 2
+        },
+        {
+          "id": "glossary-page",
+          "title": "The generated glossary",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -3014,6 +3644,11 @@ window.DocFormSearch = {
         {
           "text": "Citations",
           "term": "citation",
+          "section": ""
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
           "section": ""
         },
         {
@@ -3091,6 +3726,53 @@ window.DocFormSearch = {
           "term": "visual hierarchy",
           "section": "bibliography"
         }
+      ],
+      "outline": [
+        {
+          "id": "cross-references-and-citations",
+          "title": "Cross-references and citations",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "Numbers for figures, tables, and equations",
+          "level": 2
+        },
+        {
+          "id": "numbering-options",
+          "title": "Choosing what to number",
+          "level": 2
+        },
+        {
+          "id": "cross-page-previews",
+          "title": "A look at another page",
+          "level": 2
+        },
+        {
+          "id": "citations",
+          "title": "Giving credit",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "bibliography",
+          "title": "Bibliography",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -3158,6 +3840,16 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On by default",
+          "term": "on by default",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "scroll",
           "term": "scroll",
           "section": "see-it"
@@ -3201,6 +3893,38 @@ window.DocFormSearch = {
           "text": "section rail",
           "term": "section rail",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "section-lines-and-split-views",
+          "title": "Section lines and split views",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "How the layout works",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -3259,6 +3983,56 @@ window.DocFormSearch = {
       ],
       "terms": [
         {
+          "text": "On by default",
+          "term": "on by default",
+          "section": ""
+        },
+        {
+          "text": "Gray",
+          "tip": "The named colour gray: tinted text on a soft gray background.",
+          "section": "see-it"
+        },
+        {
+          "text": "Brown",
+          "tip": "The named colour brown: tinted text on a soft brown background.",
+          "section": "see-it"
+        },
+        {
+          "text": "Orange",
+          "tip": "The named colour orange: tinted text on a soft orange background.",
+          "section": "see-it"
+        },
+        {
+          "text": "Yellow",
+          "tip": "The named colour yellow: tinted text on a soft yellow background.",
+          "section": "see-it"
+        },
+        {
+          "text": "Green",
+          "tip": "The named colour green: tinted text on a soft green background.",
+          "section": "see-it"
+        },
+        {
+          "text": "Blue",
+          "tip": "The named colour blue: tinted text on a soft blue background.",
+          "section": "see-it"
+        },
+        {
+          "text": "Purple",
+          "tip": "The named colour purple: tinted text on a soft purple background.",
+          "section": "see-it"
+        },
+        {
+          "text": "Pink",
+          "tip": "The named colour pink: tinted text on a soft pink background.",
+          "section": "see-it"
+        },
+        {
+          "text": "Red",
+          "tip": "The named colour red: tinted text on a soft red background.",
+          "section": "see-it"
+        },
+        {
           "text": "theme",
           "term": "theme",
           "section": "see-it"
@@ -3276,6 +4050,11 @@ window.DocFormSearch = {
         {
           "text": "on request",
           "term": "on request",
+          "section": "role-legend"
+        },
+        {
+          "text": "Tip",
+          "tip": "The tip role, shown in yellow on this site.",
           "section": "role-legend"
         },
         {
@@ -3333,6 +4112,38 @@ window.DocFormSearch = {
           "term": "legend",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "colour-roles-and-theme",
+          "title": "Colour, roles, and theme",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Colours, meanings, and themes",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -3349,7 +4160,7 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Find a page Choose a group in the sidebar to see the pages it contains. Find a section Open this page’s outline and choose Sidebar modes. Keep your place Scroll and watch the top-left progress ring fill while the outline marks your current heading. The sidebar tracks your place in the site and on the page. The ring tracks how far you’ve scrolled. Try it In the sidebar, choose the arrow beside Write clearly to open that group, then choose it again to close it. On a computer you can also rest the pointer on a closed group to peek at its contents. On a phone, open the sidebar with the navigation button first."
+          "text": "Find a page Choose a group in the sidebar to see the pages it contains. Find a section Choose Navigation and reading controls in the outline below this page’s name to jump to its main heading. Keep your place Scroll and watch the top-left progress ring fill while the outline marks your current section. The sidebar tracks your place in the site and on the page. The ring tracks how far you’ve scrolled. Try it In the sidebar, choose the arrow beside Write clearly to open that group, then choose it again to close it. On a phone, open the sidebar with the navigation button first."
         },
         {
           "id": "what-it-does",
@@ -3361,19 +4172,19 @@ window.DocFormSearch = {
           "id": "page-tree",
           "title": "Page groups and outlines",
           "level": 3,
-          "text": "The sidebar lists pages in groups. A group can start collapsed, with only its name showing. The group containing the page you’re reading opens so you can see your place. The current page’s outline lists its main and smaller headings, and updates as you scroll. On a wide screen, drag the sidebar divider to resize it, or reach the divider with Tab and use the arrow keys. Double-click the divider to reset it."
+          "text": "A thin line and a heavier label mark the start of each page group. A group can start collapsed, with only its name showing. The group containing the page you’re reading opens so you can see your place. The outline lists the page’s first-level headings and highlights your current section as you scroll. On a wide screen, drag the sidebar divider to resize it, or reach the divider with Tab and use the arrow keys. Double-click the divider to reset it."
         },
         {
           "id": "sidebar-modes",
           "title": "Sidebar modes",
           "level": 3,
-          "text": "Shown The page list stays open on the left. Hidden The page list tucks away. A numbered section rail beside the text lets you jump to headings. Auto Move the pointer to the far left edge to peek at the list. It tucks away when you move back into the page. Try it On a wide screen, use the navigation button in the control pill or press N to cycle through the three modes. In Hidden, point to a rail number or reach it with Tab to see the heading it leads to. DocForm remembers your mode when browser storage is available."
+          "text": "Shown The page list stays open on the left. Hidden The page list tucks away. A numbered section rail beside the text lets you jump to headings. Auto Move the pointer to the far left edge to peek at the list. It tucks away when you move back into the page. After you pick a page from the list, it stays open on the new page until the pointer leaves it. Try it On a wide screen, use the navigation button in the control pill or press N to cycle through the three modes. In Hidden, point to a rail number or reach it with Tab to see the heading it leads to. DocForm remembers your mode when browser storage is available."
         },
         {
           "id": "heading-and-page-links",
           "title": "Heading links and the pager",
           "level": 3,
-          "text": "Point at a heading or reach its chain button with Tab to copy a link that opens the page there. The pager shows Previous and Next links at the bottom of a page, in the site’s reading order. Visit Colour, roles, and theme and use its Next link to come back. A page can hide its pager, as this page does. Authors can also leave individual headings out of the outline and section rail. The heading below remains visible in the text. Optional outline detail Try it Look for Optional outline detail under Ways to move around in the sidebar. The heading is omitted there, so the outline stays shorter."
+          "text": "Point at a heading or reach its chain button with Tab to copy a link that opens the page there. The pager shows Previous and Next links at the bottom of a page, in the site’s reading order. Visit Colour, roles, and theme and use its Next link to come back. A page can hide its pager, as this page does. Authors can also leave individual headings out of the outline and section rail. The heading below remains visible in the text. Optional outline detail Try it Compare the headings here with the sidebar. The outline shows only the first-level heading, Navigation and reading controls."
         },
         {
           "id": "when-to-use",
@@ -3421,14 +4232,14 @@ window.DocFormSearch = {
           "section": ""
         },
         {
-          "text": "sidebar",
-          "term": "sidebar",
-          "section": "see-it"
+          "text": "On by default",
+          "term": "on by default",
+          "section": ""
         },
         {
           "text": "sidebar",
           "term": "sidebar",
-          "section": "page-tree"
+          "section": "see-it"
         },
         {
           "text": "outline",
@@ -3438,6 +4249,11 @@ window.DocFormSearch = {
         {
           "text": "scroll",
           "term": "scroll",
+          "section": "page-tree"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
           "section": "page-tree"
         },
         {
@@ -3515,6 +4331,38 @@ window.DocFormSearch = {
           "term": "link",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "navigation-and-reading-controls",
+          "title": "Navigation and reading controls",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Ways to move around",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -3525,13 +4373,13 @@ window.DocFormSearch = {
           "id": "",
           "title": "Search",
           "level": 1,
-          "text": "Shape pages and sites Pressing Ctrl+K opens a search box that finds words on the current page straight away. With a prepared search index it also searches every page of the site, even offline. Official name Search Turned on On by default Signal strength Quiet Works with The offline asset tool, which prepares the site-wide index Good for Sites with more than a few pages"
+          "text": "Shape pages and sites Pressing S opens a search box that finds words on the current page straight away. With a prepared search index it also searches every page of the site, even offline. Official name Search Turned on On by default Signal strength Quiet Works with The offline asset tool, which prepares the site-wide index Good for Sites with more than a few pages"
         },
         {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Reading landmarks are the headings, figures, and labels that help you find your place on a page. This sentence is part of the live page. Its words can turn up in a search as soon as the page opens. Try it"
+          "text": "Reading landmarks are the headings, figures, and labels that help you find your place on a page. This sentence is part of the live page. Its words can turn up in a search as soon as the page opens. Try it Press S or select the magnifying glass to see the search box fade in. Press Esc to fade it out."
         },
         {
           "id": "what-it-does",
@@ -3588,6 +4436,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On by default",
+          "term": "on by default",
+          "section": ""
+        },
+        {
           "text": "search index",
           "term": "search index",
           "section": "live-page-and-site-index"
@@ -3626,6 +4479,38 @@ window.DocFormSearch = {
           "text": "browser",
           "term": "browser",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "search",
+          "title": "Search",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "What gets searched",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -3701,6 +4586,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On by default",
+          "term": "on by default",
+          "section": ""
+        },
+        {
           "text": "control pill",
           "term": "control pill",
           "section": "see-it"
@@ -3756,8 +4646,93 @@ window.DocFormSearch = {
           "section": "reading-and-figure-widths"
         },
         {
+          "text": "Blue",
+          "tip": "Default section colour: blue.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Green",
+          "tip": "Default section colour: green.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Purple",
+          "tip": "Default section colour: purple.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Orange",
+          "tip": "Default section colour: orange.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Pink",
+          "tip": "Default section colour: pink.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Brown",
+          "tip": "Default section colour: brown.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Purple",
+          "tip": "Section colour on this page: purple.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Blue",
+          "tip": "Section colour on this page: blue.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Green",
+          "tip": "Section colour on this page: green.",
+          "section": "section-cycle"
+        },
+        {
+          "text": "Page",
+          "tip": "The page background.",
+          "section": "other-swatches"
+        },
+        {
           "text": "Sidebar",
-          "term": "sidebar",
+          "tip": "The sidebar background.",
+          "section": "other-swatches"
+        },
+        {
+          "text": "Subtle fill",
+          "tip": "A soft fill for quiet panels and code.",
+          "section": "other-swatches"
+        },
+        {
+          "text": "1",
+          "tip": "Chart colour 1, used for series 1.",
+          "section": "other-swatches"
+        },
+        {
+          "text": "2",
+          "tip": "Chart colour 2, used for series 2.",
+          "section": "other-swatches"
+        },
+        {
+          "text": "3",
+          "tip": "Chart colour 3, used for series 3.",
+          "section": "other-swatches"
+        },
+        {
+          "text": "4",
+          "tip": "Chart colour 4, used for series 4.",
+          "section": "other-swatches"
+        },
+        {
+          "text": "5",
+          "tip": "Chart colour 5, used for series 5.",
+          "section": "other-swatches"
+        },
+        {
+          "text": "6",
+          "tip": "Chart colour 6, used for series 6.",
           "section": "other-swatches"
         },
         {
@@ -3774,6 +4749,38 @@ window.DocFormSearch = {
           "text": "section cycle",
           "term": "section cycle",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "design-tokens",
+          "title": "Design tokens",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "What tokens can change",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -3825,6 +4832,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "outline",
           "term": "outline",
           "section": "see-it"
@@ -3864,6 +4876,38 @@ window.DocFormSearch = {
           "term": "theme",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "tabs",
+          "title": "Tabs",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Starting tabs and groups",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -3880,7 +4924,7 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Reader tools Find your place Outline Search Read comfortably Focus mode Theme The outline lists headings in the current page. Pick one to skip to that section. Type a word in Search to see where it appears and jump to a match. Focus mode softens nearby sections so the current section stands out. Theme switches the page between light and dark colours. The group titles organise the choices, and the selected card controls the detail pane. Try it Choose Search, then Theme. With a card focused, move with Up or Down and press Enter to open its detail. Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane."
+          "text": "Reader tools Find your place Outline Search Read comfortably Focus mode Theme Outline On by default The outline lists the headings of the current page. Pick one to skip straight to that section. The marked heading follows your place as you scroll. Search On by default Press S, type a word, and pick a match to jump to it. Matches on this page come first. Other pages follow when the site has a search index. Use ↑ and ↓ to move through results and Esc to close. Focus mode Shortcut F Focus mode softens nearby sections so the one you are reading stands out. Rest the pointer on a blurred block to read it clearly without leaving focus mode. Theme Shortcut T Theme switches the page between light and dark colours. Your choice is remembered on every page of the site. The group titles organise the choices, and the selected card controls the detail pane. Try it Move your pointer over Search, then Theme. With a card focused, move with Up or Down and press Enter to open its detail. A detail can hold anything a page can: tags, emphasis, lists, keys, callouts, and small figures. Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane."
         },
         {
           "id": "what-it-does",
@@ -3904,7 +4948,7 @@ window.DocFormSearch = {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "In a card panel, Up, Down, Home and End move focus. Enter or Space selects the card. Figure steps select as soon as they receive focus. On a narrow screen, the panes stack. The highlight and labels identify the current choice in either theme. Print and pages opened with scripts off show all the written details."
+          "text": "Point at or tap a card to select it. Up, Down, Home and End move keyboard focus, and Enter or Space selects the focused card. Figure steps select as soon as they receive focus. On a narrow screen, the panes stack. Print and pages opened with scripts off show all the written details."
         },
         {
           "id": "related",
@@ -3925,13 +4969,33 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "SVG",
           "term": "svg",
           "section": ""
         },
         {
+          "text": "Outline",
+          "term": "outline",
+          "section": "see-it"
+        },
+        {
+          "text": "On by default",
+          "term": "on by default",
+          "section": "see-it"
+        },
+        {
           "text": "outline",
           "term": "outline",
+          "section": "see-it"
+        },
+        {
+          "text": "search index",
+          "term": "search index",
           "section": "see-it"
         },
         {
@@ -3940,8 +5004,23 @@ window.DocFormSearch = {
           "section": "see-it"
         },
         {
+          "text": "Shortcut F",
+          "tip": "Press F anywhere outside a text field to switch focus mode on or off.",
+          "section": "see-it"
+        },
+        {
           "text": "Theme",
           "term": "theme",
+          "section": "see-it"
+        },
+        {
+          "text": "Shortcut T",
+          "tip": "Press T anywhere outside a text field to switch between light and dark.",
+          "section": "see-it"
+        },
+        {
+          "text": "emphasis",
+          "term": "emphasis",
           "section": "see-it"
         },
         {
@@ -3965,19 +5044,244 @@ window.DocFormSearch = {
           "section": "what-it-does"
         },
         {
-          "text": "card panel",
-          "term": "card panel",
-          "section": "for-every-reader"
-        },
-        {
-          "text": "theme",
-          "term": "theme",
+          "text": "keyboard focus",
+          "term": "keyboard focus",
           "section": "for-every-reader"
         },
         {
           "text": "playback",
           "term": "playback",
           "section": "related"
+        }
+      ],
+      "outline": [
+        {
+          "id": "card-panels-and-figure-steps",
+          "title": "Card panels and figure steps",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Figure steps",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "path": "../pages/explain/pipelines.html",
+      "title": "Pipeline diagrams",
+      "sections": [
+        {
+          "id": "",
+          "title": "Pipeline diagrams",
+          "level": 1,
+          "text": "Explain step by step A pipeline diagram shows the stages of a process as blocks joined by lines. Point at a block to trace where it comes from and where it leads, and read more about it in a detail pane. Official name Pipeline diagrams · Detail panes Turned on On request Signal strength Strong Works with Card panels, steppers, and linked selection Good for Data flows, build steps, and decision paths"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "Start Write pages Plain HTML in a folder. Check Links Leads to the review point Terms Every term has a definition. Leads to the review point Build Search index Finish Share the folder Readers open it from disk. Back to writing Each page is an ordinary HTML file. Nothing needs to be installed. Broken links send readers nowhere, so they are checked before sharing. Terms that appear in the glossary get a dotted underline and a short definition. The search index lets readers search every page, even offline. Copy the folder anywhere. Readers open index.html in a browser. Two checks run side by side, meet at a junction, then split again. The dotted line loops back for the next round of edits. Try it Move your pointer over Terms. The lines and blocks before and after it stay bright while the rest fade, and the pane beside the diagram explains it. Tab into the diagram and use the arrow keys to follow the lines. The Terms block has an empty eyebrow, so it simply leaves that line out. Blocks in the same column always share one height so they line up."
+        },
+        {
+          "id": "steps",
+          "title": "Reveal a pipeline in steps",
+          "level": 2,
+          "text": "Step 1 A reader opens a page Step 2 Is it saved already? Yes: show the saved copy No: load the files Use the saved copy Load the files From the same folder. Step 4 Show the page Press Next to add one stage at a time, or Play to watch the whole flow. A pipeline can also follow a worked-example stepper, so the diagram grows as the reader moves through the written steps."
+        },
+        {
+          "id": "adjust",
+          "title": "Adjust a block by hand",
+          "level": 2,
+          "text": "Blocks are placed automatically, but you can pin one to a column or row, change its size, or give it a different look. A block with its own look still takes its words from the eyebrow, headline, and description, so editing those updates the picture too. When two lines have to cross, the line underneath gets a small gap. Draft Data Output Text · Output Figure Pinned rows force the two lines to cross. The Text block uses its own one-line look."
+        },
+        {
+          "id": "detail-panes",
+          "title": "Detail panes elsewhere on the page",
+          "level": 2,
+          "text": "The detail pane is not tied to a diagram. Place one anywhere and point it at a pipeline, a card panel, or a figure with steps. It shows the detail whose name matches the selected item. Tools Asset checker Data viewer Lists every file a site needs and whether it is present. Opens a data file and shows it as a table. Where to find it: the tools folder, file assets.html. Where to find it: any page with a data block shows a raw view."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use a pipeline diagram when order and connections matter: stages that split, run side by side, and come back together. For a single list of choices without connections, a card panel is simpler."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "Point at, tap, or focus a block to select it. Arrow keys follow the lines forward and back, or move between blocks in the same column. Each block also says where it leads for screen readers. With scripts off, or when printed, the diagram becomes a numbered list and every detail is shown."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "Card panels and figure steps Worked-example steppers Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "pipeline diagram",
+          "term": "pipeline diagram",
+          "section": ""
+        },
+        {
+          "text": "detail pane",
+          "term": "detail pane",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "HTML",
+          "term": "html",
+          "section": "see-it"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "see-it"
+        },
+        {
+          "text": "Search index",
+          "term": "search index",
+          "section": "see-it"
+        },
+        {
+          "text": "from disk",
+          "term": "from disk",
+          "section": "see-it"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "see-it"
+        },
+        {
+          "text": "glossary",
+          "term": "glossary",
+          "section": "see-it"
+        },
+        {
+          "text": "search index",
+          "term": "search index",
+          "section": "see-it"
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "see-it"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "see-it"
+        },
+        {
+          "text": "eyebrow",
+          "term": "eyebrow",
+          "section": "see-it"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "steps"
+        },
+        {
+          "text": "eyebrow",
+          "term": "eyebrow",
+          "section": "adjust"
+        },
+        {
+          "text": "detail pane",
+          "term": "detail pane",
+          "section": "detail-panes"
+        },
+        {
+          "text": "card panel",
+          "term": "card panel",
+          "section": "detail-panes"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "detail-panes"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "detail-panes"
+        },
+        {
+          "text": "pipeline diagram",
+          "term": "pipeline diagram",
+          "section": "when-to-use"
+        }
+      ],
+      "outline": [
+        {
+          "id": "pipeline-diagrams",
+          "title": "Pipeline diagrams",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "steps",
+          "title": "Reveal a pipeline in steps",
+          "level": 2
+        },
+        {
+          "id": "adjust",
+          "title": "Adjust a block by hand",
+          "level": 2
+        },
+        {
+          "id": "detail-panes",
+          "title": "Detail panes elsewhere on the page",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -4040,6 +5344,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "timeline",
           "term": "timeline",
           "section": "see-it"
@@ -4088,6 +5397,38 @@ window.DocFormSearch = {
           "text": "timeline",
           "term": "timeline",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "svg-animations",
+          "title": "SVG animations",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Four ways to change a picture",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -4144,6 +5485,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "SVG",
           "term": "svg",
           "section": ""
@@ -4187,6 +5533,38 @@ window.DocFormSearch = {
           "text": "theme",
           "term": "theme",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "worked-example-steppers",
+          "title": "Worked-example steppers",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "One step, several views",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -4238,6 +5616,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "Scroll",
           "term": "scroll",
           "section": "see-it"
@@ -4261,6 +5644,38 @@ window.DocFormSearch = {
           "text": "scroll",
           "term": "scroll",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "scroll-reveals",
+          "title": "Scroll reveals",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Add a pause or keep a block still",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -4329,6 +5744,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "Outline",
           "term": "outline",
           "section": "see-it"
@@ -4373,6 +5793,38 @@ window.DocFormSearch = {
           "term": "script",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "linked-selection",
+          "title": "Linked selection",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "How a group shares choices",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -4383,25 +5835,55 @@ window.DocFormSearch = {
           "id": "",
           "title": "Parameters and presets",
           "level": 1,
-          "text": "Explain step by step Parameters are values readers can change with sliders, menus, and switches. Presets set several of them at once with one click. Official name Parameters Turned on On request Signal strength Medium Works with Charts and results tables fed by named data sources Good for Letting readers explore what-ifs"
+          "text": "Explain step by step Parameters are values readers can change with sliders, menus, and switches. Presets set several of them at once with one click. Official name Parameters Turned on On request Signal strength Medium Works with Charts, results tables, linked selection, and any block that should appear only for certain choices Good for Letting readers explore what-ifs"
         },
         {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Pages to read: 2 Reading pace: Quick Include a review: Off Tools to practise: Outline Plan: 2 pages, 4 minutes. Tools selected: 1. Illustrative fixed value: 2 minutes per page at the quick pace. Controls change an illustrative reading plan. Each preset sets several choices at once and the plan updates to match. Try it Move the slider, choose a pace, switch on review and check both tools. Watch the sentence update. Pick Slow study, then Quick tour to return to the starting values."
+          "text": "Pages to read: 2 Reading pace: Quick Include a review: Off Tools to practise: Outline Plan: 2 pages, 4 minutes. Tools selected: 1. Illustrative fixed value: 2 minutes per page at the quick pace. Review step: skim each page’s outline once more before you finish. Search step: press S and look up one word from each page. Controls change an illustrative reading plan. Each preset sets several choices at once and the plan updates to match. Try it Move the slider, choose a pace, switch on review and check both tools. Watch the sentence update and the review and search steps appear. Pick Slow study, then Quick tour to return to the starting values."
         },
         {
           "id": "what-it-does",
           "title": "Controls and live text",
           "level": 2,
-          "text": "Slider Move along a range of numbers. This slider picks a whole number of pages. Single choice Pick one reading pace from a list. Toggle switch Turn review on or off. Multiple choice Check any number of tools, including none. Number Use a numeric value in a calculation, like this plan’s minutes per page. It has no reader control of its own. A live value can show a single setting or calculation. A live text template keeps the surrounding words and fills several places with current values. The fixed-value line above uses a single value, and the plan sentence uses a template. A preset changes its listed settings together and is marked when those values are active."
+          "text": "Slider Move along a range of numbers. This slider picks a whole number of pages. Single choice Pick one reading pace. A highlight slides to the chosen chip. Toggle switch Turn review on or off. Multiple choice Pick any number of tools, including none. Each chosen chip fills in and shows a check mark. Number Use a numeric value in a calculation, like this plan’s minutes per page. It has no reader control of its own. A live value can show a single setting or calculation. A live text template keeps the surrounding words and fills several places with current values. The fixed-value line above uses a single value, and the plan sentence uses a template. A preset changes its listed settings together and is marked when those values are active."
         },
         {
           "id": "scopes",
           "title": "Share settings within a scope",
           "level": 3,
           "text": "Pages in the reading plan: 2 Pages in a separate plan: 4 The first slider repeats the reading plan’s page count. The other slider controls a separate plan. Try it Move the first slider and check the reading plan above. Now move the other slider. The reading plan stays as it was. A scope is a named set of parameter definitions and their current values. A definition gives a setting its type, starting value and any bounds or choices. The same setting can appear in several places within a scope. Separate scopes can use the same setting name for independent values."
+        },
+        {
+          "id": "choice-styles",
+          "title": "Chips and searchable lists",
+          "level": 2,
+          "text": "Short lists of choices appear as chips: small rounded buttons that show every option at once, like the pace and tools above. A list with more than eight choices, or with long names, becomes a combobox instead. You type to narrow the list and pick from what remains. Authors can choose either look for any control. Features to study: Parameters 1 of 14 features chosen. A searchable list of 14 official feature names. Each choice appears as a removable chip above the field. Try it Click the field and type chart to narrow the list, then choose Heatmaps. Remove a chip with its small cross, or press Backspace in the empty field. Use All and None to change every choice at once."
+        },
+        {
+          "id": "linking",
+          "title": "Link controls to the page",
+          "level": 2,
+          "text": "A parameter can do more than fill in text. Without any extra page code it can show or hide a block, highlight a matching item elsewhere, or change how a chart is drawn."
+        },
+        {
+          "id": "show-when",
+          "title": "Show a block for some choices",
+          "level": 3,
+          "text": "The review and search steps in the first demo appear only while their choices are on. A block can depend on a switch, a chosen option, or a calculation. It fades in and out as the choice changes. With scripts off, every such block stays visible, so nothing is lost."
+        },
+        {
+          "id": "select-to-highlight",
+          "title": "Highlight a choice everywhere",
+          "level": 3,
+          "text": "Reference group: Reading Group References setup 3 layout 7 reading 13 interact 13 data 9 The chips and the bars share one linked selection. Choosing either one highlights the other. Try it Choose Data and watch its bar light up. Then click the setup bar and see the chips follow."
+        },
+        {
+          "id": "chart-bindings",
+          "title": "Drive a chart’s settings",
+          "level": 3,
+          "text": "A slider or a choice can change a chart directly: its number of bins, the position of a reference line, which series are shown, the visible range, the top of a colour scale, or the direction and stacking of bars. Try the bar layout choices and the bin slider on the charts page. If a value would break the chart, the control springs back to its last working value."
         },
         {
           "id": "when-to-use",
@@ -4413,13 +5895,13 @@ window.DocFormSearch = {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "Use Tab to reach each control. Arrow keys move the slider and choose a pace. Space toggles a switch or checkbox. The controls can wrap on a narrow screen and follow the page’s theme. In print the plan sentence shows the current values. With scripts off it shows the written starting values."
+          "text": "Use Tab to reach each control. Arrow keys move the slider and move between chips, and Space toggles a switch or a chip. In a combobox, type to filter, use the arrow keys to move through the list, and press Enter to choose. The controls can wrap on a narrow screen and follow the page’s theme. In print the plan sentence shows the current values. With scripts off it shows the written starting values."
         },
         {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Named data sources and data views, for views that share settings Walk through a process Feature directory"
+          "text": "Named data sources and data views, for views that share settings Linked selection SVG charts, for controls that change a chart Walk through a process Feature directory"
         }
       ],
       "terms": [
@@ -4432,6 +5914,16 @@ window.DocFormSearch = {
           "text": "Presets",
           "term": "preset",
           "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "see-it"
         },
         {
           "text": "slider",
@@ -4464,14 +5956,131 @@ window.DocFormSearch = {
           "section": "scopes"
         },
         {
+          "text": "chips",
+          "term": "choice chip",
+          "section": "choice-styles"
+        },
+        {
+          "text": "combobox",
+          "term": "combobox",
+          "section": "choice-styles"
+        },
+        {
+          "text": "field",
+          "term": "field",
+          "section": "choice-styles"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "choice-styles"
+        },
+        {
+          "text": "parameter",
+          "term": "parameter",
+          "section": "linking"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "linking"
+        },
+        {
+          "text": "linked selection",
+          "term": "linked selection",
+          "section": "select-to-highlight"
+        },
+        {
           "text": "slider",
           "term": "slider",
+          "section": "chart-bindings"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "chart-bindings"
+        },
+        {
+          "text": "reference line",
+          "term": "reference line",
+          "section": "chart-bindings"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "chart-bindings"
+        },
+        {
+          "text": "colour scale",
+          "term": "colour scale",
+          "section": "chart-bindings"
+        },
+        {
+          "text": "slider",
+          "term": "slider",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "combobox",
+          "term": "combobox",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "filter",
+          "term": "filter",
           "section": "for-every-reader"
         },
         {
           "text": "theme",
           "term": "theme",
           "section": "for-every-reader"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "related"
+        }
+      ],
+      "outline": [
+        {
+          "id": "parameters-and-presets",
+          "title": "Parameters and presets",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Controls and live text",
+          "level": 2
+        },
+        {
+          "id": "choice-styles",
+          "title": "Chips and searchable lists",
+          "level": 2
+        },
+        {
+          "id": "linking",
+          "title": "Link controls to the page",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -4550,6 +6159,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "SVG",
           "term": "svg",
           "section": ""
@@ -4603,6 +6217,38 @@ window.DocFormSearch = {
           "text": "data views",
           "term": "data view",
           "section": "related"
+        }
+      ],
+      "outline": [
+        {
+          "id": "figure-zoom-and-zoom-tools",
+          "title": "Figure zoom and zoom tools",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Which blocks can open",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -4673,6 +6319,11 @@ window.DocFormSearch = {
         {
           "text": "tree",
           "term": "tree",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -4750,6 +6401,38 @@ window.DocFormSearch = {
           "term": "theme",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "named-data-sources-and-data-views",
+          "title": "Named data sources and data views",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Three ways to read the same data",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -4797,6 +6480,11 @@ window.DocFormSearch = {
         {
           "text": "tree",
           "term": "tree",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -4859,6 +6547,38 @@ window.DocFormSearch = {
           "term": "theme",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "data-trees",
+          "title": "Data trees",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "What opens and what stays folded",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -4869,7 +6589,7 @@ window.DocFormSearch = {
           "id": "",
           "title": "SVG charts",
           "level": 1,
-          "text": "Show data DocForm draws line, bar, and scatter charts that readers can zoom, filter, and read as a table. Every chart works offline and fits the reading column. Official name SVG charts Turned on On request Signal strength Strong Works with Named data sources, linked selection, parameters, and playback Good for Trends, comparisons, and relationships in numbers"
+          "text": "Show data DocForm draws line, bar, scatter, and pie charts that work offline, fit the reading column, and move smoothly when their data changes. Bars can stand upright, lie sideways, or stack, and readers can always see exact values in a table. Official name SVG charts Turned on On request Signal strength Strong Works with Named data sources, linked selection, parameters, and playback Good for Trends, comparisons, and relationships in numbers"
         },
         {
           "id": "see-it",
@@ -4890,6 +6610,24 @@ window.DocFormSearch = {
           "text": "Group References setup 3 layout 7 reading 13 interact 13 data 9 Bar height shows the reference count for each group. The asterisk picks out the data group. Try it Inspect the marked bar and compare its count with the reading group."
         },
         {
+          "id": "bar-layout",
+          "title": "Turn bars sideways or stack them",
+          "level": 2,
+          "text": "Bars can lie sideways, which leaves room for long category names. Several series can sit side by side, stack into one bar per category, or stack to 100% so each bar shows shares instead of totals. Direction: Sideways Layout: Stacked Feature Script (kB) Stylesheet (kB) SVG charts 109.2 7.4 Results tables 44.9 6.8 Parameters 34.1 3.3 Guided chart playback 18.4 0.6 Evaluation matrices 11.5 1.2 Linked selection 9.4 2.0 Download size of six data features in an earlier library snapshot, split into script and stylesheet. The two choices above the chart set its direction and layout. Try it Choose Percent and watch each bar stretch to the full width. Then choose Upright and Side by side. Hide Script in the legend to see the stylesheet bars restack on their own. Percent bars suit a question about shares, such as how much of each feature is styling. Totals answer a question about size. A percent chart cannot include negative values, so DocForm rejects those rather than guessing."
+        },
+        {
+          "id": "motion",
+          "title": "Charts that move with their data",
+          "level": 2,
+          "text": "Every chart animates by default. Each chart draws itself in once, the first time you scroll it into view: bars grow, lines draw, and dots pop in. After that, any change moves the existing marks to their new places instead of redrawing. That includes a filter, a hidden series, a new bin count, or a new layout. Your eye can follow each bar or dot from where it was to where it is now. Try it Switch the bar layout above a few times and follow one bar, such as Parameters, as it moves. Movement is skipped when your device asks for reduced motion, when you print, and inside the full-screen zoom view. Charts then show their final state at once. Authors can also turn motion off for one chart or for a whole site."
+        },
+        {
+          "id": "pie",
+          "title": "Show shares with a pie chart",
+          "level": 2,
+          "text": "Choose a group in the legend to hide or show its slice. The pie and table recalculate each share using the total of the visible groups. Group References Setup 3 Layout 7 Reading 13 Interact 13 Data 9 Share of references by group."
+        },
+        {
           "id": "shared-filter",
           "title": "Compare file sizes with a scatter chart",
           "level": 2,
@@ -4902,6 +6640,24 @@ window.DocFormSearch = {
           "text": "Run Time (seconds) Example bounds (seconds) Count 1 30 26–34 8 2 27 22–31 8 3 24 20–28 8 Illustrative reading times with supplied lower and upper bounds. The shaded band joins the bounds across successive runs. Try it Inspect the middle point and switch to Table to read the estimate, bounds, and count. Bars and scatter points show supplied intervals as whiskers. A line chart can also use a whisker where only one point has bounds."
         },
         {
+          "id": "interval-plots",
+          "title": "Rank categories with dot and interval plots",
+          "level": 2,
+          "text": "A dot plot ranks categories by their estimates. When you supply bounds, whiskers show the range around each dot. You can put categories down the left or along the bottom, and add stems to make a lollipop plot. Reading group First read (s) Second read (s) Central 35 (31–39) 29 (25–32) North 30 (26–34) 24 (20–28) South 27 (22–32) 23 (19–27) Illustrative reading times ranked by the first read. The dashed line marks the 30-second target. Hide First read in the legend to see the remaining dots move to the middle of each row. Choose Table to see the remaining estimates and bounds."
+        },
+        {
+          "id": "histograms",
+          "title": "See how values are distributed",
+          "level": 2,
+          "text": "A histogram counts how many readings fall in each bin. Move the slider to see how wider or narrower bins change the shape. Use the legend to show either group on its own. Number of bins: 4 Seconds Short passage Long passage 2 to under 6 5 1 6 to under 10 4 3 10 to under 14 4 5 14 to 18 inclusive 1 6 Illustrative reading times for a short and a long passage. Choose Table to see the exact bin boundaries and counts. A logarithmic horizontal axis can help when positive measurements span several orders of magnitude. The slider is linked straight to the chart, so it needs no extra page code. Parameters explains these links."
+        },
+        {
+          "id": "heatmap-pointer",
+          "title": "Colour a grid of values",
+          "level": 2,
+          "text": "When values sit on a grid, such as two settings crossed with each other, a heatmap colours each cell by its value and can draw contour lines through equal values. Heatmaps has its own page."
+        },
+        {
           "id": "shared-position",
           "title": "Share a position between charts",
           "level": 2,
@@ -4911,7 +6667,7 @@ window.DocFormSearch = {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "Use a line to show change in order, bars to compare separate categories, and dots to see how two measurements relate. Give the chart room and keep the nearby prose short."
+          "text": "Use a line to show change in order, bars to compare separate categories, and dots to see how two measurements relate. Lay bars sideways when category names are long, and stack them only when the total means something. Give the chart room and keep the nearby prose short."
         },
         {
           "id": "for-every-reader",
@@ -4923,22 +6679,12 @@ window.DocFormSearch = {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Concept tables and results tables Guided chart playback Report results, a recipe that uses it Feature directory"
+          "text": "Concept tables and results tables Guided chart playback Heatmaps Parameters, for controls linked to charts Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
         {
           "text": "charts",
-          "term": "chart",
-          "section": ""
-        },
-        {
-          "text": "filter",
-          "term": "filter",
-          "section": ""
-        },
-        {
-          "text": "chart",
           "term": "chart",
           "section": ""
         },
@@ -4955,6 +6701,11 @@ window.DocFormSearch = {
         {
           "text": "SVG",
           "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -5006,6 +6757,76 @@ window.DocFormSearch = {
           "text": "axis",
           "term": "axis",
           "section": "what-it-does"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "bar-layout"
+        },
+        {
+          "text": "stack",
+          "term": "stacked bar",
+          "section": "bar-layout"
+        },
+        {
+          "text": "stylesheet",
+          "term": "stylesheet",
+          "section": "bar-layout"
+        },
+        {
+          "text": "Script",
+          "term": "script",
+          "section": "bar-layout"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "bar-layout"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "bar-layout"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "bar-layout"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "motion"
+        },
+        {
+          "text": "scroll",
+          "term": "scroll",
+          "section": "motion"
+        },
+        {
+          "text": "filter",
+          "term": "filter",
+          "section": "motion"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "motion"
+        },
+        {
+          "text": "bin",
+          "term": "bin",
+          "section": "motion"
+        },
+        {
+          "text": "reduced motion",
+          "term": "reduced motion",
+          "section": "motion"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "pie"
         },
         {
           "text": "scatter chart",
@@ -5068,6 +6889,61 @@ window.DocFormSearch = {
           "section": "intervals"
         },
         {
+          "text": "dot plot",
+          "term": "dot plot",
+          "section": "interval-plots"
+        },
+        {
+          "text": "lollipop plot",
+          "term": "lollipop plot",
+          "section": "interval-plots"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "interval-plots"
+        },
+        {
+          "text": "histogram",
+          "term": "histogram",
+          "section": "histograms"
+        },
+        {
+          "text": "bin",
+          "term": "bin",
+          "section": "histograms"
+        },
+        {
+          "text": "slider",
+          "term": "slider",
+          "section": "histograms"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "histograms"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "histograms"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "histograms"
+        },
+        {
+          "text": "heatmap",
+          "term": "heatmap",
+          "section": "heatmap-pointer"
+        },
+        {
+          "text": "contour lines",
+          "term": "contour line",
+          "section": "heatmap-pointer"
+        },
+        {
           "text": "chart",
           "term": "chart",
           "section": "when-to-use"
@@ -5087,6 +6963,287 @@ window.DocFormSearch = {
           "term": "theme",
           "section": "for-every-reader"
         }
+      ],
+      "outline": [
+        {
+          "id": "svg-charts",
+          "title": "SVG charts",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Time, ranges, and gaps",
+          "level": 2
+        },
+        {
+          "id": "categories",
+          "title": "Compare categories with bars",
+          "level": 2
+        },
+        {
+          "id": "bar-layout",
+          "title": "Turn bars sideways or stack them",
+          "level": 2
+        },
+        {
+          "id": "motion",
+          "title": "Charts that move with their data",
+          "level": 2
+        },
+        {
+          "id": "pie",
+          "title": "Show shares with a pie chart",
+          "level": 2
+        },
+        {
+          "id": "shared-filter",
+          "title": "Compare file sizes with a scatter chart",
+          "level": 2
+        },
+        {
+          "id": "intervals",
+          "title": "Show uncertainty with intervals",
+          "level": 2
+        },
+        {
+          "id": "interval-plots",
+          "title": "Rank categories with dot and interval plots",
+          "level": 2
+        },
+        {
+          "id": "histograms",
+          "title": "See how values are distributed",
+          "level": 2
+        },
+        {
+          "id": "heatmap-pointer",
+          "title": "Colour a grid of values",
+          "level": 2
+        },
+        {
+          "id": "shared-position",
+          "title": "Share a position between charts",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "path": "../pages/data/heatmaps.html",
+      "title": "Heatmaps",
+      "sections": [
+        {
+          "id": "",
+          "title": "Heatmaps",
+          "level": 1,
+          "text": "Show data A heatmap colours every cell of a grid by its value, so high and low regions stand out before you read a number. It can also draw contour lines through equal values, like the height lines on a hiking map. Official name Heatmaps Turned on On request Signal strength Loud Works with SVG charts, named data sources, parameters, linked selection, and playback Good for Finding peaks, valleys, and patterns across two settings at once"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "Text size (px) 45 55 65 75 85 95 22 57 69 75 75 69 57 20 82 91 94 91 82 67 18 93 99 99 93 81 63 16 91 94 91 82 67 46 14 75 75 69 57 39 15 Illustrative reading comfort for each mix of text size and line length. Darker green means more comfortable. Contour lines join equal scores of 60, 75, and 90. Try it Move over the cells to read each score. Then drag along the colour scale beside the grid, from about 90 up to 100. Cells outside that range fade, which leaves the most comfortable region. Choose Show all values to bring the others back."
+        },
+        {
+          "id": "what-it-does",
+          "title": "Rows, columns, and cells",
+          "level": 2,
+          "text": "Each row and column is one setting, and each cell holds the value where they cross. The grid can come from a written table or from a named data source with one record per cell. A missing value leaves its cell blank instead of guessing. A grid can have up to 5,000 cells, which is about 70 rows by 70 columns."
+        },
+        {
+          "id": "colour-scales",
+          "title": "Choose a colour scale",
+          "level": 2,
+          "text": "A sequential scale runs from pale to strong in one colour, as in the comfort grid above. A diverging scale uses two colours that meet at a neutral middle, so rises and falls read as opposites. A log scale suits values that span many powers of ten. All three use the site’s own colours and stay readable in light and dark mode. Day Start here Write clearly Show data Recipes Mon −12 −4 8 2 Tue −9 −2 14 5 Wed −6 0 18 9 Thu −3 3 11 4 Fri −1 5 6 −2 Illustrative change in reading time compared with the week before, in seconds. Orange cells got faster, blue cells got slower, and zero sits at the neutral middle. Try it Find the strongest blue cell, then click a single step on the colour scale. Only cells in that step stay bright. Click the same step again to clear it."
+        },
+        {
+          "id": "contours",
+          "title": "Contour lines",
+          "level": 2,
+          "text": "Contour lines connect places with the same value, so a ring of lines marks a peak and closely spaced lines mark a steep change. They need a complete grid whose rows and columns are numbers in order, like text sizes and line lengths. On a grid of names, such as days and sections, DocForm skips the lines and draws the colours alone."
+        },
+        {
+          "id": "value-range",
+          "title": "Filter by value",
+          "level": 2,
+          "text": "The colour scale beside the grid doubles as a filter. Drag along it to keep a range of values bright, or click one step to pick out that band. The legend names the chosen range and offers a button to show all values again. The table view always lists every value."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use a heatmap when the question is “where in this grid is it high or low?” Colour is a loud signal, so give the heatmap its own section and keep nearby callouts and tags to a minimum. For exact comparisons between a few numbers, a bar chart or a results table is easier to read."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "Tab to the grid and use the arrow keys to move between cells. Page Up and Page Down pick a band of values on the scale, and Escape clears it. Cells fade in as the grid enters view, except under reduced motion. Choose Table for exact values on a phone or in print. With scripts off, the written table stays readable."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "SVG charts Evaluation matrices, for result grids with a measure chooser Results tables, for shading cells in an ordinary table Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "heatmap",
+          "term": "heatmap",
+          "section": ""
+        },
+        {
+          "text": "contour lines",
+          "term": "contour line",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "colour scale",
+          "term": "colour scale",
+          "section": "see-it"
+        },
+        {
+          "text": "record",
+          "term": "record",
+          "section": "what-it-does"
+        },
+        {
+          "text": "sequential scale",
+          "term": "sequential colour scale",
+          "section": "colour-scales"
+        },
+        {
+          "text": "diverging scale",
+          "term": "diverging colour scale",
+          "section": "colour-scales"
+        },
+        {
+          "text": "log scale",
+          "term": "log scale",
+          "section": "colour-scales"
+        },
+        {
+          "text": "dark mode",
+          "term": "dark mode",
+          "section": "colour-scales"
+        },
+        {
+          "text": "colour scale",
+          "term": "colour scale",
+          "section": "colour-scales"
+        },
+        {
+          "text": "colour scale",
+          "term": "colour scale",
+          "section": "value-range"
+        },
+        {
+          "text": "filter",
+          "term": "filter",
+          "section": "value-range"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "value-range"
+        },
+        {
+          "text": "heatmap",
+          "term": "heatmap",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "results table",
+          "term": "results table",
+          "section": "when-to-use"
+        },
+        {
+          "text": "reduced motion",
+          "term": "reduced motion",
+          "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "heatmaps",
+          "title": "Heatmaps",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Rows, columns, and cells",
+          "level": 2
+        },
+        {
+          "id": "colour-scales",
+          "title": "Choose a colour scale",
+          "level": 2
+        },
+        {
+          "id": "contours",
+          "title": "Contour lines",
+          "level": 2
+        },
+        {
+          "id": "value-range",
+          "title": "Filter by value",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
       ]
     },
     {
@@ -5097,7 +7254,7 @@ window.DocFormSearch = {
           "id": "",
           "title": "Guided chart playback",
           "level": 1,
-          "text": "Show data Playback reveals a line chart in stages and pauses at chosen points. A short note at each stop explains what changed. Official name Guided chart playback Turned on On request Signal strength Strong Works with SVG charts and linked selection Good for Narrating how a result unfolded"
+          "text": "Show data Playback reveals a line chart in stages, or steps any other chart through a series of prepared views. A short note at each stop explains what changed. Official name Guided chart playback Turned on On request Signal strength Strong Works with SVG charts, linked selection, and parameters Good for Narrating how a result unfolded"
         },
         {
           "id": "see-it",
@@ -5112,10 +7269,16 @@ window.DocFormSearch = {
           "text": "A checkpoint is a stop at a chosen horizontal value, even between measurements. Each can have a note. Here, from one stop to the next takes 1.8 seconds. The axes hold steady while the line grows, and the readout and Table show measurements that playback has reached. Try it Jump to the busiest day, then move over a reached point in either plot. Both plots show the shared position. Reaching a checkpoint also highlights its matching chart point through linked selection."
         },
         {
+          "id": "state-checkpoints",
+          "title": "Step through chart states",
+          "level": 2,
+          "text": "Bar, pie, scatter, histogram, heatmap, and dot charts have no line to grow. Instead, each state checkpoint sets what the chart shows: which series are visible, which item is highlighted, the visible range, or the value of a linked control. The marks glide from one state to the next. Scripts only Hiding the stylesheets shows that scripts make up most of each feature’s size. Shares instead of sizes Stretching every bar to 100% shows the stylesheet share. Linked selection has the largest share. The largest feature SVG charts is highlighted. In sizes, it is more than twice as large as any other feature here. Show: Sizes Feature Script (kB) Stylesheet (kB) SVG charts 109.2 7.4 Results tables 44.9 6.8 Parameters 34.1 3.3 Linked selection 9.4 2.0 Download size of four features in an earlier library snapshot. Each checkpoint changes the visible series, the Show choice, or the highlighted bar. Try it Press Play and follow the three stops. Watch the Show choice switch to Shares at the second stop. Press Reset to return the chart to its starting view. Each checkpoint changes only what it names, and later stops keep earlier changes. Previous and Reset restore earlier views exactly, so readers can step back without losing their place."
+        },
+        {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "Use playback when readers benefit from seeing a few events in order. Give each stop one short note and let the chart show the change."
+          "text": "Use playback when readers benefit from seeing a few events in order. Use state checkpoints to guide readers through a few views of one chart. Give each stop one short note and let the chart show the change."
         },
         {
           "id": "for-every-reader",
@@ -5139,6 +7302,16 @@ window.DocFormSearch = {
         {
           "text": "chart",
           "term": "chart",
+          "section": ""
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -5202,6 +7375,56 @@ window.DocFormSearch = {
           "section": "what-it-does"
         },
         {
+          "text": "histogram",
+          "term": "histogram",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "heatmap",
+          "term": "heatmap",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "state checkpoint",
+          "term": "state checkpoint",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "stylesheet",
+          "term": "stylesheet",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "Linked selection",
+          "term": "linked selection",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": "state-checkpoints"
+        },
+        {
+          "text": "checkpoint",
+          "term": "checkpoint",
+          "section": "state-checkpoints"
+        },
+        {
           "text": "playback",
           "term": "playback",
           "section": "when-to-use"
@@ -5240,6 +7463,43 @@ window.DocFormSearch = {
           "text": "theme",
           "term": "theme",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "guided-chart-playback",
+          "title": "Guided chart playback",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Stops, notes, and timing",
+          "level": 2
+        },
+        {
+          "id": "state-checkpoints",
+          "title": "Step through chart states",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -5313,6 +7573,16 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "On by default",
+          "term": "on by default",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
           "text": "concept table",
           "term": "concept table",
           "section": "what-it-does"
@@ -5361,6 +7631,48 @@ window.DocFormSearch = {
           "text": "scroll",
           "term": "scroll",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "concept-tables-and-results-tables",
+          "title": "Concept tables and results tables",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Compare words in a concept table",
+          "level": 2
+        },
+        {
+          "id": "results",
+          "title": "Sort and shade results",
+          "level": 2
+        },
+        {
+          "id": "filters",
+          "title": "Narrow the rows",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -5418,6 +7730,11 @@ window.DocFormSearch = {
           "section": ""
         },
         {
+          "text": "colour scale",
+          "term": "colour scale",
+          "section": ""
+        },
+        {
           "text": "scenario comparison",
           "term": "scenario comparison",
           "section": ""
@@ -5430,6 +7747,11 @@ window.DocFormSearch = {
         {
           "text": "baseline",
           "term": "baseline",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -5446,6 +7768,11 @@ window.DocFormSearch = {
           "text": "file",
           "term": "file",
           "section": "see-it"
+        },
+        {
+          "text": "colour scale",
+          "term": "colour scale",
+          "section": "what-it-does"
         },
         {
           "text": "variant",
@@ -5506,6 +7833,43 @@ window.DocFormSearch = {
           "text": "scroll",
           "term": "scroll",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "evaluation-matrices-and-scenario-comparisons",
+          "title": "Evaluation matrices and scenario comparisons",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Read a matrix on one colour scale",
+          "level": 2
+        },
+        {
+          "id": "scenarios",
+          "title": "Compare a change against the baseline",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -5571,6 +7935,11 @@ window.DocFormSearch = {
         {
           "text": "file",
           "term": "file",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
           "section": ""
         },
         {
@@ -5652,6 +8021,38 @@ window.DocFormSearch = {
           "text": "download",
           "term": "download",
           "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "local-file-dropzones",
+          "title": "Local file dropzones",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Change one view or the shared source",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
         }
       ]
     },
@@ -5794,6 +8195,48 @@ window.DocFormSearch = {
           "term": "visual hierarchy",
           "section": "bibliography"
         }
+      ],
+      "outline": [
+        {
+          "id": "teach-a-concept",
+          "title": "Teach a concept",
+          "level": 1
+        },
+        {
+          "id": "the-goal",
+          "title": "The goal",
+          "level": 2
+        },
+        {
+          "id": "build-it-up",
+          "title": "Show where the entries come from",
+          "level": 2
+        },
+        {
+          "id": "count-the-entries",
+          "title": "Give the pattern a formula",
+          "level": 2
+        },
+        {
+          "id": "optional-detail",
+          "title": "Make room for a second question",
+          "level": 2
+        },
+        {
+          "id": "features-used",
+          "title": "Features used",
+          "level": 2
+        },
+        {
+          "id": "bibliography",
+          "title": "Source",
+          "level": 2
+        },
+        {
+          "id": "hierarchy-walkthrough",
+          "title": "Hierarchy walkthrough",
+          "level": 2
+        }
       ]
     },
     {
@@ -5907,6 +8350,38 @@ window.DocFormSearch = {
           "text": "worked example",
           "term": "worked example",
           "section": "features-used"
+        }
+      ],
+      "outline": [
+        {
+          "id": "walk-through-a-process",
+          "title": "Walk through a process",
+          "level": 1
+        },
+        {
+          "id": "the-goal",
+          "title": "The goal",
+          "level": 2
+        },
+        {
+          "id": "build-it-up",
+          "title": "Follow the revision",
+          "level": 2
+        },
+        {
+          "id": "review-checks",
+          "title": "Keep reusable checks nearby",
+          "level": 2
+        },
+        {
+          "id": "features-used",
+          "title": "Features used",
+          "level": 2
+        },
+        {
+          "id": "hierarchy-walkthrough",
+          "title": "Hierarchy walkthrough",
+          "level": 2
         }
       ]
     },
@@ -6093,6 +8568,48 @@ window.DocFormSearch = {
           "text": "filter",
           "term": "filter",
           "section": "features-used"
+        }
+      ],
+      "outline": [
+        {
+          "id": "report-results",
+          "title": "Report results",
+          "level": 1
+        },
+        {
+          "id": "the-goal",
+          "title": "The goal",
+          "level": 2
+        },
+        {
+          "id": "build-it-up",
+          "title": "Start with counts readers can check",
+          "level": 2
+        },
+        {
+          "id": "tell-the-story",
+          "title": "Show how the total builds",
+          "level": 2
+        },
+        {
+          "id": "compare-coverage",
+          "title": "Compare three reading plans",
+          "level": 2
+        },
+        {
+          "id": "replace-the-counts",
+          "title": "Load a different set of counts",
+          "level": 2
+        },
+        {
+          "id": "features-used",
+          "title": "Features used",
+          "level": 2
+        },
+        {
+          "id": "hierarchy-walkthrough",
+          "title": "Hierarchy walkthrough",
+          "level": 2
         }
       ]
     },
@@ -6290,6 +8807,48 @@ window.DocFormSearch = {
           "term": "search index",
           "section": "features-used"
         }
+      ],
+      "outline": [
+        {
+          "id": "present-and-publish-a-site",
+          "title": "Present and publish a site",
+          "level": 1
+        },
+        {
+          "id": "the-goal",
+          "title": "The goal",
+          "level": 2
+        },
+        {
+          "id": "build-it-up",
+          "title": "Give readers a route through the site",
+          "level": 2
+        },
+        {
+          "id": "appearance",
+          "title": "Keep meaning consistent",
+          "level": 2
+        },
+        {
+          "id": "present-a-figure",
+          "title": "Show one figure on the big screen",
+          "level": 2
+        },
+        {
+          "id": "prepare-the-offline-copy",
+          "title": "Prepare the offline copy",
+          "level": 2
+        },
+        {
+          "id": "features-used",
+          "title": "Features used",
+          "level": 2
+        },
+        {
+          "id": "hierarchy-walkthrough",
+          "title": "Hierarchy walkthrough",
+          "level": 2
+        }
       ]
     },
     {
@@ -6318,7 +8877,7 @@ window.DocFormSearch = {
           "id": "write-clearly",
           "title": "Write clearly",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Base layout On by default Strong · Medium · Quiet Design tokens Lay out the reading column, headings, and body text. Blocks On by default Loud Tags and Callouts Turn on Tags and Callouts together. Buttons On by default Loud · Medium Base layout Make actions easy to spot or step through a sequence. Callouts On by default Loud Base layout Set an important note apart in a tinted box. Citations On by default Medium Tooltips and source details Credit sources in the text and list them at the end. Code On request Strong Base layout Colour, annotate, copy, and compare program text. Cross-references On by default Medium Base layout; Tooltips for previews Number figures, tables, and equations and link to them. Glossary On request Quiet Tooltips; Search index for usage links Collect definitions and show where terms are used. Peek bubbles On request Quiet Base layout Fold extra detail into a panel that opens in place. Sidenotes On by default Quiet Base layout Set short notes beside the sentences they explain. Tags On by default Loud Base layout Mark a short phrase with a tinted label. TeX math On request Medium · Strong Base layout and bundled KaTeX Display neatly spaced mathematical formulas. Text roles On by default Medium Base layout Give context with eyebrows and align labels with their values. Tooltips On by default Medium · Quiet Base layout Explain a word while the reader stays on the page."
+          "text": "Feature Availability Signal strength Needs Purpose Base layout On by default Strong · Medium · Quiet Design tokens Lay out the reading column, headings, and body text. Blocks On by default Loud Tags and Callouts Turn on Tags and Callouts together. Buttons On by default Loud · Medium Base layout Make actions easy to spot or step through a sequence. Callouts On by default Loud Base layout Set an important note apart in a tinted box. Citations On by default Medium Tooltips and source details Credit sources in the text and list them at the end. Code On request Strong Base layout Colour, annotate, copy, and compare program text. Cross-references On by default Medium Base layout; Tooltips for previews Number figures, tables, and equations and link to them. Dropdowns On request Medium Base layout Group links and actions into a menu with expandable branches. Editable text On request Medium Base layout, plus Code for syntax colours Edit a single line or block of text directly on the page. Glossary On request Quiet Tooltips; Search index for usage links Collect definitions and show where terms are used. Peek bubbles On request Quiet Base layout Fold extra detail into a panel that opens in place. Sidenotes On by default Quiet Base layout Set short notes beside the sentences they explain. Tags On by default Loud Base layout Mark a short phrase with a tinted label. TeX math On request Medium · Strong Base layout and bundled KaTeX Display neatly spaced mathematical formulas. Text roles On by default Medium Base layout Give context with eyebrows and align labels with their values. Tooltips On by default Medium · Quiet Base layout Explain a word while the reader stays on the page."
         },
         {
           "id": "shape-pages-and-sites",
@@ -6330,13 +8889,13 @@ window.DocFormSearch = {
           "id": "explain-step-by-step",
           "title": "Explain step by step",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Base layout Choose a card to see its details beside or below it. Figure steps On request Strong Base layout; SVG animations for moving steps Show the state of a figure that matches each step. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change Let readers change values or choose saved combinations. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Tabs On request Strong Base layout Switch among related panels in the same space. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
+          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Base layout Choose a card to see its details beside or below it. Figure steps On request Strong Base layout; SVG animations for moving steps Show the state of a figure that matches each step. Pipeline diagrams On request Strong Base layout; steppers for linked steps Show the stages of a process as connected blocks with details on hover. Detail panes On request Strong Base layout Show more about the selected card, step, or block anywhere on the page. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change; Linked selection for shared choices Let readers change values with sliders, chips, or searchable lists, and link them to charts or blocks that appear on cue. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Tabs On request Strong Base layout Switch among related panels in the same space. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
         },
         {
           "id": "show-data",
           "title": "Show data",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale Draw a chart gradually and show notes at chosen points. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, bars, or dots. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
         },
         {
           "id": "reference",
@@ -6415,6 +8974,23 @@ window.DocFormSearch = {
           "text": "YAML",
           "term": "yaml",
           "section": "reference"
+        }
+      ],
+      "outline": [
+        {
+          "id": "feature-directory",
+          "title": "Feature directory",
+          "level": 1
+        },
+        {
+          "id": "how-to-read",
+          "title": "How to read the directory",
+          "level": 2
+        },
+        {
+          "id": "all-features",
+          "title": "All features",
+          "level": 2
         }
       ]
     },
@@ -6606,6 +9182,43 @@ window.DocFormSearch = {
           "term": "role",
           "section": "starter-settings"
         }
+      ],
+      "outline": [
+        {
+          "id": "behind-the-scenes",
+          "title": "Behind the scenes",
+          "level": 1
+        },
+        {
+          "id": "profiles",
+          "title": "Profiles and dependencies",
+          "level": 2
+        },
+        {
+          "id": "settings",
+          "title": "Site and page settings",
+          "level": 2
+        },
+        {
+          "id": "startup",
+          "title": "Startup and ready stages",
+          "level": 2
+        },
+        {
+          "id": "problem-reports",
+          "title": "Problem reports",
+          "level": 2
+        },
+        {
+          "id": "bundled-readers",
+          "title": "Bundled maths and data readers",
+          "level": 2
+        },
+        {
+          "id": "starter-settings",
+          "title": "Starter settings",
+          "level": 2
+        }
       ]
     },
     {
@@ -6734,6 +9347,33 @@ window.DocFormSearch = {
           "term": "stale",
           "section": "when-to-rerun"
         }
+      ],
+      "outline": [
+        {
+          "id": "offline-tools",
+          "title": "Offline tools",
+          "level": 1
+        },
+        {
+          "id": "what-it-does",
+          "title": "What the asset tool does",
+          "level": 2
+        },
+        {
+          "id": "search-index",
+          "title": "The search index",
+          "level": 2
+        },
+        {
+          "id": "data-files",
+          "title": "Offline data files",
+          "level": 2
+        },
+        {
+          "id": "when-to-rerun",
+          "title": "When to run it again",
+          "level": 2
+        }
       ]
     },
     {
@@ -6857,6 +9497,33 @@ window.DocFormSearch = {
           "term": "folder",
           "section": "older-pages"
         }
+      ],
+      "outline": [
+        {
+          "id": "when-something-looks-wrong",
+          "title": "When something looks wrong",
+          "level": 1
+        },
+        {
+          "id": "symptoms",
+          "title": "Common symptoms",
+          "level": 2
+        },
+        {
+          "id": "reading-problem-reports",
+          "title": "Problem reports",
+          "level": 2
+        },
+        {
+          "id": "stale-search",
+          "title": "Stale search or glossary",
+          "level": 2
+        },
+        {
+          "id": "older-pages",
+          "title": "Pages from older DocForm versions",
+          "level": 2
+        }
       ]
     },
     {
@@ -6887,6 +9554,23 @@ window.DocFormSearch = {
           "text": "link",
           "term": "link",
           "section": "find-a-term"
+        }
+      ],
+      "outline": [
+        {
+          "id": "glossary",
+          "title": "Glossary",
+          "level": 1
+        },
+        {
+          "id": "find-a-term",
+          "title": "Find a term",
+          "level": 2
+        },
+        {
+          "id": "definitions",
+          "title": "Definitions",
+          "level": 2
         }
       ]
     }

@@ -157,6 +157,10 @@ window.DocFormSite = {
           "path": "../pages/data/charts.html"
         },
         {
+          "title": "Heatmaps",
+          "path": "../pages/data/heatmaps.html"
+        },
+        {
           "title": "Guided chart playback",
           "path": "../pages/data/playback.html"
         },
@@ -455,9 +459,23 @@ window.DocFormSite = {
         "playback": "Drawing a chart gradually over time, like a short film of the data.",
         "checkpoint": "A planned stop during playback, usually with a short note about what to notice.",
         "heatmap": {
-          "text": "Shading table cells by their value, so high and low values show up as stronger and lighter colour.",
+          "text": "A grid or table whose cells are coloured by their value, so high and low values show up as stronger and lighter colour.",
           "more": "<p>Heatmaps let a reader spot the extremes in a grid of numbers at a glance, before reading a single figure.</p>"
         },
+        "colour scale": "The key that matches colours to values in a heatmap or shaded table, usually a strip from low to high.",
+        "sequential colour scale": "A colour scale that runs from pale to strong in one colour, for values that only go from low to high.",
+        "diverging colour scale": {
+          "text": "A colour scale with two colours that meet at a neutral middle value, so values above and below it read as opposites.",
+          "more": "<p>Use one when the middle means something, such as zero change or a target. Gains and losses then look like opposites instead of more and less of the same thing.</p>"
+        },
+        "contour line": {
+          "text": "A line that joins places with the same value, like the height lines on a hiking map.",
+          "more": "<p>Rings of contour lines mark a peak or a dip. Lines packed close together mark a steep change; lines far apart mark a gentle one.</p>"
+        },
+        "stacked bar": "A bar built from several coloured segments, one per series, so its length shows their total. A percent bar stretches every total to 100% to compare shares.",
+        "state checkpoint": "A playback stop that sets what a chart shows, such as its visible series, highlighted item, or a linked choice, instead of growing a line.",
+        "choice chip": "A small rounded button for one option in a short list. The chosen chips are filled in.",
+        "combobox": "A text field with a list of choices below it. Typing narrows the list, which helps when there are many options.",
         "threshold": {
           "text": "A cut-off value that a result must meet, used to mark it as a pass or a fail.",
           "more": "<p>With a threshold of 90%, a result of 93% passes and a result of 87% fails, and the table marks each one.</p>"

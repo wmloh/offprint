@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Heatmaps · DocForm</title>
+  <link rel="stylesheet" href="../../../docform/docform.css">
+  <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"chart-heatmap": true}}
+  </script>
+  <script src="../../../docform/docform.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <p class="df-eyebrow">Show data</p>
+      <h1>Heatmaps</h1>
+      <p>A <span data-df-term="heatmap">heatmap</span> colours every cell of a grid by its value, so high and low regions stand out before you read a number. It can also draw <span data-df-term="contour line">contour lines</span> through equal values, like the height lines on a hiking map.</p>
+      <dl class="df-fields">
+        <dt>Official name</dt><dd>Heatmaps</dd>
+        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
+        <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#loud">Loud</a></dd>
+        <dt>Works with</dt><dd><span data-df-term="SVG">SVG</span> charts, named data sources, parameters, linked selection, and playback</dd>
+        <dt>Good for</dt><dd>Finding peaks, valleys, and patterns across two settings at once</dd>
+      </dl>
+    </header>
+
+    <h2 id="see-it">See it</h2>
+
+    <figure id="see-it-demo">
+      <div data-df-chart="heatmap">
+        <script type="application/json">
+          {
+            "x": "Line length (characters)",
+            "y": "Text size (px)",
+            "value": {"label": "Comfort score", "digits": 0},
+            "columns": [45, 55, 65, 75, 85, 95],
+            "rows": [22, 20, 18, 16, 14],
+            "z": [
+              [57, 69, 75, 75, 69, 57],
+              [82, 91, 94, 91, 82, 67],
+              [93, 99, 99, 93, 81, 63],
+              [91, 94, 91, 82, 67, 46],
+              [75, 75, 69, 57, 39, 15]
+            ],
+            "scale": {"type": "sequential", "color": "green", "min": 0, "max": 100},
+            "contours": {"levels": [60, 75, 90], "labels": true}
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Text size (px)</th><th scope="col">45</th><th scope="col">55</th><th scope="col">65</th><th scope="col">75</th><th scope="col">85</th><th scope="col">95</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">22</th><td>57</td><td>69</td><td>75</td><td>75</td><td>69</td><td>57</td></tr>
+            <tr><th scope="row">20</th><td>82</td><td>91</td><td>94</td><td>91</td><td>82</td><td>67</td></tr>
+            <tr><th scope="row">18</th><td>93</td><td>99</td><td>99</td><td>93</td><td>81</td><td>63</td></tr>
+            <tr><th scope="row">16</th><td>91</td><td>94</td><td>91</td><td>82</td><td>67</td><td>46</td></tr>
+            <tr><th scope="row">14</th><td>75</td><td>75</td><td>69</td><td>57</td><td>39</td><td>15</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative reading comfort for each mix of text size and line length. Darker green means more comfortable. Contour lines join equal scores of 60, 75, and 90.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Move over the cells to read each score. Then drag along the <span data-df-term="colour scale">colour scale</span> beside the grid, from about 90 up to 100. Cells outside that range fade, which leaves the most comfortable region. Choose <strong>Show all values</strong> to bring the others back.</p>
+
+    <h2 id="what-it-does">Rows, columns, and cells</h2>
+    <p>Each row and column is one setting, and each cell holds the value where they cross. The grid can come from a written table or from a <a href="sources.html">named data source</a> with one record per cell. A missing value leaves its cell blank instead of guessing. A grid can have up to 5,000 cells, which is about 70 rows by 70 columns.</p>
+
+    <h2 id="colour-scales">Choose a colour scale</h2>
+    <p>A <span data-df-term="sequential colour scale">sequential scale</span> runs from pale to strong in one colour, as in the comfort grid above. A <span data-df-term="diverging colour scale">diverging scale</span> uses two colours that meet at a neutral middle, so rises and falls read as opposites. A log scale suits values that span many powers of ten. All three use the site’s own colours and stay readable in light and dark mode.</p>
+    <figure>
+      <div data-df-chart="heatmap">
+        <script type="application/json">
+          {
+            "x": "Section",
+            "y": "Day",
+            "value": {"label": "Change in reading time", "unit": " s", "digits": 0},
+            "columns": ["Start here", "Write clearly", "Show data", "Recipes"],
+            "rows": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+            "z": [
+              [-12, -4, 8, 2],
+              [-9, -2, 14, 5],
+              [-6, 0, 18, 9],
+              [-3, 3, 11, 4],
+              [-1, 5, 6, -2]
+            ],
+            "scale": {"type": "diverging", "mid": 0}
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Day</th><th scope="col">Start here</th><th scope="col">Write clearly</th><th scope="col">Show data</th><th scope="col">Recipes</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Mon</th><td>−12</td><td>−4</td><td>8</td><td>2</td></tr>
+            <tr><th scope="row">Tue</th><td>−9</td><td>−2</td><td>14</td><td>5</td></tr>
+            <tr><th scope="row">Wed</th><td>−6</td><td>0</td><td>18</td><td>9</td></tr>
+            <tr><th scope="row">Thu</th><td>−3</td><td>3</td><td>11</td><td>4</td></tr>
+            <tr><th scope="row">Fri</th><td>−1</td><td>5</td><td>6</td><td>−2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative change in reading time compared with the week before, in seconds. Orange cells got faster, blue cells got slower, and zero sits at the neutral middle.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Find the strongest blue cell, then click a single step on the colour scale. Only cells in that step stay bright. Click the same step again to clear it.</p>
+
+    <h2 id="contours">Contour lines</h2>
+    <p>Contour lines connect places with the same value, so a ring of lines marks a peak and closely spaced lines mark a steep change. They need a complete grid whose rows and columns are numbers in order, like text sizes and line lengths. On a grid of names, such as days and sections, DocForm skips the lines and draws the colours alone.</p>
+
+    <h2 id="value-range">Filter by value</h2>
+    <p>The colour scale beside the grid doubles as a filter. Drag along it to keep a range of values bright, or click one step to pick out that band. The legend names the chosen range and offers a button to show all values again. The table view always lists every value.</p>
+
+    <h2 id="when-to-use">When to reach for it</h2>
+    <p>Use a heatmap when the question is “where in this grid is it high or low?” Colour is a loud signal, so give the heatmap its own section and keep nearby callouts and tags to a minimum. For exact comparisons between a few numbers, a bar chart or a results table is easier to read.</p>
+
+    <h2 id="for-every-reader">For every reader</h2>
+    <p><kbd>Tab</kbd> to the grid and use the arrow keys to move between cells. <kbd>Page Up</kbd> and <kbd>Page Down</kbd> pick a band of values on the scale, and <kbd>Escape</kbd> clears it. Cells fade in as the grid enters view, except under reduced motion. Choose Table for exact values on a phone or in print. With scripts off, the written table stays readable.</p>
+
+    <h2 id="related">Related</h2>
+    <ul>
+      <li><a href="charts.html">SVG charts</a></li>
+      <li><a href="comparisons.html">Evaluation matrices</a>, for result grids with a measure chooser</li>
+      <li><a href="tables.html#results">Results tables</a>, for shading cells in an ordinary table</li>
+      <li><a href="../reference/features.html">Feature directory</a></li>
+    </ul>
+  </main>
+</body>
+</html>

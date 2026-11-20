@@ -13,6 +13,25 @@
         "reading-times": {
           "bins": {"type": "range", "min": 2, "max": 12, "step": 1, "default": 4}
         },
+        "bar-layout": {
+          "direction": {
+            "type": "select",
+            "choices": [
+              {"value": "vertical", "label": "Upright"},
+              {"value": "horizontal", "label": "Sideways"}
+            ],
+            "default": "horizontal"
+          },
+          "layout": {
+            "type": "select",
+            "choices": [
+              {"value": "none", "label": "Side by side"},
+              {"value": "stacked", "label": "Stacked"},
+              {"value": "percent", "label": "Percent"}
+            ],
+            "default": "stacked"
+          }
+        },
         "module-filter": {
           "kinds": {
             "type": "multiselect",
@@ -60,7 +79,7 @@
     <header>
       <p class="df-eyebrow">Show data</p>
       <h1>SVG charts</h1>
-      <p>DocForm draws line, bar, scatter, and pie <span data-df-term="chart">charts</span> that work offline and fit the reading column. Authors can turn on legend filters, and readers can see exact values in a table.</p>
+      <p>DocForm draws line, bar, scatter, and pie <span data-df-term="chart">charts</span> that work offline, fit the reading column, and move smoothly when their data changes. Bars can stand upright, lie sideways, or stack, and readers can always see exact values in a table.</p>
       <dl class="df-fields">
         <dt>Official name</dt><dd><span data-df-term="SVG">SVG</span> charts</dd>
         <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
@@ -150,6 +169,51 @@
 
     <p class="df-eyebrow" data-df-role="try">Try it</p>
     <p>Inspect the marked bar and compare its count with the reading group.</p>
+
+    <h2 id="bar-layout">Turn bars sideways or stack them</h2>
+    <p>Bars can lie sideways, which leaves room for long category names. Several series can sit side by side, <span data-df-term="stacked bar">stack</span> into one bar per category, or stack to 100% so each bar shows shares instead of totals.</p>
+    <div class="df-params" data-df-parameter-scope="bar-layout">
+      <div data-df-parameter="direction" data-df-parameter-label="Direction"><p>Direction: Sideways</p></div>
+      <div data-df-parameter="layout" data-df-parameter-label="Layout"><p>Layout: Stacked</p></div>
+    </div>
+    <figure>
+      <div data-df-chart="bar" data-df-scope="bar-layout" data-df-chart-bind='{"orientation": "direction", "stack": "layout"}' data-df-toggles>
+        <script type="application/json">
+          {
+            "x": "Feature",
+            "y": "Download size (kB)",
+            "orientation": "horizontal",
+            "stack": "stacked",
+            "series": [
+              {"key": "script", "name": "Script", "data": [["SVG charts", 109.2], ["Results tables", 44.9], ["Parameters", 34.1], ["Guided chart playback", 18.4], ["Evaluation matrices", 11.5], ["Linked selection", 9.4]]},
+              {"key": "style", "name": "Stylesheet", "data": [["SVG charts", 7.4], ["Results tables", 6.8], ["Parameters", 3.3], ["Guided chart playback", 0.6], ["Evaluation matrices", 1.2], ["Linked selection", 2.0]]}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Feature</th><th scope="col">Script (kB)</th><th scope="col">Stylesheet (kB)</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">SVG charts</th><td>109.2</td><td>7.4</td></tr>
+            <tr><th scope="row">Results tables</th><td>44.9</td><td>6.8</td></tr>
+            <tr><th scope="row">Parameters</th><td>34.1</td><td>3.3</td></tr>
+            <tr><th scope="row">Guided chart playback</th><td>18.4</td><td>0.6</td></tr>
+            <tr><th scope="row">Evaluation matrices</th><td>11.5</td><td>1.2</td></tr>
+            <tr><th scope="row">Linked selection</th><td>9.4</td><td>2.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Download size of six data features in an earlier library snapshot, split into script and <span data-df-term="stylesheet">stylesheet</span>. The two choices above the chart set its direction and layout.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Choose <strong>Percent</strong> and watch each bar stretch to the full width. Then choose <strong>Upright</strong> and <strong>Side by side</strong>. Hide <strong>Script</strong> in the legend to see the stylesheet bars restack on their own.</p>
+    <p>Percent bars suit a question about shares, such as how much of each feature is styling. Totals answer a question about size. A percent chart cannot include negative values, so DocForm rejects those rather than guessing.</p>
+
+    <h2 id="motion">Charts that move with their data</h2>
+    <p>Every chart animates by default. Each chart draws itself in once, the first time you scroll it into view: bars grow, lines draw, and dots pop in. After that, any change moves the existing marks to their new places instead of redrawing. That includes a filter, a hidden series, a new bin count, or a new layout. Your eye can follow each bar or dot from where it was to where it is now.</p>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Switch the bar layout above a few times and follow one bar, such as Parameters, as it moves.</p>
+    <p>Movement is skipped when your device asks for <span data-df-term="reduced motion">reduced motion</span>, when you print, and inside the full-screen zoom view. Charts then show their final state at once. Authors can also turn motion off for one chart or for a whole site.</p>
 
     <h2 id="pie">Show shares with a pie chart</h2>
     <p>Choose a group in the legend to hide or show its slice. The pie and table recalculate each share using the total of the visible groups.</p>
@@ -297,10 +361,10 @@
     <h2 id="histograms">See how values are distributed</h2>
     <p>A <span data-df-term="histogram">histogram</span> counts how many readings fall in each <span data-df-term="bin">bin</span>. Move the slider to see how wider or narrower bins change the shape. Use the legend to show either group on its own.</p>
     <div class="df-params" data-df-parameter-scope="reading-times">
-      <div data-df-parameter="bins" data-df-parameter-label="Number of bins"></div>
+      <div data-df-parameter="bins" data-df-parameter-label="Number of bins"><p>Number of bins: 4</p></div>
     </div>
     <figure>
-      <div id="reading-time-distribution" data-df-chart="histogram" data-df-toggles>
+      <div id="reading-time-distribution" data-df-chart="histogram" data-df-toggles data-df-scope="reading-times" data-df-chart-bind='{"bins": "bins"}'>
         <script type="application/json">
           {
             "bins": 4,
@@ -323,21 +387,13 @@
       </div>
       <figcaption>Illustrative reading times for a short and a long passage.</figcaption>
     </figure>
-    <script>
-      DocForm.ready(function () {
-        var chart = DocForm.chart?.get('reading-time-distribution');
-        var scope = DocForm.parameters?.scope('reading-times');
-        if (!chart || !scope) return;
-        scope.subscribe(function (values) {
-          chart.update(Object.assign(chart.spec(), { bins: values.bins }));
-        }, { keys: ['bins'] });
-      });
-    </script>
-    <p>Choose Table to see the exact bin boundaries and counts. A logarithmic horizontal axis can help when positive measurements span several orders of magnitude.</p>
+    <p>Choose Table to see the exact bin boundaries and counts. A logarithmic horizontal axis can help when positive measurements span several orders of magnitude. The slider is linked straight to the chart, so it needs no extra page code. <a href="../explain/parameters.html#chart-bindings">Parameters</a> explains these links.</p>
+    <h2 id="heatmap-pointer">Colour a grid of values</h2>
+    <p>When values sit on a grid, such as two settings crossed with each other, a <span data-df-term="heatmap">heatmap</span> colours each cell by its value and can draw <span data-df-term="contour line">contour lines</span> through equal values. <a href="heatmaps.html">Heatmaps</a> has its own page.</p>
     <h2 id="shared-position">Share a position between charts</h2>
     <p>Charts with a common linear horizontal scale can share an inspection cursor while keeping their own vertical scales and visible ranges. Try the two charts in <a href="playback.html#shared-position">Guided chart playback</a>.</p>
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>Use a line to show change in order, bars to compare separate categories, and dots to see how two measurements relate. Give the chart room and keep the nearby prose short.</p>
+    <p>Use a line to show change in order, bars to compare separate categories, and dots to see how two measurements relate. Lay bars sideways when category names are long, and stack them only when the total means something. Give the chart room and keep the nearby prose short.</p>
     <h2 id="for-every-reader">For every reader</h2>
     <p><kbd>Tab</kbd> to the plot and use the arrow keys or <kbd>Home</kbd> and <kbd>End</kbd> to inspect values. In a chart with a range brush, <kbd>+</kbd> and <kbd>−</kbd> change the range and <kbd>Shift</kbd> with the left or right arrow pans it. Use Table for exact values on a small screen or in print. The charts follow the page theme, and static tables give readers values with scripts off.</p>
 
@@ -345,6 +401,8 @@
     <ul>
       <li><a href="tables.html">Concept tables and results tables</a></li>
       <li><a href="playback.html">Guided chart playback</a></li>
+      <li><a href="heatmaps.html">Heatmaps</a></li>
+      <li><a href="../explain/parameters.html#linking">Parameters</a>, for controls linked to charts</li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>

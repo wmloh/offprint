@@ -25,7 +25,7 @@
     <header>
       <p class="df-eyebrow">Explain step by step</p>
       <h1>Scroll reveals</h1>
-      <p><span data-df-term="scroll reveal">Scroll reveals</span> let blocks glide or fade in once as they come into view. Printed pages and pages without scripts still show every block.</p>
+      <p><span data-df-term="scroll reveal">Scroll reveals</span> let blocks glide or fade in as they near the middle of the screen, and again each time you scroll back to them. Printed pages and pages without scripts still show every block.</p>
       <dl class="df-fields">
         <dt>Official name</dt><dd>Scroll reveals</dd>
         <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
@@ -34,6 +34,10 @@
         <dt>Good for</dt><dd>Gentle pacing on long pages</dd>
       </dl>
     </header>
+
+    <h2 id="how-it-works">How it works</h2>
+    <p>A marked block waits just out of place, faded and slightly shifted. When it moves into the middle part of the screen it glides into position. When you scroll it well away from the middle, above or below, it quietly steps back out, ready to play again the next time it returns.</p>
+    <p>Blocks near the very top or bottom of a page can still play, because the middle band stretches to reach the page ends. A block you are typing in or have tabbed into stays put.</p>
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
@@ -46,21 +50,22 @@
       <figcaption>Four entrances show the available directions and how a short delay can stagger neighbouring items.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>Reload at the top and watch the list as it comes into view. Scroll away and back. The items stay visible once they have appeared.</p>
+    <p>Scroll the list into the middle of the screen and watch it arrive. Scroll it off the top or bottom, then bring it back. It plays again each time.</p>
 
     <h2 id="what-it-does">Add a pause or keep a block still</h2>
-    <p>A scroll reveal waits until the reader reaches a block. The block can rise, enter from either side, or fade in place. A delay waits a little longer after the block reaches that point. In the first demo, the delays are 0, 160, 320 and 480 milliseconds.</p>
+    <p>A scroll reveal waits until a block nears the middle of the screen. The block can rise, enter from either side, or fade in place. A delay waits a little longer after the block reaches that point. In the first demo, the delays are 0, 160, 320 and 480 milliseconds.</p>
 
     <figure>
       <p data-df-reveal="left" data-df-no-reveal><strong>Keep the goal visible.</strong> This line opts out of its entrance.</p>
       <p data-df-reveal="fade" data-df-reveal-delay="350"><strong>Bring in the supporting detail.</strong> This line fades in after 350 milliseconds.</p>
-      <figcaption>The first line stays still while the second gently appears beside the explanation.</figcaption>
+      <p data-df-reveal data-df-reveal-once><strong>Arrive just once.</strong> This line plays its entrance the first time only, then stays.</p>
+      <figcaption>The first line stays still, the second replays each time, and the third plays only once.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
     <p>Scroll slowly into the second example. The first line is readable as soon as you reach it.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
-    <p>Use a short entrance to lead the eye from one idea to the next. Keep core instructions stationary so fast readers and people jumping between headings can start reading straight away. Fade in place when sideways movement would compete with the text.</p>
+    <p>Use a short entrance to lead the eye from one idea to the next. Mark a block to play only once when repeated motion would distract, such as a key result readers return to. Keep core instructions stationary so fast readers and people jumping between headings can start reading straight away. Fade in place when sideways movement would compete with the text.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
     <p>Reveals follow scrolling, including when you move through the page with the keyboard. The same content stays readable at narrow widths and in either theme. Print and pages opened with scripts off show every block immediately, including blocks you have yet to scroll to.</p>

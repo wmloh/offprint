@@ -140,9 +140,11 @@
     </ol>
 
     <figure>
-      <div class="df-params" data-df-parameter-scope="size-tour">
-        <div data-df-parameter="layout" data-df-parameter-label="Show"><p>Show: Sizes</p></div>
-      </div>
+      <fieldset data-df-parameter-scope="size-tour" data-df-choice="layout">
+        <legend>Show</legend>
+        <label><input type="radio" name="layout" value="stacked" checked> Sizes</label>
+        <label><input type="radio" name="layout" value="percent"> Shares</label>
+      </fieldset>
       <div id="size-chart" data-df-chart="bar" data-df-orientation="horizontal" data-df-toggles
         data-df-selection-group="size-feature" data-df-scope="size-tour" data-df-chart-bind='{"stack": "layout"}'>
         <script type="application/json">

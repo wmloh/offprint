@@ -30,11 +30,12 @@ Card panels	Select details from standalone cards and groups	interact/card-panels
 Detail panes	Show one keyed detail at a time, driven by cards, pipelines, or a selection group	interact/detail-panes.md
 Pipeline diagrams	Lay out structured blocks joined by curved lines with forks, merges, junctions, steps, and hover details	interact/pipelines.md
 Figure steps	Select figure states and their accompanying details	interact/figure-steps.md
-Scroll reveals	Reveal marked blocks once as they enter view	interact/reveals.md
+Scroll reveals	Replay marked blocks as they near the viewport centre	interact/reveals.md
 Split views	Lay out responsive panes with staggered reveals	interact/split-views.md
 Figure zoom	Move a live figure into a full-screen dialog	interact/figure-zoom.md
 Zoom tools	Magnify, point, draw, and measure in the zoom dialog	interact/zoom-tools.md
-Parameters	Share parameter definitions and connect scoped controls with chip and combobox choices, presets, bindings, show conditions, chart bindings, selection groups, and callbacks	interact/parameters.md
+Choice groups	Render every single or multiple choice as fieldset chips or a combobox with a press ripple	interact/choices.md
+Parameters	Share parameter definitions and connect scoped controls with fieldset choice groups, presets, bindings, show conditions, chart bindings, selection groups, and callbacks	interact/parameters.md
 Linked selection	Synchronize keyed controls, parameters, charts, and passive views with a tinted highlight	interact/linked-highlighting.md
 Worked-example steppers	Step through an ordered example and its linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md

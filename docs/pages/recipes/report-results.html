@@ -105,9 +105,14 @@
 
     <h2 id="build-it-up">Start with counts readers can check</h2>
     <figure id="build-it-up-demo" data-df-no-zoom>
-      <div class="df-params" data-df-parameter-scope="report-filter">
-        <div data-df-parameter="groups" data-df-parameter-label="Groups to show"></div>
-      </div>
+      <fieldset data-df-parameter-scope="report-filter" data-df-choice="groups">
+        <legend>Groups to show</legend>
+        <label><input type="checkbox" value="setup" checked> Setup</label>
+        <label><input type="checkbox" value="layout" checked> Layout</label>
+        <label><input type="checkbox" value="reading" checked> Reading</label>
+        <label><input type="checkbox" value="interact" checked> Interaction</label>
+        <label><input type="checkbox" value="data" checked> Data</label>
+      </fieldset>
       <div id="report-chart" data-df-chart="bar" data-df-source="Reference counts" data-df-y-label="References">
         <table>
           <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>

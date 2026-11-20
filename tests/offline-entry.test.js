@@ -200,7 +200,7 @@ test('nested none profile clears inherited choices and loads playback after its 
   assert.ok(Object.isFrozen(p.DF.site.order[0]));
   assert.equal(p.html.getAttribute('data-df-theme'), null);
   assert.deepEqual(p.loads, ['docform/js/core.js', 'docform/css/tokens.css', 'docform/css/base.css',
-    'docform/css/text.css', 'docform/css/sections.css', 'docform/css/buttons.css', 'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
+    'docform/css/text.css', 'docform/css/sections.css', 'docform/css/buttons.css', 'docform/css/choices.css', 'docform/js/choices.js', 'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
     'docform/css/detail.css', 'docform/js/detail.js', 'docform/css/steps.css', 'docform/js/steps.js']);
   assert.equal(typeof p.DF.chartPlayback.mount, 'function');
   assert.equal(p.DF.diagnostics.list().length, 0);
@@ -337,7 +337,18 @@ function matrixPage({ enabled = true, fail, options, attributes, input } = {}) {
 const matrixRecord = (row, column, count, percent) => ({ 'actual class': row, prediction: column, count, percent });
 const matrixValues = (...value) => ({ type: 'value', value });
 
-test('offline matrices pivot by declared keys and use one scale per native measure choice', async () => {
+// The measure chooser is a radio chip group, rebuilt whenever the measures are replaced.
+const descend = (el) => el.children.flatMap((child) => [child, ...descend(child)]);
+const measureGroup = (p) => p.body.firstChild.children.find((child) => child.tagName === 'FIELDSET') || null;
+const measureRadios = (p) => descend(measureGroup(p)).filter((el) => el.tagName === 'INPUT');
+const chosenMeasure = (p) => measureRadios(p).find((input) => input.checked)?.value;
+function chooseMeasure(p, key) {
+  const radios = measureRadios(p);
+  radios.forEach((input) => { input.checked = input.value === key; });
+  radios.find((input) => input.value === key).dispatchEvent(new Event('change'));
+}
+
+test('offline matrices pivot by declared keys and use one scale per measure chip', async () => {
   const p = matrixPage();
   const events = [];
   p.table.addEventListener('df:matrix:change', event => events.push(event));
@@ -347,12 +358,12 @@ test('offline matrices pivot by declared keys and use one scale per native measu
   assert.ok(p.loads.indexOf('docform/js/data.js') < p.loads.indexOf('docform/js/matrix.js'));
   assert.ok(p.loads.includes('docform/css/matrix.css'));
   assert.equal(p.table.firstChild, p.caption);
-  const [label, status, ramp] = p.body.firstChild.children;
-  const picker = label.firstChild;
-  assert.equal(picker.tagName, 'SELECT');
-  assert.equal(label.tagName, 'LABEL');
-  assert.match(label.textContent, /^Measure /);
-  assert.deepEqual(picker.children.map(option => option.value), ['count', 'share']);
+  const [group, status, ramp] = p.body.firstChild.children;
+  assert.equal(group, measureGroup(p));
+  assert.equal(group.children[0].tagName, 'LEGEND');
+  assert.equal(group.children[0].textContent, 'Measure');
+  assert.deepEqual(measureRadios(p).map(input => [input.type, input.value]), [['radio', 'count'], ['radio', 'share']]);
+  assert.equal(chosenMeasure(p), 'count');
   assert.equal(status.getAttribute('role'), 'status');
   assert.equal(ramp.getAttribute('aria-hidden'), 'true');
   assert.deepEqual(p.table.children[1].firstChild.children.slice(1).map(cell =>
@@ -370,11 +381,7 @@ test('offline matrices pivot by declared keys and use one scale per native measu
 
   const observed = [];
   matrix.subscribe((state, meta) => observed.push([state.key, meta.origin, values()]), { immediate: true });
-  picker.focus();
-  picker.value = 'share';
-  picker.dispatchEvent(new Event('change'));
-  assert.equal(label.firstChild, picker);
-  assert.equal(picker.focused, true);
+  chooseMeasure(p, 'share');
   assert.deepEqual(values(), ['80%', 'Missing', '50%', 'Missing']);
   assert.deepEqual(shades(), ['0.8', '', '0.5', '']);
   assert.equal(status.textContent, 'Share of actual class · 0% to 100%');
@@ -394,7 +401,7 @@ test('offline matrices pivot by declared keys and use one scale per native measu
   assert.equal(source.update(replaced), true);
   assert.equal(matrix.snapshot().key, 'share');
   assert.deepEqual(values(), ['Missing', 'Missing', 'Missing', '65%']);
-  assert.equal(label.firstChild, picker);
+  assert.equal(chosenMeasure(p), 'share', 'a rebuilt chooser keeps the chosen measure');
   assert.equal(matrix.update([matrixRecord('A', 'A', 3, 100)]), true);
   assert.equal(source.update(matrixValues(matrixRecord('A', 'B', 11, 75))), true);
   assert.deepEqual(values(), ['100%', 'Missing', 'Missing', 'Missing']);
@@ -471,14 +478,13 @@ test('matrix selection follows its key through named transform replacements', as
   await p.start();
   const matrix = p.DF.matrix.get(p.table);
   const source = p.DF.data.source('outcomes');
-  const [label] = p.body.firstChild.children;
   assert.equal(matrix.select('share'), true);
   assert.equal(source.update(matrixValues(matrixRecord('A', 'A', 2, 75))), true);
   assert.deepEqual({ ...matrix.snapshot() }, { key: 'share', index: 0, label: 'Row share', total: 2 });
-  assert.equal(label.firstChild.value, 'share');
+  assert.equal(chosenMeasure(p), 'share');
   assert.equal(source.update(matrixValues(matrixRecord('A', 'A', 3, 90))), true);
   assert.deepEqual({ ...matrix.snapshot() }, { key: 'count', index: 0, label: 'Count', total: 1 });
-  assert.equal(label.hidden, true);
+  assert.equal(measureGroup(p), null, 'a single measure needs no chooser');
 });
 
 test('theme changes commit before listeners and queue writes requested by subscribers', async () => {

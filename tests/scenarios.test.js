@@ -4,7 +4,7 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const vm = require('node:vm');
 
-const sources = ['chart.js', 'scenarios.js', 'core.js'].map((file) => readFileSync(join(__dirname, '../docform/js', file), 'utf8'));
+const sources = ['chart.js', 'scenarios.js', 'core.js', 'choices.js'].map((file) => readFileSync(join(__dirname, '../docform/js', file), 'utf8'));
 
 function node(tag, text = '', children = []) {
   const attrs = new Map();
@@ -14,7 +14,8 @@ function node(tag, text = '', children = []) {
     classList: {
       add: (name) => classes.add(name),
       remove: (...names) => names.forEach((name) => classes.delete(name)),
-      contains: (name) => classes.has(name)
+      contains: (name) => classes.has(name),
+      toggle: (name, on) => ((on ?? !classes.has(name)) ? classes.add(name) : classes.delete(name))
     },
     style: { setProperty() {} },
     setAttribute: (name, value) => attrs.set(name, String(value)),
@@ -88,7 +89,8 @@ function setup({ table }, withChart = true) {
   const core = vm.createContext({ DocForm: { _boot: {} }, document });
   vm.runInContext(sources[2], core);
   DocForm._pill = core.DocForm._pill;
-  const context = vm.createContext({ DocForm, document });
+  const context = vm.createContext({ DocForm, document, Date });
+  vm.runInContext(sources[3], context);
   if (withChart) vm.runInContext(sources[0], context);
   vm.runInContext(sources[1], context);
   return { page, chart: DocForm.chart, warnings, start: modules.get('scenarios') };
@@ -96,6 +98,18 @@ function setup({ table }, withChart = true) {
 
 function descendants(el) {
   return el.children.flatMap((child) => [child, ...descendants(child)]);
+}
+
+// The variant chooser is a radio chip group; this reads and drives it like a select.
+function chooser(fieldset) {
+  const inputs = () => descendants(fieldset).filter((el) => el.tagName === 'INPUT');
+  return {
+    get selectedIndex() { return inputs().findIndex((input) => input.checked); },
+    choose(index) {
+      inputs().forEach((input, i) => { input.checked = i === index; });
+      inputs()[index].dispatchEvent(new Event('change'));
+    }
+  };
 }
 
 test('selecting and resetting variants keeps baseline geometry and highlights the changed values', () => {
@@ -108,14 +122,11 @@ test('selecting and resetting variants keeps baseline geometry and highlights th
   start();
 
   const [controls, status, key, alerts, seconds] = page.firstChild.children;
-  const [label, pill] = controls.children;
+  const [group, pill] = controls.children;
   const [reset, previous, count, next] = pill.children;
-  const select = label.firstChild;
+  const select = chooser(group);
   const disabled = () => [reset, previous, next].map((button) => button.getAttribute('aria-disabled'));
-  const selectVariant = (index) => {
-    select.value = select.children[index].value;
-    select.dispatchEvent(new Event('change'));
-  };
+  const selectVariant = (index) => select.choose(index);
   const metricCells = (column) => data.rows.filter((tr) => tr.cells[column].hasAttribute('data-df-scenario-difference'));
   const markerCount = (host) => descendants(host).filter((el) => el.tagName === 'TEXT' && el.textContent === '*').length;
   const paths = (host) => descendants(host).filter((el) => el.tagName === 'PATH').map((el) => el.getAttribute('d'));
@@ -187,17 +198,16 @@ test('configuration mode lists and marks every changed condition and resets to t
   start();
 
   const [controls, heading, list, status, , alerts] = page.firstChild.children;
-  const [label, pill] = controls.children;
+  const [group, pill] = controls.children;
   const [reset] = pill.children;
-  const select = label.firstChild;
+  const select = chooser(group);
   const items = () => list.children.map((li) => li.textContent);
   const marked = (column) => data.rows.filter((tr) => tr.cells[column].hasAttribute('data-df-scenario-difference'));
   assert.equal(heading.textContent, 'Changed conditions');
   assert.deepEqual(items(), ['Threshold: 20% → 25%']);
   assert.doesNotMatch(status.textContent, /Combined/);
 
-  select.value = select.children[1].value;
-  select.dispatchEvent(new Event('change'));
+  select.choose(1);
   assert.deepEqual(items(), ['Threshold: 20% → 25%', 'Window: 5 s → 10 s']);
   assert.match(status.textContent, /^Combined effect of 2 changed conditions\. Threshold changed from 20% to 25%\. Window changed from 5 s to 10 s\. False alarms changed/);
   assert.deepEqual(marked(4), data.rows);

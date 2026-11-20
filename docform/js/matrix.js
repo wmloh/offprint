@@ -1,4 +1,4 @@
-// Evaluation matrices from named records, with a native measure chooser and a shared scale.
+// Evaluation matrices from named records, with a shared choice-chip measure chooser and a shared scale.
 (function () {
   'use strict';
 
@@ -131,14 +131,11 @@
       return ['COLGROUP', 'THEAD', 'TBODY', 'TFOOT', 'TR'].includes(child.tagName);
     });
     var controls = make('div', 'df-matrix-controls');
-    var label = make('label', 'df-matrix-picker', 'Measure ');
-    var picker = make('select');
+    var picker = null;
     var summary = make('span', 'df-matrix-summary');
     var ramp = make('span', 'df-matrix-ramp');
     summary.setAttribute('role', 'status');
     ramp.setAttribute('aria-hidden', 'true');
-    label.appendChild(picker);
-    controls.appendChild(label);
     controls.appendChild(summary);
     controls.appendChild(ramp);
 
@@ -153,12 +150,12 @@
       var hasValues = min !== Infinity;
       var [lower, upper] = item.range || [min, max];
       var scaled = hasValues && lower !== upper;
-      picker.value = item.key;
+      if (picker) picker.show(item.key);
       ramp.hidden = !scaled;
       var scaleText = hasValues ? (scaled ? format(lower, item.unit) + ' to ' + format(upper, item.unit) :
         'All values equal ' + format(lower, item.unit)) : 'No values supplied';
       if (item.normalization) scaleText = item.normalization + ' · ' + scaleText;
-      summary.textContent = label.hidden ? item.label + ' · ' + scaleText : scaleText;
+      summary.textContent = picker ? scaleText : item.label + ' · ' + scaleText;
 
       var nextBody = make('tbody');
       model.rows.forEach(function (row, i) {
@@ -226,13 +223,14 @@
         head = make('thead');
         head.appendChild(line);
         table.appendChild(head);
-        picker.textContent = '';
-        model.measures.forEach(function (item) {
-          var option = make('option', null, item.label);
-          option.value = item.key;
-          picker.appendChild(option);
+        if (picker) picker.el.remove();
+        picker = model.measures.length < 2 ? null : DocForm.choices.create({
+          label: 'Measure',
+          className: 'df-matrix-picker',
+          options: model.measures.map(function (item) { return { value: item.key, label: item.label }; }),
+          onChange: function (key) { if (!choose(key, 'user') && model) picker.show(model.measures[selected].key); }
         });
-        label.hidden = model.measures.length < 2;
+        if (picker) controls.insertBefore(picker.el, controls.firstChild);
         if (!controls.parentNode) table.before(controls);
         table.classList.add('df-matrix');
         draw();
@@ -245,7 +243,6 @@
       resetReader: true
     });
 
-    picker.addEventListener('change', function () { choose(picker.value, 'user'); });
     controller.api.select = function (key) { return choose(key, 'api'); };
     matrices.set(table, controller.api);
     data.binding('matrix', table, options, function (records, mapping, input, spec) {

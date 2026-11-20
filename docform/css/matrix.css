@@ -4,21 +4,11 @@
   align-items: center;
   gap: var(--df-space-2) var(--df-space-3);
   margin-block: var(--df-space-3) var(--df-space-2);
-  font-size: 0.9em;
 }
 
-.df-matrix-picker select {
-  padding: var(--df-space-1) var(--df-space-2);
-  border: 1px solid var(--df-border-strong);
-  border-radius: var(--df-radius);
-  background: var(--df-bg);
-  color: var(--df-text);
-  font: inherit;
-}
-
-.df-matrix-picker select:focus-visible {
-  outline: 2px solid var(--df-focus);
-  outline-offset: 2px;
+.df-matrix-picker {
+  flex: 1 1 100%;
+  margin: 0;
 }
 
 .df-matrix-ramp {

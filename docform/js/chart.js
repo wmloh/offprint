@@ -5,7 +5,7 @@
 // x: { type: 'time' } on line and scatter charts places zoned timestamps by elapsed time and shows them in UTC.
 // type: 'log' on either axis of a line or scatter chart plots positive values on a base-10 scale. A spec that fails
 // validation is not drawn: the element keeps its own content, and an update keeps the last valid chart.
-// Legend buttons hide and show series; brush: true narrows the x range of numeric and time axes by dragging or
+// Legend chips hide and show series; brush: true narrows the x range of numeric and time axes by dragging or
 // with + and -, and rescale: true fits the y axis to what is shown. Readouts and the table follow the view.
 // Motion is on by default: keyed marks morph between drawings and play an entrance the first time the chart
 // scrolls into view. motion: false or data-df-animate="false" turns it off; reduced motion and print skip it.
@@ -2489,7 +2489,7 @@
       (keyed ? ' Enter or Space selects the point being read.' : '') +
       (model.brush ? ' Drag across the plot, or press plus and minus, to narrow or widen the x range; Shift with ' +
         'the left and right arrow keys moves it.' : '') +
-      (model.toggles ? ' The legend buttons hide and show ' + (model.type === 'pie' ? 'slices.' : 'series.') : '') +
+      (model.toggles ? ' The legend chips hide and show ' + (model.type === 'pie' ? 'slices.' : 'series.') : '') +
       (model.table ? ' The Table button lists the values shown.' : '');
   }
 
@@ -2502,15 +2502,40 @@
     var def = addonOf(model);
     chart.legend.textContent = '';
     chart.seriesItems = [];
-    if (model.series.length > 1 || model.toggles || model.type === 'pie') {
-      model.series.forEach(function (s) {
-        var item = html(model.toggles ? 'button' : 'span', 'df-chart-legend-item', chart.legend);
-        if (model.toggles) {
-          item.type = 'button';
-          item.classList.add('df-chart-series-toggle');
-          item.addEventListener('click', function () { setVisible(chart, s.key, !!chart.hidden[s.key]); });
+    chart.seriesChoice = null;
+    var mark = model.type === 'line' ? 'line' : model.type === 'bar' && !def?.categoryMarks ? 'bar' : 'dot';
+    if (model.toggles && DocForm.choices) {
+      // Toggles are a shared multiple-choice chip group: a chosen chip is a shown series or slice.
+      chart.seriesChoice = DocForm.choices.create({
+        label: model.type === 'pie' ? 'Slices shown' : 'Series shown',
+        hideLabel: true,
+        multiple: true,
+        display: 'chips',
+        className: 'df-chart-series-toggles',
+        options: model.series.map(function (s, i) {
+          return {
+            value: String(i),
+            label: s.name,
+            swatch: key(mark, s, null),
+            mark: function (el) {
+              el.classList.add('df-chart-legend-item', 'df-chart-series-toggle');
+              chart.seriesItems.push({ el: el, key: s.key, name: s.name });
+            }
+          };
+        }),
+        onChange: function (shown) {
+          model.series.forEach(function (s, i) {
+            if (shown.indexOf(String(i)) >= 0) delete chart.hidden[s.key];
+            else chart.hidden[s.key] = true;
+          });
+          refresh(chart, true);
         }
-        key(model.type === 'line' ? 'line' : model.type === 'bar' && !def?.categoryMarks ? 'bar' : 'dot', s, item);
+      });
+      chart.legend.appendChild(chart.seriesChoice.el);
+    } else if (model.series.length > 1 || model.type === 'pie') {
+      model.series.forEach(function (s) {
+        var item = html('span', 'df-chart-legend-item', chart.legend);
+        key(mark, s, item);
         html('span', '', item, s.name);
         chart.seriesItems.push({ el: item, key: s.key, name: s.name });
       });
@@ -2527,15 +2552,15 @@
     syncHead(chart);
   }
 
-  // Pressed legend buttons, and the narrowed range with its Reset button.
+  // Chosen legend chips, and the narrowed range with its Reset button.
   function syncHead(chart) {
     chart.seriesItems.forEach(function (item) {
-      var off = !!chart.hidden[item.key];
-      item.el.classList[off ? 'add' : 'remove']('is-off');
-      if (!chart.model.toggles) return;
-      item.el.setAttribute('aria-pressed', off ? 'false' : 'true');
-      item.el.title = (off ? 'Show ' : 'Hide ') + item.name;
+      item.el.classList[chart.hidden[item.key] ? 'add' : 'remove']('is-off');
     });
+    if (chart.seriesChoice) {
+      chart.seriesChoice.show(chart.model.series.map(function (s, i) { return String(i); })
+        .filter(function (_, i) { return !chart.hidden[chart.model.series[i].key]; }));
+    }
     chart.rangeText.textContent = chart.range ? rangeText(chart.model, chart.range) : '';
     chart.rangeText.hidden = !chart.range;
     chart.reset.hidden = !chart.range;

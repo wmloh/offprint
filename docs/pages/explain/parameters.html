@@ -132,9 +132,17 @@
     <figure id="see-it-demo" data-df-parameter-scope="practice">
       <div class="df-params">
         <div data-df-parameter="pages" data-df-parameter-label="Pages to read"><p>Pages to read: 2</p></div>
-        <div data-df-parameter="pace" data-df-parameter-label="Reading pace"><p>Reading pace: Quick</p></div>
+        <fieldset data-df-choice="pace">
+          <legend>Reading pace</legend>
+          <label><input type="radio" name="pace" value="quick" checked> Quick</label>
+          <label><input type="radio" name="pace" value="careful"> Careful</label>
+        </fieldset>
         <div data-df-parameter="review" data-df-parameter-label="Include a review"><p>Include a review: Off</p></div>
-        <div data-df-parameter="tools" data-df-parameter-label="Tools to practise"><p>Tools to practise: Outline</p></div>
+        <fieldset data-df-choice="tools">
+          <legend>Tools to practise</legend>
+          <label><input type="checkbox" value="outline" checked> Outline</label>
+          <label><input type="checkbox" value="search"> Search</label>
+        </fieldset>
       </div>
       <p data-df-template="Plan: {{pages}} pages, {{pages * minutesPerPage * (pace === 'careful' ? 2 : 1) + (review ? 3 : 0)}} minutes. Tools selected: {{tools.length}}.">Plan: 2 pages, 4 minutes. Tools selected: 1.</p>
       <p>Illustrative fixed value: <span data-df-bind="minutesPerPage">2</span> minutes per page at the quick pace.</p>
@@ -174,11 +182,25 @@
     <p>A <span data-df-tip="A named set of settings that several controls can share.">scope</span> is a named set of parameter definitions and their current values. A definition gives a setting its type, starting value and any bounds or choices. The same setting can appear in several places within a scope. Separate scopes can use the same setting name for independent values.</p>
 
     <h2 id="choice-styles">Chips and searchable lists</h2>
-    <p>Short lists of choices appear as <span data-df-term="choice chip">chips</span>: small rounded buttons that show every option at once, like the pace and tools above. A list with more than eight choices, or with long names, becomes a <span data-df-term="combobox">combobox</span> instead. You type to narrow the list and pick from what remains. Authors can choose either look for any control.</p>
+    <p>Short lists of choices appear as <span data-df-term="choice chip">chips</span>: small rounded buttons that show every option at once, like the pace and tools above. A list with more than seven choices, or with long names, becomes a <span data-df-term="combobox">combobox</span> instead. You type to narrow the list and pick from what remains. Authors can choose either look for any control. Every press sends a soft ripple across the chip, and chart legends, table filters, variant choosers and measure choosers use the same chips.</p>
     <figure data-df-parameter-scope="study">
-      <div class="df-params">
-        <div data-df-parameter="features" data-df-parameter-label="Features to study"><p>Features to study: Parameters</p></div>
-      </div>
+      <fieldset data-df-choice="features">
+        <legend>Features to study</legend>
+        <label><input type="checkbox" value="tabs"> Tabs</label>
+        <label><input type="checkbox" value="cards"> Card panels</label>
+        <label><input type="checkbox" value="figure-steps"> Figure steps</label>
+        <label><input type="checkbox" value="animation"> SVG animations</label>
+        <label><input type="checkbox" value="stepper"> Worked-example steppers</label>
+        <label><input type="checkbox" value="reveals"> Scroll reveals</label>
+        <label><input type="checkbox" value="selection"> Linked selection</label>
+        <label><input type="checkbox" value="parameters" checked> Parameters</label>
+        <label><input type="checkbox" value="zoom"> Figure zoom</label>
+        <label><input type="checkbox" value="chart"> SVG charts</label>
+        <label><input type="checkbox" value="chart-histogram"> Histograms</label>
+        <label><input type="checkbox" value="chart-heatmap"> Heatmaps</label>
+        <label><input type="checkbox" value="results"> Results tables</label>
+        <label><input type="checkbox" value="dropzone"> File dropzones</label>
+      </fieldset>
       <p data-df-template="{{features.length}} of 14 features chosen.">1 of 14 features chosen.</p>
       <figcaption>A searchable list of 14 official feature names. Each choice appears as a removable chip above the field.</figcaption>
     </figure>
@@ -193,9 +215,14 @@
 
     <h3 id="select-to-highlight">Highlight a choice everywhere</h3>
     <figure data-df-parameter-scope="focus">
-      <div class="df-params">
-        <div data-df-parameter="group" data-df-parameter-label="Reference group"><p>Reference group: Reading</p></div>
-      </div>
+      <fieldset data-df-choice="group">
+        <legend>Reference group</legend>
+        <label><input type="radio" name="group" value="setup"> Setup</label>
+        <label><input type="radio" name="group" value="layout"> Layout</label>
+        <label><input type="radio" name="group" value="reading" checked> Reading</label>
+        <label><input type="radio" name="group" value="interact"> Interact</label>
+        <label><input type="radio" name="group" value="data"> Data</label>
+      </fieldset>
       <div data-df-chart="bar" data-df-selection-group="reference-group">
         <script type="application/json">
           {

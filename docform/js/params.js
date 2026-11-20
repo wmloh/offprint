@@ -256,38 +256,6 @@
     };
   }
 
-  function selectControl(host, name, select) {
-    var options = DocForm.all('option', host).map(function (o) {
-      var value = o.getAttribute('value');
-      return { value: value === null ? o.textContent.trim() : value, label: o.textContent.trim(), selected: o.hasAttribute('selected') };
-    });
-    var keys = options.map(function (o) { return o.value; });
-    if (!options.length || keys.some(function (k, i) { return keys.indexOf(k) !== i; })) {
-      DocForm.warnOnce('param-options:' + name, 'Choice "' + name + '" needs <option> children with distinct values.');
-      return null;
-    }
-    options.forEach(function (o) {
-      var option = document.createElement('option');
-      option.value = o.value;
-      option.textContent = o.label;
-      select.appendChild(option);
-    });
-    select.className += ' df-param-select';
-    var initial = DocForm.data(host, 'value', null);
-    if (initial !== null && keys.indexOf(initial) < 0) {
-      DocForm.warnOnce('param-initial:' + name, 'Choice "' + name + '" has no option "' + initial + '"; using the default.');
-      initial = null;
-    }
-    if (initial === null) initial = (options.filter(function (o) { return o.selected; })[0] || options[0]).value;
-    select.addEventListener('change', function () { set(name, select.value, select); });
-    return {
-      initial: function () { return initial; },
-      accepts: function (v) { return keys.indexOf(v) >= 0; },
-      expects: 'use one of ' + keys.map(quote).join(', '),
-      show: function (v, source) { if (select !== source) select.value = v; }
-    };
-  }
-
   function toggleControl(host, name, input) {
     input.type = 'checkbox';
     input.setAttribute('role', 'switch');
@@ -312,8 +280,8 @@
       return;
     }
     var type = DocForm.data(host, 'type', 'range');
-    if (type !== 'range' && type !== 'select' && type !== 'toggle') {
-      DocForm.warnOnce('param-type:' + name, 'Parameter "' + name + '" has unknown type "' + type + '"; use range, select, or toggle.');
+    if (type !== 'range' && type !== 'toggle') {
+      DocForm.warnOnce('param-type:' + name, 'Parameter "' + name + '" has unknown type "' + type + '"; use range or toggle, or a data-df-choice fieldset for choices.');
       return;
     }
     if (controls[name] && controls[name].type !== type) {
@@ -322,10 +290,10 @@
     }
 
     var id = 'df-param-' + name + '-' + (++count);
-    var input = document.createElement(type === 'select' ? 'select' : 'input');
+    var input = document.createElement('input');
     input.className = 'df-param-input';
     input.id = id;
-    var make = type === 'select' ? selectControl : type === 'toggle' ? toggleControl : rangeControl;
+    var make = type === 'toggle' ? toggleControl : rangeControl;
     var c = make(host, name, input);
     if (!c) return;
 
@@ -625,6 +593,11 @@
       return DocForm._items.transaction(function () { return commit(result.values, origin); });
     };
 
+    function attach(key, showValue) {
+      if (!displays.has(key)) displays.set(key, []);
+      displays.get(key).push(showValue);
+      showValue(current[key]);
+    }
     state.control = function (host) {
       var key = host.getAttribute('data-df-parameter').trim();
       var def = definitions[key];
@@ -632,13 +605,53 @@
         parameterIssue(host, 'Parameter "' + key + '" has no control definition in scope "' + name + '".');
         return;
       }
+      if (def.type === 'select' || def.type === 'multiselect') {
+        parameterIssue(host, 'Parameter "' + key + '" is a ' + def.type + '; author it as <fieldset data-df-choice="' + key + '">.');
+        return;
+      }
       var showValue = scopedControl(host, key, def, function (value) {
         if (!state.write({ [key]: value }, 'user')) showValue(current[key]);
       });
-      if (!showValue) return;
-      if (!displays.has(key)) displays.set(key, []);
-      displays.get(key).push(showValue);
-      showValue(current[key]);
+      if (showValue) attach(key, showValue);
+    };
+    // <fieldset data-df-choice="key"> with an optional legend and native inputs for reading without scripts.
+    state.choice = function (host) {
+      var key = host.getAttribute('data-df-choice').trim();
+      var def = definitions[key];
+      if (!def || (def.type !== 'select' && def.type !== 'multiselect')) {
+        parameterIssue(host, 'Parameter "' + key + '" has no select or multiselect definition in scope "' + name + '".');
+        return;
+      }
+      if (host.tagName !== 'FIELDSET') {
+        parameterIssue(host, 'Choice parameter "' + key + '" needs a fieldset host.');
+        return;
+      }
+      if (!DocForm.choices) {
+        parameterIssue(host, 'Choice parameter "' + key + '" needs the choices feature.');
+        return;
+      }
+      var control = DocForm.choices.create({
+        host: host,
+        label: key,
+        multiple: def.type === 'multiselect',
+        options: def.choices.map(function (choice) {
+          return {
+            value: choice.value,
+            label: choice.label,
+            mark: def.selectionGroup ? function (el) {
+              el.setAttribute('data-df-selection-group', def.selectionGroup);
+              el.setAttribute('data-df-key', choice.value);
+            } : null
+          };
+        }),
+        onChange: function (value) {
+          if (!state.write({ [key]: value }, 'user')) control.show(current[key]);
+        }
+      });
+      if (control.mismatch) {
+        parameterIssue(host, 'Authored choices for parameter "' + key + '" do not match its definition; they were replaced.');
+      }
+      attach(key, control.show);
     };
     state.render = function () { renderBindings(state.bindings, current, places); };
     state.finish = function () {
@@ -741,7 +754,7 @@
 
   function scopedControl(host, key, def, change) {
     var tag = (host.tagName || '').toLowerCase();
-    var native = tag === 'input' || tag === 'select';
+    var native = tag === 'input';
     var type = def.type;
     var label = DocForm.data(host, 'parameter-label', null);
     var places = DocForm.data(host, 'parameter-digits', null);
@@ -749,56 +762,11 @@
       parameterIssue(host, 'Invalid display precision for parameter "' + key + '".');
       places = null;
     }
-    var selectType = type === 'select' || type === 'multiselect';
-    if (native && (selectType ? tag !== 'select' || host.hasAttribute('multiple') !== (type === 'multiselect') : tag !== 'input' ||
-        host.type !== (type === 'toggle' ? 'checkbox' : 'range'))) {
+    if (native && (tag !== 'input' || host.type !== (type === 'toggle' ? 'checkbox' : 'range'))) {
       parameterIssue(host, 'Native control for parameter "' + key + '" does not match its ' + type + ' definition.');
       return null;
     }
-    var style = selectType ? choiceStyle(host, key, def, native) : 'native';
-    if (style !== 'native') {
-      var title = label !== null ? label : native && host.getAttribute('aria-label') || key;
-      var showChoice = (style === 'chips' ? chipControl : comboControl)(choiceBox(host, native, type, style), key, def, title, change);
-      if (!native) return showChoice;
-      // The hidden native select stays in step for forms and for reading with scripts off.
-      var showNative = nativeOptions(host, def, function () {});
-      return function (value) {
-        showChoice(value);
-        showNative(value);
-      };
-    }
-    if (type === 'multiselect' && !native) {
-      var group = document.createElement('fieldset');
-      group.className = 'df-param-multiselect';
-      var legend = document.createElement('legend');
-      legend.textContent = label === null ? key : label;
-      group.appendChild(legend);
-      var checks = def.choices.map(function (choice) {
-        var item = document.createElement('label');
-        if (def.selectionGroup) {
-          item.setAttribute('data-df-selection-group', def.selectionGroup);
-          item.setAttribute('data-df-key', choice.value);
-        }
-        var check = document.createElement('input');
-        check.type = 'checkbox';
-        check.value = choice.value;
-        item.appendChild(check);
-        var text = document.createElement('span');
-        text.textContent = choice.label;
-        item.appendChild(text);
-        group.appendChild(item);
-        check.addEventListener('change', function () {
-          change(checks.filter(function (input) { return input.checked; }).map(function (input) { return input.value; }));
-        });
-        return check;
-      });
-      host.textContent = '';
-      host.appendChild(group);
-      return function (value) {
-        checks.forEach(function (check) { check.checked = value.includes(check.value); });
-      };
-    }
-    var input = native ? host : document.createElement(selectType ? 'select' : 'input');
+    var input = native ? host : document.createElement('input');
     var output;
     if (!native) {
       input.id = 'df-param-' + key + '-' + (++count);
@@ -825,447 +793,11 @@
         if (output) output.textContent = format(value, places === null ? def.digits : Number(places));
       };
     }
-    if (selectType) return nativeOptions(input, def, change);
     input.type = 'checkbox';
     input.setAttribute('role', 'switch');
     input.classList.add('df-param-switch');
     input.addEventListener('change', function () { change(input.checked); });
     return function (value) { input.checked = value; };
-  }
-
-  function nativeOptions(input, def, change) {
-    input.textContent = '';
-    input.classList.add('df-param-select');
-    var options = def.choices.map(function (choice) {
-      var option = document.createElement('option');
-      option.value = choice.value;
-      option.textContent = choice.label;
-      input.appendChild(option);
-      return option;
-    });
-    if (def.type === 'multiselect') {
-      input.addEventListener('change', function () {
-        change(options.filter(function (option) { return option.selected; }).map(function (option) { return option.value; }));
-      });
-      return function (value) {
-        options.forEach(function (option) { option.selected = value.includes(option.value); });
-      };
-    }
-    input.addEventListener('change', function () { change(input.value); });
-    return function (value) { input.value = value; };
-  }
-
-  // Choice sets up to this size, in count and total label length, render as chips; larger ones as a combobox.
-  var CHIP_LIMIT = 8;
-  var CHIP_TEXT = 80;
-  var CHOICE_STYLES = ['auto', 'chips', 'combobox', 'native'];
-
-  function choiceStyle(host, key, def, native) {
-    var style = DocForm.data(host, 'parameter-style', 'auto').trim();
-    if (CHOICE_STYLES.indexOf(style) < 0) {
-      parameterIssue(host, 'Parameter "' + key + '" has unknown style "' + style + '"; use auto, chips, combobox, or native.');
-      style = 'auto';
-    }
-    if (style !== 'auto') return style;
-    if (native) return 'native';
-    var text = def.choices.reduce(function (sum, choice) { return sum + choice.label.length; }, 0);
-    return def.choices.length <= CHIP_LIMIT && text <= CHIP_TEXT ? 'chips' : 'combobox';
-  }
-
-  // Generated hosts are emptied; an authored select is hidden with its wrapping label and followed by the control.
-  function choiceBox(host, native, type, style) {
-    var box = host;
-    if (native) {
-      var anchor = (host.closest && host.closest('label')) || host;
-      box = document.createElement('div');
-      anchor.parentNode.insertBefore(box, anchor.nextSibling || null);
-      anchor.hidden = true;
-    } else host.textContent = '';
-    box.classList.add('df-param', 'df-param-' + type, 'df-param-' + style);
-    return box;
-  }
-
-  function make(tag, className, text) {
-    var el = document.createElement(tag);
-    if (className) el.className = className;
-    if (text !== undefined) el.textContent = text;
-    return el;
-  }
-
-  function markChoice(el, def, choice) {
-    if (!def.selectionGroup) return;
-    el.setAttribute('data-df-selection-group', def.selectionGroup);
-    el.setAttribute('data-df-key', choice.value);
-  }
-
-  function frame(fn) {
-    if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(fn);
-    else fn();
-  }
-
-  // Native radio or checkbox inputs inside pill labels. Arrow keys, Home, and End move between chips; for a
-  // single choice they also choose, as native radios do. A highlight slides to the chosen chip.
-  function chipControl(box, key, def, text, change) {
-    var multi = def.type === 'multiselect';
-    var id = 'df-param-' + key + '-' + (++count);
-    var heading = labelFor(text, null, 'span');
-    heading.id = id + '-label';
-    var group = make('div', 'df-chips');
-    group.setAttribute('role', multi ? 'group' : 'radiogroup');
-    group.setAttribute('aria-labelledby', heading.id);
-    var glider = null;
-    if (!multi) {
-      glider = make('span', 'df-chips-glider');
-      glider.setAttribute('aria-hidden', 'true');
-      group.classList.add('df-chips-still');
-      group.appendChild(glider);
-    }
-    var inputs = def.choices.map(function (choice, i) {
-      var chip = make('label', 'df-chip');
-      markChoice(chip, def, choice);
-      var input = make('input', 'df-chip-input');
-      input.type = multi ? 'checkbox' : 'radio';
-      input.name = id;
-      input.id = id + '-' + i;
-      input.value = choice.value;
-      chip.appendChild(input);
-      if (multi) {
-        var tick = make('span', 'df-chip-check');
-        tick.setAttribute('aria-hidden', 'true');
-        chip.appendChild(tick);
-      }
-      chip.appendChild(make('span', 'df-chip-text', choice.label));
-      group.appendChild(chip);
-      input.addEventListener('change', function () {
-        if (!multi) {
-          if (input.checked) change(input.value);
-          return;
-        }
-        change(inputs.filter(function (item) { return item.checked; }).map(function (item) { return item.value; }));
-      });
-      return input;
-    });
-    var steps = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
-    group.addEventListener('keydown', function (event) {
-      var at = inputs.indexOf(event.target);
-      var step = steps[event.key];
-      if (at < 0 || event.altKey || event.ctrlKey || event.metaKey ||
-        (step === undefined && event.key !== 'Home' && event.key !== 'End')) return;
-      event.preventDefault();
-      var next = inputs[event.key === 'Home' ? 0 : event.key === 'End' ? inputs.length - 1 :
-        (at + step + inputs.length) % inputs.length];
-      next.focus();
-      if (!multi && !next.checked) change(next.value);
-    });
-    box.appendChild(heading);
-    box.appendChild(group);
-
-    var settled = false;
-    function glide() {
-      var on = inputs.filter(function (input) { return input.checked; })[0];
-      var chip = on && on.parentNode;
-      var shown = Boolean(chip && chip.offsetWidth > 0);
-      glider.classList.toggle('is-hidden', !shown);
-      if (!shown) return;
-      glider.style.setProperty('--df-chip-x', chip.offsetLeft + 'px');
-      glider.style.setProperty('--df-chip-y', chip.offsetTop + 'px');
-      glider.style.setProperty('--df-chip-w', chip.offsetWidth + 'px');
-      glider.style.setProperty('--df-chip-h', chip.offsetHeight + 'px');
-      if (settled) return;
-      settled = true;
-      // The first placement jumps into place; later ones slide.
-      frame(function () { group.classList.remove('df-chips-still'); });
-    }
-    if (!multi && root.ResizeObserver) new root.ResizeObserver(glide).observe(group);
-    return function (value) {
-      inputs.forEach(function (input) {
-        input.checked = multi ? value.includes(input.value) : input.value === value;
-        input.parentNode.classList.toggle('is-selected', input.checked);
-      });
-      if (!multi) glide();
-    };
-  }
-
-  function fold(text) {
-    return String(text).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  }
-
-  // A text field with role="combobox" that filters a listbox in a dropdown popover. A single choice shows its
-  // label in the field; a multiselect lists removable chips before the field and adds All and None actions.
-  function comboControl(box, key, def, text, change) {
-    var multi = def.type === 'multiselect';
-    var id = 'df-param-' + key + '-' + (++count);
-    var choices = def.choices;
-    var heading = labelFor(text, id);
-    heading.id = id + '-label';
-    var wrap = make('div', 'df-combo');
-    var field = make('div', 'df-combo-field');
-    var chips = null;
-    if (multi) {
-      chips = make('ul', 'df-combo-chips');
-      chips.setAttribute('aria-label', 'Chosen');
-      field.appendChild(chips);
-    }
-    var input = make('input', 'df-combo-input');
-    input.type = 'text';
-    input.id = id;
-    input.setAttribute('role', 'combobox');
-    input.setAttribute('aria-autocomplete', 'list');
-    input.setAttribute('aria-expanded', 'false');
-    input.setAttribute('aria-controls', id + '-list');
-    input.setAttribute('autocomplete', 'off');
-    input.setAttribute('spellcheck', 'false');
-    if (multi) input.setAttribute('placeholder', 'Search choices');
-    field.appendChild(input);
-    wrap.appendChild(field);
-
-    var panel = make('div', 'df-dropdown-panel df-combo-panel');
-    panel.id = id + '-panel';
-    var popover = typeof panel.showPopover === 'function' && DocForm.dropdowns && typeof DocForm.dropdowns.follow === 'function';
-    if (popover) panel.setAttribute('popover', 'manual');
-    else panel.hidden = true;
-    var all = null;
-    var none = null;
-    var tally = null;
-    if (multi) {
-      var actions = make('div', 'df-combo-actions');
-      all = make('button', 'df-combo-action', 'All');
-      none = make('button', 'df-combo-action', 'None');
-      tally = make('span', 'df-combo-count');
-      [all, none].forEach(function (button) {
-        button.type = 'button';
-        actions.appendChild(button);
-      });
-      actions.appendChild(tally);
-      panel.appendChild(actions);
-      all.addEventListener('click', function () { change(choices.map(function (choice) { return choice.value; })); });
-      none.addEventListener('click', function () { change([]); });
-    }
-    var list = make('ul', 'df-combo-list');
-    list.id = id + '-list';
-    list.setAttribute('role', 'listbox');
-    list.setAttribute('aria-labelledby', heading.id);
-    if (multi) list.setAttribute('aria-multiselectable', 'true');
-    var options = choices.map(function (choice, i) {
-      var option = make('li', 'df-combo-option');
-      option.id = id + '-option-' + i;
-      option.setAttribute('role', 'option');
-      markChoice(option, def, choice);
-      if (multi) {
-        var tick = make('span', 'df-chip-check');
-        tick.setAttribute('aria-hidden', 'true');
-        option.appendChild(tick);
-      }
-      var label = make('span', 'df-combo-text', choice.label);
-      option.appendChild(label);
-      option.addEventListener('click', function () { pick(i); });
-      option.addEventListener('mousemove', function () { if (active !== i) activate(i, false); });
-      list.appendChild(option);
-      return { el: option, label: label, folded: fold(choice.label), value: fold(choice.value) };
-    });
-    var empty = make('p', 'df-combo-empty', 'No matching choices');
-    empty.setAttribute('role', 'status');
-    empty.hidden = true;
-    panel.appendChild(list);
-    panel.appendChild(empty);
-    wrap.appendChild(panel);
-    box.appendChild(heading);
-    box.appendChild(wrap);
-
-    var selected = multi ? [] : null;
-    var open = false;
-    var active = -1;
-    var query = '';
-    var stop = null;
-    var chipFor = new Map();
-    var live = false;
-
-    function labelOf(value) {
-      var choice = choices.filter(function (c) { return c.value === value; })[0];
-      return choice ? choice.label : '';
-    }
-
-    function isOn(i) {
-      return multi ? selected.includes(choices[i].value) : selected === choices[i].value;
-    }
-
-    function visible() {
-      return options.map(function (_, i) { return i; }).filter(function (i) { return !options[i].el.hidden; });
-    }
-
-    // Marks the first match in each label so readers see why it stayed.
-    function highlight(item, needle) {
-      var text = choices[options.indexOf(item)].label;
-      var at = needle ? item.folded.indexOf(needle) : -1;
-      if (at < 0 || item.folded.length !== text.length) {
-        item.label.textContent = text;
-        return;
-      }
-      item.label.textContent = '';
-      item.label.appendChild(document.createTextNode(text.slice(0, at)));
-      item.label.appendChild(make('mark', null, text.slice(at, at + needle.length)));
-      item.label.appendChild(document.createTextNode(text.slice(at + needle.length)));
-    }
-
-    function filter() {
-      var needle = fold(query.trim());
-      options.forEach(function (item) {
-        item.el.hidden = Boolean(needle) && item.folded.indexOf(needle) < 0 && item.value.indexOf(needle) < 0;
-        highlight(item, needle);
-      });
-      var shown = visible();
-      empty.hidden = shown.length > 0;
-      if (shown.indexOf(active) < 0) activate(shown.length ? shown[0] : -1, true);
-    }
-
-    function activate(i, scroll) {
-      if (active >= 0) options[active].el.classList.remove('is-active');
-      active = i;
-      if (i < 0) {
-        input.removeAttribute('aria-activedescendant');
-        return;
-      }
-      var el = options[i].el;
-      el.classList.add('is-active');
-      input.setAttribute('aria-activedescendant', el.id);
-      if (scroll && typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest' });
-    }
-
-    function move(step) {
-      var shown = visible();
-      if (!shown.length) return;
-      var at = shown.indexOf(active);
-      activate(shown[at < 0 ? (step > 0 ? 0 : shown.length - 1) : (at + step + shown.length) % shown.length], true);
-    }
-
-    function show() {
-      if (open) return;
-      open = true;
-      input.setAttribute('aria-expanded', 'true');
-      wrap.classList.add('is-open');
-      filter();
-      var shown = visible();
-      var chosen = shown.filter(isOn);
-      activate(chosen.length ? chosen[0] : shown.length ? shown[0] : -1, true);
-      if (!popover) {
-        panel.hidden = false;
-        return;
-      }
-      if (field.offsetWidth) panel.style.minWidth = field.offsetWidth + 'px';
-      panel.showPopover();
-      stop = DocForm.dropdowns.follow(field, panel);
-    }
-
-    function hide() {
-      if (!open) return;
-      open = false;
-      input.setAttribute('aria-expanded', 'false');
-      wrap.classList.remove('is-open');
-      activate(-1, false);
-      query = '';
-      input.value = multi ? '' : labelOf(selected);
-      if (!popover) {
-        panel.hidden = true;
-        return;
-      }
-      if (stop) stop();
-      stop = null;
-      if (panel.matches(':popover-open')) panel.hidePopover();
-    }
-
-    function pick(i) {
-      var value = choices[i].value;
-      if (!multi) {
-        change(value);
-        hide();
-        return;
-      }
-      change(isOn(i) ? selected.filter(function (v) { return v !== value; }) : choices.map(function (c) { return c.value; })
-        .filter(function (v) { return v === value || selected.includes(v); }));
-    }
-
-    function unpick(value) {
-      change(selected.filter(function (v) { return v !== value; }));
-    }
-
-    if (popover) {
-      // The popover closes itself when its field scrolls out of view.
-      panel.addEventListener('toggle', function (event) { if (event.newState === 'closed') hide(); });
-    }
-    // Keep focus in the field while pointing at choices and actions.
-    panel.addEventListener('mousedown', function (event) { event.preventDefault(); });
-    input.addEventListener('click', show);
-    input.addEventListener('focus', function () {
-      if (!multi && typeof input.select === 'function') input.select();
-    });
-    input.addEventListener('input', function () {
-      query = input.value;
-      if (!open) show();
-      filter();
-      var shown = visible();
-      activate(shown.length ? shown[0] : -1, true);
-    });
-    input.addEventListener('keydown', function (event) {
-      var key = event.key;
-      if (key === 'ArrowDown' || key === 'ArrowUp') {
-        event.preventDefault();
-        if (!open) show();
-        else if (!event.altKey) move(key === 'ArrowDown' ? 1 : -1);
-        else if (key === 'ArrowUp') hide();
-      } else if (key === 'Enter') {
-        if (!open || active < 0) return;
-        event.preventDefault();
-        pick(active);
-      } else if (key === 'Escape') {
-        if (open) {
-          event.preventDefault();
-          hide();
-        } else if (input.value && multi) input.value = '';
-        else if (!multi) input.value = labelOf(selected);
-      } else if (key === 'Tab') hide();
-      else if (key === 'Backspace' && multi && !input.value && selected.length) unpick(selected[selected.length - 1]);
-    });
-    wrap.addEventListener('focusout', function (event) {
-      var next = event.relatedTarget;
-      if (!next || !(typeof wrap.contains === 'function' && wrap.contains(next))) hide();
-    });
-
-    function renderChips() {
-      Array.from(chipFor.keys()).forEach(function (value) {
-        if (selected.includes(value)) return;
-        chipFor.get(value).remove();
-        chipFor.delete(value);
-      });
-      choices.forEach(function (choice, i) {
-        if (!selected.includes(choice.value) || chipFor.has(choice.value)) return;
-        var chip = make('li', 'df-combo-chip' + (live ? ' is-new' : ''));
-        chip.appendChild(make('span', 'df-combo-chip-text', choice.label));
-        var remove = make('button', 'df-combo-remove');
-        remove.type = 'button';
-        remove.setAttribute('aria-label', 'Remove ' + choice.label);
-        remove.addEventListener('click', function () {
-          unpick(choice.value);
-          input.focus();
-        });
-        chip.appendChild(remove);
-        // Insert before the next chosen chip so chips keep declaration order without moving existing ones.
-        var later = choices.slice(i + 1).map(function (c) { return chipFor.get(c.value); }).filter(Boolean)[0];
-        chips.insertBefore(chip, later || null);
-        chipFor.set(choice.value, chip);
-      });
-    }
-
-    return function (value) {
-      selected = value;
-      options.forEach(function (item, i) { item.el.setAttribute('aria-selected', String(isOn(i))); });
-      if (multi) {
-        renderChips();
-        all.disabled = selected.length === choices.length;
-        none.disabled = !selected.length;
-        tally.textContent = selected.length + ' of ' + choices.length + ' chosen';
-      } else if (!open || !query) input.value = labelOf(value);
-      live = true;
-    };
   }
 
   function scopeName(name) {
@@ -1365,6 +897,10 @@
     DocForm.all('[data-df-parameter]').forEach(function (el) {
       var scope = resolveScope(el, false);
       if (scope) scope.control(el);
+    });
+    DocForm.all('[data-df-choice]').forEach(function (el) {
+      var scope = resolveScope(el, false);
+      if (scope) scope.choice(el);
     });
     DocForm.all('[data-df-preset]').forEach(function (el) {
       var scope = resolveScope(el, true);

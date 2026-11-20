@@ -1,4 +1,4 @@
-// One-time reveals for marked blocks and split views, and two-way slides for callouts.
+// Two-way reveals for marked blocks and split views around the viewport centre, and two-way slides for callouts.
 (function (root) {
   'use strict';
 
@@ -12,28 +12,22 @@
   var SPLIT = '.df-split';
   var STAGGER = 140;
   var CALLOUT_INSET = 0.25;
+  // Fractions of the viewport height trimmed from each end of the reveal band. A hidden block enters the wider
+  // inset; a shown block stays until it leaves the narrower one, so the edge does not flicker.
+  var REVEAL_ENTER = 0.15;
+  var REVEAL_KEEP = 0.04;
   var doc = root.document;
   var html = doc && doc.documentElement;
-  var canObserve = typeof root.IntersectionObserver === 'function';
   var component = DocForm._component;
-  var observer;
+  var tracked = [];
 
-  // Revealed once it intersects, or once it is already above the viewport (such as after a restored scroll
-  // position), so nothing stays hidden behind the reader.
-  function shouldReveal(entry) {
-    return !!entry.isIntersecting || entry.boundingClientRect.bottom <= 0;
-  }
-
-  // Reveals each observed element once and stops watching it. `Observer` is IntersectionObserver or a stand-in.
-  function revealer(Observer, show, options) {
-    var observer = new Observer(function (entries) {
-      entries.forEach(function (entry) {
-        if (!shouldReveal(entry)) return;
-        observer.unobserve(entry.target);
-        show(entry.target);
-      });
-    }, options || { rootMargin: '0px 0px -12% 0px', threshold: 0 });
-    return observer;
+  // Like peek bubbles, a block shows while it sits in a band around the viewport centre and hides again once it
+  // moves away. The band widens at the page ends so blocks there can still reach it.
+  function revealVisible(top, bottom, height, scrolled, remaining, shown) {
+    var inset = height * (shown ? REVEAL_KEEP : REVEAL_ENTER);
+    var start = Math.min(inset, Math.max(0, scrolled));
+    var end = height - Math.min(inset, Math.max(0, remaining));
+    return bottom > start && top < end;
   }
 
   // "2:1" or "2 1" gives the panes those column shares; missing or invalid shares count as 1.
@@ -68,9 +62,41 @@
   function showTarget(target) {
     var el = component.target(target, 'reveals', true);
     if (!el) return false;
-    if (observer) observer.unobserve(el);
+    tracked = tracked.filter(function (t) { return t !== el; });
     show(el);
     return true;
+  }
+
+  // Toggles .df-revealed on each tracked block as it enters or leaves the band. data-df-reveal-once blocks stop
+  // being tracked after their first entrance.
+  function trackReveals(targets) {
+    var pending = false;
+    tracked = targets.slice();
+
+    function update() {
+      pending = false;
+      var height = root.innerHeight;
+      var scrolled = root.scrollY;
+      var remaining = html.scrollHeight - height - scrolled;
+      var boxes = tracked.map(function (el) { return el.getBoundingClientRect(); });
+      tracked = tracked.filter(function (el, i) {
+        var shown = el.classList.contains('df-revealed');
+        var next = revealVisible(boxes[i].top, boxes[i].bottom, height, scrolled, remaining, shown) ||
+          (shown && el.matches(':focus-within'));
+        if (next !== shown) el.classList.toggle('df-revealed', next);
+        return !(next && el.hasAttribute('data-df-reveal-once'));
+      });
+    }
+
+    function schedule() {
+      if (pending) return;
+      pending = true;
+      root.requestAnimationFrame(update);
+    }
+
+    update();
+    root.addEventListener('scroll', schedule, { capture: true, passive: true });
+    root.addEventListener('resize', schedule);
   }
 
   function calloutVisible(top, bottom, height, scrolled, remaining) {
@@ -127,23 +153,21 @@
     if (!boot) setupSplits();
     if (!boot || boot.enabled('callouts')) slideCallouts(DocForm.all('.df-page .df-callout').filter(revealAllowed));
     var targets = DocForm.all(splits ? SELECTOR + ', ' + SPLIT : SELECTOR).filter(revealAllowed);
-    if (!canObserve) {
+    if (typeof root.requestAnimationFrame !== 'function') {
       targets.forEach(show);
       return;
     }
-    observer = revealer(root.IntersectionObserver, show);
     targets.forEach(function (el) {
       var delay = component.number(el, 'reveal-delay', 'reveals', null, function (value) { return value >= 0; });
       if (delay !== null) el.style.setProperty('--df-reveal-delay', delay + 'ms');
       el.classList.add('df-reveal-watched');
-      observer.observe(el);
     });
     if (html && html.classList) html.classList.add('df-reveal-on');
+    trackReveals(targets);
   });
 
   DocForm.reveal = {
-    shouldReveal: shouldReveal,
-    revealer: revealer,
+    revealVisible: revealVisible,
     splitColumns: splitColumns,
     calloutVisible: calloutVisible,
     show: show

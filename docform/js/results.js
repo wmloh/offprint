@@ -441,19 +441,21 @@
     var bar = make('div', 'df-filter-bar');
     bar.setAttribute('role', 'group');
     bar.setAttribute('aria-label', 'Table filters');
+    var chipGroup = null;
     if (chips.length) {
-      var list = make('div', 'df-chips');
-      chips.forEach(function (chip) {
-        var button = make('button', 'df-chip', chip.label);
-        button.type = 'button';
-        button.addEventListener('click', function () {
-          chip.on = !chip.on;
+      chipGroup = DocForm.choices.create({
+        label: 'Quick filters',
+        hideLabel: true,
+        multiple: true,
+        display: 'chips',
+        className: 'df-filter-chips',
+        options: chips.map(function (chip, i) { return { value: String(i), label: chip.label }; }),
+        onChange: function (on) {
+          chips.forEach(function (chip, i) { chip.on = on.indexOf(String(i)) >= 0; });
           refresh();
-        });
-        chip.button = button;
-        list.appendChild(button);
+        }
       });
-      bar.appendChild(list);
+      bar.appendChild(chipGroup.el);
     }
     var count = make('span', 'df-filter-count');
     count.setAttribute('aria-live', 'polite');
@@ -499,7 +501,7 @@
       count.textContent = active ? shown + ' of ' + plural(rows.length, 'row') + ' match' : plural(rows.length, 'row');
       clear.disabled = !active;
       emptyBody.hidden = shown > 0;
-      chips.forEach(function (chip) { chip.button.setAttribute('aria-pressed', chip.on ? 'true' : 'false'); });
+      if (chipGroup) chipGroup.show(chips.map(function (chip, i) { return chip.on ? String(i) : null; }).filter(Boolean));
       filtered.forEach(function (col) {
         var on = filterActive(filters[col.name]);
         col.toggle.setAttribute('data-df-active', on ? 'true' : 'false');
@@ -632,34 +634,36 @@
       var order = sortOrder(firsts.map(function (r) { return col.values[r]; }), 'asc', col.kind !== 'text').map(function (i) { return col.keys[firsts[i]]; });
       var excluded = (filters[col.name] && filters[col.name].excluded) || [];
       var tools = make('div', 'df-filter-tools');
-      var boxes = [];
-      var update = function () {
-        setFilter(col, { excluded: boxes.filter(function (b) { return !b.input.checked; }).map(function (b) { return b.key; }) });
+      var update = function (shown) {
+        setFilter(col, { excluded: order.filter(function (key) { return shown.indexOf(key) < 0; }) });
+        values.show(shown);
       };
       [['All', true], ['None', false]].forEach(function (pair) {
         var b = make('button', 'df-button', pair[0]);
         b.type = 'button';
-        b.addEventListener('click', function () {
-          boxes.forEach(function (box) { box.input.checked = pair[1]; });
-          update();
-        });
+        b.addEventListener('click', function () { update(pair[1] ? order.slice() : []); });
         tools.appendChild(b);
       });
       el.appendChild(tools);
-      var list = make('div', 'df-filter-values');
-      order.forEach(function (key) {
-        var label = make('label', 'df-filter-value');
-        var input = make('input');
-        input.type = 'checkbox';
-        input.checked = excluded.indexOf(key) < 0;
-        input.addEventListener('change', update);
-        label.appendChild(input);
-        label.appendChild(make('span', key ? null : 'df-filter-blank', key || '(blank)'));
-        label.appendChild(make('span', 'df-filter-n', String(seen[key])));
-        boxes.push({ key: key, input: input });
-        list.appendChild(label);
+      // Value lists can be long, so they stay chips that wrap inside the scrolling menu.
+      var values = DocForm.choices.create({
+        label: 'Values shown',
+        hideLabel: true,
+        multiple: true,
+        display: 'chips',
+        className: 'df-filter-values',
+        options: order.map(function (key) {
+          return {
+            value: key,
+            label: key || '(blank)',
+            note: seen[key],
+            mark: key ? null : function (chip) { chip.classList.add('df-filter-blank'); }
+          };
+        }),
+        onChange: update
       });
-      el.appendChild(list);
+      values.show(order.filter(function (key) { return excluded.indexOf(key) < 0; }));
+      el.appendChild(values.el);
     }
 
     // Min and Max for numbers, From and To for times; empty boxes leave that side open.

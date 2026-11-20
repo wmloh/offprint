@@ -64,7 +64,12 @@ function el(tag, text = '', children = []) {
   const props = new Map();
   const node = Object.assign(new EventTarget(), {
     tagName: tag.toUpperCase(), colSpan: 1, hidden: false, children, classes, props, parentNode: null,
-    classList: { add: (name) => classes.add(name), remove: (name) => classes.delete(name), contains: (name) => classes.has(name) },
+    classList: {
+      add: (...names) => names.forEach((name) => classes.add(name)),
+      remove: (name) => classes.delete(name),
+      contains: (name) => classes.has(name),
+      toggle: (name, on) => ((on ?? !classes.has(name)) ? classes.add(name) : classes.delete(name))
+    },
     closest: () => null,
     style: { setProperty: (name, value) => props.set(name, value), removeProperty: (name) => props.delete(name) },
     setAttribute: (name, value) => attrs.set(name, String(value)),
@@ -129,6 +134,7 @@ function build(headers, cells, tableAttrs = {}, holder = null) {
     }
   });
   context.window = context;
+  vm.runInContext(read('choices.js'), context);
   vm.runInContext(read('results.js'), context);
   init();
   return { table, ths, rows, body: table.tBodies[0], warnings, results: context.DocForm.results };
@@ -200,6 +206,12 @@ const BENCH_ROWS = [
   ['A', 'sgd', '0.80', '10', '2026-03-01'], ['B', 'adam', '0.90', '20', '2026-03-02'],
   ['C', 'adam', '0.95', '30', '2026-03-03'], ['D', 'sgd', '0.85', '—', '2026-03-04']
 ];
+// Quick-filter chips are checkboxes in labels; a press flips the box and reports the change.
+const press = (chip) => {
+  const input = chip.children[0];
+  input.checked = !input.checked;
+  input.dispatchEvent(new Event('change'));
+};
 const find = (node, cls) => node.classes.has(cls) ? node : node.children.map((child) => find(child, cls)).find(Boolean);
 const shownNames = (body) => body.children.filter((tr) => !tr.hidden).map((tr) => tr.cells[0].textContent);
 const marks = (rows, c) => rows.map((tr) => [tr.cells[c].classes.has('df-best'), tr.cells[c].props.get('--df-heat') ?? null]);
@@ -221,14 +233,14 @@ test('column filters and chips combine, recompute marks over visible rows, and k
   const bar = table.parentNode.children[0];
   const count = find(bar, 'df-filter-count');
   const clear = find(bar, 'df-filter-clear');
-  const [budget, adam] = find(bar, 'df-chips').children;
+  const [, budget, adam] = find(bar, 'df-filter-chips').children;
   const empty = table.children.find((child) => child.classes.has('df-filter-empty'));
   assert.equal(count.textContent, '4 rows');
   assert.equal(clear.disabled, true);
   assert.deepEqual(marks(rows, 2), [[false, 0], [false, 0.6667], [true, 1], [false, 0.3333]]);
 
-  budget.dispatchEvent(new Event('click'));
-  assert.equal(budget.getAttribute('aria-pressed'), 'true');
+  press(budget);
+  assert.equal(budget.children[0].checked, true);
   assert.deepEqual(shownNames(body), ['A', 'B']);
   assert.equal(count.textContent, '2 of 4 rows match');
   assert.deepEqual(marks(rows, 2), [[false, 0], [true, 1], [false, null], [false, null]]);
@@ -253,7 +265,7 @@ test('column filters and chips combine, recompute marks over visible rows, and k
   clear.dispatchEvent(new Event('click'));
   assert.deepEqual(shownNames(body), ['C', 'B', 'D', 'A']);
   assert.equal(empty.hidden, true);
-  assert.equal(adam.getAttribute('aria-pressed'), 'false');
+  assert.equal(adam.children[0].checked, false);
   assert.deepEqual(marks(rows, 2)[2], [true, 1]);
 
   filters.set('Date', { min: results.timeValue('2026-03-02'), max: results.timeValue('2026-03-03') });

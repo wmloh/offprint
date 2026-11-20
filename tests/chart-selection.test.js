@@ -5,6 +5,16 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const script = (name) => fs.readFileSync(path.join(__dirname, '../docform/js', name + '.js'), 'utf8');
+// Choice chips are native inputs in labels; choosing one checks it (clearing radio siblings) and reports the change.
+const choiceInputs = (host) => host.all().filter((el) => el.tag === 'input');
+const choose = (host, value) => {
+  const inputs = choiceInputs(host);
+  const target = inputs.find((input) => input.value === value);
+  if (target.type === 'radio') inputs.forEach((input) => { input.checked = input === target; });
+  else target.checked = !target.checked;
+  target.dispatchEvent(new Event('change'));
+};
+const chosen = (host) => choiceInputs(host).filter((input) => input.checked).map((input) => input.value);
 const GROUP = 'data-df-selection-group';
 const KEY = 'data-df-key';
 const CONTROL = 'button:not([role="tab"]), [role="button"][tabindex]';
@@ -150,7 +160,7 @@ function setup({ groups, enhance, modules = [], animation = {} } = {}) {
     FileReader: class { readAsText(file) { this.result = file.text; reads.push(() => this.onload()); } },
     MutationObserver: class { observe() {} }, ...animation });
   context.window = context;
-  for (const name of ['core', 'highlight', 'chart', 'stepper', 'tabs', ...modules]) vm.runInContext(script(name), context);
+  for (const name of ['core', 'choices', 'highlight', 'chart', 'stepper', 'tabs', ...modules]) vm.runInContext(script(name), context);
   if (enhance) enhance(DocForm, document, boot);
   boot.initialize();
   after.forEach((fn) => fn());
@@ -1009,7 +1019,7 @@ test('a shared parameter scope commits filtered charts and results with coordina
     element('table', 'fixed', { results: '', source: 'runs' });
     element('div', 'fixedPlot', { chart: 'line', source: 'runs' });
     element('div', 'local', { dropzone: '', target: 'plot' });
-    element('select', 'split', { scope: 'eval', parameter: 'split' });
+    element('fieldset', 'split', { scope: 'eval', choice: 'split' });
     element('button', 'preset', { scope: 'eval', preset: '{"runs":["b"],"split":"dev"}' });
   } });
   const df = env.DocForm;
@@ -1051,10 +1061,9 @@ test('a shared parameter scope commits filtered charts and results with coordina
   assert.deepEqual([...chart.range()], [1, 3]);
   const before = scope.snapshot();
   const noticeCount = observations.length;
-  hosts.split.value = 'test';
-  hosts.split.dispatchEvent(new Event('change'));
+  choose(hosts.split, 'test');
   assert.equal(scope.snapshot(), before, 'duplicate x values in the proposed slice reject the whole update');
-  assert.equal(hosts.split.value, 'dev');
+  assert.deepEqual(chosen(hosts.split), ['dev']);
   assert.equal(observations.length, noticeCount);
 
   assert.equal(scope.set('runs', []), true);
@@ -1444,10 +1453,17 @@ test('log axes draw decade ticks and original readouts; invalid data is not draw
 
 const byClass = (c, cls) => c.host.all().filter((el) => el.classList.contains(cls));
 const legendButton = (c, name) => byClass(c, 'df-chart-series-toggle').find((el) => el.textContent === name);
+const legendInput = (chip) => chip.children.find((el) => el.tag === 'input');
+// A legend chip is a checkbox inside its label: a press flips the box and reports the change.
+const toggleLegend = (chip) => {
+  const input = legendInput(chip);
+  input.checked = !input.checked;
+  input.dispatchEvent(new Event('change'));
+};
 const dotsOf = (c) => byClass(c, 'df-chart-dot');
 const click = (el) => el.dispatchEvent(new Event('click'));
 
-test('legend buttons hide series from the plot, readout, and table; rescale is opt-in; all hidden shows a message', () => {
+test('legend chips hide series from the plot, readout, and table; rescale is opt-in; all hidden shows a message', () => {
   const spec = {
     type: 'line',
     toggles: true,
@@ -1458,8 +1474,8 @@ test('legend buttons hide series from the plot, readout, and table; rescale is o
   c.host.addEventListener('df:chartview', (event) => views.push(event.detail));
   const low = () => dotsOf(c)[0].getAttribute('cy');
   const before = low();
-  click(legendButton(c, 'High'));
-  assert.equal(legendButton(c, 'High').getAttribute('aria-pressed'), 'false');
+  toggleLegend(legendButton(c, 'High'));
+  assert.equal(legendInput(legendButton(c, 'High')).checked, false);
   assert.ok(legendButton(c, 'High').classList.contains('is-off'));
   assert.equal(dotsOf(c).length, 3, 'only Low and Mid are drawn');
   assert.equal(low(), before, 'the y axis stays put without rescale');
@@ -1484,7 +1500,7 @@ test('legend buttons hide series from the plot, readout, and table; rescale is o
   assert.equal(empty.hidden, false);
   assert.match(empty.textContent, /Every series is hidden/);
   assert.equal(c.fire('keydown', { key: 'Home' }).defaultPrevented, false, 'nothing to read');
-  click(legendButton(c, 'Mid'));
+  toggleLegend(legendButton(c, 'Mid'));
   assert.equal(empty.hidden, true);
   assert.equal(dotsOf(c).length, 1);
   assert.equal(c.api.visible('Nope', false), false);
@@ -1517,28 +1533,28 @@ test('legend transitions retarget surviving bars and remove departing bars after
   const bars = () => byClass(c, 'df-chart-bar');
   const first = () => bars().at(-1).getAttribute('d');
   const before = bars()[0].getAttribute('d');
-  click(legendButton(c, 'Second'));
+  toggleLegend(legendButton(c, 'Second'));
   assert.equal(first(), before);
   clock.tick(0);
   clock.tick(110);
   const middle = first();
   assert.notEqual(middle, before);
   assert.ok(+bars()[0].parentNode.getAttribute('opacity') < 1);
-  click(legendButton(c, 'Second'));
+  toggleLegend(legendButton(c, 'Second'));
   assert.equal(bars()[0].getAttribute('d'), middle);
   clock.tick(110);
   clock.tick(350);
   assert.equal(bars()[0].getAttribute('d'), before);
   assert.equal(bars()[1].parentNode.getAttribute('opacity'), null);
 
-  click(legendButton(c, 'Second'));
+  toggleLegend(legendButton(c, 'Second'));
   clock.tick(400);
   clock.tick(700);
   assert.equal(bars().length, 1);
 
   const still = legendClock(true);
   const reduced = draw(spec, still);
-  click(legendButton(reduced, 'Second'));
+  toggleLegend(legendButton(reduced, 'Second'));
   assert.equal(byClass(reduced, 'df-chart-bar').length, 1);
   assert.equal(still.frames.size, 0);
 });
@@ -1553,7 +1569,7 @@ test('pie slices interpolate their angles and update the visible shares, with st
   assert.match(c.tip().textContent, /North.*75%/);
   const pathOf = () => byClass(c, 'df-chart-slice').at(-1).getAttribute('d');
   const north = byClass(c, 'df-chart-slice')[0].getAttribute('d');
-  click(legendButton(c, 'South'));
+  toggleLegend(legendButton(c, 'South'));
   assert.equal(pathOf(), north);
   clock.tick(0);
   clock.tick(120);
@@ -1570,7 +1586,7 @@ test('pie slices interpolate their angles and update the visible shares, with st
   assert.doesNotMatch(table.textContent, /South/);
   assert.ok(c.api.update({ ...spec, data: [{ label: 'South updated', key: 's', value: 4 }] }));
   assert.match(table.textContent, /Every slice is hidden/);
-  assert.equal(legendButton(c, 'South updated').getAttribute('aria-pressed'), 'false');
+  assert.equal(legendInput(legendButton(c, 'South updated')).checked, false);
 });
 
 test('pie markup and mapped sources both use slice labels and opt-in legend controls', () => {
@@ -2005,7 +2021,7 @@ test('stacked bars restack after legend toggles while the readout and table foll
   c.fire('keydown', { key: 'Home' });
   assert.match(c.tip().textContent, /1 · 25%A3 · 75%B4Total/);
   const before = byClass(c, 'df-chart-series')[1].children[0].getAttribute('d');
-  click(legendButton(c, 'A'));
+  toggleLegend(legendButton(c, 'A'));
   const series = byClass(c, 'df-chart-series').filter((g) => !g.getAttribute('pointer-events'));
   assert.equal(series.length, 1);
   const moving = series[0].children[0];
@@ -2118,7 +2134,7 @@ test('interval plots dodge, draw bounds and references in both orientations, and
   assert.equal(valueRef().getAttribute('y1'), valueRef().getAttribute('y2'));
   assert.ok(c.mark('b').hasAttribute('data-df-selection-active'));
   const before = at('b', 'cx');
-  click(legendButton(c, 'Follow-up'));
+  toggleLegend(legendButton(c, 'Follow-up'));
   assert.equal(at('b', 'cx'), before);
   clock.tick(400);
   clock.tick(800);
@@ -2220,7 +2236,7 @@ test('stacked histogram bars restack and retain shared bin widths and counts aft
   assert.equal(c.tip().textContent, '[0, 1)1A2B');
   c.fire('keydown', { key: 'ArrowRight' });
   assert.equal(c.tip().textContent, '[1, 3]1A2B');
-  click(legendButton(c, 'A'));
+  toggleLegend(legendButton(c, 'A'));
   const [visible, wider] = byClass(c, 'df-chart-histogram-bar');
   assert.equal(coord(visible, 'y') + coord(visible, 'height'), coord(a, 'y') + coord(a, 'height'));
   assert.ok(Math.abs(coord(wider, 'width') / coord(visible, 'width') - 2) < 1e-12);
@@ -2392,7 +2408,7 @@ test('chart bindings apply parameter values through update and roll back values 
       bins: { type: 'range', min: 1, max: 600, step: 1, default: 3 },
       lo: { type: 'range', min: 0, max: 10, default: 0 }
     },
-    build: (el) => el('select', 'stacking', { 'data-df-scope': 'look', 'data-df-parameter': 'stacking' })
+    build: (el) => el('fieldset', 'stacking', { 'data-df-scope': 'look', 'data-df-choice': 'stacking' })
   });
   const { scope, warnings } = env;
   const barSpec = { type: 'bar', referenceLines: [{ axis: 'y', value: 0, label: 'Cut' }], series: [
@@ -2407,11 +2423,9 @@ test('chart bindings apply parameter values through update and roll back values 
   assert.equal(scope.set('shown', ['b']), true);
   assert.deepEqual([...bars.snapshot().hiddenSeries], ['a']);
 
-  const select = env.nodes.stacking;
-  select.value = 'percent';
-  select.dispatchEvent(new Event('change'));
+  choose(env.nodes.stacking, 'percent');
   assert.equal(scope.get('stacking'), 'none', 'percent bars with a negative value reject the whole update');
-  assert.equal(select.value, 'none', 'the control shows the kept value');
+  assert.deepEqual(chosen(env.nodes.stacking), ['none'], 'the control shows the kept value');
   assert.ok(!bars.model().stack);
   assert.match(warnings.at(-1), /rejected.*Chart "bars"/);
   assert.equal(scope.update({ stacking: 'stacked', cut: 5 }), true);
@@ -2496,7 +2510,7 @@ test('select and multiselect parameters publish and follow keys in a selection g
     },
     build(el) {
       el('p', 'passive', { 'data-df-selection-group': 'runs', 'data-df-key': 'c' });
-      el('div', 'many', { 'data-df-scope': 'look', 'data-df-parameter': 'many' });
+      el('fieldset', 'many', { 'data-df-scope': 'look', 'data-df-choice': 'many' });
     }
   });
   const { scope, selection, DocForm: df } = env;

@@ -11,39 +11,22 @@ vm.runInContext(read('core.js'), context);
 vm.runInContext(read('reveal.js'), context);
 const reveal = context.DocForm.reveal;
 
-const entry = (target, isIntersecting, bottom) => ({ target, isIntersecting, boundingClientRect: { bottom } });
-
-test('elements reveal when they intersect or already sit above the viewport', () => {
-  assert.equal(reveal.shouldReveal(entry('a', true, 300)), true);
-  assert.equal(reveal.shouldReveal(entry('a', false, 1400)), false);
-  assert.equal(reveal.shouldReveal(entry('a', false, -20)), true);
-  assert.equal(reveal.shouldReveal(entry('a', false, 0)), true);
+test('a block enters the centre band, stays through a narrower edge, and replays after leaving', () => {
+  const v = (top, bottom, shown) => reveal.revealVisible(top, bottom, 800, 400, 400, shown);
+  assert.equal(v(700, 760, false), false);
+  assert.equal(v(660, 720, false), true);
+  assert.equal(v(700, 760, true), true);
+  assert.equal(v(780, 840, true), false);
+  assert.equal(v(-40, 40, true), true);
+  assert.equal(v(-40, 20, true), false);
+  assert.equal(v(-40, 100, false), false);
+  assert.equal(v(-300, 1100, false), true);
 });
 
-test('each element reveals once and is no longer watched', () => {
-  let observer;
-  class FakeObserver {
-    constructor(callback, options) {
-      this.callback = callback;
-      this.options = options;
-      this.watched = new Set();
-      observer = this;
-    }
-    observe(el) { this.watched.add(el); }
-    unobserve(el) { this.watched.delete(el); }
-    fire(entries) { this.callback(entries.filter((e) => this.watched.has(e.target)), this); }
-  }
-  const shown = [];
-  reveal.revealer(FakeObserver, (el) => shown.push(el));
-  ['a', 'b', 'c'].forEach((el) => observer.observe(el));
-
-  observer.fire([entry('a', false, 900), entry('b', false, 1500), entry('c', false, -10)]);
-  assert.deepEqual(shown, ['c']);
-  observer.fire([entry('a', true, 500)]);
-  observer.fire([entry('a', false, 900), entry('a', true, 400), entry('b', true, 700)]);
-  assert.deepEqual(shown, ['c', 'a', 'b']);
-  assert.equal(observer.watched.size, 0);
-  assert.match(observer.options.rootMargin, /-12%/);
+test('blocks at the page ends can still reach the reveal band', () => {
+  assert.equal(reveal.revealVisible(20, 60, 800, 0, 400, false), true);
+  assert.equal(reveal.revealVisible(740, 790, 800, 400, 0, false), true);
+  assert.equal(reveal.revealVisible(740, 790, 800, 400, 400, false), false);
 });
 
 test('a callout enters and exits the middle half of the viewport on repeated passes', () => {

@@ -1,4 +1,4 @@
-/* SVG charts from chart.js: legend row with series toggles, recessive grid, thin marks, hover readout, range brush,
+/* SVG charts from chart.js: legend row with series toggle chips, recessive grid, thin marks, hover readout, range brush,
    and the table view. */
 .df-chart {
   margin: 0.75em 0;
@@ -27,40 +27,25 @@
   gap: 6px;
 }
 
-/* Series toggles look like the plain legend until pointed at; a hidden series fades its key and name. */
-.df-chart-series-toggle {
-  margin: 0 -4px;
-  padding: 1px 4px;
-  border: 0;
-  border-radius: var(--df-radius);
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  line-height: inherit;
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+/* Series toggles are a choices.js chip group sized to the legend row; a hidden series fades its key. */
+.df-chart-series-toggles {
+  gap: 4px;
+  margin: 0;
 }
 
-.df-chart-series-toggle:hover {
-  background: var(--df-bg-hover);
-  color: var(--df-text);
-}
-
-.df-chart-series-toggle:focus-visible,
-.df-chart-tools > button:focus-visible {
-  outline: 2px solid var(--df-focus);
-  outline-offset: 1px;
-  opacity: 1;
-}
-
-.df-chart-series-toggle.is-off {
-  color: var(--df-text-faint);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
+.df-chart-series-toggles .df-chip {
+  padding: 0.1em 0.7em;
+  gap: 6px;
 }
 
 .df-chart-series-toggle.is-off .df-chart-key {
   opacity: 0.3;
+}
+
+.df-chart-tools > button:focus-visible {
+  outline: 2px solid var(--df-focus);
+  outline-offset: 1px;
+  opacity: 1;
 }
 
 .df-chart-tools {

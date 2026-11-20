@@ -1,6 +1,6 @@
 # Parameters and presets
 
-Enable `features.parameters` with the [offline entry](../setup/include-order.md); it also loads `dropdowns` for combobox popovers. Define `parameterScopes` in the site manifest or page JSON. Site and page definitions merge by scope, parameter, and field. Page fields take precedence and arrays replace earlier arrays.
+Enable `features.parameters` with the [offline entry](../setup/include-order.md); it also loads [`choices`](choices.md) for choice groups and `dropdowns` for combobox popovers. Define `parameterScopes` in the site manifest or page JSON. Site and page definitions merge by scope, parameter, and field. Page fields take precedence and arrays replace earlier arrays.
 
 ```json
 {
@@ -19,7 +19,11 @@ Enable `features.parameters` with the [offline entry](../setup/include-order.md)
 ```html
 <div class="df-params" data-df-parameter-scope="decoder">
   <div data-df-parameter="gain" data-df-parameter-label="Gain"></div>
-  <div data-df-parameter="mode" data-df-parameter-label="Mode"></div>
+  <fieldset data-df-choice="mode">
+    <legend>Mode</legend>
+    <label><input type="radio" name="mode" value="raw" checked> Raw</label>
+    <label><input type="radio" name="mode" value="scaled"> Scaled</label>
+  </fieldset>
   <label><input type="checkbox" data-df-parameter="trace"> Show trace</label>
   <p>Doubled gain is <span data-df-bind="2 * gain" data-df-digits="1">4.0</span>.</p>
   <button type="button" data-df-preset='{"gain":2,"mode":"scaled","trace":true}'>Scaled trace</button>
@@ -33,28 +37,25 @@ Enable `features.parameters` with the [offline entry](../setup/include-order.md)
 - `number`: finite numeric state for scripts and bindings, with a required `default` and optional finite `min` and `max`.
 - `select`: nonempty ordered `choices`, each with distinct string `value` and string `label`. Default is the first value. `toggle`: boolean, default false. `digits` accepts 0–100 decimal places.
 - `multiselect` uses the same ordered choice descriptors. Defaults, writes, and preset entries are arrays of distinct known strings, including `[]`. Omitted defaults select every choice. Values normalize to declaration order, compare by content, and are copied and frozen. Named charts and results can use these choices as [record filters](../data/data-blocks.md#record-filters).
-- `data-df-parameter` binds a generated control or a matching native input (`input[type=range]`, `input[type=checkbox]`, `select`, `select[multiple]`). Select and multiselect controls take a [choice style](#choice-styles). For generated controls, `data-df-parameter-label` sets the label and `data-df-parameter-digits` overrides the range readout precision. Native controls can use an HTML label or `data-df-parameter-label` for an accessible name. Include static starting text or native control defaults for JS-off reading.
+- `data-df-parameter` binds a range or toggle: a generated control or a matching native input (`input[type=range]`, `input[type=checkbox]`). On a `select` or `multiselect` definition it reports an issue and stays unenhanced; use a [choice fieldset](#choice-groups). `.df-params` is an unboxed wrapper (scope holder, vertical spacing only). For generated controls, `data-df-parameter-label` sets the label and `data-df-parameter-digits` overrides the range readout precision. Native controls can use an HTML label or `data-df-parameter-label` for an accessible name. Include static starting text or native control defaults for JS-off reading.
 - `data-df-bind` evaluates an author-supplied JS expression in the resolved scope with Math members available. `data-df-template="Gain {{gain|1}}"` fills expression slots with optional precision. Direct references use definition precision. Other numbers default to up to three decimals. `.df-math` output re-renders with math enabled, and mixed templates can include `$…$`. Use named controller lookups for calculations across scopes.
 - `data-df-preset` accepts a nonempty JSON object of known values, including numeric strings for numeric parameters. Invalid presets warn and get `aria-disabled="true"`. Every matching preset gets `aria-current="true"`.
 
-## Choice styles
+## Choice groups
 
 ```html
-<div data-df-parameter="mode" data-df-parameter-label="Mode"></div>
-<div data-df-parameter="runs" data-df-parameter-style="combobox"></div>
-<label>Mode <select data-df-parameter="mode" data-df-parameter-style="chips" data-df-parameter-label="Mode">
-  <option>Raw</option><option selected>Scaled</option></select></label>
+<fieldset data-df-choice="runs" data-df-choice-display="combobox"></fieldset>
+<fieldset data-df-parameter-scope="report" data-df-choice="groups">
+  <legend>Groups to show</legend>
+  <label><input type="checkbox" value="setup" checked> Setup</label>
+  <label><input type="checkbox" value="layout"> Layout</label>
+</fieldset>
 ```
 
-- `data-df-parameter-style`: `auto` (default), `chips`, `combobox`, or `native`; per control, so one parameter can have several styles. Unknown values report and fall back to `auto`.
-- `auto` on a generated host: chips when the set has ≤ 8 choices and ≤ 80 label characters in total, else combobox. `auto` on an authored `select` keeps it native.
-- `native` on a generated host: `select` for single, labeled checkbox fieldset (`.df-param-multiselect`) for multiple.
-- Chips (`.df-param-chips`): `span.df-param-label` + `.df-chips` (`role="radiogroup"` or `"group"`, `aria-labelledby`) of `label.df-chip` pills wrapping visually hidden native radio (one `name` per control) or checkbox inputs. Chosen chips get `.is-selected`. Arrow keys move between chips and wrap; Home/End jump; single choice also chooses, like native radios; modified keys stay native. Single: `.df-chips-glider` slides to the chosen chip (`--df-chip-x/y/w/h` from offsets, first placement and hidden groups do not slide, ResizeObserver re-places it after wrapping). Multiple: the chosen chips fill and grow a check mark.
-- Combobox (`.df-param-combobox`): `label` + `input[role=combobox]` with `aria-autocomplete="list"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, over `ul[role=listbox]` of `li[role=option][aria-selected]` in a `.df-dropdown-panel` manual popover placed by `DocForm.dropdowns.follow`. Without the Popover API or `dropdowns` the panel drops below the field in place (`hidden` toggles).
-  - Typing filters by label or value (case- and accent-insensitive substring), underlines the first match with `mark`, and activates the first match; "No matching choices" shows as a status. Click, ↓/↑ (open, then move with wrap), Enter picks the active option, Escape closes, Tab and focus leaving the control close. Pointer down in the panel keeps focus in the field.
-  - Single: the field shows the chosen label; focus selects it; picking closes; closing restores the label.
-  - Multiple: `aria-multiselectable`; Enter or click toggles and keeps the panel open; chosen values show before the field as `.df-combo-chip` items in declaration order with a `Remove <label>` button (new chips get `.is-new` and scale in); Backspace in an empty field removes the last; All and None actions disable when they would change nothing; a count reads `n of m chosen`.
-- An authored `select` with `chips` or `combobox` is hidden (with its wrapping `label`), the generated control follows it, and the hidden select stays in step. Scripts off: the native select shows and reads the starting value. Name it with `data-df-parameter-label` or `aria-label`.
+- `data-df-choice="key"` on a `fieldset` binds a `select` (radios) or `multiselect` (checkboxes) definition; any other host tag, a missing `choices` feature, or a non-choice definition reports an issue. Scope resolves like controls, including `data-df-parameter-scope` on the fieldset itself.
+- `legend` is the label (math-aware when generated); without one, the key is used. Authored `label > input` items are the no-script view: reused in place as chips when their values and input types match the definition exactly, otherwise removed and regenerated with an issue. Authored `checked` is display-only; the definition default sets state.
+- Rendering, display choice (`data-df-choice-display`, chips ≤ 7 choices and ≤ 80 label chars), keyboard, glider, combobox, and ripple: see [Choice groups](choices.md). Selection-group definitions mark each chip or combobox option with `data-df-selection-group` and `data-df-key`.
+- Removed: `data-df-parameter-style`, native `select` hosts, `.df-param-select`, `.df-param-multiselect`, and legacy `data-df-param` with `data-df-type="select"` (now warns).
 
 ## Linking without scripts
 
@@ -65,7 +66,7 @@ Enable `features.parameters` with the [offline entry](../setup/include-order.md)
 - `select` and `multiselect` definitions accept `selectionGroup: "name"` and `selectionMode: "both" | "publish" | "follow"` (default both); other types or invalid values reject the definition. Needs the `selection` feature. Choice values are the group keys.
   - Publish: a select publishes its value on every committed change (not at startup); a multiselect publishes the last choice added, and clears the group when the shared key is removed.
   - Follow: a group key among the choices sets the select or is added to the multiselect, with origin `selection`. Clearing or a key outside the choices leaves the value. Startup follows the group's starting key; following choices count as participants for stored keys.
-  - Generated chips, combobox options, and native checkbox labels carry the group and key, so they get the linked highlight.
+  - Chips and combobox options carry the group and key, so they get the linked highlight.
 
 ## Controller
 
@@ -75,4 +76,4 @@ Enable `features.parameters` with the [offline entry](../setup/include-order.md)
 - Controls, presets, and record-filtered views synchronize before callbacks. An incompatible filter change preserves the prior scope and views. Text bindings coalesce per animation frame. The document event `df:parameters:change` follows callbacks with `{scope, current, previous, changedKeys, origin}`. Origins are `api`, `user` for controls and presets, `reset`, and `selection` for group-following writes. Only committed changes emit events.
 
 
-[Figure steps](figure-steps.md) · [Animations](animations.md) · [Charts](../data/charts.md) · [Linked selection](linked-highlighting.md) · [Source](../../js/params.js)
+[Choice groups](choices.md) · [Figure steps](figure-steps.md) · [Animations](animations.md) · [Charts](../data/charts.md) · [Linked selection](linked-highlighting.md) · [Source](../../js/params.js)

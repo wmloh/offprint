@@ -97,11 +97,13 @@
     visual.className = 'df-scenarios-visual';
     var controls = element('div', visual);
     controls.className = 'df-scenarios-controls';
-    var label = element('label', controls, 'Variant');
-    var select = element('select', label);
-    model.variants.forEach(function (variant) {
-      element('option', select, variant.name).value = variant.index;
+    var chooser = DocForm.choices.create({
+      label: 'Variant',
+      options: model.variants.map(function (variant) { return { value: String(variant.index), label: variant.name }; }),
+      className: 'df-scenarios-chooser',
+      onChange: function (value) { go(Number(value) - 1, onChoose); }
     });
+    controls.appendChild(chooser.el);
     var pill = DocForm._pill.create('', 'Scenario variants', [
       { name: 'reset', label: 'Reset to the first variant', run: function () { go(0, onReset); } },
       { name: 'previous', label: 'Previous variant', run: function () { go(selected.index - 2, onChoose); } },
@@ -131,7 +133,7 @@
     function show(variant) {
       selected = variant;
       var index = variant.index;
-      select.value = index;
+      chooser.show(String(index));
       buttons.reset.setAttribute('aria-disabled', String(index === 1));
       buttons.previous.setAttribute('aria-disabled', String(index === 1));
       buttons.next.setAttribute('aria-disabled', String(index === model.variants.length));
@@ -193,9 +195,10 @@
       if (!variant || variant === selected) return;
       if (apply) apply(variant);
       else show(variant);
+      // A rejected change leaves the chooser on the variant still shown.
+      if (selected !== variant) chooser.show(String(selected.index));
     }
 
-    select.addEventListener('change', function () { go(select.selectedIndex, onChoose); });
     table.before(visual);
     show(model.variants.find(function (variant) { return variant.key === key; }) || model.variants[0]);
     return {

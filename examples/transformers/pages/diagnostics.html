@@ -187,7 +187,11 @@
     <p>Select runs to update the scatter plot and the results table together. The table can also be sorted by
       accuracy or loss.</p>
     <div class="df-params" data-df-parameter-scope="heldout">
-      <div data-df-parameter="runs" data-df-parameter-label="Runs to show"></div>
+      <fieldset data-df-choice="runs">
+        <legend>Runs to show</legend>
+        <label><input type="checkbox" value="r01" checked> Baseline r01</label>
+        <label><input type="checkbox" value="r04" checked> Candidate r04</label>
+      </fieldset>
       <button type="button" data-df-preset='{"runs":["r04"]}'>Candidate only</button>
       <button type="button" data-df-preset='{"runs":["r01","r04"]}'>Both runs</button>
     </div>

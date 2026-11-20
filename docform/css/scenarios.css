@@ -1,21 +1,13 @@
-.df-scenarios-controls,
-.df-scenarios-controls label {
+.df-scenarios-controls {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--df-space-2);
+  align-items: flex-end;
+  gap: var(--df-space-2) var(--df-space-3);
 }
 
-.df-scenarios-controls select {
-  min-width: 0;
-  max-width: 100%;
-  padding: var(--df-space-1) var(--df-space-2);
-  border: 1px solid var(--df-border-strong);
-  border-radius: var(--df-radius);
-  background: var(--df-bg);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
+.df-scenarios-chooser {
+  flex: 1 1 auto;
+  margin: 0;
 }
 
 .df-scenarios-key {

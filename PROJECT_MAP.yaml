@@ -20,24 +20,25 @@ docform/: Copyable offline library folder
     dropdowns.css: Theme-aware popovers, expanded menu branches, and opening and closing transitions
     tabs.css: Tab list and panels with a no-JS fallback
     anim.css: Figure frames, animation controls, and SVG paint utilities
-    params.css: Parameter sliders, chip choices with a sliding highlight, searchable comboboxes with removable chips, switches, preset buttons, bound values, and show-when fades
-    reveal.css: Scroll reveals, two-way callout slides, and split views with side-gliding panes
+    choices.css: Shared choice fieldsets with eyebrow legends, borderless tinted chips, a sliding single-choice highlight, check marks, the restyled combobox, and the press ripple
+    params.css: Unboxed parameter wrappers, sliders, switches, preset buttons, bound values, and show-when fades
+    reveal.css: Two-way scroll reveals with entrance-only delays, two-way callout slides, and split views with side-gliding panes
     steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus the side-by-side detail layout for standalone cards and figure steps and optional title-only side cards
     detail.css: Standalone detail panes with overlapping, independently scrolling details and the shared hover scrollbar
     pipeline.css: Pipeline blocks with collapsing fields, curved line styles, moving dashes, edge labels, path tracing, step reveals, side or below detail panes, and a numbered-list fallback
     zoom.css: Frosted full-screen figure zoom view
     zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot and trail, ink, crosshair and ruler readouts
-    bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered
+    bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered and scrolling that passes to the page at their ends
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
     search.css: Animated frosted S-key search dialog with highlighted results
-    chart.css: Chart legend, opt-in series and slice toggles, plot marks hidden until their entrance except in print and lens clones, reference lines, selection, range brush, shared cursor, readout, and table view
+    chart.css: Chart legend, opt-in series and slice toggle chips, plot marks hidden until their entrance except in print and lens clones, reference lines, selection, range brush, shared cursor, readout, and table view
     chart-intervals.css: Interval whisker and lollipop stem styling
     chart-histogram.css: Overlaid histogram bar opacity and active-bin styling
     chart-heatmap.css: Heatmap cell hues over a neutral backdrop, dimmed out-of-range cells, contour lines and labels, and the side colour scale
     chart-playback.css: Guided playback pill spacing, playhead, checkpoint marker, and note visibility
-    results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with a chip and row-count bar
-    matrix.css: Evaluation matrix measure chooser, numeric cells, and shared color scale
+    results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with blue choice chips and a row-count bar
+    matrix.css: Evaluation matrix measure chooser layout, numeric cells, and shared color scale
     highlight.css: Tinted highlight with a fading leading accent edge for selected items in linked views, tinted rows, and glowing SVG shapes
     stepper.css: Worked-example step pill spacing and linked view visibility
     scenarios.css: Variant chooser and changed comparison cells
@@ -58,8 +59,9 @@ docform/: Copyable offline library folder
     dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches, with a shared positioning helper
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
     anim.js: Keyed SVG timeline controllers with playback, step subscriptions, and figure-step integration
-    params.js: Named parameter scopes with chip and searchable combobox choice controls, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
-    reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
+    choices.js: Shared builder for every single or multiple choice: authored or generated fieldset chips or a searchable combobox, keyboard support, and a press ripple
+    params.js: Named parameter scopes with fieldset choice groups, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
+    reveal.js: Two-way callout slides, data-df-reveal entrances that replay around the viewport centre (or once), and split panes
     steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, and inert details, both usable as detail-pane sources
     detail.js: Shared detail panes keyed to card panels, figure steps, pipelines, or selection groups, plus inert-detail and scrollbar helpers
     pipeline.js: Pipeline block diagrams with structured fields and overrides, ranked half-row layout, curved routing with fork and merge stems, junctions, crossing gaps, path tracing, keyboard navigation, steps, and detail panes

@@ -27,6 +27,7 @@ class El {
   set id(value) { this.setAttribute('id', value); }
   get textContent() { return this.text + this.children.map((c) => c.textContent).join(''); }
   set textContent(value) { this.children.forEach((c) => { c.parentNode = null; }); this.children = []; this.text = String(value); }
+  get childNodes() { return this.children; }
   get nextSibling() { const list = this.parentNode?.children; return list ? list[list.indexOf(this) + 1] ?? null : null; }
   getAttribute(name) { return this.attrs.has(name) ? this.attrs.get(name) : null; }
   setAttribute(name, value) { this.attrs.set(name, String(value)); }
@@ -52,6 +53,7 @@ class El {
   }
   addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); }
   focus() { this.doc.activeElement = this; }
+  getBoundingClientRect() { return { left: 10, top: 20, width: 80, height: 24 }; }
   select() { this.selected = true; }
 }
 
@@ -92,6 +94,7 @@ function page(define, hosts, { popover = false } = {}) {
     location: { href: 'file:///page.html' }, console: { warn: (m) => warned.push(m) } });
   ctx.window = ctx;
   vm.runInContext(read('core.js'), ctx);
+  vm.runInContext(read('choices.js'), ctx);
   vm.runInContext(read('params.js'), ctx);
   const follows = [];
   if (popover) ctx.DocForm.dropdowns = { follow: (trigger, panel) => { follows.push([trigger, panel]); return () => follows.pop(); } };
@@ -100,62 +103,83 @@ function page(define, hosts, { popover = false } = {}) {
   hosts.forEach(([tag, attrs, parent]) => {
     const el = (parent === undefined ? document.body : nodes[parent]).appendChild(new El(document, tag));
     nodes.push(el);
-    for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
+    for (const [name, value] of Object.entries(attrs)) {
+      if (name === 'text') el.textContent = value;
+      else if (name === 'checked') el.checked = true;
+      else if (['type', 'value', 'name'].includes(name)) el[name] = value;
+      else el.setAttribute(name, value);
+    }
   });
   start();
   return { scope, nodes, frames, warned, document, follows };
 }
 
-const host = (name, extra = {}) => ['div', { 'data-df-parameter': name, ...extra }];
-const styleOf = (el) => ['chips', 'combobox', 'native'].find((s) => el.classList.contains('df-param-' + s)) ||
-  (el.one('df-param-select') || el.one('df-param-multiselect') ? 'native' : null);
+const host = (name, extra = {}) => ['fieldset', { 'data-df-choice': name, ...extra }];
+const displayOf = (el) => ['chips', 'combobox'].find((s) => el.classList.contains('df-choices-' + s)) || null;
 
-test('choice styles follow set size and label length, per-control overrides, and an authored select fallback', () => {
+test('choice displays follow set size and label length, per-group overrides, and reuse matching authored inputs', () => {
   const long = choices('A rather long label for a choice', 'Another long label for a choice', 'A third long label here');
   const env = page({
     small: { type: 'select', choices: choices('One', 'Two') },
+    seven: { type: 'multiselect', choices: many.slice(0, 7) },
+    eight: { type: 'multiselect', choices: many.slice(0, 8) },
     wordy: { type: 'select', choices: long },
     large: { type: 'multiselect', choices: many },
     mode: { type: 'select', choices: choices('Fast', 'Exact'), default: 'exact' }
-  }, [host('small'), host('wordy'), host('large'), host('small', { 'data-df-parameter-style': 'combobox' }),
-    host('large', { 'data-df-parameter-style': 'chips' }), host('small', { 'data-df-parameter-style': 'native' }),
-    host('large', { 'data-df-parameter-style': 'native' }), host('small', { 'data-df-parameter-style': 'pills' }),
-    ['select', { 'data-df-parameter': 'mode' }],
-    ['label', {}], ['select', { 'data-df-parameter': 'mode', 'data-df-parameter-style': 'chips', 'data-df-parameter-label': 'Mode' }, 9]]);
-  const [small, wordy, large, smallCombo, largeChips, smallNative, largeNative, unknown, plain, label, styled] = env.nodes;
-  assert.deepEqual([small, wordy, large, smallCombo, largeChips, smallNative, largeNative, unknown].map(styleOf),
-    ['chips', 'combobox', 'combobox', 'combobox', 'chips', 'native', 'native', 'chips']);
-  assert.equal(smallNative.one('df-param-select').tag, 'select');
-  assert.equal(largeNative.one('df-param-multiselect').tag, 'fieldset');
-  assert.match(env.warned.join('\n'), /unknown style "pills"/);
+  }, [host('small'), host('seven'), host('eight'), host('wordy'), host('large'),
+    host('small', { 'data-df-choice-display': 'combobox' }), host('large', { 'data-df-choice-display': 'chips' }),
+    host('small', { 'data-df-choice-display': 'pills' }),
+    host('mode'), ['legend', { text: 'Mode' }, 8],
+    ['label', {}, 8], ['input', { type: 'radio', value: 'fast', name: 'mode' }, 10],
+    ['label', {}, 8], ['input', { type: 'radio', value: 'exact', name: 'mode', checked: '' }, 12],
+    host('mode'), ['label', {}, 14], ['input', { type: 'radio', value: 'slow' }, 15],
+    ['div', { 'data-df-choice': 'small' }], ['div', { 'data-df-parameter': 'small' }]]);
+  const nodes = env.nodes;
+  assert.deepEqual(nodes.slice(0, 8).map(displayOf),
+    ['chips', 'chips', 'combobox', 'combobox', 'combobox', 'combobox', 'chips', 'chips']);
+  assert.equal(nodes[0].one('df-choices-label').textContent, 'small', 'the key names a group without a legend');
+  assert.match(env.warned.join('\n'), /Unknown choice display "pills"/);
 
-  assert.equal(plain.hidden, false, 'an authored select stays native without a style');
-  assert.equal(plain.value, 'exact');
-  assert.equal(label.hidden, true, 'a styled select hides with its wrapping label');
-  const box = label.nextSibling;
-  assert.ok(box.classList.contains('df-param-chips'));
-  assert.equal(box.one('df-param-label').textContent, 'Mode');
-  assert.deepEqual(styled.children.map((o) => o.value), ['fast', 'exact']);
-  const radios = box.byClass('df-chip-input');
-  radios[0].checked = true;
-  fire(radios[0], 'change');
+  const [authored, fastLabel, fast, exactLabel, exact] = [nodes[8], nodes[10], nodes[11], nodes[12], nodes[13]];
+  assert.equal(displayOf(authored), 'chips');
+  assert.equal(authored.one('df-choices-label'), nodes[9], 'the authored legend labels the group');
+  assert.deepEqual(authored.byClass('df-chip'), [fastLabel, exactLabel], 'matching authored labels become the chips');
+  assert.deepEqual([fast, exact].map((r) => [r.name, r.checked]), [['mode', false], ['mode', true]]);
+  fast.checked = true;
+  fire(fast, 'change');
   assert.equal(env.scope.get('mode'), 'fast');
-  assert.equal(styled.value, 'fast', 'the hidden select follows');
-  assert.equal(plain.value, 'fast');
-  plain.value = 'exact';
-  fire(plain, 'change');
-  assert.deepEqual(radios.map((r) => r.checked), [false, true]);
+  assert.ok(fastLabel.classList.contains('is-selected'));
+
+  const mismatched = nodes[14];
+  assert.deepEqual(mismatched.byClass('df-chip-input').map((r) => r.value), ['fast', 'exact']);
+  assert.equal(nodes[15].parentNode, null, 'authored inputs that do not match are replaced');
+  assert.match(env.warned.join('\n'), /Authored choices for parameter "mode" do not match/);
+  assert.match(env.warned.join('\n'), /Choice parameter "small" needs a fieldset host/);
+  assert.match(env.warned.join('\n'), /"small" is a select; author it as <fieldset data-df-choice="small">/);
+});
+
+test('every chip press ripples from the press point, or from the centre for the keyboard', () => {
+  const env = page({ runs: { type: 'multiselect', choices: choices('A', 'B') } }, [host('runs')]);
+  const [chip] = env.nodes[0].byClass('df-chip');
+  const input = chip.one('df-chip-input');
+  fire(chip, 'pointerdown', { clientX: 30, clientY: 26 });
+  const wave = chip.one('df-ripple');
+  assert.equal(wave.getAttribute('aria-hidden'), 'true');
+  assert.deepEqual([wave.style.props['--df-ripple-x'], wave.style.props['--df-ripple-y']], ['20px', '6px']);
+  input.checked = false;
+  fire(input, 'change');
+  assert.equal(chip.byClass('df-ripple').length, 1, 'a change right after a press does not ripple again');
+  fire(wave, 'animationend');
+  assert.equal(chip.byClass('df-ripple').length, 0);
 });
 
 test('single-choice chips are radios that glide, follow the scope, and move with arrow keys', () => {
   const env = page({ mode: { type: 'select', choices: choices('Raw', 'Scaled', 'Log'), default: 'scaled', selectionGroup: 'modes' } },
-    [host('mode', { 'data-df-parameter-label': 'Mode' }), host('mode')]);
-  const [a, b] = env.nodes;
-  const group = a.one('df-chips');
-  const heading = a.one('df-param-label');
-  assert.equal(group.getAttribute('role'), 'radiogroup');
-  assert.equal(group.getAttribute('aria-labelledby'), heading.id);
-  assert.equal(heading.textContent, 'Mode');
+    [host('mode'), ['legend', { text: 'Mode' }, 0], host('mode')]);
+  const [a, , b] = env.nodes;
+  const group = a;
+  assert.equal(a.one('df-choices-label').textContent, 'Mode');
+  assert.ok(!group.classList.contains('is-multiple'));
   const chips = a.byClass('df-chip');
   const radios = a.byClass('df-chip-input');
   assert.deepEqual(radios.map((r) => [r.type, r.name === radios[0].name, r.checked]),
@@ -164,7 +188,7 @@ test('single-choice chips are radios that glide, follow the scope, and move with
   assert.deepEqual(chips.map((c) => c.getAttribute('data-df-key')), ['raw', 'scaled', 'log']);
   assert.ok(chips[1].classList.contains('is-selected'));
 
-  const glider = a.one('df-chips-glider');
+  const glider = a.one('df-choices-glider');
   assert.ok(glider.classList.contains('is-hidden'), 'no layout yet, so the highlight waits');
   Object.assign(chips[2], { offsetLeft: 120, offsetTop: 0, offsetWidth: 50, offsetHeight: 24 });
   radios[2].checked = true;
@@ -173,9 +197,9 @@ test('single-choice chips are radios that glide, follow the scope, and move with
   assert.deepEqual(b.byClass('df-chip-input').map((r) => r.checked), [false, false, true]);
   assert.ok(!glider.classList.contains('is-hidden'));
   assert.deepEqual(glider.style.props, { '--df-chip-x': '120px', '--df-chip-y': '0px', '--df-chip-w': '50px', '--df-chip-h': '24px' });
-  assert.ok(group.classList.contains('df-chips-still'), 'the first placement does not slide');
+  assert.ok(group.classList.contains('df-choices-still'), 'the first placement does not slide');
   env.frames.splice(0).forEach((fn) => fn());
-  assert.ok(!group.classList.contains('df-chips-still'));
+  assert.ok(!group.classList.contains('df-choices-still'));
 
   assert.equal(key(radios[2], 'ArrowRight').defaultPrevented, true);
   assert.equal(env.scope.get('mode'), 'raw', 'arrows wrap and choose');
@@ -193,8 +217,8 @@ test('single-choice chips are radios that glide, follow the scope, and move with
 test('multiple-choice chips are checkboxes in declaration order and arrows only move focus', () => {
   const env = page({ runs: { type: 'multiselect', choices: choices('A', 'B', 'C'), default: ['c'] } }, [host('runs')]);
   const [el] = env.nodes;
-  assert.equal(el.one('df-chips').getAttribute('role'), 'group');
-  assert.equal(el.one('df-chips-glider'), undefined);
+  assert.ok(el.classList.contains('is-multiple'));
+  assert.equal(el.one('df-choices-glider'), undefined);
   const boxes = el.byClass('df-chip-input');
   assert.deepEqual(boxes.map((b) => [b.type, b.checked]), [['checkbox', false], ['checkbox', false], ['checkbox', true]]);
   boxes[0].checked = true;
@@ -209,7 +233,7 @@ test('multiple-choice chips are checkboxes in declaration order and arrows only 
 });
 
 test('a single-choice combobox filters, highlights matches, and picks with the keyboard', () => {
-  const env = page({ pick: { type: 'select', choices: many, default: 'gamma' } }, [host('pick', { 'data-df-parameter-label': 'Letter' })]);
+  const env = page({ pick: { type: 'select', choices: many, default: 'gamma' } }, [host('pick'), ['legend', { text: 'Letter' }, 0]]);
   const [el] = env.nodes;
   const input = el.one('df-combo-input');
   const panel = el.one('df-combo-panel');
@@ -217,7 +241,8 @@ test('a single-choice combobox filters, highlights matches, and picks with the k
   const options = el.byClass('df-combo-option');
   const shown = () => options.filter((o) => !o.hidden).map((o) => o.textContent);
   const active = () => input.getAttribute('aria-activedescendant');
-  assert.equal(el.one('df-param-label').htmlFor, input.id);
+  assert.equal(input.getAttribute('aria-labelledby'), el.one('df-choices-label').id);
+  assert.equal(el.one('df-choices-label').textContent, 'Letter');
   assert.deepEqual(['role', 'aria-expanded', 'aria-controls'].map((a) => input.getAttribute(a)), ['combobox', 'false', list.id]);
   assert.equal(list.getAttribute('role'), 'listbox');
   assert.equal(input.value, 'Gamma');

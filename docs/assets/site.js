@@ -409,7 +409,7 @@ window.DocFormSite = {
         "detail pane": "A box that shows more about whichever card or block is currently selected.",
         "stepper": "A control with Previous and Next buttons that moves through an example one step at a time.",
         "worked example": "A problem solved step by step, showing the reasoning at each step.",
-        "scroll reveal": "A block that glides or fades into view once as you scroll down to it.",
+        "scroll reveal": "A block that glides or fades into view as it nears the middle of the screen, and again each time you come back to it.",
         "split view": "Two blocks placed side by side, such as a picture and its explanation.",
         "linked selection": "Choosing an item in one view highlights the matching items in every linked view on the page.",
         "selection key": "The shared name that ties matching items together in linked selection, so picking one highlights the others.",

@@ -173,8 +173,17 @@
     <h2 id="bar-layout">Turn bars sideways or stack them</h2>
     <p>Bars can lie sideways, which leaves room for long category names. Several series can sit side by side, <span data-df-term="stacked bar">stack</span> into one bar per category, or stack to 100% so each bar shows shares instead of totals.</p>
     <div class="df-params" data-df-parameter-scope="bar-layout">
-      <div data-df-parameter="direction" data-df-parameter-label="Direction"><p>Direction: Sideways</p></div>
-      <div data-df-parameter="layout" data-df-parameter-label="Layout"><p>Layout: Stacked</p></div>
+      <fieldset data-df-choice="direction">
+        <legend>Direction</legend>
+        <label><input type="radio" name="direction" value="vertical"> Upright</label>
+        <label><input type="radio" name="direction" value="horizontal" checked> Sideways</label>
+      </fieldset>
+      <fieldset data-df-choice="layout">
+        <legend>Layout</legend>
+        <label><input type="radio" name="layout" value="none"> Side by side</label>
+        <label><input type="radio" name="layout" value="stacked" checked> Stacked</label>
+        <label><input type="radio" name="layout" value="percent"> Percent</label>
+      </fieldset>
     </div>
     <figure>
       <div data-df-chart="bar" data-df-scope="bar-layout" data-df-chart-bind='{"orientation": "direction", "stack": "layout"}' data-df-toggles>
@@ -235,9 +244,11 @@
 
     <h2 id="shared-filter">Compare file sizes with a scatter chart</h2>
     <p>A scatter chart puts one dot at the intersection of two numbers. Here, each dot uses the size and line count of a repository file, and the series group the <span data-df-term="record">records</span> by kind. A linear axis adds the same amount over equal distances. The horizontal log scale here multiplies by ten at each major step and takes only positive values.</p>
-    <div class="df-params" data-df-parameter-scope="module-filter">
-      <div data-df-parameter="kinds" data-df-parameter-label="File kinds to show"></div>
-    </div>
+    <fieldset data-df-parameter-scope="module-filter" data-df-choice="kinds">
+      <legend>File kinds to show</legend>
+      <label><input type="checkbox" value="script" checked> Scripts</label>
+      <label><input type="checkbox" value="style" checked> Stylesheets</label>
+    </fieldset>
 
     <figure>
       <div id="module-scatter" data-df-chart="scatter" data-df-source="Module sizes"

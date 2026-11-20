@@ -1,0 +1,391 @@
+/* Choice groups from choices.js: a fieldset with a small-caps legend over borderless tinted chips, or a combobox for
+   larger sets. Colour a group with data-df-role or data-df-color. Every press ripples. */
+.df-choices {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em;
+  min-inline-size: 0;
+  margin: 0.6em 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Floating the legend makes it an ordinary flex item on its own line, above the chips. */
+.df-choices-label {
+  float: left;
+  width: 100%;
+  margin: 0 0 0.15em;
+  padding: 0;
+  color: var(--df-text-label);
+  font-size: var(--df-eyebrow-size);
+  font-weight: var(--df-eyebrow-weight);
+  letter-spacing: var(--df-eyebrow-tracking);
+  line-height: 1.4;
+  text-transform: var(--df-eyebrow-case);
+}
+
+:is([data-df-color], [data-df-role]) > .df-choices-label,
+.df-choices:is([data-df-color], [data-df-role]) > .df-choices-label {
+  color: color-mix(in srgb, var(--df-accent) 85%, var(--df-text));
+}
+
+.df-choices-label.is-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.df-chip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.22em 0.85em;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--df-bg-hover) 70%, transparent);
+  color: var(--df-text-muted);
+  line-height: 1.4;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.df-chip:hover {
+  background: var(--df-bg-hover);
+  color: var(--df-text);
+}
+
+.df-chip-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.df-chip:has(.df-chip-input:focus-visible) {
+  outline: 2px solid var(--df-accent, var(--df-focus));
+  outline-offset: 2px;
+}
+
+.df-chip.is-selected {
+  color: var(--df-accent, var(--df-text));
+  font-weight: 600;
+}
+
+.df-chip-note {
+  color: var(--df-text-faint);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A single choice fills its chip through one highlight that slides between chips. */
+.df-choices-glider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--df-chip-w, 0);
+  height: var(--df-chip-h, 0);
+  border-radius: 999px;
+  background: var(--df-accent-bg, var(--df-bg-hover));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--df-accent, var(--df-text)) 22%, transparent);
+  transform: translate(var(--df-chip-x, 0), var(--df-chip-y, 0));
+  transition: transform 0.22s ease-out, width 0.22s ease-out, height 0.22s ease-out, opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.df-choices-still > .df-choices-glider {
+  transition: none;
+}
+
+.df-choices-glider.is-hidden {
+  opacity: 0;
+}
+
+.df-choices:not(.is-multiple) .df-chip.is-selected,
+.df-choices:not(.is-multiple) .df-chip.is-selected:hover {
+  background: transparent;
+}
+
+/* Multiple choices fill each chosen chip and grow a check mark. */
+.df-choices.is-multiple .df-chip.is-selected {
+  background: var(--df-accent-bg, var(--df-bg-hover));
+}
+
+.df-chip-check {
+  box-sizing: border-box;
+  flex: none;
+  width: 0;
+  height: 0.55em;
+  margin-inline-end: -0.35em;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  opacity: 0;
+  transform: translateY(-0.1em) rotate(45deg) scale(0.4);
+  transition: width 0.2s ease-out, margin 0.2s ease-out, opacity 0.2s ease, transform 0.2s ease-out;
+}
+
+:is(.df-chip.is-selected, .df-combo-option[aria-selected="true"]) > .df-chip-check {
+  width: 0.32em;
+  margin-inline-end: 0.1em;
+  opacity: 1;
+  transform: translateY(-0.1em) rotate(45deg);
+}
+
+/* The press ripple: a tinted disc that spreads from the press point and fades. */
+.df-ripple {
+  position: absolute;
+  top: var(--df-ripple-y, 50%);
+  left: var(--df-ripple-x, 50%);
+  width: var(--df-ripple-size, 100%);
+  height: var(--df-ripple-size, 100%);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--df-accent, var(--df-text)) 24%, transparent);
+  transform: translate(-50%, -50%) scale(0);
+  animation: df-ripple 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes df-ripple {
+  60% { opacity: 1; }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Combobox: a search field over a listbox in a dropdown popover, for large choice sets. */
+.df-combo {
+  position: relative;
+  flex: 1 1 100%;
+  max-width: 24rem;
+}
+
+.df-combo-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.22em 2em 0.22em 0.4em;
+  border-radius: 1.2em;
+  background: color-mix(in srgb, var(--df-bg-hover) 70%, transparent);
+  cursor: text;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.df-combo-field:hover {
+  background: var(--df-bg-hover);
+}
+
+.df-combo-field::after {
+  content: "";
+  position: absolute;
+  top: 1.05em;
+  right: 0.9em;
+  width: 0.45em;
+  height: 0.45em;
+  border: solid var(--df-text-muted);
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-50%) rotate(45deg);
+  transition: transform 0.18s ease;
+  pointer-events: none;
+}
+
+.df-combo.is-open .df-combo-field::after {
+  transform: translateY(-15%) rotate(225deg);
+}
+
+.df-combo-field:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--df-accent, var(--df-focus));
+}
+
+.df-combo-input {
+  flex: 1 1 6em;
+  min-width: 4em;
+  padding: 0.15em 0.4em;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.df-combo-chips {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.df-combo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+  margin: 0;
+  padding: 0 0.15em 0 0.65em;
+  border-radius: 999px;
+  background: var(--df-accent-bg, var(--df-bg-hover));
+  color: var(--df-accent, var(--df-text));
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1.6;
+  list-style: none;
+}
+
+.df-combo-chip.is-new {
+  animation: df-chip-in 0.18s ease-out;
+}
+
+@keyframes df-chip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.df-combo-remove {
+  display: inline-grid;
+  place-items: center;
+  width: 1.3em;
+  height: 1.3em;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.df-combo-remove::before {
+  content: "×";
+  line-height: 1;
+}
+
+.df-combo-remove:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+/* Without the popover API the panel drops below the field in place. */
+.df-combo-panel:not([popover]) {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  box-sizing: border-box;
+  min-width: 100%;
+  max-height: 18rem;
+  padding: 5px;
+  overflow: auto;
+  border: 1px solid var(--df-border-strong);
+  border-radius: var(--df-radius-lg);
+  background: var(--df-bg);
+  box-shadow: 0 8px 28px light-dark(rgba(15, 15, 15, 0.14), rgba(0, 0, 0, 0.45));
+}
+
+.df-combo-panel[hidden] {
+  display: none;
+}
+
+.df-combo-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--df-space-1);
+  padding: 0 0 5px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--df-border);
+}
+
+.df-combo-action {
+  position: relative;
+  overflow: hidden;
+  padding: 0.1em 0.7em;
+  border: 0;
+  border-radius: 999px;
+  background: var(--df-bg-hover);
+  color: inherit;
+  font: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.df-combo-action:hover:not(:disabled) {
+  background: var(--df-accent-bg, var(--df-bg-hover));
+  color: var(--df-accent, var(--df-text));
+}
+
+.df-combo-action:disabled {
+  color: var(--df-text-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.df-combo-count {
+  margin-inline-start: auto;
+  color: var(--df-text-muted);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+.df-combo-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.df-combo-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  min-block-size: 2rem;
+  margin: 0;
+  padding: var(--df-space-1) var(--df-space-2);
+  overflow: hidden;
+  border-radius: var(--df-radius);
+  list-style: none;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.df-combo-option[hidden] {
+  display: none;
+}
+
+.df-combo-option.is-active {
+  background: var(--df-accent-bg, var(--df-bg-hover));
+  color: var(--df-accent, var(--df-text));
+}
+
+.df-combo-option[aria-selected="true"] {
+  font-weight: 600;
+}
+
+.df-combo-option > .df-chip-note {
+  margin-inline-start: auto;
+}
+
+.df-combo-option mark {
+  padding: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.15em;
+}
+
+.df-combo-empty {
+  margin: 0;
+  padding: var(--df-space-1) var(--df-space-2);
+  color: var(--df-text-muted);
+  font-size: 0.9em;
+}

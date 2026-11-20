@@ -14,20 +14,13 @@ Enable `"chart-histogram": true` in site or page features. Use `data-df-chart="h
 
 ## Live bin count
 
-Enable [parameters](../interact/parameters.md), define an integer range (for example min 1, max 20, step 1), and set its default to the chart's initial bin count. Use raw observations so the chart can re-bin them.
+Enable [parameters](../interact/parameters.md), define an integer range (for example min 1, max 20, step 1), and set its default to the chart's initial bin count. Use raw observations so the chart can re-bin them. Bind it declaratively; a count the chart rejects (over 500) rolls the slider back.
 
 ```html
 <div data-df-parameter="bins" data-df-scope="histogram"></div>
-<script>
-  DocForm.ready(function () {
-    var chart = DocForm.chart.get('distribution');
-    var scope = DocForm.parameters.scope('histogram');
-    if (!chart || !scope) return;
-    scope.subscribe(function (values) {
-      chart.update(Object.assign(chart.spec(), { bins: values.bins }));
-    }, { keys: ['bins'] });
-  });
-</script>
+<div id="distribution" data-df-chart="histogram" data-df-scope="histogram" data-df-chart-bind='{"bins":"bins"}'>
+  <script type="application/json">{"data": [1, 2, 2, 6, 7]}</script>
+</div>
 ```
 
-The chart host has ID `distribution` and the range parameter is `bins` in scope `histogram`. The [charts guide](../../../docs/pages/data/charts.html#histograms) shows the complete example.
+A script can do the same with `scope.subscribe` and `chart.update(Object.assign(chart.spec(), {bins}))`. The chart host has ID `distribution` and the range parameter is `bins` in scope `histogram`. The [charts guide](../../../docs/pages/data/charts.html#histograms) shows the complete example.

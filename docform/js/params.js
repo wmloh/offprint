@@ -423,6 +423,13 @@
     var type = raw.type;
     var def = { type: type, digits: raw.digits };
     if (def.digits !== undefined && !precision(def.digits)) return null;
+    if (raw.selectionGroup !== undefined || raw.selectionMode !== undefined) {
+      var group = typeof raw.selectionGroup === 'string' ? raw.selectionGroup.trim() : '';
+      if ((type !== 'select' && type !== 'multiselect') || !group ||
+        (raw.selectionMode !== undefined && !['both', 'publish', 'follow'].includes(raw.selectionMode))) return null;
+      def.selectionGroup = group;
+      def.selectionMode = raw.selectionMode || 'both';
+    }
     var initial;
     if (type === 'range' || type === 'number') {
       var range = type === 'range';
@@ -465,7 +472,7 @@
     })));
     var current = defaults;
     var displays = new Map();
-    var state = { bindings: [], presets: [] };
+    var state = { bindings: [], presets: [], shows: [] };
     var places = Object.create(null);
     Object.keys(definitions).forEach(function (key) { places[key] = definitions[key].digits; });
     var subscribers = new Set();
@@ -479,6 +486,67 @@
         snapshot: function () { return current; },
         bind: function (prepare) { views.push({ keys: keys, prepare: prepare }); }
       };
+    };
+
+    // Other features join every commit of this scope: prepare(candidate) throws to reject the whole update,
+    // or returns a stage that applies it.
+    state.link = function () {
+      var keys = Object.keys(definitions);
+      return {
+        snapshot: function () { return current; },
+        evaluate: evaluate,
+        bind: function (prepare) { views.push({ keys: keys, prepare: prepare }); }
+      };
+    };
+
+    state.groupDomains = function () {
+      Object.keys(definitions).forEach(function (key) {
+        var def = definitions[key];
+        if (def.selectionGroup && def.selectionMode !== 'publish' && DocForm._selection) {
+          DocForm._selection.collect(def.selectionGroup, def.choices.map(function (choice) { return choice.value; }), []);
+        }
+      });
+    };
+
+    state.renderShows = function (animate) {
+      state.shows.forEach(function (item) { showItem(item, current, animate); });
+    };
+
+    // A select follows a group key among its choices; a multiselect adds it. A select publishes its value; a
+    // multiselect publishes the choice just added, or clears the group when the shared key is removed.
+    state.joinGroups = function () {
+      Object.keys(definitions).forEach(function (key) {
+        var def = definitions[key];
+        if (!def.selectionGroup) return;
+        var group = DocForm._selection && DocForm._selection.ensure(def.selectionGroup);
+        if (!group) {
+          parameterIssue(null, 'Enable selection to link parameter "' + key + '" to group "' + def.selectionGroup + '".');
+          return;
+        }
+        var shared = group.api;
+        var choices = def.choices.map(function (choice) { return choice.value; });
+        if (def.selectionMode !== 'publish') {
+          var follow = function (selected) {
+            var chosen = selected && selected.key;
+            if (!choices.includes(chosen)) return;
+            if (def.type === 'select') state.write({ [key]: chosen }, 'selection');
+            else if (!current[key].includes(chosen)) state.write({ [key]: current[key].concat(chosen) }, 'selection');
+          };
+          shared.subscribe(follow);
+          follow(shared.snapshot());
+        }
+        if (def.selectionMode === 'follow') return;
+        subscribers.add({ keys: [key], fn: function (now, meta) {
+          if (meta.origin === 'init') return;
+          var value = now[key];
+          if (def.type === 'select') { shared.select(value); return; }
+          var before = meta.previous ? meta.previous[key] : [];
+          var added = value.filter(function (choice) { return !before.includes(choice); });
+          var at = shared.get();
+          if (added.length) shared.select(added[added.length - 1]);
+          else if (choices.includes(at) && !value.includes(at)) shared.clear();
+        } });
+      });
     };
 
     state.validate = function (update, fromMarkup) {
@@ -531,6 +599,7 @@
       current = candidate;
       renderControls();
       renderPresets(state.presets, current);
+      state.renderShows(true);
       var notifications = prepared.map(function (stage) { return stage(); });
       notifications.forEach(function (notify) { if (notify) notify(); });
       if (!scopesReady) return true;
@@ -605,6 +674,56 @@
 
   var scopesReady = false;
   var bindingQueue = new Set();
+  var SHOW_MS = 200;
+
+  // data-df-show-when holds an expression; with data-df-show-value the element shows when the result, or any
+  // item of an array result, equals that text. Otherwise it shows when the result is truthy and not an empty array.
+  function showItem(item, values, animate) {
+    var on = true;
+    try {
+      var result = evaluate(item.expr, values);
+      on = item.value === null ? (Array.isArray(result) ? result.length > 0 : !!result) :
+        [].concat(result).some(function (value) { return String(value) === item.value; });
+    } catch (error) {
+      if (!item.failed) parameterIssue(item.el, 'Cannot evaluate show condition "' + item.expr + '": ' + error.message);
+      item.failed = true;
+    }
+    if (item.on === on) return;
+    item.on = on;
+    var el = item.el;
+    if (item.timer) root.clearTimeout(item.timer);
+    item.timer = null;
+    el.classList.remove('df-show-enter', 'df-show-leave');
+    if (!animate || typeof root.requestAnimationFrame !== 'function' || typeof root.setTimeout !== 'function') {
+      el.hidden = !on;
+      return;
+    }
+    if (on) {
+      el.hidden = false;
+      el.classList.add('df-show-enter');
+      // Two frames, so the start state is painted before the transition back to rest.
+      root.requestAnimationFrame(function () {
+        root.requestAnimationFrame(function () { if (item.on) el.classList.remove('df-show-enter'); });
+      });
+    } else {
+      el.classList.add('df-show-leave');
+      item.timer = root.setTimeout(function () {
+        item.timer = null;
+        el.hidden = true;
+        el.classList.remove('df-show-leave');
+      }, SHOW_MS);
+    }
+  }
+
+  function showWhen(el, list) {
+    var expr = el.getAttribute('data-df-show-when');
+    if (!expr || !expr.trim()) {
+      parameterIssue(el, 'data-df-show-when needs an expression over the scope parameters.');
+      return;
+    }
+    el.classList.add('df-show-when');
+    list.push({ el: el, expr: expr, value: el.getAttribute('data-df-show-value'), on: !el.hidden, timer: null, failed: false });
+  }
 
   function scheduleScopedBindings(state) {
     if (!state.bindings.length) return;
@@ -638,6 +757,10 @@
       group.appendChild(legend);
       var checks = def.choices.map(function (choice) {
         var item = document.createElement('label');
+        if (def.selectionGroup) {
+          item.setAttribute('data-df-selection-group', def.selectionGroup);
+          item.setAttribute('data-df-key', choice.value);
+        }
         var check = document.createElement('input');
         check.type = 'checkbox';
         check.value = choice.value;
@@ -775,6 +898,16 @@
     var scope = scopes.get(scopeName(name));
     return scope ? scope.views(keys) : null;
   };
+  // The scope an element resolves to, as a link other features can join; null after reporting an unknown scope.
+  DocForm._parameterLink = function (el) {
+    var scope = resolveScope(el, false);
+    return scope ? scope.link() : null;
+  };
+
+  // Stored group keys count only when a participant offers them, so linked choices join the startup domain.
+  if (DocForm._items) DocForm._items.scan('parameters', function () {
+    scopes.forEach(function (scope) { scope.groupDomains(); });
+  });
 
   var configured = (boot ? DocForm.site : root.DocFormSite) || {};
   if (configured.parameterScopes !== undefined) {
@@ -814,10 +947,16 @@
       var scope = resolveScope(el, true);
       if (scope !== null) bind(el, scope ? scope.bindings : bindings);
     });
+    DocForm.all('[data-df-show-when]').forEach(function (el) {
+      var scope = resolveScope(el, false);
+      if (scope) showWhen(el, scope.shows);
+    });
     started = true;
     scopes.forEach(function (scope) {
       renderPresets(scope.presets, scope.api.snapshot());
       scope.render();
+      scope.renderShows(false);
+      scope.joinGroups();
     });
     markPresets();
     listeners.slice().forEach(function (l) { if (ready(l)) l.fn(snapshot(), null, l.names.slice()); });

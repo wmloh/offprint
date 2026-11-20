@@ -43,6 +43,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* data-df-show-when elements fade and settle in or out; scripts off leaves them visible. */
+.df-show-when {
+  transition: opacity 0.2s ease, translate 0.2s ease;
+}
+
+.df-show-when.df-show-enter,
+.df-show-when.df-show-leave {
+  opacity: 0;
+  translate: 0 -0.35em;
+}
+
+.df-show-when[hidden] {
+  display: none !important;
+}
+
 .df-param-select {
   grid-column: span 2;
   justify-self: start;

@@ -2742,7 +2742,8 @@
       hidden: Object.create(null), range: null, drag: null, dragged: false, clip: 'df-chart-clip-' + (++clips),
       playhead: null
     };
-    chart.view = viewOf(model, chart.hidden, null);
+    applyLinkedView(chart, model);
+    chart.view = viewOf(model, chart.hidden, chart.range);
     host.classList.add('df-chart');
     typeClasses(host, model);
 
@@ -2916,6 +2917,7 @@
         if (!compatible) delete chart.hidden[name];
       });
       if (!model.noMatches) chart.range = keepRange(chart.range, chart.model, model);
+      applyLinkedView(chart, model);
       chart.model = model;
       var notifyPlayback = reconcilePlayhead(chart, origin);
       if (chart.xGroup && chart.xGroup.owner === chart && !linearX(model)) leaveInspection(chart, origin);
@@ -3082,9 +3084,160 @@
   }
 
   function chartModel(host, spec) {
-    var model = normalize(spec);
+    var bound = boundSpec(host, spec);
+    var model = normalize(bound.spec);
+    model.errors.push.apply(model.errors, bound.errors);
     if (DocForm._items) model.selectionMode = DocForm._items.mode(host, 'chart');
     model.motion = resolveMotion(animateAttribute(host), spec, DocForm._boot ? DocForm._boot.optionLayers('chart', host.id) : []);
+    return model;
+  }
+
+  // Parameter bindings: data-df-chart-bind, or the instance option bind, maps targets to expressions in the host's
+  // parameter scope. Spec targets apply over every spec the chart receives; series and range set the reader view.
+  // A bound value the chart cannot draw rejects the whole parameter update.
+  var BIND_TARGET = /^(?:bins|orientation|stack|series|range|colorMin|colorMax|reference(?:\.\d+)?)$/;
+  var links = new WeakMap();
+
+  function boundSpec(host, spec) {
+    var link = links.get(host);
+    var values = link && link.values;
+    var out = { spec: spec, errors: [] };
+    if (!values || !spec || typeof spec !== 'object') return out;
+    var next = Object.assign({}, spec);
+    Object.keys(values).forEach(function (target) {
+      var value = values[target];
+      if (target === 'bins' || target === 'orientation' || target === 'stack') next[target] = value;
+      else if (target === 'colorMin' || target === 'colorMax') {
+        next.scale = next.scale && typeof next.scale === 'object' ? Object.assign({}, next.scale) : { type: next.scale };
+        next.scale[target === 'colorMin' ? 'min' : 'max'] = value;
+      } else if (target.indexOf('reference') === 0) {
+        var index = Number(target.split('.')[1] || 0);
+        var refs = Array.isArray(next.referenceLines) ? next.referenceLines.slice() : [];
+        if (!refs[index] || typeof refs[index] !== 'object') {
+          out.errors.push('The bound reference line ' + index + ' is not in the chart spec.');
+        } else if (!isNum(value) && !(typeof value === 'string' && value.trim())) {
+          out.errors.push('The bound reference line ' + index + ' needs a finite number or a text value.');
+        } else refs[index] = Object.assign({}, refs[index], { value: value });
+        next.referenceLines = refs;
+      }
+    });
+    out.spec = next;
+    return out;
+  }
+
+  // The reader view bound values ask for: {hidden?, range?}. Throws when they do not fit the model.
+  function linkedView(model, values) {
+    var view = {};
+    if (!values) return view;
+    if (Object.hasOwn(values, 'series')) {
+      var keys = model.series.map(function (s) { return s.key; });
+      var wanted = values.series == null ? keys : [].concat(values.series);
+      if (wanted.some(function (key) { return !keys.includes(key); })) {
+        throw new Error('Bound series must be series keys: ' + keys.join(', ') + '.');
+      }
+      view.hidden = Object.create(null);
+      keys.forEach(function (key) { if (!wanted.includes(key)) view.hidden[key] = true; });
+    }
+    if (Object.hasOwn(values, 'range')) {
+      var r = values.range;
+      var read = model.x && model.x.time ? toTime : toNumber;
+      view.range = r == null ? null : Array.isArray(r) && r.length === 2 ? clampRange(model, read(r[0]), read(r[1])) : false;
+      if (view.range === false) throw new Error('A bound range needs [lo, hi] on a continuous x axis with room between them.');
+    }
+    return view;
+  }
+
+  function applyLinkedView(chart, model) {
+    var link = links.get(chart.box);
+    if (!link || !link.values) return;
+    try {
+      var view = linkedView(model, link.values);
+      if (view.hidden) chart.hidden = view.hidden;
+      if (Object.hasOwn(view, 'range')) chart.range = view.range;
+    } catch (error) {
+      // New data that no longer fits the bound view keeps the reader view until the parameters change.
+    }
+  }
+
+  function bindIssue(host, message) {
+    if (DocForm._component) DocForm._component.issue('chart', host, message, 'Check data-df-chart-bind and its parameter scope.');
+    else DocForm.warnOnce('chart-bind:' + message, message, host);
+  }
+
+  function bindMap(host) {
+    var raw = DocForm.data(host, 'chart-bind', null);
+    if (raw !== null) {
+      try { return JSON.parse(raw); } catch (e) { return undefined; }
+    }
+    var boot = DocForm._boot;
+    if (!boot || !host.id) return null;
+    return boot.optionLayers('chart', host.id).slice(boot.optionLayers('chart').length).reduce(function (map, layer) {
+      return layer && Object.hasOwn(layer, 'bind') ? layer.bind : map;
+    }, null);
+  }
+
+  function linkHost(host) {
+    if (links.has(host)) return;
+    links.set(host, null);
+    var map = bindMap(host);
+    if (map === null) return;
+    var targets = map && typeof map === 'object' && !Array.isArray(map) ? Object.keys(map) : [];
+    if (!targets.length) return bindIssue(host, 'Chart parameter bindings need a JSON object of targets and expressions.');
+    var bad = targets.find(function (t) { return !BIND_TARGET.test(t) || typeof map[t] !== 'string' || !map[t].trim(); });
+    if (bad !== undefined) {
+      return bindIssue(host, 'Chart binding "' + bad + '" needs a known target (bins, orientation, stack, reference, ' +
+        'reference.N, series, range, colorMin, colorMax) and an expression.');
+    }
+    if (!DocForm._parameterLink) return bindIssue(host, 'Enable parameters to bind chart properties.');
+    var scope = DocForm._parameterLink(host);
+    if (!scope) return;
+    var link = { scope: scope, map: map, values: null };
+    try { link.values = linkValues(link, scope.snapshot()); }
+    catch (error) { return bindIssue(host, 'Chart binding failed: ' + error.message); }
+    links.set(host, link);
+    scope.bind(function (candidate) { return prepareLink(host, link, candidate); });
+  }
+
+  function linkValues(link, values) {
+    var out = {};
+    Object.keys(link.map).forEach(function (target) { out[target] = link.scope.evaluate(link.map[target], values); });
+    return out;
+  }
+
+  // Validates bound values against the drawn chart before the parameter scope commits them.
+  function prepareLink(host, link, candidate) {
+    var values = linkValues(link, candidate);
+    if (JSON.stringify(values) === JSON.stringify(link.values)) return function () {};
+    function modelFor(chart) {
+      var previous = link.values;
+      link.values = values;
+      try { return carryModel(chart.model, chartModel(host, chart.spec)); } finally { link.values = previous; }
+    }
+    var chart = charts.get(host);
+    var model = chart && modelFor(chart);
+    if (model && model.errors.length) throw new Error('Chart ' + (host.id ? '"' + host.id + '" ' : '') + model.errors.join(' '));
+    if (model) linkedView(model, values);
+    var spec = chart && chart.spec;
+    return function () {
+      link.values = values;
+      var current = charts.get(host);
+      if (!current) return;
+      // An earlier stage of the same update may have replaced the data.
+      var next = current === chart && current.spec === spec ? model : modelFor(current);
+      if (next.errors.length) return;
+      current.replace(current.spec, next, 'parameter');
+      if (current.controller) current.controller.change('parameter');
+    };
+  }
+
+  // Source-derived model fields that a recomputed model keeps.
+  function carryModel(before, model) {
+    ['filterSeries', 'noMatches'].forEach(function (name) { if (before[name] !== undefined) model[name] = before[name]; });
+    if (before.toggles) model.toggles = model.series.length > 0;
+    model.series.forEach(function (s) {
+      var old = before.series.find(function (o) { return o.key === s.key; });
+      if (old && old.index !== undefined) s.index = old.index;
+    });
     return model;
   }
 
@@ -3126,6 +3279,7 @@
   }
 
   function fromMarkup(host, options) {
+    linkHost(host);
     if (host.hasAttribute('data-df-source')) {
       var input = namedInput(host, options);
       return input ? chartController(host, null, input) : null;
@@ -3449,6 +3603,7 @@
       existing.api.update(spec);
       return existing.api;
     }
+    linkHost(host);
     var model = chartModel(host, spec || {});
     if (!report(model, host)) return null;
     var original = { spec: copyChart(spec || {}), model: model, table: null };

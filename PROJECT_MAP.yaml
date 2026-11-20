@@ -20,7 +20,7 @@ docform/: Copyable offline library folder
     dropdowns.css: Theme-aware popovers, expanded menu branches, and opening and closing transitions
     tabs.css: Tab list and panels with a no-JS fallback
     anim.css: Figure frames, animation controls, and SVG paint utilities
-    params.css: Parameter sliders, single and multiple choices, switches, preset buttons, and bound values
+    params.css: Parameter sliders, single and multiple choices, switches, preset buttons, bound values, and show-when fades
     reveal.css: Scroll reveals, two-way callout slides, and split views with side-gliding panes
     steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus the side-by-side detail layout for standalone cards and figure steps and optional title-only side cards
     detail.css: Standalone detail panes with overlapping, independently scrolling details and the shared hover scrollbar
@@ -58,7 +58,7 @@ docform/: Copyable offline library folder
     dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
     anim.js: Keyed SVG timeline controllers with playback, step subscriptions, and figure-step integration
-    params.js: Named parameter scopes with multiple-choice controls, presets, text bindings, atomic updates, Reset, and subscriptions
+    params.js: Named parameter scopes with multiple-choice controls, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, one-time data-df-reveal fade-ins, and split panes
     steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, and inert details, both usable as detail-pane sources
     detail.js: Shared detail panes keyed to card panels, figure steps, pipelines, or selection groups, plus inert-detail and scrollbar helpers
@@ -69,7 +69,7 @@ docform/: Copyable offline library folder
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: S-key search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
-    chart.js: SVG line, scatter, pie, and vertical or horizontal grouped, stacked, and percent bar charts with default-on keyed tweens and scroll entrances, add-on chart type, scale, and legend registration, named data mappings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
+    chart.js: SVG line, scatter, pie, and vertical or horizontal grouped, stacked, and percent bar charts with default-on keyed tweens and scroll entrances, add-on chart type, scale, and legend registration, named data mappings, declarative parameter bindings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
     chart-intervals.js: Ranked dot and lollipop plots with supplied intervals and dodged series in either orientation
     chart-histogram.js: Raw and pre-binned distributions with live binning, continuous log axes, and overlaid or stacked bars
     chart-heatmap.js: Matrix or record heatmaps with sequential, diverging, and log colour scales, a brushable value-range scale, and marching-squares contours

@@ -6,6 +6,81 @@
   <title>Report results · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"chart": true, "chart-playback": true, "results": true, "matrix": true, "scenarios": true, "parameters": true, "dropzone": true},
+      "parameterScopes": {
+        "report-filter": {
+          "groups": {
+            "type": "multiselect",
+            "choices": [
+              {"value": "setup", "label": "Setup"},
+              {"value": "layout", "label": "Layout"},
+              {"value": "reading", "label": "Reading"},
+              {"value": "interact", "label": "Interaction"},
+              {"value": "data", "label": "Data"}
+            ],
+            "default": ["setup", "layout", "reading", "interact", "data"]
+          }
+        }
+      },
+      "options": {
+        "chart": {
+          "instances": {
+            "report-chart": {
+              "mapping": {
+                "x": "group",
+                "series": [{"key": "count", "field": "references", "label": "References"}]
+              },
+              "filter": {"scope": "report-filter", "fields": {"groups": "group"}}
+            }
+          }
+        },
+        "results": {
+          "instances": {
+            "report-table": {"filter": {"scope": "report-filter", "fields": {"groups": "group"}}}
+          }
+        },
+        "matrix": {
+          "instances": {
+            "coverage-matrix": {
+              "mapping": {
+                "row": "part",
+                "column": "scope",
+                "rows": [
+                  {"key": "included", "label": "Included"},
+                  {"key": "remaining", "label": "Still to cover"}
+                ],
+                "columns": [
+                  {"key": "opening", "label": "Setup and Layout"},
+                  {"key": "reading", "label": "Through Reading"},
+                  {"key": "full", "label": "All groups"}
+                ],
+                "measures": [
+                  {"key": "count", "field": "count", "label": "Reference count", "range": [0, 45]},
+                  {"key": "share", "field": "share", "label": "Share of all references", "unit": "%", "range": [0, 100]}
+                ]
+              }
+            }
+          }
+        },
+        "scenarios": {
+          "instances": {
+            "report-scenarios": {
+              "mapping": {
+                "recordKey": "scope",
+                "baselineKey": "opening",
+                "variantKeys": ["reading", "full"],
+                "labels": {"opening": "Setup and Layout", "reading": "Through Reading", "full": "All groups"},
+                "conditions": [{"field": "groups", "label": "Groups included"}],
+                "outcomes": [{"field": "total", "label": "References covered"}]
+              }
+            }
+          }
+        }
+      }
+    }
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -17,30 +92,134 @@
     <header>
       <p class="df-eyebrow">Recipes</p>
       <h1>Report results</h1>
-      <p>Present measured results so readers can check them and explore them. This recipe combines named data, charts, playback, results tables, comparisons, parameters, and dropzones.</p>
+      <p>Present measured results so readers can check them and explore them. This recipe combines named data, <span data-df-term="chart">charts</span>, playback, <span data-df-term="results table">results tables</span>, comparisons, <span data-df-term="parameter">parameters</span>, and <span data-df-term="dropzone">dropzones</span>.</p>
       <dl class="df-fields">
         <dt>Goal</dt><dd>Share results readers can check and explore</dd>
-        <dt>Combines</dt><dd>Named data sources, SVG charts, guided chart playback, results tables, evaluation matrices, scenario comparisons, parameters, file dropzones</dd>
+        <dt>Combines</dt><dd>Named data sources, <span data-df-term="SVG">SVG</span> charts, guided chart playback, results tables, evaluation matrices, scenario comparisons, parameters, file dropzones</dd>
         <dt>Reading time</dt><dd>About 10 minutes</dd>
       </dl>
     </header>
 
     <h2 id="the-goal">The goal</h2>
-    <p>What the finished page should do for its reader.</p>
+    <p>Show how the 45 references in a snapshot of DocForm’s library are distributed across five groups. A reader should be able to check a count, compare groups, and see how much a shorter reading plan would cover.</p>
 
-    <h2 id="build-it-up">Build it up</h2>
-    <figure id="build-it-up-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>The page assembled one feature at a time. The caption will say what to notice.</figcaption>
+    <h2 id="build-it-up">Start with counts readers can check</h2>
+    <figure id="build-it-up-demo" data-df-no-zoom>
+      <div class="df-params" data-df-parameter-scope="report-filter">
+        <div data-df-parameter="groups" data-df-parameter-label="Groups to show"></div>
+      </div>
+      <div id="report-chart" data-df-chart="bar" data-df-source="Reference counts" data-df-y-label="References">
+        <table>
+          <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>
+          <tbody>
+            <tr><td>Setup</td><td>3</td></tr>
+            <tr><td>Layout</td><td>7</td></tr>
+            <tr><td>Reading</td><td>13</td></tr>
+            <tr><td>Interaction</td><td>13</td></tr>
+            <tr><td>Data</td><td>9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <table id="report-table" data-df-results data-df-source="Reference counts">
+        <caption>Exact counts for the visible groups</caption>
+        <thead><tr><th scope="col" data-df-field="group">Group</th><th scope="col" data-df-field="references" data-df-best="max">References</th></tr></thead>
+        <tbody>
+          <tr><td>Setup</td><td>3</td></tr>
+          <tr><td>Layout</td><td>7</td></tr>
+          <tr><td>Reading</td><td>13</td></tr>
+          <tr><td>Interaction</td><td>13</td></tr>
+          <tr><td>Data</td><td>9</td></tr>
+        </tbody>
+      </table>
+      <figcaption>Reading and Interaction were tied at 13 references each in this snapshot. The chart shows relative size, and the table gives exact values.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Clear Reading and Interaction in Groups to show. Their bars and rows disappear together. Sort the table by References to compare the remaining groups, then select all five again.</p>
+    <p>Use <strong>Named sources and <span data-df-term="data view">data views</span></strong> to give several views one named set of <span data-df-term="record">records</span>. Here, the <strong>SVG chart</strong> and <strong>Results table</strong> both read Reference counts. <strong>Parameters</strong> let the reader change a setting, in this case which groups both views show.</p>
+
+    <h2 id="tell-the-story">Show how the total builds</h2>
+    <figure data-df-no-zoom>
+      <ol id="coverage-playback" data-df-chart-playback data-df-target="coverage-chart" data-df-duration="1600">
+        <li data-df-key="setup" data-df-x="1"><strong data-df-step-label>Start with Setup.</strong> The first group covers 3 references.</li>
+        <li data-df-key="reading" data-df-x="3"><strong data-df-step-label>Continue through Reading.</strong> Layout and Reading take the running total to 23.</li>
+        <li data-df-key="full" data-df-x="5"><strong data-df-step-label>Cover all five groups.</strong> Interaction and Data bring the total to 45.</li>
+      </ol>
+      <div id="coverage-chart" data-df-chart="line" data-df-x-label="Groups included" data-df-y-label="References so far">
+        <table>
+          <thead><tr><th scope="col">Groups included</th><th scope="col">References so far</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>3</td></tr>
+            <tr><td>2</td><td>10</td></tr>
+            <tr><td>3</td><td>23</td></tr>
+            <tr><td>4</td><td>36</td></tr>
+            <tr><td>5</td><td>45</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Each point adds the next group’s references. The horizontal scale counts groups in reading order.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Use Play to watch the count build, or use Next to move between notes one at a time. <strong>Guided chart playback</strong> gives each note a point where it can explain what changed.</p>
+
+    <h2 id="compare-coverage">Compare three reading plans</h2>
+    <script type="application/json" data-df-source="Coverage measures">
+      [
+        {"part": "included", "scope": "opening", "count": 10, "share": 22.2},
+        {"part": "remaining", "scope": "opening", "count": 35, "share": 77.8},
+        {"part": "included", "scope": "reading", "count": 23, "share": 51.1},
+        {"part": "remaining", "scope": "reading", "count": 22, "share": 48.9},
+        {"part": "included", "scope": "full", "count": 45, "share": 100},
+        {"part": "remaining", "scope": "full", "count": 0, "share": 0}
+      ]
+    </script>
+    <table id="coverage-matrix" data-df-matrix data-df-source="Coverage measures">
+      <caption>References included and remaining for each reading plan</caption>
+      <thead><tr><th scope="col">Coverage</th><th scope="col">Setup and Layout</th><th scope="col">Through Reading</th><th scope="col">All groups</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Included</th><td>10</td><td>23</td><td>45</td></tr>
+        <tr><th scope="row">Still to cover</th><td>35</td><td>22</td><td>0</td></tr>
+      </tbody>
+    </table>
+    <script type="application/json" data-df-source="Coverage plans">
+      [
+        {"scope": "opening", "groups": "Setup and Layout", "total": 10},
+        {"scope": "reading", "groups": "Setup, Layout, and Reading", "total": 23},
+        {"scope": "full", "groups": "Setup, Layout, Reading, Interaction, and Data", "total": 45}
+      ]
+    </script>
+    <table id="report-scenarios" data-df-scenarios="configurations" data-df-source="Coverage plans">
+      <caption>What each reading plan includes and how many references it covers</caption>
+      <thead><tr><th scope="col">Measure</th><th scope="col">Unit</th><th scope="col">Setup and Layout</th><th scope="col">Through Reading</th><th scope="col">All groups</th></tr></thead>
+      <tbody>
+        <tr data-df-condition><th scope="row">Groups included</th><td></td><td>Setup and Layout</td><td>Setup, Layout, and Reading</td><td>Setup, Layout, Reading, Interaction, and Data</td></tr>
+        <tr><th scope="row">References covered</th><td></td><td>10</td><td>23</td><td>45</td></tr>
+      </tbody>
+    </table>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>In the <strong>Evaluation matrix</strong>, change Reference count to Share of all references. In the <strong>Scenario comparison</strong>, choose All groups to compare it with the starting plan, Setup and Layout. The matrix shows proportions at a glance. The comparison tells you which groups account for the difference.</p>
+
+    <h2 id="replace-the-counts">Load a different set of counts</h2>
+    <div data-df-dropzone data-df-accept="csv" data-df-target-source="Reference counts">
+      <p>Choose or drop a CSV file, a small table saved as plain text.</p>
+    </div>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p><a href="../../assets/samples/setup-and-layout.csv" download>Download the Setup and Layout sample</a>, then choose it in the <strong>File dropzone</strong>. The chart and results table both show just those two groups, subject to the selections above. Press Reset beside the file chooser to restore the original counts.</p>
+    <p>The dropzone replaces the shared source for the current page. The playback and plan comparisons use the original snapshot so their notes and totals stay together.</p>
 
     <h2 id="features-used">Features used</h2>
-    <p>Links to the page for each feature in this recipe.</p>
+    <ul>
+      <li><a href="../data/sources.html">Named sources and data views</a> feed the <a href="../data/charts.html">SVG chart</a> and <a href="../data/tables.html#results">Results table</a>. <a href="../explain/parameters.html">Parameters</a> filter both.</li>
+      <li><a href="../data/playback.html">Guided chart playback</a> shows how each group contributes to the total.</li>
+      <li><a href="../data/comparisons.html">Evaluation matrices and scenario comparisons</a> show what each plan covers.</li>
+      <li><a href="../data/dropzones.html">File dropzones</a> let readers supply their own data.</li>
+    </ul>
 
     <h2 id="hierarchy-walkthrough">Hierarchy walkthrough</h2>
-    <p>The page's loud, strong, and quiet elements, and why each one earns its place.</p>
+    <dl class="df-fields">
+      <dt>Loud</dt><dd>The best-value emphasis and matrix shading mark the numbers worth comparing first.</dd>
+      <dt>Strong</dt><dd>Charts give shape to the counts, and tables hold the values readers may want to check.</dd>
+      <dt>Quiet</dt><dd>Captions and short notes explain what the views count and which figures come from the fixed snapshot.</dd>
+    </dl>
   </main>
 </body>
 </html>

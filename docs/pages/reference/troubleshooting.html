@@ -17,7 +17,7 @@
     <header>
       <p class="df-eyebrow">Reference</p>
       <h1>When something looks wrong</h1>
-      <p>Most problems on a DocForm page have a simple cause and a quick fix. This page lists common symptoms and what to ask for.</p>
+      <p>Find a symptom you recognise and see what you or your agent can check.</p>
       <dl class="df-fields">
         <dt>Use it to</dt><dd>Match a symptom to its fix</dd>
         <dt>Reading time</dt><dd>About 5 minutes</dd>
@@ -25,16 +25,27 @@
     </header>
 
     <h2 id="symptoms">Common symptoms</h2>
-    <p>Unstyled pages, missing features, and blank figures.</p>
+    <p>Start with what you can see. If you have the page as a file, open it in a browser from the original site folder so it can find the files beside it.</p>
+    <table>
+      <thead><tr><th scope="col">What you see</th><th scope="col">What to check</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Plain text and default-looking headings</th><td>Make sure the site folder has been unpacked and the DocForm library folder came with it. See <a href="../start/open-a-site.html#unstyled-page">opening a site</a>.</td></tr>
+        <tr><th scope="row">Text looks right, but the controls do nothing</th><td>Open the original page in a browser rather than a file preview. Ask the agent to check whether the browser ran the page's scripts.</td></tr>
+        <tr><th scope="row">A single feature is missing</th><td>Check the <a href="features.html">feature directory</a> to see whether the feature is on request and what it needs. Ask the agent to check the page settings.</td></tr>
+        <tr><th scope="row">A chart or figure is blank</th><td>Ask the agent to check that its image or data is present, the data can be read, and any prepared copy is current. If a file dropzone changed the view, try Reset.</td></tr>
+      </tbody>
+    </table>
 
     <h2 id="reading-problem-reports">Problem reports</h2>
-    <p>Where DocForm says what went wrong.</p>
+    <p>A problem report may appear beside a broken view. Copy the wording or take a picture of it. Include the page title, the section, and what you did just before it happened.</p>
+    <p>Some reports are recorded in the <span data-df-tip="A panel in the browser that shows messages from the current page.">browser console</span>. If the page shows no message, give your agent the same details and ask for the recorded reports to be checked. See <a href="behind-the-scenes.html#problem-reports">what a report can contain</a>.</p>
 
     <h2 id="stale-search">Stale search or glossary</h2>
-    <p>When search or the glossary misses recent changes.</p>
+    <p>If search finds a new phrase on its own page but misses it from other pages, the site search index may be stale. A glossary entry can also show its shared definition while its Used on links miss new pages or still point at renamed sections.</p>
+    <p>Ask your agent to <span data-df-term>regenerate</span> the search index with the offline asset tool. Then reopen the page and try again. See <a href="offline-tools.html#search-index">how the tool prepares the index</a>. If a shared definition itself is wrong, ask the agent to check the site settings too.</p>
 
     <h2 id="older-pages">Pages from older DocForm versions</h2>
-    <p>How an agent can bring older pages up to date.</p>
+    <p>Older pages may have been built for a different version of DocForm. If a feature stops working after the library is replaced, ask your agent to update the page and its settings to work with the new version. Give them the original site folder and an example of what changed so they can check the result against the original.</p>
   </main>
 </body>
 </html>

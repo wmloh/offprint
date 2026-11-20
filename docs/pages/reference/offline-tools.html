@@ -25,16 +25,29 @@
     </header>
 
     <h2 id="what-it-does">What the asset tool does</h2>
-    <p>Checking each prepared file and rebuilding the ones that are out of date.</p>
+    <p>Open the <a href="../../../docform/tools/assets.html">offline asset tool</a>, a page for checking and rebuilding your prepared files. Choose the folder containing your site. The tool reads the site settings, finds the pages and data they name, and compares each prepared file with the version it would make from those inputs today.</p>
+    <dl class="df-fields">
+      <dt>Current</dt><dd>The prepared file matches the current inputs.</dd>
+      <dt>Missing</dt><dd>The prepared file has yet to be saved where the site expects it.</dd>
+      <dt>Stale</dt><dd>The saved file is out of date and can be rebuilt.</dd>
+      <dt>Blocked</dt><dd>The tool needs a correction first, such as restoring a missing source file.</dd>
+    </dl>
+    <p>Choose the files to regenerate. Where the browser offers save access, the tool can save them into the site folder. Otherwise it downloads them and shows where each belongs. The files stay on your device.</p>
 
     <h2 id="search-index">The search index</h2>
-    <p>How site-wide search and the glossary's used-on links are prepared.</p>
+    <p>The search index collects written page text, headings, term uses, and definitions attached to words on individual pages. Search reads the index to find matches on other pages. Navigation and link previews use it too, and the glossary uses it to show where terms were used.</p>
+    <p>Search can still read the current page directly. This explains why a new heading may appear in search while you are on that page and be missing when you search from another page.</p>
 
     <h2 id="data-files">Offline data files</h2>
-    <p>How data files are packaged so pages can read them offline.</p>
+    <p>The Data file wrapper packages a CSV, JSON, or YAML source so a local page can read it. The tool checks that the source can be read and prepares it under the site's chosen name. The site can then use it in <span data-df-term="chart">charts</span>, tables, and other views.</p>
+    <p>A reader can still open a file temporarily with <a href="../data/dropzones.html">File dropzones</a>. That choice affects the current page. The prepared file stays as it was.</p>
 
     <h2 id="when-to-rerun">When to run it again</h2>
-    <p>The changes that make prepared files stale.</p>
+    <ul>
+      <li>Ask for the search index to be checked after writing, renaming, moving, adding, or removing pages. Check it after changing headings, definitions, or the list of pages included in search.</li>
+      <li>Ask for the data file wrappers to be checked after updating a source file or changing which source a page loads.</li>
+      <li>Before handing the site to someone else, ask for a check of all prepared files. Files marked Missing or Stale are ready to rebuild. Files marked Blocked need the cause fixed first.</li>
+    </ul>
   </main>
 </body>
 </html>

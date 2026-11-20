@@ -6,6 +6,9 @@
   <title>Behind the scenes · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {"features": {"math": true}}
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -25,22 +28,53 @@
     </header>
 
     <h2 id="profiles">Profiles and dependencies</h2>
-    <p>How features are bundled and how one feature brings in another.</p>
+    <p>A profile is a starting set of features.</p>
+    <figure>
+      <table>
+        <thead><tr><th scope="col">Starting choice</th><th scope="col">What the reader gets</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Reading profile</th><td>The standard reading features, including the sidebar, search, and theme switch on this page.</td></tr>
+          <tr><th scope="row">Empty profile</th><td>A starting point with no features selected. The agent chooses what to add.</td></tr>
+          <tr><th scope="row">Empty profile with Zoom tools requested</th><td>Zoom tools, Figure zoom, and the basic page styles they need.</td></tr>
+        </tbody>
+      </table>
+      <figcaption>Two starting choices and an example of one request bringing in several features.</figcaption>
+    </figure>
+    <p>The reading profile is the usual choice. Your agent can add or turn off features to suit a page. A feature that another one needs is called a <span data-df-term>dependency</span>. DocForm automatically includes dependencies, so asking for Zoom tools also brings in Figure zoom.</p>
+    <p>See the <a href="features.html">feature directory</a> for the reading defaults and what each feature needs.</p>
 
     <h2 id="settings">Site and page settings</h2>
-    <p>What is set once for the whole site and what each page can change.</p>
+    <p>The site settings, also called the <span data-df-term="site settings">manifest</span>, hold shared choices. They give the site its title and page order, choose a glossary page, and keep lists of terms, sources, and reusable controls. They also describe which prepared search and data files the site uses and where those files belong.</p>
+    <p>Page settings apply to a single page. This page adds TeX math for the formula below. The other reference pages use the same site settings and keep their own feature choices.</p>
 
     <h2 id="startup">Startup and ready stages</h2>
-    <p>The order in which a page gets ready.</p>
+    <ol>
+      <li><strong>Load.</strong> DocForm reads the settings and opens the selected features and prepared data from the site folder.</li>
+      <li><strong>Set up.</strong> The page can supply its own material, such as the values that will feed a chart.</li>
+      <li><strong>Build.</strong> DocForm applies the features to the page, for instance by drawing the chart and adding its controls.</li>
+      <li><strong>Ready.</strong> The page can now use the finished chart, for example to read which series it displays. DocForm reaches this stage even when it can recover from a problem along the way.</li>
+    </ol>
 
     <h2 id="problem-reports">Problem reports</h2>
-    <p>How DocForm reports a mistake on a page.</p>
+    <figure>
+      <dl class="df-fields">
+        <dt>Feature</dt><dd>Tooltips</dd>
+        <dt>Problem</dt><dd>A word marked for a definition is missing from the shared list.</dd>
+        <dt>Correction</dt><dd>Add a definition to the site settings.</dd>
+      </dl>
+      <figcaption>An illustrative problem report. Notice how it gives the agent a place to start and a suggested correction.</figcaption>
+    </figure>
+    <p>DocForm collects <span data-df-term="problem report">problem reports</span> as the page opens and as readers use it. It also lets the page know when each report arrives. Your agent can inspect the collected reports. Some features show a message right beside the problem, as in the <a href="../data/sources.html#limits-and-errors">unreadable data example</a>.</p>
 
     <h2 id="bundled-readers">Bundled maths and data readers</h2>
-    <p>The helpers included so maths and data work offline.</p>
+    <figure>
+      <div class="df-math" data-df-display>2 + 3 = 5</div>
+      <figcaption><span data-df-term="KaTeX">KaTeX</span> draws the formula using files included with DocForm.</figcaption>
+    </figure>
+    <p>TeX math comes with KaTeX to lay out formulas. DocForm also includes <span data-df-tip="The helper DocForm uses to read YAML data from local files.">js-yaml</span> to read YAML, a way of saving named values and lists in a text file. Both helpers work offline. The <a href="../data/dropzones.html">file dropzones guide</a> has a YAML sample you can open on the page.</p>
 
     <h2 id="starter-settings">Starter settings</h2>
-    <p>The ready-made settings file new sites start from.</p>
+    <p>The starter settings template gives your agent a shared settings file to copy and adapt. It includes the reading profile, a sample page list, and examples of <span data-df-term="role">colour roles</span>, definitions, and sources. Your agent replaces the examples with your site's title, pages, and content.</p>
   </main>
 </body>
 </html>

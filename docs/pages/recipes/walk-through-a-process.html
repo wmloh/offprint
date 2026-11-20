@@ -6,6 +6,12 @@
   <title>Walk through a process · DocForm</title>
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    {
+      "features": {"stepper": true, "cards": true, "tabs": true, "code": true, "selection": true},
+      "selectionGroups": {"outline-review": {"initial": "draft"}}
+    }
+  </script>
   <script src="../../../docform/docform.js"></script>
 </head>
 <body>
@@ -17,7 +23,7 @@
     <header>
       <p class="df-eyebrow">Recipes</p>
       <h1>Walk through a process</h1>
-      <p>Guide a reader through a procedure one step at a time. This recipe combines steppers, card panels, tabs, annotated code, and linked selection.</p>
+      <p>Guide a reader through a procedure one step at a time. This recipe combines <span data-df-term="stepper">steppers</span>, <span data-df-term="card panel">card panels</span>, tabs, annotated code, and linked selection.</p>
       <dl class="df-fields">
         <dt>Goal</dt><dd>Take a reader through a procedure in order</dd>
         <dt>Combines</dt><dd>Worked-example steppers, card panels, tabs, code, linked selection</dd>
@@ -26,21 +32,82 @@
     </header>
 
     <h2 id="the-goal">The goal</h2>
-    <p>What the finished page should do for its reader.</p>
+    <p>Take a reader through revising the headings of a sample DocForm page. The finished outline should tell someone where to start, how to move around, and how to find a section.</p>
 
-    <h2 id="build-it-up">Build it up</h2>
-    <figure id="build-it-up-demo">
-      <p>Live demo coming soon.</p>
-      <figcaption>The page assembled one feature at a time. The caption will say what to notice.</figcaption>
+    <h2 id="build-it-up">Follow the revision</h2>
+    <figure id="build-it-up-demo" data-df-no-zoom>
+      <ol id="outline-review-steps" data-df-stepper data-df-selection-group="outline-review">
+        <li data-df-key="draft"><strong data-df-step-label>Read the draft.</strong> Check what each heading promises.</li>
+        <li data-df-key="changes"><strong data-df-step-label>Review the changes.</strong> Look for a more useful name for the middle section.</li>
+        <li data-df-key="preview"><strong data-df-step-label>Read the finished outline.</strong> Check that the three headings still make sense in order.</li>
+      </ol>
+      <div class="df-tabs" data-df-selection-group="outline-review">
+        <div data-df-tab="Draft" data-df-key="draft">
+          <pre data-df-no-search data-df-annotation-list="draft-heading-notes"><code>Open a site  # (1)
+More things  # (2)
+Find a section</code></pre>
+          <ol id="draft-heading-notes">
+            <li>This heading names the reader’s first action.</li>
+            <li>The reader has to open this section to discover that it explains how to move around the site.</li>
+          </ol>
+        </div>
+        <div data-df-tab="Changes" data-df-key="changes">
+          <div class="df-diff" data-df-no-search>
+            <pre data-df-diff="before">Open a site
+More things
+Find a section</pre>
+            <pre data-df-diff="after">Open a site
+Move around the site
+Find a section</pre>
+          </div>
+        </div>
+        <div data-df-tab="Finished outline" data-df-key="preview">
+          <ol>
+            <li>Open a site</li>
+            <li>Move around the site</li>
+            <li>Find a section</li>
+          </ol>
+        </div>
+      </div>
+      <figcaption>Each step opens the matching view of an illustrative DocForm outline. The draft has numbered notes, and Changes marks the heading that was replaced.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>A short prompt will say what to hover, click, or press here.</p>
+    <p>Point at a circled number in Draft or focus it with <kbd>Tab</kbd> to see its annotation, a note about that line. Press Next and find the minus and plus in Changes. That view is a <strong>diff</strong>, which shows what was removed or added. Choose Finished outline directly and watch the stepper catch up.</p>
+    <p>The <strong>worked-example stepper</strong> sets the order. <strong>Tabs</strong> let readers jump straight to a view they want to revisit. <strong>Linked selection</strong> keeps both controls on the same stage. The <strong>Code</strong> feature displays the exact draft text, annotations, and changes. Here it displays heading text from the example.</p>
+
+    <h2 id="review-checks">Keep reusable checks nearby</h2>
+    <figure data-df-no-zoom>
+      <div class="df-card-panel">
+        <div class="df-step-panel">
+          <p class="df-step-heading" id="review-cards-title">Checks for any heading</p>
+          <div class="df-step-list" aria-labelledby="review-cards-title">
+            <button type="button" data-df-key="specific" data-df-detail="review-specific">Name the action</button>
+            <button type="button" data-df-key="order" data-df-detail="review-order">Check the order</button>
+          </div>
+        </div>
+        <div class="df-step-details">
+          <div id="review-specific"><p>Say what the reader will do or find under the heading. “Move around the site” gives a clearer promise than “More things”.</p></div>
+          <div id="review-order"><p>Read the headings as a list. Put “Open a site” ahead of any action that needs the site to be open.</p></div>
+        </div>
+      </div>
+      <figcaption>These checks apply to any draft, so the card panel stays available at every stage.</figcaption>
+    </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Choose Check the order and compare it with the finished outline above. The procedure stays where you left it.</p>
 
     <h2 id="features-used">Features used</h2>
-    <p>Links to the page for each feature in this recipe.</p>
+    <ul>
+      <li><a href="../explain/steppers.html">Worked-example steppers</a>, <a href="../explain/tabs.html">Tabs</a>, and <a href="../explain/selection.html">Linked selection</a> connect each stage with its view.</li>
+      <li><a href="../write/code.html">Code</a> shows the draft with annotations and the changes in a diff.</li>
+      <li><a href="../explain/cards.html">Card panels</a> keep reusable checks close to the worked example.</li>
+    </ul>
 
     <h2 id="hierarchy-walkthrough">Hierarchy walkthrough</h2>
-    <p>The page's loud, strong, and quiet elements, and why each one earns its place.</p>
+    <dl class="df-fields">
+      <dt>Loud</dt><dd>The active tab and the lines marked added or removed show the reader where to look for the current change.</dd>
+      <dt>Strong</dt><dd>The stepper, tab panels, and code blocks give each stage a stable place. The separate card panel groups the checks that apply throughout.</dd>
+      <dt>Quiet</dt><dd>Short directions and captions explain how to read each view and leave room for the draft and its changes.</dd>
+    </dl>
   </main>
 </body>
 </html>

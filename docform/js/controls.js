@@ -398,9 +398,9 @@
       var searchButton = pill.appendChild(make('button', 'df-controls-btn df-controls-search'));
       searchButton.type = 'button';
       searchButton.innerHTML = DocForm.search.icon;
-      searchButton.setAttribute('aria-keyshortcuts', 'Control+K Meta+K');
+      searchButton.setAttribute('aria-keyshortcuts', 'S');
       searchButton.setAttribute('aria-label', 'Search');
-      searchButton.title = 'Search (Ctrl+K)';
+      searchButton.title = 'Search (S)';
       searchButton.addEventListener('click', function () { DocForm.search.open(searchButton); });
     }
 

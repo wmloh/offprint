@@ -58,33 +58,39 @@
   font-weight: 600;
 }
 
-/* Without bubble.js, <details> shows as a tinted card with its content open; bubble.js turns each one into a
-   peek bubble (bubble.css). */
+/* Peek-bubble candidates show their content before enhancement. Explicit opt-outs and nested disclosures
+   keep the browser's disclosure marker and open/closed behaviour. */
 .df-page details {
   margin: var(--df-space-4) 0;
   padding: 0.8em 1.15em;
   border-radius: var(--df-radius-lg);
   background: var(--df-accent-bg, var(--df-purple-bg));
+
+  &:not(:where(details details, [data-df-no-bubble=""], [data-df-no-bubble="true"],
+    [data-df-no-bubble=""] *, [data-df-no-bubble="true"] *)) {
+    & > summary {
+      display: block;
+      list-style: none;
+    }
+
+    & > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    &::details-content {
+      content-visibility: visible;
+    }
+  }
 }
 
 .df-page summary {
-  display: block;
-  list-style: none;
   color: var(--df-accent, var(--df-purple));
   font-weight: 600;
-}
-
-.df-page summary::-webkit-details-marker {
-  display: none;
 }
 
 .df-page summary > :is(h1, h2, h3, h4, h5, h6, p) {
   display: inline;
   margin: 0;
-}
-
-.df-page details::details-content {
-  content-visibility: visible;
 }
 
 .df-page details > :last-child {

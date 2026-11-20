@@ -1,4 +1,4 @@
-/* Ctrl+K search palette from search.js: a frosted dialog with a results list. */
+/* S-key search palette from search.js: a frosted dialog with a results list. */
 .df-search {
   width: min(640px, calc(100vw - 32px));
   max-height: min(560px, calc(100vh - 96px));

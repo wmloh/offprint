@@ -1,4 +1,4 @@
-// Ctrl+K search palette over the manifest's pages, read from a search index loaded as a script global.
+// S-key search palette over the manifest's pages, read from a search index loaded as a script global.
 (function (root) {
   'use strict';
 
@@ -496,8 +496,11 @@
   }
 
   function isShortcut(event) {
-    return !!(event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey &&
-      typeof event.key === 'string' && event.key.toLowerCase() === 'k';
+    var target = event && event.target;
+    var editable = !!(target && (target.isContentEditable ||
+      typeof target.closest === 'function' && target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]')));
+    return !!event && !event.defaultPrevented && !event.ctrlKey && !event.metaKey && !event.altKey &&
+      !event.isComposing && !editable && typeof event.key === 'string' && event.key.toLowerCase() === 's';
   }
 
   // Indexed pages with resolved URLs, for other modules such as the sidebar and glossary:

@@ -56,12 +56,19 @@ test('highlights mark every token without overlaps, and snippets centre the firs
   assert.equal(search.snippet('short text', ['x']), 'short text');
 });
 
-test('Ctrl+K and Cmd+K open the palette, other chords do not', () => {
+test('S opens the palette outside editable fields, without modifiers, or after another handler', () => {
   const search = load();
-  assert.equal(search.isShortcut({ key: 'k', ctrlKey: true }), true);
-  assert.equal(search.isShortcut({ key: 'K', metaKey: true }), true);
-  assert.equal(search.isShortcut({ key: 'k', ctrlKey: true, shiftKey: true }), false);
-  assert.equal(search.isShortcut({ key: 'k' }), false);
+  const field = { closest: (selector) => selector.includes('input') ? {} : null };
+  assert.equal(search.isShortcut({ key: 's' }), true);
+  assert.equal(search.isShortcut({ key: 'S', shiftKey: true }), true);
+  assert.equal(search.isShortcut({ key: 's', ctrlKey: true }), false);
+  assert.equal(search.isShortcut({ key: 's', metaKey: true }), false);
+  assert.equal(search.isShortcut({ key: 's', altKey: true }), false);
+  assert.equal(search.isShortcut({ key: 's', defaultPrevented: true }), false);
+  assert.equal(search.isShortcut({ key: 's', isComposing: true }), false);
+  assert.equal(search.isShortcut({ key: 's', target: field }), false);
+  assert.equal(search.isShortcut({ key: 's', target: { isContentEditable: true } }), false);
+  assert.equal(search.isShortcut({ key: 'k', ctrlKey: true }), false);
 });
 
 test('indexed pages are listed with URLs resolved against the manifest base', () => {

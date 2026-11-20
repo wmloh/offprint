@@ -2614,6 +2614,16 @@
     var playback = playbackFor(chart);
     if (!playback) return;
     var reference = charts.get(playback.reference);
+    if (playback.state) {
+      var restored = playback.reconcile([reference && reference.model], origin);
+      if (reference && restored.state) {
+        try { assignView(reference, linkedView(reference.model, restored.state)); }
+        catch (error) {
+          // A state that no longer fits the new data keeps the reader view until the next checkpoint.
+        }
+      }
+      return restored.notify;
+    }
     var models = [reference && reference.model];
     if (playback.group) playback.group.members.forEach(function (host) {
       var member = charts.get(host);
@@ -3147,13 +3157,16 @@
     return view;
   }
 
+  function assignView(chart, view) {
+    if (view.hidden) chart.hidden = view.hidden;
+    if (Object.hasOwn(view, 'range')) chart.range = view.range;
+  }
+
   function applyLinkedView(chart, model) {
     var link = links.get(chart.box);
     if (!link || !link.values) return;
     try {
-      var view = linkedView(model, link.values);
-      if (view.hidden) chart.hidden = view.hidden;
-      if (Object.hasOwn(view, 'range')) chart.range = view.range;
+      assignView(chart, linkedView(model, link.values));
     } catch (error) {
       // New data that no longer fits the bound view keeps the reader view until the parameters change.
     }
@@ -3684,6 +3697,42 @@
     else playbacks.set(host, playback);
     return function (x, origin) {
       paintPlayback(playback, x, origin);
+    };
+  };
+  // Keyed-state playback: one chart, no playhead. reconcile([model], origin) returns {state, notify} after each
+  // replacement, and the returned state's series and range are restored before the chart redraws.
+  chart._checkView = linkedView;
+  chart._statePlayback = function (host, reconcile) {
+    var target = charts.get(host);
+    if (!target || playbackFor(target)) return null;
+    playbacks.set(host, { reference: host, group: null, state: true, reconcile: reconcile, x: null });
+    return {
+      view: function () {
+        var own = charts.get(host);
+        if (!own) return null;
+        var shown = own.model.series.filter(function (s) { return !own.hidden[s.key]; });
+        return { series: shown.length === own.model.series.length ? null : shown.map(function (s) { return s.key; }),
+          range: own.range && own.range.slice() };
+      },
+      // Throws when the state does not fit the current data; otherwise tweens to it.
+      apply: function (state, origin) {
+        var own = charts.get(host);
+        if (!own) return;
+        var view = linkedView(own.model, state);
+        var hidden = view.hidden || own.hidden;
+        var range = Object.hasOwn(view, 'range') ? view.range : own.range;
+        var same = Object.keys(hidden).sort().join('\n') === Object.keys(own.hidden).sort().join('\n');
+        if (same && sameRange(range, own.range)) return;
+        function run() {
+          own.hidden = hidden;
+          own.range = range;
+          own.origin = origin;
+          try { refresh(own, true); } finally { own.origin = null; }
+          return true;
+        }
+        if (DocForm._dataViews) DocForm._dataViews.transaction(run);
+        else run();
+      }
     };
   };
   chart._upload = function (api, entry, cap) {

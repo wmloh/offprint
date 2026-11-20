@@ -42,7 +42,7 @@ SVG charts	Draw line, bar (horizontal, stacked, percent), scatter, and pie chart
 Dot and interval plots	Rank categories with dots, lollipop stems, and supplied bounds in either orientation	data/chart-intervals.md
 Histograms	Bin observations into overlaid or stacked bars with optional log axes and live bin counts	data/chart-histogram.md
 Heatmaps	Colour grids from matrices or records with sequential, diverging, or log scales, value-range filtering, and contours	data/chart-heatmap.md
-Guided chart playback	Reveal numeric line charts through keyed checkpoints and HTML notes	data/chart-playback.md
+Guided chart playback	Reveal numeric line charts through keyed checkpoints and HTML notes, or step non-line charts through keyed states	data/chart-playback.md
 Concept tables	Style semantic tables for text comparisons	data/concept-tables.md
 Results tables	Sort, shade, classify, and filter result rows	data/results-tables.md
 Evaluation matrices	Pivot named records into a table of supplied counts and normalized measures	data/matrix.md

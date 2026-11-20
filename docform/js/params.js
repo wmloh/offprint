@@ -1330,6 +1330,10 @@
     var scope = resolveScope(el, false);
     return scope ? scope.link() : null;
   };
+  DocForm._parameterScope = function (el) {
+    var scope = resolveScope(el, false);
+    return scope ? scope.api : null;
+  };
 
   // Stored group keys count only when a participant offers them, so linked choices join the startup domain.
   if (DocForm._items) DocForm._items.scan('parameters', function () {

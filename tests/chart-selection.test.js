@@ -2359,10 +2359,10 @@ test('heatmaps draw contours on numeric grids and read long-form records from a 
 
 const choiceList = (...values) => values.map((value) => ({ value, label: value }));
 
-function linked({ define, groups, animation, build }) {
+function linked({ define, groups, animation, build, modules = [] }) {
   let scope;
   const nodes = {};
-  const env = setup({ groups, animation, modules: ['params', 'chart-histogram', 'chart-heatmap'], enhance(df, document) {
+  const env = setup({ groups, animation, modules: ['params', 'chart-histogram', 'chart-heatmap', ...modules], enhance(df, document) {
     scope = df.parameters.define('look', define);
     build?.((tag, id, attrs) => {
       const el = document.body.appendChild(new Node(tag));
@@ -2530,4 +2530,158 @@ test('select and multiselect parameters publish and follow keys in a selection g
   assert.deepEqual(labels.map((label) => [label.getAttribute('data-df-selection-group'), label.getAttribute('data-df-key')]),
     [['picked', 'a'], ['picked', 'b'], ['picked', 'c']]);
   assert.equal(df.parameters.define('bad', { n: { type: 'range', selectionGroup: 'runs' } }), null);
+});
+
+function stateClock(reduced = false) {
+  const frames = new Map();
+  let id = 0;
+  let now = 0;
+  return {
+    frames,
+    animation: {
+      performance: { now: () => now },
+      matchMedia: () => ({ matches: reduced }),
+      requestAnimationFrame(fn) { frames.set(++id, fn); return id; },
+      cancelAnimationFrame(i) { frames.delete(i); }
+    },
+    advance(ms) {
+      now += ms;
+      const pending = [...frames.values()];
+      frames.clear();
+      pending.forEach((fn) => fn(now));
+    }
+  };
+}
+
+function statePlayback(env, id, target, checkpoints, attrs = {}) {
+  const host = env.document.body.appendChild(new Node('ol'));
+  host.id = id;
+  host.setAttribute('data-df-chart-playback', 'state');
+  host.setAttribute('data-df-target', target);
+  host.setAttribute('data-df-scope', 'look');
+  for (const [name, value] of Object.entries(attrs)) host.setAttribute(name, value);
+  return { host, playback: env.DocForm.chartPlayback.mount(host, checkpoints && { checkpoints }) };
+}
+
+test('state checkpoints carry series, selection, and parameters forward, tween on Play, and step back exactly', () => {
+  const clock = stateClock();
+  const env = linked({ animation: clock.animation, modules: ['chart-playback'],
+    define: { cut: { type: 'range', min: 0, max: 10, default: 1 } } });
+  const bars = env.mount('bars', { reference: 'cut' }, { type: 'bar', toggles: true, selectionGroup: 'picks',
+    referenceLines: [{ axis: 'y', value: 0 }], series: [
+      { key: 'a', name: 'A', data: [{ x: 'x', y: 1, key: 'ax' }, { x: 'y', y: 2, key: 'ay' }] },
+      { key: 'b', name: 'B', data: [{ x: 'x', y: 3, key: 'bx' }, { x: 'y', y: 4, key: 'by' }] }] });
+  const { playback } = statePlayback(env, 'tour', 'bars', [
+    { key: 'focus', label: 'Only B', series: ['b'], params: { cut: 4 } },
+    { key: 'pick', select: 'bx' },
+    { key: 'all', series: null, select: null }
+  ]);
+  const picks = env.selection.group('picks');
+  const status = env.document.body.querySelector('.df-pill-count');
+  const barCount = () => bars.element.all().filter((el) => el.classList.contains('df-chart-bar')).length;
+  assert.deepEqual({ ...playback.snapshot() }, { x: 0, key: null, index: null, total: 3, state: 'paused' });
+
+  assert.equal(playback.play(), true);
+  assert.equal(playback.snapshot().state, 'playing');
+  assert.equal(status.textContent, 'Playing to Only B');
+  assert.equal(bars.visible('a'), false, 'the target state applies as the leg starts');
+  assert.equal(env.scope.get('cut'), 4);
+  assert.equal(bars.model().referenceLines[0].value, 4, 'bound parameters update the chart');
+  assert.equal(barCount(), 4, 'departing bars fade out instead of vanishing');
+  clock.advance(0);
+  clock.advance(500);
+  assert.equal(playback.snapshot().state, 'playing');
+  clock.advance(400);
+  assert.equal(playback.snapshot().key, 'focus');
+  assert.equal(playback.snapshot().state, 'paused');
+  assert.equal(barCount(), 2);
+
+  assert.equal(playback.next(), true);
+  assert.equal(status.textContent, 'Checkpoint 2');
+  assert.equal(picks.get(), 'bx');
+  assert.equal(bars.visible('a'), false, 'unchanged series carry forward');
+  assert.equal(playback.next(), true);
+  assert.equal(playback.snapshot().state, 'ended');
+  assert.equal(bars.visible('a'), true);
+  assert.equal(picks.get(), null);
+  assert.equal(env.scope.get('cut'), 4);
+
+  assert.equal(playback.prev(), true);
+  assert.equal(playback.snapshot().key, 'pick');
+  assert.equal(bars.visible('a'), false, 'Previous restores the earlier state exactly');
+  assert.equal(picks.get(), 'bx');
+  assert.equal(playback.select('focus'), true);
+  assert.equal(picks.get(), null, 'the selection the start had returns before the first select');
+  assert.equal(env.scope.set('cut', 7), true);
+  assert.equal(playback.reset(), true);
+  assert.equal(bars.visible('a'), true);
+  assert.equal(env.scope.get('cut'), 1, 'Reset restores the values captured at mount');
+  assert.equal(playback.snapshot().key, null);
+});
+
+test('state checkpoints validate against the chart and restore the last reached state after data replacement', () => {
+  const clock = stateClock();
+  const env = linked({ animation: clock.animation, modules: ['chart-playback'],
+    define: { bins: { type: 'range', min: 1, max: 20, step: 1, default: 4 } } });
+  const { warnings } = env;
+  const spec = (extra = []) => ({ type: 'histogram', toggles: true, brush: true, series: [
+    { key: 'm', name: 'M', data: [0, 1, 2, 3, 4, 5, 6, 7, 8, ...extra] }, { key: 'n', name: 'N', data: [1, 2, 3] }] });
+  const hist = env.mount('hist', { bins: 'bins' }, spec());
+  env.mount('trend', {}, { type: 'line', data: [[0, 1], [1, 2]] });
+  const rejects = (checkpoints, pattern, attrs) => {
+    assert.equal(statePlayback(env, 'bad' + warnings.length, 'hist', checkpoints, attrs).playback, null);
+    assert.match(warnings.at(-1), pattern);
+  };
+  rejects([{ key: 'k', x: 3, series: ['m'] }], /Invalid checkpoint "k"/);
+  rejects([{ key: 'k' }, { key: 'k' }], /Invalid checkpoint "k"/);
+  rejects([{ key: 'k', range: [1] }], /Invalid checkpoint "k"/);
+  rejects([{ key: 'k', series: ['zzz'] }], /Checkpoint "k" does not fit the chart/);
+  rejects([{ key: 'k', select: 'bin:0:2' }], /own selection group/);
+  rejects([{ key: 'k', params: { nope: 1 } }], /Unknown checkpoint parameter "nope"/);
+  rejects([], /no checkpoints/);
+  rejects([{ key: 'k' }], /Unknown playback mode "steps"/, { 'data-df-chart-playback': 'steps' });
+  assert.equal(statePlayback(env, 'line-state', 'trend', [{ key: 'k' }]).playback, null);
+  assert.match(warnings.at(-1), /non-line chart/);
+
+  const markup = env.document.body.appendChild(new Node('ol'));
+  markup.id = 'markup';
+  markup.setAttribute('data-df-chart-playback', 'state');
+  markup.setAttribute('data-df-target', 'hist');
+  markup.setAttribute('data-df-scope', 'look');
+  const item = (key, state) => {
+    const li = markup.appendChild(new Node('li'));
+    li.setAttribute('data-df-key', key);
+    li.setAttribute('data-df-state', state);
+    return li;
+  };
+  const zoom = item('zoom', '{"range": [2, 6], "params": {"bins": 8}}');
+  const broken = item('one', '{series: m}');
+  assert.equal(env.DocForm.chartPlayback.mount(markup), null);
+  assert.match(warnings.at(-1), /Invalid checkpoint "one"/);
+  broken.setAttribute('data-df-state', '{"series": ["m"]}');
+  const playback = env.DocForm.chartPlayback.mount(markup);
+  assert.ok(playback, 'failed mounts leave the chart free for a valid controller');
+  assert.equal(zoom.hidden, true, 'notes show only at their checkpoint');
+
+  assert.equal(playback.next(), true);
+  assert.equal(zoom.hidden, false);
+  assert.deepEqual([...hist.range()], [2, 6]);
+  assert.equal(hist.model().histogramEdges.length, 9);
+  hist.range([3, 5]);
+  hist.visible('n', false);
+  assert.equal(hist.update(spec([9])), true);
+  assert.deepEqual([...hist.range()], [2, 6], 'replacement restores the reached range');
+  assert.equal(hist.visible('n'), true, 'and the series the reached state shows');
+  assert.equal(playback.snapshot().key, 'zoom');
+
+  assert.equal(playback.play(), true);
+  assert.equal(hist.visible('n'), false);
+  hist.visible('n', true);
+  assert.equal(hist.update(spec([10])), true);
+  assert.equal(playback.snapshot().state, 'playing', 'a leg keeps playing through replacement');
+  assert.equal(hist.visible('n'), false, 'with the state it is heading to');
+  clock.advance(0);
+  clock.advance(900);
+  assert.equal(playback.snapshot().key, 'one');
+  assert.equal(playback.snapshot().state, 'ended');
 });

@@ -2231,3 +2231,128 @@ test('stacked histogram bars restack and retain shared bin widths and counts aft
   assert.deepEqual(c.host.querySelector('.df-chart-table').querySelectorAll('tr').map((row) => row.textContent),
     ['BinB', '[1, 3]2'], 'narrowing into the edge of a bin keeps its original interval and count');
 });
+
+const heatSpec = { type: 'heatmap', x: 'Hour', y: 'Day', value: { label: 'Visits' }, columns: ['9', '10', '11'],
+  rows: ['Mon', 'Tue'], z: [[1, 5, 9], [3, null, 7]], selectionGroup: 'cells' };
+const cellsOf = (c) => byClass(c, 'df-heatmap-cell');
+const cellAt = (c, key) => cellsOf(c).find((el) => el.getAttribute(KEY) === key);
+
+test('heatmap cells read by row and column, move between rows, select keys, and list a grid table', () => {
+  const c = draw(heatSpec, { modules: ['chart-heatmap'] });
+  assert.equal(cellsOf(c).length, 5, 'missing cells draw no mark');
+  assert.ok(c.host.classList.contains('is-heatmap'));
+  const low = cellAt(c, 'cell:Mon:9');
+  const high = cellAt(c, 'cell:Mon:11');
+  assert.ok(+low.getAttribute('fill-opacity') < +high.getAttribute('fill-opacity'));
+  c.fire('keydown', { key: 'Home' });
+  assert.equal(c.tip().textContent, 'Mon · 91Visits');
+  c.fire('keydown', { key: 'ArrowDown' });
+  assert.match(c.tip().textContent, /^Tue · 93/);
+  c.fire('keydown', { key: 'ArrowRight' });
+  assert.match(c.tip().textContent, /^Tue · 117/, 'reading skips the missing cell');
+  c.fire('keydown', { key: 'ArrowUp' });
+  assert.match(c.tip().textContent, /^Mon · 119/);
+  c.fire('keydown', { key: 'Enter' });
+  assert.equal(c.selection.group('cells').get(), 'cell:Mon:11');
+  const x = +low.getAttribute('x') + 2;
+  const y = +low.getAttribute('y') + 2;
+  c.fire('pointermove', { clientX: x, clientY: y });
+  assert.match(c.tip().textContent, /^Mon · 91/);
+  assert.deepEqual([c.api.coords(x, y).x, c.api.coords(x, y).y, c.api.coords(x, y).yText], ['9', 'Mon', 'Mon · 1']);
+  assert.match(c.plot.getAttribute('aria-label'), /^Heatmap of Visits by Day and Hour, 2 rows by 3 columns/);
+  click(c.host.querySelector('.df-chart-toggle'));
+  const table = c.host.querySelector('.df-chart-table');
+  assert.deepEqual(table.querySelectorAll('tr').map((row) => row.textContent), ['Day91011', 'Mon159', 'Tue37']);
+  assert.ok(table.querySelectorAll('td').find((td) => td.getAttribute(KEY) === 'cell:Mon:11').hasAttribute('data-df-selection-active'));
+});
+
+test('the heatmap colour scale filters cells by value range from the pointer, keys, and API', () => {
+  const c = draw(heatSpec, { modules: ['chart-heatmap'] });
+  const events = [];
+  c.host.addEventListener('df:chart:heatmap-range', ({ detail }) => events.push(detail));
+  const dimmed = () => cellsOf(c).filter((el) => el.classList.contains('is-dimmed')).map((el) => el.getAttribute(KEY));
+  const reset = c.host.querySelector('.df-heatmap-filter-reset');
+  assert.equal(reset.hidden, true);
+  c.fire('keydown', { key: 'PageUp' });
+  assert.deepEqual([...c.chart.heatmap.valueRange(c.host)], [8, 9]);
+  assert.deepEqual(dimmed(), ['cell:Mon:9', 'cell:Mon:10', 'cell:Tue:9', 'cell:Tue:11']);
+  assert.equal(reset.hidden, false);
+  assert.equal(c.host.querySelector('.df-heatmap-filter-text').textContent, 'Values 8 – 9');
+  c.fire('keydown', { key: 'PageDown' });
+  assert.deepEqual([...c.chart.heatmap.valueRange(c.host)], [6, 8]);
+  c.fire('keydown', { key: 'Home' });
+  assert.match(c.tip().textContent, /Outside the value range$/);
+  c.fire('keydown', { key: 'Escape' });
+  assert.equal(c.chart.heatmap.valueRange(c.host), null);
+  assert.deepEqual(dimmed(), []);
+
+  const hit = c.host.querySelector('.df-heatmap-scale-hit');
+  const top = +hit.getAttribute('y') + 4;
+  const bottom = top + +hit.getAttribute('height') - 8;
+  const at = (value) => bottom - (value - 1) / 8 * (bottom - top);
+  const pointer = (type, value) => hit.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), {
+    button: 0, clientY: at(value) }));
+  pointer('pointerdown', 6.5);
+  pointer('pointermove', 2.5);
+  assert.deepEqual(dimmed(), ['cell:Mon:9', 'cell:Mon:11', 'cell:Tue:11'], 'dragging dims live');
+  const announced = events.length;
+  pointer('pointerup', 2.5);
+  assert.equal(events.length, announced + 1, 'a drag is announced once when it ends');
+  assert.deepEqual([...events.at(-1).current].map((v) => +v.toFixed(6)), [2.5, 6.5]);
+  pointer('pointerdown', 5);
+  pointer('pointerup', 5);
+  assert.deepEqual([...c.chart.heatmap.valueRange(c.host)], [4, 6], 'a click picks the step between two ticks');
+  pointer('pointerdown', 5);
+  pointer('pointerup', 5);
+  assert.equal(c.chart.heatmap.valueRange(c.host), null, 'clicking the chosen step again shows every value');
+
+  assert.equal(c.chart.heatmap.valueRange(c.host, [6, 2]), false);
+  assert.equal(c.chart.heatmap.valueRange(c.host, [0, 4]), true);
+  assert.deepEqual([...c.chart.heatmap.valueRange(c.host)], [1, 4], 'ranges clamp to the scale');
+  assert.equal(c.api.update({ ...heatSpec, z: [[1, 2, 3], [4, 5, 6]] }), true);
+  assert.deepEqual(dimmed(), ['cell:Tue:10', 'cell:Tue:11'], 'the filter applies to replaced values');
+  click(reset);
+  assert.equal(c.chart.heatmap.valueRange(c.host), null);
+  assert.deepEqual(events.at(-1).origin, 'user');
+});
+
+test('heatmap cells enter by fading in and tween colour strength on updates', () => {
+  const clock = entranceClock();
+  const spec = { type: 'heatmap', scale: { type: 'diverging' }, columns: ['a', 'b'], rows: ['r'], z: [[-2, 2]], selectionGroup: 'g' };
+  const c = draw(spec, { ...clock, modules: ['chart-heatmap'] });
+  const cell = (key) => cellAt(c, key);
+  assert.ok(awaiting(c));
+  clock.scrollTo(c.host);
+  clock.tick(0);
+  assert.equal(cell('cell:r:a').getAttribute('fill-opacity'), '0');
+  clock.tick(1000);
+  assert.equal(cell('cell:r:a').getAttribute('fill-opacity'), '0.9');
+  assert.equal(cell('cell:r:a').getAttribute('data-df-heat'), 'low');
+  assert.equal(c.api.update({ ...spec, z: [[-1, 2]] }), true);
+  clock.tick(1000);
+  clock.tick(1120);
+  const mid = +cell('cell:r:a').getAttribute('fill-opacity');
+  assert.ok(mid > 0.45 && mid < 0.9, 'strength tweens from the displayed value');
+  clock.tick(2000);
+  assert.equal(cell('cell:r:a').getAttribute('fill-opacity'), '0.45');
+});
+
+test('heatmaps draw contours on numeric grids and read long-form records from a named source', () => {
+  const host = new Node('div');
+  host.id = 'grid';
+  host.setAttribute('data-df-chart', 'heatmap');
+  host.setAttribute('data-df-source', 'field');
+  const env = setup({ modules: ['data', 'chart-heatmap'], enhance(df, document, boot) {
+    df.data.define('field', { type: 'csv', text: 'col,row,v,id\n0,0,0,a\n1,0,4,b\n0,1,4,c\n1,1,8,d' });
+    boot.optionLayers = (feature) => feature === 'chart' ?
+      [{ mapping: { x: 'col', y: 'row', z: 'v', pointKey: 'id' }, contours: { levels: [2, 6], labels: true } }] : [];
+    document.body.appendChild(host);
+  } });
+  const api = env.chart.get(host);
+  assert.deepEqual(JSON.parse(JSON.stringify(api.model().heatmap.z)), [[0, 4], [4, 8]]);
+  const contours = host.querySelectorAll('.df-heatmap-contour');
+  assert.deepEqual(contours.map((el) => el.getAttribute('data-df-level')), ['2', '6']);
+  assert.deepEqual(host.querySelectorAll('.df-heatmap-contour-label').map((el) => el.textContent), ['2', '6']);
+  assert.equal(api.model().series[0].points[3].key, 'd');
+  assert.match(host.querySelector('.df-chart-plot').getAttribute('aria-label'), /Contour lines mark levels 2, 6/);
+});

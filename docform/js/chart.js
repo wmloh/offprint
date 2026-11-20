@@ -778,7 +778,8 @@
   // Chart add-on features call DocForm.chart.addon(id, parts) as their script loads. parts.types maps new type names
   // to definitions drawn on a core base type; parts.scales and parts.legends add named scale factories and legend
   // renderers that any chart type can look up. Nothing is registered unless every part is valid.
-  var HOOKS = ['prepare', 'normalize', 'extent', 'draw', 'categoryMarks', 'continuousMarks', 'pick', 'readout', 'table', 'describe'];
+  var HOOKS = ['prepare', 'normalize', 'extent', 'draw', 'categoryMarks', 'continuousMarks', 'pick', 'readout', 'table', 'describe',
+    'keys', 'coords', 'mapFields', 'mapRecords', 'fromTable'];
 
   function addon(feature, parts) {
     var problem = addonProblem(feature, parts);
@@ -1083,8 +1084,10 @@
   // The data position under a point (px, py) of the drawn plot, or null outside the plot area. Continuous values are
   // rounded to what one pixel can tell apart; categorical x gives the category of the band.
   function readAt(model, geom, px, py) {
-    if (!geom || !(geom.y || geom.value) ||
+    var def = addonOf(model);
+    if (!geom || !(geom.y || geom.value || def?.coords) ||
       !(px >= geom.left && px <= geom.right && py >= geom.top && py <= geom.bottom)) return null;
+    if (def?.coords) return def.coords(model, geom, px, py, kit);
     var fine = function (scale, p, log) {
       var v = scale.invert(p);
       var step = Math.abs(scale.invert(p + 1) - v);
@@ -1263,7 +1266,7 @@
   var TWEEN = 240;
   var ENTRANCE = 700;
   var STAGGER = 0.3;
-  var GEOMETRY = ['d', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'x2', 'y1', 'y2', 'width', 'height'];
+  var GEOMETRY = ['d', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'x2', 'y1', 'y2', 'width', 'height', 'fill-opacity'];
   var svgNumber = /[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi;
   var moving = new Set();
   var awaiting = new Set();
@@ -1465,7 +1468,10 @@
         from = 0;
       }
       if (from !== 1) changes.push({ run: fade(next.el, from, 1) });
-      if (from && paintKey(tintOf(before)) !== paintKey(tintOf(next))) {
+      // An entry's own paint name, when given, stands in for its series colour.
+      var repaint = next.paint !== undefined || before.paint !== undefined ? before.paint !== next.paint :
+        paintKey(tintOf(before)) !== paintKey(tintOf(next));
+      if (from && repaint) {
         tints.push({ from: computedPaint(tintOf(before)), el: tintOf(next) });
       }
     });
@@ -2808,6 +2814,8 @@
       if (activate(chart)) event.preventDefault();
     });
     chart.plot.addEventListener('keydown', function (event) {
+      var def = addonOf(chart.model);
+      if (def?.keys && chart.svg && def.keys(chart, event, kit)) return;
       if (keyRange(chart, event)) return;
       if (event.key === 'Escape') return leaveInspection(chart);
       var n = chart.spots.length;
@@ -3100,10 +3108,13 @@
     } else if (table) {
       var cells = DocForm.all('tr', table).map(function (tr) { return DocForm.all('th, td', tr); });
       var keys = cells.map(function (r) { return r.map(function (cell) { return DocForm.data(cell, 'key', '').trim() || null; }); });
-      var type = DocForm.data(host, 'chart', '') === 'pie' ? 'pie' : null;
-      spec = fromTable(cells.map(function (r) { return r.map(cellText); }), type, keys);
+      var named = DocForm.data(host, 'chart', '');
+      var type = named === 'pie' ? 'pie' : null;
+      var tableHook = Object.hasOwn(addons, named) ? addons[named].fromTable : null;
+      var text = cells.map(function (r) { return r.map(cellText); });
+      spec = tableHook ? tableHook(text, keys) : fromTable(text, type, keys);
       var heads = DocForm.all('tr', table)[0];
-      (type !== 'pie' && heads ? DocForm.all('th, td', heads) : []).slice(1).forEach(function (cell, i) {
+      (type !== 'pie' && !tableHook && heads ? DocForm.all('th, td', heads) : []).slice(1).forEach(function (cell, i) {
         var s = spec.series[i];
         if (!s) return;
         s.role = DocForm.data(cell, 'role', null);
@@ -3194,6 +3205,20 @@
 
   function mappedSpec(value, mapping, base, maxRows, parsed, truncate, filter, values) {
     var data = DocForm._dataSource;
+    // Add-on types with their own record shape name the fields they read and build the spec from the records.
+    var custom = typeof base.type === 'string' && Object.hasOwn(addons, base.type) ? addons[base.type] : null;
+    if (custom && custom.mapFields) {
+      var wanted = data.fields(value, custom.mapFields(mapping));
+      if (parsed && parsed.type === 'csv') {
+        var absent = wanted.find(function (key) { return !parsed.columns.includes(key); });
+        if (absent !== undefined) throw new Error('Required CSV chart field ' + JSON.stringify(absent) + ' is missing.');
+      }
+      if (value.length > maxRows) throw new Error('The chart exceeds its ' + maxRows + '-row limit.');
+      var picked = filter ? filter.rows(value, parsed, values) : value;
+      var built = Object.assign({}, base);
+      delete built.data;
+      return { spec: custom.mapRecords(picked, wanted, mapping, built, kit), rows: picked.length, filterSeries: null };
+    }
     var grouped = mapping && mapping.group !== undefined;
     if (grouped) {
       if (!mapping.group || typeof mapping.group !== 'object' || Array.isArray(mapping.group) || mapping.series != null) {
@@ -3474,7 +3499,7 @@
     svg: svg, html: html, paint: paint, legendKey: key, tagKey: tagKey, barPath: barPath, whisker: whisker,
     ticks: ticks, logTicks: logTicks, timeTicks: timeTicks, tickFormat: tickFormat, logTickFormat: logTickFormat,
     format: format, toNumber: toNumber, isNum: isNum, extent: extent, intervalReadout: intervalReadout, row: row,
-    markId: markId, addMark: addMark, scale: chart.scale, COLORS: COLORS
+    markId: markId, addMark: addMark, scale: chart.scale, COLORS: COLORS, CHAR: CHAR, inspect: inspectSpot, hide: hide
   };
   chart.get = function (target) {
     var el = typeof target === 'string' ? document.getElementById(target) : target;

@@ -678,3 +678,14 @@ test('the offline loader enables histogram assets and registers the add-on after
   assert.equal(p.DF.chart.normalize({ type: 'histogram', data: [1, 2] }).addon, 'histogram');
   assert.equal(p.DF.diagnostics.list().length, 0);
 });
+
+test('the offline loader enables heatmap assets and registers the add-on after chart', async () => {
+  const p = page({ entryProfile: 'none', config: { features: { 'chart-heatmap': true } } });
+  await p.start();
+  assert.deepEqual(p.loads.filter(path => path.includes('/chart')), [
+    'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-heatmap.css', 'docform/js/chart-heatmap.js'
+  ]);
+  assert.equal(p.DF._boot.chartFeature('heatmap'), 'chart-heatmap');
+  assert.equal(p.DF.chart.normalize({ type: 'heatmap', z: [[1, 2]] }).addon, 'heatmap');
+  assert.equal(p.DF.diagnostics.list().length, 0);
+});

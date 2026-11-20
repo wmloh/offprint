@@ -1,0 +1,85 @@
+/* Heatmaps from chart-heatmap.js: cells in a palette hue over a neutral backdrop, dimmed cells outside the chosen
+   value range, contour lines with haloed labels, and the side colour scale. */
+.df-chart.is-heatmap {
+  --df-heatmap-high: var(--df-blue);
+  --df-heatmap-low: var(--df-orange);
+}
+
+.df-heatmap-backdrop {
+  fill: var(--df-gray-bg);
+}
+
+.df-heatmap-cell,
+.df-heatmap-swatch,
+.df-heatmap-key > span {
+  fill: var(--df-heatmap-high);
+  background: var(--df-heatmap-high);
+}
+
+:is(.df-heatmap-cell, .df-heatmap-swatch, .df-heatmap-key > span)[data-df-heat="low"] {
+  fill: var(--df-heatmap-low);
+  background: var(--df-heatmap-low);
+}
+
+.df-heatmap-cell {
+  transition: opacity 0.2s ease-out;
+}
+
+.df-heatmap-cell.is-dimmed {
+  opacity: 0.12;
+}
+
+.df-heatmap-cell.is-active {
+  stroke: var(--df-text);
+  stroke-width: 1.5;
+}
+
+.df-heatmap-key {
+  position: relative;
+  overflow: hidden;
+  background: var(--df-gray-bg);
+}
+
+.df-heatmap-key > span {
+  position: absolute;
+  inset: 0;
+}
+
+.df-heatmap-contour {
+  fill: none;
+  stroke: var(--df-text);
+  stroke-opacity: 0.7;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.df-heatmap-contour-label {
+  fill: var(--df-text);
+  font-size: 10px;
+  paint-order: stroke;
+  stroke: var(--df-bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.df-heatmap-scale-tick {
+  stroke: var(--df-border-strong);
+}
+
+.df-heatmap-scale-range {
+  fill: none;
+  stroke: var(--df-text);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.df-heatmap-scale-hit {
+  fill: transparent;
+  cursor: ns-resize;
+}
+
+.df-heatmap-filter-text {
+  font-variant-numeric: tabular-nums;
+}

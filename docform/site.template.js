@@ -16,7 +16,13 @@ window.DocFormSite = {
   ],
   "options": {
     "roles": {
-      "colors": { "definition": "blue", "theorem": "purple", "example": "green", "warning": "red" }
+      "colors": { "definition": "blue", "theorem": "purple", "example": "green", "warning": "red" },
+      "tips": {
+        "definition": "A term defined for use in what follows.",
+        "theorem": "A proven statement.",
+        "example": "A worked instance of an idea.",
+        "warning": "A common mistake or pitfall."
+      }
     },
     "tooltips": {
       "terms": { "vector": "A quantity with magnitude and direction." },

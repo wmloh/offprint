@@ -42,3 +42,15 @@ test('every named colour has text and background tokens and a data-df-color rule
     assert.ok(base.includes(`[data-df-color="${name}" i] { --df-accent: var(--df-${name}); --df-accent-bg: var(--df-${name}-bg); }`), name);
   }
 });
+
+test('role tips keep nonempty text for known roles and warn about the rest', () => {
+  const { DocForm, warnings } = load();
+  const site = DocForm.normalizeSite({ options: { roles: {
+    colors: { Theorem: 'purple', tip: 'yellow' },
+    tips: { THEOREM: ' A proven statement. ', tip: '  ', ghost: 'Unknown.' }
+  } } }, 'file:///x/site.js');
+  assert.deepEqual(JSON.parse(JSON.stringify(site.roleTips)), { theorem: 'A proven statement.' });
+  assert.equal(DocForm.roles.tip('Theorem', site), 'A proven statement.');
+  assert.equal(DocForm.roles.tip('tip', site), null);
+  assert.equal(warnings.length, 2);
+});

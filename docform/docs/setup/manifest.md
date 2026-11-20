@@ -24,6 +24,7 @@ Use one `window.DocFormSite = <JSON object>;` assignment. The asset tool require
 | `glossaryPage` | Path or `{path, title?}`. Defaults to `Glossary` and appends a navigation entry unless an existing page has the same resolved URL ignoring its fragment. |
 | `profile`, `features` | `"reading"` or `"none"` starting profile and a map of feature IDs to booleans. Pages can override site settings. [Feature IDs and dependencies](include-order.md) |
 | `options.roles.colors` | Map of role names to named colours. Trimmed, lowercased keys must match `^[a-z0-9][a-z0-9_-]*$`. Invalid entries warn and are ignored. [Roles](../layout/roles.md) |
+| `options.roles.tips` | Map of role names to nonempty hover text. Tags and legend entries of that role without their own tip show it. Tips for unknown roles or blank text warn and are ignored. [Roles](../layout/roles.md) |
 | `options.tooltips.terms` | Map of terms to definition strings or `{text, title?, more?}`. `more` is author HTML and `text` is plain text with optional inline TeX. [Tooltips](../reading/tooltips.md) |
 | `options.tooltips` | `{autoLink?: boolean, hold?: number}`. Auto-link is off unless `true`. Hold defaults to 600 ms. [Tooltips](../reading/tooltips.md) |
 | `options.math.macros` | KaTeX macro map. Use doubled backslashes in JS string literals, for example `'\\R': '\\mathbb{R}'`. [Math](../reading/math.md) |

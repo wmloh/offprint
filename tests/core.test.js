@@ -30,6 +30,7 @@ test('missing manifest normalizes to empty defaults', () => {
     order: [],
     glossaryPage: null,
     roles: {},
+    roleTips: {},
     glossary: {},
     terms: {},
     macros: {},

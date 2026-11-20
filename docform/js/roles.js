@@ -26,7 +26,14 @@
     return name.replace(/[-_]+/g, ' ').trim();
   }
 
-  function renderLegend(el, roles) {
+  // A legend entry's hover text: the role's manifest tip, or null so tooltips fall back and warn.
+  function roleTip(name, site) {
+    var tips = (site || DocForm.site || {}).roleTips || {};
+    var key = String(name).trim().toLowerCase();
+    return Object.prototype.hasOwnProperty.call(tips, key) ? tips[key] : null;
+  }
+
+  function renderLegend(el, roles, site) {
     var names = Object.keys(roles);
     el.classList.add('df-legend');
     if (!names.length) {
@@ -42,7 +49,11 @@
       var swatch = document.createElement('span');
       item.className = 'df-legend-item';
       item.setAttribute('data-df-role', name);
-      item.title = name + ': ' + roles[name];
+      var tip = roleTip(name, site);
+      // Tooltips show the role tip as a DocForm hover card; without them, the native title stands in.
+      if (DocForm.tooltips) {
+        if (tip) item.setAttribute('data-df-tip', tip);
+      } else item.title = tip || roleLabel(name);
       swatch.className = 'df-legend-swatch';
       swatch.setAttribute('aria-hidden', 'true');
       item.appendChild(swatch);
@@ -69,7 +80,9 @@
       var key = String(name).trim().toLowerCase();
       return map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : null;
     },
-    css: function (colors) { return roleCss(DocForm._normalizeRoles(colors)); }
+    css: function (colors) { return roleCss(DocForm._normalizeRoles(colors)); },
+    tip: roleTip,
+    label: roleLabel
   };
 
   DocForm.register('roles', function (site) {
@@ -81,7 +94,7 @@
       document.head.appendChild(style);
     }
     DocForm.all('[data-df-legend]').forEach(function (el) {
-      if (!DocForm._boot || DocForm._component.flag(el, 'legend', 'roles')) renderLegend(el, site.roles);
+      if (!DocForm._boot || DocForm._component.flag(el, 'legend', 'roles')) renderLegend(el, site.roles, site);
     });
     checkMarkup(site);
   });

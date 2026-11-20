@@ -1,5 +1,6 @@
 // Heatmaps colour a grid of cells from a z matrix or long-form records, with a side colour scale that dims cells
-// outside a value range, and optional contour lines traced by marching squares over complete numeric grids.
+// outside a value range, and optional contour lines traced by marching squares over complete numeric grids, which a
+// legend chip hides and shows.
 (function (root) {
   'use strict';
 
@@ -347,7 +348,7 @@
   function stateOf(chart) {
     var state = states.get(chart);
     if (!state) {
-      state = { range: null, cells: [], steps: [] };
+      state = { range: null, cells: [], steps: [], contours: true, lines: null, contourChoice: null };
       states.set(chart, state);
       hosts.set(chart.box, chart);
     }
@@ -439,6 +440,7 @@
 
     if (info.contours && info.contours.levels.length) {
       var lines = svg('g', { class: 'df-heatmap-contours' }, layer);
+      state.lines = lines;
       var grid = scale.log ? info.z.map(function (row) { return row.map(Math.log10); }) : info.z;
       var px = function (pt) { return [left + cw * (pt[0] + 0.5), top + ch * (pt[1] + 0.5)]; };
       info.contours.levels.forEach(function (level) {
@@ -498,12 +500,34 @@
       return scale.invert((plotB - (clientY - box.top) * k) / (plotB - top));
     });
 
+    if (!(info.contours && info.contours.levels.length)) state.lines = null;
     chart.heatmapGeom = { cw: cw, ch: ch, cols: cols, rows: rows };
     var empty = spots.length ? '' : 'No values to show.';
     var result = { frame: frame, layer: layer, marks: marks, spots: spots, empty: empty,
       geom: { left: left, right: left + plotW, top: top, bottom: plotB } };
     paintRange(chart);
+    paintContours(chart);
     return result;
+  }
+
+  function paintContours(chart) {
+    var state = stateOf(chart);
+    if (state.lines) state.lines.classList.toggle('is-off', !state.contours);
+    if (state.contourChoice) state.contourChoice.show(state.contours ? ['on'] : []);
+  }
+
+  function setContours(chart, on, origin) {
+    var state = stateOf(chart);
+    on = !!on;
+    if (state.contours === on) return true;
+    state.contours = on;
+    paintContours(chart);
+    if (typeof root.CustomEvent === 'function') {
+      chart.box.dispatchEvent(new root.CustomEvent('df:chart:heatmap-contours', { bubbles: true, detail: {
+        current: on, previous: !on, origin: origin
+      } }));
+    }
+    return true;
   }
 
   function clampRange(range, scale) {
@@ -617,7 +641,22 @@
       setRange(chart, null, 'user');
       if (typeof chart.plot.focus === 'function') chart.plot.focus({ preventScroll: true });
     });
+    state.contourChoice = null;
+    var info = chart.model.heatmap;
+    if (info.contours && info.contours.levels.length && DocForm.choices) {
+      // One chip hides and shows every contour line and label together.
+      var swatch = kit.html('span', 'df-chart-key df-heatmap-contour-key');
+      swatch.setAttribute('aria-hidden', 'true');
+      state.contourChoice = DocForm.choices.create({
+        label: 'Contour lines shown', hideLabel: true, multiple: true, display: 'chips',
+        className: 'df-chart-series-toggles df-heatmap-contour-toggle',
+        options: [{ value: 'on', label: 'Contour lines', swatch: swatch }],
+        onChange: function (value) { setContours(chart, value.indexOf('on') >= 0, 'user'); }
+      });
+      el.appendChild(state.contourChoice.el);
+    }
     paintRange(chart);
+    paintContours(chart);
   }
 
   // Up and Down move between rows within a column; Page Up and Page Down step the colour-scale filter.
@@ -728,7 +767,8 @@
       (s.type === 'diverging' ? 'Colours diverge around ' + format(s.mid, model.y) + '.' :
         s.type === 'log' ? 'Colours follow a log scale.' : 'Darker colours mean higher values.') +
       (info.contours && info.contours.levels.length ? ' Contour lines mark levels ' +
-        info.contours.levels.map(function (v) { return format(v, model.y); }).join(', ') + '.' : '') +
+        info.contours.levels.map(function (v) { return format(v, model.y); }).join(', ') +
+        '; the Contour lines chip hides and shows them.' : '') +
       ' Arrow keys read the cells; Up and Down move between rows. Page Up and Page Down show one step of the colour ' +
       'scale at a time, and Escape shows every value again.';
   }
@@ -789,6 +829,17 @@
         return false;
       }
       return setRange(chart, range, 'api');
+    },
+    // Reads or sets whether a heatmap's contour lines show; null or false when the target has no contours.
+    contours: function (target, on) {
+      var host = typeof target === 'string' ? root.document.getElementById(target) : target;
+      var chart = host && hosts.get(host);
+      var info = chart && states.has(chart) && chart.model.addon === 'heatmap' ? chart.model.heatmap : null;
+      if (!info || !info.contours || !info.contours.levels.length) return arguments.length > 1 ? false : null;
+      var state = stateOf(chart);
+      if (arguments.length < 2) return state.contours;
+      if (typeof on !== 'boolean') return false;
+      return setContours(chart, on, 'api');
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

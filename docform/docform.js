@@ -395,6 +395,7 @@
     optionMap('roles', 'colors', function (value) {
       return typeof value === 'string' && DF.colors.includes(value.trim().toLowerCase());
     });
+    optionMap('roles', 'tips', function (value) { return typeof value === 'string' && value.trim() !== ''; });
     optionMap('math', 'macros', function (value) { return typeof value === 'string'; });
     optionMap('tooltips', 'terms', function (value) {
       return typeof value === 'string' || (object(value) && typeof value.text === 'string' &&

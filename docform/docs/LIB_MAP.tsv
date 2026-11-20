@@ -8,7 +8,7 @@ Colour roles	Assign semantic accents and render a legend	layout/roles.md
 Theme	Switch and persist light and dark modes	layout/theme.md
 Navigation	Build the sidebar tree, heading outline, pager, and drawer	layout/navigation.md
 Reading controls	Show progress, focus mode, and sidebar controls	layout/controls.md
-Tags	Label short phrases with inline accents	reading/tags.md
+Tags	Label short phrases with inline accents and required tooltips	reading/tags.md
 Text roles	Set context with eyebrows and pair labels with values in aligned fields	reading/text-roles.md
 Callouts	Emphasize blocks with optional icons and scroll slides	reading/callouts.md
 Peek bubbles	Expand native disclosures into reading-gutter panels	reading/peek-bubbles.md

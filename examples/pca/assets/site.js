@@ -41,6 +41,12 @@ window.DocFormSite = {
         "projection": "purple",
         "decision": "green",
         "alert": "orange"
+      },
+      "tips": {
+        "baseline": "Known-good data and the statistics fitted from it.",
+        "projection": "The PCA basis and the low-rank projection built from it.",
+        "decision": "Thresholds and the choices they drive.",
+        "alert": "Windows or events that need attention."
       }
     },
     "tooltips": {

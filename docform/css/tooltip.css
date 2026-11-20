@@ -13,9 +13,9 @@
   text-decoration-color: currentColor;
 }
 
-/* Tags keep their tooltips and help cursor but never show the dotted underline. */
-.df-tag:is(.df-tip, .df-term),
-.df-tag :is(.df-tip, .df-term) {
+/* Tags and role-legend entries keep their tooltips and help cursor but never show the dotted underline. */
+:is(.df-tag, .df-legend-item):is(.df-tip, .df-term),
+:is(.df-tag, .df-legend-item) :is(.df-tip, .df-term) {
   text-decoration: none;
 }
 

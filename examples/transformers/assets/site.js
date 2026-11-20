@@ -40,6 +40,12 @@ window.DocFormSite = {
         "context": "purple",
         "output": "green",
         "masked": "orange"
+      },
+      "tips": {
+        "input": "What enters the model: token IDs and their embeddings.",
+        "context": "Information mixed in from other positions, such as position vectors and attention.",
+        "output": "What the model produces: logits, probabilities, and sampled tokens.",
+        "masked": "Positions hidden from attention, such as future tokens."
       }
     },
     "tooltips": {

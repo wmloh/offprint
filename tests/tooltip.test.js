@@ -184,3 +184,34 @@ test('tags whose whole label is a glossary term become its anchor unless they ca
   assert.equal(tip.tagTerm(tag('On request', {}, { nested: true }), keys), null);
   assert.equal(tip.tagTerm(tag('On request', {}, { inside: {} }), keys), null);
 });
+
+test('every tag gets a tooltip: own tip or term kept, role tip inherited, otherwise a warned fallback', () => {
+  const { tip, warnings } = load();
+  const tag = (label, attrs = {}, nested = false) => ({
+    textContent: label,
+    attrs: { ...attrs },
+    classes: [],
+    classList: { add(name) { this.owner.classes.push(name); } },
+    hasAttribute(name) { return name in this.attrs; },
+    getAttribute(name) { return name in this.attrs ? this.attrs[name] : null; },
+    setAttribute(name, value) { this.attrs[name] = value; },
+    querySelector: () => (nested ? {} : null)
+  });
+  const tags = [
+    tag('Draft', { 'data-df-tip': 'Not final.' }),
+    tag('Basis', { 'data-df-term': 'basis' }),
+    tag('Wrapped', {}, true),
+    tag('On by default', { 'data-df-role': 'Default' }),
+    tag('Try it', { 'data-df-role': 'try' }),
+    tag(' New  label ')
+  ];
+  tags.forEach((el) => { el.classList.owner = el; });
+  const scope = { querySelectorAll: () => tags };
+  const missing = tip.tipTags(scope, { roleTips: { default: 'On without any setup.' } });
+  assert.deepEqual(tags.map((el) => el.attrs['data-df-tip'] ?? null),
+    ['Not final.', null, null, 'On without any setup.', 'Colour role: try', 'New label']);
+  assert.deepEqual([...missing], [tags[4], tags[5]]);
+  assert.ok(missing.every((el) => el.classes.includes('df-tag-untipped')));
+  assert.equal(warnings.length, 2);
+  assert.match(warnings[0], /Tag "Try it" has no tooltip.*options\.roles\.tips\["try"\]/);
+});

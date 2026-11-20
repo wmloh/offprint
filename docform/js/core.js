@@ -440,6 +440,20 @@
     return roles;
   }
 
+  // Role tips: the hover text that tags and legend entries of a role show unless they carry their own.
+  function normalizeRoleTips(value, roles) {
+    var source = plainObject(value, 'roles.tips');
+    var tips = {};
+    Object.keys(source).forEach(function (name) {
+      var key = name.trim().toLowerCase();
+      var text = typeof source[name] === 'string' ? source[name].trim() : '';
+      if (!hasOwn.call(roles, key)) warnOnce('role-tip:' + key, 'Ignoring the tip for unknown role "' + key + '".');
+      else if (!text) warnOnce('role-tip-text:' + key, 'Ignoring role "' + key + '" tip: use nonempty text.');
+      else tips[key] = text;
+    });
+    return tips;
+  }
+
   // glossaryPage: a path or { path, title } listed last in the page tree, unless the tree already has that page.
   function addGlossaryPage(value, pages, base, order) {
     if (value == null) return null;
@@ -472,6 +486,7 @@
     var search = source.assets && source.assets.search && source.assets.search.output || source.search;
     var order = [];
     var pages = normalizePages(source.pages, base, order, 'pages');
+    var roles = normalizeRoles(options.roles && options.roles.colors !== undefined ? options.roles.colors : source.roles);
     return {
       provided: provided,
       base: base,
@@ -479,7 +494,8 @@
       pages: pages,
       order: order,
       glossaryPage: addGlossaryPage(source.glossaryPage, pages, base, order),
-      roles: normalizeRoles(options.roles && options.roles.colors !== undefined ? options.roles.colors : source.roles),
+      roles: roles,
+      roleTips: normalizeRoleTips(options.roles && options.roles.tips, roles),
       glossary: plainObject(tooltips.terms === undefined ? source.glossary : tooltips.terms, 'glossary'),
       terms: terms,
       macros: plainObject(options.math && options.math.macros !== undefined ? options.math.macros : source.macros, 'macros'),

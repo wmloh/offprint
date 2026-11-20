@@ -120,13 +120,13 @@ const ids = pieces.map(piece => {
       </thead>
       <tbody>
         <tr><th scope="row">Which vocabulary entry the token names</th>
-          <td><span class="df-tag" data-df-color="orange">Token ID</span></td>
+          <td><span class="df-tag" data-df-color="orange" data-df-tip="An integer index into the tokenizer vocabulary.">Token ID</span></td>
           <td>The integer <code>2</code> picks a row in the embedding table.</td></tr>
         <tr><th scope="row">The vector associated with that vocabulary entry</th>
-          <td><span class="df-tag" data-df-role="input">Token embedding</span></td>
+          <td><span class="df-tag" data-df-role="input" data-df-tip="The learned vector stored in the embedding table row for a token ID.">Token embedding</span></td>
           <td>The lookup returns the vector (1, 1) wherever <code>is</code> appears.</td></tr>
         <tr><th scope="row">Where this occurrence sits in the sequence</th>
-          <td><span class="df-tag" data-df-role="context">Position vector</span></td>
+          <td><span class="df-tag" data-df-role="context" data-df-tip="A vector added to the embedding that encodes where the token sits in the sequence.">Position vector</span></td>
           <td>The third slot adds (0.5, 0), giving the attention layer (1.5, 1).</td></tr>
       </tbody>
     </table>

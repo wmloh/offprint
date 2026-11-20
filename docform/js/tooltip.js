@@ -192,6 +192,31 @@
     return made;
   }
 
+  // Every tag and role-legend entry must have a hover tooltip. One without its own tip, term, or glossary match
+  // takes its role's manifest tip; otherwise it warns and falls back to its role name or label, and is returned.
+  var TAGS = '.df-tag, .df-legend-item';
+  function tipTags(scope, site) {
+    var tips = (site && site.roleTips) || {};
+    var missing = [];
+    DocForm.all(TAGS, scope).forEach(function (el) {
+      if (el.hasAttribute('data-df-term') || el.hasAttribute('data-df-tip') ||
+        el.querySelector('[data-df-term], [data-df-tip]')) return;
+      var role = (el.getAttribute('data-df-role') || '').trim().toLowerCase();
+      if (role && hasOwn.call(tips, role)) {
+        el.setAttribute('data-df-tip', tips[role]);
+        return;
+      }
+      var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      var fallback = role ? 'Colour role: ' + role.replace(/[-_]+/g, ' ') : text;
+      DocForm.warnOnce('tag-tip:' + (role || text), 'Tag "' + text + '" has no tooltip; add data-df-tip or data-df-term' +
+        (role ? ', or options.roles.tips["' + role + '"]' : '') + '. Showing "' + fallback + '" instead.', el);
+      if (fallback) el.setAttribute('data-df-tip', fallback);
+      el.classList.add('df-tag-untipped');
+      missing.push(el);
+    });
+    return missing;
+  }
+
   // Places a box of `size` below the anchor rect, or above when it does not fit, kept inside the viewport.
   function place(rect, size, view) {
     var below = rect.bottom + GAP;
@@ -477,6 +502,7 @@
     autoLink: autoLink,
     tagTerm: tagTerm,
     linkTags: linkTags,
+    tipTags: tipTags,
     place: place,
     mixed: setMixed,
     rich: rich,
@@ -498,6 +524,7 @@
       return !boot || component.flag(el, 'autolink', 'tooltips', true);
     }).concat(roots);
     var auto = new Set(linkTags(document, terms).concat(autoLink(roots, matcher(Object.keys(terms)))));
+    tipTags(document, site);
 
     DocForm.all('[data-df-tip]').forEach(function (el) {
       el.classList.add('df-tip');

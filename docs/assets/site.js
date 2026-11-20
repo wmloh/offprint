@@ -236,6 +236,13 @@ window.DocFormSite = {
         "try": "purple",
         "tip": "yellow",
         "caution": "red"
+      },
+      "tips": {
+        "default": "Green marks a feature that is on by default on a standard DocForm page.",
+        "on-request": "Blue marks a feature you add to the pages that need it.",
+        "try": "Purple marks an action to try on the page.",
+        "tip": "Yellow marks a helpful tip.",
+        "caution": "Red marks a caution: something that can go wrong."
       }
     },
     "tooltips": {

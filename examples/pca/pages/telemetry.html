@@ -29,7 +29,7 @@
         crosses the <a href="monitor.html#alert-thresholds">rank-two alert threshold</a> after a telemetry gap.</p>
       <dl class="df-fields">
         <dt>Source</dt><dd>One pump, twelve five-minute windows relayed by the sensor gateway</dd>
-        <dt>Model</dt><dd><span class="df-tag" data-df-role="projection">Rank two</span> Frozen baseline scaler and PCA basis</dd>
+        <dt>Model</dt><dd><span class="df-tag" data-df-role="projection" data-df-tip="The projection keeps the first two principal components.">Rank two</span> Frozen baseline scaler and PCA basis</dd>
         <dt>Alert rule</dt><dd>Flag a window when its rank-two residual exceeds 0.80</dd>
         <dt data-df-role="alert">First alert</dt><dd>13:45 UTC, two windows after a ten-minute telemetry gap</dd>
       </dl>

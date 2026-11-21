@@ -80,6 +80,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
   const events = [];
   const loads = [];
   const keyboards = [];
+  const clicks = [];
   const head = element('head');
   const body = element('body');
   const html = element('html');
@@ -114,6 +115,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     addEventListener(type, callback, capture) {
       if (type === 'DOMContentLoaded') launch = callback;
       if (type === 'keydown') keyboards.push({ callback, capture });
+      if (type === 'click') clicks.push(callback);
     },
     removeEventListener() {},
     dispatchEvent(event) { events.push(event); },
@@ -158,6 +160,9 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
       if (props.handled) event.preventDefault();
       keyboards.forEach(({ callback }) => callback(event));
       return event;
+    },
+    click(target) {
+      clicks.forEach(callback => callback({ target, button: 0 }));
     },
     runScript(url) { vm.runInContext(fs.readFileSync(url, 'utf8'), context, { filename: url.pathname }); },
     async start() {
@@ -288,7 +293,7 @@ test('the offline loader enables interval plots and loads their chart dependency
 
 test('mixed features load all shipped assets and register data before author setup', async () => {
   const features = Object.fromEntries(('animation cards chart code concept-tables data-view dropdowns dropzone editable-text figure-steps ' +
-    'glossary math parameters peek-bubbles pipeline results reveals scenarios selection split-views stepper tabs tree zoom-tools')
+    'glossary math parameters peek-bubbles pipeline results reveals scenarios selection sequence split-views stepper tabs timeline tree tree-diagram zoom-tools')
     .split(' ').map(key => [key, true]));
   const p = page({ nested: true, site: { features, assets: { data: {
     runs: { source: 'examples/transformers/assets/runs.csv', output: 'examples/transformers/assets/generated/runs.js' }
@@ -303,6 +308,9 @@ test('mixed features load all shipped assets and register data before author set
     assert.equal(typeof DF.chart.mount, 'function');
     assert.equal(typeof DF.dropdowns.mount, 'function');
     assert.equal(typeof DF.editableText.mount, 'function');
+    assert.equal(typeof DF.sequence.get, 'function');
+    assert.equal(typeof DF.sequenceDiagram.get, 'function');
+    assert.equal(typeof DF.treeDiagram.get, 'function');
   });
   await p.start();
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
@@ -310,6 +318,11 @@ test('mixed features load all shipped assets and register data before author set
   assert.deepEqual(Array.from(p.DF.data.names()), ['runs', 'setup-records', 'readings']);
   assert.equal(new Set(p.loads).size, p.loads.length);
   assert.ok(p.loads.includes('docform/js/scenarios.js'));
+  assert.deepEqual(p.loads.filter(path => /^docform\/js\/(detail|diagram|pipeline|sequence-diagram|timeline|tree-diagram)\.js$/.test(path)), [
+    'docform/js/detail.js', 'docform/js/diagram.js', 'docform/js/pipeline.js', 'docform/js/timeline.js',
+    'docform/js/sequence-diagram.js', 'docform/js/tree-diagram.js'
+  ]);
+  for (const css of ['timeline', 'sequence', 'tree-diagram']) assert.ok(p.loads.includes('docform/css/' + css + '.css'));
   assert.ok(p.loads.includes('docform/js/zoomtools.js'));
   for (const alias of ['anim', 'bubble', 'dataset', 'nav', 'notes', 'params', 'refs', 'reveal', 'roleCss', 'tooltip', 'zoomtools']) {
     assert.equal(Object.hasOwn(p.DF, alias), false, alias);
@@ -836,6 +849,42 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
   assert.equal(p.events.at(-1).detail.current, null);
   assert.deepEqual(observed, [true, true]);
   assert.equal(p.body.focused, true);
+});
+
+test('diagram fullscreen requires an opt-in and opens from the background or keyboard', async () => {
+  const p = page({ config: { profile: 'none', features: { zoom: true } } });
+  const figures = ['df-timeline', 'df-sequence', 'df-tree-diagram', 'regular'].map((cls, i) => {
+    const figure = p.body.appendChild(element('figure'));
+    const background = figure.appendChild(element('div'));
+    const control = figure.appendChild(element('button'));
+    if (i === 0) figure.setAttribute('data-df-zoom', '');
+    if (i === 1) figure.setAttribute('data-df-zoom', 'false');
+    figure.matches = (selector) => selector === '.df-page img, .df-page figure';
+    for (const target of [figure, background, control]) {
+      target.closest = (selector) => {
+        if (selector.includes('figure.' + cls) || selector.includes('.df-page figure')) return figure;
+        return null;
+      };
+    }
+    control.matches = (selector) => selector.split(', ').includes('button');
+    return { figure, background, control };
+  });
+  p.body.querySelectorAll = (selector) => selector.startsWith('.df-page img') ? figures.map(({ figure }) => figure) : [];
+  await p.start();
+  assert.deepEqual(figures.map(({ figure }) => figure.classList.contains('df-zoomable')), [true, false, false, true]);
+  p.click(figures[1].background);
+  p.click(figures[2].background);
+  p.click(figures[0].control);
+  assert.equal(p.DF.zoom.snapshot(), null);
+  p.click(figures[0].background);
+  const open = p.DF.zoom.snapshot();
+  assert.equal(open.target, figures[0].figure);
+  assert.equal(open.target.parentNode, open.stage);
+  p.DF.zoom.close();
+  open.overlay.dispatchEvent(new Event('transitionend'));
+  assert.equal(p.DF.zoom.snapshot(), null);
+  assert.equal(p.key('Enter', figures[0].figure).defaultPrevented, true);
+  assert.equal(p.DF.zoom.snapshot().target, figures[0].figure);
 });
 
 test('offline parameter scopes merge before setup and publish their first snapshot before ready', async () => {

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tree diagrams · DocForm</title>
+  <link rel="stylesheet" href="../../../docform/docform.css">
+  <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    { "features": { "tree-diagram": true, "zoom-tools": true } }
+  </script>
+  <script src="../../../docform/docform.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <p class="df-eyebrow">Explain step by step</p>
+      <h1>Tree diagrams</h1>
+      <p>Show how a topic, plan, or set of categories breaks into smaller parts. Readers can close branches to focus on one part at a time.</p>
+    </header>
+
+    <h2 id="release">Break down a documentation release</h2>
+    <p>Hover over or select a node to read its details. Use the plus and minus buttons to open or close a branch and see how the remaining nodes move.</p>
+    <figure class="df-tree-diagram" id="release-plan" data-df-zoom>
+      <ul class="df-tree-diagram-nodes">
+        <li data-df-key="release">
+          <span class="df-tree-diagram-label">Docs release</span>
+          <ul>
+            <li data-df-key="write">
+              <span class="df-tree-diagram-label">Write</span>
+              <ul>
+                <li data-df-key="guide"><span class="df-tree-diagram-label">Update guide</span></li>
+                <li data-df-key="examples"><span class="df-tree-diagram-label">Add examples</span></li>
+              </ul>
+            </li>
+            <li data-df-key="verify" data-df-collapsed>
+              <span class="df-tree-diagram-label">Verify</span>
+              <ul>
+                <li data-df-key="links"><span class="df-tree-diagram-label">Check links</span></li>
+                <li data-df-key="offline"><span class="df-tree-diagram-label">Try offline</span></li>
+              </ul>
+            </li>
+            <li data-df-key="publish"><span class="df-tree-diagram-label">Publish</span></li>
+          </ul>
+        </li>
+      </ul>
+      <div class="df-detail-pane">
+        <p data-df-key="release">Bring the guide and its examples up to date together.</p>
+        <p data-df-key="write">Revise the explanations and prepare examples to match.</p>
+        <p data-df-key="guide">Update the setup steps and the feature descriptions.</p>
+        <p data-df-key="examples">Give readers a small example they can adapt.</p>
+        <p data-df-key="verify">Check links and open the site from disk before publishing.</p>
+        <p data-df-key="links">Follow the guide links to the examples and references.</p>
+        <p data-df-key="offline">Open the entry page from disk and try the interactive examples.</p>
+        <p data-df-key="publish">Make the guide and examples available together.</p>
+      </div>
+      <figcaption>Work needed for a documentation release.</figcaption>
+    </figure>
+
+    <p>Click the background to open fullscreen. Tab to the node controls, then use Up and Down to move between visible nodes and Left or Right to close or open a branch. See the <a href="../../../docform/docs/diagram/tree-diagrams.md">tree diagram reference</a> for markup and named sources.</p>
+    <nav class="df-prevnext" data-df-prevnext aria-label="Adjacent pages"></nav>
+  </main>
+</body>
+</html>

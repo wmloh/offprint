@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Timeline diagrams · DocForm</title>
+  <link rel="stylesheet" href="../../../docform/docform.css">
+  <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    { "features": { "timeline": true, "selection": true, "data": true, "zoom-tools": true } }
+  </script>
+  <script src="../../../docform/docform.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <p class="df-eyebrow">Explain step by step</p>
+      <h1>Timeline diagrams</h1>
+      <p>Put milestones and durations on one time axis. Give each team or workstream its own lane so readers can see where activities overlap.</p>
+    </header>
+
+    <h2 id="calendar">Plan on a calendar</h2>
+    <p>A dot marks a single event. A bar runs from the start date to the end date. Select an event to read its details below the diagram.</p>
+    <figure class="df-timeline" id="release-dates" data-df-zoom data-df-selection-group="release-schedule">
+      <ol class="df-timeline-events">
+        <li data-df-key="draft" data-df-lane="Writing" data-df-start="2026-06-01" data-df-end="2026-06-05" data-df-label="Draft chapter">
+          1–5 June · Writing · Draft chapter
+        </li>
+        <li data-df-key="art" data-df-lane="Writing" data-df-start="2026-06-03" data-df-end="2026-06-08" data-df-label="Prepare figures">
+          3–8 June · Writing · Prepare figures
+        </li>
+        <li data-df-key="review" data-df-lane="Review" data-df-start="2026-06-06" data-df-end="2026-06-10" data-df-label="Review chapter">
+          6–10 June · Review · Review chapter
+        </li>
+        <li data-df-key="publish" data-df-lane="Release" data-df-start="2026-06-13" data-df-label="Publish">
+          13 June · Release · Publish
+        </li>
+      </ol>
+      <div class="df-detail-pane">
+        <p data-df-key="draft"><strong>Draft chapter.</strong> Write the walkthrough and leave placeholders for the figures.</p>
+        <p data-df-key="art"><strong>Prepare figures.</strong> Start the illustrations as soon as the examples are drafted.</p>
+        <p data-df-key="review"><strong>Review chapter.</strong> Check the instructions, figure labels, and captions.</p>
+        <p data-df-key="publish"><strong>Publish.</strong> Share the chapter after review is complete.</p>
+      </div>
+      <figcaption>Chapter release schedule by date.</figcaption>
+    </figure>
+
+    <h2 id="elapsed-time">Show days from kickoff</h2>
+    <p>This diagram reads a named CSV source. It shares event keys with the calendar above, so selecting an event in either view updates both.</p>
+    <script type="text/csv" data-df-source="release-offsets">
+key,lane,label,start,end
+draft,Writing,Draft chapter,0,4
+art,Writing,Prepare figures,2,7
+review,Review,Review chapter,5,9
+publish,Release,Publish,12,
+    </script>
+    <figure class="df-timeline" id="release-days" data-df-zoom data-df-source="release-offsets" data-df-selection-group="release-schedule">
+      <ol class="df-timeline-events">
+        <li>Days 0–4 · Writing · Draft chapter</li>
+        <li>Days 2–7 · Writing · Prepare figures</li>
+        <li>Days 5–9 · Review · Review chapter</li>
+        <li>Day 12 · Release · Publish</li>
+      </ol>
+      <figcaption>Chapter release schedule in days from kickoff.</figcaption>
+    </figure>
+
+    <p>Hover or select an event to see its details. Click the background for fullscreen, then use the crosshair to read a date or value and its lane. Tab to the event controls and use Left and Right to move between them. For the markup and source fields, see the <a href="../../../docform/docs/diagram/timelines.md">timeline reference</a>.</p>
+
+    <nav class="df-prevnext" data-df-prevnext aria-label="Adjacent pages"></nav>
+  </main>
+</body>
+</html>

@@ -27,7 +27,7 @@ Editable text	Edit single-line or multiline text with optional syntax highlighti
 Tabs	Switch keyed panels and synchronize them by selection group	interact/tabs.md
 SVG animations	Play and scrub a keyed SVG timeline	interact/animations.md
 Card panels	Select details from cards with optional numbering, tags, and filtering	interact/card-panels.md
-Detail panes	Display keyed details from cards, steps, pipelines, or selections	interact/detail-panes.md
+Detail panes	Display keyed details from cards, steps, diagrams, or selections	interact/detail-panes.md
 Figure steps	Select figure states and show their details	interact/figure-steps.md
 Scroll reveals	Animate blocks as they approach the viewport centre	interact/reveals.md
 Split views	Arrange responsive panes with staggered reveals	interact/split-views.md
@@ -40,6 +40,9 @@ Step sequences	Control steps and synchronize keyed sequences	interact/step-contr
 Worked-example steppers	Step through worked examples and their linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
 Pipeline diagrams	Connect structured blocks with curved routes, branches, steps, and details	diagram/pipelines.md
+Timeline diagrams	Plot point and span events in lanes on a numeric or calendar axis	diagram/timelines.md
+Sequence diagrams	Show ordered messages between participant lifelines	diagram/sequences.md
+Tree diagrams	Explore a hierarchy with animated collapsible branches	diagram/tree-diagrams.md
 SVG charts	Draw line, bar, scatter, and pie charts with keyed motion	data/charts.md
 Dot and interval plots	Compare categories with dots, lollipop stems, and supplied intervals	data/chart-intervals.md
 Histograms	Bin observations with optional log axes, live binning, and stacked bars	data/chart-histogram.md

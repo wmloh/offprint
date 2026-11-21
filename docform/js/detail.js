@@ -117,7 +117,7 @@
     if (target) {
       var host = typeof target === 'string' ? document.getElementById(target) : target;
       if (!host) {
-        items.issue('detail-pane', pane, 'A detail pane follows a missing element.', 'Set data-df-detail-for to the ID of a card panel or pipeline.');
+        items.issue('detail-pane', pane, 'A detail pane follows a missing element.', 'Set data-df-detail-for to an existing keyed source ID.');
       } else {
         follow(host, function (controller) {
           var current = controller.snapshot();
@@ -153,8 +153,12 @@
 
   DocForm.register('detail-pane', function () {
     DocForm.all('.df-detail-pane').forEach(function (pane) {
-      // A pane inside a pipeline is linked by the pipeline itself.
-      if (!pane.parentElement || !pane.parentElement.classList.contains('df-pipeline')) setupPane(pane);
+      // Diagrams link their direct panes during setup.
+      var parent = pane.parentElement;
+      var diagram = parent && ['df-pipeline', 'df-timeline', 'df-sequence', 'df-tree-diagram'].some(function (cls) {
+        return parent.classList.contains(cls);
+      });
+      if (!diagram) setupPane(pane);
     });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -26,6 +26,9 @@ docform/: Copyable offline library folder
     steps.css: Shared selector with a muted small-caps title, titled card groups, a sliding highlight, and animated bold labels, plus the side-by-side detail layout for standalone cards and figure steps, optional title-only side cards, number circles, right-aligned tags, and the inline filter box
     detail.css: Standalone detail panes with overlapping, independently scrolling details and the shared hover scrollbar
     pipeline.css: Pipeline blocks with collapsing fields, curved line styles, moving dashes, edge labels, path tracing, step reveals, side or below detail panes, and a numbered-list fallback
+    sequence.css: Participant headers, message controls, arrows, and lifelines
+    tree-diagram.css: Tree cards, disclosure controls, and animated branch positions
+    timeline.css: Responsive timeline axes, lane labels, point and span event controls, and a print list
     zoom.css: Frosted full-screen figure zoom view
     zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot and trail, ink, crosshair and ruler readouts
     bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered and scrolling that passes to the page at their ends
@@ -64,9 +67,13 @@ docform/: Copyable offline library folder
     reveal.js: Two-way callout slides, data-df-reveal entrances that replay around the viewport centre (or once), and split panes
     steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, inert details, optional numbering, tag slots, and label-and-tag filtering, both usable as detail-pane sources
     detail.js: Shared detail panes keyed to card panels, figure steps, pipelines, or selection groups, plus inert-detail and scrollbar helpers
+    diagram.js: Internal diagram geometry and SVG helpers, keyed node selection, detail-pane binding, and a record diagram adapter
     pipeline.js: Pipeline block diagrams with structured fields and overrides, ranked half-row layout, curved routing with fork and merge stems, junctions, crossing gaps, path tracing, keyboard navigation, shared keyed reveal steps, and detail panes
+    sequence-diagram.js: Ordered messages and participant lifelines from markup or named records
+    tree-diagram.js: Collapsible visual hierarchy, animated layout, and keyed node selection
+    timeline.js: Numeric and calendar timelines from markup or named records, with lane packing, keyed selection, and detail panes
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
-    zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
+    zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart and timeline crosshairs, plus a ruler on other figures
     bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes

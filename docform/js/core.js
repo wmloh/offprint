@@ -436,8 +436,8 @@
     var state = null;
     var events = signal(feature, host, function () { return state; });
 
-    function apply(index, origin) {
-      if (index < 0 || index >= keys.length || (state && state.index === index)) return null;
+    function apply(index, origin, refresh) {
+      if (index < 0 || index >= keys.length || (!refresh && state && state.index === index)) return null;
       var previous = state;
       state = Object.freeze(snapshotAt(index, keys[index]));
       var current = state;
@@ -450,9 +450,13 @@
 
     function choose(index, origin) {
       if (index < 0 || index >= keys.length) return false;
+      var before = keys;
+      var key = keys[index];
       return transaction(function () {
+        if (keys !== before) index = keys.indexOf(key);
+        if (index < 0) return false;
         var notify = apply(index, origin);
-        if (group && mode !== 'follow') group.commit(keys[index], origin, notify);
+        if (group && mode !== 'follow') group.commit(key, origin, notify);
         else if (notify) notify();
         return true;
       });
@@ -473,6 +477,13 @@
         subscribe: events.subscribe
       },
       choose: choose,
+      replace: function (next) {
+        domain = next;
+        keys = next.keys;
+        var index = state ? keys.indexOf(state.key) : -1;
+        if (index < 0 && group && mode !== 'publish') index = keys.indexOf(group.api.get());
+        return apply(index < 0 ? domain.initial : index, 'source', true);
+      },
       start: function () {
         var shared = group && mode !== 'publish' ? keys.indexOf(group.api.get()) : -1;
         var notify = apply(shared < 0 ? domain.initial : shared, 'init');

@@ -17,6 +17,7 @@ const choose = (host, value) => {
 const chosen = (host) => choiceInputs(host).filter((input) => input.checked).map((input) => input.value);
 const GROUP = 'data-df-selection-group';
 const KEY = 'data-df-key';
+const hover = (el, pointerType = 'mouse') => el.dispatchEvent(Object.assign(new Event('pointermove'), { pointerType }));
 const CONTROL = 'button:not([role="tab"]), [role="button"][tabindex]';
 
 // Enough DOM for data views to build, draw, and handle events.
@@ -93,6 +94,7 @@ class Node extends EventTarget {
   deleteTHead() { this.tHead?.remove(); }
   insertAdjacentHTML() {}
   focus() {}
+  contains(node) { return node === this || this.all().includes(node); }
   hasAttribute(name) { return this.attributes.has(name); }
   toggleAttribute(name, on) { if (on) this.setAttribute(name, ''); else this.removeAttribute(name); }
   matches(selector) {
@@ -2702,6 +2704,134 @@ test('state checkpoints validate against the chart and restore the last reached 
   assert.equal(playback.snapshot().canNext, false);
 });
 
+test('a mounted pipeline preserves fork geometry, tracing, keyboard navigation, and keyed details', () => {
+  let host, document, inline, external;
+  const graph = [];
+  const { DocForm, warnings } = setup({
+    modules: ['detail', 'diagram', 'pipeline'],
+    groups: { flow: { initial: 'write' } },
+    animation: { addEventListener() {}, getComputedStyle: () => ({ columnGap: '40px', rowGap: '20px', position: 'fixed' }) },
+    enhance(_df, doc) {
+      document = doc;
+      document.readyState = 'complete';
+      function add(parent, tag, attrs) {
+        const el = parent.appendChild(new Node(tag));
+        Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+        return el;
+      }
+      host = add(document.body, 'figure', { id: 'flow', class: 'df-pipeline', [GROUP]: 'flow', 'data-df-detail-layout': 'side' });
+      // A connected stage allows the production measurement and SVG drawing to run.
+      const create = doc.createElement;
+      doc.createElement = (tag) => Object.assign(create(tag), { isConnected: true });
+      const list = add(host, 'ol', { class: 'df-pipe-blocks' });
+      [
+        ['write', 'links terms', 100, 40],
+        ['links', 'merge', 80, 30],
+        ['terms', 'merge', 120, 50],
+        ['merge', 'share', 12, 12],
+        ['share', '', 90, 40]
+      ].forEach(([id, to, width, height]) => {
+        const el = add(list, 'li', { id, class: id === 'merge' ? 'df-pipe-junction' : 'df-pipe-block', 'data-df-to': to });
+        el.offsetWidth = width;
+        el.offsetHeight = height;
+        el.focus = () => {
+          document.activeElement = el;
+          el.dispatchEvent(new Event('focus'));
+        };
+        graph.push(el);
+      });
+      const route = add(graph[2], 'a', { class: 'df-pipe-link', href: '#merge', 'data-df-line': 'dashed', 'data-df-label': 'Review' });
+      route.textContent = 'Review';
+      inline = add(host, 'div', { class: 'df-detail-pane' });
+      external = add(doc.body, 'div', { class: 'df-detail-pane', 'data-df-detail-for': 'flow' });
+      [inline, external].forEach(pane => {
+        ['write', 'links', 'terms', 'share'].forEach(key => add(pane, 'div', { [KEY]: key }));
+      });
+    }
+  });
+  const stage = host.querySelector('.df-pipe-stage');
+  const lines = host.querySelector('.df-pipe-lines');
+  const controller = DocForm.pipeline.get('flow');
+  const [write, links, terms, merge, share] = graph;
+  const geometry = () => ({
+    blocks: graph.map(({ style }) => [style.left, style.top, style.minHeight]),
+    viewBox: lines.getAttribute('viewBox'),
+    paths: lines.querySelectorAll('.df-pipe-path').map(path => path.getAttribute('d')),
+    label: host.querySelector('.df-pipe-label').textContent
+  });
+  const original = geometry();
+  assert.deepEqual(original, {
+    blocks: [
+      ['32px', '72px', ''],
+      ['192px', '32px', '50px'],
+      ['172px', '102px', ''],
+      ['332px', '86px', undefined],
+      ['384px', '72px', '']
+    ],
+    viewBox: '0 0 506 184',
+    paths: [
+      'M144 92C168 92 162 57 186 57',
+      'M144 92C168 92 142 127 166 127',
+      'M272 57C303.4 57 310.3 77.3 338 92',
+      'M292 127C316.3 127 318.7 106.7 338 92',
+      'M338 92C362 92 354 92 378 92',
+      'M144 92L132 92'
+    ],
+    label: 'Review'
+  });
+  assert.equal(controller.layout(), true);
+  assert.deepEqual(geometry(), original);
+  assert.equal(terms.querySelector('.df-pipe-link').tabIndex, -1);
+  assert.ok(lines.querySelector('.df-pipe-line-dashed'));
+  assert.deepEqual(warnings, []);
+
+  function current(key) {
+    assert.equal(controller.snapshot().key, key);
+    assert.equal(controller.snapshot().blockId, key);
+    assert.equal(DocForm.selection.group('flow').get(), key);
+    [inline, external].forEach(pane => {
+      assert.equal(DocForm.detailPane.get(pane).snapshot().key, key);
+      assert.deepEqual(pane.children.filter(child => !child.inert).map(child => child.getAttribute(KEY)), [key]);
+    });
+    assert.deepEqual(graph.filter(el => el.hasAttribute('aria-current')).map(el => el.id), [key]);
+  }
+
+  function fire(el, type, props) {
+    const event = Object.assign(new Event(type, { cancelable: true }), props);
+    el.dispatchEvent(event);
+    return event;
+  }
+
+  current('write');
+  assert.equal(write.tabIndex, 0);
+  fire(terms, 'pointermove', { pointerType: 'touch' });
+  current('write');
+  fire(terms, 'pointermove', { pointerType: 'mouse' });
+  current('terms');
+  assert.deepEqual(graph.filter(el => el.hasAttribute('data-df-pipe-trace')), [write, terms, merge, share]);
+  fire(stage, 'pointerleave');
+  assert.equal(host.classList.contains('df-pipe-tracing'), false);
+
+  write.focus();
+  assert.equal(fire(write, 'keydown', { key: 'ArrowRight' }).defaultPrevented, true);
+  current('terms');
+  fire(terms, 'keydown', { key: 'ArrowUp' });
+  current('links');
+  assert.equal(links.tabIndex, 0);
+  fire(links, 'keydown', { key: 'ArrowDown' });
+  current('terms');
+  fire(terms, 'keydown', { key: 'ArrowRight' });
+  current('share');
+  assert.equal(document.activeElement, share);
+  fire(host, 'focusout', { relatedTarget: document.body });
+  assert.equal(host.classList.contains('df-pipe-tracing'), false);
+  DocForm.selection.group('flow').select('write');
+  current('write');
+  assert.equal(share.tabIndex, 0);
+  fire(terms, 'click');
+  current('terms');
+});
+
 test('all six sequence members share navigation, events, and bidirectional keyed selection', () => {
   const keys = ['start', 'middle', 'end'];
   const hosts = new Map();
@@ -2712,7 +2842,7 @@ test('all six sequence members share navigation, events, and bidirectional keyed
   const pendingFrames = new Map();
   let serial = 0;
   const { DocForm, selection } = setup({
-    modules: ['detail', 'steps', 'anim', 'pipeline', 'chart-playback', 'scenarios'],
+    modules: ['detail', 'steps', 'anim', 'diagram', 'pipeline', 'chart-playback', 'scenarios'],
     groups: { tour: { initial: 'middle' } },
     animation: {
       addEventListener() {}, clearTimeout() {},
@@ -2899,4 +3029,302 @@ test('figure step controls paint keyed SVG frames and restore the opening drawin
   assert.deepEqual(frame(), ['1', '0', '0px 0px', '5']);
   assert.equal(DocForm.sequence.get(box).key, 'start');
   assert.equal(DocForm.sequence.get(figure).key, 'start');
+});
+
+test('timelines link authored and mapped events, detail panes, and transactional source replacements', () => {
+  const set = (node, attrs) => {
+    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+    return node;
+  };
+  const figure = (id, attrs) => set(new Node('figure'), {
+    class: 'df-timeline', id, [GROUP]: 'schedule', ...attrs
+  });
+  const pane = (attrs) => {
+    const el = set(new Node('div'), { class: 'df-detail-pane', ...attrs });
+    for (const key of ['draft', 'publish']) el.appendChild(set(new Node('p'), { [KEY]: key }));
+    return el;
+  };
+  const calendar = figure('calendar', {});
+  const sourceTimeline = figure('days', { 'data-df-source': 'releases' });
+  const list = set(new Node('ol'), { class: 'df-timeline-events' });
+  list.append(set(new Node('li'), {
+    [KEY]: 'draft', 'data-df-start': '2028-02-28', 'data-df-end': '2028-03-01',
+    'data-df-lane': 'Writing', 'data-df-label': 'Draft'
+  }), set(new Node('li'), {
+    id: 'publish', 'data-df-start': '2028-03-02', 'data-df-label': 'Publish', 'data-df-initial': ''
+  }));
+  const directPane = pane({});
+  const externalPane = pane({ 'data-df-detail-for': 'days' });
+  calendar.append(list, directPane);
+  const input = (rows) => ({ type: 'csv', text: 'id,from,through,team,title\n' + rows.join('\n') });
+  const original = input(['draft,0,2,Writing,Draft', 'publish,3,,Release,Publish']);
+  const changes = [];
+  sourceTimeline.addEventListener('df:timeline:change', ({ detail }) => changes.push(detail));
+  let data;
+  let resize;
+  const env = setup({
+    groups: { schedule: { initial: 'draft' } },
+    modules: ['data', 'detail', 'diagram', 'timeline'],
+    animation: { ResizeObserver: class { constructor(fn) { resize = fn; } observe() {} } },
+    enhance(DF, document, boot) {
+      boot.optionLayers = (feature) => feature === 'timeline' ? [{
+        mapping: { key: 'id', start: 'from', end: 'through', lane: 'team', label: 'title' }
+      }] : [];
+      document.body.append(calendar, sourceTimeline, externalPane);
+      data = DF.data.define('releases', original);
+      document.createElement = (tag) => {
+        const element = new Node(tag);
+        element.focus = () => { document.activeElement = element; element.dispatchEvent(new Event('focus')); };
+        return element;
+      };
+    }
+  });
+  const { DocForm: DF, document, warnings } = env;
+  const calendarAPI = DF.timeline.get('calendar');
+  const source = DF.timeline.get(sourceTimeline);
+  const detail = (el) => DF.detailPane.get(el).snapshot().key;
+  const marks = (host) => host.querySelectorAll('.df-timeline-event');
+  const keyOf = (button) => button.getAttribute(KEY);
+
+  assert.deepEqual(warnings, []);
+  assert.equal(calendarAPI.snapshot().key, 'draft');
+  assert.equal(calendarAPI.snapshot().end, Date.parse('2028-03-01'));
+  assert.equal(source.snapshot().key, 'draft');
+  assert.equal(detail(directPane), 'draft');
+  assert.equal(detail(externalPane), 'draft');
+  const spanWidth = parseFloat(marks(calendar)[0].querySelector('.df-timeline-span').style.width);
+  const axis = calendar.querySelector('.df-timeline-axis');
+  const [left, right] = ['x1', 'x2'].map((attr) => Number(axis.getAttribute(attr)));
+  assert.ok(Math.abs(spanWidth - (right - left) * 2 / 3) < 0.01);
+  const [draft, publish] = marks(calendar);
+  assert.equal(draft.tabIndex, 0);
+  assert.equal(publish.tabIndex, -1);
+  const scroll = sourceTimeline.querySelector('.df-timeline-scroll');
+  const stage = sourceTimeline.querySelector('.df-timeline-stage');
+  scroll.clientWidth = 1100;
+  resize();
+  assert.equal(stage.style.width, '1100px');
+  assert.equal(sourceTimeline.querySelector('.df-timeline-axis').getAttribute('x2'), String(right + 356));
+  const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
+  const width = parseFloat(stage.style.width);
+  const height = parseFloat(stage.style.height);
+  stage.getBoundingClientRect = () => rect(20, 30, width, height);
+  scroll.getBoundingClientRect = sourceTimeline.getBoundingClientRect = () => rect(20, 30, width, height);
+  const mid = 20 + (left + right + 356) / 2;
+  const hit = DF._timeline.coords(sourceTimeline, mid, 70);
+  assert.equal(hit.value, '1.5');
+  assert.equal(hit.lane, 'Writing');
+  scroll.getBoundingClientRect = () => rect(mid + 1, 30, 400, height);
+  assert.equal(DF._timeline.coords(sourceTimeline, mid, 70), null);
+  hover(publish, 'touch');
+  assert.equal(calendarAPI.snapshot().key, 'draft');
+  hover(publish);
+  assert.equal(source.snapshot().key, 'publish');
+  assert.equal(detail(directPane), 'publish');
+  hover(draft);
+  const keydown = Object.assign(new Event('keydown', { cancelable: true }), { key: 'ArrowRight' });
+  draft.dispatchEvent(keydown);
+  assert.equal(keydown.defaultPrevented, true);
+  assert.equal(document.activeElement, publish);
+  assert.equal(publish.getAttribute('aria-current'), 'true');
+  assert.equal(draft.getAttribute('aria-current'), null);
+  assert.equal(detail(directPane), 'publish');
+  assert.equal(detail(externalPane), 'publish');
+  assert.equal(DF.selection.group('schedule').get(), 'publish');
+
+  const updated = input(['publish,12,,Release,Ship', 'draft,0,10,Writing,Revise']);
+  marks(sourceTimeline)[1].focus();
+  assert.equal(data.update(updated), true);
+  assert.equal(source.snapshot().key, 'publish');
+  assert.equal(source.snapshot().index, 0);
+  assert.equal(source.snapshot().start, 12);
+  assert.equal(source.snapshot().label, 'Ship');
+  assert.equal(changes.at(-1).origin, 'source');
+  assert.equal(changes.at(-1).previous.start, 3);
+  assert.equal(keyOf(document.activeElement), 'publish');
+  assert.equal(marks(sourceTimeline)[0].getAttribute('aria-current'), 'true');
+  assert.equal(detail(externalPane), 'publish');
+
+  assert.equal(data.update(input(['publish,1,0,Release,Invalid'])), false);
+  assert.equal(data.snapshot().revision, 1);
+  assert.equal(source.snapshot().start, 12);
+  assert.equal(data.update(input(['draft,0,10,Writing,Only draft'])), true);
+  assert.equal(source.snapshot().key, 'draft');
+  assert.equal(detail(externalPane), 'draft');
+  assert.equal(data.reset(), true);
+  assert.equal(source.snapshot().key, 'draft');
+  assert.equal(source.snapshot().end, 2);
+  marks(sourceTimeline)[1].dispatchEvent(new Event('click'));
+  assert.equal(DF.selection.group('schedule').get(), 'publish');
+  assert.equal(calendarAPI.snapshot().key, 'publish');
+
+  const stop = source.subscribe(() => {
+    stop();
+    data.update(updated);
+    source.select('publish');
+  });
+  source.select('draft');
+  assert.equal(source.snapshot().key, 'publish');
+  assert.equal(source.snapshot().index, 0);
+  assert.equal(detail(externalPane), 'publish');
+});
+
+test('sequence diagrams keep message and participant order while linking selection and mapped records', () => {
+  const add = (parent, tag, attrs, label) => {
+    const el = parent.appendChild(new Node(tag));
+    for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+    if (label) el.textContent = label;
+    return el;
+  };
+  const input = (rows) => ({ type: 'csv', text: 'id,sender,recipient,caption\n' + rows.join('\n') });
+  let diagram, named, pane, data;
+  const { DocForm: DF, document, warnings } = setup({
+    modules: ['data', 'detail', 'diagram', 'sequence-diagram'],
+    enhance(DF, document, boot) {
+      document.createElement = (tag) => {
+        const el = new Node(tag);
+        el.focus = () => { document.activeElement = el; el.dispatchEvent(new Event('focus')); };
+        return el;
+      };
+      boot.optionLayers = (feature) => feature === 'sequence' ? [{
+        mapping: { key: 'id', from: 'sender', to: 'recipient', label: 'caption' }
+      }] : [];
+      diagram = add(document.body, 'figure', { class: 'df-sequence', id: 'messages', [GROUP]: 'order' });
+      const participants = add(diagram, 'ul', { class: 'df-sequence-participants' });
+      add(participants, 'li', { [KEY]: 'shop' }, 'Shop');
+      add(participants, 'li', { [KEY]: 'buyer' }, 'Buyer');
+      const messages = add(diagram, 'ol', { class: 'df-sequence-messages' });
+      add(messages, 'li', { [KEY]: 'request', 'data-df-from': 'buyer', 'data-df-to': 'shop' }, 'Request');
+      add(messages, 'li', { [KEY]: 'check', 'data-df-from': 'shop', 'data-df-to': 'shop' }, 'Check');
+      add(messages, 'li', { [KEY]: 'reply', 'data-df-from': 'shop', 'data-df-to': 'buyer' }, 'Reply');
+      pane = add(diagram, 'div', { class: 'df-detail-pane' });
+      for (const key of ['request', 'check', 'reply']) add(pane, 'p', { [KEY]: key }, key);
+      named = add(document.body, 'figure', { class: 'df-sequence', [GROUP]: 'order', 'data-df-source': 'messages' });
+      data = DF.data.define('messages', input(['request,buyer,shop,Request', 'reply,shop,buyer,Reply']));
+    }
+  });
+  const authored = DF.sequenceDiagram.get('messages');
+  const mapped = DF.sequenceDiagram.get(named);
+  const buttons = diagram.querySelectorAll('.df-sequence-message');
+  assert.deepEqual(warnings, []);
+  assert.deepEqual(diagram.querySelectorAll('.df-sequence-participant').map((el) => el.textContent), ['Shop', 'Buyer']);
+  assert.deepEqual(buttons.map((el) => el.getAttribute(KEY)), ['request', 'check', 'reply']);
+  assert.equal(diagram.querySelectorAll('path')[2].getAttribute('d'), 'M82 158h54v17H82');
+  assert.equal(authored.snapshot().key, 'request');
+  hover(buttons[2], 'touch');
+  assert.equal(authored.snapshot().key, 'request');
+  hover(buttons[2], 'pen');
+  assert.equal(mapped.snapshot().key, 'reply');
+  assert.equal(DF.detailPane.get(pane).snapshot().key, 'reply');
+  hover(buttons[0]);
+  const end = Object.assign(new Event('keydown', { cancelable: true }), { key: 'End' });
+  buttons[0].dispatchEvent(end);
+  assert.equal(end.defaultPrevented, true);
+  assert.equal(document.activeElement, buttons[2]);
+  assert.equal(mapped.snapshot().key, 'reply');
+  assert.equal(DF.detailPane.get(pane).snapshot().key, 'reply');
+  assert.equal(data.update(input(['reply,shop,buyer,Done', 'request,buyer,shop,Go'])), true);
+  assert.equal(mapped.snapshot().index, 0);
+  assert.equal(mapped.snapshot().label, 'Done');
+  assert.equal(data.update(input(['reply,shop,,Invalid'])), false);
+  assert.equal(mapped.snapshot().key, 'reply');
+});
+
+test('tree disclosure repositions persistent nodes and keeps details and selection linked', () => {
+  const add = (parent, tag, attrs, label) => {
+    const el = parent.appendChild(new Node(tag));
+    for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+    if (label) el.textContent = label;
+    return el;
+  };
+  const rows = [
+    { name: 'root', title: 'Root' }, { name: 'branch', under: 'root', title: 'Branch' },
+    { name: 'leaf', under: 'branch', title: 'Leaf' }, { name: 'tip', under: 'branch', title: 'Tip' },
+    { name: 'other', under: 'root', title: 'Other' }
+  ];
+  const input = (value) => ({ type: 'value', value });
+  let diagram, named, pane, data;
+  const { DocForm: DF, document, warnings } = setup({
+    modules: ['data', 'detail', 'diagram', 'tree-diagram'],
+    enhance(DF, document, boot) {
+      document.createElement = (tag) => {
+        const el = new Node(tag);
+        el.focus = () => { document.activeElement = el; el.dispatchEvent(new Event('focus')); };
+        return el;
+      };
+      boot.optionLayers = (feature) => feature === 'tree-diagram' ? [{
+        mapping: { key: 'name', parent: 'under', label: 'title' }
+      }] : [];
+      diagram = add(document.body, 'figure', { class: 'df-tree-diagram', id: 'tree-plan', [GROUP]: 'plan' });
+      named = add(document.body, 'figure', { class: 'df-tree-diagram', [GROUP]: 'plan', 'data-df-source': 'plan' });
+      const list = add(diagram, 'ul', { class: 'df-tree-diagram-nodes' });
+      const node = (list, key, attrs = {}) => {
+        const el = add(list, 'li', { [KEY]: key, ...attrs });
+        add(el, 'span', { class: 'df-tree-diagram-label' }, key);
+        return el;
+      };
+      const siblings = add(node(list, 'root'), 'ul', {});
+      const leaves = add(node(siblings, 'branch', { 'data-df-collapsed': '' }), 'ol', {});
+      node(leaves, 'leaf');
+      node(leaves, 'tip');
+      node(siblings, 'other');
+      pane = add(document.body, 'div', { class: 'df-detail-pane', 'data-df-detail-for': 'tree-plan' });
+      rows.forEach((row) => add(pane, 'p', { [KEY]: row.name }, row.title));
+      data = DF.data.define('plan', input(rows));
+    }
+  });
+  const tree = DF.treeDiagram.get(diagram);
+  const mapped = DF.treeDiagram.get(named);
+  const picks = (host) => host.querySelectorAll('.df-tree-diagram-pick');
+  const [root, branch, leaf, tip, other] = picks(diagram);
+  const closed = other.parentNode.style.transform;
+  const toggle = branch.parentNode.querySelector('.df-tree-diagram-toggle');
+  const icon = toggle.querySelector('svg');
+  const detail = DF.detailPane.get(pane);
+  assert.deepEqual(warnings, []);
+  assert.equal(icon.getAttribute('viewBox'), '0 0 16 16');
+  assert.deepEqual(icon.children.map((path) => path.getAttribute('d')), ['M5 8h6', 'M8 5v6']);
+  assert.equal(root.tabIndex, 0);
+  assert.equal(branch.getAttribute('aria-expanded'), 'false');
+  assert.equal(leaf.parentNode.inert, true);
+  hover(leaf.parentNode);
+  assert.equal(tree.snapshot().key, 'root');
+  hover(other.parentNode);
+  assert.equal(mapped.snapshot().key, 'other');
+  assert.equal(detail.snapshot().key, 'other');
+  assert.equal(mapped.select('tip'), true);
+  assert.equal(tree.snapshot().key, 'tip');
+  assert.equal(detail.snapshot().key, 'tip');
+  assert.equal(tip.parentNode.inert, false);
+  assert.equal(branch.getAttribute('aria-expanded'), 'true');
+  assert.notEqual(other.parentNode.style.transform, closed);
+
+  toggle.dispatchEvent(new Event('click'));
+  assert.equal(tree.snapshot().key, 'branch');
+  assert.equal(mapped.snapshot().key, 'branch');
+  assert.equal(detail.snapshot().key, 'branch');
+  assert.equal(document.activeElement, branch);
+  assert.equal(other.parentNode.style.transform, closed);
+  assert.equal(picks(diagram)[4], other);
+  assert.equal(leaf.parentNode.inert, true);
+
+  const keydown = (el, key) => el.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key }));
+  keydown(branch, 'ArrowDown');
+  assert.equal(tree.snapshot().key, 'other');
+  keydown(other, 'ArrowUp');
+  keydown(branch, 'ArrowRight');
+  assert.equal(leaf.parentNode.inert, false);
+  keydown(branch, 'ArrowRight');
+  assert.equal(tree.snapshot().key, 'leaf');
+  assert.equal(document.activeElement, leaf);
+  assert.equal(picks(named)[2].getAttribute('aria-current'), 'true');
+
+  const namedBranch = picks(named)[1].parentNode.querySelector('.df-tree-diagram-toggle');
+  namedBranch.dispatchEvent(new Event('click'));
+  assert.equal(data.update(input(rows.map((row) => ({ ...row, title: row.title + ' updated' })))), true);
+  assert.equal(mapped.snapshot().label, 'Branch updated');
+  assert.equal(picks(named)[1].getAttribute('aria-expanded'), 'false');
+  assert.equal(document.activeElement, picks(named)[1]);
+  assert.equal(data.update(input([{ name: 'root', under: 'root' }])), false);
+  assert.equal(mapped.snapshot().key, 'branch');
 });

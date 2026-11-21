@@ -115,6 +115,18 @@ window.DocFormSite = {
           "path": "../pages/explain/pipelines.html"
         },
         {
+          "title": "Timeline diagrams",
+          "path": "../pages/explain/timelines.html"
+        },
+        {
+          "title": "Sequence diagrams",
+          "path": "../pages/explain/sequences.html"
+        },
+        {
+          "title": "Tree diagrams",
+          "path": "../pages/explain/tree-diagrams.html"
+        },
+        {
           "title": "SVG animations",
           "path": "../pages/explain/animations.html"
         },

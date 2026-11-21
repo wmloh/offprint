@@ -3,17 +3,17 @@
   'use strict';
 
   var DocForm = root.DocForm;
-  if (!DocForm || !DocForm._detail) {
-    if (typeof console !== 'undefined') console.warn('[docform] pipeline.js needs core.js and detail.js loaded before it.');
+  if (!DocForm || !DocForm._diagram) {
+    if (typeof console !== 'undefined') console.warn('[docform] pipeline.js needs diagram.js loaded before it.');
     return;
   }
 
   var items = DocForm._items;
   var sequence = DocForm._sequence;
   var detail = DocForm._detail;
-  var SVG = 'http://www.w3.org/2000/svg';
+  var diagram = DocForm._diagram;
   var FIELDS = ['eyebrow', 'headline', 'description'];
-  var SIDES = { right: [1, 0], left: [-1, 0], bottom: [0, 1], top: [0, -1] };
+  var SIDES = diagram.sides;
   var STEM = 12;
   var ARROW = 8;
   var GAP = 5;
@@ -22,10 +22,6 @@
   var serial = 0;
 
   // ---- Layout geometry (pure) ----
-
-  function mean(values) {
-    return values.reduce(function (sum, value) { return sum + value; }, 0) / values.length;
-  }
 
   function adjacency(count, edges) {
     var out = [];
@@ -110,7 +106,7 @@
       var key = {};
       list.forEach(function (node) {
         var near = neighbors[node];
-        key[node] = pins[node] != null ? pins[node] / 2 : near.length ? mean(near.map(function (u) { return pos[u]; })) : pos[node];
+        key[node] = pins[node] != null ? pins[node] / 2 : near.length ? diagram.mean(near.map(function (u) { return pos[u]; })) : pos[node];
       });
       list.sort(function (a, b) { return key[a] - key[b] || pos[a] - pos[b]; });
       list.forEach(function (node, i) { pos[node] = i; });
@@ -137,7 +133,7 @@
           return;
         }
         var placed = preds[node].filter(function (u) { return h[u] !== undefined; });
-        var want = placed.length ? Math.round(mean(placed.map(function (u) { return h[u]; }))) : 0;
+        var want = placed.length ? Math.round(diagram.mean(placed.map(function (u) { return h[u]; }))) : 0;
         var at = Math.max(want, last + 2);
         while (clashes(fixed, at)) at++;
         h[node] = at;
@@ -154,7 +150,7 @@
       list.forEach(function (node, i) {
         if (pins[node] != null || !succs[node].length) return;
         if (preds[node].length && succs[node].length < 2) return;
-        var want = Math.round(mean(succs[node].map(function (u) { return h[u]; })));
+        var want = Math.round(diagram.mean(succs[node].map(function (u) { return h[u]; })));
         var lo = i > 0 ? h[list[i - 1]] + 2 : 0;
         var hi = i < list.length - 1 ? h[list[i + 1]] - 2 : Infinity;
         want = Math.min(Math.max(want, lo, 0), hi);
@@ -165,135 +161,6 @@
   }
 
   // Cross-axis centers for every half row. Neighbours in a rank keep their gap; spacing is shared evenly.
-  function centers(h, rank, size, gap) {
-    var maxH = Math.max.apply(null, h);
-    var step = [];
-    for (var k = 0; k < maxH; k++) step.push(0);
-    var byRank = {};
-    h.forEach(function (_, v) { (byRank[rank[v]] = byRank[rank[v]] || []).push(v); });
-    Object.keys(byRank).forEach(function (r) {
-      var list = byRank[r].sort(function (a, b) { return h[a] - h[b]; });
-      for (var i = 1; i < list.length; i++) {
-        var a = list[i - 1];
-        var b = list[i];
-        var span = Math.max(h[b] - h[a], 1);
-        var per = (size[a] / 2 + gap + size[b] / 2) / span;
-        for (var j = h[a]; j < h[a] + span && j < maxH; j++) step[j] = Math.max(step[j], per);
-      }
-    });
-    var fallback = (mean(size) + gap) / 2;
-    var c = [0];
-    for (k = 0; k < maxH; k++) c.push(c[k] + (step[k] || fallback));
-    var top = Math.min.apply(null, h.map(function (row, v) { return c[row] - size[v] / 2; }));
-    return c.map(function (value) { return value - top; });
-  }
-
-  function bands(rank, size, gap) {
-    var maxRank = Math.max.apply(null, rank);
-    var width = [];
-    for (var r = 0; r <= maxRank; r++) width.push(0);
-    rank.forEach(function (r, v) { width[r] = Math.max(width[r], size[v]); });
-    var start = [0];
-    for (r = 1; r <= maxRank; r++) start.push(start[r - 1] + width[r - 1] + gap);
-    return {
-      center: width.map(function (w, i) { return start[i] + w / 2; }),
-      total: start[maxRank] + width[maxRank]
-    };
-  }
-
-  // Linear interpolation over evenly indexed positions, extrapolating past the ends.
-  function interpolate(list, at) {
-    if (list.length === 1) return list[0];
-    var i = Math.min(Math.max(Math.floor(at), 0), list.length - 2);
-    return list[i] + (at - i) * (list[i + 1] - list[i]);
-  }
-
-  function add(a, b) { return [a[0] + b[0], a[1] + b[1]]; }
-  function sub(a, b) { return [a[0] - b[0], a[1] - b[1]]; }
-  function mul(a, k) { return [a[0] * k, a[1] * k]; }
-  function length(a) { return Math.sqrt(a[0] * a[0] + a[1] * a[1]); }
-  function unit(a) {
-    var l = length(a);
-    return l ? [a[0] / l, a[1] / l] : [1, 0];
-  }
-
-  // Smooth cubic segments through the points. Directions are travel directions at the ends.
-  function curve(points, startDir, endDir) {
-    var last = points.length - 1;
-    var tangents = points.map(function (point, i) {
-      return i === 0 ? startDir : i === last ? endDir : unit(sub(points[i + 1], points[i - 1]));
-    });
-    var segments = [];
-    for (var i = 0; i < last; i++) {
-      var a = points[i];
-      var b = points[i + 1];
-      var chord = sub(b, a);
-      var k = Math.max(length(chord) * (last > 1 ? 0.35 : 0.42), 24);
-      // A tangent across the chord (a loop back) gets a short handle so the bend stays near the blocks.
-      var along = unit(chord);
-      var k0 = tangents[i][0] * along[0] + tangents[i][1] * along[1] < 0.3 ? Math.min(k, 40) : k;
-      var k1 = tangents[i + 1][0] * along[0] + tangents[i + 1][1] * along[1] < 0.3 ? Math.min(k, 40) : k;
-      segments.push([a, add(a, mul(tangents[i], k0)), sub(b, mul(tangents[i + 1], k1)), b]);
-    }
-    return segments;
-  }
-
-  function point(segment, t) {
-    var u = 1 - t;
-    var a = u * u * u;
-    var b = 3 * u * u * t;
-    var c = 3 * u * t * t;
-    var d = t * t * t;
-    return [a * segment[0][0] + b * segment[1][0] + c * segment[2][0] + d * segment[3][0],
-      a * segment[0][1] + b * segment[1][1] + c * segment[2][1] + d * segment[3][1]];
-  }
-
-  function midpoint(segments) {
-    return point(segments[Math.floor((segments.length - 1) / 2)], segments.length % 2 ? 0.5 : 1);
-  }
-
-  function sample(segments, count) {
-    var points = [segments[0][0]];
-    segments.forEach(function (segment) {
-      for (var i = 1; i <= count; i++) points.push(point(segment, i / count));
-    });
-    return points;
-  }
-
-  function cross(a, b) { return a[0] * b[1] - a[1] * b[0]; }
-
-  function intersect(p1, p2, q1, q2) {
-    var r = sub(p2, p1);
-    var s = sub(q2, q1);
-    var d = cross(r, s);
-    if (Math.abs(d) < 1e-9) return null;
-    var t = cross(sub(q1, p1), s) / d;
-    var u = cross(sub(q1, p1), r) / d;
-    return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? add(p1, mul(r, t)) : null;
-  }
-
-  function crossings(a, b) {
-    var found = [];
-    for (var i = 1; i < a.length; i++) {
-      for (var j = 1; j < b.length; j++) {
-        if (Math.max(a[i - 1][0], a[i][0]) < Math.min(b[j - 1][0], b[j][0]) ||
-            Math.min(a[i - 1][0], a[i][0]) > Math.max(b[j - 1][0], b[j][0]) ||
-            Math.max(a[i - 1][1], a[i][1]) < Math.min(b[j - 1][1], b[j][1]) ||
-            Math.min(a[i - 1][1], a[i][1]) > Math.max(b[j - 1][1], b[j][1])) continue;
-        var hit = intersect(a[i - 1], a[i], b[j - 1], b[j]);
-        if (hit && !found.some(function (other) { return length(sub(other, hit)) < GAP * 2; })) found.push(hit);
-      }
-    }
-    return found;
-  }
-
-  function pathData(segments) {
-    function f(n) { return Math.round(n * 10) / 10; }
-    return 'M' + f(segments[0][0][0]) + ' ' + f(segments[0][0][1]) + segments.map(function (s) {
-      return 'C' + [s[1], s[2], s[3]].map(function (p) { return f(p[0]) + ' ' + f(p[1]); }).join(' ');
-    }).join('');
-  }
-
   // "col row; col row" in one-based grid units; rows accept halves.
   function parseVia(text) {
     if (!text || !text.trim()) return [];
@@ -339,11 +206,8 @@
       return null;
     }
     var base = host.id || 'df-pipeline-' + (++serial);
-    els.forEach(function (el, i) {
-      if (!el.id) el.id = detail.uniqueId(base + '-' + (i + 1));
-      if (el.classList.contains('df-pipe-block') && !el.hasAttribute('data-df-key')) el.setAttribute('data-df-key', el.id);
-    });
     var blocks = els.filter(function (el) { return el.classList.contains('df-pipe-block'); });
+    diagram.prepareNodes(els, blocks, base);
     var steps = host.querySelector(':scope > [data-df-pipeline-steps]');
     var domain = steps && items.domain('pipeline', host, DocForm.all(':scope > li', steps));
     var model = { list: list, els: els, blocks: blocks, domain: items.domain('pipeline', host, blocks),
@@ -413,18 +277,6 @@
 
   // ---- Mounted diagram ----
 
-  function svg(name, attrs, parent) {
-    var el = document.createElementNS(SVG, name);
-    Object.keys(attrs).forEach(function (key) { if (attrs[key] != null) el.setAttribute(key, attrs[key]); });
-    if (parent) parent.appendChild(el);
-    return el;
-  }
-
-  function sideOf(rect, side) {
-    var d = SIDES[side];
-    return [rect.x + rect.w / 2 + d[0] * rect.w / 2, rect.y + rect.h / 2 + d[1] * rect.h / 2];
-  }
-
   function setup(host) {
     var model = prepare(host);
     if (!model) return;
@@ -479,7 +331,7 @@
     model.list.parentNode.insertBefore(scroll, model.list);
     scroll.appendChild(stage);
     stage.appendChild(model.list);
-    var lines = svg('svg', { class: 'df-pipe-lines', 'aria-hidden': 'true', focusable: 'false' }, stage);
+    var lines = diagram.svg('svg', { class: 'df-pipe-lines', 'aria-hidden': 'true', focusable: 'false' }, stage);
     var labels = document.createElement('div');
     labels.className = 'df-pipe-labels';
     labels.setAttribute('aria-hidden', 'true');
@@ -506,18 +358,9 @@
 
     // ---- Selection, detail pane, and keyboard ----
     var buttons = model.blocks;
-    var selection = items.controller('pipeline', host, model.domain, function (index, key) {
+    var selection = diagram.selection('pipeline', host, model.domain, function (index, key) {
       return { key: key, index: index, blockId: buttons[index].id };
-    }, function (current, previous) {
-      if (previous) buttons[previous.index].removeAttribute('aria-current');
-      buttons[current.index].setAttribute('aria-current', 'true');
-      roving(current.index);
     }, model.stepDomain ? 'block-selection-group' : 'selection-group');
-
-    function roving(index) {
-      var focused = buttons.indexOf(document.activeElement);
-      buttons.forEach(function (button, i) { button.tabIndex = i === (focused < 0 ? index : focused) ? 0 : -1; });
-    }
 
     function hidden(i) { return nodes[i].el.hasAttribute('data-df-pipe-hidden'); }
 
@@ -561,7 +404,7 @@
       button.addEventListener('focus', function () {
         preview(state, i);
         if (selection.controller.snapshot().index !== b) selection.choose(b, 'user');
-        roving(b);
+        selection.roving(b);
       });
       button.addEventListener('keydown', function (event) {
         var along = down ? { ArrowDown: 1, ArrowUp: -1 } : { ArrowRight: 1, ArrowLeft: -1 };
@@ -648,9 +491,8 @@
     if (pane) {
       var placement = host.getAttribute('data-df-detail-layout');
       if (placement && placement !== 'side' && placement !== 'below') issue(host, 'Invalid data-df-detail-layout value.', 'Use below or side.');
-      detail.mount(pane, { source: host });
     }
-    detail.source(host, selection.controller);
+    diagram.connectDetails(host, pane, selection.controller);
 
     state.layout = function () { layout(state); };
     var controller = Object.assign({}, selection.controller, {
@@ -799,8 +641,8 @@
 
     var main = down ? 1 : 0;
     var crossAxis = 1 - main;
-    var mainBands = bands(state.rank, sizes.map(function (s) { return s[main]; }), down ? gapY : gapX);
-    var c = centers(state.h, state.rank, sizes.map(function (s) { return s[crossAxis]; }), down ? gapX : gapY);
+    var mainBands = diagram.bands(state.rank, sizes.map(function (s) { return s[main]; }), down ? gapY : gapX);
+    var c = diagram.centers(state.h, state.rank, sizes.map(function (s) { return s[crossAxis]; }), down ? gapX : gapY);
     var crossTotal = Math.max.apply(null, state.h.map(function (row, i) { return c[row] + sizes[i][crossAxis] / 2; }));
     var pad = 32;
     nodes.forEach(function (node, i) {
@@ -823,8 +665,8 @@
   function gridPoint(state, via) {
     var g = state.grid;
     var p = [];
-    p[g.main] = interpolate(g.bands, via[0]) + g.pad;
-    p[1 - g.main] = interpolate(g.c, via[1]) + g.pad;
+    p[g.main] = diagram.interpolate(g.bands, via[0]) + g.pad;
+    p[1 - g.main] = diagram.interpolate(g.c, via[1]) + g.pad;
     return p;
   }
 
@@ -837,7 +679,7 @@
     lines.setAttribute('width', total[0]);
     lines.setAttribute('height', total[1]);
     lines.setAttribute('viewBox', '0 0 ' + total[0] + ' ' + total[1]);
-    var defs = svg('defs', {}, lines);
+    var defs = diagram.svg('defs', {}, lines);
     var stageSize = total;
     var uid = state.host.id;
 
@@ -855,8 +697,8 @@
     var stems = [];
     groups.forEach(function (group, key) {
       if (group.edges.length < 2) return;
-      var port = sideOf(nodes[group.node].rect, group.side);
-      var tip = add(port, mul(SIDES[group.side], STEM));
+      var port = diagram.sideOf(nodes[group.node].rect, group.side);
+      var tip = diagram.add(port, diagram.mul(SIDES[group.side], STEM));
       stemAt[key] = tip;
       stems.push({ group: group, port: port, tip: tip });
     });
@@ -865,7 +707,7 @@
       var key = [kind, node, side].join(':');
       if (stemAt[key]) return stemAt[key];
       var rect = nodes[node].rect;
-      return nodes[node].junction ? [rect.x + rect.w / 2, rect.y + rect.h / 2] : sideOf(rect, side);
+      return nodes[node].junction ? [rect.x + rect.w / 2, rect.y + rect.h / 2] : diagram.sideOf(rect, side);
     }
 
     var shapes = edges.map(function (edge) {
@@ -873,19 +715,19 @@
       var end = endpoint(edge.to, edge.enter, 'in');
       var merged = Boolean(stemAt[['in', edge.to, edge.enter].join(':')]);
       var forked = Boolean(stemAt[['out', edge.from, edge.exit].join(':')]);
-      var endDir = mul(SIDES[edge.enter], -1);
+      var endDir = diagram.mul(SIDES[edge.enter], -1);
       var startDir = SIDES[edge.exit];
-      if (nodes[edge.to].junction) endDir = unit(sub(end, start));
-      if (nodes[edge.from].junction) startDir = unit(sub(end, start));
+      if (nodes[edge.to].junction) endDir = diagram.unit(diagram.sub(end, start));
+      if (nodes[edge.from].junction) startDir = diagram.unit(diagram.sub(end, start));
       var endArrow = !merged && (edge.arrow === 'end' || edge.arrow === 'both');
       var startArrow = !forked && (edge.arrow === 'start' || edge.arrow === 'both');
-      var a = startArrow ? add(start, mul(startDir, ARROW - 2)) : start;
-      var b = endArrow ? sub(end, mul(endDir, ARROW - 2)) : end;
+      var a = startArrow ? diagram.add(start, diagram.mul(startDir, ARROW - 2)) : start;
+      var b = endArrow ? diagram.sub(end, diagram.mul(endDir, ARROW - 2)) : end;
       var points = [a].concat(edge.via.map(function (via) { return gridPoint(state, via); }), [b]);
-      var segments = curve(points, startDir, endDir);
+      var segments = diagram.curve(points, startDir, endDir);
       return {
-        segments: segments, poly: sample(segments, 20),
-        arrows: [startArrow && [start, mul(startDir, -1)], endArrow && [end, endDir]].filter(Boolean)
+        segments: segments, poly: diagram.sample(segments, 20),
+        arrows: [startArrow && [start, diagram.mul(startDir, -1)], endArrow && [end, endDir]].filter(Boolean)
       };
     });
 
@@ -902,23 +744,23 @@
     for (var i = 0; i < edges.length; i++) {
       for (var j = i + 1; j < edges.length; j++) {
         var shared = [edges[i].from, edges[i].to].some(function (n) { return n === edges[j].from || n === edges[j].to; });
-        if (!shared) gaps[j] = gaps[j].concat(crossings(shapes[i].poly, shapes[j].poly));
+        if (!shared) gaps[j] = gaps[j].concat(diagram.crossings(shapes[i].poly, shapes[j].poly, GAP));
       }
     }
 
     state.paths = edges.map(function (edge, index) {
-      var g = svg('g', {
+      var g = diagram.svg('g', {
         class: 'df-pipe-edge df-pipe-line-' + edge.line + (edge.flow ? ' df-pipe-flow' : ''),
         'data-df-color': edge.color, 'data-df-role': edge.role
       }, lines);
       var mask = null;
       if (gaps[index].length) {
         mask = uid + '-gap-' + index;
-        var m = svg('mask', { id: mask, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: total[0], height: total[1] }, defs);
-        svg('rect', { x: 0, y: 0, width: total[0], height: total[1], fill: 'white' }, m);
-        gaps[index].forEach(function (p) { svg('circle', { cx: p[0], cy: p[1], r: GAP, fill: 'black' }, m); });
+        var m = diagram.svg('mask', { id: mask, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: total[0], height: total[1] }, defs);
+        diagram.svg('rect', { x: 0, y: 0, width: total[0], height: total[1], fill: 'white' }, m);
+        gaps[index].forEach(function (p) { diagram.svg('circle', { cx: p[0], cy: p[1], r: GAP, fill: 'black' }, m); });
       }
-      svg('path', { class: 'df-pipe-path', d: pathData(shapes[index].segments), mask: mask && 'url(#' + mask + ')' }, g);
+      diagram.svg('path', { class: 'df-pipe-path', d: diagram.pathData(shapes[index].segments), mask: mask && 'url(#' + mask + ')' }, g);
       shapes[index].arrows.forEach(function (arrow) { arrowHead(g, arrow[0], arrow[1]); });
       if (edge.label) {
         var tag = document.createElement('span');
@@ -926,7 +768,7 @@
         if (edge.color) tag.setAttribute('data-df-color', edge.color);
         if (edge.role) tag.setAttribute('data-df-role', edge.role);
         tag.textContent = edge.label;
-        var at = midpoint(shapes[index].segments);
+        var at = diagram.midpoint(shapes[index].segments);
         tag.style.left = at[0] + 'px';
         tag.style.top = at[1] + 'px';
         state.labels.appendChild(tag);
@@ -937,12 +779,12 @@
 
     state.stems = stems.map(function (stem) {
       var first = edges[stem.group.edges[0]];
-      var g = svg('g', { class: 'df-pipe-edge df-pipe-stem', 'data-df-color': first.color, 'data-df-role': first.role }, lines);
+      var g = diagram.svg('g', { class: 'df-pipe-edge df-pipe-stem', 'data-df-color': first.color, 'data-df-role': first.role }, lines);
       var inward = stem.group.kind === 'in';
       var arrow = inward && stem.group.edges.some(function (e) { return /end|both/.test(edges[e].arrow); });
-      var dir = mul(SIDES[stem.group.side], -1);
-      var end = arrow ? sub(stem.port, mul(dir, ARROW - 2)) : stem.port;
-      svg('path', { class: 'df-pipe-path', d: 'M' + stem.tip[0] + ' ' + stem.tip[1] + 'L' + end[0] + ' ' + end[1] }, g);
+      var dir = diagram.mul(SIDES[stem.group.side], -1);
+      var end = arrow ? diagram.sub(stem.port, diagram.mul(dir, ARROW - 2)) : stem.port;
+      diagram.svg('path', { class: 'df-pipe-path', d: 'M' + stem.tip[0] + ' ' + stem.tip[1] + 'L' + end[0] + ' ' + end[1] }, g);
       if (arrow) arrowHead(g, stem.port, dir);
       return { g: g, edges: stem.group.edges };
     });
@@ -950,11 +792,11 @@
   }
 
   function arrowHead(g, tip, dir) {
-    var base = sub(tip, mul(dir, ARROW));
+    var base = diagram.sub(tip, diagram.mul(dir, ARROW));
     var n = [-dir[1] * ARROW * 0.55, dir[0] * ARROW * 0.55];
-    var a = add(base, n);
-    var b = sub(base, n);
-    svg('path', { class: 'df-pipe-arrow', d: 'M' + tip.join(' ') + 'L' + a.join(' ') + 'L' + b.join(' ') + 'Z' }, g);
+    var a = diagram.add(base, n);
+    var b = diagram.sub(base, n);
+    diagram.svg('path', { class: 'df-pipe-arrow', d: 'M' + tip.join(' ') + 'L' + a.join(' ') + 'L' + b.join(' ') + 'Z' }, g);
   }
 
   // Emphasize everything upstream and downstream of a block; dim the rest.
@@ -1020,8 +862,7 @@
   }
 
   DocForm._pipeline = {
-    ranks: ranks, rows: rows, centers: centers, bands: bands, interpolate: interpolate,
-    curve: curve, sample: sample, crossings: crossings, pathData: pathData, parseVia: parseVia, isEmpty: isEmpty
+    ranks: ranks, rows: rows, parseVia: parseVia, isEmpty: isEmpty
   };
   DocForm.pipeline = {
     get: function (target) { return hosts.get(items.target(target)) || null; }

@@ -63,7 +63,7 @@ class El extends EventTarget {
   setPointerCapture() {}
 }
 
-function setup(chartHit) {
+function setup(chartHit, timelineHit) {
   const document = new EventTarget();
   document.createElement = (tag) => new El(tag);
   document.createElementNS = (_, tag) => new El(tag);
@@ -83,6 +83,10 @@ function setup(chartHit) {
       } : null
     } : undefined
   };
+  if (timelineHit) {
+    api.timeline = { get: () => ({}) };
+    api._timeline = { coords: (host, x, y) => timelineHit(x, y) };
+  }
   const context = vm.createContext({
     document, MutationObserver, Map, Set,
     performance: { now: () => 1000 }, innerWidth: 1920, innerHeight: 1080,
@@ -343,4 +347,29 @@ test('on charts the measure tool is a crosshair that reads data coordinates; els
   plain.pointer(layer, 'pointerup', 40, 50);
   plain.pointer(plain.overlay, 'pointermove', 400, 400);
   assert.equal(plain.find('df-zoomtools-readout').textContent, '50 px (Δx 30, Δy 40)', 'the ruler stays after release');
+});
+
+test('timeline crosshairs read the axis and lane while sequence and tree use presentation tools', () => {
+  const z = setup(null, (x, y) => x > 200 && {
+    label: 'Date', value: '2028-02-29', lane: 'Writing', plot: { left: 150, right: 450, top: 120, bottom: 380 }
+  });
+  z.target.className = 'df-timeline';
+  z.open();
+  assert.equal(z.tools.use('measure'), true);
+  z.pointer(z.overlay, 'pointermove', 300, 200);
+  assert.equal(z.find('df-zoomtools-readout').textContent, 'Date2028-02-29LaneWriting');
+  assert.equal(z.find('df-zoomtools-measure').children.length, 2);
+  z.pointer(z.overlay, 'pointermove', 180, 200);
+  assert.equal(z.find('df-zoomtools-readout').hidden, true);
+  z.close();
+
+  for (const diagram of ['df-sequence', 'df-tree-diagram']) {
+    z.target.className = diagram;
+    z.open();
+    assert.deepEqual(z.findAll('df-zoomtools-btn').map((b) => b.getAttribute('data-tool')).filter(Boolean),
+      ['cursor', 'magnifier', 'laser', 'pen', 'highlighter']);
+    assert.equal(z.key('c').defaultPrevented, false);
+    assert.equal(z.tools.use('measure'), false);
+    z.close();
+  }
 });

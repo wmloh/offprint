@@ -7,8 +7,9 @@ const vm = require('node:vm');
 const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
 const context = vm.createContext({ console });
 context.window = context;
-['core.js', 'detail.js', 'pipeline.js'].forEach((file) => vm.runInContext(read(file), context));
+['core.js', 'detail.js', 'diagram.js', 'pipeline.js'].forEach((file) => vm.runInContext(read(file), context));
 const P = context.DocForm._pipeline;
+const D = context.DocForm._diagram;
 const edges = (pairs) => pairs.map(([from, to]) => ({ from, to }));
 const none = (n) => Array(n).fill(null);
 const plain = (value) => JSON.parse(JSON.stringify(value));
@@ -43,32 +44,32 @@ test('rows centre forks and merges on half rows and keep pinned rows clear', () 
 });
 
 test('centres give neighbours their gap, share the space across half rows, and start at the edge', () => {
-  const c = P.centers([0, 2, 1], [0, 0, 1], [40, 60, 30], 20);
+  const c = D.centers([0, 2, 1], [0, 0, 1], [40, 60, 30], 20);
   assert.equal(c[2] - c[0], 40 / 2 + 20 + 60 / 2);
   assert.equal(c[1], (c[0] + c[2]) / 2);
   assert.equal(c[0], 20);
 
-  const b = P.bands([0, 1, 1, 3], [100, 80, 120, 10], 50);
+  const b = D.bands([0, 1, 1, 3], [100, 80, 120, 10], 50);
   assert.deepEqual(plain(b.center), [50, 210, 320, 375]);
   assert.equal(b.total, 380);
-  assert.equal(P.interpolate([0, 10, 30], 1.5), 20);
-  assert.equal(P.interpolate([0, 10, 30], 3), 50);
+  assert.equal(D.interpolate([0, 10, 30], 1.5), 20);
+  assert.equal(D.interpolate([0, 10, 30], 3), 50);
 });
 
 test('curves run straight between aligned ports and gaps are found only where lines cross', () => {
-  const straight = P.curve([[0, 0], [100, 0]], [1, 0], [1, 0]);
-  assert.ok(P.sample(straight, 10).every(([, y]) => y === 0));
-  assert.match(P.pathData(straight), /^M0 0C/);
+  const straight = D.curve([[0, 0], [100, 0]], [1, 0], [1, 0]);
+  assert.ok(D.sample(straight, 10).every(([, y]) => y === 0));
+  assert.match(D.pathData(straight), /^M0 0C/);
 
-  const a = P.sample(P.curve([[0, 0], [100, 100]], [1, 0], [1, 0]), 20);
-  const b = P.sample(P.curve([[0, 100], [100, 0]], [1, 0], [1, 0]), 20);
-  const c = P.sample(P.curve([[0, 200], [100, 200]], [1, 0], [1, 0]), 20);
-  const hits = P.crossings(a, b);
+  const a = D.sample(D.curve([[0, 0], [100, 100]], [1, 0], [1, 0]), 20);
+  const b = D.sample(D.curve([[0, 100], [100, 0]], [1, 0], [1, 0]), 20);
+  const c = D.sample(D.curve([[0, 200], [100, 200]], [1, 0], [1, 0]), 20);
+  const hits = D.crossings(a, b, 5);
   assert.equal(hits.length, 1);
   assert.ok(Math.abs(hits[0][0] - 50) < 1 && Math.abs(hits[0][1] - 50) < 1);
-  assert.equal(P.crossings(a, c).length, 0);
+  assert.equal(D.crossings(a, c, 5).length, 0);
 
-  const via = P.curve([[0, 0], [50, 40], [100, 0]], [1, 0], [1, 0]);
+  const via = D.curve([[0, 0], [50, 40], [100, 0]], [1, 0], [1, 0]);
   assert.equal(via.length, 2);
   assert.deepEqual(plain(via[0][3]), [50, 40]);
 });

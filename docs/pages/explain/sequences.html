@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sequence diagrams · DocForm</title>
+  <link rel="stylesheet" href="../../../docform/docform.css">
+  <script src="../../assets/site.js" data-df-site></script>
+  <script type="application/json" data-df-page>
+    { "features": { "sequence": true, "zoom-tools": true } }
+  </script>
+  <script src="../../../docform/docform.js"></script>
+</head>
+<body>
+  <nav class="df-sidebar" aria-label="Site navigation">
+    <div data-df-nav></div>
+  </nav>
+
+  <main class="df-page">
+    <header>
+      <p class="df-eyebrow">Explain step by step</p>
+      <h1>Sequence diagrams</h1>
+      <p>Give each participant a column and draw messages in the order they happen, from top to bottom.</p>
+    </header>
+
+    <h2 id="checkout">Follow an online payment</h2>
+    <p>Read each arrow from sender to receiver. A loop shows a participant doing work on its own. Hover over or select a message to see what happens at that point.</p>
+    <figure class="df-sequence" id="payment" data-df-zoom>
+      <ul class="df-sequence-participants">
+        <li data-df-key="buyer">Buyer</li>
+        <li data-df-key="shop">Shop</li>
+        <li data-df-key="payment">Payment service</li>
+      </ul>
+      <ol class="df-sequence-messages">
+        <li data-df-key="submit" data-df-from="buyer" data-df-to="shop" data-df-label="Place order">Buyer → Shop · Place order</li>
+        <li data-df-key="request" data-df-from="shop" data-df-to="payment" data-df-label="Request payment">Shop → Payment service · Request payment</li>
+        <li data-df-key="verify" data-df-from="payment" data-df-to="payment" data-df-label="Check payment">Payment service · Check payment</li>
+        <li data-df-key="result" data-df-from="payment" data-df-to="shop" data-df-label="Return result">Payment service → Shop · Return result</li>
+        <li data-df-key="confirm" data-df-from="shop" data-df-to="buyer" data-df-label="Confirm order">Shop → Buyer · Confirm order</li>
+      </ol>
+      <div class="df-detail-pane">
+        <p data-df-key="submit">The buyer submits an order and chooses how to pay.</p>
+        <p data-df-key="request">The shop sends the order reference and amount to the payment service.</p>
+        <p data-df-key="verify">The payment service checks whether the payment can be authorized.</p>
+        <p data-df-key="result">The payment service returns the authorization result to the shop.</p>
+        <p data-df-key="confirm">The shop confirms the order after receiving approval.</p>
+      </div>
+      <figcaption>One successful checkout, from order to confirmation.</figcaption>
+    </figure>
+
+    <p>Click the background to open fullscreen. Tab to the message controls and use Up or Down to move through them. See the <a href="../../../docform/docs/diagram/sequences.md">sequence reference</a> for markup and named sources.</p>
+    <nav class="df-prevnext" data-df-prevnext aria-label="Adjacent pages"></nav>
+  </main>
+</body>
+</html>

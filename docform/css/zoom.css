@@ -1,6 +1,7 @@
 /* Figure zoom from zoom.js: images and figures open in a frosted full-screen view. */
 img.df-zoomable,
 figure.df-zoomable :is(svg, img),
+figure.df-zoomable:not(.df-zoomed):is(.df-timeline, .df-sequence, .df-tree-diagram),
 .df-zoomable:not(figure, img) {
   cursor: zoom-in;
 }
@@ -69,6 +70,11 @@ figure.df-zoomed {
   border-radius: var(--df-radius-lg);
   background: var(--df-bg);
   box-shadow: inset 0 0 0 1px var(--df-border), 0 24px 64px rgba(0, 0, 0, 0.18);
+}
+
+figure.df-zoomed:is(.df-timeline, .df-sequence, .df-tree-diagram) {
+  width: 100%;
+  max-width: 100%;
 }
 
 figure.df-zoomed > svg {

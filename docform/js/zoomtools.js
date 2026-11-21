@@ -1,5 +1,5 @@
 // Presentation tools for the zoom view of zoom.js: a frosted pill with a cursor (the default), a magnifier lens, a
-// laser pointer, pen and highlighter ink, and a crosshair that reads chart data (a ruler on other figures).
+// laser pointer, pen and highlighter ink, and a crosshair that reads chart and timeline axes.
 // Letters pick tools while a figure is zoomed. Closing the view discards the ink and returns to the cursor.
 (function (root) {
   'use strict';
@@ -217,11 +217,11 @@
     return b;
   }
 
-  function chartHosts(target) {
-    if (!DocForm.chart || typeof DocForm.chart.get !== 'function') return [];
-    var hosts = DocForm.all('.df-chart', target);
-    if (target.classList.contains('df-chart')) hosts.unshift(target);
-    return hosts.filter(function (h) { return !!DocForm.chart.get(h); });
+  function hostsWithAPI(target, cls, api) {
+    if (!api || typeof api.get !== 'function') return [];
+    var hosts = DocForm.all('.' + cls, target);
+    if (target.classList.contains(cls)) hosts.unshift(target);
+    return hosts.filter(function (host) { return !!api.get(host); });
   }
 
   function start(detail) {
@@ -230,8 +230,12 @@
     var target = detail.target;
     var s = {
       overlay: overlay, target: target, state: createState(), pointer: null, frame: 0, trail: [], ruler: null,
-      charts: chartHosts(target), observer: null, clone: null, buttons: {}, swatches: []
+      charts: hostsWithAPI(target, 'df-chart', DocForm.chart),
+      timelines: hostsWithAPI(target, 'df-timeline', DocForm.timeline),
+      observer: null, clone: null, buttons: {}, swatches: []
     };
+    s.crosshair = s.timelines.length > 0 || s.charts.length > 0;
+    s.presentationOnly = target.classList.contains('df-sequence') || target.classList.contains('df-tree-diagram');
     session = s;
 
     s.layer = svg('svg', { class: 'df-zoomtools-layer', 'aria-hidden': 'true', focusable: 'false' });
@@ -262,8 +266,9 @@
       return name;
     }
     TOOLS.forEach(function (t) {
-      var icon = t.id === 'measure' ? (s.charts.length ? 'crosshair' : 'ruler') : t.id;
-      var label = t.id === 'measure' && !s.charts.length ? 'Ruler' : t.label;
+      if (t.id === 'measure' && s.presentationOnly) return;
+      var icon = t.id === 'measure' ? (s.crosshair ? 'crosshair' : 'ruler') : t.id;
+      var label = t.id === 'measure' && !s.crosshair ? 'Ruler' : t.label;
       var b = button('df-zoomtools-btn', label, icon, pill);
       b.setAttribute('aria-label', label);
       DocForm._shortcutHint(b, bind(t.id, t.key, label, function () { choose(t.id); }), label);
@@ -308,6 +313,9 @@
 
     s.onMove = function (event) { move(event.clientX, event.clientY, event); };
     s.onLeave = function () { s.pointer = null; hidePointer(); };
+    s.onScroll = function () {
+      if (s.pointer && s.state.tool === 'measure' && s.crosshair) crosshair(s.pointer.x, s.pointer.y);
+    };
     s.onWheel = function (event) {
       if (s.state.tool !== 'magnifier') return;
       event.preventDefault();
@@ -317,6 +325,7 @@
     s.onInput = function () { if (s.sync) s.sync.mark(); };
     overlay.addEventListener('pointermove', s.onMove);
     overlay.addEventListener('pointerleave', s.onLeave);
+    overlay.addEventListener('scroll', s.onScroll, true);
     overlay.addEventListener('wheel', s.onWheel, { passive: false });
     s.layer.addEventListener('pointerdown', s.onDown);
     target.addEventListener('input', s.onInput);
@@ -338,6 +347,7 @@
     watch(s, false);
     s.overlay.removeEventListener('pointermove', s.onMove);
     s.overlay.removeEventListener('pointerleave', s.onLeave);
+    s.overlay.removeEventListener('scroll', s.onScroll, true);
     s.overlay.removeEventListener('wheel', s.onWheel, { passive: false });
     s.target.removeEventListener('input', s.onInput);
     s.target.removeEventListener('change', s.onInput);
@@ -365,9 +375,9 @@
     var tool = s.state.tool;
     TOOLS.forEach(function (t) {
       s.overlay.classList.toggle('is-tool-' + t.id, t.id === tool);
-      s.buttons[t.id].setAttribute('aria-pressed', String(t.id === tool));
+      if (s.buttons[t.id]) s.buttons[t.id].setAttribute('aria-pressed', String(t.id === tool));
     });
-    s.overlay.classList.toggle('is-tool-ruler', tool === 'measure' && !s.charts.length);
+    s.overlay.classList.toggle('is-tool-ruler', tool === 'measure' && !s.crosshair);
     s.zoomText.hidden = tool !== 'magnifier';
     s.zoomText.textContent = s.state.zoom.toLocaleString('en-US', { maximumFractionDigits: 2 }) + '×';
     var ink = isInk(tool);
@@ -411,7 +421,7 @@
     } else if (tool === 'magnifier') {
       wake();
     } else if (tool === 'measure') {
-      if (s.charts.length) crosshair(x, y);
+      if (s.crosshair) crosshair(x, y);
       else if (s.ruler && s.ruler.active) dragRuler(x, y, event && event.shiftKey);
     } else if (isInk(tool) && s.state.stroke && event) {
       var points = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
@@ -534,11 +544,18 @@
   function crosshair(x, y) {
     var s = session;
     var hit = null;
-    var host = null;
-    for (var i = 0; i < s.charts.length && !hit; i++) {
-      var api = DocForm.chart.get(s.charts[i]);
+    var rows;
+    for (var i = 0; i < s.timelines.length && !hit; i++) {
+      hit = DocForm._timeline.coords(s.timelines[i], x, y);
+      if (hit) rows = [[hit.label, hit.value], ['Lane', hit.lane]];
+    }
+    for (var j = 0; j < s.charts.length && !hit; j++) {
+      var api = DocForm.chart.get(s.charts[j]);
       hit = api && api.coords(x, y);
-      if (hit) host = api;
+      if (hit) {
+        var model = api.model();
+        rows = [[model.x.label || 'x', hit.xText], [model.y.label || 'y', hit.yText]];
+      }
     }
     s.measureGroup.textContent = '';
     if (!hit) {
@@ -548,9 +565,8 @@
     var g = hit.plot;
     svg('line', { x1: x, x2: x, y1: g.top, y2: g.bottom }, s.measureGroup);
     svg('line', { x1: g.left, x2: g.right, y1: y, y2: y }, s.measureGroup);
-    var model = host.model();
     s.readout.textContent = '';
-    [[model.x.label || 'x', hit.xText], [model.y.label || 'y', hit.yText]].forEach(function (row) {
+    rows.forEach(function (row) {
       var line = make('div', '', s.readout);
       make('span', '', line).textContent = row[0];
       make('b', '', line).textContent = row[1];
@@ -600,7 +616,7 @@
     if (isInk(tool)) {
       var stroke = begin(s.state, event.clientX, event.clientY);
       s.strokePath = inkPath(stroke);
-    } else if (tool === 'measure' && !s.charts.length) {
+    } else if (tool === 'measure' && !s.crosshair) {
       s.ruler = { a: { x: event.clientX, y: event.clientY }, b: { x: event.clientX, y: event.clientY }, active: true,
         frame: frameAt(s.target, event.clientX, event.clientY) };
       drawRuler();
@@ -689,7 +705,7 @@
     active: function () { return session ? session.state.tool : null; },
     // Chooses a tool in the open zoom view; returns false when none is open or the name is unknown.
     use: function (id) {
-      if (!session || !toolOf(id)) return false;
+      if (!session || !Object.hasOwn(session.buttons, id)) return false;
       choose(id);
       return true;
     }

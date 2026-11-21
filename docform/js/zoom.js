@@ -10,6 +10,7 @@
   }
 
   var TRIGGERS = '.df-page img, .df-page figure, [data-df-zoom]';
+  var DIAGRAMS = 'figure.df-timeline, figure.df-sequence, figure.df-tree-diagram';
   // Focusable regions without a control role, such as chart plots, still open the zoom view.
   var SKIP = 'a, button, input, select, textarea, label, summary, [contenteditable], [role="button"], [role="link"], ' +
     '[role="tab"], [role="slider"], [role="checkbox"], [role="switch"], [role="option"], [role="menuitem"], ' +
@@ -172,6 +173,8 @@
   function triggerFor(node) {
     if (!node || typeof node.closest !== 'function' || node.closest('.df-zoom')) return null;
     if (component.closestFlag(node, 'no-zoom', 'zoom')) return null;
+    var diagram = node.closest(DIAGRAMS);
+    if (diagram && !isTrigger(diagram)) return null;
     var trigger = node.closest(TRIGGERS);
     while (trigger && !isTrigger(trigger)) trigger = trigger.parentElement && trigger.parentElement.closest(TRIGGERS);
     if (!trigger) return null;
@@ -180,6 +183,8 @@
   }
 
   function isTrigger(el) {
+    var diagram = el.closest(DIAGRAMS);
+    if (diagram) return el === diagram && component.flag(el, 'zoom', 'zoom');
     return el.matches('.df-page img, .df-page figure') ||
       (boot ? component.flag(el, 'zoom', 'zoom') : el.hasAttribute('data-df-zoom'));
   }

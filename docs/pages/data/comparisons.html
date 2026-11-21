@@ -8,7 +8,7 @@
   <script src="../../assets/site.js" data-df-site></script>
   <script type="application/json" data-df-page>
     {
-      "features": {"matrix": true, "scenarios": true},
+      "features": {"matrix": true, "scenarios": true, "selection": true},
       "options": {
         "matrix": {
           "instances": {
@@ -171,15 +171,16 @@
       ]
     </script>
 
-    <table id="reading-scenario" data-df-scenarios="configurations" data-df-source="Example reading times">
+    <table id="reading-scenario" data-df-scenarios="configurations" data-df-source="Example reading times" data-df-selection-group="reading-plan">
       <caption>Illustrative reading times with different navigation settings</caption>
-      <thead><tr><th scope="col">Measure</th><th scope="col">Unit</th><th scope="col">Full contents</th><th scope="col">Short contents</th><th scope="col">Short contents with outline off</th></tr></thead>
+      <thead><tr><th scope="col">Measure</th><th scope="col">Unit</th><th scope="col" data-df-key="baseline">Full contents</th><th scope="col" data-df-key="short"><span data-df-step-label>Short contents</span></th><th scope="col" data-df-key="compact"><span data-df-step-label>Short contents with outline off</span></th></tr></thead>
       <tbody>
         <tr data-df-condition><th scope="row">Table of contents</th><td></td><td>Full</td><td>Short</td><td>Short</td></tr>
         <tr data-df-condition><th scope="row">Outline</th><td></td><td>On</td><td>On</td><td>Off</td></tr>
         <tr><th scope="row">Time to find a section</th><td>seconds</td><td>30</td><td>25</td><td>23</td></tr>
       </tbody>
     </table>
+    <p><button type="button" class="df-button" data-df-selection-group="reading-plan" data-df-key="short">Compare short contents</button></p>
 
     <p class="df-eyebrow" data-df-role="try">Try it</p>
     <p>Choose <strong>Next variant</strong> to compare a short contents list with the outline off. The summary names both changed conditions. Look for the estimated time, its bounds, and the paired change from the baseline.</p>

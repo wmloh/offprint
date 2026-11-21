@@ -9,6 +9,7 @@
   }
 
   var items = DocForm._items;
+  var sequence = DocForm._sequence;
   var detail = DocForm._detail;
   var SVG = 'http://www.w3.org/2000/svg';
   var FIELDS = ['eyebrow', 'headline', 'description'];
@@ -343,12 +344,15 @@
       if (el.classList.contains('df-pipe-block') && !el.hasAttribute('data-df-key')) el.setAttribute('data-df-key', el.id);
     });
     var blocks = els.filter(function (el) { return el.classList.contains('df-pipe-block'); });
-    var model = { list: list, els: els, blocks: blocks, domain: items.domain('pipeline', host, blocks) };
+    var steps = host.querySelector(':scope > [data-df-pipeline-steps]');
+    var domain = steps && items.domain('pipeline', host, DocForm.all(':scope > li', steps));
+    var model = { list: list, els: els, blocks: blocks, domain: items.domain('pipeline', host, blocks),
+      steps: steps, stepDomain: domain };
     models.set(host, model.domain ? model : null);
     return models.get(host);
   }
 
-  function readEdges(host, nodes) {
+  function readEdges(host, nodes, stepIndex) {
     var index = new Map(nodes.map(function (node, i) { return [node.el.id, i]; }));
     var edges = [];
     var pairs = new Map();
@@ -402,8 +406,7 @@
       edge.exit = SIDES[get('exit')] ? get('exit') : null;
       edge.enter = SIDES[get('enter')] ? get('enter') : null;
       edge.via = via;
-      var step = link && Number(get('step'));
-      edge.step = Number.isInteger(step) && step > 0 ? step : null;
+      edge.step = link ? stepIndex(link, null) : null;
     });
     return edges;
   }
@@ -433,19 +436,27 @@
     var backSide = down ? 'right' : 'bottom';
     var opposite = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' };
 
+    function stepIndex(el, fallback) {
+      var key = items.key(DocForm.data(el, 'reveal-step'));
+      if (!key || !model.stepDomain) return fallback;
+      var index = model.stepDomain.keys.indexOf(key);
+      if (index >= 0) return index + 1;
+      issue(el, 'Unknown pipeline reveal step "' + key + '".', 'Use a key from the pipeline step list.');
+      return fallback;
+    }
+
     var nodes = model.els.map(function (el) {
       var junction = el.classList.contains('df-pipe-junction');
-      var step = Number(el.getAttribute('data-df-step'));
       return {
         el: el, junction: junction,
         col: positive(el, 'col'), row: positive(el, 'row', true),
         width: DocForm._maxWidth(el.getAttribute('data-df-width')),
         height: DocForm._maxWidth(el.getAttribute('data-df-height')),
-        step: Number.isInteger(step) && step > 0 ? step : 1,
+        step: stepIndex(el, 1),
         rect: null
       };
     });
-    var edges = readEdges(host, nodes);
+    var edges = readEdges(host, nodes, stepIndex);
     var graph = ranks(nodes.length, edges, nodes.map(function (node) { return node.col; }));
     var rank = graph.rank;
     var h = rows(nodes.length, edges, rank, nodes.map(function (node) { return node.row; }));
@@ -490,7 +501,7 @@
     var state = {
       host: host, nodes: nodes, edges: edges, rank: rank, h: h, down: down,
       stage: stage, lines: lines, labels: labels, paths: [], stems: [], tags: [],
-      trace: null, step: 0, total: Math.max.apply(null, nodes.map(function (node) { return node.step; }))
+      trace: null, step: 0, total: model.stepDomain ? model.stepDomain.keys.length : 0
     };
 
     // ---- Selection, detail pane, and keyboard ----
@@ -501,7 +512,7 @@
       if (previous) buttons[previous.index].removeAttribute('aria-current');
       buttons[current.index].setAttribute('aria-current', 'true');
       roving(current.index);
-    });
+    }, model.stepDomain ? 'block-selection-group' : 'selection-group');
 
     function roving(index) {
       var focused = buttons.indexOf(document.activeElement);
@@ -574,62 +585,62 @@
       if (!stage.contains(event.relatedTarget)) preview(state, null);
     });
 
-    // ---- Steps ----
-    var stepEvents = items.signal('pipeline', host, function () { return stepSnapshot(); }, { action: 'step' });
-    var pill = null;
-    var timer = null;
+    var steps = null;
+    if (model.stepDomain) {
+      var domain = model.stepDomain;
+      var timer = null;
+      var notes = domain.items.map(sequence.detail);
 
-    function stepSnapshot() {
-      return state.total > 1 ? Object.freeze({ step: state.step, total: state.total }) : null;
-    }
-
-    function go(step, origin) {
-      if (state.total < 2 || !Number.isInteger(step) || step < 1 || step > state.total) return false;
-      if (step === state.step) return true;
-      var previous = stepSnapshot();
-      state.step = step;
-      reveal(state);
-      if (pill) {
-        pill.count.textContent = 'Step ' + step + ' of ' + state.total;
-        pill.buttons.reset.setAttribute('aria-disabled', String(step === 1));
-        pill.buttons.previous.setAttribute('aria-disabled', String(step === 1));
-        pill.buttons.next.setAttribute('aria-disabled', String(step === state.total));
+      function pause(origin) {
+        if (timer === null) return true;
+        root.clearInterval(timer);
+        timer = null;
+        var notify = steps.stage(origin);
+        if (notify) notify();
+        return true;
       }
-      var first = blockIndex.find(function (v) { return nodes[v].step === step; });
-      if (first !== undefined && origin === 'user') selection.choose(blockIndex.indexOf(first), origin);
-      var current = stepSnapshot();
-      items.notify(function () { stepEvents.emit(current, previous, origin); });
-      return true;
-    }
 
-    function play(on) {
-      if (!pill) return;
-      root.clearInterval(timer);
-      timer = null;
-      if (on) {
-        if (state.step === state.total) go(1, 'user');
+      function play(origin) {
+        if (timer !== null || domain.keys.length < 2) return false;
         timer = root.setInterval(function () {
-          if (state.step >= state.total) play(false);
-          else go(state.step + 1, 'user');
+          if (!steps.controller.snapshot().canNext) steps.run('pause', origin);
+          else steps.choose(steps.controller.index + 1, 'playback');
         }, 1400);
+        if (!steps.controller.snapshot().canNext) steps.choose(domain.initial, 'playback');
+        var notify = steps.stage(origin);
+        if (notify) notify();
+        return true;
       }
-      DocForm._pill.icon(pill.buttons.play, on ? 'pause' : 'play', on ? 'Pause' : 'Play');
-    }
 
-    var follow = host.getAttribute('data-df-steps-follow');
-    if (state.total > 1 && follow) {
-      var stepper = DocForm.stepper && DocForm.stepper.get(follow);
-      if (!stepper) issue(host, 'A pipeline follows a missing stepper.', 'Enable stepper and set data-df-steps-follow to its list ID.');
-      else stepper.subscribe(function (current) { go(Math.min(current.index + 1, state.total), 'source'); }, { immediate: true });
-    } else if (state.total > 1) {
-      pill = DocForm._pill.create('df-pipe-steps', 'Pipeline steps', [
-        { name: 'reset', label: 'Reset', run: function () { play(false); go(1, 'reset'); } },
-        { name: 'previous', label: 'Previous step', run: function () { play(false); go(state.step - 1, 'user'); } },
-        'count',
-        { name: 'next', label: 'Next step', run: function () { play(false); go(state.step + 1, 'user'); } },
-        { name: 'play', label: 'Play', run: function () { play(timer === null); } }
-      ], scroll.id = detail.uniqueId(host.id + '-canvas'));
-      host.insertBefore(pill.element, scroll);
+      steps = sequence.indexed('pipeline', host, domain, function (index, previous, origin) {
+        state.step = index + 1;
+        reveal(state);
+        sequence.showDetails(notes, index);
+        var first = blockIndex.find(function (v) { return nodes[v].step === state.step; });
+        if (first !== undefined && (origin === 'user' || origin === 'playback')) {
+          selection.choose(blockIndex.indexOf(first), origin);
+        }
+      }, {
+        playing: function () { return timer !== null; },
+        stop: function (origin) {
+          if (origin !== 'playback' && timer !== null) {
+            root.clearInterval(timer);
+            timer = null;
+          }
+        },
+        transport: { play: play, pause: pause }
+      });
+      var pill = sequence.pill(steps, {
+        className: 'df-pipe-steps', label: 'Pipeline steps',
+        controls: scroll.id = detail.uniqueId(host.id + '-canvas'),
+        initial: function () { return domain.initial; },
+        canPlay: function () { return domain.keys.length > 1; },
+        status: function (current) {
+          return sequence.label(domain.items[current.index]) || 'Step ' + (current.index + 1) + ' of ' + current.count;
+        }
+      });
+      if (domain.keys.length > 1) host.insertBefore(pill.element, scroll);
+      model.steps.hidden = true;
     }
 
     // ---- Detail pane ----
@@ -645,20 +656,13 @@
     var controller = Object.assign({}, selection.controller, {
       layout: function () { layout(state); return true; },
       fields: function (id, values) { return setFields(state, id, values); },
-      steps: {
-        go: function (step) { return go(step, 'api'); },
-        next: function () { return go(state.step + 1, 'api'); },
-        previous: function () { return go(state.step - 1, 'api'); },
-        reset: function () { return go(1, 'reset'); },
-        snapshot: stepSnapshot,
-        subscribe: stepEvents.subscribe
-      }
+      steps: steps ? steps.controller : null
     });
     hosts.set(host, controller);
 
     host.classList.add('df-pipeline-ready');
     layout(state);
-    if (state.total > 1) go(1, 'init');
+    if (steps) steps.start();
     else reveal(state);
     selection.start();
 
@@ -1026,7 +1030,10 @@
   items.scan('pipeline', function () {
     DocForm.all('.df-pipeline').forEach(function (host) {
       var model = prepare(host);
-      items.collect('pipeline', host, model && model.domain);
+      if (model && model.stepDomain) {
+        items.collect('pipeline', host, model.stepDomain);
+        items.collect('pipeline', host, model.domain, 'block-selection-group');
+      } else items.collect('pipeline', host, model && model.domain);
     });
   });
   DocForm.register('pipeline', function () { DocForm.all('.df-pipeline').forEach(setup); });

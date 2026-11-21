@@ -3,12 +3,12 @@ DocForm.setup(({ animation }) => {
     steps: [
       {
         key: 'sections',
-        caption: 'Two section headings make two entries.',
+        label: 'Two section headings make two entries.',
         actions: [{ fade: '#outline-subheading', from: 0, to: 0 }]
       },
       {
         key: 'all',
-        caption: 'The smaller heading adds a third entry under its parent.',
+        label: 'The smaller heading adds a third entry under its parent.',
         actions: [{ fade: '#outline-subheading', from: 0, to: 1 }]
       }
     ]

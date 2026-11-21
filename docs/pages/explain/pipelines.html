@@ -10,6 +10,7 @@
     {
       "features": {
         "pipeline": true,
+        "selection": true,
         "cards": true
       }
     }
@@ -83,13 +84,19 @@
     <p>The Terms block has an empty eyebrow, so it simply leaves that line out. Blocks in the same column always share one height so they line up.</p>
 
     <h2 id="steps">Reveal a pipeline in steps</h2>
-    <figure class="df-pipeline" id="request-flow" data-df-direction="down" data-df-block-width="13rem">
+    <figure class="df-pipeline" id="request-flow" data-df-selection-group="request-steps" data-df-direction="down" data-df-block-width="13rem">
+      <ol data-df-pipeline-steps>
+        <li data-df-key="request" data-df-initial><span data-df-step-label>Open the page</span></li>
+        <li data-df-key="check"><span data-df-step-label>Check the cache</span></li>
+        <li data-df-key="reply"><span data-df-step-label>Choose the source</span></li>
+        <li data-df-key="show"><span data-df-step-label>Show the page</span></li>
+      </ol>
       <ol class="df-pipe-blocks">
-        <li class="df-pipe-block" id="request" data-df-to="cache" data-df-step="1">
+        <li class="df-pipe-block" id="request" data-df-to="cache" data-df-reveal-step="request">
           <p class="df-pipe-eyebrow">Step 1</p>
           <p class="df-pipe-headline">A reader opens a page</p>
         </li>
-        <li class="df-pipe-block" id="cache" data-df-step="2">
+        <li class="df-pipe-block" id="cache" data-df-reveal-step="check">
           <p class="df-pipe-eyebrow">Step 2</p>
           <p class="df-pipe-headline">Is it saved already?</p>
           <p class="df-pipe-links">
@@ -97,21 +104,22 @@
             <a class="df-pipe-link" href="#load" data-df-label="no" data-df-color="orange">No: load the files</a>
           </p>
         </li>
-        <li class="df-pipe-block" id="saved" data-df-to="show" data-df-step="3">
+        <li class="df-pipe-block" id="saved" data-df-to="show" data-df-reveal-step="reply">
           <p class="df-pipe-headline">Use the saved copy</p>
         </li>
-        <li class="df-pipe-block" id="load" data-df-to="show" data-df-step="3">
+        <li class="df-pipe-block" id="load" data-df-to="show" data-df-reveal-step="reply">
           <p class="df-pipe-headline">Load the files</p>
           <p class="df-pipe-description">From the same folder.</p>
         </li>
-        <li class="df-pipe-block" id="show" data-df-step="4">
+        <li class="df-pipe-block" id="show" data-df-reveal-step="show">
           <p class="df-pipe-eyebrow">Step 4</p>
           <p class="df-pipe-headline">Show the page</p>
         </li>
       </ol>
       <figcaption>Press Next to add one stage at a time, or Play to watch the whole flow.</figcaption>
     </figure>
-    <p>A pipeline can also follow a <a href="steppers.html">worked-example stepper</a>, so the diagram grows as the reader moves through the written steps.</p>
+    <p><button type="button" class="df-button" data-df-selection-group="request-steps" data-df-key="reply">Jump to source choice</button></p>
+    <p>A pipeline and a <a href="steppers.html">worked-example stepper</a> move together when they share a selection group and use matching step keys.</p>
 
     <h2 id="adjust">Adjust a block by hand</h2>
     <p>Blocks are placed automatically, but you can pin one to a column or row, change its size, or give it a different look. A block with its own look still takes its words from the eyebrow, headline, and description, so editing those updates the picture too. When two lines have to cross, the line underneath gets a small gap.</p>

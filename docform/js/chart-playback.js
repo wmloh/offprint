@@ -4,11 +4,11 @@
   var DocForm = root.DocForm;
   var component = DocForm._component;
   var items = DocForm._items;
+  var sequence = DocForm._sequence;
   var feature = 'chart-playback';
   var HOST = 'ol[data-df-chart-playback]';
-  var controllers = new WeakMap();
   var controlledNotes = new WeakSet();
-  var STATE_FIELDS = ['key', 'label', 'detailId', 'series', 'select', 'range', 'params'];
+  var STATE_FIELDS = ['key', 'label', 'detail', 'initial', 'series', 'select', 'range', 'params'];
 
   function issue(host, message, correction) {
     component.issue(feature, host, message, correction);
@@ -54,22 +54,23 @@
       var key = stop && items.key(stop.key);
       var state = stateMode && key ? readState(stop) : null;
       if (!key || keys.has(key) || (stateMode ? !state : !Number.isFinite(stop.x) || (i && stop.x <= stops[i - 1].x)) ||
-        (stop.label !== undefined && (typeof stop.label !== 'string' || !stop.label.trim()))) {
+        (stop.label !== undefined && (typeof stop.label !== 'string' || !stop.label.trim())) ||
+        (stop.initial !== undefined && typeof stop.initial !== 'boolean')) {
         issue(host, 'Invalid checkpoint ' + (key ? '"' + key + '"' : 'at position ' + (i + 1)) + '.', stateMode ?
           'Use a unique nonempty key, a nonempty label if supplied, and only series, select, range, and params state.' :
           'Use a unique nonempty key, strictly increasing finite x values, and a nonempty label if supplied.');
         return null;
       }
       var detail = null;
-      if (stop.detailId !== undefined) {
-        detail = typeof stop.detailId === 'string' && component.target(stop.detailId, feature);
+      if (stop.detail !== undefined) {
+        detail = typeof stop.detail === 'string' && component.target(stop.detail, feature);
         var playbackList = detail && detail.closest(HOST);
         if (!detail || !contains(document.body, detail) || contains(detail, host) ||
           chartHosts.some(function (chartHost) { return contains(chartHost, detail); }) ||
           (playbackList && playbackList !== host) || detail.querySelector(HOST) ||
           (detail.namespaceURI && detail.namespaceURI !== 'http://www.w3.org/1999/xhtml') ||
           detail.tagName === 'SCRIPT' || detail.tagName === 'TEMPLATE') {
-          issue(host, 'Invalid detail reference "' + stop.detailId + '" for checkpoint "' + key + '".',
+          issue(host, 'Invalid detail reference "' + stop.detail + '" for checkpoint "' + key + '".',
             'Use the unique plain ID of an HTML note that does not wrap the chart or playback controls.');
           return null;
         }
@@ -77,7 +78,7 @@
       keys.add(key);
       // State checkpoints sit at positions 1..n after the start at 0, so the playhead transport walks them in order.
       stops.push({ key: key, x: stateMode ? i + 1 : stop.x, label: stop.label && stop.label.trim(), index: i,
-        item: list[i], detail: detail, state: state });
+        item: list[i], detail: detail, state: state, initial: stop.initial === true });
     }
     var bound = new Map();
     for (var checkpoint of stops) {
@@ -162,9 +163,8 @@
     }
     var list = DocForm.all(':scope > li', host);
     var input = list.length ? list.map(function (item) {
-      var title = item.querySelector(':scope > [data-df-step-label]');
-      var stop = { key: DocForm.data(item, 'key'), label: title ? title.textContent : undefined,
-        detailId: DocForm.data(item, 'detail') };
+      var stop = { key: DocForm.data(item, 'key'), label: sequence.label(item) || undefined,
+        detail: DocForm.data(item, 'detail'), initial: items.flag(item, 'initial', feature) };
       if (!stateMode) return Object.assign(stop, { x: component.number(item, 'x', feature, NaN, Number.isFinite) });
       return Object.assign(markupState(item), stop);
     }) : option('checkpoints', [], function () { return true; });
@@ -286,7 +286,8 @@
   function mount(target, options) {
     var host = component.target(target, feature, true);
     if (!host) return null;
-    if (controllers.has(host)) return controllers.get(host);
+    var mounted = DocForm.sequence.get(host);
+    if (mounted) return Object.hasOwn(mounted, 'position') ? mounted : null;
 
     var instance = readInstance(host, options, true);
     if (!instance) return null;
@@ -300,59 +301,42 @@
       return null;
     }
     var stops = instance.stops;
+    var keys = stops.map(function (stop) { return stop.key; });
     var model = models[0];
     var range = instance.state ? stateRange(host, model, stops, true) : playableRange(host, models, stops, true);
     if (!range) return null;
     var positive = function (value) { return Number.isFinite(value) && value > 0; };
     var duration = component.number(host, 'duration', feature, instance.option('duration', 800, positive), positive);
-    var group = DocForm._selection && DocForm._selection.ensure(DocForm.data(host, 'selection-group'));
-    var mode = group ? items.mode(host, feature) : 'both';
-    var setup = instance.state && prepareState(host, model, stops, group);
+    var binding = sequence.binding(feature, host);
+    var setup = instance.state && prepareState(host, model, stops, binding.group);
     if (instance.state && !setup) return null;
     var resolved = null;
     var applied = 0;
 
     var controlIds = instance.chartHosts.concat(host).map(function (target) { return target.id; }).filter(Boolean);
-    var pill = DocForm._pill.create('df-chart-playback-controls', 'Chart playback', [
-      { name: 'reset', label: 'Reset', run: transport(reset, 'user') },
-      { name: 'previous', label: 'Previous checkpoint', run: transport(previous, 'user') },
-      'count',
-      { name: 'toggle', icon: 'play', label: 'Play to the next checkpoint', run: transport(toggle, 'user') },
-      { name: 'next', label: 'Next checkpoint', run: transport(next, 'user') }
-    ], controlIds.join(' '));
-    var controls = pill.element;
-    var status = pill.count;
-    var buttons = pill.buttons;
     var x = range[0];
     var state = 'paused';
     var lastReached = null;
     var leg = null;
     var frame = null;
-    var announced = null;
-    var beforeReconcile = null;
+    var beforeReconcile = false;
     var motion = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)');
-    var events = component.signal(feature, host, snapshot);
-    var api = {
-      snapshot: snapshot, subscribe: events.subscribe,
-      play: transport(play), pause: transport(pause), next: transport(next), prev: transport(previous),
-      reset: transport(reset, 'reset'),
-      select: function (key) {
-        key = items.key(key);
-        var stop = stops.find(function (item) { return item.key === key; });
-        return !!stop && !!range && component.transaction(function () {
-          return range ? jump(stop.x, 'api') : false;
-        });
-      }
-    };
+    var initialStop = stops.find(function (stop) { return stop.initial; });
+    function initial() { return initialStop ? initialStop.x : range[0]; }
+    var entry;
+    var pill;
+
+    function stopWithKey(key) {
+      return stops.find(function (stop) { return stop.key === key; });
+    }
+
+    function follow(key, origin) {
+      var stop = stopWithKey(key);
+      return range && stop ? arrive(stop.x, origin) : null;
+    }
 
     function stopAt(value) {
       return stops.find(function (stop) { return stop.x === value; });
-    }
-
-    function snapshot() {
-      var stop = stopAt(x);
-      return Object.freeze({ x: x, key: stop ? stop.key : null, index: stop ? stop.index : null,
-        total: stops.length, state: state });
     }
 
     function labelAt(value) {
@@ -386,23 +370,8 @@
     }
 
     function renderControls() {
-      var disabled = {
-        reset: !range || (x === range[0] && state === 'paused' && !leg),
-        previous: !range || (x === range[0] && state !== 'playing'),
-        toggle: !range || state === 'ended',
-        next: !range || state === 'ended'
-      };
-      Object.keys(buttons).forEach(function (name) {
-        buttons[name].setAttribute('aria-disabled', String(disabled[name]));
-      });
-      // One button toggles, so focus stays put when playback starts or stops.
-      if (state === 'playing') DocForm._pill.icon(buttons.toggle, 'pause', 'Pause');
-      else DocForm._pill.icon(buttons.toggle, 'play', 'Play to the next checkpoint');
-      var message = !range ? 'Playback unavailable.' : state === 'playing' ? 'Playing to ' + labelAt(leg.to) :
-        leg ? 'Paused at ' + DocForm.chart.format(x, model.x) : labelAt(x);
+      pill.update();
       var active = checkpoint();
-      if (status.textContent !== message || active !== announced) status.textContent = message;
-      announced = active;
       stops.forEach(function (stop) {
         var current = stop === active;
         if (stop.item) {
@@ -414,16 +383,13 @@
       });
     }
 
-    function publish(previous, origin) {
-      var current = snapshot();
-      if (!previous || current.x !== previous.x || current.state !== previous.state) events.emit(current, previous, origin);
+    function transport(run) {
+      return function (origin, key) { return range ? run(origin, key) : false; };
     }
 
-    function transport(run, origin) {
-      return function () {
-        if (!range) return false;
-        return component.transaction(function () { return range ? run(origin || 'api') : false; });
-      };
+    function changed(origin) {
+      var notify = entry.stage(origin);
+      if (notify) notify();
     }
 
     function cancel() {
@@ -440,19 +406,17 @@
     }
 
     function arrive(to, origin) {
-      var before = snapshot();
       cancel();
       restAt(to);
       paint(x, origin);
       renderControls();
-      return function () { publish(before, origin); };
+      return entry.stage(origin);
     }
 
     function jump(to, origin) {
       var notify = arrive(to, origin);
       var active = checkpoint();
-      if (active && group && mode !== 'follow') group.commit(active.key, origin, notify);
-      else notify();
+      binding.publish(active ? active.key : null, origin, notify);
       return true;
     }
 
@@ -477,11 +441,10 @@
     }
 
     function play(origin) {
-      if (state !== 'paused') return true;
+      if (state !== 'paused') return state === 'playing';
       var stop = stops.find(function (item) { return item.x > x; });
       var to = leg ? leg.to : stop ? stop.x : range[1];
       if ((motion && motion.matches) || to <= x) return jump(to, origin);
-      var before = snapshot();
       leg = leg || { from: x, to: to, progress: 0 };
       // A state leg shows its target from the start, so a replacement mid-leg restores the target.
       if (instance.state) lastReached = stopAt(leg.to).key;
@@ -491,22 +454,19 @@
       frame = root.requestAnimationFrame(function (time) { tick(time, activeLeg, origin); });
       paint(x, origin);
       renderControls();
-      publish(before, origin);
+      changed(origin);
       return true;
     }
 
     // Next skips the animation: it finishes a running leg or jumps to the following stop.
     function next(origin) {
-      if (state === 'ended') return true;
+      if (state === 'ended') return false;
       var stop = stops.find(function (item) { return item.x > x; });
       return jump(leg ? leg.to : stop ? stop.x : range[1], origin);
     }
 
-    function toggle(origin) {
-      return state === 'playing' ? pause(origin) : play(origin);
-    }
-
     function previous(origin) {
+      if (x === range[0] && !leg) return false;
       var to = range[0];
       var at = instance.state && leg ? leg.to : x;
       for (var i = stops.length - 1; i >= 0; i--) {
@@ -519,15 +479,14 @@
     function pause(origin) {
       if (state !== 'playing') return true;
       if (instance.state) return jump(leg.to, origin);
-      var before = snapshot();
       cancel();
       state = 'paused';
       renderControls();
-      publish(before, origin);
+      changed(origin);
       return true;
     }
 
-    function reset(origin) { return jump(range[0], origin); }
+    function reset(origin) { return jump(initial(), origin); }
 
     function current() {
       return { x: x, state: resolved && range ? resolved[applied] : null };
@@ -538,22 +497,21 @@
     function reconcile(models, origin, referenceChanged) {
       var nextRange = instance.state ? stateRange(host, models[0], stops, true) : playableRange(host, models, stops, true);
       if ((instance.state || !referenceChanged) && Boolean(range) === Boolean(nextRange)) return current();
-      var before = beforeReconcile || snapshot();
       cancel();
       model = models[0];
       range = nextRange;
       var reached = stops.find(function (stop) { return stop.key === lastReached; });
       var remembered = lastReached;
-      restAt(range ? (reached ? reached.x : range[0]) : null);
+      restAt(range ? (reached ? reached.x : initial()) : null);
       if (!range) lastReached = remembered;
       if (x !== null) applied = x;
       renderControls();
       if (beforeReconcile) return current();
-      beforeReconcile = before;
+      beforeReconcile = true;
       return Object.assign(current(), { notify: function () {
         component.transaction(function () {
-          beforeReconcile = null;
-          publish(before, origin || 'api');
+          beforeReconcile = false;
+          changed(origin || 'api');
         });
       } });
     }
@@ -577,7 +535,33 @@
       }
       resolved = resolveStates(stops, start);
     }
-    host.before(controls);
+    entry = sequence.define(host, {
+      keys: function () { return keys; },
+      read: function () {
+        var stop = checkpoint();
+        return { index: stop ? stop.index : null, playing: state === 'playing',
+          canPrev: !!range && (x > range[0] || state === 'playing'),
+          canNext: !!range && state !== 'ended' };
+      },
+      play: transport(play), pause: transport(pause), next: transport(next), prev: transport(previous),
+      reset: transport(reset),
+      select: transport(function (origin, key) { return jump(stopWithKey(key).x, origin); }),
+      apply: follow
+    });
+    var api = entry.controller;
+    Object.defineProperty(api, 'position', { get: function () { return x; } });
+    pill = sequence.pill(entry, {
+      className: 'df-chart-playback-controls', label: 'Chart playback', controls: controlIds.join(' '),
+      playAt: 3, prevLabel: 'Previous checkpoint', nextLabel: 'Next checkpoint', playLabel: 'Play to the next checkpoint',
+      canReset: function () { return !!range && (x !== initial() || state === 'playing' || !!leg); },
+      status: function () {
+        if (!range) return 'Playback unavailable.';
+        if (state === 'playing') return 'Playing to ' + labelAt(leg.to);
+        return leg ? 'Paused at ' + DocForm.chart.format(x, model.x) : labelAt(x);
+      }
+    });
+
+    host.before(pill.element);
     stops.forEach(function (stop) {
       if (stop.item) controlledNotes.add(stop.item);
       if (stop.detail) {
@@ -586,46 +570,31 @@
       }
     });
     if (stops.some(function (stop) { return stop.item; })) host.classList.add('df-chart-playback-ready');
-    var shared = group && mode !== 'publish' && stops.find(function (stop) { return stop.key === group.api.get(); });
-    if (group && mode !== 'publish') {
-      group.follow(function (key) {
-        var stop = stops.find(function (item) { return item.key === key; });
-        return range && stop ? arrive(stop.x, 'group') : null;
-      });
-    }
-    restAt(shared ? shared.x : x);
+    binding.follow(follow);
+    var shared = stopWithKey(binding.initial());
+    restAt(shared ? shared.x : initial());
     renderControls();
-    controllers.set(host, api);
-    paint(x);
-    component.notify(function () { publish(null, 'init'); });
+    paint(x, 'init');
+    sequence.start(entry.stage('init'));
     return api;
   }
 
-  DocForm.chartPlayback = {
-    mount: mount,
-    get: function (target) { return controllers.get(component.target(target, feature)) || null; }
-  };
+  DocForm.chartPlayback = { mount: mount };
 
   items.scan(feature, function () {
     DocForm.all(HOST).forEach(function (host) {
       var name = DocForm.data(host, 'selection-group');
-      if (!DocForm._selection.ensure(name) || controllers.has(host)) return;
+      if (!DocForm._selection.ensure(name) || DocForm.sequence.get(host)) return;
       if (DocForm._boot && !DocForm._boot.setupComplete) return;
       var instance = readInstance(host);
       if (!instance) return;
       var models = instance.chartHosts.map(DocForm.chart._selectionModel);
-      // State playback starts before its first checkpoint, so it never seeds the group.
-      if (instance.state) {
-        if (stateRange(host, models[0], instance.stops)) {
-          DocForm._selection.collect(name, instance.stops.map(function (stop) { return stop.key; }), []);
-        }
-        return;
-      }
-      var range = playableRange(host, models, instance.stops);
+      var range = instance.state ? stateRange(host, models[0], instance.stops) :
+        playableRange(host, models, instance.stops);
       if (!range) return;
-      var initial = instance.stops[0];
-      var seed = initial && initial.x === range[0] && items.mode(host, feature) !== 'follow' &&
-        items.flag(host, 'selection-seed', feature);
+      var initial = instance.stops.find(function (stop) { return stop.initial; }) ||
+        instance.stops.find(function (stop) { return stop.x === range[0]; });
+      var seed = initial && items.mode(host, feature) !== 'follow' && items.flag(host, 'selection-seed', feature);
       DocForm._selection.collect(name, instance.stops.map(function (stop) { return stop.key; }),
         seed ? [[initial.item || host, initial.key]] : []);
     });

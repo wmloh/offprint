@@ -665,21 +665,21 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
   figure.querySelector = selector => selector === 'svg' ? svg : null;
   p.ids.set('custom-figure', figure);
   const events = [];
-  figure.addEventListener('df:animation:step', event => events.push([event.detail.current.key, event.detail.origin, event.bubbles]));
+  figure.addEventListener('df:step', event => events.push([event.detail.key, event.detail.origin, event.bubbles]));
   let animation;
   p.DF.setup(DF => {
-    animation = DF.animation.mount('custom-figure', { steps: [{ key: 'trace', caption: 'Trace', actions: [] }] });
+    animation = DF.animation.mount('custom-figure', { steps: [{ key: 'trace', label: 'Trace', actions: [] }] });
   });
   await p.start();
   assert.ok(animation);
   assert.equal(p.DF.animation.mount(figure), animation);
-  assert.deepEqual({ ...animation.snapshot() }, { key: 'start', index: 0, completed: 0, time: 0 });
+  assert.deepEqual({ ...animation.snapshot() }, { key: 'start', index: 0, count: 2, canPrev: false, canNext: true, playing: false });
   const steps = [];
   animation.subscribe((state, meta) => steps.push([state.key, meta.origin]));
-  assert.equal(animation.go('unknown'), false);
-  assert.equal(animation.go('trace'), true);
+  assert.equal(animation.select('unknown'), false);
+  assert.equal(animation.select('trace'), true);
   animation.timeline.ends[0] = 0;
-  assert.equal(animation.snapshot().time, 400);
+  assert.equal(animation.time, 400);
   assert.equal(animation.reset(), true);
   assert.deepEqual(steps, [['trace', 'api'], ['start', 'reset']]);
   assert.deepEqual(events, [['start', 'init', true], ['trace', 'api', true], ['start', 'reset', true]]);
@@ -754,7 +754,7 @@ test('selection groups merge across configuration and an authored group is avail
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
   assert.equal(p.DF.site.selectionGroups.trace.persist, true);
   assert.equal(p.DF.selection.group('trace').get(), 'page');
-  assert.equal(p.DF.stepper.get(list).snapshot().key, 'first');
+  assert.equal(p.DF.sequence.get(list).snapshot().key, 'first');
   const changes = p.events.filter(event => event.type === 'df:selection:change');
   assert.deepEqual(changes.map(event => [event.detail.group, event.detail.current.key]), [
     ['trace', 'page'], ['implicit', 'first']

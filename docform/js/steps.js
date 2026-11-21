@@ -14,7 +14,7 @@
     if (typeof console !== 'undefined') console.warn('[docform] steps.js needs detail.js loaded before it.');
     return;
   }
-  var figures = new WeakMap();
+  var sequence = DocForm._sequence;
   var cards = new WeakMap();
 
   function detailsIn(box) {
@@ -221,30 +221,28 @@
     var filter = setupFilter(box, prepared.panel, list, buttons, buttons.map(function (button) {
       return rowOf(button, list);
     }), 'step', function () { highlight.refresh(); });
+    var labels = buttons.map(function (button) { return sequence.label(button, button); });
     var highlight = trackSelection(list, buttons, numbersFor(box, buttons), filter && filter.shown);
     var panes = setupPanes(list, prepared.details);
 
-    function sync(current, origin) {
-      if (!current.animationKey || !DocForm._animationStep) return null;
-      var notification = DocForm._animationStep(figure, current.animationKey, origin);
-      if (notification === false) {
-        items.issue('figure-steps', box, 'Unknown animation key "' + current.animationKey + '".', 'Use a key from the figure animation or start.');
-      }
-      return notification;
+    function sync(index, origin) {
+      return sequence.apply(figure, domain.keys[index], origin);
     }
 
-    var state = items.controller('figure-steps', box, domain, function (index, key) {
-      var target = prepared.targets[index];
-      return { key: key, index: index, animationKey: items.key(DocForm.data(buttons[index], 'animation-key')),
-        detailId: target ? target.id : null };
-    }, function (current, previous, origin) {
-      if (previous) buttons[previous.index].removeAttribute('aria-current');
-      var button = buttons[current.index];
+    var state = sequence.indexed('figure-steps', box, domain, function (index, previous, origin) {
+      if (previous !== null) buttons[previous].removeAttribute('aria-current');
+      var button = buttons[index];
       button.setAttribute('aria-current', 'step');
       highlight(button);
-      panes.show(prepared.targets[current.index]);
-      return sync(current, origin);
+      panes.show(prepared.targets[index]);
+      return sync(index, origin);
     });
+    var pill = sequence.pill(state, {
+      className: 'df-figure-step-controls', label: 'Figure steps', controls: figure.id,
+      initial: function () { return domain.initial; },
+      status: function (current) { return labels[current.index]; }
+    });
+    if (domain.keys.length > 1) figure.appendChild(pill.element);
 
     buttons.forEach(function (button, index) {
       var target = prepared.targets[index];
@@ -261,13 +259,11 @@
     });
     box.classList.add('df-figure-steps-ready');
     figure.classList.add('df-step-figure');
-    figures.set(box, state.controller);
-    detail.source(box, state.controller);
     state.start();
-    if (document.readyState !== 'complete' && !(DocForm.animation && DocForm.animation.get(figure))) {
+    detail.source(box, state.controller);
+    if (document.readyState !== 'complete' && !DocForm.sequence.get(figure)) {
       root.addEventListener('load', function () {
-        var notify = sync(state.controller.snapshot(), 'init');
-        if (typeof notify === 'function') items.notify(notify);
+        sequence.start(sync(state.controller.index, 'init'));
       }, { once: true });
     }
   }
@@ -380,7 +376,6 @@
     state.start();
   }
 
-  DocForm.figureSteps = { get: function (target) { return figures.get(items.target(target)) || null; } };
   DocForm.cards = { get: function (target) { return cards.get(items.target(target)) || null; } };
 
   items.scan('figure-steps', function () {

@@ -35,6 +35,7 @@ Zoom tools	Magnify, point, draw, and measure in the zoom dialog	interact/zoom-to
 Choice groups	Choose one or more options with chips or a combobox	interact/choices.md
 Parameters	Define scoped values and link controls, presets, visibility, charts, and selections	interact/parameters.md
 Linked selection	Synchronize keyed controls, charts, and passive views	interact/linked-highlighting.md
+Step sequences	Control steps and synchronize keyed sequences	interact/step-contract.md
 Worked-example steppers	Step through worked examples and their linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
 Pipeline diagrams	Connect structured blocks with curved routes, branches, steps, and details	diagram/pipelines.md

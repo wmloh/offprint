@@ -154,20 +154,28 @@
       return function () { events.emit(current, previous, origin); };
     }
 
+    function afterRender(after, origin) {
+      var emission = notify(adapter.snapshot(), origin, adapter.alwaysNotify);
+      if (typeof after !== 'function') return emission;
+      return function () {
+        after();
+        if (emission) emission();
+      };
+    }
+
     function render(prepared, origin) {
-      adapter.render(prepared, origin);
-      return notify(adapter.snapshot(), origin, adapter.alwaysNotify);
+      return afterRender(adapter.render(prepared, origin), origin);
     }
 
     destination(api, function (input, origin) {
       var prepared;
       try { prepared = adapter.prepare(input); }
       catch (error) { dataIssue(feature, host, error.message); throw error; }
-      adapter.render(prepared, origin);
+      var after = adapter.render(prepared, origin);
       local = true;
       refilterLocal = prepared && prepared.refilter;
       return function (origin) {
-        var emission = notify(adapter.snapshot(), origin, adapter.alwaysNotify);
+        var emission = afterRender(after, origin);
         if (emission) emission();
       };
     }, function () {
@@ -274,8 +282,8 @@
     return { keys: keys, initial: Math.max(0, initial), items: items };
   }
 
-  function collectItems(feature, host, domain) {
-    var name = data(host, 'selection-group', null);
+  function collectItems(feature, host, domain, groupAttribute) {
+    var name = data(host, groupAttribute || 'selection-group', null);
     if (!domain) {
       DocForm._selection.ensure(name);
       return;
@@ -285,10 +293,10 @@
         ? [[domain.items[domain.initial], domain.keys[domain.initial]]] : []);
   }
 
-  function itemController(feature, host, domain, snapshotAt, render) {
+  function itemController(feature, host, domain, snapshotAt, render, groupAttribute) {
     var keys = domain.keys;
     var selection = DocForm._selection;
-    var group = selection && selection.ensure(data(host, 'selection-group', null));
+    var group = selection && selection.ensure(data(host, groupAttribute || 'selection-group', null));
     var mode = group ? selectionMode(host, feature) : 'both';
     var state = null;
     var events = signal(feature, host, function () { return state; });
@@ -337,6 +345,214 @@
         else if (notify) transaction(notify);
       }
     };
+  }
+
+  var sequences = new WeakMap();
+
+  function sequenceGet(target) {
+    var entry = sequences.get(elementTarget(target));
+    return entry && (!entry.available || entry.available()) ? entry.controller : null;
+  }
+
+  function sequenceLabel(item, fallback) {
+    var label = item.querySelector(':scope > [data-df-step-label]');
+    return (label || fallback || {}).textContent?.trim() || '';
+  }
+
+  function sequenceDetail(item) {
+    return elementTarget(data(item, 'detail'));
+  }
+
+  function showStepDetails(details, index) {
+    var active = details[index];
+    details.forEach(function (detail) { if (detail) detail.hidden = detail !== active; });
+  }
+
+  function sequenceBinding(feature, host) {
+    var group = DocForm._selection && DocForm._selection.ensure(data(host, 'selection-group'));
+    var mode = group ? selectionMode(host, feature) : 'both';
+    return {
+      group: group,
+      initial: function () { return group && mode !== 'publish' ? group.api.get() : null; },
+      follow: function (apply) {
+        if (group && mode !== 'publish') group.follow(function (key) { return apply(key, 'group'); });
+      },
+      publish: function (key, origin, notify) {
+        if (group && key !== null && mode !== 'follow' && origin !== 'group') group.commit(key, origin, notify);
+        else if (notify) notify();
+      }
+    };
+  }
+
+  function defineSequence(host, impl) {
+    var state = null;
+    var callbacks = new Set();
+    var controller = {
+      get key() { return controller.snapshot().key; },
+      get index() { return controller.snapshot().index; },
+      get keys() { return Object.freeze(impl.keys().slice()); },
+      snapshot: function () {
+        var current = impl.read();
+        var index = current.index;
+        var keys = impl.keys();
+        var count = keys.length;
+        var result = { key: index === null ? null : keys[index], index: index, count: count,
+          canPrev: current.canPrev ?? (index !== null && index > 0),
+          canNext: current.canNext ?? (index !== null && index < count - 1) };
+        if (impl.play) result.playing = Boolean(current.playing);
+        return Object.freeze(result);
+      },
+      select: function (key) { return run('select', 'api', key); },
+      next: function () { return run('next', 'api'); },
+      prev: function () { return run('prev', 'api'); },
+      reset: function () { return run('reset', 'reset'); },
+      subscribe: function (fn, options) {
+        if (typeof fn !== 'function') return function () {};
+        var listener = { fn: fn };
+        callbacks.add(listener);
+        if (options && options.immediate) notifyNow(function () {
+          call(listener, controller.snapshot(), null, 'init');
+        });
+        return function () { callbacks.delete(listener); };
+      }
+    };
+
+    function call(listener, current, previous, origin) {
+      try { listener.fn(current, Object.freeze({ previous: previous, origin: origin })); }
+      catch (error) { issue('sequence', host, 'Subscriber failed: ' + String(error), 'Check the subscriber callback.'); }
+    }
+
+    function run(action, origin, key) {
+      if (action === 'select') {
+        key = selectionKey(key);
+        if (!controller.keys.includes(key)) return false;
+      }
+      return transaction(function () { return impl[action](origin, key); });
+    }
+
+    function stage(origin) {
+      var previous = state;
+      var current = state = controller.snapshot();
+      if (entry.updateControls) entry.updateControls(current);
+      var changed = !previous || previous.key !== current.key || previous.index !== current.index;
+      if (!changed && Object.keys(current).every(function (key) { return previous[key] === current[key]; })) return null;
+      return function () {
+        Array.from(callbacks).forEach(function (listener) {
+          if (callbacks.has(listener)) call(listener, current, previous, origin);
+        });
+        if (changed && typeof root.CustomEvent === 'function') {
+          host.dispatchEvent(new root.CustomEvent('df:step', {
+            bubbles: true, detail: Object.freeze({ key: current.key, index: current.index, origin: origin })
+          }));
+        }
+      };
+    }
+
+    if (impl.play) {
+      controller.play = function () { return run('play', 'api'); };
+      controller.pause = function () { return run('pause', 'api'); };
+    }
+    var entry = { controller: controller, run: run, stage: stage, apply: impl.apply, available: impl.available };
+    sequences.set(host, entry);
+    return entry;
+  }
+
+  function startSequence(notify) {
+    if (!notify) return;
+    if (initialItems) initialItems.push(notify);
+    else notifyNow(notify);
+  }
+
+  function indexedSequence(feature, host, domain, render, options) {
+    options = options || {};
+    var binding = sequenceBinding(feature, host);
+    var index = null;
+    function apply(key, origin, force) {
+      var next = domain.keys.indexOf(key);
+      if (next < 0 || (index === next && !force)) return null;
+      var previous = index;
+      index = next;
+      var after = render(index, previous, origin);
+      var notify = entry.stage(origin);
+      return function () {
+        if (typeof after === 'function') after();
+        if (notify) notify();
+      };
+    }
+
+    function choose(origin, key) {
+      if (!domain.keys.includes(key)) return false;
+      if (options.stop) options.stop(origin);
+      binding.publish(key, origin, apply(key, origin) || entry.stage(origin));
+      return true;
+    }
+
+    var entry = defineSequence(host, Object.assign({
+      keys: function () { return domain.keys; },
+      available: function () { return domain.keys.length > 0; },
+      read: function () { return { index: index, playing: options.playing && options.playing() }; },
+      select: choose,
+      next: function (origin) { return choose(origin, domain.keys[index + 1]); },
+      prev: function (origin) { return choose(origin, domain.keys[index - 1]); },
+      reset: function (origin) { return choose(origin, domain.keys[domain.initial]); },
+      apply: apply
+    }, options.transport));
+    binding.follow(apply);
+    entry.choose = function (i, origin) { return entry.run('select', origin, domain.keys[i]); };
+    entry.replace = function (key, origin) {
+      var shared = binding.initial();
+      var selected = domain.keys.includes(key) ? key : domain.keys.includes(shared) && origin !== 'reset'
+        ? shared : domain.keys[domain.initial];
+      if (domain.keys.length) return apply(selected, origin, true);
+      index = null;
+      return entry.stage(origin);
+    };
+    entry.start = function () {
+      var shared = binding.initial();
+      startSequence(apply(domain.keys.includes(shared) ? shared : domain.keys[domain.initial], 'init'));
+    };
+    return entry;
+  }
+
+  function sequencePill(entry, options) {
+    function action(name, method, label) {
+      return { name: name, label: label, run: function () { entry.run(method, 'user'); } };
+    }
+    var parts = [
+      action('reset', 'reset', options.resetLabel || 'Reset'),
+      action('previous', 'prev', options.prevLabel || 'Previous step'), 'count',
+      action('next', 'next', options.nextLabel || 'Next step')
+    ].filter(function (part) { return !options.omit || !options.omit.includes(part.name); });
+    var timed = typeof entry.controller.play === 'function';
+    if (timed) parts.splice(options.playAt ?? parts.length, 0, {
+      name: 'play', label: options.playLabel || 'Play',
+      run: function () {
+        var playing = entry.controller.snapshot().playing;
+        if (playing && options.onPause) options.onPause();
+        entry.run(playing ? 'pause' : 'play', 'user');
+      }
+    });
+    var controls = pill(options.className, options.label, parts, options.controls);
+    function update(state) {
+      var disabled = {
+        reset: options.canReset ? !options.canReset(state) : state.index === (options.initial ? options.initial() : 0),
+        previous: !state.canPrev, next: !state.canNext,
+        play: !state.playing && (options.canPlay ? !options.canPlay(state) : !state.canNext)
+      };
+      Object.keys(controls.buttons).forEach(function (name) {
+        controls.buttons[name].setAttribute('aria-disabled', String(disabled[name]));
+      });
+      if (timed) pillIcon(controls.buttons.play, state.playing ? 'pause' : 'play',
+        state.playing ? 'Pause' : options.playLabel || 'Play');
+      var label = options.status ? options.status(state) : 'Step ' + (state.index + 1) + ' of ' + state.count;
+      if (controls.count.textContent !== label) controls.count.textContent = label;
+    }
+    controls.update = function () { update(entry.controller.snapshot()); };
+    entry.updateControls = update;
+    controls.destroy = function () {
+      if (entry.updateControls === update) entry.updateControls = null;
+    };
+    return controls;
   }
 
   function warnOnce(key, message, detail) {
@@ -833,7 +1049,15 @@
     },
     _interval: { normalize: estimateInterval, text: intervalText },
     _maxWidth: maxWidthValue,
-    _pill: { create: pill, icon: pillIcon },
+    sequence: { get: sequenceGet },
+    _sequence: {
+      define: defineSequence, indexed: indexedSequence, binding: sequenceBinding, start: startSequence,
+      pill: sequencePill, label: sequenceLabel, detail: sequenceDetail, showDetails: showStepDetails,
+      apply: function (target, key, origin) {
+        var entry = sequences.get(target);
+        return entry && entry.apply ? entry.apply(key, origin) : null;
+      }
+    },
     _items: {
       key: selectionKey, flag: attributeFlag, mode: selectionMode, issue: issue, signal: signal,
       transaction: transaction, notify: notifyNow, domain: itemDomain, controller: itemController, collect: collectItems,

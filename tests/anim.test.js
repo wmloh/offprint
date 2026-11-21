@@ -35,9 +35,9 @@ test('lerp handles numbers, arrays, and strings with matching numbers', () => {
 
 test('steps lay out end to end with delays, step durations, and caption-only steps', () => {
   const tl = anim.timeline([
-    { caption: 'A', actions: [{ draw: '#a' }, { fade: '#b', delay: 300, duration: 200 }] },
-    { caption: 'B', duration: 400, actions: [{ move: '#c', to: [5, 5] }] },
-    { caption: 'Pause' },
+    { label: 'A', actions: [{ draw: '#a' }, { fade: '#b', delay: 300, duration: 200 }] },
+    { label: 'B', duration: 400, actions: [{ move: '#c', to: [5, 5] }] },
+    { label: 'Pause' },
     [{ attr: '#d', name: 'r', to: 9, duration: 100 }]
   ], { duration: 1000 });
   assert.deepEqual(json(tl.ends), [1000, 1400, 1900, 2000]);

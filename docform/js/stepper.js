@@ -9,15 +9,14 @@
   }
 
   var items = DocForm._items;
-  var controllers = new WeakMap();
+  var sequence = DocForm._sequence;
   var HOST = 'ol[data-df-stepper]';
 
   function prepare(list) {
     var domain = items.domain('stepper', list, DocForm.all(':scope > li', list));
     if (!domain) return null;
     domain.labels = domain.items.map(function (step) {
-      var title = step.querySelector(':scope > [data-df-step-label]');
-      return title ? title.textContent.trim() : '';
+      return sequence.label(step);
     });
     if (!list.id || domain.labels.includes('')) {
       items.issue('stepper', list, 'A worked example needs a list ID and a short label on each step.',
@@ -38,46 +37,28 @@
       if (domain.keys.includes(key)) bindings.push({ view: view, key: key });
     });
 
-    var state = items.controller('stepper', list, domain, function (index, key) {
-      return { key: key, index: index, label: domain.labels[index], total: steps.length };
-    }, function (current) {
-      var index = current.index;
+    var details = steps.map(sequence.detail);
+    var state = sequence.indexed('stepper', list, domain, function (index) {
       steps.forEach(function (step, i) {
         step.hidden = i !== index;
         if (i === index) step.setAttribute('aria-current', 'step');
         else step.removeAttribute('aria-current');
       });
+      sequence.showDetails(details, index);
       bindings.forEach(function (binding) {
-        binding.view.toggleAttribute('hidden', binding.key !== current.key);
+        binding.view.toggleAttribute('hidden', binding.key !== domain.keys[index]);
       });
-      // aria-disabled keeps focus on the activated control when it reaches a boundary.
-      buttons.previous.setAttribute('aria-disabled', String(index === 0));
-      buttons.next.setAttribute('aria-disabled', String(index === steps.length - 1));
-      buttons.reset.setAttribute('aria-disabled', String(index === domain.initial));
-      controls.count.textContent = 'Step ' + (index + 1) + ' of ' + steps.length;
     });
-
-    var move = function (by) {
-      return function () { state.choose(state.controller.snapshot().index + by, 'user'); };
-    };
-    var controls = DocForm._pill.create('df-stepper-controls', 'Worked example steps', [
-      { name: 'reset', label: 'Reset', run: state.controller.reset },
-      { name: 'previous', label: 'Previous step', run: move(-1) },
-      'count',
-      { name: 'next', label: 'Next step', run: move(1) }
-    ], list.id);
-    var buttons = controls.buttons;
+    var controls = sequence.pill(state, {
+      className: 'df-stepper-controls', label: 'Worked example steps', controls: list.id,
+      initial: function () { return domain.initial; }
+    });
 
     list.before(controls.element);
     list.classList.add('df-stepper-ready');
     list.setAttribute('role', 'list');
-    controllers.set(list, state.controller);
     state.start();
   }
-
-  DocForm.stepper = {
-    get: function (target) { return controllers.get(items.target(target)) || null; }
-  };
 
   items.scan('stepper', function () {
     DocForm.all(HOST).forEach(function (list) { items.collect('stepper', list, prepare(list)); });

@@ -10,7 +10,7 @@ const source = readFileSync(join(__dirname, '../docform/js/stepper.js'), 'utf8')
 function element(tag, attrs = {}, children = []) {
   const attributes = new Map(Object.entries(attrs));
   const node = Object.assign(new EventTarget(), {
-    tag,
+    tag, nodeType: 1,
     id: attrs.id || '',
     children,
     classList: new Set(),
@@ -69,7 +69,7 @@ function setup(lists, views = []) {
   vm.runInContext(core, context);
   DocForm.all = all;
   vm.runInContext(source, context);
-  return { start: boot.initialize, stepper: DocForm.stepper, warnings };
+  return { start: boot.initialize, stepper: DocForm.sequence, warnings };
 }
 
 test('controls stop at both boundaries and Reset restores the initial step and linked results', () => {
@@ -82,13 +82,15 @@ test('controls stop at both boundaries and Reset restores the initial step and l
   const { start, stepper } = setup([list], views);
   const changes = [];
   const viewVisibility = () => views.map((node) => node.getAttribute('hidden') === null);
-  list.addEventListener('df:stepper:change', (event) => {
-    const { index, key, label, total } = event.detail.current;
+  list.addEventListener('df:step', (event) => {
+    const { index, key, origin } = event.detail;
+    const { count } = stepper.get(list).snapshot();
+    assert.equal(origin, changes.length ? 'user' : 'init');
     assert.equal(event.bubbles, true);
-    assert.equal(event.detail.current, stepper.get('sum').snapshot());
+    assert.deepEqual(Object.keys(event.detail), ['key', 'index', 'origin']);
     assert.equal(list.children[index].getAttribute('aria-current'), 'step');
-    assert.equal(list.controls.children[2].textContent, `Step ${index + 1} of ${total}`);
-    changes.push({ index, key, name: label, visible: viewVisibility() });
+    assert.equal(list.controls.children[2].textContent, `Step ${index + 1} of ${count}`);
+    changes.push({ index, key, visible: viewVisibility() });
   });
 
   assert.deepEqual(viewVisibility(), [true, true, true, true]);
@@ -124,12 +126,12 @@ test('controls stop at both boundaries and Reset restores the initial step and l
   assert.deepEqual(list.children.map((step) => step.hidden), [false, true, true]);
   assert.deepEqual(list.children.map((step) => step.getAttribute('aria-current')), ['step', null, null]);
   assert.deepEqual(changes, [
-    { index: 0, key: 'Inputs', name: 'Inputs', visible: [true, true, false, false] },
-    { index: 1, key: 'Add', name: 'Add', visible: [false, false, false, false] },
-    { index: 2, key: 'Check', name: 'Check', visible: [false, false, true, true] },
-    { index: 1, key: 'Add', name: 'Add', visible: [false, false, false, false] },
-    { index: 2, key: 'Check', name: 'Check', visible: [false, false, true, true] },
-    { index: 0, key: 'Inputs', name: 'Inputs', visible: [true, true, false, false] }
+    { index: 0, key: 'Inputs', visible: [true, true, false, false] },
+    { index: 1, key: 'Add', visible: [false, false, false, false] },
+    { index: 2, key: 'Check', visible: [false, false, true, true] },
+    { index: 1, key: 'Add', visible: [false, false, false, false] },
+    { index: 2, key: 'Check', visible: [false, false, true, true] },
+    { index: 0, key: 'Inputs', visible: [true, true, false, false] }
   ]);
 });
 
@@ -173,7 +175,7 @@ test('select jumps to a named step through the same update as the controls', () 
   assert.equal(stepper.get('trace'), null, 'nothing to select before setup');
   start();
   const changes = [];
-  list.addEventListener('df:stepper:change', (event) => changes.push(event.detail.current.key));
+  list.addEventListener('df:step', (event) => changes.push(event.detail.key));
   const [reset, previous, , next] = list.controls.children;
 
   assert.equal(stepper.get('trace').select('late'), true);

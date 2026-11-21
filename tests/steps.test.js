@@ -13,7 +13,9 @@ function element(attrs = {}, parentElement = null) {
   const classList = new Set();
   classList.toggle = (name, on) => on ? classList.add(name) : classList.delete(name);
   const el = Object.assign(new EventTarget(), {
-    parentElement,
+    parentElement, nodeType: 1,
+    querySelector: () => null,
+    appendChild: (child) => el.append(child),
     classList,
     childNodes: [],
     style: {},
@@ -68,7 +70,7 @@ function setup({ list = false, headed = false, late = false, descriptions = fals
   panel.querySelector = (selector) => selector === ':scope > .df-step-list' && headed ? cardList : null;
   const details = descriptions ? ['first', 'second', 'third'].map((id) => Object.assign(scrollport(), { id })) : [];
   const buttons = ['start', 'middle', 'end'].map((key, index) => element({
-    'data-df-key': key, 'data-df-animation-key': key,
+    'data-df-key': key,
     ...(details[index] ? { 'data-df-detail': details[index].id } : {})
   }, list ? element() : cardList));
   const children = {
@@ -79,8 +81,7 @@ function setup({ list = false, headed = false, late = false, descriptions = fals
   const box = Object.assign(element(), { id: 'wrapper', querySelector: (selector) => children[selector] });
   const go = [];
   const visited = [];
-  let controller = late ? null : { go: (step) => Boolean(go.push(step)) };
-  box.addEventListener('df:figure-steps:change', (event) => visited.push([event.detail.current.index, event.detail.current.key]));
+  box.addEventListener('df:step', (event) => visited.push([event.detail.index, event.detail.key]));
 
   const view = new EventTarget();
   const { context, DocForm, boot } = harness(
@@ -89,17 +90,22 @@ function setup({ list = false, headed = false, late = false, descriptions = fals
     assert.fail,
     { getComputedStyle: () => ({ direction: 'ltr' }), addEventListener: view.addEventListener.bind(view) }
   );
-  DocForm.animation = { get: () => controller };
-  DocForm._animationStep = (figure, key) => { if (controller) controller.go(key); };
+  function mountAnimation() {
+    const keys = ['start', 'middle', 'end'];
+    DocForm._sequence.define(figure, {
+      keys: () => keys, read: () => ({ index: 0 }), apply: (key) => { go.push(key); }
+    });
+  }
+  if (!late) mountAnimation();
   vm.runInContext(source, context);
   boot.initialize();
 
   function loadAnimation() {
-    controller = { go: (step) => Boolean(go.push(step)) };
+    mountAnimation();
     view.dispatchEvent(new Event('load'));
   }
 
-  return { box, panel, cardList, buttons, details, go, visited, loadAnimation, get: DocForm.figureSteps.get };
+  return { box, panel, cardList, buttons, details, go, visited, loadAnimation, get: DocForm.sequence.get };
 }
 
 function pointer(target, type, pointerType, clientX) {
@@ -153,7 +159,7 @@ test('a custom visualization can select a step by figure or id and share its sel
   assert.deepEqual(inert(), [false, true, true]);
   assert.equal(buttons[2].getAttribute('aria-describedby'), 'third');
 
-  box.addEventListener('df:figure-steps:change', (event) => get(box).select(event.detail.current.key));
+  box.addEventListener('df:step', (event) => get(box).select(event.detail.key));
   assert.equal(get('wrapper').select('end'), true);
   assert.deepEqual(inert(), [true, true, false]);
   assert.equal(buttons[2].getAttribute('aria-current'), 'step');

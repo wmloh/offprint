@@ -47,7 +47,7 @@ docform/: Copyable offline library folder
     dropzone.css: Dashed file drop area, status line with Reset, and the dropped file's view
     glossary.css: Glossary page tag filter chips, letter jumps, letter groups, definitions with tags, variant definitions, and used-on links
   js/: Per-module classic scripts on a shared DocForm namespace
-    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, data-df-max-width limits, the shared step-control pill builder, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
+    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
@@ -58,13 +58,13 @@ docform/: Copyable offline library folder
     editable-text.js: Native text fields with optional live syntax highlighting
     dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches, with a shared positioning helper
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
-    anim.js: Keyed SVG timeline controllers with playback, step subscriptions, and figure-step integration
+    anim.js: Keyed SVG timeline controllers with shared steps, playback, scrubbing, and figure-step integration
     choices.js: Shared builder for every single or multiple choice: authored or generated fieldset chips or a searchable combobox, keyboard support, and a press ripple
     params.js: Named parameter scopes with fieldset choice groups, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, data-df-reveal entrances that replay around the viewport centre (or once), and split panes
     steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, inert details, optional numbering, tag slots, and label-and-tag filtering, both usable as detail-pane sources
     detail.js: Shared detail panes keyed to card panels, figure steps, pipelines, or selection groups, plus inert-detail and scrollbar helpers
-    pipeline.js: Pipeline block diagrams with structured fields and overrides, ranked half-row layout, curved routing with fork and merge stems, junctions, crossing gaps, path tracing, keyboard navigation, steps, and detail panes
+    pipeline.js: Pipeline block diagrams with structured fields and overrides, ranked half-row layout, curved routing with fork and merge stems, junctions, crossing gaps, path tracing, keyboard navigation, shared keyed reveal steps, and detail panes
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
     zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart crosshair, and a ruler on other figures
     bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past
@@ -75,12 +75,12 @@ docform/: Copyable offline library folder
     chart-intervals.js: Ranked dot and lollipop plots with supplied intervals and dodged series in either orientation
     chart-histogram.js: Raw and pre-binned distributions with live binning, continuous log axes, and overlaid or stacked bars
     chart-heatmap.js: Matrix or record heatmaps with sequential, diverging, and log colour scales, a brushable value-range scale, and marching-squares contours with a show/hide legend chip
-    chart-playback.js: Guided playback for individual numeric line charts and x-position groups, plus opt-in keyed-state checkpoints for non-line charts, with a Play/Pause step pill, authored checkpoint notes, and linked selection
+    chart-playback.js: Guided playback for individual numeric line charts and x-position groups, plus opt-in keyed-state checkpoints for non-line charts, with the shared timed sequence controls, authored checkpoint notes, and linked selection
     results.js: Source-mapped or authored tables with supplied intervals, sorting, heatmaps, thresholds, column filters, and saved state across replacements
     matrix.js: Named evaluation records pivoted into semantic tables with keyed axes, interchangeable measures, and static fallbacks
     highlight.js: Shared keyed selection controller with startup seeds, persistence, and passive HTML and SVG participants
     stepper.js: Ordered worked examples with a Reset, Previous, and Next step pill, keyed selection groups, and linked step views
-    scenarios.js: Keyed scenario comparisons with a variant chooser and Previous/Next pill, fixed baselines, shared chart scales by unit, and supplied outcome intervals and baseline-paired differences
+    scenarios.js: Keyed scenario comparisons with a variant chooser and shared step pill, fixed baselines, shared chart scales by unit, and supplied outcome intervals and baseline-paired differences
     data.js: Transactional named sources with record transforms, scoped chart and results filters, and raw views
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
@@ -94,6 +94,7 @@ docform/: Copyable offline library folder
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Agent-facing setup, layout, reading, interaction, diagram, data, and offline tool references
     LIB_MAP.tsv: Index of agent references by component, description, and relative path
+    interact/step-contract.md: Shared step markup, selection binding, controller, and event
 docs/: Human-facing beginner DocForm HTML site with a Start here orientation and live examples
   index.html: Welcome page
   pages/: Start here, hierarchy, feature guide, recipe, and reference pages in group folders, plus the glossary page

@@ -9,6 +9,9 @@
     return;
   }
 
+  var sequence = DocForm._sequence;
+  var items = DocForm._items;
+
   function text(cell) {
     return cell.textContent.trim().replace(/\s+/g, ' ');
   }
@@ -22,14 +25,14 @@
     var heads = DocForm.all(':scope > thead > tr', table);
     if (heads.length !== 1) return null;
     var columns = Array.from(heads[0].cells);
-    var names = columns.slice(2).map(text);
+    var names = columns.slice(2).map(function (cell) { return sequence.label(cell, cell); });
     var keys = columns.slice(2).map(function (cell) {
-      return (cell.getAttribute('data-df-key') ?? text(cell)).trim();
+      return items.key(DocForm.data(cell, 'key'));
     });
     var rows = DocForm.all(':scope > tbody > tr', table);
     var conditions = [];
     var groups = new Map();
-    if (table.tFoot || names.length < 2 || names.includes('') || keys.includes('') || new Set(keys).size !== keys.length) return null;
+    if (table.tFoot || names.length < 2 || names.includes('') || keys.includes(null) || new Set(keys).size !== keys.length) return null;
     if (columns.some(function (cell) { return cell.tagName !== 'TH' || cell.colSpan !== 1 || cell.rowSpan !== 1; })) return null;
 
     for (var row of rows) {
@@ -63,13 +66,15 @@
     var variants = names.slice(1).map(function (name, i) {
       var index = i + 1;
       var changed = conditions.filter(function (condition) { return condition.values[index] !== condition.values[0]; });
-      return { key: keys[index], name: name, index: index, changes: changed };
+      return { key: keys[index], name: name, index: index, changes: changed,
+        detail: sequence.detail(columns[index + 2]) };
     });
     var valid = function (variant) {
       return mode === 'configurations' ? variant.changes.length > 0 : variant.changes.length === 1;
     };
     if (!groups.size || !variants.every(valid)) return null;
-    return { mode: mode, columns: columns, rows: rows, baseline: names[0], baselineKey: keys[0], groups: groups, variants: variants };
+    return { mode: mode, columns: columns, rows: rows, baseline: names[0], baselineKey: keys[0], groups: groups,
+      variants: variants, domain: items.domain('scenarios', table, columns.slice(3)) };
   }
 
   function element(tag, parent, content) {
@@ -92,7 +97,7 @@
     return interval ? { x: outcome.name, y: outcome.numbers[index], interval: interval } : outcome.numbers[index];
   }
 
-  function draw(table, model, key, onChoose, onReset) {
+  function draw(table, model, steps) {
     var visual = document.createElement('div');
     visual.className = 'df-scenarios-visual';
     var controls = element('div', visual);
@@ -101,17 +106,15 @@
       label: 'Variant',
       options: model.variants.map(function (variant) { return { value: String(variant.index), label: variant.name }; }),
       className: 'df-scenarios-chooser',
-      onChange: function (value) { go(Number(value) - 1, onChoose); }
+      onChange: function (value) { steps.choose(Number(value) - 1, 'user'); }
     });
     controls.appendChild(chooser.el);
-    var pill = DocForm._pill.create('', 'Scenario variants', [
-      { name: 'reset', label: 'Reset to the first variant', run: function () { go(0, onReset); } },
-      { name: 'previous', label: 'Previous variant', run: function () { go(selected.index - 2, onChoose); } },
-      'count',
-      { name: 'next', label: 'Next variant', run: function () { go(selected.index, onChoose); } }
-    ]);
+    var pill = sequence.pill(steps, {
+      label: 'Scenario variants', prevLabel: 'Previous variant', nextLabel: 'Next variant',
+      initial: function () { return model.domain.initial; },
+      status: function (current) { return (current.index + 1) + ' of ' + current.count; }
+    });
     controls.appendChild(pill.element);
-    var buttons = pill.buttons;
     pill.count.removeAttribute('role');
     pill.count.setAttribute('aria-hidden', 'true');
 
@@ -129,15 +132,13 @@
       return { group: group, host: element('div', visual) };
     });
     var selected;
+    var notes = model.variants.map(function (variant) { return variant.detail; });
 
     function show(variant) {
       selected = variant;
       var index = variant.index;
       chooser.show(String(index));
-      buttons.reset.setAttribute('aria-disabled', String(index === 1));
-      buttons.previous.setAttribute('aria-disabled', String(index === 1));
-      buttons.next.setAttribute('aria-disabled', String(index === model.variants.length));
-      pill.count.textContent = index + ' of ' + model.variants.length;
+      sequence.showDetails(notes, index - 1);
       var conditionText = variant.changes.map(function (change) { return changeText(change, index); });
       var changedText = [];
       var selectedColumn = index + 2;
@@ -190,21 +191,13 @@
       marker.hidden = !changedText.length;
     }
 
-    function go(position, apply) {
-      var variant = model.variants[position];
-      if (!variant || variant === selected) return;
-      if (apply) apply(variant);
-      else show(variant);
-      // A rejected change leaves the chooser on the variant still shown.
-      if (selected !== variant) chooser.show(String(selected.index));
-    }
-
     table.before(visual);
-    show(model.variants.find(function (variant) { return variant.key === key; }) || model.variants[0]);
     return {
       show: show,
       remove: function () {
         plots.forEach(function (plot) { DocForm.chart._remove(plot.host); });
+        model.variants.forEach(function (variant) { if (variant.detail) variant.detail.hidden = false; });
+        pill.destroy();
         visual.remove();
       },
       snapshot: function () {
@@ -265,7 +258,7 @@
     });
   }
 
-  function mapTable(records, mapping, mode, parsed) {
+  function mapTable(records, mapping, mode, parsed, authored) {
     var data = DocForm._dataSource;
     if (!data || !mapping || !Array.isArray(mapping.variantKeys) || !mapping.variantKeys.length ||
         !Array.isArray(mapping.conditions) || !Array.isArray(mapping.outcomes) || !mapping.outcomes.length ||
@@ -288,9 +281,18 @@
     element('th', header, 'Measure');
     element('th', header, 'Unit');
     keys.forEach(function (key) {
-      var label = mapping.labels && Object.hasOwn(mapping.labels, key) ? mapping.labels[key] : key;
+      var match = authored.find(function (cell) { return items.key(DocForm.data(cell, 'key')) === key; });
+      var label = mapping.labels && Object.hasOwn(mapping.labels, key) ? mapping.labels[key] :
+        match && sequence.label(match, match) || key;
       if (typeof label !== 'string' || !label.trim()) throw new Error('Use a nonempty scenario label.');
-      element('th', header, label).setAttribute('data-df-key', key);
+      var cell = element('th', header);
+      element('span', cell, label).setAttribute('data-df-step-label', '');
+      cell.setAttribute('data-df-key', key);
+      var detail = match && DocForm.data(match, 'detail');
+      if (detail) cell.setAttribute('data-df-detail', detail);
+      if (mapping.initial === key || (mapping.initial === undefined && match && items.flag(match, 'initial', 'scenarios'))) {
+        cell.setAttribute('data-df-initial', '');
+      }
     });
     var body = table.createTBody();
     features.forEach(function (field, i) {
@@ -322,22 +324,21 @@
     var mode = table.getAttribute('data-df-scenarios') || options.mode || '';
     var caps = data ? DocForm._dataSource.limits(table, options) : null;
     var original = { model: read(table), sections: [table.tHead].concat(Array.from(table.tBodies)).filter(Boolean) };
+    var authored = Array.from(table.tHead?.rows[0]?.cells || []).slice(2);
     var current = original;
     var visual;
+    var domain = { keys: [], initial: 0 };
+    var steps = sequence.indexed('scenarios', table, domain, function (index, previous, origin) {
+      visual.show(current.model.variants[index]);
+      if (!replacing) return function () { controller.change(origin); };
+    });
+    var replacing = false;
     function prepare(records, mapping, kind, parsed) {
       if (!Array.isArray(records) || records.length > caps.maxRows) throw new Error('Scenarios need records within the row limit.');
-      var result = mapTable(records, mapping, kind, parsed);
+      var result = mapTable(records, mapping, kind, parsed, authored);
       if (!result.model) throw new Error(EXPLANATION);
       result.sections = [result.table.tHead].concat(Array.from(result.table.tBodies));
       return result;
-    }
-    function choose(variant, origin) {
-      return runtime.transaction(function () {
-        if (!visual || !current.model.variants.includes(variant)) return false;
-        visual.show(variant);
-        controller.change(origin);
-        return true;
-      });
     }
     var controller = runtime.controller('scenarios', table, {
       prepare: function (input) {
@@ -358,16 +359,17 @@
           prepared.sections.forEach(function (section) { table.appendChild(section); });
           current = prepared;
         }
-        if (prepared.model) visual = draw(table, prepared.model, origin !== 'reset' && previous && previous.key,
-          function (variant) { choose(variant, 'user'); }, function (variant) { choose(variant, 'reset'); });
+        var model = prepared.model;
+        domain.keys = model ? model.domain.keys : [];
+        domain.initial = model ? model.domain.initial : 0;
+        if (model) visual = draw(table, model, steps);
+        replacing = true;
+        try { return steps.replace(origin !== 'reset' && previous ? previous.key : null, origin); }
+        finally { replacing = false; }
       },
       snapshot: function () { return visual ? visual.snapshot() : null; },
       resetReader: true
     });
-    controller.api.select = function (key) {
-      var variant = current.model && current.model.variants.find(function (variant) { return variant.key === key; });
-      return variant ? choose(variant, 'api') : false;
-    };
     scenarios.set(table, controller.api);
     if (named) data.binding('scenarios', table, options, function (records, mapping, input, spec) {
       return spec ? prepare(records.records, records.mapping, records.mode ?? mode) :
@@ -383,20 +385,29 @@
     get: function (target) { return scenarios.get(DocForm._dataViews.target(target)) || null; }
   };
 
+  items.scan('scenarios', function () {
+    DocForm.all('table[data-df-scenarios]').forEach(function (table) {
+      var model = read(table);
+      var data = DocForm._dataSource;
+      var mapping = data && table.hasAttribute('data-df-source') && data.options('scenarios', table).mapping;
+      if (!mapping || !Array.isArray(mapping.variantKeys)) {
+        if (model) items.collect('scenarios', table, model.domain);
+        return;
+      }
+      var keys = mapping.variantKeys.map(data.key);
+      var authored = model && model.domain.keys[model.domain.initial];
+      var initial = Math.max(0, keys.indexOf(data.key(mapping.initial ?? authored)));
+      items.collect('scenarios', table, { keys: keys, initial: initial,
+        items: keys.map(function () { return table; }) });
+    });
+  });
+
   DocForm.register('scenarios', function () {
     var tables = DocForm.all('table[data-df-scenarios]');
-    if (!tables.length) return;
-    if (!DocForm.chart) {
+    if (tables.length && !DocForm.chart) {
       DocForm.warnOnce('scenarios:chart', 'scenarios.js needs chart.js for interactive comparisons.');
       return;
     }
-    tables.forEach(function (table) {
-      if (DocForm._dataViews) mount(table);
-      else {
-        var model = read(table);
-        if (model) draw(table, model);
-        else DocForm.warnOnce('scenarios:markup', EXPLANATION, table);
-      }
-    });
+    tables.forEach(function (table) { mount(table); });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -11,6 +11,9 @@
   var KINDS = ['draw', 'fade', 'move', 'attr'];
   var NUM = /-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi;
   var component = DocForm._component;
+  var sequence = DocForm._sequence;
+  var items = DocForm._items;
+  var pending = [];
 
   function cubicIn(p) { return p * p * p; }
   function cubicOut(p) { return 1 - Math.pow(1 - p, 3); }
@@ -84,7 +87,7 @@
       });
       t += length;
       ends.push(t);
-      captions.push(step.caption || '');
+      captions.push(step.label || '');
     });
     return { ends: ends, total: t, captions: captions, actions: actions };
   }
@@ -194,29 +197,10 @@
     return /^\s*-?(?:\d+\.?\d*|\.\d+)\s*$/.test(raw) ? parseFloat(raw) : raw;
   }
 
-  var ICON = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false" fill="currentColor">';
-  var ICONS = {
-    prev: ICON + '<path d="M3 3h1.6v10H3zM13 3.2v9.6L6 8z"/></svg>',
-    next: ICON + '<path d="M11.4 3H13v10h-1.6zM3 3.2v9.6L10 8z"/></svg>',
-    play: ICON + '<path d="M4 2.5v11L13 8z"/></svg>',
-    pause: ICON + '<path d="M4 3h3v10H4zM9 3h3v10H9z"/></svg>'
-  };
-
-  function button(cls, label, icon) {
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'df-anim-btn ' + cls;
-    b.setAttribute('aria-label', label);
-    b.title = label;
-    b.innerHTML = icon;
-    return b;
-  }
-
-  function setup(figure, steps, options, ctl, keys) {
+  function setup(figure, steps, options, keys, notes) {
     var tl = timeline(steps, options);
-    var list = tracks(figure, tl, Boolean(keys));
+    var list = tracks(figure, tl, true);
     var hold = options.hold == null ? 700 : options.hold;
-    var intro = options.caption || '';
     var stepDriven = figure.matches('.df-figure-steps > figure');
     var t = 0;
     var playing = false;
@@ -224,31 +208,29 @@
     var timer = 0;
     var target = null;
     var origin = 'init';
-    var changes = keys && component.signal('animation', figure, snapshot, { action: 'step' });
-    var displayed = null;
+    var selected = 0;
     var staging = false;
-    var pendingStep = null;
+    var binding = sequence.binding('animation', figure);
+    var initialIndex = options.initial;
+    var ctl = {};
 
-    function snapshot() {
-      var at = locate(tl.ends, t);
-      return Object.freeze({ key: keys[at.current], index: at.current, completed: at.done, time: t });
-    }
+    function index() { return selected ?? locate(tl.ends, t).current; }
 
     function commit(fn, from) {
-      if (!keys) return fn();
       return component.transaction(function () {
         origin = from;
-        fn();
-        return true;
+        return fn() !== false;
       });
+    }
+
+    function action(method, from, arg) {
+      origin = from;
+      return ctl[method](arg) !== false;
     }
 
     figure.classList.add('df-anim');
     var controls = document.createElement('div');
     controls.className = 'df-anim-controls';
-    var prev = button('df-anim-prev', 'Previous step', ICONS.prev);
-    var play = button('df-anim-play', 'Play', ICONS.play);
-    var next = button('df-anim-next', 'Next step', ICONS.next);
     var scrub = document.createElement('input');
     scrub.type = 'range';
     scrub.className = 'df-anim-scrub';
@@ -256,12 +238,9 @@
     scrub.max = String(tl.total);
     scrub.step = 'any';
     scrub.setAttribute('aria-label', 'Animation position');
-    var counter = document.createElement('span');
-    counter.className = 'df-anim-count';
     var caption = document.createElement('div');
     caption.className = 'df-anim-caption';
     caption.setAttribute('aria-live', 'polite');
-    [prev, play, next, scrub, counter].forEach(function (el) { controls.appendChild(el); });
 
     var svg = figure.querySelector('svg');
     var after = svg && svg.parentNode === figure ? svg.nextSibling : figure.querySelector('figcaption');
@@ -271,33 +250,23 @@
 
     function render() {
       list.forEach(function (item) { apply(item.el, item.kind, item.prop, value(item.track, t)); });
-      var at = locate(tl.ends, t);
       scrub.value = String(t);
-      counter.textContent = at.current + ' / ' + tl.ends.length;
-      var changed = at.current !== shown;
+      var at = index();
+      var changed = at !== shown;
       if (changed) {
-        shown = at.current;
-        var text = at.current ? tl.captions[at.current - 1] : intro;
+        shown = at;
+        var text = at ? tl.captions[at - 1] : options.label || '';
         if (DocForm.math && DocForm.math.mixed) caption.innerHTML = DocForm.math.mixed(text);
         else caption.textContent = text;
         caption.hidden = !text;
+        sequence.showDetails(notes, at);
       }
-      prev.disabled = t <= EPS;
-      next.disabled = t >= tl.total - EPS;
-      play.innerHTML = playing ? ICONS.pause : ICONS.play;
-      play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-      play.title = play.getAttribute('aria-label');
       figure.classList.toggle('is-playing', playing);
-      if (!changed) return;
-      if (changes) {
-        var previous = displayed;
-        var current = displayed = snapshot();
-        var from = origin;
-        var notify = function () { changes.emit(current, previous, from); };
-        if (staging) pendingStep = notify;
-        else notify();
-      } else if (typeof root.CustomEvent === 'function') {
-        figure.dispatchEvent(new root.CustomEvent('df:animstep', { detail: { step: at.current, done: at.done } }));
+      pill.update();
+      if (!staging) {
+        var notify = entry.stage(origin);
+        if (changed) binding.publish(keys[at], origin, notify);
+        else if (notify) notify();
       }
     }
 
@@ -310,7 +279,8 @@
       playing = false;
     }
 
-    function seek(time) {
+    function seek(time, index) {
+      selected = index ?? null;
       t = Math.max(0, Math.min(tl.total, time));
       render();
     }
@@ -323,6 +293,7 @@
       function advance(now) {
         if (last === null) last = now;
         var dt = now - last;
+        if (dt) selected = null;
         t = goal >= t ? Math.min(goal, t + dt) : Math.max(goal, t - dt);
         last = now;
         render();
@@ -367,7 +338,7 @@
     ctl.play = function () {
       if (playing) return;
       stop();
-      if (t >= tl.total - EPS) seek(0);
+      if (t >= tl.total - EPS) seek(0, 0);
       playing = true;
       render();
       playOn();
@@ -377,6 +348,8 @@
       render();
     };
     ctl.next = function () {
+      if (index() >= keys.length - 1 && t >= tl.total - EPS) return false;
+      if (selected !== null && stepTime(tl.ends, selected + 1) <= t + EPS) return ctl.go(selected + 1);
       var from = target !== null ? target : t;
       stop();
       if (from > t + EPS) seek(from);
@@ -384,12 +357,15 @@
       render();
     };
     ctl.prev = function () {
+      if (index() === 0 && t <= EPS) return false;
+      if (selected !== null) return ctl.go(selected - 1);
       stop();
-      seek(prevEnd(t));
+      var time = prevEnd(t);
+      seek(time, time === 0 ? 0 : undefined);
     };
     ctl.go = function (step) {
       stop();
-      seek(stepTime(tl.ends, step));
+      seek(stepTime(tl.ends, step), step);
     };
     // Animates to the end of `step`, playing only the last step when it would cross several.
     ctl.to = function (step) {
@@ -403,73 +379,86 @@
       stop();
       seek(time);
     };
-    ctl.figure = figure;
-    ctl.svg = svg;
-    ctl.timeline = tl;
-    Object.defineProperty(ctl, 'time', { get: function () { return t; } });
-    Object.defineProperty(ctl, 'step', { get: function () { return locate(tl.ends, t).done; } });
-
     function invoke(method, from, arg) {
-      return commit(function () { ctl[method](arg); }, from);
+      return component.transaction(function () { return action(method, from, arg); });
     }
 
-    if (keys) {
-      var api = {
-        figure: figure, svg: svg, snapshot: snapshot, subscribe: changes.subscribe,
-        reset: function () { return invoke('go', 'reset', 0); },
-        seek: function (time) {
-          if (typeof time !== 'number' || !Number.isFinite(time)) return false;
-          return invoke('seek', 'api', time);
-        }
-      };
-      Object.defineProperty(api, 'timeline', { get: function () { return copy(tl); } });
-      ['play', 'pause', 'next', 'prev'].forEach(function (method) {
-        api[method] = function () { return invoke(method, 'api'); };
-      });
-      ['go', 'to'].forEach(function (method) {
-        api[method] = function (key) {
-          var index = keys.indexOf(DocForm._items.key(key));
-          return index < 0 ? false : invoke(method, 'api', index);
-        };
-      });
-      keyed.set(figure, api);
-      linkedSteps.set(figure, function (key, from) {
-        var index = keys.indexOf(key);
-        if (index < 0) return false;
-        origin = from;
-        staging = true;
-        try {
-          ctl.go(index);
-          return pendingStep;
-        } finally {
-          pendingStep = null;
-          staging = false;
-        }
-      });
+    function apply(key, from) {
+      var at = keys.indexOf(key);
+      if (at < 0 || (index() === at && (from === 'group' || (selected === at && !playing && target === null)))) return null;
+      origin = from;
+      staging = true;
+      try { ctl.go(at); }
+      finally { staging = false; }
+      return entry.stage(from);
     }
 
-    // A mouse or pen crossing a stopped figure plays it; pressing Pause holds it until the pointer leaves.
+    var entry = sequence.define(figure, {
+      keys: function () { return keys; },
+      read: function () { return { index: index(), playing: playing,
+        canNext: index() < keys.length - 1 || t < tl.total - EPS }; },
+      select: function (from, key) { return action('go', from, keys.indexOf(key)); },
+      reset: function (from) { return action('go', from, initialIndex); },
+      play: function (from) { return action('play', from); },
+      pause: function (from) { return action('pause', from); },
+      next: function (from) { return action('next', from); },
+      prev: function (from) { return action('prev', from); },
+      apply: apply
+    });
+    var api = entry.controller;
+    api.figure = figure;
+    api.svg = svg;
+    api.seek = function (time) {
+      return Number.isFinite(time) && invoke('seek', 'api', time);
+    };
+    api.to = function (key) {
+      var at = keys.indexOf(items.key(key));
+      return at >= 0 && invoke('to', 'api', at);
+    };
+    Object.defineProperties(api, {
+      timeline: { get: function () { return copy(tl); } },
+      time: { get: function () { return t; } }
+    });
+    binding.follow(apply);
     var held = false;
+    var pill = sequence.pill(entry, {
+      label: 'Animation steps', controls: figure.id, playAt: 1, omit: ['reset'],
+      canPlay: function () { return tl.total > EPS; },
+      status: function (current) { return current.index + ' / ' + tl.ends.length; },
+      onPause: function () { held = true; }
+    });
+    controls.appendChild(pill.element);
+    controls.appendChild(scrub);
+
+    // A mouse or pen crossing a stopped figure plays it; Pause holds it until the pointer leaves.
     figure.addEventListener('pointerenter', function (event) {
       if (hoverPlays({ playing: playing, held: held, pointer: event.pointerType, stepDriven: stepDriven })) {
-        invoke('play', 'user');
+        entry.run('play', 'user');
       }
     });
     figure.addEventListener('pointerleave', function () { held = false; });
-    play.addEventListener('click', function () {
-      if (playing) {
-        held = true;
-        invoke('pause', 'user');
-      } else invoke('play', 'user');
-    });
-    next.addEventListener('click', function () { invoke('next', 'user'); });
-    prev.addEventListener('click', function () { invoke('prev', 'user'); });
     scrub.addEventListener('input', function () { invoke('seek', 'user', parseFloat(scrub.value)); });
-    if (keys) component.notify(render);
-    else render();
+    function initialize() {
+      var shared = keys.indexOf(binding.initial());
+      selected = shared >= 0 ? shared : initialIndex;
+      t = stepTime(tl.ends, selected);
+      staging = true;
+      render();
+      staging = false;
+    }
 
-    var auto = keys ? component.flag(figure, 'animation-autoplay', 'animation', options.autoplay) :
-      options.autoplay != null ? options.autoplay : DocForm.flag(figure, 'autoplay');
+    initialize();
+    if (DocForm._boot && !DocForm._boot.setupComplete) {
+      pending.push({
+        figure: figure, keys: keys, initial: initialIndex,
+        start: function () {
+          if (keys.includes(binding.initial())) initialize();
+          sequence.start(entry.stage('init'));
+        }
+      });
+    } else sequence.start(entry.stage('init'));
+
+    var auto = component.flag(figure, 'animation-autoplay', 'animation', options.autoplay);
     if (auto && !stepDriven && typeof root.IntersectionObserver === 'function') {
       var seen = new IntersectionObserver(function (entries) {
         if (!entries.some(function (e) { return e.isIntersecting; })) return;
@@ -478,6 +467,7 @@
       }, { threshold: 0.5 });
       seen.observe(figure);
     }
+    return api;
   }
 
   // Touch is left out: a tap on Play would otherwise start the figure on entry and pause it on click.
@@ -505,12 +495,6 @@
     chain: chain, value: value, stepTime: stepTime, path: path, hoverPlays: hoverPlays
   };
 
-  var keyed = new WeakMap();
-  var linkedSteps = new WeakMap();
-  DocForm._animationStep = function (figure, key, origin) {
-    var sync = linkedSteps.get(figure);
-    return sync ? sync(key, origin) : undefined;
-  };
   function copy(value) {
     if (!value || typeof value !== 'object') return value;
     if (Array.isArray(value)) return value.map(copy);
@@ -518,11 +502,11 @@
   }
 
   DocForm.animation = {
-    get: function (target) { return keyed.get(component.target(target, 'animation', false)) || null; },
     mount: function (target, options) {
       var figure = component.target(target, 'animation', true);
       if (!figure) return null;
-      if (keyed.has(figure)) return keyed.get(figure);
+      var mounted = DocForm.sequence.get(figure);
+      if (mounted) return mounted.figure === figure ? mounted : null;
       if (!figure.matches('figure') || !figure.querySelector('svg')) {
         component.issue('animation', figure, 'Animation needs a figure containing an SVG.', 'Pass the animation figure.');
         return null;
@@ -532,7 +516,7 @@
       var number = function (value) { return Number.isFinite(value) && value >= 0; };
       var text = function (value) { return typeof value === 'string'; };
       var ease = function (value) { return typeof value === 'function' || Object.hasOwn(EASINGS, value); };
-      var valid = { hold: number, duration: number, easing: ease, caption: text, autoplay: function (value) {
+      var valid = { hold: number, duration: number, easing: ease, label: text, autoplay: function (value) {
         return typeof value === 'boolean';
       } };
       Object.keys(valid).forEach(function (key) {
@@ -540,10 +524,10 @@
       });
       var steps = component.option('animation', figure, 'steps', null, Array.isArray, options);
       var keys = ['start'].concat(steps ? steps.map(function (step) {
-        return DocForm._items.key(step && step.key);
+        return items.key(step && step.key);
       }) : [null]);
       if (keys.includes(null) || new Set(keys).size !== keys.length) {
-        DocForm._items.issue('animation', figure, 'Animation steps need distinct keys.',
+        items.issue('animation', figure, 'Animation steps need distinct keys.',
           'Set a nonempty key for each step and reserve start for the starting state.');
         return null;
       }
@@ -568,12 +552,39 @@
           'Give each step an actions array and use nonnegative finite durations and delays.');
         return null;
       }
-      try { setup(figure, copy(steps), animation, {}, keys); }
-      catch (error) {
+      steps = copy(steps);
+      var markup = figure.querySelector(':scope > [data-df-animation-steps]');
+      var entries = markup ? DocForm.all(':scope > [data-df-key]', markup) : [];
+      var notes = keys.map(function (key, index) {
+        var item = entries.find(function (entry) { return items.key(DocForm.data(entry, 'key')) === key; });
+        var step = index ? steps[index - 1] : animation;
+        if (item) {
+          step.label = sequence.label(item) || step.label;
+          step.detail = DocForm.data(item, 'detail', step.detail);
+          step.initial = items.flag(item, 'initial', 'animation', step.initial);
+        }
+        return component.target(step.detail);
+      });
+      animation.initial = animation.initial === true ? 0 :
+        1 + steps.findIndex(function (step) { return step.initial === true; });
+      try {
+        var controller = setup(figure, steps, animation, keys, notes);
+        if (markup) markup.hidden = true;
+        return controller;
+      } catch (error) {
         component.issue('animation', figure, 'Cannot mount animation: ' + error.message, 'Check the animation actions and SVG selectors.');
         return null;
       }
-      return keyed.get(figure);
     }
   };
+  items.scan('animation', function () {
+    pending.forEach(function (entry) {
+      items.collect('animation', entry.figure, {
+        keys: entry.keys, initial: entry.initial, items: entry.keys.map(function () { return entry.figure; })
+      });
+    });
+  });
+  DocForm.register('animation', function () {
+    pending.splice(0).forEach(function (entry) { entry.start(); });
+  });
 })(typeof window !== 'undefined' ? window : globalThis);

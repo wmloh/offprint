@@ -45,50 +45,11 @@ svg .df-muted { --df-accent: var(--df-text-muted); }
   margin-top: var(--df-space-3);
 }
 
-.df-anim-btn {
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--df-radius);
-  background: transparent;
-  color: var(--df-text-muted);
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.df-anim-btn:hover:not(:disabled) {
-  background: var(--df-bg-hover);
-  color: var(--df-text);
-}
-
-.df-anim-btn:disabled {
-  color: var(--df-text-faint);
-  cursor: default;
-}
-
-.df-anim-play {
-  background: var(--df-bg-hover);
-  color: var(--df-text);
-}
-
 .df-anim-scrub {
   flex: 1;
   min-width: 60px;
   margin: 0 var(--df-space-2);
   accent-color: var(--df-text-muted);
-}
-
-.df-anim-count {
-  flex: none;
-  min-width: 3.5em;
-  color: var(--df-text-muted);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
 }
 
 .df-anim-caption {

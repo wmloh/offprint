@@ -136,6 +136,10 @@
   }
 }
 
+.df-figure-step-controls {
+  margin-block-start: var(--df-space-3);
+}
+
 .df-step-figure > .df-anim-controls {
   display: none;
 }

@@ -44,13 +44,13 @@
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
       <ol id="reference-count" data-df-stepper data-df-selection-group="reference-count-steps">
-        <li data-df-key="setup"><strong data-df-step-label>Start with setup.</strong> Count the 3 setup references.</li>
-        <li data-df-key="layout"><strong data-df-step-label>Add layout.</strong> Add 7 layout references to get 10.</li>
-        <li data-df-key="reading"><strong data-df-step-label>Add reading.</strong> Add 13 reading references to get 23.</li>
+        <li data-df-key="setup" data-df-detail="reference-count-setup"><strong data-df-step-label>Start with setup.</strong> Count the 3 setup references.</li>
+        <li data-df-key="layout" data-df-detail="reference-count-layout"><strong data-df-step-label>Add layout.</strong> Add 7 layout references to get 10.</li>
+        <li data-df-key="reading" data-df-detail="reference-count-reading"><strong data-df-step-label>Add reading.</strong> Add 13 reading references to get 23.</li>
       </ol>
-      <p data-df-stepper-view="reference-count" data-df-key="setup">Running total: 3.</p>
-      <p data-df-stepper-view="reference-count" data-df-key="layout">Running total: 3 + 7 = 10.</p>
-      <p data-df-stepper-view="reference-count" data-df-key="reading">Running total: 10 + 13 = 23.</p>
+      <p id="reference-count-setup">Running total: 3.</p>
+      <p id="reference-count-layout">Running total: 3 + 7 = 10.</p>
+      <p id="reference-count-reading">Running total: 10 + 13 = 23.</p>
       <div data-df-chart="line" data-df-height="220" data-df-y-label="Running total" data-df-selection-group="reference-count-steps">
         <table>
           <thead><tr><th scope="col">Group added</th><th scope="col" data-df-role="on-request">References so far</th></tr></thead>
@@ -77,6 +77,10 @@
     <h2 id="what-it-does">One step, several views</h2>
     <p>The stepper shows one item of an ordered example and reports where you are, such as Step 2 of 3. Previous and Next move in order. Reset restores the author’s chosen starting step, which is the first step here.</p>
     <p>The companion calculation switches with the current step. The chart and table use <a href="selection.html">linked selection</a> to mark the same item. All the rows and points stay visible, so readers can compare the selected value with the others.</p>
+
+    <h2 id="shared-steps">Use the same step controls elsewhere</h2>
+    <p>Figure steps, chart tours, SVG animations, stepped pipelines, and scenario comparisons share the stepper’s navigation. Give items matching <code>data-df-key</code> values and put the same <code>data-df-selection-group</code> on the components to move them together. Use <code>data-df-initial</code> to choose where Reset goes.</p>
+    <p>In a page script, <code>DocForm.sequence.get('reference-count')</code> gives you the controller. Call <code>select('reading')</code> to jump to a step, or listen for <code>df:step</code> on the list to run code when the current step changes.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
     <p>Use a worked-example stepper when each operation builds on the last. Keep a shared chart or table in sight when the reader needs the whole sequence for context. Put any instructions that apply to every step before the controls.</p>

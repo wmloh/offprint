@@ -10,7 +10,7 @@ function node(tag, text = '', children = []) {
   const attrs = new Map();
   const classes = new Set();
   const el = Object.assign(new EventTarget(), {
-    tagName: tag.toUpperCase(), children, hidden: false, value: '', colSpan: 1, rowSpan: 1, clientWidth: 640,
+    tagName: tag.toUpperCase(), nodeType: 1, children, hidden: false, value: '', colSpan: 1, rowSpan: 1, clientWidth: 640,
     classList: {
       add: (name) => classes.add(name),
       remove: (...names) => names.forEach((name) => classes.delete(name)),
@@ -31,6 +31,9 @@ function node(tag, text = '', children = []) {
       child.parentNode = this;
       children.splice(children.indexOf(old), 1, child);
     },
+    get tHead() { return children.find(child => child.tagName === 'THEAD'); },
+    get tBodies() { return children.filter(child => child.tagName === 'TBODY'); },
+    querySelector() { return null; },
     before(sibling) { this.parentNode.insertBefore(sibling, this); },
     click() { this.dispatchEvent(new Event('click')); }
   });
@@ -53,6 +56,7 @@ function row(values, condition = false, head = false) {
 
 function fixture(threshold = '20') {
   const head = row(['Measure', 'Unit', 'Baseline', 'Higher threshold', 'Longer window', 'Small adjustment'], false, true);
+  head.cells.slice(2).forEach(cell => cell.setAttribute('data-df-key', cell.textContent));
   const rows = [
     row(['Threshold', '%', '20', '25', threshold, '21'], true),
     row(['Window', 's', '5', '5', '10', '5'], true),
@@ -71,25 +75,27 @@ function setup({ table }, withChart = true) {
   page.appendChild(table);
   const warnings = [];
   const modules = new Map();
-  const DocForm = {
-    all(selector, el) {
-      switch (selector) {
-        case 'table[data-df-scenarios]': return [table];
-        case ':scope > thead > tr': return el.children[0].children;
-        case ':scope > tbody > tr': return el.children[1].children;
-        case '.is-active': return [];
-        default: throw new Error(`Unexpected selector ${selector}`);
-      }
-    },
-    warnOnce: (_, message) => warnings.push(message),
-    register: (name, start) => modules.set(name, start)
+  const boot = {
+    report: (_, feature, host, message) => warnings.push(message),
+    canInitialize: () => true,
+    optionLayers: () => [],
+    moduleFailed: (_, error) => { throw error; }
   };
+  const DocForm = { _boot: boot };
   const document = { createElement: node, createElementNS: (_, tag) => node(tag) };
-  // Only the shared step pill comes from core; the rest of this fake stays a page without data views.
-  const core = vm.createContext({ DocForm: { _boot: {} }, document });
-  vm.runInContext(sources[2], core);
-  DocForm._pill = core.DocForm._pill;
-  const context = vm.createContext({ DocForm, document, Date });
+  const context = vm.createContext({ DocForm, document, CustomEvent, Date });
+  vm.runInContext(sources[2], context);
+  DocForm.all = (selector, el) => {
+    switch (selector) {
+      case 'table[data-df-scenarios]': return [table];
+      case ':scope > thead > tr': return el.children[0].children;
+      case ':scope > tbody > tr': return el.children[1].children;
+      case '.is-active': return [];
+      default: throw new Error(`Unexpected selector ${selector}`);
+    }
+  };
+  DocForm.register = (name, start) => modules.set(name, start);
+  DocForm.warnOnce = (_, message) => warnings.push(message);
   vm.runInContext(sources[3], context);
   if (withChart) vm.runInContext(sources[0], context);
   vm.runInContext(sources[1], context);
@@ -136,7 +142,7 @@ test('selecting and resetting variants keeps baseline geometry and highlights th
 
   assert.equal(status.getAttribute('role'), 'status');
   assert.deepEqual([reset, previous, next].map((button) => button.getAttribute('aria-label')),
-    ['Reset to the first variant', 'Previous variant', 'Next variant']);
+    ['Reset', 'Previous variant', 'Next variant']);
   assert.equal(count.textContent, '1 of 3');
   assert.deepEqual(disabled(), ['true', 'true', 'false']);
   next.click();

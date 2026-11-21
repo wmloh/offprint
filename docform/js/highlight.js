@@ -29,11 +29,13 @@
   }
 
   function load(name) {
+    if (DocForm._readerState?.isolated()) return null;
     try { return items.key(root.localStorage.getItem(storageKey(name))); }
     catch (error) { return null; }
   }
 
   function save(name, key) {
+    if (DocForm._readerState?.isolated()) return;
     try {
       if (key === null) root.localStorage.removeItem(storageKey(name));
       else root.localStorage.setItem(storageKey(name), key);
@@ -76,6 +78,13 @@
     var origin;
 
     function commit(key, from, notifyLocal) {
+      if (from === 'hover' && DocForm._readerState) {
+        return DocForm._readerState.transient(function () { return publish(key, 'user', notifyLocal); });
+      }
+      return publish(key, from, notifyLocal);
+    }
+
+    function publish(key, from, notifyLocal) {
       var previous = current;
       var changed = !previous || previous.key !== key;
       var notifications = notifyLocal ? [notifyLocal] : [];
@@ -94,6 +103,7 @@
       }
       notifications.forEach(function (notify) { notify(); });
       if (changed) events.emit(current, previous, from, name);
+      track?.(from);
       return true;
     }
 
@@ -113,6 +123,13 @@
       subscribe: events.subscribe
     };
 
+    var track = DocForm._readerState?.watch('selection', name, api.get, function (key) {
+      if (key === null) return api.clear();
+      var available = keys.has(key) || custom.includes(key) || key === initial || DocForm._all(ITEM).some(function (el) {
+        return items.key(el.getAttribute(GROUP)) === name && items.key(el.getAttribute(KEY)) === key;
+      });
+      return available && api.select(key);
+    }, { order: 8, reassert: true });
     var group = {
       api: api,
       commit: commit,
@@ -150,9 +167,11 @@
           }
         }
         current = Object.freeze({ key: key });
-        keys.clear();
+        if (!DocForm._readerState?.isolated()) {
+          keys.clear();
+          custom.length = 0;
+        }
         seeds.length = 0;
-        custom.length = 0;
       },
       finish: function () { if (origin) events.emit(current, null, origin, name); }
     };

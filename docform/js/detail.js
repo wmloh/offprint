@@ -82,6 +82,7 @@
     }
     var shared = panel(children);
     var state = null;
+    var track = DocForm._readerState?.watch('detail-pane', pane, function () { return state?.key; }, show);
     var events = items.signal('detail-pane', pane, function () { return state; });
 
     function apply(index, origin) {
@@ -93,6 +94,7 @@
       shared.show(child);
       var current = state;
       items.notify(function () { events.emit(current, previous, origin); });
+      track?.(origin);
       return true;
     }
 

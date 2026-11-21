@@ -351,6 +351,17 @@
       state = { range: null, cells: [], steps: [], contours: true, lines: null, contourChoice: null };
       states.set(chart, state);
       hosts.set(chart.box, chart);
+      state.trackRange = DocForm._readerState?.watch('heatmap-range', chart.box,
+        function () { return state.range && state.range.slice(); }, function (range) {
+          if (chart.model.addon !== 'heatmap' || !state.scale) return false;
+          if (range !== null && (!Array.isArray(range) || range.length !== 2 || !range.every(Number.isFinite) ||
+              !same(range, clampRange(range, state.scale)))) return false;
+          return setRange(chart, range, 'api');
+        }, { order: 11, current: function () { return state.announced === undefined; } });
+      state.trackContours = DocForm._readerState?.watch('heatmap-contours', chart.box,
+        function () { return chart.model.heatmap?.contours?.levels.length ? state.contours : undefined; }, function (on) {
+          return typeof on === 'boolean' && DocForm._chart._heatmap.contours(chart.box, on);
+        }, { order: 11 });
     }
     return state;
   }
@@ -522,6 +533,7 @@
     if (state.contours === on) return true;
     state.contours = on;
     paintContours(chart);
+    state.trackContours?.(origin);
     if (typeof root.CustomEvent === 'function') {
       chart.box.dispatchEvent(new root.CustomEvent('df:chart:heatmap-contours', { bubbles: true, detail: {
         current: on, previous: !on, origin: origin
@@ -598,6 +610,7 @@
       return true;
     }
     state.announced = undefined;
+    state.trackRange?.(origin);
     if (!same(previous, next) && typeof root.CustomEvent === 'function') {
       chart.box.dispatchEvent(new root.CustomEvent('df:chart:heatmap-range', { bubbles: true, detail: {
         current: next && next.slice(), previous: previous && previous.slice(), origin: origin

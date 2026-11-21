@@ -30,7 +30,11 @@
     // Scrolling can move a row under a stationary pointer and dispatch pointerenter.
     row.addEventListener('pointermove', function (event) {
       if ((event.pointerType === 'mouse' || event.pointerType === 'pen') &&
-          state.controller.snapshot().index !== index) state.choose(index, 'user');
+          state.controller.snapshot().index !== index) {
+        var choose = function () { state.choose(index, 'user'); };
+        if (DocForm._readerState) DocForm._readerState.transient(choose);
+        else choose();
+      }
     });
   }
 
@@ -131,11 +135,22 @@
       changed();
     }
 
-    input.addEventListener('input', apply);
+    var track = DocForm._readerState?.watch('panel-filter', host,
+      function () { return searchText(input.value); }, function (value) {
+        if (typeof value !== 'string') return false;
+        input.value = value;
+        apply();
+        return true;
+      });
+    function filter() {
+      apply();
+      track?.('user');
+    }
+    input.addEventListener('input', filter);
     input.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && input.value) {
         input.value = '';
-        apply();
+        filter();
       } else if (event.key === 'ArrowDown') {
         var first = buttons.find(function (button, i) { return shown[i]; });
         if (first) first.focus();

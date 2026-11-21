@@ -403,7 +403,16 @@
       pause: function (from) { return action('pause', from); },
       next: function (from) { return action('next', from); },
       prev: function (from) { return action('prev', from); },
-      apply: applyStep
+      apply: applyStep,
+      exportView: {
+        snapshot: function () { return { time: t, key: selected === null ? null : keys[selected] }; },
+        apply: function (value) {
+          if (!value || !Number.isFinite(value.time) || value.time < 0 || value.time > tl.total) return false;
+          if (value.key !== null) return api.select(value.key);
+          return api.seek(value.time);
+        },
+        order: 9, current: function () { return origin !== 'hover'; }
+      }
     });
     var api = entry.controller;
     api.figure = figure;
@@ -433,7 +442,7 @@
     // A mouse or pen crossing a stopped figure plays it; Pause holds it until the pointer leaves.
     figure.addEventListener('pointerenter', function (event) {
       if (hoverPlays({ playing: playing, held: held, pointer: event.pointerType, stepDriven: stepDriven })) {
-        entry.run('play', 'user');
+        entry.run('play', 'hover');
       }
     });
     figure.addEventListener('pointerleave', function () { held = false; });

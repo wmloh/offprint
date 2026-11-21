@@ -188,11 +188,15 @@
           selected = index;
           draw();
           controller.change(origin);
+          track?.(origin);
         }
         return true;
       });
     }
 
+    var track = DocForm._readerState?.watch('matrix', table, function () {
+      return model?.measures[selected]?.key;
+    }, function (key) { return choose(key, 'api'); });
     var controller = runtime.controller('matrix', table, {
       prepare: function (records) {
         var input = data.input({ type: 'value', value: records }, null, 0);

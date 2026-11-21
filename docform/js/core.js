@@ -161,7 +161,7 @@
 
   function transaction(fn) {
     if (preparingData) throw new Error('Data transforms cannot change controller state.');
-    transactions.push(fn);
+    transactions.push(DocForm._readerState?.preserveOrigin(fn) || fn);
     if (committing) return true;
     committing = true;
     try {
@@ -256,7 +256,9 @@
         try { committed = clear ? reset() : update(input, origin); }
         catch (failure) { error = failure; return false; }
         sequence++;
+        var previousOwner = owner;
         owner = zone && !clear ? zone : null;
+        if (previousOwner && previousOwner !== owner) DocForm._readerState?.removeImport(previousOwner);
         if (committed) committed(origin);
         return true;
       });
@@ -438,6 +440,7 @@
     var mode = group ? selectionMode(host, feature) : 'both';
     var state = null;
     var events = signal(feature, host, function () { return state; });
+    var track = DocForm._readerState?.watch(feature, host, function () { return state?.key; }, select, { reassert: true });
 
     function apply(index, origin, refresh) {
       if (index < 0 || index >= keys.length || (!refresh && state && state.index === index)) return null;
@@ -448,6 +451,7 @@
       return function () {
         if (typeof notify === 'function') notify();
         events.emit(current, previous, origin);
+        track?.(origin);
       };
     }
 
@@ -461,6 +465,7 @@
         var notify = apply(index, origin);
         if (group && mode !== 'follow') group.commit(key, origin, notify);
         else if (notify) notify();
+        track?.(origin);
         return true;
       });
     }
@@ -584,6 +589,8 @@
       var current = state = controller.snapshot();
       if (entry.updateControls) entry.updateControls(current);
       var changed = !previous || previous.key !== current.key || previous.index !== current.index;
+      track?.(origin);
+      if (origin === 'hover') origin = 'user';
       if (!changed && Object.keys(current).every(function (key) { return previous[key] === current[key]; })) return null;
       return function () {
         Array.from(callbacks).forEach(function (listener) {
@@ -603,6 +610,9 @@
     }
     var entry = { controller: controller, run: run, stage: stage, apply: impl.apply, available: impl.available };
     sequences.set(host, entry);
+    var track = impl.exportView ? DocForm._readerState?.watch('sequence', host,
+      impl.exportView.snapshot, impl.exportView.apply, impl.exportView) :
+      DocForm._readerState?.keyed('sequence', host, controller);
     return entry;
   }
 

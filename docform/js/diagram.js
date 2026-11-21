@@ -199,7 +199,11 @@
   function selectOnHover(target, index, binding) {
     target.addEventListener('pointermove', function (event) {
       if (event.pointerType === 'touch' || target.inert) return;
-      if (binding.controller.snapshot().index !== index) binding.choose(index, 'user');
+      if (binding.controller.snapshot().index !== index) {
+        var choose = function () { binding.choose(index, 'user'); };
+        if (DocForm._readerState) DocForm._readerState.transient(choose);
+        else choose();
+      }
     });
   }
 
@@ -278,6 +282,7 @@
       var records;
       var next;
       var actions = {
+        host: host,
         current: function () { return binding.controller.snapshot().index; },
         choose: function (index, origin) { return binding.choose(index, origin); },
         focus: function (index) { next.items[index].focus(); }

@@ -356,6 +356,7 @@
       if (!scopesReady) return true;
       scheduleScopedBindings(state);
       var meta = Object.freeze({ previous: previous, changedKeys: Object.freeze(changed), origin: origin });
+      track?.(origin);
       Array.from(subscribers).forEach(function (sub) {
         if (subscribers.has(sub) && (!sub.keys || changed.some(function (key) { return sub.keys.includes(key); }))) notify(sub, meta);
       });
@@ -461,6 +462,8 @@
         return function () { subscribers.delete(sub); };
       }
     };
+
+    var track = DocForm._readerState?.watch('parameters', name, state.api.snapshot, state.api.update, { order: -20 });
 
     function knownKey(key) {
       return typeof key === 'string' && hasOwn.call(definitions, key);

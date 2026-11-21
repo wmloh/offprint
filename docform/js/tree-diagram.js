@@ -185,6 +185,17 @@
       });
     }
 
+    var track = DocForm._readerState?.watch('tree-branches', actions.host, function () {
+      return Array.from(collapsed).sort();
+    }, function (keys) {
+      if (!Array.isArray(keys) ||
+          keys.some(function (key) { return !nodes.some(function (node) { return node.key === key && node.children.length; }); })) return false;
+      collapsed.clear();
+      keys.forEach(function (key) { collapsed.add(key); });
+      place();
+      return true;
+    }, { order: -10 });
+
     function setCollapsed(index, closed) {
       var key = nodes[index].key;
       if (closed) {
@@ -195,6 +206,7 @@
         collapsed.delete(key);
         place();
       }
+      track?.('user');
     }
 
     function reveal(index) {

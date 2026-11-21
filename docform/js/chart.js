@@ -2672,6 +2672,7 @@
       }));
     }
     if (chart.controller) chart.controller.change(chart.origin || 'user');
+    chart.trackView?.(chart.origin || 'user');
   }
 
   function setVisible(chart, name, on) {
@@ -2768,7 +2769,10 @@
     chart.toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     chart.toggle.textContent = on ? 'Chart' : 'Table';
     if (!on) draw(chart);
-    if (chart.controller && !chart.updating) chart.controller.change('user');
+    if (!chart.updating) {
+      if (chart.controller) chart.controller.change('user');
+      chart.trackView?.('user');
+    }
   }
 
   function build(host, model, sourceTable, spec, useSourceTable, origin) {
@@ -2931,6 +2935,24 @@
         return write(function () { if (!sameRange(value, chart.range)) setRange(chart, value); });
       }
     };
+    chart.trackView = DocForm._readerState?.watch('chart', host, function () {
+      return { hidden: Object.keys(chart.hidden).sort(), range: chart.api.range(), table: chart.plot.hidden };
+    }, function (saved) {
+      if (!saved || !Array.isArray(saved.hidden) || typeof saved.table !== 'boolean') return false;
+      var series = chart.model.filterSeries || chart.model.series.map(function (item) { return item.key; });
+      if (saved.hidden.some(function (key) { return !series.includes(key); }) ||
+          (saved.table && !chart.model.table)) return false;
+      if (saved.range !== null && (!Array.isArray(saved.range) || saved.range.length !== 2 ||
+          !saved.range.every(Number.isFinite) || !sameRange(saved.range, clampRange(chart.model, ...saved.range)))) return false;
+      var hidden = Object.create(null);
+      saved.hidden.forEach(function (key) { hidden[key] = true; });
+      chart.hidden = hidden;
+      chart.range = saved.range?.slice() || null;
+      setTable(chart, saved.table);
+      refresh(chart, false);
+      return true;
+    }, { order: 10, current: function () { return true; } });
+
     function write(fn) {
       function apply() {
         chart.origin = 'api';
@@ -2973,6 +2995,7 @@
         if (!chart.plot.hidden) draw(chart, true);
       }
       chart.updating = false;
+      if (origin === 'reset') chart.trackView?.(origin);
       if (notifyPlayback) notifyPlayback();
       return true;
     }

@@ -370,6 +370,7 @@
         else if (state.dir === first) state.dir = first === 'asc' ? 'desc' : 'asc';
         else state = { col: -1, dir: null };
         apply();
+        settings.onFilter?.('user');
       });
     });
 
@@ -387,6 +388,16 @@
     });
     return {
       sort: function () { return state.col < 0 ? null : { field: columns[state.col].name, dir: state.dir }; },
+      sortBy: function (sort) {
+        if (sort === null) state = { col: -1, dir: null };
+        else {
+          var col = columns.findIndex(function (column) { return column.name === sort.field && column.button; });
+          if (col < 0 || !['asc', 'desc'].includes(sort.dir)) return false;
+          state = { col: col, dir: sort.dir };
+        }
+        apply();
+        return true;
+      },
       filter: filtering,
       snapshot: function () { return filtering ? filtering.snapshot() : { shown: rows.length, total: rows.length, filters: {}, chips: [] }; }
     };
@@ -736,7 +747,21 @@
     };
     if (CONTROLLERS) CONTROLLERS.set(table, api);
     refresh();
-    return { api: api, bar: bar, close: closeMenu, snapshot: function () { return state; } };
+    function restore(next) {
+      if (Object.keys(next.filters).some(function (name) {
+        var col = filtered.find(function (col) { return col.name === name; });
+        var filter = next.filters[name];
+        if (!filter || !col) return true;
+        if (col.filter === 'values') return !Array.isArray(filter.excluded) ||
+          filter.excluded.some(function (key) { return !col.keys.includes(key); });
+        return ![filter.min, filter.max].every(function (v) { return v == null || Number.isFinite(v); });
+      }) || next.chips.some(function (label) { return !chips.some(function (chip) { return chip.label === label; }); })) return false;
+      filters = Object.assign(Object.create(null), next.filters);
+      chips.forEach(function (chip) { chip.on = next.chips.includes(chip.label); });
+      refresh();
+      return true;
+    }
+    return { api: api, bar: bar, close: closeMenu, restore: restore, snapshot: function () { return state; } };
   }
 
   var resultViews = new WeakMap();
@@ -851,8 +876,25 @@
     var current;
     var rendering = true;
     function onFilter(origin) {
-      if (!rendering) controller.change(origin);
+      if (!rendering) {
+        controller.change(origin);
+        track?.(origin);
+      }
     }
+    var track = DocForm._readerState?.watch('results', table, function () {
+      var view = current?.interaction;
+      if (!view) return undefined;
+      var filters = view.snapshot();
+      return { sort: view.sort(), filters: filters.filters, chips: filters.chips };
+    }, function (saved) {
+      var view = current?.interaction;
+      if (!view || !saved || !saved.filters || !Array.isArray(saved.chips)) return false;
+      var previous = view.sort();
+      if (!view.sortBy(saved.sort)) return false;
+      var accepted = view.filter ? view.filter.restore(saved) : !Object.keys(saved.filters).length && !saved.chips.length;
+      if (!accepted) view.sortBy(previous);
+      return accepted;
+    }, { order: 10, current: function () { return true; } });
     var controller = runtime.controller('results', table, {
       prepare: function (records) {
         if (uploadInputs.has(records)) {

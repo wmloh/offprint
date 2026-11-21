@@ -279,7 +279,7 @@
     input.setAttribute('accept', accept.map(function (t) { return EXTENSIONS[t].join(','); }).join(','));
     hint.appendChild(choose);
     hint.appendChild(document.createTextNode(' ' + listNames(accept) + ', up to ' + source.formatSize(caps.maxBytes) +
-      '. The file stays on this computer.'));
+      '. The file stays on this computer.' + (DocForm._readerState ? ' Accepted files can be saved in this browser for export.' : '')));
     area.appendChild(hint);
     area.appendChild(input);
     var status = make('p', 'df-dropzone-status');
@@ -327,10 +327,41 @@
         linked.restore(zone, linked.reserve());
       }
       request = null;
+      DocForm._readerState?.removeImport(zone);
       if (output) output.remove();
       output = null;
       zone.classList.remove('is-loaded');
     };
+
+    function applyFile(entry, ticket) {
+      if (source.size(entry.text) > caps.maxBytes) throw new Error('The decoded file exceeds this file box’s size limit.');
+      if (linked) return linked.feed(entry, caps, zone, ticket);
+      var parsed = data.parse(entry.text, entry.type);
+      var next = make('div', 'df-dropzone-output');
+      source.showFile(next, entry, display, null, parsed, zone);
+      if (output) output.replaceWith(next);
+      else zone.appendChild(next);
+      output = next;
+      return '';
+    }
+
+    var readerState = DocForm._readerState;
+    var remember;
+    if (readerState && !invalid) {
+      var baseline = hasSource && data.source(sourceName)?.snapshot();
+      var authored = baseline?.type === 'value' ? JSON.stringify(baseline.value) : baseline?.text;
+      var signature = hasSource ? ['source', sourceName, baseline?.type, readerState.stamp(authored ?? '')] :
+        hasTarget ? ['target', targetId, readerState.targetStamp(target)] : ['standalone'];
+      remember = readerState.registerImport(hasSource || hasTarget ? JSON.stringify(signature.slice(0, 2)) : null,
+        zone, JSON.stringify(signature), function (entry) {
+          linked = destination();
+          applyFile(entry, linked?.reserve());
+          zone.classList.add('is-loaded');
+          return true;
+        }, function (item) {
+          return accept.includes(item.type) && item.bytes <= caps.maxBytes && typeof item.name === 'string';
+        });
+    }
 
     var load = function (files) {
       var id = ++reading;
@@ -359,21 +390,14 @@
       reader.onload = function () {
         if (!current()) return;
         var entry = { name: file.name, type: verdict.type, text: String(reader.result) };
-        var note = '';
-        if (linked) {
-          try {
-            note = linked.feed(entry, caps, zone, ticket);
-          } catch (e) {
-            var m = String(e.message);
-            return say('Could not show "' + file.name + '": ' + m.charAt(0).toLowerCase() + m.slice(1), true, owns());
-          }
-        } else {
-          var next = make('div', 'df-dropzone-output');
-          if (output) output.replaceWith(next);
-          else zone.appendChild(next);
-          output = next;
-          source.showFile(output, entry, display);
+        var note;
+        try {
+          note = applyFile(entry, ticket);
+        } catch (error) {
+          var message = String(error.message);
+          return say('Could not show "' + file.name + '": ' + message.charAt(0).toLowerCase() + message.slice(1), true, owns());
         }
+        remember?.(entry);
         zone.classList.add('is-loaded');
         say('Showing "' + file.name + '" (' + source.formatSize(file.size) + ')' + (linked ? ' in place of the page\'s data' : '') +
           '.' + (note ? ' ' + note : ''), false, true);

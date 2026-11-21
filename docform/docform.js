@@ -5,10 +5,11 @@
   if (root.DocForm) return;
 
   var entry = doc.currentScript;
-  var pageURL = root.location.href;
+  var exportContext = doc.documentElement.hasAttribute('data-df-export-replay') && root.DocFormExportContext;
+  var pageURL = exportContext && exportContext.pageURL || root.location.href;
   var library = new URL('.', entry.src);
   var siteScript = doc.querySelector('script[data-df-site]');
-  var siteURL = siteScript && siteScript.src || pageURL;
+  var siteURL = exportContext && exportContext.siteURL || siteScript && siteScript.src || pageURL;
   var authoredTheme = doc.documentElement.getAttribute('data-df-theme');
   var appliedTheme;
 
@@ -494,6 +495,12 @@
     Object.defineProperty(DF, '_site', { value: siteConfig(config), writable: false });
     boot.configOptions = [config.site, config.page].map(function (layer) { return freeze(merge(layer.options)); });
     boot.themeDefault = config.enabled.has('theme') ? themeMode(config) : undefined;
+    var readerState = new URL('js/reader-state.js', library).href;
+    if (await load(readerState, false) && DF._readerState) {
+      DF._readerState.prepare(doc, pageURL, DF._site.provided ? siteURL : pageURL, [
+        config.page, config.options, config.site.selectionGroups, config.site.parameterScopes, config.site.assets
+      ]);
+    } else assetFailure('reader-state', readerState);
     for (var id of Object.keys(catalog)) {
       if (!config.enabled.has(id)) continue;
       var missing = (catalog[id].needs || []).find(function (dep) { return !active.has(dep); });
@@ -518,6 +525,7 @@
     after.forEach(function (item) {
       try { item.fn(); } catch (error) { boot.moduleFailed(item.name, error); }
     });
+    DF._readerState?.start();
     finish();
   }
 

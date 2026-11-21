@@ -51,6 +51,7 @@
   }
 
   function write(value) {
+    if (DocForm._readerState?.isolated()) return;
     try {
       root.localStorage.setItem(KEY, value);
     } catch (e) {

@@ -246,7 +246,7 @@ test('nested none profile clears inherited choices and loads playback after its 
   assert.equal(p.DF._site.order[0].href, p.DF._page);
   assert.ok(Object.isFrozen(p.DF._site.order[0]));
   assert.equal(p.html.getAttribute('data-df-theme'), null);
-  assert.deepEqual(p.loads, ['docform/js/core.js', 'docform/css/tokens.css', 'docform/css/base.css',
+  assert.deepEqual(p.loads, ['docform/js/core.js', 'docform/js/reader-state.js', 'docform/css/tokens.css', 'docform/css/base.css',
     'docform/css/text.css', 'docform/css/sections.css', 'docform/css/buttons.css', 'docform/css/choices.css', 'docform/js/choices.js', 'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
     'docform/css/detail.css', 'docform/js/detail.js', 'docform/css/steps.css', 'docform/js/steps.js']);
   assert.equal(typeof p.DF._chartPlayback.mount, 'function');
@@ -343,7 +343,8 @@ test('floating controls show shared tooltip cards with current labels and effect
   await fallback.start();
   const fallbackPill = fallback.body.children.find(el => el.className === 'df-controls-bar').firstChild;
   assert.equal(fallbackPill.firstChild.title, 'Read 100%');
-  assert.equal(fallbackPill.lastChild.title, 'Theme: Light. Switch to Dark. (T)');
+  assert.equal(fallbackPill.children[1].title, 'Theme: Light. Switch to Dark. (T)');
+  assert.equal(fallbackPill.children[2].getAttribute('aria-label'), 'Clear saved views and imports');
 });
 
 test('required failures preserve fallbacks and independent features still reach ready', async () => {
@@ -687,7 +688,8 @@ test('invalid matrix replacements roll back and authored content survives failed
   ]) {
     const fallback = matrixPage(inputs);
     await fallback.start();
-    assert.deepEqual(fallback.body.children, [fallback.table]);
+    assert.ok(fallback.body.firstChild === fallback.table);
+    assert.equal(fallback.body.lastChild.firstChild.getAttribute('aria-label'), 'Clear saved views and imports');
     assert.deepEqual(fallback.table.children, [fallback.caption, fallback.fallbackHead, fallback.fallbackBody]);
     if (inputs.input) {
       const api = fallback.DF._matrix.get(fallback.table);
@@ -797,7 +799,7 @@ test('custom reading extensions mount code once, dispose tooltips, and resolve l
   dispose();
   dispose();
   assert.equal(term.getAttribute('aria-describedby'), 'prior');
-  assert.equal(p.body.childNodes.length, 2);
+  assert.equal(p.body.childNodes.filter(node => !node.firstChild?.hasAttribute?.('data-df-reader-state-control')).length, 2);
   const math = p.body.appendChild(element('span'));
   p.ids.set('math:x', math);
   assert.equal(DF._math.set('math:x', 'x^2'), true);

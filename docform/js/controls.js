@@ -44,6 +44,7 @@
   var listeners = [];
 
   function load(key) {
+    if (DocForm._readerState?.isolated()) return null;
     try {
       return root.localStorage.getItem(key);
     } catch (e) {
@@ -52,6 +53,7 @@
   }
 
   function save(key, value) {
+    if (DocForm._readerState?.isolated()) return;
     try {
       if (value === null) root.localStorage.removeItem(key);
       else root.localStorage.setItem(key, value);
@@ -62,6 +64,7 @@
 
   // Reads and clears the sidebar-link click mark left by the previous page in this tab.
   function takePeek() {
+    if (DocForm._readerState?.isolated()) return false;
     try {
       var at = Number(root.sessionStorage.getItem(KEYS.peek));
       root.sessionStorage.removeItem(KEYS.peek);
@@ -73,6 +76,7 @@
   }
 
   function markPeek() {
+    if (DocForm._readerState?.isolated()) return;
     try {
       root.sessionStorage.setItem(KEYS.peek, String(Date.now()));
     } catch (e) {
@@ -513,6 +517,7 @@
 
     listeners.push(syncNav, syncFocus);
     var bar = make('div', 'df-controls-bar');
+    DocForm._readerState?.mountClear(pill, true);
     bar.appendChild(pill);
     appendPagePill(bar);
     document.body.appendChild(bar);

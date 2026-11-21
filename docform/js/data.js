@@ -726,6 +726,21 @@
     if (DocForm._code) DocForm._all('pre', el).forEach(DocForm._code.mount);
   }
 
+  function trackView(state, host) {
+    state.track = DocForm._readerState?.watch('data-rows', host,
+      function () { return state.entry ? { shown: state.shown || 0, force: Boolean(state.force) } : undefined; },
+      function (saved) {
+        if (!state.entry || !saved || !Number.isSafeInteger(saved.shown) || saved.shown < 0 ||
+            typeof saved.force !== 'boolean') return false;
+        if (saved.shown > 0 && state.snapshot?.total != null && saved.shown > state.snapshot.total) return false;
+        if ((state.shown || 0) === saved.shown && Boolean(state.force) === saved.force) return true;
+        state.shown = saved.shown;
+        state.force = saved.force;
+        draw(state);
+        return true;
+      }, { order: 10, current: function () { return true; } });
+  }
+
   function recordView(state, detail) {
     state.snapshot = detail.error ? null : {
       name: state.name, view: detail.view, total: detail.rows ?? null,
@@ -734,6 +749,7 @@
   }
 
   function changed(state, origin) {
+    state.track?.(origin);
     if (state.controller) state.controller.change(origin);
     else if (state.fileSignal && state.snapshot) {
       var previous = state.reported || null;
@@ -788,7 +804,9 @@
       shown = 'code';
     }
     if (shown === 'tree') {
-      el.appendChild(DocForm._tree.build(valueOf(parsed), { label: 'Data ' + label, open: state.open, maxItems: state.limits.maxRows }));
+      el.appendChild(DocForm._tree.build(valueOf(parsed), {
+        label: 'Data ' + label, open: state.open, maxItems: state.limits.maxRows, anchor: state.anchor
+      }));
       recordView(state, { view: 'tree' });
     } else if (shown === 'table') {
       var data = state.grid || table(parsed);
@@ -839,6 +857,9 @@
     var template = el.querySelector(':scope > table');
     var state = { name: name, view: mode, template: template,
       limits: limits(el, options), open: treeDepth('data-view', el, instance), el: el };
+
+    state.anchor = el;
+    trackView(state, el);
 
     function prepare(input, value) {
       var mapping = tableMapping(value, options.mapping, template, input.parsed);
@@ -905,7 +926,7 @@
     return controller.api;
   }
 
-  function showFile(host, entry, display, template) {
+  function showFile(host, entry, display, template, parsed, anchor) {
     var state = {
       el: host,
       name: entry.name,
@@ -916,11 +937,13 @@
       open: display.open,
       shown: 0,
       force: false,
-      parsed: null
+      parsed: parsed || null
     };
     state.fileSignal = runtime.signal('data-view', host, function () { return state.snapshot || null; },
       { action: 'render' });
     host.classList.add('df-data', 'df-data-ready');
+    state.anchor = anchor;
+    if (anchor) trackView(state, anchor);
     draw(state);
     changed(state, 'drop');
   }

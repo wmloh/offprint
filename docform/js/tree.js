@@ -83,7 +83,7 @@
   function children(m, node) {
     var keys = keysOf(node.value);
     if (!node.shown) node.shown = Math.min(keys.length, m.maxItems);
-    var list = node.items ? node.items.filter(function (n) { return n.kind !== 'more'; }) : [];
+    var list = node.items ? node.items.filter(function (n) { return n.kind !== 'more'; }).slice(0, node.shown) : [];
     for (var i = list.length; i < node.shown; i++) {
       list.push(makeNode(keys[i], node.value[keys[i]], node.depth + 1, node.depth < 0 ? null : node));
     }
@@ -300,9 +300,65 @@
     var hasNested = m.roots.some(expandable);
     bar.hidden = !hasNested;
 
-    openAll.addEventListener('click', function () { refresh(t, expandAll(m)); });
+    var changes = new Map();
+    var track = DocForm._readerState?.watch('data-tree', options.anchor, function () {
+      return Array.from(changes.values());
+    }, function (saved) {
+      if (!Array.isArray(saved)) return false;
+      if (!saved.length) return true;
+      if (!m.top) return false;
+      // Validate every branch against the dataset before changing the tree.
+      if (saved.some(function (entry) {
+        if (!entry || !Array.isArray(entry.path) || typeof entry.open !== 'boolean' ||
+            !Number.isSafeInteger(entry.shown) || entry.shown < 0) return true;
+        var branch = value;
+        for (var part of entry.path) {
+          if (!branch || typeof branch !== 'object' || !hasOwn.call(branch, part) ||
+              (Array.isArray(branch) ? !Number.isSafeInteger(part) : typeof part !== 'string')) return true;
+          branch = branch[part];
+        }
+        return !branch || typeof branch !== 'object' || entry.shown > keysOf(branch).length;
+      })) return false;
+      saved.slice().sort(function (a, b) { return a.path.length - b.path.length; }).forEach(function (entry) {
+        var node = m.top;
+        var list = m.roots;
+        entry.path.forEach(function (part) {
+          node = list.find(function (child) { return child.key === part; });
+          list = children(m, node);
+        });
+        node.shown = entry.shown;
+        node.expanded = entry.open;
+        children(m, node);
+        if (node === m.top) m.roots = node.items;
+      });
+      function clearElements(nodes) {
+        nodes.forEach(function (node) {
+          node.el = node.group = null;
+          if (node.items) clearElements(node.items);
+        });
+      }
+      clearElements(m.roots);
+      t.list.textContent = '';
+      m.roots.forEach(function (node) { t.list.appendChild(renderNode(t, node)); });
+      t.current = m.roots[0];
+      if (t.current) t.current.el.tabIndex = 0;
+      return true;
+    }, { order: 12 });
+
+    function update(nodes) {
+      refresh(t, nodes);
+      if (!track || !nodes.length) return;
+      nodes.forEach(function (node) {
+        var path = [];
+        for (var at = node; at && at !== m.top; at = at.parent) path.unshift(at.key);
+        changes.set(JSON.stringify(path), { path: path, open: node.expanded, shown: node.shown });
+      });
+      track('user');
+    }
+
+    openAll.addEventListener('click', function () { update(expandAll(m)); });
     closeAll.addEventListener('click', function () {
-      refresh(t, collapseAll(m));
+      update(collapseAll(m));
       // The focusable item moves to the top-level node that still shows.
       if (t.current) {
         var top = topOf(t.current);
@@ -316,7 +372,7 @@
       var node = li && t.byEl.get(li);
       if (!node || !event.target.closest('.df-tree-row') || event.target.closest('.df-tree-row').parentNode !== li) return;
       var result = key(m, node, 'Enter');
-      refresh(t, result.changed);
+      update(result.changed);
       focusNode(t, result.focus);
     });
     t.list.addEventListener('keydown', function (event) {
@@ -327,7 +383,7 @@
       var result = key(m, node, event.key);
       if (!result) return;
       event.preventDefault();
-      refresh(t, result.changed);
+      update(result.changed);
       focusNode(t, result.focus);
     });
     return box;

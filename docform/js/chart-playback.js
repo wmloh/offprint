@@ -546,7 +546,17 @@
       play: transport(play), pause: transport(pause), next: transport(next), prev: transport(previous),
       reset: transport(reset),
       select: transport(function (origin, key) { return jump(stopWithKey(key).x, origin); }),
-      apply: follow
+      apply: follow,
+      exportView: {
+        snapshot: function () { return instance.state && leg ? leg.to : x; },
+        apply: function (value) {
+          if (value === null) return !range;
+          if (!range || !Number.isFinite(value) || value < range[0] || value > range[1] ||
+              (instance.state && !Number.isInteger(value))) return false;
+          return component.transaction(function () { return jump(value, 'api'); });
+        },
+        order: instance.state ? -30 : 5, current: function () { return true; }
+      }
     });
     var api = entry.controller;
     Object.defineProperty(api, 'position', { get: function () { return x; } });

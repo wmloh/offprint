@@ -343,7 +343,6 @@
     button.setAttribute('data-df-export-control', '');
     button.setAttribute('aria-haspopup', 'dialog');
     if (iconOnly) {
-      button.title = 'Export';
       button.setAttribute('aria-label', 'Export');
       button.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" ' +
         'fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' +
@@ -363,6 +362,8 @@
       }
     });
     parent.appendChild(button);
+    boot.exportMounted = true;
+    return button;
   }
 
   function assetFailure(feature, url) {

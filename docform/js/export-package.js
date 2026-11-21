@@ -5,11 +5,10 @@
   var svg = 'http://www.w3.org/2000/svg';
   var csp = "default-src 'none'; style-src 'unsafe-inline' data:; img-src data:; font-src data:; " +
     "base-uri 'none'; form-action 'none'";
-  var tipCSS = '.df-export-tip-button{margin-inline:.3em;min-width:1.6em;font:inherit;cursor:pointer}' +
-    '.df-export-tip{max-width:min(46rem,85%);max-height:80%;padding:1rem;background:Canvas;color:CanvasText}' +
-    '.df-export-tip::backdrop{background:#0005}.df-export-tip>button{float:inline-end;margin:0 0 .5rem .5rem}' +
-    '.df-export-tip>div{clear:both}.df-export-tip .df-tooltip{position:static;max-width:none;max-height:none;' +
-    'opacity:1;transform:none;overflow:visible;box-shadow:none}' +
+  var tipCSS = '.df-export-pop{position:fixed;z-index:50;display:flex;flex-direction:column;gap:6px;' +
+    'max-width:min(320px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}' +
+    '.df-export-pop.is-wide{max-width:min(480px,calc(100vw - 16px))}' +
+    '.df-export-pop .df-tooltip{position:static;max-width:none;max-height:none;opacity:1;transform:none;overflow:visible}' +
     '[data-export-disabled]{text-decoration:line-through!important;cursor:default}';
   var readerCSS = 'html{color-scheme:light dark}body{margin:0;height:100dvh;display:flex;flex-direction:column;' +
     'font:1rem system-ui;background:Canvas;color:CanvasText}header{padding:.65rem 1rem;border-bottom:1px solid GrayText;' +
@@ -34,34 +33,57 @@
     } catch (error) { return null; }
   }
 
-  function folderFromFiles(files, pageURL, name) {
-    var list = Array.from(files);
-    name ||= list[0]?.webkitRelativePath?.split('/')[0];
+  function folderError(message, folder) {
+    var error = Error(message);
+    error.folder = folder;
+    return error;
+  }
+
+  // Locates the selected folder on disk from a known file that it must contain.
+  function folderFromFiles(files, anchorURL, page, kind, label) {
+    var list = Array.from(files || []);
+    var name = list[0]?.webkitRelativePath?.split('/')[0];
     var prefix = name + '/';
     var paths = new Map(list.map(function (file) {
       var path = file.webkitRelativePath;
       if (!name || !path?.startsWith(prefix) || path.length === prefix.length) {
-        throw Error('Select a folder containing this DocForm page.');
+        throw folderError('Choose the ' + label + ' folder.', kind);
       }
       return [path.slice(prefix.length), file];
     }));
-    var current = fileKey(pageURL, true);
-    var segments = current?.split('/') || [];
-    var firstFolder = pageURL?.host ? 3 : 1;
+    if (!paths.size) throw folderError('Choose the ' + label + ' folder.', kind);
+    var segments = fileKey(anchorURL, page)?.split('/') || [];
+    var firstFolder = anchorURL?.host ? 3 : 1;
     var match = segments.findLastIndex(function (part, index) {
       return index >= firstFolder && part === name && paths.has(segments.slice(index + 1).join('/'));
     });
-    if (match < 0) throw Error('The selected folder does not contain the open DocForm page.');
+    if (match < 0) {
+      throw folderError('The selected ' + label + ' folder does not contain ' +
+        (kind === 'library' ? 'the DocForm library used by this page.' : 'the open DocForm page.'), kind);
+    }
     var base = segments.slice(0, match + 1).join('/') + '/';
-
-    function file(url, page) {
+    return function (url, page) {
       var key = fileKey(url, page);
       return key?.startsWith(base) ? paths.get(key.slice(base.length)) : undefined;
+    };
+  }
+
+  function sourceFolders(documents, library, pageURL) {
+    var lookups = [
+      folderFromFiles(documents, pageURL, true, 'documents', 'documentation'),
+      folderFromFiles(library, address(DF._boot.entryURL), false, 'library', 'DocForm library')
+    ];
+
+    function file(url, page) {
+      for (var lookup of lookups) {
+        var item = lookup(url, page);
+        if (item) return item;
+      }
     }
 
     return { file: file, readText: async function (url) {
       var item = file(address(url));
-      if (!item) throw Error('The file was not found in the selected folder.');
+      if (!item) throw Error('The file was not found in the selected folders.');
       return item.text();
     } };
   }
@@ -214,7 +236,7 @@
           throw Error('The file is not an SVG drawing.');
         }
       } catch (error) {
-        report('missing-reference', value, 'The SVG drawing could not be read from the selected folder.');
+        report('missing-reference', value, 'The SVG drawing could not be read from the selected folders.');
         return null;
       }
       var doc = page.document;
@@ -464,7 +486,7 @@
       signal?.throwIfAborted();
       try {
         var file = folder.file(address(page.url), true);
-        if (!file) throw Error('The page file was not found in the selected folder.');
+        if (!file) throw Error('The page file was not found in the documentation folder.');
         var html = await file.text();
         var source = DF._assetBuild.parseHTML(html);
         var configForPage = await config(source, address(page.url), folder, manifestCache).catch(function (error) {
@@ -521,7 +543,7 @@
     var signal = options?.signal;
     signal?.throwIfAborted();
     var url = address(DF._page);
-    var folder = folderFromFiles(files, url, options?.folderName);
+    var folder = sourceFolders(files, options?.library, url);
     var loaded = await Promise.all([
       ['_assetBuild', 'tools/asset-build.js'], ['_pageSnapshot', 'js/page-snapshot.js'],
       ['_exportResources', 'js/export-resources.js'], ['_exportReader', 'js/export-reader.js']

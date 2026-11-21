@@ -13,6 +13,7 @@
     var active;
     var ready = false;
     var focus = false;
+    var hideTip = null;
 
     function leg(link, page, label) {
       link.hidden = !page;
@@ -49,66 +50,94 @@
       focus = false;
     }
 
+    // Shows an anchor's captured tooltip cards beside it on hover, keyboard focus, or tap, like the live page.
     function tips(doc) {
       var bank = doc.querySelector('[data-df-snapshot-tips]');
-      if (!bank) return;
-      var dialog = doc.createElement('dialog');
-      dialog.className = 'df-export-tip';
-      dialog.setAttribute('aria-label', 'Definition');
-      var close = doc.createElement('button');
-      close.type = 'button';
-      close.textContent = 'Close';
-      close.autofocus = true;
-      var content = doc.createElement('div');
-      dialog.append(close, content);
-      doc.body.append(dialog);
-      var trigger;
-      var svgTools = new Map();
-      close.addEventListener('click', function () { dialog.close(); });
-      dialog.addEventListener('close', function () {
-        bank.append(...content.children);
-        trigger?.focus();
-      });
+      if (!bank) return null;
+      var view = doc.defaultView;
+      var pop = doc.createElement('div');
+      pop.className = 'df-export-pop';
+      pop.hidden = true;
+      doc.body.append(pop);
+      var active = null;
+      var timer = 0;
+      var touched = false;
+
+      function place() {
+        var rects = active.getClientRects();
+        var rect = rects.length ? rects[0] : active.getBoundingClientRect();
+        var width = doc.documentElement.clientWidth;
+        var height = view.innerHeight;
+        var below = rect.bottom + 8;
+        var above = rect.top - 8 - pop.offsetHeight;
+        var top = below + pop.offsetHeight <= height - 8 || above < 8 ? below : above;
+        var left = rect.left + rect.width / 2 - pop.offsetWidth / 2;
+        pop.style.top = Math.round(top) + 'px';
+        pop.style.left = Math.round(Math.max(8, Math.min(left, width - 8 - pop.offsetWidth))) + 'px';
+      }
+
+      function show(anchor, cards) {
+        clearTimeout(timer);
+        if (active === anchor) return;
+        hide();
+        active = anchor;
+        pop.append(...cards);
+        pop.classList.toggle('is-wide', cards.some(function (card) { return card.querySelector('.df-tooltip-more'); }));
+        pop.hidden = false;
+        place();
+      }
+
+      function hide() {
+        clearTimeout(timer);
+        if (!active) return;
+        active = null;
+        pop.hidden = true;
+        bank.append(...pop.children);
+      }
+
+      function later(fn) {
+        clearTimeout(timer);
+        timer = setTimeout(fn, 120);
+      }
+
       doc.querySelectorAll('[data-df-snapshot-tip]').forEach(function (anchor) {
-        var cards = anchor.getAttribute('data-df-snapshot-tip').split(/\s+/)
+        var ids = anchor.getAttribute('data-df-snapshot-tip');
+        var cards = ids.split(/\s+/)
           .map(function (id) { return doc.getElementById(id); })
           .filter(function (node) { return node && bank.contains(node); });
         if (!cards.length) return;
-        var button = doc.createElement('button');
-        button.type = 'button';
-        button.className = 'df-export-tip-button';
-        button.textContent = '?';
-        button.setAttribute('aria-haspopup', 'dialog');
-        var label = (anchor.getAttribute('aria-label') || anchor.textContent ||
-          cards[0].querySelector('.df-tooltip-title')?.textContent || '').trim();
-        button.setAttribute('aria-label', label ? 'Definition for ' + label : 'Show definition');
-        if (anchor instanceof doc.defaultView.SVGElement) {
-          var drawing = anchor.ownerSVGElement || anchor;
-          while (drawing.ownerSVGElement) drawing = drawing.ownerSVGElement;
-          if (!svgTools.has(drawing)) {
-            var tools = doc.createElement('span');
-            drawing.after(tools);
-            svgTools.set(drawing, tools);
-          }
-          if (label) button.textContent = label + ' ?';
-          svgTools.get(drawing).append(button);
-        } else anchor.after(button);
-        if (anchor.getAttribute('tabindex') === '0' && !anchor.matches('a[href],a[*|href],button,summary')) {
-          anchor.removeAttribute('tabindex');
-        }
-        button.addEventListener('click', function () {
-          trigger = button;
-          content.append(...cards);
-          dialog.showModal();
+        if (!anchor.hasAttribute('aria-describedby')) anchor.setAttribute('aria-describedby', ids);
+        anchor.addEventListener('mouseenter', function () { later(function () { show(anchor, cards); }); });
+        anchor.addEventListener('mouseleave', function () { later(hide); });
+        anchor.addEventListener('focus', function () { show(anchor, cards); });
+        anchor.addEventListener('blur', function () {
+          if (active === anchor && !pop.matches(':hover')) hide();
+        });
+        anchor.addEventListener('click', function () {
+          if (!touched || anchor.closest('a[href]')) return;
+          if (active === anchor) hide();
+          else show(anchor, cards);
         });
       });
+      pop.addEventListener('mouseenter', function () { clearTimeout(timer); });
+      pop.addEventListener('mouseleave', function () { later(hide); });
+      doc.addEventListener('pointerdown', function (event) {
+        touched = event.pointerType !== 'mouse';
+        if (active && !active.contains(event.target) && !pop.contains(event.target)) hide();
+      }, true);
+      doc.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') hide();
+      });
+      view.addEventListener('scroll', function () { if (active) place(); }, { passive: true, capture: true });
+      view.addEventListener('resize', function () { if (active) place(); });
+      return hide;
     }
 
     function follow(event) {
       var link = event.target.closest?.('[data-export-destination]');
       if (!link || event.defaultPrevented) return;
       event.preventDefault();
-      event.target.ownerDocument.querySelector('dialog.df-export-tip[open]')?.close();
+      hideTip?.();
       contents.open = false;
       focus = true;
       var hash = link.getAttribute('href');
@@ -132,7 +161,7 @@
         if (current !== frame || current.contentDocument?.URL !== 'about:srcdoc') return;
         var doc = current.contentDocument;
         doc.addEventListener('click', follow);
-        tips(doc);
+        hideTip = tips(doc);
         ready = true;
         scroll(destination()[1]);
       });

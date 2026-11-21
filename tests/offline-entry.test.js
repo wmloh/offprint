@@ -323,7 +323,7 @@ test('floating controls show shared tooltip cards with current labels and effect
   await p.start();
 
   const [pill, pager] = p.body.children.find(el => el.className === 'df-controls-bar').children;
-  const [progress, nav, focus, search, theme] = pill.children;
+  const [progress, nav, focus, search, theme, exportButton] = pill.children;
   const next = pager.firstChild;
   const showHint = el => {
     assert.equal(el.hasAttribute('title'), false);
@@ -345,6 +345,9 @@ test('floating controls show shared tooltip cards with current labels and effect
   assert.equal(themeCard.textContent, 'Theme: Dark. Switch to Light. (Y)');
   assert.equal(theme.hasAttribute('title'), false);
   assert.equal(showHint(next).textContent, 'Next page: Next chapter');
+  assert.equal(exportButton.getAttribute('aria-label'), 'Export');
+  assert.equal(showHint(exportButton).textContent, 'Export');
+  assert.equal(pill.children.length, 6);
   assert.equal(progress.tabIndex, undefined);
   assert.equal(progress.hasAttribute('title'), false);
   progress.dispatchEvent(new Event('mouseenter'));
@@ -357,8 +360,10 @@ test('floating controls show shared tooltip cards with current labels and effect
   const fallbackPill = fallback.body.children.find(el => el.className === 'df-controls-bar').firstChild;
   assert.equal(fallbackPill.firstChild.title, 'Read 100%');
   assert.equal(fallbackPill.children[1].title, 'Theme: Light. Switch to Dark. (T)');
-  assert.ok(fallbackPill.children.some(el => el.getAttribute('aria-label') === 'Clear saved views and imports'));
-  assert.ok(fallbackPill.children.some(el => el.getAttribute('aria-label') === 'Export'));
+  const fallbackExport = fallbackPill.children.find(el => el.getAttribute('aria-label') === 'Export');
+  assert.ok(fallbackExport);
+  assert.equal(fallbackExport.hasAttribute('title'), false);
+  assert.ok(!fallbackPill.children.some(el => el.getAttribute('aria-label') === 'Clear saved views and imports'));
 });
 
 test('the lazy export dialog handles folder recovery, mixed groups, cancellation and the reviewed download', async () => {
@@ -381,21 +386,27 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
 
   const find = (tag, title) => descendants(modal).find(el => el.tagName === tag &&
     (title === undefined || el.textContent === title));
-  const folderInput = find('INPUT');
-  const choose = find('BUTTON', 'Choose source folder');
+  const [docsInput, libraryInput] = descendants(modal).filter(el => el.tagName === 'INPUT');
+  const choose = find('BUTTON', 'Choose documentation folder');
+  const chooseLibrary = find('BUTTON', 'Choose DocForm library folder');
   const build = find('BUTTON', 'Build preview');
   const stop = find('BUTTON', 'Cancel');
   const download = find('BUTTON', 'Download HTML');
   const status = descendants(modal).find(el => el.getAttribute('role') === 'status');
   assert.equal(p.document.activeElement, choose);
-  folderInput.dispatchEvent(new Event('cancel'));
+  docsInput.dispatchEvent(new Event('cancel'));
   assert.match(status.textContent, /Folder selection cancelled/);
   const leaf = (id, title, available = true) => ({ id, title, available, children: [] });
   const selected = [];
   const blob = new Blob(['<!doctype html>']);
   p.DF._exportPackage = {
-    async prepare(files) {
-      if (!files[0].webkitRelativePath.startsWith('source/')) throw new Error('Wrong folder');
+    async prepare(files, { library }) {
+      if (!files[0].webkitRelativePath.startsWith('source/')) {
+        throw Object.assign(new Error('Wrong folder'), { folder: 'documents' });
+      }
+      if (!library[0].webkitRelativePath.startsWith('docform/')) {
+        throw Object.assign(new Error('Wrong library'), { folder: 'library' });
+      }
       return {
         active: 'home',
         tree: [{ title: 'Book', children: [leaf('home', 'Home'), {
@@ -416,15 +427,23 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
       };
     }
   };
-  const selectFolder = async path => {
-    folderInput.files = [{ webkitRelativePath: path + '/index.html' }];
-    folderInput.dispatchEvent(new Event('change'));
+  const selectFolder = async (input, path) => {
+    input.files = [{ webkitRelativePath: path + '/index.html' }];
+    input.dispatchEvent(new Event('change'));
     await settle();
   };
-  await selectFolder('wrong');
+  await selectFolder(docsInput, 'wrong');
+  assert.match(status.textContent, /Choose the DocForm library folder/);
+  await selectFolder(libraryInput, 'docform');
   assert.match(status.textContent, /Wrong folder/);
   assert.equal(build.hidden, true);
-  await selectFolder('source');
+  assert.equal(p.document.activeElement, choose);
+  await selectFolder(docsInput, 'source');
+  assert.match(modal.textContent, /source/);
+  await selectFolder(libraryInput, 'other');
+  assert.match(status.textContent, /Wrong library/);
+  assert.equal(p.document.activeElement, chooseLibrary);
+  await selectFolder(libraryInput, 'docform');
   const picker = find('FIELDSET');
   const [group, home, part, chapter] = descendants(picker).filter(el => el.type === 'checkbox');
   assert.equal(home.checked, true);
@@ -449,6 +468,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   build.click();
   await settle();
   assert.deepEqual(selected, Array.from({ length: 3 }, () => ['home', 'chapter']));
+  assert.equal(p.DF._readerState.enabled(), true);
   assert.equal(download.hidden, false);
   assert.match(modal.textContent, /Current view/);
   assert.match(modal.textContent, /Saved view/);
@@ -459,6 +479,20 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   download.click();
   assert.equal(downloads[0][0], 'Book.html');
   assert.match(downloads[0][1], /^blob:/);
+  assert.match(modal.textContent, /Saved reading data/);
+  const cleared = [];
+  p.DF._readerState.clear = async () => cleared.push(true) && true;
+  find('BUTTON', 'Clear saved views and imports').click();
+  find('BUTTON', 'Keep').click();
+  assert.equal(cleared.length, 0);
+  find('BUTTON', 'Clear saved views and imports').click();
+  find('BUTTON', 'Clear').click();
+  await settle();
+  assert.equal(cleared.length, 1);
+  assert.match(status.textContent, /cleared\. Build a new preview/);
+  assert.equal(download.hidden, true);
+  build.click();
+  await settle();
   chapter.checked = false;
   chapter.dispatchEvent(new Event('change'));
   assert.equal(download.hidden, true);
@@ -810,7 +844,7 @@ test('invalid matrix replacements roll back and authored content survives failed
     const fallback = matrixPage(inputs);
     await fallback.start();
     assert.ok(fallback.body.firstChild === fallback.table);
-    assert.ok(fallback.body.lastChild.children.some(el => el.getAttribute('aria-label') === 'Clear saved views and imports'));
+    assert.deepEqual(fallback.body.lastChild.children.map(el => el.textContent), ['Export']);
     assert.deepEqual(fallback.table.children, [fallback.caption, fallback.fallbackHead, fallback.fallbackBody]);
     if (inputs.input) {
       const api = fallback.DF._matrix.get(fallback.table);

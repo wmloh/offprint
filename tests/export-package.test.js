@@ -37,6 +37,8 @@ function file(path, text) {
   return { webkitRelativePath: path, text: async () => text };
 }
 
+const library = [file('docform/docform.js', ''), file('docform/css/base.css', 'base')];
+
 test('prepares nested manifest groups in reading order and marks missing pages', async () => {
   const manifest = {
     title: 'Site',
@@ -58,7 +60,14 @@ test('prepares nested manifest groups in reading order and marks missing pages',
     file('project/docs/guide/Chapter #1.html', 'chapter'),
     file('project/docs/guide/glossary/index.html', 'glossary')
   ];
-  const prepared = await runtime._exportPackage.prepare(files);
+  await assert.rejects(runtime._exportPackage.prepare(files), error => {
+    assert.match(error.message, /Choose the DocForm library folder/);
+    return error.folder === 'library';
+  });
+  await assert.rejects(runtime._exportPackage.prepare(files, {
+    library: [file('other/docform.js', '')]
+  }), error => error.folder === 'library' && /DocForm library used by this page/.test(error.message));
+  const prepared = await runtime._exportPackage.prepare(files, { library });
   assert.equal(prepared.title, 'Site');
   assert.equal(prepared.active, 'page-1');
   const [part, glossary] = prepared.tree;
@@ -69,6 +78,12 @@ test('prepares nested manifest groups in reading order and marks missing pages',
     ['page-2', true], ['page-3', false]
   ]);
   assert.equal(glossary.url, 'file:///work/project/docs/guide/glossary/index.html');
+  const setup = runtime._exportResources.setup;
+  runtime._exportResources.setup = folder => {
+    assert.equal(folder.file(new URL('file:///work/project/docform/css/base.css')), library[1]);
+    assert.equal(folder.file(new URL('file:///work/project/docs/index.html'), true), files[0]);
+    return setup(folder);
+  };
   const captures = [];
   runtime._pageSnapshot.capture = async page => {
     captures.push(page.url);
@@ -86,14 +101,15 @@ test('prepares nested manifest groups in reading order and marks missing pages',
     return true;
   });
   await assert.rejects(runtime._exportPackage.prepare(files.map(item =>
-    file(item.webkitRelativePath.replace('project/', 'wrong/'), 'home'))), /does not contain/);
+    file(item.webkitRelativePath.replace('project/', 'wrong/'), 'home')), { library }),
+  error => error.folder === 'documents' && /does not contain the open DocForm page/.test(error.message));
 });
 
 test('a standalone page supplies its own title and single selectable page', async () => {
   const runtime = load(new Map([['only', { title: 'An example' }]]));
   runtime._page = 'file:///work/project/An%20example.html';
   runtime._site = { provided: false };
-  const prepared = await runtime._exportPackage.prepare([file('project/An example.html', 'only')]);
+  const prepared = await runtime._exportPackage.prepare([file('project/An example.html', 'only')], { library });
   assert.equal(prepared.title, 'An example');
   assert.equal(prepared.tree.length, 1);
   assert.equal(prepared.tree[0].id, prepared.active);
@@ -109,7 +125,7 @@ test('a Windows network-share folder resolves pages on the same host only', asyn
     file('project/index.html', 'home'),
     file('project/site.js', 'window.DocFormSite = ' + JSON.stringify(manifest) + ';'),
     file('project/chapter.html', 'chapter')
-  ]);
+  ], { library });
   assert.deepEqual(Array.from(prepared.tree, page => page.available), [true, false, true]);
   assert.equal(prepared.tree[2].id, prepared.active);
 });

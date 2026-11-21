@@ -6,6 +6,7 @@
   var document = root.document;
   var dialog;
   var sizes = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
+  var exact = new Intl.NumberFormat();
 
   function make(tag, text) {
     var node = document.createElement(tag);
@@ -119,13 +120,34 @@
       }
       pages.append(item);
     }
-    var size = make('p', count(result.pages.length, 'page') + ' · ' + formatSize(result.bytes));
-    size.title = count(result.bytes, 'byte');
-    panel.append(size, pages);
+    var size = count(result.pages.length, 'page') + ' · ' + formatSize(result.bytes);
+    if (result.bytes >= 1024) size += ' (' + exact.format(result.bytes) + ' bytes)';
+    panel.append(make('p', size), pages);
     var links = result.issues.filter(function (issue) { return issue.code === 'unavailable-link'; });
     var gaps = result.issues.filter(function (issue) { return issue.code !== 'unavailable-link'; });
     addIssues(panel, count(links.length, 'disabled link'), links);
     addIssues(panel, count(gaps.length, 'content or resource issue'), gaps);
+  }
+
+  function folderRow(label, hint) {
+    var row = make('div');
+    row.className = 'df-export-source';
+    var input = make('input');
+    input.type = 'file';
+    input.setAttribute('webkitdirectory', '');
+    input.hidden = true;
+    var name = make('span');
+    name.className = 'df-export-folder';
+    var help = make('small', hint);
+    var choose = button(label);
+    row.append(choose, input, name, help);
+    choose.addEventListener('click', function () { input.click(); });
+    return { row: row, button: choose, input: input, name: name, files: null,
+      set: function (files) {
+        this.files = files?.length ? files : null;
+        name.textContent = this.files ? files[0].webkitRelativePath.split('/')[0] : '';
+        help.hidden = !!this.files;
+      } };
   }
 
   function open(opener) {
@@ -140,14 +162,10 @@
 
     var content = make('div');
     content.className = 'df-export-content';
-    var intro = make('p', 'Choose the source folder that contains this page, the DocForm library, and any assets to include.');
-    var choose = button('Choose source folder');
-    var folderInput = make('input');
-    folderInput.type = 'file';
-    folderInput.setAttribute('webkitdirectory', '');
-    folderInput.hidden = true;
-    var folderName = make('span');
-    folderName.className = 'df-export-folder';
+    var intro = make('p', 'Choose the documentation folder and the DocForm library folder. ' +
+      'Chrome may ask to upload their files; they are only read on this computer.');
+    var documents = folderRow('Choose documentation folder', 'The folder with the site’s pages, manifest and assets');
+    var library = folderRow('Choose DocForm library folder', 'The folder that contains docform.js');
     var fieldset = make('fieldset');
     fieldset.hidden = true;
     fieldset.append(make('legend', 'Pages to export'));
@@ -159,7 +177,20 @@
     heading.tabIndex = -1;
     var summary = make('div');
     preview.append(heading, summary);
-    content.append(intro, choose, folderInput, folderName, fieldset, preview);
+    var saved = make('section');
+    saved.className = 'df-export-saved';
+    saved.hidden = !DF._readerState?.enabled?.();
+    var forget = button('Clear saved views and imports');
+    var confirmation = make('div');
+    confirmation.className = 'df-export-confirm';
+    confirmation.hidden = true;
+    var confirmClear = button('Clear');
+    var keep = button('Keep');
+    confirmation.append(make('p', 'Clear them for every page of this document on this browser?'), confirmClear, keep);
+    saved.append(make('h3', 'Saved reading data'), make('p', 'This browser keeps reading choices and accepted ' +
+      'imports from this document so pages that are not open export with them. Without them, those pages ' +
+      'export their starting view.'), forget, confirmation);
+    content.append(intro, documents.row, library.row, fieldset, preview, saved);
 
     var footer = make('footer');
     var status = make('p');
@@ -177,7 +208,7 @@
     function update() {
       var busy = !!task;
       var selected = picker?.ids().length || 0;
-      choose.disabled = fieldset.disabled = busy;
+      documents.button.disabled = library.button.disabled = fieldset.disabled = forget.disabled = busy;
       build.hidden = !prepared || busy;
       build.disabled = !selected;
       stop.hidden = !busy;
@@ -225,30 +256,20 @@
       task.abort();
     }
 
-    choose.addEventListener('click', function () { folderInput.click(); });
-    folderInput.addEventListener('cancel', function () { status.textContent = 'Folder selection cancelled.'; });
-    folderInput.addEventListener('change', function () {
-      var files = Array.from(folderInput.files);
-      folderInput.value = '';
-      picker?.list.remove();
-      prepared = picker = null;
-      fieldset.hidden = true;
-      folderName.textContent = '';
-      clearPreview();
-      if (!files.length) {
-        status.textContent = 'The selected folder is empty.';
+    function checkFolders() {
+      if (!documents.files || !library.files) {
+        status.textContent = 'Choose the ' + (documents.files ? 'DocForm library' : 'documentation') + ' folder.';
         update();
         return;
       }
-      run('Checking the source folder…', async function (signal) {
+      run('Checking the selected folders…', async function (signal) {
         if (!DF._exportPackage) await DF._boot.loadExport('js/export-package.js');
         if (!DF._exportPackage) {
-          throw Error('The export tools could not load. Check the local DocForm files and choose the folder again.');
+          throw Error('The export tools could not load. Check the local DocForm files and choose the folders again.');
         }
-        return DF._exportPackage.prepare(files, { signal: signal });
+        return DF._exportPackage.prepare(documents.files, { library: library.files, signal: signal });
       }, function (source) {
         prepared = source;
-        folderName.textContent = files[0].webkitRelativePath.split('/')[0];
         picker = pagePicker(source.tree, source.active, function () {
           var hadPreview = !preview.hidden;
           clearPreview();
@@ -258,8 +279,56 @@
         picker.sync();
         fieldset.append(picker.list);
         fieldset.hidden = false;
-        status.textContent = 'Source folder ready. ' + count(picker.ids().length, 'page') + ' selected.';
-      }, null, function () { return prepared ? build : choose; });
+        status.textContent = 'Folders ready. ' + count(picker.ids().length, 'page') + ' selected.';
+      }, function (error) {
+        if (error.folder === 'documents') documents.set(null);
+        else if (error.folder === 'library') library.set(null);
+      }, function () {
+        return prepared ? build : !documents.files ? documents.button : library.button;
+      });
+    }
+
+    for (let source of [documents, library]) {
+      source.input.addEventListener('cancel', function () { status.textContent = 'Folder selection cancelled.'; });
+      source.input.addEventListener('change', function () {
+        var files = Array.from(source.input.files);
+        source.input.value = '';
+        picker?.list.remove();
+        prepared = picker = null;
+        fieldset.hidden = true;
+        clearPreview();
+        source.set(files);
+        if (files.length) checkFolders();
+        else {
+          status.textContent = 'The selected folder is empty.';
+          update();
+        }
+      });
+    }
+
+    forget.addEventListener('click', function () {
+      forget.hidden = true;
+      confirmation.hidden = false;
+      confirmClear.focus();
+    });
+    keep.addEventListener('click', function () {
+      confirmation.hidden = true;
+      forget.hidden = false;
+      forget.focus();
+    });
+    confirmClear.addEventListener('click', async function () {
+      confirmClear.disabled = keep.disabled = true;
+      var cleared = await DF._readerState.clear();
+      if (!modal.open) return;
+      var hadPreview = !!result;
+      if (cleared && hadPreview) clearPreview();
+      status.textContent = cleared ? 'Saved views and imports cleared.' + (hadPreview ? ' Build a new preview.' : '')
+        : 'Saved views and imports could not be cleared.';
+      confirmClear.disabled = keep.disabled = false;
+      confirmation.hidden = true;
+      forget.hidden = false;
+      update();
+      forget.focus();
     });
 
     build.addEventListener('click', function () {
@@ -316,6 +385,8 @@
     modal.addEventListener('close', function () {
       task?.abort();
       prepared = picker = result = null;
+      documents.set(null);
+      library.set(null);
       if (dialog === modal) dialog = null;
       modal.remove();
       if (opener.isConnected) opener.focus({ preventScroll: true });
@@ -323,7 +394,7 @@
     update();
     document.body.append(modal);
     modal.showModal();
-    choose.focus();
+    documents.button.focus();
   }
 
   DF._exportDialog = { open: open };

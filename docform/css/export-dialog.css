@@ -83,10 +83,27 @@
   margin-block: 0 0.75rem;
 }
 
+.df-export-source,
+.df-export-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+  margin-block: 0 0.5rem;
+}
+
+.df-export-source small { color: var(--df-text-label, CanvasText); }
+
 .df-export-folder {
-  margin-inline-start: 0.65rem;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
+
+.df-export-folder:empty { display: none; }
+
+.df-export-saved > p { margin-block: 0.25rem 0.5rem; }
+.df-export-confirm { margin-block: 0; }
+.df-export-confirm > p { flex-basis: 100%; }
 
 .df-export-dialog fieldset,
 .df-export-dialog section {

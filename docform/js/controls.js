@@ -517,8 +517,8 @@
 
     listeners.push(syncNav, syncFocus);
     var bar = make('div', 'df-controls-bar');
-    boot.mountExport?.(pill, true);
-    DocForm._readerState?.mountClear(pill, true);
+    var exportButton = boot.mountExport?.(pill, true);
+    if (exportButton && DocForm._tooltips) controlHint(exportButton)('Export');
     bar.appendChild(pill);
     appendPagePill(bar);
     document.body.appendChild(bar);

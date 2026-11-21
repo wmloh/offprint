@@ -9,7 +9,7 @@ Enable the `controls` feature. The module inserts the top-left pill without auth
 | `J` / `K` | At least one `h2` or `h3`. Jump to the next or previous heading. |
 | `T` | `theme`. Switch light/dark. |
 | `S` | `search` handles the shortcut and provides the pill button. |
-| Export | Open the standalone export dialog. The entry moves to the page footer when the reading controls are unavailable. |
+| Export | Open the standalone export dialog. Shared tooltip panel hint, none without `tooltips`. The entry moves to the page footer when the reading controls are unavailable. |
 | Previous / Next | `navigation` and an adjacent page in the manifest reading order. Arrow links appear in a separate pill to the right. Each link names its destination and the pill hides while the narrow-screen drawer is open. |
 
 - [Keyboard shortcuts](../interact/shortcuts.md) lists the binding IDs and remapping options. The progress ring reflects the scroll position over the scrollable page height.
@@ -20,7 +20,8 @@ Enable the `controls` feature. The module inserts the top-left pill without auth
 
 ## Standalone export
 
-- Use desktop Chrome with JavaScript enabled from a local page. Select the source folder containing the page, manifest and assets, including the library. Pick pages in manifest order, build a preview, then download one HTML file.
+- Use desktop Chrome with JavaScript enabled from a local page. Choose both folders: documentation root (page, manifest, assets) and DocForm library (contains `docform.js`). Both are required, even when the library sits inside the root. Layout rules: [site structure](../setup/site-structure.md). Pick pages in manifest order, build a preview, then download one HTML file.
+- Dialog's **Saved reading data** section clears this browser's saved views and imports for the document after an in-dialog confirm; an existing preview is discarded. Hidden when browser-local state is off.
 - The active page uses its committed live view. Sibling pages use browser-local saved views and accepted imports when available, with authored defaults for missing or stale state. The preview reports fallbacks, import-derived content, missing assets, unavailable links and output size.
 - Open the download from disk with JavaScript enabled. The standalone reader provides contents, sequential navigation, internal heading links and definitions. Interactive source features are frozen and supported assets are embedded. External hyperlinks remain available when online.
 

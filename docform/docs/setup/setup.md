@@ -26,6 +26,7 @@ Copy `docform/` with its CSS, scripts, and vendor assets. Open the HTML directly
 ```
 
 - Optional `<script src="site.js" data-df-site></script>` before the synchronous entry in the head. Use ordinary page-relative URLs for the includes. Entry locates feature assets relative to its own script URL.
+- Multi-page sites: follow [site structure](site-structure.md) so export can read every resource.
 - Load author scripts after the entry. See the [extension API](../extend/api.md) for setup, ready, and feature registration.
 
 [Include order](include-order.md) · [Manifest](manifest.md) · [Entry source](../../docform.js)

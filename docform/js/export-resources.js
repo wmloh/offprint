@@ -85,7 +85,7 @@
             return null;
           }
         }
-        report('missing-resource', value, 'The resource was not found in the selected folder.');
+        report('missing-resource', value, 'The resource was not found in the selected folders.');
       }
       return null;
     }
@@ -99,7 +99,7 @@
       }
       var file = folder.file(url);
       if (!file) {
-        report('missing-stylesheet', value, 'The stylesheet was not found in the selected folder.');
+        report('missing-stylesheet', value, 'The stylesheet was not found in the selected folders.');
         return null;
       }
       if (parents.has(file)) {

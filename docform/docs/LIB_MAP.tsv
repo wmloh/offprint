@@ -1,6 +1,7 @@
 Offline setup	Load DocForm offline and register author hooks	setup/setup.md
 Include order	Choose feature profiles and resolve dependencies	setup/include-order.md
 Site manifest	Configure pages, features, registries, and generated assets	setup/manifest.md
+Site structure	Lay out documentation and library folders for offline use and export	setup/site-structure.md
 Base layout	Style the reading column, typography, lists, tables, and figure widths	layout/base.md
 Section lines	Accent sections with spacing, colour, and margin lines	layout/sections.md
 Design tokens	Customize colours, fonts, spacing, and widths	layout/tokens.md

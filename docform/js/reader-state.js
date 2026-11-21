@@ -26,7 +26,6 @@
   var configuration;
   var started = false;
   var muted = 0;
-  var clearMounted = false;
   var revision = 0;
   var session = Math.random().toString(36).slice(2);
 
@@ -158,12 +157,12 @@
     root.document.addEventListener('visibilitychange', function () {
       if (root.document.visibilityState === 'hidden') flush();
     });
-    if (!clearMounted) {
+    // Pages without reading controls get the export entry at the end of their content.
+    if (DF._boot?.mountExport && !DF._boot.exportMounted) {
       var parent = root.document.querySelector('main, .df-page') || root.document.body;
       var controls = parent.appendChild(root.document.createElement('div'));
       controls.setAttribute('data-df-reader-state-control', '');
-      DF._boot?.mountExport?.(controls);
-      mountClear(controls);
+      DF._boot.mountExport(controls);
     }
   }
 
@@ -476,38 +475,12 @@
     return writes;
   }
 
-  function mountClear(parent, styled) {
-    if (mode !== 'reading') return;
-    clearMounted = true;
-    var button = root.document.createElement('button');
-    var status = root.document.createElement('span');
-    button.type = 'button';
-    button.className = styled ? 'df-controls-btn' : 'df-button';
-    if (styled) {
-      button.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" ' +
-        'fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' +
-        '<path d="M2.5 4.5h11m-9.5 0 .5 9h7l.5-9M6 4.5v-2h4v2M6.75 7v4m2.5-4v4"/></svg>';
-    } else button.textContent = 'Clear saved views and imports';
-    button.setAttribute('data-df-reader-state-control', '');
-    button.setAttribute('aria-label', 'Clear saved views and imports');
-    button.title = 'Clear saved views and imports';
-    status.setAttribute('role', 'status');
-    status.setAttribute('data-df-reader-state-control', '');
-    button.addEventListener('click', async function () {
-      if (!root.confirm('Clear saved views and imports for export from this document on this browser?')) return;
-      button.disabled = true;
-      status.textContent = await clear() ? 'Saved views and imports cleared.' : 'Saved views and imports could not be cleared.';
-      button.disabled = false;
-    });
-    parent.appendChild(button);
-    parent.appendChild(status);
-  }
-
   DF._readerState = {
     prepare: prepare, start: start, watch: watch, keyed: keyed, transient: transient,
     preserveOrigin: function (fn) { return muted ? function () { return transient(fn); } : fn; },
     isolated: function () { return mode === 'replay'; },
     registerImport: registerImport, removeImport: removeImport, targetStamp: targetStamp, stamp: stamp,
-    capture: capture, read: read, replay: replay, clear: clear, mountClear: mountClear
+    capture: capture, read: read, replay: replay, clear: clear,
+    enabled: function () { return mode === 'reading'; }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

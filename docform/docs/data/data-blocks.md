@@ -39,4 +39,4 @@ Enable `data` for the registry, `data-view` for raw views, and each consuming fe
 - Use `maxSize` or `data-df-max-size` (default 1 MiB), and `maxRows` or `data-df-max-rows` (default 5000). Initial oversized raw views offer Show anyway. Tables and code load in batches with Show more. Tree limits apply per branch.
 - `DocForm.dataView.mount(target, options?)` and `get(target)` accept an ID or element. The controller exposes `update(input)` for a local override, `reset()`, `snapshot()`, and `subscribe()`. The view snapshot is `{name, view, total, shown}` with null counts where unavailable. `df:data-view:render` bubbles after the view and any nested enhancements are ready.
 
-[File wrappers](file-wrapper.md) · [Charts](charts.md) · [Results](results-tables.md) · [Scenarios](../interact/scenarios.md) · [Dropzones](dropzones.md) · [Example](../../../examples/transformers/pages/diagnostics.html#shared-runs)
+[File wrappers](../tools/file-wrapper.md) · [Charts](charts.md) · [Results](results-tables.md) · [Scenarios](../interact/scenarios.md) · [Dropzones](dropzones.md) · [Example](../../../examples/transformers/pages/diagnostics.html#shared-runs)

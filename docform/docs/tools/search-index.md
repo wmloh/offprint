@@ -8,4 +8,4 @@ Open [tools/assets.html](../../tools/assets.html) from disk. Choose the folder c
 - Check the outputs to regenerate. Save selected outputs directly if the folder offers save access, or use the listed destinations to place downloaded files. Expand an output to preview or copy its script.
 - The index assigns `window.DocFormSearch = {format, version, metadata, pages}`. Each page has `{path, title, sections, terms}`. Page paths resolve from the manifest. Sections have `{id, title, level, text}`, with an empty ID for the intro. Term uses have `{text, section, tip, tags}` (running-text tips only; `tags` are glossary tag keys) or `{text, section, term}`.
 
-[Search palette](search.md) · [Glossary page](glossary.md) · [Data wrappers](../data/file-wrapper.md)
+[Search palette](../reading/search.md) · [Glossary page](../reading/glossary.md) · [Data wrappers](file-wrapper.md)

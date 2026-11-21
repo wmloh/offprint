@@ -28,4 +28,4 @@ Enable `cards`. Place the selector and details directly inside `.df-card-panel`.
 - Details use the shared [detail pane](detail-panes.md) behaviour (`detail-pane` loads with `cards`). A separate `.df-detail-pane` elsewhere can follow the panel with `data-df-detail-for="<panel id>"` and keys matching the card keys.
 - `DocForm.cards.get(idOrHost)` returns the [item controller](linked-highlighting.md) or `null`. Snapshot `{key, index, detailId}` uses a zero-based index. `df:cards:change` bubbles from the host with `{current, previous, origin}`.
 
-[Tabs](tabs.md) · [Figure steps](figure-steps.md) · [Detail panes](detail-panes.md) · [Pipelines](pipelines.md) · [Code blocks](../reading/code.md) · [Source](../../js/steps.js)
+[Tabs](tabs.md) · [Figure steps](figure-steps.md) · [Detail panes](detail-panes.md) · [Pipelines](../diagram/pipelines.md) · [Code blocks](../reading/code.md) · [Source](../../js/steps.js)

@@ -17,4 +17,4 @@ Enable `glossary` (requires `tooltips`). Enable `search` to read indexed tips an
 - A missing index or older index without glossary data yields a manifest-only view with a notice. An index whose tip records lack `tags` (built before glossary tags; it may hold tips on tags and controls) has its tip records skipped, keeps term uses, and shows a rebuild notice. Rebuild the index after changing tips, uses, or page anchors.
 - `DocForm.glossary.merge(terms, pages)` takes normalized tooltip definitions and resolved indexed pages. `groups(entries)` groups the merged entries. `render(el, entries, message?, registry?)` replaces a holder's contents (registry defaults to `DocForm.site.tags`). Setup marks the generated holder outside navigation outlines and automatic term linking.
 
-[Tooltip definitions](tooltips.md) · [Search index builder](search-index.md) · [Glossary source](../../js/glossary.js)
+[Tooltip definitions](tooltips.md) · [Search index builder](../tools/search-index.md) · [Glossary source](../../js/glossary.js)

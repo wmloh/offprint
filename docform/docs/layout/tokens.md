@@ -13,7 +13,7 @@ Tokens load with `base` and are included in `docform.css`. Override custom prope
 | Fonts | `--df-font`, `--df-font-serif`, `--df-font-mono`, `--df-font-size`, `--df-line-height`. |
 | Spacing | `--df-space-1` through `--df-space-8` (4, 8, 12, 16, 24, 32, 48, 64 px). |
 | Sections | `--df-space-h2` (56 px), `--df-space-h3` (32 px), `--df-section-cycle` (`blue green purple orange pink brown`; space- or comma-separated named colours), `--df-section-offset` (14 px, 9 px narrow), `--df-section-line-width` (2 px), `--df-section-line-strength` (45 % line colour mix). See [section lines](sections.md). |
-| Text roles | `--df-text-label` (label colour, about 5:1 in light mode), `--df-eyebrow-size`, `--df-eyebrow-weight`, `--df-eyebrow-tracking`, `--df-eyebrow-case` (`uppercase`; `none` turns caps off), `--df-field-label-width` (11em). See [text roles](../reading/text-roles.md). |
+| Text roles | `--df-text-label` (label colour, about 5:1 in light mode), `--df-eyebrow-size`, `--df-eyebrow-weight`, `--df-eyebrow-tracking`, `--df-eyebrow-case` (`uppercase`; `none` turns caps off), `--df-field-label-width` (11em). See [text roles](text-roles.md). |
 | Radii | `--df-radius-sm`, `--df-radius`, `--df-radius-lg` (3, 4, 8 px). |
 | Layout | `--df-content-width` (1120 px), `--df-figure-max-width` (`100%`; cap for outermost figures, tables, code, charts, and similar blocks, see [base](base.md)), `--df-page-gutter` (24 px), `--df-sidebar-width` (260 px). |
 

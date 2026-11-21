@@ -26,4 +26,4 @@ Enable `dropdowns`. Pair a direct `button[popovertarget]` with a direct `.df-dro
 - `DocForm.dropdowns.follow(trigger, panel)` places an open popover panel below its trigger (above when there is more room), keeps it there through scrolling and resizing, hides it once the trigger leaves the viewport, and returns a stop function. Parameter comboboxes use it.
 - `DocForm.dropdowns.mount(idOrHost)` prepares a dropdown added after startup and returns its popover or `null`. The native Popover API and `details` handle opening and keyboard access with scripts off in supporting browsers.
 
-[Buttons](buttons.md) · [Dropdowns source](../../js/dropdowns.js)
+[Buttons](../layout/buttons.md) · [Dropdowns source](../../js/dropdowns.js)

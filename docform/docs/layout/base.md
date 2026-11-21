@@ -10,4 +10,4 @@ Enable `base` (included in the reading profile and `docform.css`). Use `<main cl
 - Lists use accented counter badges and dots with hover feedback. The tint follows `data-df-color` or `data-df-role` on an item, list, or ancestor, with gray as the default. Put `data-df-no-list-style` on a list or ancestor for native markers. Navigation lists, lists with an explicit `role`, and the roles legend also skip custom markers.
 - Sidebar, table, and `pre` scrollbars use a transparent thumb until hover or visible focus. The page scrollbar is handled by [reading controls](controls.md).
 
-[Tokens](tokens.md) · [Section lines](sections.md) · [Buttons](../interact/buttons.md) · [Stylesheet](../../css/base.css)
+[Tokens](tokens.md) · [Section lines](sections.md) · [Buttons](buttons.md) · [Stylesheet](../../css/base.css)

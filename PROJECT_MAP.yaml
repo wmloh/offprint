@@ -93,7 +93,7 @@ docform/: Copyable offline library folder
     search-index.html, data-file.html: Redirects from the former builder and converter to the asset tool
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
-  docs/: Agent-facing setup, layout, reading, interaction, and data references grouped by purpose
+  docs/: Agent-facing setup, layout, reading, interaction, diagram, data, and offline tool references
     LIB_MAP.tsv: Index of agent references by component, description, and relative path
 docs/: Human-facing beginner DocForm HTML site with a Start here orientation and live examples
   index.html: Welcome page

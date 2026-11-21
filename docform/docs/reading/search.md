@@ -8,4 +8,4 @@ Enable the `search` feature. Press S or use the optional control pill button to 
 - `DocForm.search.open(openerIdOrElement?)`, `close()`, and `toggle(opener?)` drive the dialog. `load(cb)` returns the index or `null` via callback. `pages(cb)` returns resolved `{href, title, sections, terms}` pages or `null`. `find(href, cb)` returns `{page, title, text}` for a page or section, or `null`. `extract(doc, title?)` returns `{title, sections, terms}`.
 - The index also supplies other-page outlines, remote link previews, and glossary usage. Use explicit heading IDs for stable external links.
 
-[Search index builder](search-index.md) · [Navigation](../layout/navigation.md) · [Search source](../../js/search.js)
+[Search index builder](../tools/search-index.md) · [Navigation](../layout/navigation.md) · [Search source](../../js/search.js)

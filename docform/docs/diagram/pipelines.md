@@ -1,6 +1,6 @@
 # Pipeline diagrams
 
-Enable `pipeline` (loads `detail-pane`). Host `figure.df-pipeline` with a direct `ol.df-pipe-blocks` of `li.df-pipe-block` and optional `li.df-pipe-junction` items, an optional direct [`.df-detail-pane`](detail-panes.md), and an optional `figcaption`.
+Enable `pipeline` (loads `detail-pane`). Host `figure.df-pipeline` with a direct `ol.df-pipe-blocks` of `li.df-pipe-block` and optional `li.df-pipe-junction` items, an optional direct [`.df-detail-pane`](../interact/detail-panes.md), and an optional `figcaption`.
 
 ```html
 <figure class="df-pipeline" id="flow" data-df-detail-layout="side">
@@ -47,7 +47,7 @@ Enable `pipeline` (loads `detail-pane`). Host `figure.df-pipeline` with a direct
 
 ## Interaction
 
-- Mouse/pen hover, click, and focus select a block (sticky; touch swipes do not). Selection drives the linked pane, sets `aria-current="true"`, and joins `data-df-selection-group` with `data-df-selection-mode="both|publish|follow"` like [cards](card-panels.md).
+- Mouse/pen hover, click, and focus select a block (sticky; touch swipes do not). Selection drives the linked pane, sets `aria-current="true"`, and joins `data-df-selection-group` with `data-df-selection-mode="both|publish|follow"` like [cards](../interact/card-panels.md).
 - Hover/focus trace: `.df-pipe-tracing` on the host; upstream and downstream blocks, junctions, lines, and labels get `data-df-pipe-trace`; the rest dim to 30 %. Leaving the stage clears it unless a block keeps focus.
 - Keyboard: one roving tab stop. Along the flow (Right/Left, or Down/Up for `down`) moves to the nearest successor/predecessor through junctions; across moves within the rank; Home/End go to the first/last visible block.
 - Detail pane: a direct `.df-detail-pane` links automatically. `data-df-detail-layout="side"` puts it beside the canvas at a container width ≥ 46rem (sticky, `--df-detail-pane-max: min(30rem, 60svh)`); otherwise below. External panes use `data-df-detail-for="<pipeline id>"`.
@@ -55,14 +55,14 @@ Enable `pipeline` (loads `detail-pane`). Host `figure.df-pipeline` with a direct
 ## Steps
 
 - Any `data-df-step` (positive integer, default 1) on blocks or junctions enables steps; lines show from the later of their two ends unless the link sets its own step. Hidden items get `data-df-pipe-hidden` (fade, no layout shift); current-step blocks get `data-df-pipe-current`.
-- A [step pill](buttons.md#step-pill) (Reset, Previous, `Step n of m`, Next, Play/Pause at 1.4 s) precedes the canvas. User steps select the first block of the new step.
-- `data-df-steps-follow="<stepper id>"` replaces the pill: step = [stepper](worked-examples.md) index + 1 (clamped). Enable `stepper`.
+- A [step pill](../layout/buttons.md#step-pill) (Reset, Previous, `Step n of m`, Next, Play/Pause at 1.4 s) precedes the canvas. User steps select the first block of the new step.
+- `data-df-steps-follow="<stepper id>"` replaces the pill: step = [stepper](../interact/worked-examples.md) index + 1 (clamped). Enable `stepper`.
 
 ## Fallback and API
 
 - No script or print: numbered list of blocks with fields and authored links; the pane shows every detail; lines, labels, and the pill are omitted. Empty junctions are hidden.
 - Horizontal overflow scrolls inside `.df-pipe-scroll`; the host keeps the figure width cap. Relayout on block resize, field mutation, font load, and page load. Hidden hosts lay out when shown.
-- `DocForm.pipeline.get(idOrHost)` returns the [item controller](linked-highlighting.md) plus `layout()`, `fields(blockId, {eyebrow?, headline?, description?})` (string or `null`; creates missing fields in order; returns boolean), and `steps` {`go(n)`, `next()`, `previous()`, `reset()`, `snapshot()` → `{step, total}` or `null`, `subscribe`}. Snapshot `{key, index, blockId}`. Events bubble from the host: `df:pipeline:change` and `df:pipeline:step`.
+- `DocForm.pipeline.get(idOrHost)` returns the [item controller](../interact/linked-highlighting.md) plus `layout()`, `fields(blockId, {eyebrow?, headline?, description?})` (string or `null`; creates missing fields in order; returns boolean), and `steps` {`go(n)`, `next()`, `previous()`, `reset()`, `snapshot()` → `{step, total}` or `null`, `subscribe`}. Snapshot `{key, index, blockId}`. Events bubble from the host: `df:pipeline:change` and `df:pipeline:step`.
 - Diagnostics: missing list or blocks, missing link targets, self links, duplicate keys, invalid col/row/sides/via/direction/layout, missing stepper.
 
-[Detail panes](detail-panes.md) · [Card panels](card-panels.md) · [Source](../../js/pipeline.js)
+[Detail panes](../interact/detail-panes.md) · [Card panels](../interact/card-panels.md) · [Source](../../js/pipeline.js)

@@ -1,6 +1,6 @@
 # Text roles
 
-Loads with `base` (reading profile and `docform.css`); CSS only, no script. Two roles for visual hierarchy: eyebrows and labelled fields. Tokens in [tokens](../layout/tokens.md).
+Loads with `base` (reading profile and `docform.css`); CSS only, no script. Two roles for visual hierarchy: eyebrows and labelled fields. Tokens in [tokens](tokens.md).
 
 ```html
 <p class="df-eyebrow">Incident review</p>
@@ -27,4 +27,4 @@ Loads with `base` (reading profile and `docform.css`); CSS only, no script. Two 
 - `container-type: inline-size`; below 30em of list width rows stack (label above value), e.g. split panes, step details, phones. Container sizing means the list collapses inside shrink-to-fit parents (inline-block, floats, `fit-content` grid tracks); give it a definite width there.
 - Use for short facts with recurring labels (Inputs, Outputs, Why it happens). Use a table for comparisons across items, a concept table for definitions side by side.
 
-[Tags](tags.md) · [Buttons](../interact/buttons.md) · [Stylesheet](../../css/text.css) · [PCA telemetry example](../../../examples/pca/pages/telemetry.html) · [Transformer attention steps](../../../examples/transformers/pages/attention.html#causal-mask)
+[Tags](../reading/tags.md) · [Buttons](buttons.md) · [Stylesheet](../../css/text.css) · [PCA telemetry example](../../../examples/pca/pages/telemetry.html) · [Transformer attention steps](../../../examples/transformers/pages/attention.html#causal-mask)

@@ -11,7 +11,7 @@ function load() {
   context.window = context;
   vm.runInContext(read('core.js'), context);
   vm.runInContext(read('search.js'), context);
-  return Object.assign({}, context.DocForm.search, { context });
+  return Object.assign({}, context.DocForm._search, { context });
 }
 
 const json = (value) => JSON.parse(JSON.stringify(value));
@@ -59,7 +59,7 @@ test('highlights mark every token without overlaps, and snippets centre the firs
 test('indexed pages are listed with URLs resolved against the manifest base', () => {
   const search = load();
   const context = search.context;
-  context.DocForm.site = { provided: true, base: 'file:///notes/' };
+  context.DocForm._site = { provided: true, base: 'file:///notes/' };
   const sections = [{ id: 'x', level: 2, title: 'X' }];
   const outline = [{ id: 'heading', level: 1, title: 'B' }, ...sections];
   const page = { path: 'a/b.html', title: 'B', sections };

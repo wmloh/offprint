@@ -174,6 +174,29 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
   };
 }
 
+test('the offline entry exposes the extension surface and initializes a custom feature before ready', async () => {
+  const p = page({ config: { features: { chart: true, data: true, selection: true } } });
+  const phases = [];
+  p.DF.setup(DF => {
+    phases.push('setup');
+    DF.register('test-reading-marker', () => {
+      phases.push('initialize');
+      p.body.setAttribute('data-reading-marker', DF.util.slug('Reading Ready'));
+    });
+  });
+  p.DF.ready(() => phases.push('ready'));
+  await p.start();
+
+  assert.deepEqual(phases, ['setup', 'initialize', 'ready']);
+  assert.equal(p.body.getAttribute('data-reading-marker'), 'reading-ready');
+  assert.deepEqual(Object.getOwnPropertyNames(p.DF).filter(name => !name.startsWith('_')).sort(), [
+    'chart', 'data', 'diagnostics', 'ready', 'register', 'selection', 'sequence', 'setup', 'shortcuts', 'util'
+  ]);
+  assert.deepEqual(Object.keys(p.DF.chart).sort(), ['addon', 'addons', 'legend', 'scale']);
+  assert.deepEqual(Object.keys(p.DF.data).sort(), ['define', 'defineTransform', 'names', 'parse', 'source', 'table', 'valueOf']);
+  assert.equal(p.DF.diagnostics.list().length, 0);
+});
+
 test('standalone reading profile applies early theme and renders citations with tooltip cards before ready', async () => {
   const p = page({ cite: true, staticCSS: true, storage: new Error('blocked'), config: {
     options: { theme: { mode: 'dark' }, citations: { entries: { example: 'An example source.' } } }
@@ -183,8 +206,8 @@ test('standalone reading profile applies early theme and renders citations with 
   let preview;
   p.DF.setup(DF => {
     order.push('setup');
-    assert.equal(DF.site.provided, false);
-    DF.tooltips.attach = (link, title, text, options) => { preview = options.content; };
+    assert.equal(DF._site.provided, false);
+    DF._tooltips.attach = (link, title, text, options) => { preview = options.content; };
     throw new Error('Example callback failure');
   });
   p.DF.setup(() => order.push('next setup'));
@@ -192,8 +215,8 @@ test('standalone reading profile applies early theme and renders citations with 
     order.push('ready');
     assert.equal(p.citation.childNodes[1].textContent, '1');
     assert.equal(preview().textContent, 'An example source.');
-    assert.equal(typeof DF.search.open, 'function');
-    assert.equal(DF.theme.get(), 'dark');
+    assert.equal(typeof DF._search.open, 'function');
+    assert.equal(DF._theme.get(), 'dark');
   });
   await p.start();
   assert.deepEqual(order, ['setup', 'next setup', 'ready']);
@@ -213,13 +236,13 @@ test('nested none profile clears inherited choices and loads playback after its 
     lateConfig: { profile: 'none', features: { 'chart-playback': true, cards: true, 'figure-steps': true } }
   });
   await p.start();
-  assert.equal(p.DF.site.order[0].href, p.DF.page);
-  assert.ok(Object.isFrozen(p.DF.site.order[0]));
+  assert.equal(p.DF._site.order[0].href, p.DF._page);
+  assert.ok(Object.isFrozen(p.DF._site.order[0]));
   assert.equal(p.html.getAttribute('data-df-theme'), null);
   assert.deepEqual(p.loads, ['docform/js/core.js', 'docform/css/tokens.css', 'docform/css/base.css',
     'docform/css/text.css', 'docform/css/sections.css', 'docform/css/buttons.css', 'docform/css/choices.css', 'docform/js/choices.js', 'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
     'docform/css/detail.css', 'docform/js/detail.js', 'docform/css/steps.css', 'docform/js/steps.js']);
-  assert.equal(typeof p.DF.chartPlayback.mount, 'function');
+  assert.equal(typeof p.DF._chartPlayback.mount, 'function');
   assert.equal(p.DF.diagnostics.list().length, 0);
 });
 
@@ -229,8 +252,8 @@ test('required failures preserve fallbacks and independent features still reach 
     fail: ['docform/css/chart.css', 'docform/js/tabs.js']
   });
   await p.start();
-  assert.ok(p.DF.math);
-  assert.equal(p.DF.chart, undefined);
+  assert.ok(p.DF._math);
+  assert.equal(p.DF._chart, undefined);
   assert.equal(p.loads.includes('docform/js/refs.js'), false);
   assert.equal(p.loads.includes('docform/js/scenarios.js'), false);
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => [item.code, item.feature]), [
@@ -251,8 +274,8 @@ test('chart setup merges options and an invalid attribute preserves the configur
   host.id = 'trace';
   host.setAttribute('data-df-height', '400px');
   p.DF.setup(DF => {
-    const api = DF.chart.mount(host, { data: [2, 3], height: 390 });
-    assert.equal(DF.chart.mount(host, { height: 410 }), api);
+    const api = DF._chart.mount(host, { data: [2, 3], height: 390 });
+    assert.equal(DF._chart.mount(host, { height: 410 }), api);
     assert.equal(api.spec().height, 390);
     assert.equal(api.spec().x.label, 'Samples');
     assert.equal(api.spec().x.digits, 1);
@@ -269,10 +292,10 @@ test('configured chart motion merges like other chart options and add-on chart t
   });
   const hosts = ['calm', 'lively', 'odd', 'needs'].map(id => Object.assign(element('div'), { id }));
   p.DF.setup(DF => {
-    assert.equal(DF.chart.mount(hosts[0], { data: [1, 2] }).model().motion, false);
-    assert.equal(DF.chart.mount(hosts[1], { data: [1, 2] }).model().motion, true);
-    assert.equal(DF.chart.mount(hosts[2], { data: [1, 2] }).model().motion, false, 'an invalid value keeps the site choice');
-    assert.equal(DF.chart.mount(hosts[3], { type: 'histogram', data: [1, 2] }), null);
+    assert.equal(DF._chart.mount(hosts[0], { data: [1, 2] }).model().motion, false);
+    assert.equal(DF._chart.mount(hosts[1], { data: [1, 2] }).model().motion, true);
+    assert.equal(DF._chart.mount(hosts[2], { data: [1, 2] }).model().motion, false, 'an invalid value keeps the site choice');
+    assert.equal(DF._chart.mount(hosts[3], { type: 'histogram', data: [1, 2] }), null);
     assert.equal(DF._boot.chartFeature('heatmap'), 'chart-heatmap');
     assert.equal(DF._boot.chartFeature('line'), null);
   });
@@ -287,7 +310,7 @@ test('the offline loader enables interval plots and loads their chart dependency
     'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-intervals.css', 'docform/js/chart-intervals.js'
   ]);
   assert.equal(p.DF._boot.chartFeature('interval'), 'chart-intervals');
-  assert.equal(p.DF.chart.normalize({ type: 'interval', data: [['A', 3]] }).addon, 'interval');
+  assert.equal(p.DF._chart.normalize({ type: 'interval', data: [['A', 3]] }).addon, 'interval');
   assert.equal(p.DF.diagnostics.list().length, 0);
 });
 
@@ -304,13 +327,13 @@ test('mixed features load all shipped assets and register data before author set
     assert.equal(DF.data.source('runs').snapshot().value[0].run, 'r01');
     assert.equal(DF.data.define('setup-records', { type: 'value', value: [{ id: 'sample' }] }).snapshot().revision, 0);
     assert.equal(DF.data.define('readings', { type: 'csv', text: 'x,y\n1,2' }).snapshot().name, 'readings');
-    assert.equal(typeof DF.animation.mount, 'function');
-    assert.equal(typeof DF.chart.mount, 'function');
-    assert.equal(typeof DF.dropdowns.mount, 'function');
-    assert.equal(typeof DF.editableText.mount, 'function');
+    assert.equal(typeof DF._animation.mount, 'function');
+    assert.equal(typeof DF._chart.mount, 'function');
+    assert.equal(typeof DF._dropdowns.mount, 'function');
+    assert.equal(typeof DF._editableText.mount, 'function');
     assert.equal(typeof DF.sequence.get, 'function');
-    assert.equal(typeof DF.sequenceDiagram.get, 'function');
-    assert.equal(typeof DF.treeDiagram.get, 'function');
+    assert.equal(typeof DF._sequenceDiagram.get, 'function');
+    assert.equal(typeof DF._treeDiagram.get, 'function');
   });
   await p.start();
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
@@ -373,12 +396,12 @@ test('only current source and view attributes register and render data', async (
   assert.equal(oldView.textContent, 'Old fallback');
   assert.equal(bare.textContent, 'Bare fallback');
   assert.equal(p.DF.data.source('current').snapshot().type, 'csv');
-  const controller = p.DF.dataView.get(view);
+  const controller = p.DF._dataView.get(view);
   assert.equal(controller.snapshot().view, 'code');
   assert.equal(view.textContent, 'a,b\n1,2');
   assert.match(capped.textContent, /over this block's 1 byte limit/);
   assert.equal(capped.firstChild.lastChild.textContent, 'Show anyway');
-  const target = p.DF.dropzone.link(view);
+  const target = p.DF._dropzone.link(view);
   const zone = element('div');
   assert.equal(target.kind, 'data');
   assert.equal(target.feed({ type: 'csv', text: 'a,b\n3,4' }, {}, zone, target.reserve()), '');
@@ -408,7 +431,7 @@ test('the asset tool loads through the offline entry and wires its folder input'
 test('legacy search manifest keys do not load an index', async () => {
   const p = page({ site: { search: 'legacy.js' } });
   await p.start();
-  assert.equal(p.DF.site.search, null);
+  assert.equal(p.DF._site.search, null);
   assert.equal(p.loads.some(asset => asset.endsWith('legacy.js')), false);
 });
 
@@ -464,8 +487,8 @@ test('offline matrices pivot by declared keys and use one scale per measure chip
   const events = [];
   p.table.addEventListener('df:matrix:change', event => events.push(event));
   await p.start();
-  const matrix = p.DF.matrix.get('confusion');
-  assert.equal(matrix, p.DF.matrix.mount(p.table));
+  const matrix = p.DF._matrix.get('confusion');
+  assert.equal(matrix, p.DF._matrix.mount(p.table));
   assert.ok(p.loads.indexOf('docform/js/data.js') < p.loads.indexOf('docform/js/matrix.js'));
   assert.ok(p.loads.includes('docform/css/matrix.css'));
   assert.equal(p.table.firstChild, p.caption);
@@ -534,7 +557,7 @@ test('invalid matrix replacements roll back and authored content survives failed
   const p = matrixPage({ options: { maxRows: 3, maxSize: '512 B', maxCells: 4 } });
   await p.start();
   const source = p.DF.data.source('outcomes');
-  const matrix = p.DF.matrix.get(p.table);
+  const matrix = p.DF._matrix.get(p.table);
   const initial = source.snapshot();
   const body = p.table.lastChild;
   const valid = matrixRecord('A', 'A', 2, null);
@@ -566,7 +589,7 @@ test('invalid matrix replacements roll back and authored content survives failed
     assert.deepEqual(fallback.body.children, [fallback.table]);
     assert.deepEqual(fallback.table.children, [fallback.caption, fallback.fallbackHead, fallback.fallbackBody]);
     if (inputs.input) {
-      const api = fallback.DF.matrix.get(fallback.table);
+      const api = fallback.DF._matrix.get(fallback.table);
       assert.equal(api.snapshot(), null);
       assert.equal(api.update([valid]), true);
       assert.equal(api.reset(), true);
@@ -587,7 +610,7 @@ test('matrix selection follows its key through named transform replacements', as
     return { records: value, mapping: { ...mapping, measures } };
   }));
   await p.start();
-  const matrix = p.DF.matrix.get(p.table);
+  const matrix = p.DF._matrix.get(p.table);
   const source = p.DF.data.source('outcomes');
   assert.equal(matrix.select('share'), true);
   assert.equal(source.update(matrixValues(matrixRecord('A', 'A', 2, 75))), true);
@@ -604,7 +627,7 @@ test('theme changes commit before listeners and queue writes requested by subscr
   const host = p.body.appendChild(element('button'));
   p.ids.set('theme:toggle', host);
   await p.start();
-  const theme = p.DF.theme;
+  const theme = p.DF._theme;
   assert.equal(theme.mount('theme:toggle'), host);
   assert.equal(theme.mount(host), host);
   const unsubscribe = theme.subscribe((state, meta) => {
@@ -633,7 +656,7 @@ test('drawer and controls use committed state and retain valid options from the 
   p.document.querySelector = selector => selector === '.df-sidebar' ? sidebar : querySelector(selector);
   p.ids.set('open:nav', opener);
   await p.start();
-  const { drawer } = p.DF.navigation;
+  const { drawer } = p.DF._navigation;
   const seen = [];
   drawer.subscribe((state, meta) => seen.push([state.open, meta.origin]), { immediate: true });
   assert.equal(drawer.toggle('open:nav'), true);
@@ -644,8 +667,8 @@ test('drawer and controls use committed state and retain valid options from the 
   assert.deepEqual(seen, [[false, 'init'], [true, 'api'], [false, 'api']]);
   assert.deepEqual(p.events.filter(event => event.type === 'df:navigation:drawer').map(event => event.detail.current.open),
     [true, false]);
-  const controls = p.DF.controls;
-  assert.equal(p.DF.roles.color('definition'), 'blue');
+  const controls = p.DF._controls;
+  assert.equal(p.DF._roles.color('definition'), 'blue');
   assert.deepEqual({ ...controls.snapshot() }, { focus: true, nav: false, navMode: 'auto' });
   assert.equal(controls.setFocus(false), true);
   assert.equal(controls.setNavMode('shown'), true);
@@ -661,14 +684,14 @@ test('custom reading extensions mount code once, dispose tooltips, and resolve l
   const pre = p.body.appendChild(element('pre'));
   pre.textContent = 'const x = 1;';
   p.ids.set('sample:code', pre);
-  assert.equal(DF.code.mount('sample:code'), pre);
-  assert.equal(DF.code.mount(pre), pre);
+  assert.equal(DF._code.mount('sample:code'), pre);
+  assert.equal(DF._code.mount(pre), pre);
   assert.equal(pre.parentNode.className, 'df-code');
   assert.equal(pre.parentNode.childNodes.length, 2);
   const term = p.body.appendChild(element('span'));
   term.setAttribute('aria-describedby', 'prior');
   p.ids.set('term:example', term);
-  const dispose = DF.tooltips.attach('term:example', '', 'An example.');
+  const dispose = DF._tooltips.attach('term:example', '', 'An example.');
   assert.match(term.getAttribute('aria-describedby'), /^prior df-tip-/);
   dispose();
   dispose();
@@ -676,10 +699,10 @@ test('custom reading extensions mount code once, dispose tooltips, and resolve l
   assert.equal(p.body.childNodes.length, 2);
   const math = p.body.appendChild(element('span'));
   p.ids.set('math:x', math);
-  assert.equal(DF.math.set('math:x', 'x^2'), true);
-  assert.equal(DF.math.source('math:x'), 'x^2');
-  assert.equal(DF.roles.color('example'), 'green');
-  assert.match(DF.roles.css({ warning: 'red' }), /--df-role-warning:var\(--df-red\)/);
+  assert.equal(DF._math.set('math:x', 'x^2'), true);
+  assert.equal(DF._math.source('math:x'), 'x^2');
+  assert.equal(DF._roles.color('example'), 'green');
+  assert.match(DF._roles.css({ warning: 'red' }), /--df-role-warning:var\(--df-red\)/);
 });
 
 test('shortcuts use a single capture listener and route to the innermost active scope', async () => {
@@ -817,11 +840,11 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
   figure.addEventListener('df:step', event => events.push([event.detail.key, event.detail.origin, event.bubbles]));
   let animation;
   p.DF.setup(DF => {
-    animation = DF.animation.mount('custom-figure', { steps: [{ key: 'trace', label: 'Trace', actions: [] }] });
+    animation = DF._animation.mount('custom-figure', { steps: [{ key: 'trace', label: 'Trace', actions: [] }] });
   });
   await p.start();
   assert.ok(animation);
-  assert.equal(p.DF.animation.mount(figure), animation);
+  assert.equal(p.DF._animation.mount(figure), animation);
   assert.deepEqual({ ...animation.snapshot() }, { key: 'start', index: 0, count: 2, canPrev: false, canNext: true, playing: false });
   const steps = [];
   animation.subscribe((state, meta) => steps.push([state.key, meta.origin]));
@@ -833,7 +856,7 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
   assert.deepEqual(steps, [['trace', 'api'], ['start', 'reset']]);
   assert.deepEqual(events, [['start', 'init', true], ['trace', 'api', true], ['start', 'reset', true]]);
 
-  const zoom = p.DF.zoom;
+  const zoom = p.DF._zoom;
   const observed = [];
   zoom.subscribe(state => observed.push(state ? figure.parentNode === state.stage : figure.parentNode === p.body));
   assert.equal(zoom.open('custom-figure'), true);
@@ -875,16 +898,16 @@ test('diagram fullscreen requires an opt-in and opens from the background or key
   p.click(figures[1].background);
   p.click(figures[2].background);
   p.click(figures[0].control);
-  assert.equal(p.DF.zoom.snapshot(), null);
+  assert.equal(p.DF._zoom.snapshot(), null);
   p.click(figures[0].background);
-  const open = p.DF.zoom.snapshot();
+  const open = p.DF._zoom.snapshot();
   assert.equal(open.target, figures[0].figure);
   assert.equal(open.target.parentNode, open.stage);
-  p.DF.zoom.close();
+  p.DF._zoom.close();
   open.overlay.dispatchEvent(new Event('transitionend'));
-  assert.equal(p.DF.zoom.snapshot(), null);
+  assert.equal(p.DF._zoom.snapshot(), null);
   assert.equal(p.key('Enter', figures[0].figure).defaultPrevented, true);
-  assert.equal(p.DF.zoom.snapshot().target, figures[0].figure);
+  assert.equal(p.DF._zoom.snapshot().target, figures[0].figure);
 });
 
 test('offline parameter scopes merge before setup and publish their first snapshot before ready', async () => {
@@ -896,22 +919,22 @@ test('offline parameter scopes merge before setup and publish their first snapsh
   });
   const order = [];
   p.DF.setup(DF => {
-    const decoder = DF.parameters.scope('decoder');
+    const decoder = DF._parameters.scope('decoder');
     order.push('setup');
     assert.deepEqual({ ...decoder.snapshot() }, { temperature: 1.5, flag: false });
     assert.equal(decoder.set('temperature', 0.5), true);
-    DF.parameters.define('experiment', { total: { type: 'number', default: 2 } });
+    DF._parameters.define('experiment', { total: { type: 'number', default: 2 } });
     decoder.subscribe((state, meta) => order.push([state.temperature, meta.origin]), { immediate: true });
   });
   p.DF.ready(DF => {
     order.push('ready');
-    assert.equal(DF.parameters.scope('experiment').get('total'), 2);
+    assert.equal(DF._parameters.scope('experiment').get('total'), 2);
   });
   await p.start();
   assert.deepEqual(order, ['setup', [0.5, 'init'], 'ready']);
   assert.deepEqual(p.events, []);
-  assert.equal(p.DF.parameters.scope('decoder').reset(), true);
-  assert.equal(p.DF.parameters.scope('decoder').get('temperature'), 1.5);
+  assert.equal(p.DF._parameters.scope('decoder').reset(), true);
+  assert.equal(p.DF._parameters.scope('decoder').get('temperature'), 1.5);
 });
 
 test('selection groups merge across configuration and an authored group is available in setup', async () => {
@@ -939,7 +962,7 @@ test('selection groups merge across configuration and an authored group is avail
   });
   await p.start();
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
-  assert.equal(p.DF.site.selectionGroups.trace.persist, true);
+  assert.equal(p.DF._site.selectionGroups.trace.persist, true);
   assert.equal(p.DF.selection.group('trace').get(), 'page');
   assert.equal(p.DF.sequence.get(list).snapshot().key, 'first');
   const changes = p.events.filter(event => event.type === 'df:selection:change');
@@ -955,7 +978,7 @@ test('the offline loader enables histogram assets and registers the add-on after
     'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-histogram.css', 'docform/js/chart-histogram.js'
   ]);
   assert.equal(p.DF._boot.chartFeature('histogram'), 'chart-histogram');
-  assert.equal(p.DF.chart.normalize({ type: 'histogram', data: [1, 2] }).addon, 'histogram');
+  assert.equal(p.DF._chart.normalize({ type: 'histogram', data: [1, 2] }).addon, 'histogram');
   assert.equal(p.DF.diagnostics.list().length, 0);
 });
 
@@ -966,6 +989,6 @@ test('the offline loader enables heatmap assets and registers the add-on after c
     'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-heatmap.css', 'docform/js/chart-heatmap.js'
   ]);
   assert.equal(p.DF._boot.chartFeature('heatmap'), 'chart-heatmap');
-  assert.equal(p.DF.chart.normalize({ type: 'heatmap', z: [[1, 2]] }).addon, 'heatmap');
+  assert.equal(p.DF._chart.normalize({ type: 'heatmap', z: [[1, 2]] }).addon, 'heatmap');
   assert.equal(p.DF.diagnostics.list().length, 0);
 });

@@ -72,7 +72,7 @@
   }
 
   function labelInto(el, text) {
-    if (DocForm.math && DocForm.math.mixed) el.innerHTML = DocForm.math.mixed(text);
+    if (DocForm._math && DocForm._math.mixed) el.innerHTML = DocForm._math.mixed(text);
     else el.textContent = text;
   }
 
@@ -218,7 +218,7 @@
 
     var panel = make('div', 'df-dropdown-panel df-combo-panel');
     panel.id = id + '-panel';
-    var popover = typeof panel.showPopover === 'function' && DocForm.dropdowns && typeof DocForm.dropdowns.follow === 'function';
+    var popover = typeof panel.showPopover === 'function' && DocForm._dropdowns && typeof DocForm._dropdowns.follow === 'function';
     if (popover) panel.setAttribute('popover', 'manual');
     else panel.hidden = true;
     var all = null;
@@ -353,7 +353,7 @@
       }
       if (field.offsetWidth) panel.style.minWidth = field.offsetWidth + 'px';
       panel.showPopover();
-      stop = DocForm.dropdowns.follow(field, panel);
+      stop = DocForm._dropdowns.follow(field, panel);
     }
 
     function hide() {
@@ -478,9 +478,9 @@
     var multiple = !!spec.multiple;
     var host = spec.host && spec.host.tagName === 'FIELDSET' ? spec.host : null;
     var box = host || make('fieldset');
-    var requested = spec.display || (host && DocForm.data(host, 'choice-display', null)) || 'auto';
+    var requested = spec.display || (host && DocForm._data(host, 'choice-display', null)) || 'auto';
     if (DISPLAYS.indexOf(requested) < 0) {
-      DocForm.warnOnce('choice-display:' + requested, 'Unknown choice display "' + requested + '"; use auto, chips, or combobox.', box);
+      DocForm._warnOnce('choice-display:' + requested, 'Unknown choice display "' + requested + '"; use auto, chips, or combobox.', box);
       requested = 'auto';
     }
     var shown = display(requested, options);
@@ -514,7 +514,7 @@
     });
   }
 
-  DocForm.choices = {
+  DocForm._choices = {
     create: create,
     read: read,
     ripple: ripple,

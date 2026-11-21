@@ -3,7 +3,7 @@
 
   var DocForm = root.DocForm;
   var boot = DocForm && DocForm._boot;
-  if (!boot || DocForm.theme) return;
+  if (!boot || DocForm._theme) return;
 
   var MODES = ['light', 'dark'];
   var KEY = 'docform-theme';
@@ -122,7 +122,7 @@
 
   apply(read());
 
-  DocForm.theme = {
+  DocForm._theme = {
     modes: MODES.slice(),
     key: KEY,
     normalize: normalize,

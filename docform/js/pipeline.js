@@ -199,7 +199,7 @@
   function prepare(host) {
     if (models.has(host)) return models.get(host);
     var list = host.querySelector(':scope > .df-pipe-blocks');
-    var els = list ? DocForm.all(':scope > .df-pipe-block, :scope > .df-pipe-junction', list) : [];
+    var els = list ? DocForm._all(':scope > .df-pipe-block, :scope > .df-pipe-junction', list) : [];
     if (!els.some(function (el) { return el.classList.contains('df-pipe-block'); })) {
       issue(host, 'A pipeline needs a .df-pipe-blocks list with at least one block.', 'Add li.df-pipe-block items to an ol.df-pipe-blocks child.');
       models.set(host, null);
@@ -209,7 +209,7 @@
     var blocks = els.filter(function (el) { return el.classList.contains('df-pipe-block'); });
     diagram.prepareNodes(els, blocks, base);
     var steps = host.querySelector(':scope > [data-df-pipeline-steps]');
-    var domain = steps && items.domain('pipeline', host, DocForm.all(':scope > li', steps));
+    var domain = steps && items.domain('pipeline', host, DocForm._all(':scope > li', steps));
     var model = { list: list, els: els, blocks: blocks, domain: items.domain('pipeline', host, blocks),
       steps: steps, stepDomain: domain };
     models.set(host, model.domain ? model : null);
@@ -237,7 +237,7 @@
     }
     nodes.forEach(function (node, from) {
       (node.el.getAttribute('data-df-to') || '').split(/\s+/).filter(Boolean).forEach(function (id) { add(from, id); });
-      DocForm.all('.df-pipe-link', node.el).forEach(function (link) {
+      DocForm._all('.df-pipe-link', node.el).forEach(function (link) {
         var href = link.getAttribute('href');
         var id = link.getAttribute('data-df-to') || (href && href.charAt(0) === '#' ? decodeURIComponent(href.slice(1)) : null);
         if (id) add(from, id, link);
@@ -289,7 +289,7 @@
     var opposite = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' };
 
     function stepIndex(el, fallback) {
-      var key = items.key(DocForm.data(el, 'reveal-step'));
+      var key = items.key(DocForm._data(el, 'reveal-step'));
       if (!key || !model.stepDomain) return fallback;
       var index = model.stepDomain.keys.indexOf(key);
       if (index >= 0) return index + 1;
@@ -338,7 +338,7 @@
     stage.appendChild(labels);
     model.list.setAttribute('role', 'list');
     // Lines replace the visually hidden links, so only blocks take focus.
-    DocForm.all('.df-pipe-link', model.list).forEach(function (link) { link.tabIndex = -1; });
+    DocForm._all('.df-pipe-link', model.list).forEach(function (link) { link.tabIndex = -1; });
     if (!host.id) host.id = detail.uniqueId('df-pipeline');
     var width = DocForm._maxWidth(host.getAttribute('data-df-block-width'));
     if (width) host.style.setProperty('--df-pipe-block-width', width);
@@ -547,10 +547,10 @@
     var display = block.querySelector(':scope > .df-pipe-display');
     if (!display) return;
     display.setAttribute('aria-hidden', 'true');
-    DocForm.all('[data-df-slot]', display).forEach(function (slot) {
+    DocForm._all('[data-df-slot]', display).forEach(function (slot) {
       var field = fields[slot.getAttribute('data-df-slot')];
       var copy = field ? field.cloneNode(true) : null;
-      if (copy) DocForm.all('[id]', copy).forEach(function (el) { el.removeAttribute('id'); });
+      if (copy) DocForm._all('[id]', copy).forEach(function (el) { el.removeAttribute('id'); });
       var text = copy ? Array.from(copy.childNodes) : [];
       if (slot.childNodes.length !== text.length || slot.innerHTML !== (copy ? copy.innerHTML : '')) slot.replaceChildren.apply(slot, text);
       slot.toggleAttribute('data-df-pipe-empty', !field || isEmpty(field));
@@ -862,14 +862,12 @@
   }
 
   DocForm._pipeline = {
-    ranks: ranks, rows: rows, parseVia: parseVia, isEmpty: isEmpty
-  };
-  DocForm.pipeline = {
+    ranks: ranks, rows: rows, parseVia: parseVia, isEmpty: isEmpty,
     get: function (target) { return hosts.get(items.target(target)) || null; }
   };
 
   items.scan('pipeline', function () {
-    DocForm.all('.df-pipeline').forEach(function (host) {
+    DocForm._all('.df-pipeline').forEach(function (host) {
       var model = prepare(host);
       if (model && model.stepDomain) {
         items.collect('pipeline', host, model.stepDomain);
@@ -877,5 +875,5 @@
       } else items.collect('pipeline', host, model && model.domain);
     });
   });
-  DocForm.register('pipeline', function () { DocForm.all('.df-pipeline').forEach(setup); });
+  DocForm.register('pipeline', function () { DocForm._all('.df-pipeline').forEach(setup); });
 })(typeof window !== 'undefined' ? window : globalThis);

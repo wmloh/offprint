@@ -87,7 +87,7 @@
 
   function pageInputs(site, manifest, include) {
     var base = 'file:///site/' + manifest.split('/').map(encodeURIComponent).join('/');
-    var normalized = DF.normalizeSite(site, base);
+    var normalized = DF._normalizeSite(site, base);
     var titles = new Map();
     if (include !== undefined && !Array.isArray(include)) {
       throw Error('assets.search.include must be an ordered array of page paths.');
@@ -111,7 +111,7 @@
   }
 
   function glossaryOptions(terms) {
-    return Object.fromEntries(Object.entries(DF.tooltips.glossary(terms)).sort(function (a, b) {
+    return Object.fromEntries(Object.entries(DF._tooltips.glossary(terms)).sort(function (a, b) {
       return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
     }));
   }
@@ -135,7 +135,7 @@
       try {
         if (format === SEARCH) {
           job.inputs = pageInputs(site, manifest, item.include);
-          var normalized = DF.normalizeSite(site, 'file:///manifest.js');
+          var normalized = DF._normalizeSite(site, 'file:///manifest.js');
           job.config = { terms: glossaryOptions(normalized.glossary), autoLink: normalized.terms.autoLink === true };
         } else {
           var file = resolve(item.source, manifest);
@@ -190,8 +190,8 @@
     if (autoLink) roots = roots.concat(Array.from(doc.querySelectorAll('.df-page')).filter(function (el) {
       return DF._component.flag(el, 'autolink', 'tooltips', true);
     }));
-    DF.tooltips.linkTags(doc, terms);
-    DF.tooltips.autoLink(roots, DF.tooltips.matcher(Object.keys(terms)));
+    DF._tooltips.linkTags(doc, terms);
+    DF._tooltips.autoLink(roots, DF._tooltips.matcher(Object.keys(terms)));
   }
 
   async function fingerprint(file) {
@@ -253,7 +253,7 @@
           try {
             var doc = parseHTML(contents[i].text);
             linkTerms(doc, job.config);
-            var page = DF.search.extract(doc, input.title);
+            var page = DF._search.extract(doc, input.title);
             pages.push({ path: input.path, title: page.title || input.path, sections: page.sections,
               terms: page.terms, outline: page.outline });
           } catch (error) {

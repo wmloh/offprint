@@ -29,8 +29,8 @@
   var count = 0;
   var hasOwn = Object.prototype.hasOwnProperty;
 
-  var termKey = DocForm.termKey;
-  var GLOSSARY_SHAPE = DocForm.tagShapes[0];
+  var termKey = DocForm._termKey;
+  var GLOSSARY_SHAPE = DocForm._tagShapes[0];
   var boot = DocForm._boot;
   var component = DocForm._component;
 
@@ -50,26 +50,26 @@
           title: typeof value.title === 'string' ? value.title : name.trim(),
           text: value.text,
           more: typeof value.more === 'string' ? value.more.trim() : '',
-          tags: registry ? knownTags(DocForm.tagKeys(value.tags), registry, 'Glossary entry "' + name.trim() + '"') :
-            DocForm.tagKeys(value.tags)
+          tags: registry ? knownTags(DocForm._tagKeys(value.tags), registry, 'Glossary entry "' + name.trim() + '"') :
+            DocForm._tagKeys(value.tags)
         };
         if (value.more != null && typeof value.more !== 'string') {
-          DocForm.warnOnce('glossary-more:' + name, 'Glossary entry "' + name + '" has a non-text "more"; ignoring it.');
+          DocForm._warnOnce('glossary-more:' + name, 'Glossary entry "' + name + '" has a non-text "more"; ignoring it.');
         }
       }
       if (!key || !entry) {
-        DocForm.warnOnce('glossary:' + name, 'Glossary entry "' + name + '" needs a text definition; ignoring it.');
+        DocForm._warnOnce('glossary:' + name, 'Glossary entry "' + name + '" needs a text definition; ignoring it.');
         return;
       }
       if (hasOwn.call(out, key)) {
-        DocForm.warnOnce('glossary-dup:' + key, 'Glossary terms "' + out[key].title + '" and "' + name + '" collide; keeping the first.');
+        DocForm._warnOnce('glossary-dup:' + key, 'Glossary terms "' + out[key].title + '" and "' + name + '" collide; keeping the first.');
         return;
       }
       out[key] = entry;
       if (!entry.tags.length) untagged.push(entry.title);
     });
     if (registry && untagged.length) {
-      DocForm.warnOnce('glossary-untagged', untagged.length + ' glossary ' + (untagged.length === 1 ? 'entry has' : 'entries have') +
+      DocForm._warnOnce('glossary-untagged', untagged.length + ' glossary ' + (untagged.length === 1 ? 'entry has' : 'entries have') +
         ' no tags; give each a "tags" array of options.tags.glossary labels: ' + untagged.slice(0, 8).join(', ') +
         (untagged.length > 8 ? ', …' : '') + '.');
     }
@@ -81,7 +81,7 @@
     var known = (registry && registry.glossary) || {};
     return keys.filter(function (key) {
       if (hasOwn.call(known, key)) return true;
-      DocForm.warnOnce('tag-unknown:' + owner + ':' + key, owner + ' names unknown glossary tag "' + key +
+      DocForm._warnOnce('tag-unknown:' + owner + ':' + key, owner + ' names unknown glossary tag "' + key +
         '"; add it to options.tags.glossary.');
       return false;
     });
@@ -104,7 +104,7 @@
   function classifyTags(scope, site) {
     var registry = (site && site.tags) || { glossary: {}, classes: {}, labels: {} };
     var missing = [];
-    DocForm.all('.df-tag', scope).forEach(function (el) {
+    DocForm._all('.df-tag', scope).forEach(function (el) {
       if (el.closest('.df-tooltip') || el.classList.contains('df-tag-glossary')) return;
       var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
       var named = el.getAttribute('data-df-tag-class');
@@ -112,7 +112,7 @@
       if (named !== null) {
         owner = named.trim().toLowerCase();
         if (!hasOwn.call(registry.classes, owner)) {
-          DocForm.warnOnce('tag-class-unknown:' + owner, 'Tag "' + text + '" names unknown tag class "' + named.trim() + '"' +
+          DocForm._warnOnce('tag-class-unknown:' + owner, 'Tag "' + text + '" names unknown tag class "' + named.trim() + '"' +
             (owner === 'glossary' ? '; glossary tags are matched by their label' : '; add it to options.tags.classes') + '.', el);
           owner = null;
         }
@@ -121,7 +121,7 @@
       el.setAttribute('data-df-shape', shape);
       el.classList.toggle('df-tag-unclassified', !owner);
       if (owner) return;
-      DocForm.warnOnce('tag-class:' + text, 'Tag "' + text + '" has no tag class; list it in options.tags.classes.<name>.tags ' +
+      DocForm._warnOnce('tag-class:' + text, 'Tag "' + text + '" has no tag class; list it in options.tags.classes.<name>.tags ' +
         'or set data-df-tag-class.', el);
       missing.push(el);
     });
@@ -134,7 +134,7 @@
     if (!name || !name.trim()) name = el.textContent;
     var key = termKey(name);
     if (hasOwn.call(terms, key)) return terms[key];
-    DocForm.warnOnce('term:' + key, 'Unknown glossary term "' + name.trim() + '"; add it to the manifest glossary.');
+    DocForm._warnOnce('term:' + key, 'Unknown glossary term "' + name.trim() + '"; add it to the manifest glossary.');
     return null;
   }
 
@@ -162,7 +162,7 @@
     if (value === undefined || value === null) return HOLD;
     var ms = Number(value);
     if (isFinite(ms) && ms >= 0) return ms;
-    DocForm.warnOnce('hold:' + value, 'Hold time "' + value + '" must be a number of milliseconds; using ' + HOLD + '.');
+    DocForm._warnOnce('hold:' + value, 'Hold time "' + value + '" must be a number of milliseconds; using ' + HOLD + '.');
     return HOLD;
   }
 
@@ -247,7 +247,7 @@
     var keys = new Set(Object.keys(terms || {}).map(termKey));
     var made = [];
     if (!keys.size) return made;
-    DocForm.all('.df-tag', scope).forEach(function (el) {
+    DocForm._all('.df-tag', scope).forEach(function (el) {
       var key = tagTerm(el, keys);
       if (!key) return;
       el.setAttribute('data-df-term', key);
@@ -262,7 +262,7 @@
   function tipTags(scope, site) {
     var tips = (site && site.roleTips) || {};
     var missing = [];
-    DocForm.all(TAGS, scope).forEach(function (el) {
+    DocForm._all(TAGS, scope).forEach(function (el) {
       if (el.hasAttribute('data-df-term') || el.hasAttribute('data-df-tip') ||
         el.querySelector('[data-df-term], [data-df-tip]')) return;
       var glossaryTag = site && site.tags && site.tags.glossary[termKey(el.textContent || '')];
@@ -277,7 +277,7 @@
       }
       var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
       var fallback = role ? 'Colour role: ' + role.replace(/[-_]+/g, ' ') : text;
-      DocForm.warnOnce('tag-tip:' + (role || text), 'Tag "' + text + '" has no tooltip; add data-df-tip or data-df-term' +
+      DocForm._warnOnce('tag-tip:' + (role || text), 'Tag "' + text + '" has no tooltip; add data-df-tip or data-df-term' +
         (role ? ', or options.roles.tips["' + role + '"]' : '') + '. Showing "' + fallback + '" instead.', el);
       if (fallback) el.setAttribute('data-df-tip', fallback);
       el.classList.add('df-tag-untipped');
@@ -297,7 +297,7 @@
   }
 
   function content(text) {
-    return DocForm.math && DocForm.math.mixed ? DocForm.math.mixed(text) : null;
+    return DocForm._math && DocForm._math.mixed ? DocForm._math.mixed(text) : null;
   }
 
   function setMixed(el, text) {
@@ -309,7 +309,7 @@
   // Author HTML with $…$ math in its text and any .df-math elements rendered.
   function rich(el, html) {
     el.innerHTML = html;
-    var math = DocForm.math;
+    var math = DocForm._math;
     if (!math || !math.mixed) return;
     var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     var nodes = [];
@@ -570,7 +570,7 @@
     };
   }
 
-  DocForm.tooltips = {
+  DocForm._tooltips = {
     termKey: termKey,
     glossary: glossary,
     lookup: lookup,
@@ -599,13 +599,13 @@
     var terms = glossary(site.glossary, registry);
     var options = site.terms || {};
 
-    var roots = DocForm.all('[data-df-autolink]').filter(function (el) {
+    var roots = DocForm._all('[data-df-autolink]').filter(function (el) {
       return boot ? component.flag(el, 'autolink', 'tooltips') : el.getAttribute('data-df-autolink') !== 'false';
     });
     var autoLinkPages = boot ? component.option('tooltips', null, 'autoLink', false, function (value) {
       return typeof value === 'boolean';
     }) : options.autoLink === true;
-    if (autoLinkPages) roots = DocForm.all('.df-page').filter(function (el) {
+    if (autoLinkPages) roots = DocForm._all('.df-page').filter(function (el) {
       return !boot || component.flag(el, 'autolink', 'tooltips', true);
     }).concat(roots);
     var auto = new Set(linkTags(document, terms).concat(autoLink(roots, matcher(Object.keys(terms)))));
@@ -613,14 +613,14 @@
     tipTags(document, site);
 
     // Tips in running text are glossary entries and need at least one glossary tag from data-df-tip-tags.
-    DocForm.all('[data-df-tip]').forEach(function (el) {
+    DocForm._all('[data-df-tip]').forEach(function (el) {
       el.classList.add('df-tip');
       var tags = null;
-      if (DocForm.glossaryTip(el)) {
+      if (DocForm._glossaryTip(el)) {
         var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
-        tags = knownTags(DocForm.tagKeys(el.getAttribute('data-df-tip-tags')), registry, 'Tip "' + text + '"');
+        tags = knownTags(DocForm._tagKeys(el.getAttribute('data-df-tip-tags')), registry, 'Tip "' + text + '"');
         if (!tags.length) {
-          DocForm.warnOnce('tip-untagged:' + text, 'Tip "' + text + '" has no glossary tag; add data-df-tip-tags with ' +
+          DocForm._warnOnce('tip-untagged:' + text, 'Tip "' + text + '" has no glossary tag; add data-df-tip-tags with ' +
             'labels from options.tags.glossary.', el);
           el.classList.add('df-tip-untagged');
         }
@@ -630,7 +630,7 @@
 
     // Terms that share an entry and extended text share one tooltip box.
     var shared = new Map();
-    DocForm.all('[data-df-term]').forEach(function (el) {
+    DocForm._all('[data-df-term]').forEach(function (el) {
       el.classList.add('df-term');
       var entry = lookup(terms, el);
       if (!entry) {

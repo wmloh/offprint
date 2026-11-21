@@ -23,7 +23,7 @@
   function accepted(value) {
     var list = String(value == null ? '' : value).split(/[\s,]+/).filter(Boolean).map(function (v) {
       var t = source.type(v.replace(/^\./, ''));
-      if (!t) DocForm.warnOnce('dropzone-accept:' + v, 'Ignoring "' + v + '" in data-df-accept; use csv, json, or yaml.');
+      if (!t) DocForm._warnOnce('dropzone-accept:' + v, 'Ignoring "' + v + '" in data-df-accept; use csv, json, or yaml.');
       return t;
     }).filter(function (t, i, all) { return t && all.indexOf(t) === i; });
     return list.length ? list : TYPES.slice();
@@ -75,7 +75,7 @@
     if (grid) {
       if (grid.columns.length < 2) throw new Error('a chart needs an x column and at least one series column.');
       var cells = maxRows > 0 ? grid.cells.slice(0, maxRows) : grid.cells;
-      var spec = DocForm.chart.fromTable([grid.columns].concat(cells), base.type);
+      var spec = DocForm._chart.fromTable([grid.columns].concat(cells), base.type);
       if (spec.type === 'pie') {
         var slices = new Map((base.data || []).map(function (slice) { return [slice.label, slice]; }));
         next.data = spec.data.map(function (slice) {
@@ -112,11 +112,11 @@
   }
 
   function chartOf(el) {
-    if (!DocForm.chart || !DocForm.chart.get) return null;
-    var api = DocForm.chart.get(el);
+    if (!DocForm._chart || !DocForm._chart.get) return null;
+    var api = DocForm._chart.get(el);
     if (api) return api;
     var inner = el.querySelector && el.querySelector('.df-chart');
-    return inner ? DocForm.chart.get(inner) : null;
+    return inner ? DocForm._chart.get(inner) : null;
   }
 
   function controls(api, kind, convert) {
@@ -173,8 +173,8 @@
     var api = chartOf(el);
     if (api) {
       var managedChart = controls(api, 'chart', function (entry, limits) {
-        var made = DocForm.chart._upload(api, entry, limits.maxRows) ||
-          chartSpec(data.parse(entry.text, entry.type), DocForm.chart._baseline(api), limits.maxRows);
+        var made = DocForm._chart._upload(api, entry, limits.maxRows) ||
+          chartSpec(data.parse(entry.text, entry.type), DocForm._chart._baseline(api), limits.maxRows);
         return { input: made.spec, note: plotNote(made) };
       });
       if (managedChart) return managedChart;
@@ -184,7 +184,7 @@
         feed: function (entry, limits) {
           if (original === undefined) original = api.spec();
           var made = chartSpec(data.parse(entry.text, entry.type), original, limits.maxRows);
-          var errors = DocForm.chart.validate(made.spec);
+          var errors = DocForm._chart.validate(made.spec);
           if (errors.length) throw new Error(errors.join(' '));
           api.update(made.spec);
           return plotNote(made);
@@ -195,12 +195,12 @@
         }
       };
     }
-    var view = DocForm.dataView.get(el) || DocForm.dataView.get(el.querySelector && el.querySelector('.df-data'));
+    var view = DocForm._dataView.get(el) || DocForm._dataView.get(el.querySelector && el.querySelector('.df-data'));
     if (view) return controls(view, 'data', function (entry) { return { input: entry }; });
     var table = el.tagName === 'TABLE' ? el : el.querySelector && el.querySelector('table[data-df-results]');
-    var results = table && DocForm.results && DocForm.results.get(table);
+    var results = table && DocForm._results && DocForm._results.get(table);
     if (results) return controls(results, 'table', function (entry) {
-      return { input: DocForm.results._upload(entry) };
+      return { input: DocForm._results._upload(entry) };
     });
     if (table && template) {
       var host = null;
@@ -215,14 +215,14 @@
           (host || table).replaceWith(next);
           host = next;
           // The static table's filter bar sits beside it, so it hides while the table is away.
-          var bar = DocForm.results && DocForm.results.bar ? DocForm.results.bar(table) : null;
+          var bar = DocForm._results && DocForm._results.bar ? DocForm._results.bar(table) : null;
           if (bar) bar.hidden = true;
           return '';
         },
         restore: function () {
           if (host) host.replaceWith(table);
           host = null;
-          var bar = DocForm.results && DocForm.results.bar ? DocForm.results.bar(table) : null;
+          var bar = DocForm._results && DocForm._results.bar ? DocForm._results.bar(table) : null;
           if (bar) bar.hidden = false;
         }
       };
@@ -238,10 +238,10 @@
   }
 
   function setup(zone) {
-    var accept = accepted(DocForm.data(zone, 'accept', ''));
+    var accept = accepted(DocForm._data(zone, 'accept', ''));
     var caps = source.limits(zone, source.options('dropzone', zone));
-    var targetId = DocForm.data(zone, 'target', '').trim();
-    var sourceName = DocForm.data(zone, 'target-source', '').trim();
+    var targetId = DocForm._data(zone, 'target', '').trim();
+    var sourceName = DocForm._data(zone, 'target-source', '').trim();
     var hasTarget = zone.hasAttribute('data-df-target');
     var hasSource = zone.hasAttribute('data-df-target-source');
     var invalid = hasTarget && hasSource || hasTarget && !targetId || hasSource && !sourceName;
@@ -420,7 +420,7 @@
     });
   }
 
-  DocForm.dropzone = {
+  DocForm._dropzone = {
     accepted: accepted,
     listNames: listNames,
     fileType: fileType,
@@ -430,6 +430,6 @@
   };
 
   DocForm.register('dropzone', function () {
-    DocForm.all('[data-df-dropzone]:not(.df-dropzone)').forEach(setup);
+    DocForm._all('[data-df-dropzone]:not(.df-dropzone)').forEach(setup);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

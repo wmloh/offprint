@@ -120,14 +120,14 @@
         // are not glossary entries; its tips are skipped until it is rebuilt.
         if (typeof record.tip === 'string') {
           if (!Array.isArray(record.tags)) return;
-          var key = DocForm.termKey(record.text);
+          var key = DocForm._termKey(record.text);
           if (!key) return;
           var e = entry(key, clean(record.text));
-          define(e, record.tip, page, record.tags.map(DocForm.termKey));
+          define(e, record.tip, page, record.tags.map(DocForm._termKey));
           use(e, page, record.section || '');
         } else if (typeof record.term === 'string') {
           // data-df-term only reads the manifest, so a use of any other name is a missing term.
-          var known = byKey[DocForm.termKey(record.term)];
+          var known = byKey[DocForm._termKey(record.term)];
           if (known && known.manifest) use(known, page, record.section || '');
         }
       });
@@ -189,7 +189,7 @@
   }
 
   function mixed(el, text) {
-    var tooltip = DocForm.tooltips;
+    var tooltip = DocForm._tooltips;
     if (tooltip && tooltip.mixed) tooltip.mixed(el, text);
     else el.textContent = text;
     return el;
@@ -239,7 +239,7 @@
 
   // A circle tag with its registry tip as a tooltip; one shared tooltip box per tag.
   function tagWithTip(key, registry, cards, tagName) {
-    var tooltip = DocForm.tooltips;
+    var tooltip = DocForm._tooltips;
     var chip = tooltip.tagChip(key === UNTAGGED ? null : key, registry, tagName);
     var tag = key === UNTAGGED ? null : registry.glossary[key];
     var tip = tag ? tag.tip : 'No glossary tag yet. Give the term tags in the site settings or with data-df-tip-tags.';
@@ -255,7 +255,7 @@
       [e].concat(e.variants).forEach(function (item) {
         item.tags = (item.tags || []).filter(function (key) {
           if (hasOwn.call(known, key)) return true;
-          DocForm.warnOnce('glossary-tag:' + key, 'Glossary tag "' + key + '" is not in options.tags.glossary; hiding it.');
+          DocForm._warnOnce('glossary-tag:' + key, 'Glossary tag "' + key + '" is not in options.tags.glossary; hiding it.');
           return false;
         });
       });
@@ -328,11 +328,11 @@
   function render(el, entries, message, registry) {
     if (typeof el === 'string') el = DocForm._component.target(el, 'glossary', true);
     if (!el) return;
-    registry = registry || (DocForm.site && DocForm.site.tags) || { glossary: {} };
-    var tagged = !!DocForm.tooltips && !!DocForm.tooltips.tagChip;
+    registry = registry || (DocForm._site && DocForm._site.tags) || { glossary: {} };
+    var tagged = !!DocForm._tooltips && !!DocForm._tooltips.tagChip;
     if (tagged) entryTags(entries, registry);
     var cards = Object.create(null);
-    var used = new Set(DocForm.all('[id]').filter(function (node) { return !el.contains(node); })
+    var used = new Set(DocForm._all('[id]').filter(function (node) { return !el.contains(node); })
       .map(function (node) { return node.id; }));
     el.classList.add('df-glossary');
     el.setAttribute('data-df-no-autolink', '');
@@ -349,7 +349,7 @@
     var list = groups(entries);
     var ids = {};
     list.forEach(function (g) {
-      ids[g.letter] = DocForm.uniqueSlug('glossary-' + (g.letter === OTHER ? 'other' : DocForm.slug(g.letter) || 'letter'), used);
+      ids[g.letter] = DocForm.util.uniqueSlug('glossary-' + (g.letter === OTHER ? 'other' : DocForm.util.slug(g.letter) || 'letter'), used);
     });
 
     var rows = [];
@@ -400,7 +400,7 @@
       g.entries.forEach(function (e) {
         var dt = dl.appendChild(make('dt', 'df-glossary-term'));
         mixed(dt.appendChild(make('span', 'df-glossary-title')), e.title);
-        dt.id = DocForm.uniqueSlug('term-' + (DocForm.slug(e.key) || 'entry'), used);
+        dt.id = DocForm.util.uniqueSlug('term-' + (DocForm.util.slug(e.key) || 'entry'), used);
         if (tagged) {
           var tagLine = dt.appendChild(make('span', 'df-glossary-tags'));
           (e.tags.length ? e.tags : [UNTAGGED]).forEach(function (key) { tagLine.appendChild(tagWithTip(key, registry, cards)); });
@@ -408,7 +408,7 @@
         var dd = dl.appendChild(make('dd', 'df-glossary-entry'));
         rows.push({ entry: e, dt: dt, dd: dd, letter: g.letter });
         mixed(dd.appendChild(make('p', 'df-glossary-text')), e.text);
-        if (e.more && DocForm.tooltips && DocForm.tooltips.rich) DocForm.tooltips.rich(dd.appendChild(make('div', 'df-glossary-more')), e.more);
+        if (e.more && DocForm._tooltips && DocForm._tooltips.rich) DocForm._tooltips.rich(dd.appendChild(make('div', 'df-glossary-more')), e.more);
         if (e.variants.length) {
           dd.appendChild(variantsBlock(e.variants, tagged && function (key) { return tagWithTip(key, registry, cards); }));
         }
@@ -417,7 +417,7 @@
     });
   }
 
-  DocForm.glossary = {
+  DocForm._glossary = {
     merge: merge,
     groups: groups,
     jumps: jumps,
@@ -429,12 +429,12 @@
   };
 
   DocForm.register('glossary', function (site) {
-    var holders = DocForm.all('[data-df-glossary]').filter(function (el) {
+    var holders = DocForm._all('[data-df-glossary]').filter(function (el) {
       return !DocForm._boot || DocForm._component.flag(el, 'glossary', 'glossary');
     });
     if (!holders.length) return;
-    if (!DocForm.tooltips) DocForm.warnOnce('glossary-tooltip', 'glossary.js needs tooltip.js for the manifest glossary.');
-    var terms = DocForm.tooltips ? DocForm.tooltips.glossary(site.glossary, site.tags) : {};
+    if (!DocForm._tooltips) DocForm._warnOnce('glossary-tooltip', 'glossary.js needs tooltip.js for the manifest glossary.');
+    var terms = DocForm._tooltips ? DocForm._tooltips.glossary(site.glossary, site.tags) : {};
     var draw = function (pages) {
       var entries = merge(terms, pages);
       var message = notice(pages);
@@ -448,7 +448,7 @@
       }
       if (target && holders.some(function (el) { return el.contains(target); })) target.scrollIntoView({ block: 'start' });
     };
-    if (DocForm.search) DocForm.search.pages(draw);
+    if (DocForm._search) DocForm._search.pages(draw);
     else draw(null);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

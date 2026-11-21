@@ -28,14 +28,14 @@ test('figures, tables, and equations are numbered separately in page order', () 
 test('citations number by first use, skip repeats, and report unknown keys once', () => {
   const { DocForm } = load(['refs.js']);
   const bib = { a: 'A', b: 'B', c: 'C' };
-  const lists = [' b, a ', 'zz a', 'c;b', 'zz'].map(DocForm.citations.citeKeys);
+  const lists = [' b, a ', 'zz a', 'c;b', 'zz'].map(DocForm._citations.citeKeys);
   const result = DocForm._references.assignNumbers(lists, bib);
   assert.deepEqual(json(result), { numbers: { b: 1, a: 2, c: 3 }, order: ['b', 'a', 'c'], missing: ['zz'] });
 });
 
 test('entries format authors, venue details, and links, and strings pass through', () => {
   const { DocForm } = load(['refs.js']);
-  const { citationText, formatEntry } = DocForm.citations;
+  const { citationText, formatEntry } = DocForm._citations;
   const { joinAuthors } = DocForm._references;
   assert.equal(citationText({
     author: 'A. Vaswani and N. Shazeer and N. Parmar',
@@ -53,7 +53,7 @@ test('entries format authors, venue details, and links, and strings pass through
 
 test('sidenotes go to the margin only when the column leaves room beside it', () => {
   const { DocForm } = load(['notes.js']);
-  const { fits, width, gap } = DocForm.sidenotes;
+  const { fits, width, gap } = DocForm._sidenotes;
   // A 1920px window with the sidebar shown leaves about 390px right of the column.
   assert.equal(fits(1920, 1530, width, gap, 16), true);
   assert.equal(fits(1440, 1290, width, gap, 16), false);

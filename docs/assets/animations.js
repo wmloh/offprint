@@ -1,4 +1,4 @@
-DocForm.setup(({ animation }) => {
+DocForm.setup(({ _animation: animation }) => {
   animation.mount('see-it-demo', {
     label: 'Start at Search.',
     steps: [

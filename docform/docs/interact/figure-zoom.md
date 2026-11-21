@@ -4,6 +4,6 @@ Enable the `zoom` feature. Figures and images inside `.df-page` are triggers. Ad
 
 - Click or focus the zoomable element and press Enter or Space. Escape, backdrop click, and the close button dismiss the dialog. Tab is contained in the open dialog and closing restores focus to the opener. The real element moves into the stage, leaving a sized placeholder, then returns to its prior position. Live controls and figure state move with it.
 - Links, form controls, terms and tips, and animation controls are excluded from figure click activation. Chart plot clicks can open the figure unless handled by keyed selection or range brushing. Without JS the figure stays in the page.
-- `DocForm.zoom.open(idOrElement)` and `close()` return whether the request was accepted. `snapshot()` returns `{target, overlay, stage}` with live elements, or `null`. `subscribe(fn)` receives committed open and close states. On `document`, `df:zoom:closing` fires before restoration for teardown and `df:zoom:change` fires after each commit, with `{current, previous, origin}`.
+- On `document`, `df:zoom:closing` fires before restoration and `df:zoom:change` fires after each commit. Detail is `{current, previous, origin}`. An open state is `{target, overlay, stage}` with live elements. A closed state is `null`.
 
 [Presentation tools](zoom-tools.md) · [Charts](../data/charts.md) · [Source](../../js/zoom.js)

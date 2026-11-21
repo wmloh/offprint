@@ -396,17 +396,17 @@
     if (typeof entry === 'string') return define(name, { type: sniff(entry, name), text: entry });
     if (entry && (entry.format !== undefined || entry.version !== undefined) &&
         (entry.format !== 'docform-data' || entry.version !== 1)) {
-      DocForm.warnOnce('data-version:' + name, 'Regenerate the data wrapper for "' + name + '" with the current asset tool.');
+      DocForm._warnOnce('data-version:' + name, 'Regenerate the data wrapper for "' + name + '" with the current asset tool.');
       return null;
     }
     if (entry && typeof entry.text === 'string') {
       var kind = type(entry.type);
       if (entry.type != null && !kind) {
-        DocForm.warnOnce('data-type:' + entry.type, 'Unknown data type "' + entry.type + '"; use csv, json, or yaml.');
+        DocForm._warnOnce('data-type:' + entry.type, 'Unknown data type "' + entry.type + '"; use csv, json, or yaml.');
       }
       return define(name, { type: kind || sniff(entry.text, name), text: entry.text });
     }
-    DocForm.warnOnce('data-entry:' + name, 'window.DocFormData["' + name + '"] needs a text string; ignoring it.');
+    DocForm._warnOnce('data-entry:' + name, 'window.DocFormData["' + name + '"] needs a text string; ignoring it.');
     return null;
   }
 
@@ -572,7 +572,7 @@
     var tabular = !!table(parsed);
     if (want === 'code' || want === 'tree') return want;
     if (want === 'table' && !tabular) {
-      DocForm.warnOnce('data-view-table', 'This data is not a flat list of records, so it is shown as code instead of a table.');
+      DocForm._warnOnce('data-view-table', 'This data is not a flat list of records, so it is shown as code instead of a table.');
     }
     return tabular ? 'table' : 'code';
   }
@@ -657,7 +657,7 @@
         var key = columnKey(th);
         var at = data.columns.indexOf(key);
         if (at < 0 && !th.hasAttribute('data-df-field')) at = lower.indexOf(key.toLowerCase());
-        if (at < 0) DocForm.warnOnce('data-col:' + state.name + ':' + key, 'Data "' + state.name + '" has no column "' + key + '".', th);
+        if (at < 0) DocForm._warnOnce('data-col:' + state.name + ':' + key, 'Data "' + state.name + '" has no column "' + key + '".', th);
         return at;
       }) : [];
       Array.prototype.slice.call(table.tBodies).forEach(function (b) { b.remove(); });
@@ -720,10 +720,10 @@
   }
 
   function enhanceAll(el) {
-    if (DocForm.results && DocForm.results.enhance) DocForm.all('table[data-df-results]', el).forEach(function (table) {
-      DocForm.results.enhance(table, { silent: true });
+    if (DocForm._results && DocForm._results.enhance) DocForm._all('table[data-df-results]', el).forEach(function (table) {
+      DocForm._results.enhance(table, { silent: true });
     });
-    if (DocForm.code) DocForm.all('pre', el).forEach(DocForm.code.mount);
+    if (DocForm._code) DocForm._all('pre', el).forEach(DocForm._code.mount);
   }
 
   function recordView(state, detail) {
@@ -783,12 +783,12 @@
       return;
     }
     var shown = state.grid && (state.view === 'auto' || state.view === 'table') ? 'table' : view(parsed, state.view);
-    if (shown === 'tree' && !DocForm.tree) {
+    if (shown === 'tree' && !DocForm._tree) {
       runtime.issue('data-view', el, 'Enable the tree feature for tree views. Showing code.');
       shown = 'code';
     }
     if (shown === 'tree') {
-      el.appendChild(DocForm.tree.build(valueOf(parsed), { label: 'Data ' + label, open: state.open, maxItems: state.limits.maxRows }));
+      el.appendChild(DocForm._tree.build(valueOf(parsed), { label: 'Data ' + label, open: state.open, maxItems: state.limits.maxRows }));
       recordView(state, { view: 'tree' });
     } else if (shown === 'table') {
       var data = state.grid || table(parsed);
@@ -925,11 +925,11 @@
     changed(state, 'drop');
   }
 
-  Object.assign(DocForm.data, {
+  DocForm.data = {
     define: define, source: source, defineTransform: defineTransform,
     names: function () { return Array.from(sources.keys()); },
     parse: parse, table: table, valueOf: valueOf
-  });
+  };
   DocForm._dataSource = {
     binding: binding, options: optionsFor, fields: mappedFields, key: keyOf, input: readInput,
     columns: tableMapping, interval: mappedInterval, transform: transformValue, filter: recordFilter,
@@ -940,7 +940,7 @@
     },
     showFile: showFile
   };
-  DocForm.dataView = {
+  DocForm._dataView = {
     mount: mountView,
     get: function (target) { return dataViews.get(DocForm._component.target(target, 'data-view', false)) || null; }
   };
@@ -949,8 +949,8 @@
     Object.keys(root.DocFormData || {}).forEach(function (name) {
       if (!sources.has(name) && !invalidSources.has(name)) registerWrapped(name);
     });
-    DocForm.all('script[data-df-source], pre[data-df-source]').forEach(function (el) {
-      var name = DocForm.data(el, 'source', '').trim();
+    DocForm._all('script[data-df-source], pre[data-df-source]').forEach(function (el) {
+      var name = DocForm._data(el, 'source', '').trim();
       var text = dedent(el.textContent);
       var declared = el.getAttribute('data-df-source-type');
       var kind = el.tagName === 'PRE' ? (declared === null ? sniff(text, name) : type(declared)) :
@@ -966,6 +966,6 @@
     boot.registerData = registerWrapped;
   }
   DocForm.register('data-view', function () {
-    DocForm.all('[data-df-data-view]:not([data-df-dropzone])').forEach(function (el) { mountView(el); });
+    DocForm._all('[data-df-data-view]:not([data-df-dropzone])').forEach(function (el) { mountView(el); });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

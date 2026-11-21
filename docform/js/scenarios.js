@@ -22,14 +22,14 @@
     var requested = (table.getAttribute('data-df-scenarios') || '').trim();
     if (!Object.hasOwn(MODES, requested)) return null;
     var mode = MODES[requested];
-    var heads = DocForm.all(':scope > thead > tr', table);
+    var heads = DocForm._all(':scope > thead > tr', table);
     if (heads.length !== 1) return null;
     var columns = Array.from(heads[0].cells);
     var names = columns.slice(2).map(function (cell) { return sequence.label(cell, cell); });
     var keys = columns.slice(2).map(function (cell) {
-      return items.key(DocForm.data(cell, 'key'));
+      return items.key(DocForm._data(cell, 'key'));
     });
-    var rows = DocForm.all(':scope > tbody > tr', table);
+    var rows = DocForm._all(':scope > tbody > tr', table);
     var conditions = [];
     var groups = new Map();
     if (table.tFoot || names.length < 2 || names.includes('') || keys.includes(null) || new Set(keys).size !== keys.length) return null;
@@ -45,7 +45,7 @@
         conditions.push(measure);
       } else {
         measure.numbers = measure.values.map(function (value) {
-          return value.endsWith('%') ? null : DocForm.chart.toNumber(value);
+          return value.endsWith('%') ? null : DocForm._chart.toNumber(value);
         });
         if (!measure.numbers.every(Number.isFinite)) return null;
         var group = groups.get(measure.unit);
@@ -102,7 +102,7 @@
     visual.className = 'df-scenarios-visual';
     var controls = element('div', visual);
     controls.className = 'df-scenarios-controls';
-    var chooser = DocForm.choices.create({
+    var chooser = DocForm._choices.create({
       label: 'Variant',
       options: model.variants.map(function (variant) { return { value: String(variant.index), label: variant.name }; }),
       className: 'df-scenarios-chooser',
@@ -168,7 +168,7 @@
           changedText.push(changeText(outcome, index));
           outcome.cells[selectedColumn].setAttribute('data-df-scenario-difference', '');
         });
-        (DocForm.chart._embedded || DocForm.chart)(plot.host, {
+        (DocForm._chart._embedded || DocForm._chart)(plot.host, {
           type: 'bar',
           title: group.unit ? 'Outcomes in ' + group.unit : 'Unitless outcomes',
           categories: group.categories,
@@ -195,7 +195,7 @@
     return {
       show: show,
       remove: function () {
-        plots.forEach(function (plot) { DocForm.chart._remove(plot.host); });
+        plots.forEach(function (plot) { DocForm._chart._remove(plot.host); });
         model.variants.forEach(function (variant) { if (variant.detail) variant.detail.hidden = false; });
         pill.destroy();
         visual.remove();
@@ -281,14 +281,14 @@
     element('th', header, 'Measure');
     element('th', header, 'Unit');
     keys.forEach(function (key) {
-      var match = authored.find(function (cell) { return items.key(DocForm.data(cell, 'key')) === key; });
+      var match = authored.find(function (cell) { return items.key(DocForm._data(cell, 'key')) === key; });
       var label = mapping.labels && Object.hasOwn(mapping.labels, key) ? mapping.labels[key] :
         match && sequence.label(match, match) || key;
       if (typeof label !== 'string' || !label.trim()) throw new Error('Use a nonempty scenario label.');
       var cell = element('th', header);
       element('span', cell, label).setAttribute('data-df-step-label', '');
       cell.setAttribute('data-df-key', key);
-      var detail = match && DocForm.data(match, 'detail');
+      var detail = match && DocForm._data(match, 'detail');
       if (detail) cell.setAttribute('data-df-detail', detail);
       if (mapping.initial === key || (mapping.initial === undefined && match && items.flag(match, 'initial', 'scenarios'))) {
         cell.setAttribute('data-df-initial', '');
@@ -380,13 +380,13 @@
     return controller.api;
   }
 
-  DocForm.scenarios = {
+  DocForm._scenarios = {
     mount: mount,
     get: function (target) { return scenarios.get(DocForm._dataViews.target(target)) || null; }
   };
 
   items.scan('scenarios', function () {
-    DocForm.all('table[data-df-scenarios]').forEach(function (table) {
+    DocForm._all('table[data-df-scenarios]').forEach(function (table) {
       var model = read(table);
       var data = DocForm._dataSource;
       var mapping = data && table.hasAttribute('data-df-source') && data.options('scenarios', table).mapping;
@@ -403,9 +403,9 @@
   });
 
   DocForm.register('scenarios', function () {
-    var tables = DocForm.all('table[data-df-scenarios]');
-    if (tables.length && !DocForm.chart) {
-      DocForm.warnOnce('scenarios:chart', 'scenarios.js needs chart.js for interactive comparisons.');
+    var tables = DocForm._all('table[data-df-scenarios]');
+    if (tables.length && !DocForm._chart) {
+      DocForm._warnOnce('scenarios:chart', 'scenarios.js needs chart.js for interactive comparisons.');
       return;
     }
     tables.forEach(function (table) { mount(table); });

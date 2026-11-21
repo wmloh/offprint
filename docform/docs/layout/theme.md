@@ -7,7 +7,6 @@ The offline entry applies the `theme` feature before paint. Saved mode takes pre
 ```
 
 - Use an empty host or button. The script creates or enhances a button with the current mode and an accessible label for the action. The [control pill](controls.md) adds its own when present.
-- `DocForm.theme` provides `get()`, `set(mode)`, `next(mode)`, and `mount(idOrElement)`. Mount returns the same enhanced button on repeat. `set()` returns whether the request was accepted.
-- The root `data-df-theme` reflects the mode. `snapshot()` returns `{mode}`. `subscribe(fn, {immediate: true}?)` returns an unsubscribe function. Updates commit before subscribers and `df:theme:change` on `document` with `{current, previous, origin}`. Origins include `user`, `api`, and `storage`.
+- The root `data-df-theme` reflects the mode. On `document`, `df:theme:change` reports `{current, previous, origin}` with `{mode}` states.
 
 [Tokens](tokens.md) · [Theme source](../../js/theme.js)

@@ -13,7 +13,7 @@
   var HOST = 'ol[data-df-stepper]';
 
   function prepare(list) {
-    var domain = items.domain('stepper', list, DocForm.all(':scope > li', list));
+    var domain = items.domain('stepper', list, DocForm._all(':scope > li', list));
     if (!domain) return null;
     domain.labels = domain.items.map(function (step) {
       return sequence.label(step);
@@ -32,8 +32,8 @@
     var steps = domain.items;
     var bindings = [];
     views.forEach(function (view) {
-      if (DocForm.data(view, 'stepper-view') !== list.id) return;
-      var key = items.key(DocForm.data(view, 'key'));
+      if (DocForm._data(view, 'stepper-view') !== list.id) return;
+      var key = items.key(DocForm._data(view, 'key'));
       if (domain.keys.includes(key)) bindings.push({ view: view, key: key });
     });
 
@@ -61,10 +61,10 @@
   }
 
   items.scan('stepper', function () {
-    DocForm.all(HOST).forEach(function (list) { items.collect('stepper', list, prepare(list)); });
+    DocForm._all(HOST).forEach(function (list) { items.collect('stepper', list, prepare(list)); });
   });
   DocForm.register('stepper', function () {
-    var views = DocForm.all('[data-df-stepper-view][data-df-key]');
-    DocForm.all(HOST).forEach(function (list) { setup(list, views); });
+    var views = DocForm._all('[data-df-stepper-view][data-df-key]');
+    DocForm._all(HOST).forEach(function (list) { setup(list, views); });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

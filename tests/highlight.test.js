@@ -62,7 +62,7 @@ function selectionPage(nodes, groups = {}, store = new Map()) {
   const diagnostics = [];
   const boot = { canInitialize: () => true, report: (_, feature, host, message) => diagnostics.push(message),
     moduleFailed: (_, error) => { throw error; } };
-  const DocForm = { _boot: boot, site: { base: 'file:///site/site.js', selectionGroups: groups } };
+  const DocForm = { _boot: boot, _site: { base: 'file:///site/site.js', selectionGroups: groups } };
   const context = vm.createContext({
     DocForm,
     document,
@@ -82,7 +82,7 @@ function selectionPage(nodes, groups = {}, store = new Map()) {
   });
 
   vm.runInContext(core, context);
-  DocForm.all = (selector, scope = document.body) => descendants(scope).filter((el) => el.matches(selector));
+  DocForm._all = (selector, scope = document.body) => descendants(scope).filter((el) => el.matches(selector));
   vm.runInContext(source, context);
   boot.prepareSelection();
 

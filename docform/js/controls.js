@@ -349,9 +349,9 @@
   function render() {
     var main = document.querySelector('.df-page') || document.querySelector('main') || document.body;
     var sidebar = document.querySelector('.df-sidebar');
-    var headings = DocForm.all('h2, h3', main).filter(function (h) { return !h.closest('.df-sidebar'); });
+    var headings = DocForm._all('h2, h3', main).filter(function (h) { return !h.closest('.df-sidebar'); });
     var drawerMode = root.matchMedia ? root.matchMedia(DRAWER) : null;
-    var theme = DocForm.theme;
+    var theme = DocForm._theme;
     var pill = make('div', 'df-controls');
     var progressRing = ring();
     var actions = {};
@@ -366,7 +366,7 @@
     pill.appendChild(progressRing.el);
 
     function drawer() {
-      return drawerMode && drawerMode.matches && DocForm.navigation && DocForm.navigation.drawer ? DocForm.navigation.drawer : null;
+      return drawerMode && drawerMode.matches && DocForm._navigation && DocForm._navigation.drawer ? DocForm._navigation.drawer : null;
     }
 
     function syncNav() {
@@ -403,7 +403,7 @@
         else setNavMode(NAV_MODES[state.navMode]);
       };
       navButton.addEventListener('click', actions.nav);
-      if (DocForm.navigation && DocForm.navigation.drawer) DocForm.navigation.drawer.subscribe(syncNav);
+      if (DocForm._navigation && DocForm._navigation.drawer) DocForm._navigation.drawer.subscribe(syncNav);
       if (drawerMode) drawerMode.addEventListener('change', syncNav);
       watchAutoNav(sidebar, navButton, drawerMode, syncNav);
     }
@@ -414,13 +414,13 @@
       focusButton.addEventListener('click', actions.focus);
     }
 
-    if (DocForm.search && typeof DocForm.search.open === 'function') {
+    if (DocForm._search && typeof DocForm._search.open === 'function') {
       var searchButton = pill.appendChild(make('button', 'df-controls-btn df-controls-search'));
       searchButton.type = 'button';
-      searchButton.innerHTML = DocForm.search.icon;
+      searchButton.innerHTML = DocForm._search.icon;
       searchButton.setAttribute('aria-label', 'Search');
       DocForm._shortcutHint(searchButton, 'search.open', 'Search');
-      searchButton.addEventListener('click', function () { DocForm.search.open(searchButton); });
+      searchButton.addEventListener('click', function () { DocForm._search.open(searchButton); });
     }
 
     if (theme && typeof theme.toggle === 'function') {
@@ -480,7 +480,7 @@
     });
   }
 
-  DocForm.controls = {
+  DocForm._controls = {
     keys: KEYS,
     pickFocus: pickFocus,
     blockSpans: blockSpans,

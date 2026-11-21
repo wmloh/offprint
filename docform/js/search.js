@@ -38,12 +38,12 @@
     var record = null;
     if (el.hasAttribute('data-df-tip')) {
       var tip = clean(el.getAttribute('data-df-tip'));
-      if (text && tip && DocForm.glossaryTip(el)) {
-        record = { text: text, tip: tip, tags: DocForm.tagKeys(el.getAttribute('data-df-tip-tags')), section: section };
+      if (text && tip && DocForm._glossaryTip(el)) {
+        record = { text: text, tip: tip, tags: DocForm._tagKeys(el.getAttribute('data-df-tip-tags')), section: section };
       }
     } else {
       var name = el.getAttribute('data-df-term');
-      var key = DocForm.termKey(name && name.trim() ? name : text);
+      var key = DocForm._termKey(name && name.trim() ? name : text);
       if (text && key) record = { text: text, term: key, section: section };
     }
     if (!record) return;
@@ -60,7 +60,7 @@
     var used = new Set(Array.prototype.map.call(doc.querySelectorAll('[id]'), function (el) { return el.id; }));
     Array.prototype.forEach.call(main.querySelectorAll('h2, h3'), function (h) {
       if (!h.id && !h.closest('.df-sidebar') && !component.closestFlag(h, 'no-outline', 'search')) {
-        h.id = DocForm.uniqueSlug(DocForm.slug(h.textContent), used);
+        h.id = DocForm.util.uniqueSlug(DocForm.util.slug(h.textContent), used);
       }
     });
     var h1 = main.querySelector('h1');
@@ -76,7 +76,7 @@
           component.closestFlag(h, 'no-search', 'search')) return;
       var text = clean(h.textContent);
       if (!text) return;
-      if (!h.id) h.id = DocForm.uniqueSlug(DocForm.slug(h.textContent), used);
+      if (!h.id) h.id = DocForm.util.uniqueSlug(DocForm.util.slug(h.textContent), used);
       outline.push({ id: h.id, title: text, level: Number(h.tagName[1]) });
     });
     var parts = [[]];
@@ -231,7 +231,7 @@
 
   function load(callback) {
     if (index() || failed) return callback(index());
-    var site = DocForm.site;
+    var site = DocForm._site;
     var src = site && (site.assets ? site.assets.search.output : site.search);
     if (!src) return callback(null);
     if (waiting) return waiting.push(callback);
@@ -242,7 +242,7 @@
         if (DocForm._boot) DocForm._boot.report('search-index', 'search', src,
           'The search index did not load or did not register its pages.',
           'Regenerate the classic search index and check its path. Current-page search is still available.');
-        else DocForm.warnOnce('search-index', 'Search index "' + src + '" did not load or does not set window.DocFormSearch.');
+        else DocForm._warnOnce('search-index', 'Search index "' + src + '" did not load or does not set window.DocFormSearch.');
       }
       var list = waiting;
       waiting = null;
@@ -260,14 +260,14 @@
   }
 
   function base() {
-    var site = DocForm.site || {};
+    var site = DocForm._site || {};
     return site.searchBase || (site.provided ? site.base : root.location.href);
   }
 
   // Search entries: the live current page plus every other page in the index.
   function entries(data) {
     var here = pageKey(root.location.href);
-    var site = DocForm.site || {};
+    var site = DocForm._site || {};
     var current = null;
     (site.order || []).forEach(function (page) {
       if (!current && page.href && pageKey(page.href) === here) current = page.title;
@@ -279,7 +279,7 @@
     });
     if (!data) return out;
     data.pages.forEach(function (page) {
-      var href = DocForm.resolvePath(page.path, base());
+      var href = DocForm._resolvePath(page.path, base());
       if (!href || pageKey(href) === here) return;
       (page.sections || []).forEach(function (s) {
         out.push({
@@ -308,7 +308,7 @@
       }
       for (var i = 0; i < data.pages.length; i++) {
         var page = data.pages[i];
-        var url = DocForm.resolvePath(page.path, base());
+        var url = DocForm._resolvePath(page.path, base());
         if (!url || pageKey(url) !== key) continue;
         var sections = page.sections || [];
         for (var j = 0; j < sections.length; j++) {
@@ -443,7 +443,7 @@
 
   // With an empty query, the palette lists the manifest's pages, or this page's sections without a manifest.
   function defaults(all) {
-    var site = DocForm.site || {};
+    var site = DocForm._site || {};
     var here = pageKey(root.location.href);
     if (site.order && site.order.length) {
       return site.order.map(function (page) {
@@ -521,7 +521,7 @@
       if (!data) return callback(null);
       callback(data.pages.map(function (page) {
         return {
-          href: DocForm.resolvePath(page.path, base()),
+          href: DocForm._resolvePath(page.path, base()),
           title: page.title,
           sections: page.sections || [],
           outline: page.outline || page.sections || [],
@@ -531,7 +531,7 @@
     });
   }
 
-  DocForm.search = {
+  DocForm._search = {
     extract: extract,
     tokens: tokens,
     rank: rank,

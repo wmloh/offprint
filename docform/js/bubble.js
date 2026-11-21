@@ -273,7 +273,7 @@
     update();
   }
 
-  DocForm.peekBubbles = {
+  DocForm._peekBubbles = {
     pick: pick,
     band: Object.assign({}, BAND),
     most: MOST
@@ -281,7 +281,7 @@
 
   DocForm.register('bubble', function () {
     var page = doc.querySelector('.df-page') || doc.querySelector('main') || doc.body;
-    var list = DocForm.all('details', page).filter(function (el) {
+    var list = DocForm._all('details', page).filter(function (el) {
       return !DocForm._component.closestFlag(el, 'no-bubble', 'peek-bubbles') &&
         !el.parentElement.closest('details, .df-dropdown-panel');
     });

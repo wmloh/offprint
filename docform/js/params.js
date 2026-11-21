@@ -51,7 +51,7 @@
     try {
       return format(evaluate(expr, scope), placesFor(expr, places, precision));
     } catch (e) {
-      DocForm.warnOnce('param-expr:' + expr, 'Cannot evaluate "' + expr + '": ' + (e && e.message ? e.message : e));
+      DocForm._warnOnce('param-expr:' + expr, 'Cannot evaluate "' + expr + '": ' + (e && e.message ? e.message : e));
       return '?';
     }
   }
@@ -69,8 +69,8 @@
       var text = b.template === null ? show(b.expr, scope, b.places, precision) : fill(b.template, scope, precision);
       if (text === b.last) return;
       b.last = text;
-      if (b.el.classList.contains('df-math') && DocForm.math) DocForm.math.set(b.el, text);
-      else if (b.template !== null && DocForm.math && DocForm.math.mixed) b.el.innerHTML = DocForm.math.mixed(text);
+      if (b.el.classList.contains('df-math') && DocForm._math) DocForm._math.set(b.el, text);
+      else if (b.template !== null && DocForm._math && DocForm._math.mixed) b.el.innerHTML = DocForm._math.mixed(text);
       else b.el.textContent = text;
     });
   }
@@ -95,7 +95,7 @@
     var label = document.createElement(tag || 'label');
     label.className = 'df-param-label';
     if (id) label.htmlFor = id;
-    if (DocForm.math && DocForm.math.mixed) label.innerHTML = DocForm.math.mixed(text);
+    if (DocForm._math && DocForm._math.mixed) label.innerHTML = DocForm._math.mixed(text);
     else label.textContent = text;
     return label;
   }
@@ -131,7 +131,7 @@
       el: el,
       template: template,
       expr: template === null ? expr : null,
-      places: DocForm.num(el, 'digits', null),
+      places: DocForm._num(el, 'digits', null),
       last: null
     });
   }
@@ -409,11 +409,11 @@
         parameterIssue(host, 'Choice parameter "' + key + '" needs a fieldset host.');
         return;
       }
-      if (!DocForm.choices) {
+      if (!DocForm._choices) {
         parameterIssue(host, 'Choice parameter "' + key + '" needs the choices feature.');
         return;
       }
-      var control = DocForm.choices.create({
+      var control = DocForm._choices.create({
         host: host,
         label: key,
         multiple: def.type === 'multiselect',
@@ -539,8 +539,8 @@
     var tag = (host.tagName || '').toLowerCase();
     var native = tag === 'input';
     var type = def.type;
-    var label = DocForm.data(host, 'parameter-label', null);
-    var places = DocForm.data(host, 'parameter-digits', null);
+    var label = DocForm._data(host, 'parameter-label', null);
+    var places = DocForm._data(host, 'parameter-digits', null);
     if (places !== null && (!places.trim() || !precision(Number(places)))) {
       parameterIssue(host, 'Invalid display precision for parameter "' + key + '".');
       places = null;
@@ -608,7 +608,7 @@
   }
 
   function resolveScope(el) {
-    var name = DocForm.data(el, 'scope', null);
+    var name = DocForm._data(el, 'scope', null);
     if (name === null) {
       for (var node = el; node; node = node.parentElement) {
         name = node.getAttribute(scopeMarker);
@@ -628,7 +628,7 @@
     });
   }
 
-  DocForm.parameters = {
+  DocForm._parameters = {
     define: define,
     scope: function (name) {
       var scope = scopes.get(name === undefined ? 'page' : scopeName(name));
@@ -654,7 +654,7 @@
     scopes.forEach(function (scope) { scope.groupDomains(); });
   });
 
-  var configured = DocForm.site || {};
+  var configured = DocForm._site || {};
   if (configured.parameterScopes !== undefined) {
     if (record(configured.parameterScopes)) {
       Object.keys(configured.parameterScopes).forEach(function (name) { define(name, configured.parameterScopes[name]); });
@@ -663,15 +663,15 @@
   boot.after('parameters', finishScopes);
 
   DocForm.register('params', function () {
-    DocForm.all('[data-df-parameter]').forEach(function (el) {
+    DocForm._all('[data-df-parameter]').forEach(function (el) {
       var scope = resolveScope(el);
       if (scope) scope.control(el);
     });
-    DocForm.all('[data-df-choice]').forEach(function (el) {
+    DocForm._all('[data-df-choice]').forEach(function (el) {
       var scope = resolveScope(el);
       if (scope) scope.choice(el);
     });
-    DocForm.all('[data-df-preset]').forEach(function (el) {
+    DocForm._all('[data-df-preset]').forEach(function (el) {
       var scope = resolveScope(el);
       if (scope === null) {
         el.classList.add('df-preset');
@@ -679,11 +679,11 @@
         if (!el.hasAttribute('type')) el.setAttribute('type', 'button');
       } else preset(el, scope);
     });
-    DocForm.all('[data-df-bind], [data-df-template]').forEach(function (el) {
+    DocForm._all('[data-df-bind], [data-df-template]').forEach(function (el) {
       var scope = resolveScope(el);
       if (scope) bind(el, scope.bindings);
     });
-    DocForm.all('[data-df-show-when]').forEach(function (el) {
+    DocForm._all('[data-df-show-when]').forEach(function (el) {
       var scope = resolveScope(el);
       if (scope) showWhen(el, scope.shows);
     });

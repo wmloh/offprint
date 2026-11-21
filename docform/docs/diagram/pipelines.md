@@ -58,11 +58,11 @@ Enable `pipeline` (loads `detail-pane`). Host `figure.df-pipeline` with a direct
 - Set `data-df-reveal-step="key"` on blocks and junctions to reveal them at that step. Unassigned blocks appear on the first step. Lines appear at the later of their two ends unless their link specifies a reveal key. Reveals fade without layout shift.
 - A [step pill](../layout/buttons.md#step-pill) with Play/Pause precedes the canvas. Playback advances every 1.4 s. Reader navigation selects the first block of the new step. To follow a worked example, set the same `data-df-selection-group` on both hosts and match their step keys. Use `data-df-selection-mode="follow"` on the pipeline if only the stepper should publish.
 
-## Fallback and API
+## Fallback and events
 
 - No script or print: numbered list of blocks with fields and authored links; the pane shows every detail; lines, labels, and the pill are omitted. Empty junctions are hidden.
 - Horizontal overflow scrolls inside `.df-pipe-scroll`; the host keeps the figure width cap. Relayout on block resize, field mutation, font load, and page load. Hidden hosts lay out when shown.
-- `DocForm.pipeline.get(idOrHost)` returns the [block selector](../interact/linked-highlighting.md) plus `layout()`, `fields(blockId, {eyebrow?, headline?, description?})`, and `steps`. The selector snapshot is `{key, index, blockId}` and emits `df:pipeline:change`. The `steps` property is the [shared controller](../interact/step-contract.md) for stepped diagrams, also available through `DocForm.sequence.get(idOrHost)`.
+- `df:pipeline:change` bubbles from the host with `{current, previous, origin}` and `{key, index, blockId}` states. For stepped diagrams, use `DocForm.sequence.get(idOrHost)` for the [shared controller](../interact/step-contract.md).
 - Diagnostics: missing list or blocks, missing link targets, self links, duplicate keys, invalid col/row/sides/via/direction/layout, unknown reveal keys.
 
 [Detail panes](../interact/detail-panes.md) · [Card panels](../interact/card-panels.md) · [Source](../../js/pipeline.js)

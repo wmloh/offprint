@@ -16,7 +16,7 @@
 
   // One shared copy per manifest, so \gdef in one formula carries to later ones without touching the manifest.
   function macros() {
-    var site = DocForm.site;
+    var site = DocForm._site;
     if (!site) return {};
     if (macroSite !== site) {
       macroSite = site;
@@ -28,7 +28,7 @@
 
   function katex() {
     if (root.katex && typeof root.katex.renderToString === 'function') return root.katex;
-    DocForm.warnOnce('math:katex', 'KaTeX is not loaded; include docform/vendor/katex/katex.min.js before math.js. Math stays as TeX source.');
+    DocForm._warnOnce('math:katex', 'KaTeX is not loaded; include docform/vendor/katex/katex.min.js before math.js. Math stays as TeX source.');
     return null;
   }
 
@@ -55,7 +55,7 @@
     if (tex === undefined) tex = source(el);
     el.setAttribute('data-df-tex', tex);
     try {
-      el.innerHTML = html(tex, DocForm._boot ? component.flag(el, 'display', 'math') : DocForm.flag(el, 'display'));
+      el.innerHTML = html(tex, DocForm._boot ? component.flag(el, 'display', 'math') : DocForm._flag(el, 'display'));
       el.classList.remove(ERROR);
       el.removeAttribute('title');
     } catch (e) {
@@ -64,7 +64,7 @@
       el.classList.add(ERROR);
       el.title = message;
       if (DocForm._boot) component.issue('math', el, 'Cannot render TeX: ' + message, 'Check the TeX source and configured macros.');
-      else DocForm.warnOnce('math-error:' + tex, 'Cannot render TeX "' + tex + '": ' + message);
+      else DocForm._warnOnce('math-error:' + tex, 'Cannot render TeX "' + tex + '": ' + message);
     }
     el.classList.add(RENDERED);
     return true;
@@ -77,7 +77,7 @@
       if (!scope) return 0;
     }
     scope = scope || document;
-    var list = DocForm.all(SELECTOR, scope);
+    var list = DocForm._all(SELECTOR, scope);
     if (scope.matches && scope.matches(SELECTOR)) list.unshift(scope);
     var count = 0;
     list.forEach(function (el) {
@@ -140,7 +140,7 @@
     }).join('');
   }
 
-  DocForm.math = { render: render, set: set, html: html, source: source, split: split, mixed: mixed, escape: escape };
+  DocForm._math = { render: render, set: set, html: html, source: source, split: split, mixed: mixed, escape: escape };
 
   DocForm.register('math', function () {
     render(document);

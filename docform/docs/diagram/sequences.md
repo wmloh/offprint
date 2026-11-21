@@ -33,8 +33,8 @@ Enable `sequence` (loads `detail-pane`). Use `figure.df-sequence` with a direct 
 
 Enable `data` and set `data-df-source="name"` on the figure. Supply a nonempty record array with unique string `key`, string `from` and `to`, and optional `label`. Record order determines message order. Use `options.sequence.mapping` to override field names. An optional authored message list serves as fallback. Source replacements retain selection by key and reject invalid records transactionally.
 
-## API
+## Events
 
-`DocForm.sequenceDiagram.get(idOrHost)` returns the selector or `null`. Methods `select(key)`, `reset()`, `snapshot()`, `subscribe(fn, {immediate?})`. Snapshot `{key, index, label, from, to}`. `df:sequence:change` bubbles with `{current, previous, origin}`.
+`df:sequence:change` bubbles from the diagram with `{current, previous, origin}` and `{key, index, label, from, to}` states.
 
 [Detail panes](../interact/detail-panes.md) · [Linked selection](../interact/linked-highlighting.md) · [Named data sources](../data/data-blocks.md)

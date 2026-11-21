@@ -14,6 +14,5 @@ Enable `peek-bubbles`. Author `details` with a direct `summary` for the label an
 - Closing reverses the same animation. When the bubble sits above the viewport middle (scrolled past), the script scrolls by each frame's height change so text below stays still, and adds `html.df-bubble-holding` (`overflow-anchor: none`) meanwhile. Reopening mid-shrink grows from the current size. Without Web Animations support, sizes snap.
 - The bubble title ends with →; the open bubble omits it.
 - Click, Enter, or Space scrolls the bubble to centre and reveals its content. Hover, focus, or tap clears the content blur. Escape closes the bubble when focus is inside it and prevents it reopening until it leaves the scroll band.
-- `DocForm.peekBubbles` exposes `pick(boxes, viewportHeight, openIndexes)`, `band`, and `most`.
 
 [Block styles](../../css/blocks.css) · [Bubble source](../../js/bubble.js)

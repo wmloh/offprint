@@ -95,7 +95,7 @@
     var allEquations = equations === 'all';
     var found = [];
     pages.forEach(function (page) {
-      DocForm.all('figure, table, .df-math[data-df-display]', page).forEach(function (el) {
+      DocForm._all('figure, table, .df-math[data-df-display]', page).forEach(function (el) {
         var kind = kindOf(el, allEquations);
         if (kind) found.push({ el: el, kind: kind });
       });
@@ -114,20 +114,20 @@
 
   function headingText(h) {
     var copy = h.cloneNode(true);
-    DocForm.all(STRIP, copy).forEach(function (el) { el.remove(); });
+    DocForm._all(STRIP, copy).forEach(function (el) { el.remove(); });
     return copy.textContent.trim();
   }
 
   function scrub(node) {
     node.removeAttribute && node.removeAttribute('id');
-    DocForm.all('[id]', node).forEach(function (el) { el.removeAttribute('id'); });
-    DocForm.all(STRIP, node).forEach(function (el) { el.remove(); });
-    DocForm.all('[tabindex]', node).forEach(function (el) { el.removeAttribute('tabindex'); });
+    DocForm._all('[id]', node).forEach(function (el) { el.removeAttribute('id'); });
+    DocForm._all(STRIP, node).forEach(function (el) { el.remove(); });
+    DocForm._all('[tabindex]', node).forEach(function (el) { el.removeAttribute('tabindex'); });
     // Copies of focus-mode blocks must not inherit the page's dimming.
-    [node].concat(DocForm.all('.df-focus-block', node)).forEach(function (el) {
+    [node].concat(DocForm._all('.df-focus-block', node)).forEach(function (el) {
       if (el.classList) el.classList.remove('df-focus-block', 'df-focus-dim');
     });
-    DocForm.all('.df-term, .df-tip', node).forEach(function (el) { el.removeAttribute('aria-describedby'); });
+    DocForm._all('.df-term, .df-tip', node).forEach(function (el) { el.removeAttribute('aria-describedby'); });
     return node;
   }
 
@@ -162,7 +162,7 @@
   function remotePreview(href) {
     var box = document.createElement('div');
     box.className = 'df-peek-section';
-    var search = DocForm.search;
+    var search = DocForm._search;
     var fillIn = function (hit) {
       box.textContent = '';
       if (!hit) {
@@ -210,10 +210,10 @@
   }
 
   function linkRefs(pages, site) {
-    var tooltip = DocForm.tooltips;
+    var tooltip = DocForm._tooltips;
     var remote = false;
     pages.forEach(function (page) {
-      DocForm.all('a[href]', page).forEach(function (a) {
+      DocForm._all('a[href]', page).forEach(function (a) {
         if (a.closest(NO_PREVIEW) || component.closestFlag(a, 'no-preview', 'references')) return;
         var raw = a.getAttribute('href');
         var url;
@@ -227,7 +227,7 @@
           if (url.hash.length < 2) return;
           var target = targetOf(url.hash);
           if (!target) {
-            DocForm.warnOnce('ref:' + url.hash, 'No element "' + url.hash + '" for a reference link.');
+            DocForm._warnOnce('ref:' + url.hash, 'No element "' + url.hash + '" for a reference link.');
             a.classList.add('df-ref-missing');
             if (empty) a.textContent = '??';
             return;
@@ -261,7 +261,7 @@
       });
     });
     // Warm the search index so cross-page previews are ready by the first hover.
-    if (remote && DocForm.search && DocForm.search.load) DocForm.search.load(function () {});
+    if (remote && DocForm._search && DocForm._search.load) DocForm._search.load(function () {});
   }
 
   function isSitePage(url, site) {
@@ -375,20 +375,20 @@
   }
 
   function refId(key) {
-    return 'ref-' + DocForm.slug(key);
+    return 'ref-' + DocForm.util.slug(key);
   }
 
   function renderCitations(pages, site) {
     var bib = site.bibliography || {};
     var cites = [];
-    pages.forEach(function (page) { cites = cites.concat(DocForm.all('[data-df-cite]', page)); });
+    pages.forEach(function (page) { cites = cites.concat(DocForm._all('[data-df-cite]', page)); });
     var lists = cites.map(function (el) { return citeKeys(el.getAttribute('data-df-cite')); });
     var result = assignNumbers(lists, bib);
     result.missing.forEach(function (key) {
-      DocForm.warnOnce('cite:' + key, 'Unknown citation "' + key + '"; add it to the manifest bibliography.');
+      DocForm._warnOnce('cite:' + key, 'Unknown citation "' + key + '"; add it to the manifest bibliography.');
     });
     var first = Object.create(null);
-    var tooltip = DocForm.tooltips;
+    var tooltip = DocForm._tooltips;
 
     cites.forEach(function (el, i) {
       if (!lists[i].length) {
@@ -417,7 +417,7 @@
         a.href = '#' + refId(key);
         a.textContent = String(result.numbers[key]);
         if (!first[key]) {
-          first[key] = 'cite-' + DocForm.slug(key);
+          first[key] = 'cite-' + DocForm.util.slug(key);
           a.id = first[key];
         }
         el.appendChild(a);
@@ -433,7 +433,7 @@
     });
 
     var slots = [];
-    pages.forEach(function (page) { slots = slots.concat(DocForm.all('[data-df-bibliography]', page)); });
+    pages.forEach(function (page) { slots = slots.concat(DocForm._all('[data-df-bibliography]', page)); });
     if (!slots.length && result.order.length && pages.length) slots.push(appendSection(pages[0]));
     slots.forEach(function (slot, i) {
       slot.textContent = '';
@@ -478,24 +478,21 @@
     return slot;
   }
 
-  DocForm._references = {
-    numberItems: numberItems,
-    assignNumbers: assignNumbers,
-    joinAuthors: joinAuthors
-  };
-
   function pageRoots() {
-    var pages = DocForm.all('.df-page');
+    var pages = DocForm._all('.df-page');
     return pages.length ? pages : [document.querySelector('main') || document.body];
   }
 
-  DocForm.references = {
+  DocForm._references = {
+    numberItems: numberItems,
+    assignNumbers: assignNumbers,
+    joinAuthors: joinAuthors,
     label: function (target) {
       var el = component.target(target, 'references', false);
       return el ? el.getAttribute('data-df-label') : null;
     }
   };
-  DocForm.citations = { citeKeys: citeKeys, formatEntry: formatEntry, citationText: citationText };
+  DocForm._citations = { citeKeys: citeKeys, formatEntry: formatEntry, citationText: citationText };
   DocForm.register('refs', function (site) {
     var pages = pageRoots();
     numberPage(pages, site);
@@ -508,7 +505,7 @@
     // Heading ids are assigned during navigation setup.
     if (boot) boot.after('refs', link);
     else Promise.resolve().then(link).catch(function (e) {
-      DocForm.warnOnce('init:refs', 'Module "refs" failed to link references.', e);
+      DocForm._warnOnce('init:refs', 'Module "refs" failed to link references.', e);
     });
   });
   if (boot) DocForm.register('citations', function (site) { renderCitations(pageRoots(), site); });

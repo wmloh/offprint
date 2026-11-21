@@ -237,7 +237,8 @@
     };
   }
 
-  DocForm._treeDiagram = { prepare: prepare, layout: layout };
-  DocForm.treeDiagram = diagram.recordDiagram(FEATURE, markup,
+  DocForm._treeDiagram = diagram.recordDiagram(FEATURE, markup,
     { key: 'key', parent: 'parent', label: 'label', collapsed: 'collapsed' }, prepare, draw);
+  DocForm._treeDiagram.prepare = prepare;
+  DocForm._treeDiagram.layout = layout;
 })(typeof window !== 'undefined' ? window : globalThis);

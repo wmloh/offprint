@@ -20,54 +20,54 @@
     callouts: { needs: ['base'], css: ['blocks'] },
     blocks: { needs: ['tags', 'callouts'] },
     'concept-tables': { needs: ['base'] },
-    theme: { needs: ['tokens'], css: ['theme'], script: 'theme', api: 'theme' },
-    roles: { needs: ['base'], css: ['roles'], script: 'roles', api: 'roles' },
+    theme: { needs: ['tokens'], css: ['theme'], script: 'theme', api: '_theme' },
+    roles: { needs: ['base'], css: ['roles'], script: 'roles', api: '_roles' },
     math: { needs: ['base'], css: ['vendor/katex/katex.min.css', 'math'],
-      vendor: ['vendor/katex/katex.min.js', 'katex'], script: 'math', api: 'math' },
-    tooltips: { needs: ['base'], css: ['tooltip'], script: 'tooltip', api: 'tooltips' },
+      vendor: ['vendor/katex/katex.min.js', 'katex'], script: 'math', api: '_math' },
+    tooltips: { needs: ['base'], css: ['tooltip'], script: 'tooltip', api: '_tooltips' },
     selection: { needs: ['base'], css: ['highlight'], script: 'highlight', api: 'selection' },
-    animation: { needs: ['base'], css: ['anim'], script: 'anim', api: 'animation' },
-    dropdowns: { needs: ['base'], css: ['dropdowns'], script: 'dropdowns', api: 'dropdowns' },
-    choices: { needs: ['base'], css: ['choices'], script: 'choices', api: 'choices' },
-    parameters: { needs: ['base', 'dropdowns', 'choices'], css: ['params'], script: 'params', api: 'parameters' },
-    code: { needs: ['base'], css: ['code'], script: 'code', api: 'code' },
-    'editable-text': { needs: ['base'], css: ['editable-text'], script: 'editable-text', api: 'editableText' },
-    tree: { needs: ['base'], css: ['tree'], script: 'tree', api: 'tree' },
+    animation: { needs: ['base'], css: ['anim'], script: 'anim', api: '_animation' },
+    dropdowns: { needs: ['base'], css: ['dropdowns'], script: 'dropdowns', api: '_dropdowns' },
+    choices: { needs: ['base'], css: ['choices'], script: 'choices', api: '_choices' },
+    parameters: { needs: ['base', 'dropdowns', 'choices'], css: ['params'], script: 'params', api: '_parameters' },
+    code: { needs: ['base'], css: ['code'], script: 'code', api: '_code' },
+    'editable-text': { needs: ['base'], css: ['editable-text'], script: 'editable-text', api: '_editableText' },
+    tree: { needs: ['base'], css: ['tree'], script: 'tree', api: '_tree' },
     data: { vendor: ['vendor/js-yaml/js-yaml.min.js', 'jsyaml'], script: 'data', api: 'data' },
     'data-view': { needs: ['base', 'data'], css: ['data'] },
-    chart: { needs: ['base', 'choices'], css: ['chart'], script: 'chart', api: 'chart' },
-    dropzone: { needs: ['base', 'data'], css: ['dropzone', 'data'], script: 'dropzone', api: 'dropzone' },
-    'chart-playback': { needs: ['chart'], css: ['chart-playback'], script: 'chart-playback', api: 'chartPlayback' },
+    chart: { needs: ['base', 'choices'], css: ['chart'], script: 'chart', api: '_chart' },
+    dropzone: { needs: ['base', 'data'], css: ['dropzone', 'data'], script: 'dropzone', api: '_dropzone' },
+    'chart-playback': { needs: ['chart'], css: ['chart-playback'], script: 'chart-playback', api: '_chartPlayback' },
     // Chart add-ons register the chart types they list with DocForm.chart.addon as their script loads.
     'chart-intervals': { needs: ['chart'], css: ['chart-intervals'], script: 'chart-intervals', chartTypes: ['interval'] },
     'chart-histogram': { needs: ['chart'], css: ['chart-histogram'], script: 'chart-histogram', chartTypes: ['histogram'] },
     'chart-heatmap': { needs: ['chart'], css: ['chart-heatmap'], script: 'chart-heatmap', chartTypes: ['heatmap'] },
-    results: { needs: ['base', 'choices'], css: ['results'], script: 'results', api: 'results' },
-    matrix: { needs: ['base', 'data', 'choices'], css: ['matrix'], script: 'matrix', api: 'matrix' },
+    results: { needs: ['base', 'choices'], css: ['results'], script: 'results', api: '_results' },
+    matrix: { needs: ['base', 'data', 'choices'], css: ['matrix'], script: 'matrix', api: '_matrix' },
     scenarios: { needs: ['chart'], css: ['scenarios'], script: 'scenarios' },
-    tabs: { needs: ['base'], css: ['tabs'], script: 'tabs', api: 'tabs' },
-    'detail-pane': { needs: ['base'], css: ['detail'], script: 'detail', api: 'detailPane' },
-    cards: { needs: ['detail-pane'], css: ['steps'], script: 'steps', api: 'cards' },
+    tabs: { needs: ['base'], css: ['tabs'], script: 'tabs', api: '_tabs' },
+    'detail-pane': { needs: ['base'], css: ['detail'], script: 'detail', api: '_detailPane' },
+    cards: { needs: ['detail-pane'], css: ['steps'], script: 'steps', api: '_cards' },
     'figure-steps': { needs: ['detail-pane'], css: ['steps'], script: 'steps', module: 'figure-steps' },
     stepper: { needs: ['base'], css: ['stepper'], script: 'stepper' },
     'diagram-core': { needs: ['detail-pane'], script: 'diagram', api: '_diagram' },
-    pipeline: { needs: ['diagram-core'], css: ['pipeline'], script: 'pipeline', api: 'pipeline' },
-    timeline: { needs: ['diagram-core'], css: ['timeline'], script: 'timeline', api: 'timeline' },
-    sequence: { needs: ['diagram-core'], css: ['sequence'], script: 'sequence-diagram', api: 'sequenceDiagram' },
-    'tree-diagram': { needs: ['diagram-core'], css: ['tree-diagram'], script: 'tree-diagram', api: 'treeDiagram' },
+    pipeline: { needs: ['diagram-core'], css: ['pipeline'], script: 'pipeline', api: '_pipeline' },
+    timeline: { needs: ['diagram-core'], css: ['timeline'], script: 'timeline', api: '_timeline' },
+    sequence: { needs: ['diagram-core'], css: ['sequence'], script: 'sequence-diagram', api: '_sequenceDiagram' },
+    'tree-diagram': { needs: ['diagram-core'], css: ['tree-diagram'], script: 'tree-diagram', api: '_treeDiagram' },
     'split-views': { needs: ['base'], css: ['reveal'], script: 'reveal', module: 'split-views' },
-    reveals: { needs: ['base'], css: ['reveal'], script: 'reveal', api: 'reveals' },
-    'peek-bubbles': { needs: ['base'], css: ['blocks', 'bubble'], script: 'bubble', api: 'peekBubbles' },
-    search: { needs: ['base'], css: ['search'], script: 'search', api: 'search' },
-    glossary: { needs: ['tooltips'], css: ['glossary'], script: 'glossary', api: 'glossary' },
-    references: { needs: ['base'], css: ['refs'], script: 'refs', api: 'references' },
-    citations: { needs: ['tooltips'], css: ['refs'], script: 'refs', api: 'citations' },
-    navigation: { needs: ['base'], css: ['nav'], script: 'nav', api: 'navigation' },
-    sidenotes: { needs: ['base'], css: ['notes'], script: 'notes', api: 'sidenotes' },
-    sections: { needs: ['base'], script: 'sections', api: 'sections' },
-    controls: { needs: ['base'], css: ['controls'], script: 'controls', api: 'controls' },
-    zoom: { needs: ['base'], css: ['zoom'], script: 'zoom', api: 'zoom' },
-    'zoom-tools': { needs: ['zoom'], css: ['zoomtools'], script: 'zoomtools', api: 'zoomTools' }
+    reveals: { needs: ['base'], css: ['reveal'], script: 'reveal', api: '_reveals' },
+    'peek-bubbles': { needs: ['base'], css: ['blocks', 'bubble'], script: 'bubble', api: '_peekBubbles' },
+    search: { needs: ['base'], css: ['search'], script: 'search', api: '_search' },
+    glossary: { needs: ['tooltips'], css: ['glossary'], script: 'glossary', api: '_glossary' },
+    references: { needs: ['base'], css: ['refs'], script: 'refs', api: '_references' },
+    citations: { needs: ['tooltips'], css: ['refs'], script: 'refs', api: '_citations' },
+    navigation: { needs: ['base'], css: ['nav'], script: 'nav', api: '_navigation' },
+    sidenotes: { needs: ['base'], css: ['notes'], script: 'notes', api: '_sidenotes' },
+    sections: { needs: ['base'], script: 'sections', api: '_sections' },
+    controls: { needs: ['base'], css: ['controls'], script: 'controls', api: '_controls' },
+    zoom: { needs: ['base'], css: ['zoom'], script: 'zoom', api: '_zoom' },
+    'zoom-tools': { needs: ['zoom'], css: ['zoomtools'], script: 'zoomtools', api: '_zoomTools' }
   };
   var reading = ['base', 'blocks', 'theme', 'roles', 'navigation', 'controls', 'tooltips',
     'references', 'citations', 'sidenotes', 'search', 'sections'];
@@ -145,8 +145,8 @@
   }
 
   var DF = root.DocForm = {
-    page: pageURL,
-    site: null,
+    _page: pageURL,
+    _site: null,
     diagnostics: { list: function () { return diagnostics.slice(); } },
     setup: function (fn) {
       if (setupClosed || typeof fn !== 'function') {
@@ -397,7 +397,7 @@
       } else if (object(options[feature])) delete options[feature][field];
     }
     optionMap('roles', 'colors', function (value) {
-      return typeof value === 'string' && DF.colors.includes(value.trim().toLowerCase());
+      return typeof value === 'string' && DF._colors.includes(value.trim().toLowerCase());
     });
     optionMap('roles', 'tips', function (value) { return typeof value === 'string' && value.trim() !== ''; });
     optionMap('tags', 'glossary', function (value) {
@@ -414,7 +414,7 @@
     });
     optionMap('citations', 'entries', function (value) { return typeof value === 'string' || object(value); });
     var hasManifest = !!siteScript && object(root.DocFormSite);
-    var normalized = DF.normalizeSite(hasManifest ? copy(site) : undefined, siteURL, options);
+    var normalized = DF._normalizeSite(hasManifest ? copy(site) : undefined, siteURL, options);
     var declared = object(site.assets) ? site.assets : {};
     var pageSearch = config.page.options && config.page.options.search;
     var localSearch = localPath(pageSearch && pageSearch.index, pageURL, 'search', 'options.search.index');
@@ -491,7 +491,7 @@
       finish();
       return;
     }
-    Object.defineProperty(DF, 'site', { value: siteConfig(config), writable: false });
+    Object.defineProperty(DF, '_site', { value: siteConfig(config), writable: false });
     boot.configOptions = [config.site, config.page].map(function (layer) { return freeze(merge(layer.options)); });
     boot.themeDefault = config.enabled.has('theme') ? themeMode(config) : undefined;
     for (var id of Object.keys(catalog)) {
@@ -502,8 +502,8 @@
     }
     if (!active.has('theme') && appliedTheme) earlyTheme({ enabled: active });
     if (active.has('data')) {
-      for (var name of Object.keys(DF.site.assets.data)) {
-        var url = DF.site.assets.data[name].output;
+      for (var name of Object.keys(DF._site.assets.data)) {
+        var url = DF._site.assets.data[name].output;
         if (!await load(url, false)) assetFailure('data', url);
         else if (!boot.registerData(name)) report('data-wrapper', 'data', url,
           'Data wrapper did not register "' + name + '".', 'Regenerate the classic data wrapper with that name.', name);

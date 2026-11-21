@@ -97,8 +97,8 @@
     return panel;
   }
 
-  DocForm.dropdowns = { mount: mount, follow: follow };
+  DocForm._dropdowns = { mount: mount, follow: follow };
   DocForm.register('dropdowns', function () {
-    DocForm.all('.df-dropdown').forEach(mount);
+    DocForm._all('.df-dropdown').forEach(mount);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -35,8 +35,8 @@ Opt in with `data-df-chart-playback="state"` (or `mode: "state"`; default `"play
 - Data replacement (update, named source, bound parameter) restores the applied state's `series` and `range` before drawing; a running leg continues. States that no longer fit keep the reader view. Incompatible replacements (line type, invalid data, removed chart) suspend playback as in playhead mode and restore the last reached checkpoint when compatible again. A rejected parameter write reports and the rest of the state still applies.
 - `position` is 0 at Start and `i + 1` at checkpoint `i`. It stays unchanged during a leg. Status reads the label or `Checkpoint N`.
 
-## API
+## Step controller
 
-- `DocForm.chartPlayback.mount(idOrElement, options?)` is idempotent and returns the [shared controller](../interact/step-contract.md) or `null`. Its read-only `position` gives the current playhead x value, the state position, or `null` when suspended. `next()` jumps without animation.
+- Use `DocForm.sequence.get(idOrElement)` for the [shared controller](../interact/step-contract.md). Its read-only `position` gives the playhead x value, the state position, or `null` when suspended. `next()` jumps without animation.
 
 [Charts](charts.md) · [Training example](../../../examples/transformers/pages/diagnostics.html#guided-training) · [Source](../../js/chart-playback.js)

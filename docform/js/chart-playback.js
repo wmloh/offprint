@@ -121,7 +121,7 @@
     function option(name, fallback, valid) {
       return component.option(feature, host, name, fallback, valid, options);
     }
-    var mode = DocForm.data(host, 'chart-playback', '') ||
+    var mode = DocForm._data(host, 'chart-playback', '') ||
       option('mode', 'playhead', function (value) { return value === 'playhead' || value === 'state'; });
     if (mode !== 'playhead' && mode !== 'state') {
       if (report) issue(host, 'Unknown playback mode "' + mode + '".',
@@ -129,8 +129,8 @@
       return null;
     }
     var stateMode = mode === 'state';
-    var targetId = DocForm.data(host, 'target', null);
-    var groupOption = DocForm.data(host, 'x-group', null);
+    var targetId = DocForm._data(host, 'target', null);
+    var groupOption = DocForm._data(host, 'x-group', null);
     if (targetId === null && groupOption === null) {
       targetId = option('target', null, function () { return true; });
       groupOption = option('xGroup', null, function () { return true; });
@@ -147,7 +147,7 @@
           'Supply one nonempty x-group name in data-df-x-group or xGroup, or supply a chart target.');
         return null;
       }
-      chartHosts = DocForm.chart._positionHosts(xGroup, !report);
+      chartHosts = DocForm._chart._positionHosts(xGroup, !report);
       if (!chartHosts.length) {
         if (report) issue(host, 'Cannot resolve chart x-group "' + xGroup + '".',
           'Mount charts with this data-df-x-group before mounting playback.');
@@ -161,10 +161,10 @@
       if (report) reportTarget(host, targetId);
       return null;
     }
-    var list = DocForm.all(':scope > li', host);
+    var list = DocForm._all(':scope > li', host);
     var input = list.length ? list.map(function (item) {
-      var stop = { key: DocForm.data(item, 'key'), label: sequence.label(item) || undefined,
-        detail: DocForm.data(item, 'detail'), initial: items.flag(item, 'initial', feature) };
+      var stop = { key: DocForm._data(item, 'key'), label: sequence.label(item) || undefined,
+        detail: DocForm._data(item, 'detail'), initial: items.flag(item, 'initial', feature) };
       if (!stateMode) return Object.assign(stop, { x: component.number(item, 'x', feature, NaN, Number.isFinite) });
       return Object.assign(markupState(item), stop);
     }) : option('checkpoints', [], function () { return true; });
@@ -175,13 +175,13 @@
 
   // data-df-state holds the checkpoint's JSON state; a stray data-df-x or unreadable JSON makes the stop invalid.
   function markupState(item) {
-    var raw = DocForm.data(item, 'state');
+    var raw = DocForm._data(item, 'state');
     var state = {};
     if (raw !== undefined) {
       try { state = JSON.parse(raw); } catch (error) { state = null; }
     }
     if (!state || typeof state !== 'object' || Array.isArray(state)) return { invalid: true };
-    return Object.assign({}, state, { x: DocForm.data(item, 'x') });
+    return Object.assign({}, state, { x: DocForm._data(item, 'x') });
   }
 
   function stateModel(model) {
@@ -230,7 +230,7 @@
       }
     }
     for (var stop of stops) {
-      try { DocForm.chart._checkView(model, stop.state); }
+      try { DocForm._chart._checkView(model, stop.state); }
       catch (error) {
         issue(host, 'Checkpoint "' + stop.key + '" does not fit the chart. ' + error.message,
           'Use the chart\'s series keys and a range within a continuous x axis.');
@@ -268,7 +268,7 @@
     }
     var model = models[0];
     var range = revealModel(model) &&
-      model.series.some(function (series) { return series.points.length; }) && DocForm.chart.domain(model);
+      model.series.some(function (series) { return series.points.length; }) && DocForm._chart.domain(model);
     if (!range || !Number.isFinite(range[1] - range[0])) {
       if (report) issue(host, 'The target has no playable numeric line range.',
         'Use a mounted line chart with a continuous linear x axis, observations, and distinct bounds.');
@@ -293,7 +293,7 @@
     if (!instance) return null;
     var chartHost = instance.chartHosts[0];
     var models = instance.chartHosts.map(function (target) {
-      var chart = DocForm.chart.get(target);
+      var chart = DocForm._chart.get(target);
       return chart && chart.model();
     });
     if (!models[0] && !instance.xGroup) {
@@ -343,7 +343,7 @@
       var stop = stopAt(value);
       if (instance.state) return stop ? stop.label || 'Checkpoint ' + (stop.index + 1) : 'Start';
       return (stop && stop.label) || (value === range[0] ? 'Start' : value === range[1] ? 'End' :
-        DocForm.chart.format(value, model.x));
+        DocForm._chart.format(value, model.x));
     }
 
     // Applies the state of the position being reached once, as the leg starts, so the chart tweens during the leg.
@@ -516,9 +516,9 @@
       } });
     }
 
-    var handle = instance.state && DocForm.chart._statePlayback(chartHost, reconcile);
+    var handle = instance.state && DocForm._chart._statePlayback(chartHost, reconcile);
     var paint = instance.state ? handle && function (value, origin) { applyState(origin); } :
-      DocForm.chart._playback(chartHost, instance.xGroup, reconcile, checkpoint);
+      DocForm._chart._playback(chartHost, instance.xGroup, reconcile, checkpoint);
     if (!paint) {
       issue(host, 'A target chart already has a playback controller.', 'Use one playback controller per chart or x-group.');
       return null;
@@ -557,7 +557,7 @@
       status: function () {
         if (!range) return 'Playback unavailable.';
         if (state === 'playing') return 'Playing to ' + labelAt(leg.to);
-        return leg ? 'Paused at ' + DocForm.chart.format(x, model.x) : labelAt(x);
+        return leg ? 'Paused at ' + DocForm._chart.format(x, model.x) : labelAt(x);
       }
     });
 
@@ -579,16 +579,16 @@
     return api;
   }
 
-  DocForm.chartPlayback = { mount: mount };
+  DocForm._chartPlayback = { mount: mount };
 
   items.scan(feature, function () {
-    DocForm.all(HOST).forEach(function (host) {
-      var name = DocForm.data(host, 'selection-group');
+    DocForm._all(HOST).forEach(function (host) {
+      var name = DocForm._data(host, 'selection-group');
       if (!DocForm._selection.ensure(name) || DocForm.sequence.get(host)) return;
       if (DocForm._boot && !DocForm._boot.setupComplete) return;
       var instance = readInstance(host);
       if (!instance) return;
-      var models = instance.chartHosts.map(DocForm.chart._selectionModel);
+      var models = instance.chartHosts.map(DocForm._chart._selectionModel);
       var range = instance.state ? stateRange(host, models[0], instance.stops) :
         playableRange(host, models, instance.stops);
       if (!range) return;
@@ -600,6 +600,6 @@
     });
   });
   DocForm.register(feature, function () {
-    DocForm.all(HOST).forEach(function (host) { mount(host); });
+    DocForm._all(HOST).forEach(function (host) { mount(host); });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

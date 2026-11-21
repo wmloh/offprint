@@ -40,7 +40,6 @@ Use one `window.DocFormSite = <JSON object>;` assignment. The asset tool require
 | `assets.data` | Map of source names to `{source, output, type?}` for generation. Paths are manifest-relative. `source` identifies the raw input for generation. The entry uses `output` to load wrapped scripts before setup if `data` is enabled. [Data wrappers](../tools/file-wrapper.md) |
 
 - `pages[].path`, `glossaryPage`, and `assets.search.output` resolve via `new URL(path, base)`. The base is the `src` URL of the first `script[data-df-site]`, or the page URL if that script or its `src` is missing. Index entries use the base of the configuration that supplies the index path. Ordinary HTML asset URLs still resolve from the page.
-- `DocForm.site` contains `provided`, `base`, normalized `pages`, flattened navigable `order`, the resolved `glossaryPage` and `search` URLs (or `null`), and `tags: {glossary: {key: {label, tip, color, role}}, classes: {name: {shape, label, tags: [keys]}}, labels: {key: class | 'glossary'}}` (keys are term keys). The offline entry adds merged `options`, `selectionGroups`, and `parameterScopes` and resolved `assets`. A normalized page node has `{title, path, href, collapsed, pages}`. Arrays and objects are optional and default to empty. Unknown fields are omitted.
 - Assign explicit IDs to headings linked across pages if their text may change. Build the search index again after page or manifest changes that affect indexed content or paths.
 
 [Navigation](../layout/navigation.md) · [Core source](../../js/core.js)

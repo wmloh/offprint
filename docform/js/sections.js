@@ -19,7 +19,7 @@
 
   // Named colours from a token value such as "blue green purple"; unknown names are dropped with a warning.
   function cycle(text) {
-    var names = String(text || '').split(/[\s,]+/).filter(Boolean).map(DocForm.color).filter(Boolean);
+    var names = String(text || '').split(/[\s,]+/).filter(Boolean).map(DocForm._color).filter(Boolean);
     return names.length ? names : CYCLE.slice();
   }
 
@@ -128,7 +128,7 @@
   }
 
   var layoutPage = null;
-  DocForm.sections = {
+  DocForm._sections = {
     cycle: cycle,
     layout: function () {
       if (!layoutPage) return false;

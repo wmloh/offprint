@@ -51,7 +51,7 @@ function harness(document, all, report, globals = {}) {
   const DocForm = { _boot: boot };
   const context = vm.createContext({ DocForm, document, CustomEvent, ...globals });
   vm.runInContext(core, context);
-  DocForm.all = all;
+  DocForm._all = all;
   vm.runInContext(detail, context);
   return { context, DocForm, boot };
 }

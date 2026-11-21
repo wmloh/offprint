@@ -75,8 +75,8 @@ function setup(chartHit, timelineHit) {
     disconnect() { this.on = false; }
   }
   const api = {
-    all: (selector, scope) => scope.querySelectorAll(selector),
-    chart: chartHit ? {
+    _all: (selector, scope) => scope.querySelectorAll(selector),
+    _chart: chartHit ? {
       get: (host) => host.classList.contains('df-chart') ? {
         coords: chartHit,
         model: () => ({ x: { label: 'Time' }, y: { label: '' } })
@@ -84,8 +84,7 @@ function setup(chartHit, timelineHit) {
     } : undefined
   };
   if (timelineHit) {
-    api.timeline = { get: () => ({}) };
-    api._timeline = { coords: (host, x, y) => timelineHit(x, y) };
+    api._timeline = { get: () => ({}), coords: (host, x, y) => timelineHit(x, y) };
   }
   const context = vm.createContext({
     document, MutationObserver, Map, Set,
@@ -96,7 +95,7 @@ function setup(chartHit, timelineHit) {
   vm.runInContext(core, context);
   Object.assign(context.DocForm, api);
   vm.runInContext(source, context);
-  const tools = context.DocForm.zoomTools;
+  const tools = context.DocForm._zoomTools;
 
   const overlay = new El('div');
   overlay.className = 'df-zoom';

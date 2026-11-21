@@ -31,7 +31,7 @@ function setup({ follow, group, initial } = {}) {
   const DocForm = { _boot: boot };
   const context = vm.createContext({ DocForm, document, CustomEvent, getComputedStyle: () => ({}) });
   vm.runInContext(read('core.js'), context);
-  DocForm.all = (selector) => selector === '.df-detail-pane' ? [pane] : [];
+  DocForm._all = (selector) => selector === '.df-detail-pane' ? [pane] : [];
   vm.runInContext(read('detail.js'), context);
   boot.initialize();
   return { DocForm, pane, details, source, warnings, shown: () => details.findIndex((d) => !d.inert) };
@@ -49,7 +49,7 @@ function keyed(start) {
 
 test('a pane starts on its initial child and keeps the last detail for unknown keys', () => {
   const { DocForm, pane, details, shown, warnings } = setup({ initial: 'clean' });
-  const controller = DocForm.detailPane.get(pane);
+  const controller = DocForm._detailPane.get(pane);
   assert.deepEqual(warnings, []);
   assert.equal(shown(), 1);
   assert.equal(details[0].getAttribute('tabindex'), '0');

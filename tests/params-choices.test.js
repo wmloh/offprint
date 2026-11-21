@@ -102,8 +102,8 @@ function page(define, hosts, { popover = false } = {}) {
   vm.runInContext(read('choices.js'), ctx);
   vm.runInContext(read('params.js'), ctx);
   const follows = [];
-  if (popover) ctx.DocForm.dropdowns = { follow: (trigger, panel) => { follows.push([trigger, panel]); return () => follows.pop(); } };
-  const scope = ctx.DocForm.parameters.define('page', define);
+  if (popover) ctx.DocForm._dropdowns = { follow: (trigger, panel) => { follows.push([trigger, panel]); return () => follows.pop(); } };
+  const scope = ctx.DocForm._parameters.define('page', define);
   const nodes = [];
   hosts.forEach(([tag, attrs, parent]) => {
     const el = (parent === undefined ? document.body : nodes[parent]).appendChild(new El(document, tag));

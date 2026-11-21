@@ -22,8 +22,8 @@
   var WIDTH_SHARE = 0.4;
   var WIDTH_STEP = 16;
 
-  var slugify = DocForm.slug;
-  var uniqueSlug = DocForm.uniqueSlug;
+  var slugify = DocForm.util.slug;
+  var uniqueSlug = DocForm.util.uniqueSlug;
 
   // Compares pages by location only, so "dir/" and "dir/index.html" match and query or hash are ignored.
   function pageKey(href) {
@@ -85,8 +85,8 @@
   }
 
   function collectHeadings(scope) {
-    var used = new Set(DocForm.all('[id]').map(function (el) { return el.id; }));
-    var headings = DocForm.all('h1, h2, h3', scope).filter(function (h) {
+    var used = new Set(DocForm._all('[id]').map(function (el) { return el.id; }));
+    var headings = DocForm._all('h1, h2, h3', scope).filter(function (h) {
       return !h.closest('.df-sidebar') && !DocForm._component.closestFlag(h, 'no-outline', 'navigation');
     });
     // Keep generated h2 and h3 anchors compatible with existing links and search indexes.
@@ -121,7 +121,7 @@
     var timer = 0;
     button.addEventListener('click', function () {
       var url = headingUrl(root.location.href, h.id);
-      DocForm.copyText(url).then(function () {
+      DocForm.util.copyText(url).then(function () {
         button.classList.add('is-done');
         button.innerHTML = DONE_ICON;
         button.title = 'Link copied';
@@ -274,7 +274,7 @@
   }
 
   function outlineOthers(ctx) {
-    var search = DocForm.search;
+    var search = DocForm._search;
     if (!ctx.others.length || !search || typeof search.pages !== 'function') return;
     search.pages(function (indexed) {
       if (!indexed) return;
@@ -615,7 +615,7 @@
     sync();
   }
 
-  DocForm.navigation = {
+  DocForm._navigation = {
     slugify: slugify,
     uniqueSlug: uniqueSlug,
     pageKey: pageKey,
@@ -637,7 +637,7 @@
     var sidebar = document.querySelector('.df-sidebar');
     if (!hasTree && !sections.length && !sidebar) return;
 
-    var index = findCurrent(site.order, DocForm.page);
+    var index = findCurrent(site.order, DocForm._page);
     var links = Object.create(null);
     var outline = sections.length ? renderOutline(sections, '', links) : null;
 
@@ -672,7 +672,7 @@
 
     spy(anchorHeadings.filter(function (h) { return h.level < 3; }), links, sidebar, main);
     renderPager(main, site.order, index);
-    DocForm.navigation.drawer = drawer(sidebar);
+    DocForm._navigation.drawer = drawer(sidebar);
     resizer(sidebar);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -13,7 +13,7 @@
   var count = 0;
 
   function prepare(el) {
-    return items.domain('tabs', el, DocForm.all(':scope > [data-df-tab]', el));
+    return items.domain('tabs', el, DocForm._all(':scope > [data-df-tab]', el));
   }
 
   function build(el) {
@@ -79,11 +79,11 @@
     state.start();
   }
 
-  DocForm.tabs = {
+  DocForm._tabs = {
     get: function (target) { return controllers.get(items.target(target)) || null; }
   };
   items.scan('tabs', function () {
-    DocForm.all(HOST).forEach(function (el) { items.collect('tabs', el, prepare(el)); });
+    DocForm._all(HOST).forEach(function (el) { items.collect('tabs', el, prepare(el)); });
   });
-  DocForm.register('tabs', function () { DocForm.all(HOST).forEach(build); });
+  DocForm.register('tabs', function () { DocForm._all(HOST).forEach(build); });
 })(typeof window !== 'undefined' ? window : globalThis);

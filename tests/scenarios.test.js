@@ -85,7 +85,7 @@ function setup({ table }, withChart = true) {
   const document = { createElement: node, createElementNS: (_, tag) => node(tag) };
   const context = vm.createContext({ DocForm, document, CustomEvent, Date });
   vm.runInContext(sources[2], context);
-  DocForm.all = (selector, el) => {
+  DocForm._all = (selector, el) => {
     switch (selector) {
       case 'table[data-df-scenarios]': return [table];
       case ':scope > thead > tr': return el.children[0].children;
@@ -95,11 +95,11 @@ function setup({ table }, withChart = true) {
     }
   };
   DocForm.register = (name, start) => modules.set(name, start);
-  DocForm.warnOnce = (_, message) => warnings.push(message);
+  DocForm._warnOnce = (_, message) => warnings.push(message);
   vm.runInContext(sources[3], context);
   if (withChart) vm.runInContext(sources[0], context);
   vm.runInContext(sources[1], context);
-  return { page, chart: DocForm.chart, warnings, start: modules.get('scenarios') };
+  return { page, chart: DocForm._chart, warnings, start: modules.get('scenarios') };
 }
 
 function descendants(el) {

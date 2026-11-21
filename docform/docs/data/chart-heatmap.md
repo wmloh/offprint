@@ -1,6 +1,6 @@
 # Heatmaps
 
-Enable `"chart-heatmap": true` in site or page `features` (loads [SVG charts](charts.md)). Use `data-df-chart="heatmap"` with a direct JSON spec or table, `DocForm.chart(host, {type: "heatmap", ...})`, or a named source.
+Enable `"chart-heatmap": true` in site or page `features` (loads [SVG charts](charts.md)). Use `data-df-chart="heatmap"` with a direct JSON spec or table, or a named source.
 
 ```html
 <div id="traffic" data-df-chart="heatmap" data-df-selection-group="slot">
@@ -32,15 +32,14 @@ Enable `"chart-heatmap": true` in site or page `features` (loads [SVG charts](ch
 
 - Drag on the side scale to dim cells outside `[lo, hi]` live; release announces once. Click (≤3px movement) picks the tick step containing the value; clicking the same step clears. Plot keys: Page Up / Page Down select and move one tick step (first press: top / bottom step); Escape clears, then leaves inspection. Legend shows `Values lo – hi` and a **Show all values** button.
 - Dimmed cells get `.is-dimmed` (opacity 0.12, 0.2 s transition); readouts add "Outside the value range". The table lists all values. The range survives updates, clamped to the new scale, and clears when it no longer overlaps.
-- `DocForm.chart.heatmap.valueRange(idOrHost)` → `[lo, hi]` or null; `valueRange(host, [lo, hi] | null)` → true, or false for invalid input or a non-heatmap. Bubbling `df:chart:heatmap-range` on the host: `{current, previous, origin: "user" | "api"}`.
+- Bubbling `df:chart:heatmap-range` reports `{current, previous, origin}` with `[lo, hi]` or `null` range states.
 
 ## Contours
 
 - `contours: true | {levels?, labels?}`. Levels: default the scale's ticks strictly inside the data range; `levels: n` (1–20) evenly spaced inside (log: by ratio); `levels: [values]` (finite, positive on log); out-of-range levels are dropped; >20 fails.
 - Needs a complete grid (no missing cells), ≥2 rows and columns, and row and column labels that are numbers in strictly increasing or decreasing order. Otherwise warns once (`Heatmap contours were skipped because …`) and draws without them. Constant grids draw none.
 - Marching squares over cell centres (log scales interpolate in log10); saddles resolve by the mean of the four corners. One path per level (`.df-heatmap-contour`, `data-df-level`); `labels: true` adds a haloed `.df-heatmap-contour-label` at the segment nearest the level's centroid. Positions follow cell order, not numeric label spacing.
-- Toggle: a drawn contour set adds one legend chip, `Contour lines` (`.df-heatmap-contour-toggle`, choices.js multiple chip), that hides and shows every line and label together (`.df-heatmap-contours.is-off`, fades). On by default; kept across redraws and data updates. `DocForm.chart.heatmap.contours(target)` → `true|false`, or `null` with no contours; `contours(target, boolean)` → `true`, `false` for no contours or a non-boolean. Fires bubbling `df:chart:heatmap-contours` `{current, previous, origin: 'user'|'api'}` on change.
-- `DocForm.chart.heatmap.contourSegments(z, level)` → `[[[col, row], [col, row]], ...]` in cell-centre units; `contourLevels(option, scale, values)`; `scale(option, values)` → `{lo, hi, mid, pos, invert, paint}`; `pivot(records, {columns?, rows?}, toNumber?)` → `{columns, rows, z, keys}`; `MAX_CELLS`.
+- Toggle: a drawn contour set adds one legend chip, `Contour lines` (`.df-heatmap-contour-toggle`, choices.js multiple chip), that hides and shows every line and label together (`.df-heatmap-contours.is-off`, fades). On by default; kept across redraws and data updates. Fires bubbling `df:chart:heatmap-contours` `{current, previous, origin: 'user'|'api'}` on change.
 
 ## Reading, selection, motion
 

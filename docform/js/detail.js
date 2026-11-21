@@ -143,7 +143,7 @@
   }
 
   DocForm._detail = { scrollport: scrollport, panel: panel, source: source, mount: setupPane, uniqueId: uniqueId };
-  DocForm.detailPane = {
+  DocForm._detailPane = {
     get: function (target) { return panes.get(items.target(target)) || null; },
     mount: function (target, options) {
       var pane = items.target(target);
@@ -152,7 +152,7 @@
   };
 
   DocForm.register('detail-pane', function () {
-    DocForm.all('.df-detail-pane').forEach(function (pane) {
+    DocForm._all('.df-detail-pane').forEach(function (pane) {
       // Diagrams link their direct panes during setup.
       var parent = pane.parentElement;
       var diagram = parent && ['df-pipeline', 'df-timeline', 'df-sequence', 'df-tree-diagram'].some(function (cls) {

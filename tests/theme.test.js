@@ -30,7 +30,7 @@ function load({ stored = null, dark = false, storage } = {}) {
   const context = vm.createContext({ window });
   vm.runInContext(core, context);
   vm.runInContext(source, context);
-  return { theme: window.DocForm.theme, store, attrs };
+  return { theme: window.DocForm._theme, store, attrs };
 }
 
 test('only light and dark exist; unknown values fall back to the OS preference', () => {

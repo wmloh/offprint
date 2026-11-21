@@ -74,7 +74,7 @@
       throw new TypeError('A shortcut needs an ID, a callback, and a valid scope.');
     }
     if (shortcuts.has(id)) throw new Error('Shortcut ID "' + id + '" is already registered.');
-    var options = DocForm.site && DocForm.site.options && DocForm.site.options.shortcuts;
+    var options = DocForm._site && DocForm._site.options && DocForm._site.options.shortcuts;
     var override = options && hasOwn.call(options, id) ? options[id] : undefined;
     if (override !== undefined && override !== null && !shortcutKey(override)) {
       shortcutIssue('shortcut-key', 'options.shortcuts', 'Invalid key for shortcut "' + id + '". Using its default.', id);
@@ -975,7 +975,7 @@
   }
 
   function roleColor(name, site) {
-    var roles = (site || DocForm.site || {}).roles || {};
+    var roles = (site || DocForm._site || {}).roles || {};
     var key = String(name).trim().toLowerCase();
     if (hasOwn.call(roles, key)) return roles[key];
     warnOnce('role:' + key, 'Unknown role "' + name + '"; add it to the manifest roles.');
@@ -985,7 +985,7 @@
   function run(mod) {
     if (boot && !boot.canInitialize(mod.name)) return;
     try {
-      mod.init(DocForm.site, DocForm);
+      mod.init(DocForm._site, DocForm);
     } catch (e) {
       if (boot) boot.moduleFailed(mod.name, e);
       else warnOnce('init:' + mod.name, 'Module "' + mod.name + '" failed to initialise.', e);
@@ -1161,27 +1161,24 @@
       (interval.count === undefined ? '' : ' (n = ' + interval.count + ')');
   }
 
-  var DocForm = root.DocForm = Object.assign(root.DocForm || { site: null, page: null }, {
-    colors: COLORS.slice(),
+  var DocForm = root.DocForm = Object.assign(root.DocForm || { _site: null, _page: null }, {
+    _colors: COLORS.slice(),
     register: register,
-    data: data,
-    flag: flag,
-    num: num,
-    all: all,
-    color: color,
+    _data: data,
+    _flag: flag,
+    _num: num,
+    _all: all,
+    _color: color,
     _normalizeRoles: normalizeRoles,
-    roleColor: roleColor,
-    resolvePath: resolvePath,
-    normalizeSite: normalizeSite,
-    slug: slug,
-    uniqueSlug: uniqueSlug,
-    termKey: termKey,
-    tagShapes: SHAPES.slice(),
+    _roleColor: roleColor,
+    _resolvePath: resolvePath,
+    _normalizeSite: normalizeSite,
+    _termKey: termKey,
+    _tagShapes: SHAPES.slice(),
     _normalizeTags: normalizeTags,
-    tagKeys: tagKeys,
-    glossaryTip: glossaryTip,
-    copyText: copyText,
-    warnOnce: warnOnce,
+    _tagKeys: tagKeys,
+    _glossaryTip: glossaryTip,
+    _warnOnce: warnOnce,
     _component: {
       target: elementTarget, flag: attributeFlag, closestFlag: closestFlag, number: attributeNumber, option: option, issue: issue,
       transaction: transaction, notify: notifyNow, signal: signal

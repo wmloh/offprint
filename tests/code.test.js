@@ -9,7 +9,7 @@ const context = vm.createContext({ URL, console });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('code.js'), context);
-const code = context.DocForm.code;
+const code = context.DocForm._code;
 
 // Typed tokens only, as "type:text" strings.
 const typed = (src, lang) => JSON.parse(JSON.stringify(

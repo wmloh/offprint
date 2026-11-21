@@ -10,7 +10,7 @@ sections: 3</textarea>
 ```
 
 - The native field retains its value, form attributes, editing behavior, and `input` and `change` events. Save through the page if edits should survive reload.
-- `DocForm.editableText.mount(idOrField)` prepares a field added after startup and returns it or `null`. Call `DocForm.editableText.refresh(idOrField)` after assigning `.value` from script. Native form reset updates the colours automatically.
+- Native form reset updates the colours automatically.
 - Missing or unsupported highlighters leave the field editable with plain text. The authored controls work with scripts off.
 
 [Editable text source](../../js/editable-text.js)

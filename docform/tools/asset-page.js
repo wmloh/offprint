@@ -104,7 +104,7 @@ window.DocForm.ready(function (DF) {
       file.addEventListener('click', function () { download(job.output, script); });
       copy.addEventListener('click', async function () {
         try {
-          await DF.copyText(script);
+          await DF.util.copyText(script);
           status.textContent = 'Copied ' + job.label + '.';
         } catch (error) {
           area.focus();

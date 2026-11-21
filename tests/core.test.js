@@ -21,7 +21,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
 test('missing manifest normalizes to empty defaults', () => {
   const { DocForm, warnings } = load();
-  const site = DocForm.normalizeSite(undefined, 'file:///notes/index.html');
+  const site = DocForm._normalizeSite(undefined, 'file:///notes/index.html');
   assert.deepEqual(plain(site), {
     provided: false,
     base: 'file:///notes/index.html',
@@ -44,7 +44,7 @@ test('missing manifest normalizes to empty defaults', () => {
 
 test('page paths resolve against the manifest and keep reading order', () => {
   const { DocForm, warnings } = load();
-  const site = DocForm.normalizeSite({
+  const site = DocForm._normalizeSite({
     title: 'Notes',
     pages: [
       'index.html',
@@ -76,24 +76,24 @@ test('page paths resolve against the manifest and keep reading order', () => {
 test('roles are lowercased and invalid entries warn once', () => {
   const { DocForm, warnings } = load();
   const raw = { options: { roles: { colors: { Theorem: 'Purple', bad: 'teal', 'no spaces': 'red' } } } };
-  const site = DocForm.normalizeSite(raw, 'file:///x/site.js');
-  DocForm.normalizeSite(raw, 'file:///x/site.js');
+  const site = DocForm._normalizeSite(raw, 'file:///x/site.js');
+  DocForm._normalizeSite(raw, 'file:///x/site.js');
   assert.deepEqual(plain(site.roles), { theorem: 'purple' });
   assert.equal(warnings.length, 3);
 });
 
 test('unknown role lookups warn once and return null', () => {
   const { DocForm, warnings } = load();
-  const site = DocForm.normalizeSite({ options: { roles: { colors: { proof: 'gray' } } } }, 'file:///x/site.js');
-  assert.equal(DocForm.roleColor('Proof', site), 'gray');
-  assert.equal(DocForm.roleColor('lemma', site), null);
-  assert.equal(DocForm.roleColor('lemma', site), null);
+  const site = DocForm._normalizeSite({ options: { roles: { colors: { proof: 'gray' } } } }, 'file:///x/site.js');
+  assert.equal(DocForm._roleColor('Proof', site), 'gray');
+  assert.equal(DocForm._roleColor('lemma', site), null);
+  assert.equal(DocForm._roleColor('lemma', site), null);
   assert.equal(warnings.length, 1);
 });
 
 test('non-object manifest fields are ignored with a warning', () => {
   const { DocForm, warnings } = load();
-  const site = DocForm.normalizeSite({ pages: 'index.html', options: { tooltips: { terms: [] }, math: { macros: null } } }, 'file:///x/site.js');
+  const site = DocForm._normalizeSite({ pages: 'index.html', options: { tooltips: { terms: [] }, math: { macros: null } } }, 'file:///x/site.js');
   assert.deepEqual(plain(site.pages), []);
   assert.deepEqual(plain(site.glossary), {});
   assert.deepEqual(plain(site.macros), {});
@@ -115,16 +115,16 @@ test('copyText uses the clipboard and falls back to execCommand when it is refus
   const window = { navigator: { clipboard }, isSecureContext: true };
   vm.runInNewContext(source, { window, document, URL, console: { warn() {} } });
   const { DocForm } = window;
-  await DocForm.copyText('plain');
-  await DocForm.copyText('refused');
+  await DocForm.util.copyText('plain');
+  await DocForm.util.copyText('refused');
   allowFallback = false;
-  await assert.rejects(DocForm.copyText('refused'));
+  await assert.rejects(DocForm.util.copyText('refused'));
   assert.deepEqual(copied, ['plain', 'fallback:refused', 'fallback:refused']);
 });
 
 test('bibliography, refs, and the search index path are read from the manifest', () => {
   const { DocForm } = load();
-  const site = DocForm.normalizeSite({
+  const site = DocForm._normalizeSite({
     options: { citations: { entries: { a: 'Entry' } }, references: { equations: 'all' } },
     assets: { search: { output: 'search-index.js' } }
   }, 'file:///repo/docs/site.js');
@@ -135,7 +135,7 @@ test('bibliography, refs, and the search index path are read from the manifest',
 
 test('legacy top-level manifest keys do not supply feature options', () => {
   const { DocForm, warnings } = load();
-  const site = DocForm.normalizeSite({
+  const site = DocForm._normalizeSite({
     roles: { example: 'blue' },
     glossary: { example: 'Definition' },
     terms: { hold: 1, autoLink: true },
@@ -157,7 +157,7 @@ test('core does not register a standalone page startup handler', () => {
   const window = {};
   vm.runInNewContext(source, { window, document, URL });
   assert.deepEqual(listeners, []);
-  assert.equal(window.DocForm.site, null);
+  assert.equal(window.DocForm._site, null);
 });
 
 test('max-width attributes accept positive lengths and percentages only', () => {
@@ -199,6 +199,6 @@ test('tag classes own one shape each, the circle stays with glossary tags, and a
   for (const re of [/"Empty" needs a nonempty tip/, /unknown role "nope"/, /"basics" is listed in both "glossary" and "availability"/,
     /"clash": class "availability" already uses the triangle/, /"round": the circle is reserved/, /"glossary" is reserved/,
     /"odd": its shape must be one of triangle, star, square, heart, spades, diamond, clubs/]) assert.match(text, re);
-  assert.deepEqual(plain(DocForm.tagKeys(' Basics, web ,, BASICS ')), ['basics', 'web']);
-  assert.deepEqual(plain(DocForm.tagKeys(['Web', 3])), ['web']);
+  assert.deepEqual(plain(DocForm._tagKeys(' Basics, web ,, BASICS ')), ['basics', 'web']);
+  assert.deepEqual(plain(DocForm._tagKeys(['Web', 3])), ['web']);
 });

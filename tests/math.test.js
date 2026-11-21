@@ -17,7 +17,7 @@ function load({ withKatex = true, macros } = {}) {
   if (withKatex) vm.runInContext(katex, context);
   vm.runInContext(math, context);
   const DocForm = context.DocForm;
-  DocForm.site = DocForm.normalizeSite({ options: { math: { macros } } }, 'file:///x/site.js');
+  DocForm._site = DocForm._normalizeSite({ options: { math: { macros } } }, 'file:///x/site.js');
   return { DocForm, warnings };
 }
 
@@ -44,11 +44,11 @@ const scope = (els) => ({ querySelectorAll: () => els });
 
 test('manifest macros apply and \\gdef does not leak into the manifest', () => {
   const { DocForm } = load({ macros: { '\\R': '\\mathbb{R}' } });
-  assert.match(DocForm.math.html('x \\in \\R'), /mathbb/);
-  assert.match(DocForm.math.html('x', true), /katex-display/);
-  DocForm.math.html('\\gdef\\V{v}');
-  assert.match(DocForm.math.html('\\V'), /mord mathnormal[^>]*>v</);
-  assert.deepEqual(Object.keys(DocForm.site.macros), ['\\R']);
+  assert.match(DocForm._math.html('x \\in \\R'), /mathbb/);
+  assert.match(DocForm._math.html('x', true), /katex-display/);
+  DocForm._math.html('\\gdef\\V{v}');
+  assert.match(DocForm._math.html('\\V'), /mord mathnormal[^>]*>v</);
+  assert.deepEqual(Object.keys(DocForm._site.macros), ['\\R']);
 });
 
 test('render handles inline, display, and errors, and skips rendered elements', () => {
@@ -56,7 +56,7 @@ test('render handles inline, display, and errors, and skips rendered elements', 
   const inline = element('  a^2  ');
   const display = element('b', { 'data-df-display': '' });
   const bad = element('\\frac{1}');
-  assert.equal(DocForm.math.render(scope([inline, display, bad])), 3);
+  assert.equal(DocForm._math.render(scope([inline, display, bad])), 3);
 
   assert.equal(inline.getAttribute('data-df-tex'), 'a^2');
   assert.match(inline.innerHTML, /class="katex"/);
@@ -68,16 +68,16 @@ test('render handles inline, display, and errors, and skips rendered elements', 
   assert.match(bad.title, /KaTeX parse error/);
   assert.equal(warnings.length, 1);
 
-  assert.equal(DocForm.math.render(scope([inline, display, bad])), 0);
-  assert.equal(DocForm.math.render(scope([inline]), true), 1);
+  assert.equal(DocForm._math.render(scope([inline, display, bad])), 0);
+  assert.equal(DocForm._math.render(scope([inline]), true), 1);
 });
 
 test('set replaces the source and clears a previous error', () => {
   const { DocForm } = load();
   const el = element('\\frac{1}');
-  DocForm.math.render(scope([el]));
+  DocForm._math.render(scope([el]));
   assert.ok(el.classList.contains('df-math-error'));
-  assert.equal(DocForm.math.set(el, 'x = 3'), true);
+  assert.equal(DocForm._math.set(el, 'x = 3'), true);
   assert.equal(el.getAttribute('data-df-tex'), 'x = 3');
   assert.ok(!el.classList.contains('df-math-error'));
   assert.equal(el.title, '');
@@ -87,7 +87,7 @@ test('set replaces the source and clears a previous error', () => {
 test('missing KaTeX leaves TeX source in place with one warning', () => {
   const { DocForm, warnings } = load({ withKatex: false });
   const el = element('a^2');
-  assert.equal(DocForm.math.render(scope([el, element('b')])), 0);
+  assert.equal(DocForm._math.render(scope([el, element('b')])), 0);
   assert.equal(el.textContent, 'a^2');
   assert.ok(!el.classList.contains('df-math-rendered'));
   assert.equal(warnings.length, 1);
@@ -95,11 +95,11 @@ test('missing KaTeX leaves TeX source in place with one warning', () => {
 
 test('split and mixed render $…$ inside text and keep escaped dollars', () => {
   const { DocForm } = load();
-  const parts = (text) => JSON.parse(JSON.stringify(DocForm.math.split(text)));
+  const parts = (text) => JSON.parse(JSON.stringify(DocForm._math.split(text)));
   assert.deepEqual(parts('Cost \\$5, area $a^2$ <ok>'),
     [{ tex: false, text: 'Cost $5, area ' }, { tex: true, text: 'a^2' }, { tex: false, text: ' <ok>' }]);
   assert.deepEqual(parts('open $x'), [{ tex: false, text: 'open $x' }]);
-  const html = DocForm.math.mixed('a <b> $x^2$ $\\frac{1}$');
+  const html = DocForm._math.mixed('a <b> $x^2$ $\\frac{1}$');
   assert.match(html, /^a &lt;b&gt; <span class="katex">/);
   assert.match(html, /<span class="df-math-error">\\frac\{1\}<\/span>$/);
 });

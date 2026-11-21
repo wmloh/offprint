@@ -1,4 +1,4 @@
-DocForm.setup(({ animation }) => {
+DocForm.setup(({ _animation: animation }) => {
   animation.mount('page-parts', {
     steps: [
       {

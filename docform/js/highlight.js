@@ -25,7 +25,7 @@
   }
 
   function storageKey(name) {
-    return 'docform-selection:' + JSON.stringify([DocForm.site.base, name]);
+    return 'docform-selection:' + JSON.stringify([DocForm._site.base, name]);
   }
 
   function load(name) {
@@ -86,7 +86,7 @@
           var notify = apply(key);
           if (notify) notifications.push(notify);
         });
-        DocForm.all(ITEM).forEach(function (el) {
+        DocForm._all(ITEM).forEach(function (el) {
           if (items.key(el.getAttribute(GROUP)) === name) sync(el);
         });
       } else if (key === null && persist && started) {
@@ -187,11 +187,11 @@
   function prepare() {
     if (!configured) {
       configured = true;
-      var options = DocForm.site.selectionGroups;
+      var options = DocForm._site.selectionGroups;
       if (options) Object.keys(options).forEach(function (name) { define(name, options[name]); });
     }
     groups.forEach(function (group) { group.prepare(); });
-    DocForm.all(ITEM).forEach(function (el) {
+    DocForm._all(ITEM).forEach(function (el) {
       var key = items.key(el.getAttribute(KEY));
       if (!key) return;
       collect(el.getAttribute(GROUP), [key], el.matches(CONTROL) && !el.matches(DISABLED) &&
@@ -219,7 +219,7 @@
   function syncAdded(node) {
     if (node.nodeType !== 1 || !document.body.contains(node)) return;
     if (node.matches(ITEM)) sync(node);
-    DocForm.all(ITEM, node).forEach(sync);
+    DocForm._all(ITEM, node).forEach(sync);
   }
 
   DocForm.selection = {
@@ -243,7 +243,7 @@
   };
 
   DocForm.register('selection', function () {
-    DocForm.all(ITEM).forEach(sync);
+    DocForm._all(ITEM).forEach(sync);
     new root.MutationObserver(function (records) {
       records.forEach(function (record) {
         if (record.type === 'attributes') {

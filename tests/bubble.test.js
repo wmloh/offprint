@@ -9,7 +9,7 @@ const context = vm.createContext({ URL, console: { warn() {} } });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('bubble.js'), context);
-const bubble = context.DocForm.peekBubbles;
+const bubble = context.DocForm._peekBubbles;
 const json = (value) => JSON.parse(JSON.stringify(value));
 
 // Boxes are anchor rectangles in a 1000px-tall viewport.

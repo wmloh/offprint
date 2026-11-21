@@ -28,7 +28,7 @@
 
   // A legend entry's hover text: the role's manifest tip, or null so tooltips fall back and warn.
   function roleTip(name, site) {
-    var tips = (site || DocForm.site || {}).roleTips || {};
+    var tips = (site || DocForm._site || {}).roleTips || {};
     var key = String(name).trim().toLowerCase();
     return Object.prototype.hasOwnProperty.call(tips, key) ? tips[key] : null;
   }
@@ -37,7 +37,7 @@
     var names = Object.keys(roles);
     el.classList.add('df-legend');
     if (!names.length) {
-      DocForm.warnOnce('legend:empty', 'A data-df-legend element was found but the manifest defines no roles.');
+      DocForm._warnOnce('legend:empty', 'A data-df-legend element was found but the manifest defines no roles.');
       return;
     }
     el.textContent = '';
@@ -51,7 +51,7 @@
       item.setAttribute('data-df-role', name);
       var tip = roleTip(name, site);
       // Tooltips show the role tip as a DocForm hover card; without them, the native title stands in.
-      if (DocForm.tooltips) {
+      if (DocForm._tooltips) {
         if (tip) item.setAttribute('data-df-tip', tip);
       } else item.title = tip || roleLabel(name);
       swatch.className = 'df-legend-swatch';
@@ -64,18 +64,18 @@
   }
 
   function checkMarkup(site) {
-    DocForm.all('[data-df-color]').forEach(function (el) {
-      DocForm.color(el.getAttribute('data-df-color'));
+    DocForm._all('[data-df-color]').forEach(function (el) {
+      DocForm._color(el.getAttribute('data-df-color'));
     });
-    DocForm.all('[data-df-role]').forEach(function (el) {
+    DocForm._all('[data-df-role]').forEach(function (el) {
       if (el.hasAttribute('data-df-color')) return;
-      DocForm.roleColor(el.getAttribute('data-df-role'), site);
+      DocForm._roleColor(el.getAttribute('data-df-role'), site);
     });
   }
 
-  DocForm.roles = {
+  DocForm._roles = {
     color: function (name, colors) {
-      var map = colors === undefined ? (DocForm.site || {}).roles : DocForm._normalizeRoles(colors);
+      var map = colors === undefined ? (DocForm._site || {}).roles : DocForm._normalizeRoles(colors);
       var key = String(name).trim().toLowerCase();
       return map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : null;
     },
@@ -92,7 +92,7 @@
       style.textContent = css;
       document.head.appendChild(style);
     }
-    DocForm.all('[data-df-legend]').forEach(function (el) {
+    DocForm._all('[data-df-legend]').forEach(function (el) {
       if (!DocForm._boot || DocForm._component.flag(el, 'legend', 'roles')) renderLegend(el, site.roles, site);
     });
     checkMarkup(site);

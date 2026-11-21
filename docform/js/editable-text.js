@@ -20,7 +20,7 @@
     if (mirrors.has(field)) return field;
     var lang = field.getAttribute('data-df-lang');
     if (!lang) return field;
-    var code = DocForm.code;
+    var code = DocForm._code;
     if (!code || !code.language(lang)) {
       component.issue('editable-text', field, 'Syntax highlighting is unavailable for "' + lang + '".',
         'Enable the code feature and use a supported language.');
@@ -72,10 +72,10 @@
     if (render) render();
   }
 
-  DocForm.editableText = { mount: mount, refresh: refresh };
+  DocForm._editableText = { mount: mount, refresh: refresh };
 
   DocForm.register('editable-text', function () {
-    DocForm.all(selector).forEach(mount);
+    DocForm._all(selector).forEach(mount);
     document.addEventListener('reset', function (event) {
       var fields = Array.from(event.target.elements || []).filter(function (field) { return mirrors.has(field); });
       if (fields.length) root.setTimeout(function () { fields.forEach(refresh); }, 0);

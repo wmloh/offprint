@@ -1,6 +1,6 @@
 # Dot and interval plots
 
-- Enable `"chart-intervals": true` in site or page `features`. It loads [SVG charts](charts.md) as a dependency. Use `data-df-chart="interval"` in markup or `DocForm.chart(host, {type: "interval", ...})`.
+- Enable `"chart-intervals": true` in site or page `features`. It loads [SVG charts](charts.md) as a dependency. Use `data-df-chart="interval"` in markup.
 - `x` is a category and `y` is a linear numeric estimate in both orientations. `orientation: "vertical"` (default) places categories along the bottom. `"horizontal"` lists them down the left, wraps long labels, and sizes the plot by row count unless `height` is set. Also accepts `data-df-orientation`.
 - `sort: "value"` (default) ranks highest first by the first series. Set `sortSeries` to another series key. Ties keep input order. Categories without a value in the ranking series go last. `"label"` sorts alphabetically and `"none"` keeps input order (`categories` first, then first appearance). Hiding a series keeps the category order.
 - `mark: "dot"` (default) scales to the estimates and supplied bounds. `"lollipop"` draws stems from zero and includes zero in the automatic scale. A fixed value domain that excludes zero puts stems at the nearest plot edge.

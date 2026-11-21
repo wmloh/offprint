@@ -107,9 +107,9 @@ test('nested outputs are reproducible, independent across sites, and load throug
   assert.equal(context.DocFormSearch.metadata.inputs[0].sha256, createHash('sha256').update('First site').digest('hex'));
   assert.equal(runtime._boot.registerData('runs').snapshot().text, 'run,time\nA,12\n');
   assert.equal(runtime._boot.registerData('values').snapshot().type, 'yaml');
-  runtime.search.load(index => assert.equal(index.pages[0].sections[0].text, 'First site'));
+  runtime._search.load(index => assert.equal(index.pages[0].sections[0].text, 'First site'));
   context.DocFormSearch.version++;
-  runtime.search.load(index => assert.equal(index, null));
+  runtime._search.load(index => assert.equal(index, null));
   context.DocFormData.values.version++;
   context.DocFormData.unsupported = context.DocFormData.values;
   assert.equal(runtime._boot.registerData('unsupported'), null);

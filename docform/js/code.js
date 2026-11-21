@@ -442,7 +442,7 @@
   }
 
   function langOf(pre, code) {
-    var attr = DocForm.data(pre, 'lang', null) || (code && DocForm.data(code, 'lang', null));
+    var attr = DocForm._data(pre, 'lang', null) || (code && DocForm._data(code, 'lang', null));
     if (attr) return attr;
     var cls = ((code && code.className) + ' ' + pre.className).match(/\blang(?:uage)?-([\w+#-]+)/);
     return cls ? cls[1] : '';
@@ -460,11 +460,11 @@
 
   // Replaces the before and after blocks of a .df-diff with one pre whose rows come from the line diff.
   function buildDiff(box) {
-    var pres = DocForm.all(':scope > pre', box);
+    var pres = DocForm._all(':scope > pre', box);
     var before = box.querySelector(':scope > pre[data-df-diff="before"]') || pres[0];
     var after = box.querySelector(':scope > pre[data-df-diff="after"]') || pres.filter(function (p) { return p !== before; })[0];
     if (!before || !after || !DIFFS) {
-      DocForm.warnOnce('diff-pair', 'A .df-diff needs a before and an after pre; leaving it as is.', box);
+      DocForm._warnOnce('diff-pair', 'A .df-diff needs a before and an after pre; leaving it as is.', box);
       return;
     }
     var textOf = function (pre) {
@@ -476,10 +476,10 @@
     var indent = indentOf(a.concat(b));
     var cut = function (lines) { return lines.map(function (line) { return line.slice(indent); }).join('\n'); };
     var pre = document.createElement('pre');
-    var lang = DocForm.data(box, 'lang', null) || langOf(after, after.querySelector(':scope > code')) ||
+    var lang = DocForm._data(box, 'lang', null) || langOf(after, after.querySelector(':scope > code')) ||
       langOf(before, before.querySelector(':scope > code'));
     if (lang) pre.setAttribute('data-df-lang', lang);
-    var lines = DocForm.data(box, 'lines', null);
+    var lines = DocForm._data(box, 'lines', null);
     if (lines) pre.setAttribute('data-df-lines', lines);
     DIFFS.set(pre, diffLines(cut(a), cut(b)));
     box.insertBefore(pre, before);
@@ -503,13 +503,13 @@
 
   // Links each circled marker to the matching item of the annotation list: hover lights both, click scrolls to it.
   function linkNotes(wrap, pre) {
-    var ref = DocForm.data(pre, 'annotate', '');
+    var ref = DocForm._data(pre, 'annotate', '');
     var target = pre.getAttribute('data-df-annotation-list');
     var list = target !== null ? component.target(target, 'code', true) :
       !boot && ref.charAt(0) === '#' ? document.getElementById(ref.slice(1)) : wrap.nextElementSibling;
-    var marks = DocForm.all('.df-code-mark', wrap);
+    var marks = DocForm._all('.df-code-mark', wrap);
     if (!list || list.tagName !== 'OL') {
-      if (marks.length) DocForm.warnOnce('code-notes:' + ref, 'No ordered list found for the code annotations.', pre);
+      if (marks.length) DocForm._warnOnce('code-notes:' + ref, 'No ordered list found for the code annotations.', pre);
       return;
     }
     list.classList.add('df-code-notes');
@@ -521,7 +521,7 @@
       var li = items[n - first];
       if (!li) {
         mark.classList.add('is-missing');
-        DocForm.warnOnce('code-note:' + n, 'Code annotation ' + n + ' has no matching list item.', pre);
+        DocForm._warnOnce('code-note:' + n, 'Code annotation ' + n + ' has no matching list item.', pre);
         return;
       }
       var group = groups[n] || (groups[n] = { li: li, els: [li] });
@@ -540,12 +540,12 @@
         void li.offsetWidth;
         li.classList.add('is-flash');
       });
-      if (DocForm.tooltips) {
-        DocForm.tooltips.attach(mark, '', '', {
+      if (DocForm._tooltips) {
+        DocForm._tooltips.attach(mark, '', '', {
           className: 'df-code-tip',
           content: function () {
             var copy = li.cloneNode(true);
-            DocForm.all('[id]', copy).forEach(function (el) { el.removeAttribute('id'); });
+            DocForm._all('[id]', copy).forEach(function (el) { el.removeAttribute('id'); });
             var box = document.createElement('div');
             while (copy.firstChild) box.appendChild(copy.firstChild);
             return box;
@@ -583,13 +583,13 @@
     var markers = null;
     var diffMode = pre.getAttribute('data-df-diff');
     if (!diff && diffMode !== 'before' && diffMode !== 'after' &&
-      (boot ? component.flag(pre, 'diff', 'code') : DocForm.flag(pre, 'diff'))) diff = diffRows(source);
+      (boot ? component.flag(pre, 'diff', 'code') : DocForm._flag(pre, 'diff'))) diff = diffRows(source);
     if (annotate && !diff) {
       var parsed = annotations(source);
       source = parsed.source;
       markers = parsed.markers;
     }
-    var marked = lineList(DocForm.data(pre, 'lines', ''));
+    var marked = lineList(DocForm._data(pre, 'lines', ''));
 
     if (diff || markers || marked.length) {
       var rows = diff || source.split('\n').map(function (text) { return { type: 'same', text: text }; });
@@ -638,7 +638,7 @@
     var text = button.lastChild;
     var timer = 0;
     button.addEventListener('click', function () {
-      DocForm.copyText(source).then(function () {
+      DocForm.util.copyText(source).then(function () {
         text.textContent = 'Copied';
         button.classList.add('is-done');
       }, function () {
@@ -678,7 +678,7 @@
     return null;
   }
 
-  DocForm.code = {
+  DocForm._code = {
     mount: mount,
     enhance: enhance,
     tokenize: tokenize,
@@ -694,8 +694,8 @@
 
   DocForm.register('code', function () {
     // Every .df-page, including bubble panels that live outside the main page.
-    var pages = DocForm.all('.df-page');
-    (pages.length ? DocForm.all('.df-page .df-diff') : DocForm.all('.df-diff', document.body)).forEach(mount);
-    (pages.length ? DocForm.all('.df-page pre') : DocForm.all('pre', document.body)).forEach(mount);
+    var pages = DocForm._all('.df-page');
+    (pages.length ? DocForm._all('.df-page .df-diff') : DocForm._all('.df-diff', document.body)).forEach(mount);
+    (pages.length ? DocForm._all('.df-page pre') : DocForm._all('pre', document.body)).forEach(mount);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

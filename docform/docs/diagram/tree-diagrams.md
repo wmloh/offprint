@@ -34,8 +34,8 @@ Enable `tree-diagram` (loads `detail-pane`). Use `figure.df-tree-diagram` with a
 
 Enable `data` and set `data-df-source="name"` on the figure. Supply a flat array with unique string `key`, optional string `parent`, optional `label`, and optional Boolean `collapsed`. An empty or omitted parent denotes a root. Parents may appear anywhere in the array. Use `options.tree-diagram.mapping` to override field names. The authored list is optional fallback. Source replacements keep the selected key and the disclosure state of surviving branches when possible. Unknown parents, cycles, and invalid keys reject the transaction.
 
-## API
+## Events
 
-`DocForm.treeDiagram.get(idOrHost)` returns the selector or `null`. Methods `select(key)`, `reset()`, `snapshot()`, `subscribe(fn, {immediate?})`. Reset restores the initial selection. Snapshot `{key, index, label, parent}`, with `null` for a root's parent. `df:tree-diagram:change` bubbles with `{current, previous, origin}`.
+`df:tree-diagram:change` bubbles from the diagram with `{current, previous, origin}` and `{key, index, label, parent}` states. The root has `parent: null`.
 
 [Detail panes](../interact/detail-panes.md) · [Linked selection](../interact/linked-highlighting.md) · [Named data sources](../data/data-blocks.md)

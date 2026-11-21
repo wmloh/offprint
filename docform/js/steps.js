@@ -45,7 +45,7 @@
   // A hidden bold copy in the same grid cell reserves the label's selected width. Direct .df-tag children move to a
   // right-hand slot outside both copies, so their tooltips are not duplicated.
   function wrapLabel(button, number) {
-    var tags = DocForm.all(':scope > .df-tag', button);
+    var tags = DocForm._all(':scope > .df-tag', button);
     var label = span('df-step-label');
     label.append.apply(label, Array.from(button.childNodes).filter(function (node) { return tags.indexOf(node) < 0; }));
     var bold = label.cloneNode(true);
@@ -69,10 +69,10 @@
 
   // data-df-numbered counts 1..N across groups; an integer data-df-number restarts the count from that value.
   function numbersFor(host, buttons) {
-    if (!DocForm.flag(host, 'numbered')) return [];
+    if (!DocForm._flag(host, 'numbered')) return [];
     var next = 1;
     return buttons.map(function (button) {
-      var own = DocForm.data(button, 'number', null);
+      var own = DocForm._data(button, 'number', null);
       if (own === null) return String(next++);
       own = own.trim();
       if (/^-?\d+$/.test(own)) next = parseInt(own, 10) + 1;
@@ -95,8 +95,8 @@
     }
     var texts = buttons.map(function (button) { return searchText(button.textContent); });
     var shown = buttons.map(function () { return true; });
-    var groups = DocForm.all(':scope > .df-step-group', list);
-    var hint = DocForm.data(host, 'search', '').trim() || 'Filter ' + noun + 's';
+    var groups = DocForm._all(':scope > .df-step-group', list);
+    var hint = DocForm._data(host, 'search', '').trim() || 'Filter ' + noun + 's';
     var box = document.createElement('div');
     box.className = 'df-step-search';
     var input = document.createElement('input');
@@ -198,11 +198,11 @@
       return null;
     }
     var list = panel.querySelector(':scope > .df-step-list') || panel;
-    var domain = items.domain('figure-steps', box, DocForm.all(':scope > button, :scope > li > button', list));
+    var domain = items.domain('figure-steps', box, DocForm._all(':scope > button, :scope > li > button', list));
     if (!domain) return null;
     var details = detailsIn(box);
     var targets = domain.items.map(function (button) {
-      return detailById(details, DocForm.data(button, 'detail', null));
+      return detailById(details, DocForm._data(button, 'detail', null));
     });
     if (domain.items.some(function (button, i) { return button.hasAttribute('data-df-detail') && !targets[i]; })) {
       items.issue('figure-steps', box, 'A figure step links to a missing detail.', 'Use the ID of a direct child of .df-step-details.');
@@ -272,9 +272,9 @@
     var panel = box.querySelector(':scope > .df-step-panel');
     var list = panel && panel.querySelector(':scope > .df-step-list');
     var details = detailsIn(box);
-    var buttons = list ? DocForm.all(':scope > button, :scope > .df-step-group > button', list) : [];
+    var buttons = list ? DocForm._all(':scope > button, :scope > .df-step-group > button', list) : [];
     var targets = buttons.map(function (button) {
-      return detailById(details, DocForm.data(button, 'detail', null));
+      return detailById(details, DocForm._data(button, 'detail', null));
     });
     if (!buttons.length || !list.getAttribute('aria-labelledby') || targets.length !== details.length ||
         !targets.every(Boolean) || new Set(targets).size !== details.length) {
@@ -376,20 +376,20 @@
     state.start();
   }
 
-  DocForm.cards = { get: function (target) { return cards.get(items.target(target)) || null; } };
+  DocForm._cards = { get: function (target) { return cards.get(items.target(target)) || null; } };
 
   items.scan('figure-steps', function () {
-    DocForm.all('.df-figure-steps').forEach(function (box) {
+    DocForm._all('.df-figure-steps').forEach(function (box) {
       var prepared = prepareFigure(box);
       items.collect('figure-steps', box, prepared && prepared.domain);
     });
   });
   items.scan('cards', function () {
-    DocForm.all('.df-card-panel').forEach(function (box) {
+    DocForm._all('.df-card-panel').forEach(function (box) {
       var prepared = prepareCards(box);
       items.collect('cards', box, prepared && prepared.domain);
     });
   });
-  DocForm.register('figure-steps', function () { DocForm.all('.df-figure-steps').forEach(setupFigure); });
-  DocForm.register('cards', function () { DocForm.all('.df-card-panel').forEach(setupCards); });
+  DocForm.register('figure-steps', function () { DocForm._all('.df-figure-steps').forEach(setupFigure); });
+  DocForm.register('cards', function () { DocForm._all('.df-card-panel').forEach(setupCards); });
 })(typeof window !== 'undefined' ? window : globalThis);

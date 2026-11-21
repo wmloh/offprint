@@ -25,6 +25,5 @@ count += 1
 ```
 
 - A paired diff uses a line-based comparison. Alternatively, on a single `pre[data-df-diff]`, prefix rows with `+`, `-`, or space. `@@` marks hunks and leading `---` / `+++` file headers are metadata. Highlights count displayed rows. Copy omits removed and metadata rows. Annotations apply to ordinary code blocks.
-- `DocForm.code.mount(idOrElement)` enhances a `pre` or `.df-diff` and returns the same host on repeat or `null` if it cannot mount. `tokenize(src, lang)` returns `{type, text}` tokens. `highlight(src, lang)` returns escaped highlighted HTML.
 
 [Tooltip cards](tooltips.md) · [Code source](../../js/code.js)

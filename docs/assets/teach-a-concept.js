@@ -1,4 +1,4 @@
-DocForm.setup(({ animation }) => {
+DocForm.setup(({ _animation: animation }) => {
   animation.mount('build-it-up-demo', {
     steps: [
       {

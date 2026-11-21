@@ -12,7 +12,8 @@ vm.runInContext(read('core.js'), context);
 vm.runInContext(read('chart.js'), context);
 vm.runInContext(read('chart-intervals.js'), context);
 vm.runInContext(read('chart-histogram.js'), context);
-const chart = context.DocForm.chart;
+const chart = context.DocForm._chart;
+const addOns = context.DocForm.chart;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 test('interval plots rank by estimate or label with stable ties and missing values last', () => {
@@ -466,21 +467,22 @@ test('add-ons register types on a core base, scales, and legends, and an unregis
   const lollipop = {
     base: 'bar',
     legend: 'swatch',
-    normalize(model, spec) {
+    normalize(model, spec, kit) {
       if (spec.stem === false) throw new Error('Lollipops need stems.');
+      assert.equal(kit.scale('sqrt'), addOns.scale('sqrt'));
       model.stem = true;
       return model;
     },
     describe: () => 'Lollipop chart.'
   };
-  assert.equal(chart.addon('test-lollipops', { types: { lollipop }, scales: { sqrt: () => {} }, legends: { swatch: () => {} } }), true);
+  assert.equal(addOns.addon('test-lollipops', { types: { lollipop }, scales: { sqrt: () => {} }, legends: { swatch: () => {} } }), true);
   const model = chart.normalize({ type: 'lollipop', series: [{ data: [['a', 1]] }] });
   assert.deepEqual(plain([model.type, model.addon, model.stem, model.categories]), ['bar', 'lollipop', true, ['a']]);
   assert.match(chart.validate({ type: 'lollipop', stem: false, data: [1] }).join(' '), /need stems/);
-  assert.equal(typeof chart.scale('sqrt'), 'function');
-  assert.equal(chart.scale('linear'), chart.linear);
-  assert.equal(chart.scale('nope'), null);
-  assert.deepEqual(Array.from(chart.addons()), ['chart-intervals', 'chart-histogram', 'test-lollipops']);
+  assert.equal(typeof addOns.scale('sqrt'), 'function');
+  assert.equal(addOns.scale('linear'), chart.linear);
+  assert.equal(addOns.scale('nope'), null);
+  assert.deepEqual(Array.from(addOns.addons()), ['chart-intervals', 'chart-histogram', 'test-lollipops']);
 
   const rejected = [
     ['test-lollipops', { types: {} }],
@@ -491,14 +493,14 @@ test('add-ons register types on a core base, scales, and legends, and an unregis
     ['test-legend', { types: { ring: { base: 'pie', legend: 'missing' } } }],
     ['test-scale', { scales: { linear: () => {} } }]
   ];
-  rejected.forEach(([id, parts]) => assert.equal(chart.addon(id, parts), false, id));
-  assert.equal(chart.scale('ring'), null);
-  assert.deepEqual(Array.from(chart.addons()), ['chart-intervals', 'chart-histogram', 'test-lollipops'], 'rejected add-ons register nothing');
+  rejected.forEach(([id, parts]) => assert.equal(addOns.addon(id, parts), false, id));
+  assert.equal(addOns.scale('ring'), null);
+  assert.deepEqual(Array.from(addOns.addons()), ['chart-intervals', 'chart-histogram', 'test-lollipops'], 'rejected add-ons register nothing');
 
   context.DocForm._boot = { chartFeature: (type) => type === 'heatmap' ? 'chart-heatmap' : null };
   try {
     assert.match(chart.validate({ type: 'heatmap', data: [1, 2] }).join(' '), /needs the "chart-heatmap" feature/);
-    assert.equal(chart.addon('test-thief', { types: { heatmap: { base: 'bar' } } }), false, 'types belong to their loader feature');
+    assert.equal(addOns.addon('test-thief', { types: { heatmap: { base: 'bar' } } }), false, 'types belong to their loader feature');
     assert.equal(chart.normalize({ type: 'mystery', data: [1] }).type, 'line', 'unknown types still fall back to line');
   } finally {
     delete context.DocForm._boot;

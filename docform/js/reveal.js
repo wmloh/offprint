@@ -50,7 +50,7 @@
       pane.classList.add('df-split-pane', 'df-split-' + side);
       pane.style.setProperty('--df-pane-delay', i * STAGGER + 'ms');
     });
-    var spec = DocForm.data(split, 'split', '');
+    var spec = DocForm._data(split, 'split', '');
     if (spec) split.style.setProperty('--df-split-cols', splitColumns(spec, panes.length));
     split.style.setProperty('--df-split-count', String(Math.max(panes.length, 1)));
   }
@@ -146,13 +146,13 @@
   function revealAllowed(el) {
     return boot ? !component.flag(el, 'no-reveal', 'reveals') : !el.hasAttribute('data-df-no-reveal');
   }
-  function setupSplits() { DocForm.all('.df-split').forEach(setupSplit); }
+  function setupSplits() { DocForm._all('.df-split').forEach(setupSplit); }
   if (boot) DocForm.register('split-views', setupSplits);
   DocForm.register('reveal', function () {
     var splits = !boot || boot.enabled('split-views');
     if (!boot) setupSplits();
-    if (!boot || boot.enabled('callouts')) slideCallouts(DocForm.all('.df-page .df-callout').filter(revealAllowed));
-    var targets = DocForm.all(splits ? SELECTOR + ', ' + SPLIT : SELECTOR).filter(revealAllowed);
+    if (!boot || boot.enabled('callouts')) slideCallouts(DocForm._all('.df-page .df-callout').filter(revealAllowed));
+    var targets = DocForm._all(splits ? SELECTOR + ', ' + SPLIT : SELECTOR).filter(revealAllowed);
     if (typeof root.requestAnimationFrame !== 'function') {
       targets.forEach(show);
       return;
@@ -172,5 +172,5 @@
     calloutVisible: calloutVisible,
     show: show
   };
-  DocForm.reveals = { show: showTarget };
+  DocForm._reveals = { show: showTarget };
 })(typeof window !== 'undefined' ? window : globalThis);

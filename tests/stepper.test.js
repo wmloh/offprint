@@ -67,7 +67,7 @@ function setup(lists, views = []) {
     }
   });
   vm.runInContext(core, context);
-  DocForm.all = all;
+  DocForm._all = all;
   vm.runInContext(source, context);
   return { start: boot.initialize, stepper: DocForm.sequence, warnings };
 }

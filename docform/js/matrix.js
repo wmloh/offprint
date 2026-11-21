@@ -224,7 +224,7 @@
         head.appendChild(line);
         table.appendChild(head);
         if (picker) picker.el.remove();
-        picker = model.measures.length < 2 ? null : DocForm.choices.create({
+        picker = model.measures.length < 2 ? null : DocForm._choices.create({
           label: 'Measure',
           className: 'df-matrix-picker',
           options: model.measures.map(function (item) { return { value: item.key, label: item.label }; }),
@@ -252,13 +252,13 @@
     return controller.api;
   }
 
-  DocForm.matrix = {
+  DocForm._matrix = {
     mount: mount,
     get: function (target) { return matrices.get(component.target(target, 'matrix', false)) || null; }
   };
 
   DocForm.register('matrix', function () {
-    DocForm.all('table[data-df-matrix]').forEach(function (table) {
+    DocForm._all('table[data-df-matrix]').forEach(function (table) {
       if (component.flag(table, 'matrix', 'matrix')) mount(table);
     });
   });

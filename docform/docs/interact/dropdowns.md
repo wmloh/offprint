@@ -23,7 +23,6 @@ Enable `dropdowns`. Pair a direct `button[popovertarget]` with a direct `.df-dro
 - The inline-sized host can sit within a toolbar.
 - Click, tap, or use Enter or Space on a trigger or branch. Tab moves through the visible entries. Escape closes the open branch containing focus, or dismisses the popover. Outside clicks and leaf actions dismiss the popover.
 - Links follow their native behavior. Attach a page action to an ordinary button's `click` event. The panel enters the browser's top layer, positions within the viewport, and scrolls when it exceeds the available space.
-- `DocForm.dropdowns.follow(trigger, panel)` places an open popover panel below its trigger (above when there is more room), keeps it there through scrolling and resizing, hides it once the trigger leaves the viewport, and returns a stop function. Parameter comboboxes use it.
-- `DocForm.dropdowns.mount(idOrHost)` prepares a dropdown added after startup and returns its popover or `null`. The native Popover API and `details` handle opening and keyboard access with scripts off in supporting browsers.
+- The native Popover API and `details` provide opening and keyboard access.
 
 [Buttons](../layout/buttons.md) · [Dropdowns source](../../js/dropdowns.js)

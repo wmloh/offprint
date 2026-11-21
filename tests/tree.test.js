@@ -9,7 +9,7 @@ const context = vm.createContext({ URL, console });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('tree.js'), context);
-const tree = context.DocForm.tree;
+const tree = context.DocForm._tree;
 const config = { model: { name: 'cnn', layers: [64, 128] }, seed: 1, tags: [] };
 const names = (m) => [...tree.visible(m)].map((n) => (n.kind === 'more' ? 'more' : n.key));
 const keys = (list) => [...list].map((n) => n.key);

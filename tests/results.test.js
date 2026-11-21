@@ -9,7 +9,7 @@ const context = vm.createContext({ URL, console, Intl });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('results.js'), context);
-const results = context.DocForm.results;
+const results = context.DocForm._results;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 test('result cells parse numbers with spreads, units, and marks', () => {
@@ -127,9 +127,9 @@ function build(headers, cells, tableAttrs = {}, holder = null) {
     Intl, WeakMap,
     document: { createElement: (tag) => el(tag), createTextNode: (text) => el('#text', text) },
     DocForm: {
-      data: (node, key, fallback) => node.getAttribute('data-df-' + key) ?? fallback,
-      warnOnce: (key, message) => warnings.push(message),
-      all: () => [table],
+      _data: (node, key, fallback) => node.getAttribute('data-df-' + key) ?? fallback,
+      _warnOnce: (key, message) => warnings.push(message),
+      _all: () => [table],
       register: (name, fn) => { init = fn; }
     }
   });
@@ -137,7 +137,7 @@ function build(headers, cells, tableAttrs = {}, holder = null) {
   vm.runInContext(read('choices.js'), context);
   vm.runInContext(read('results.js'), context);
   init();
-  return { table, ths, rows, body: table.tBodies[0], warnings, results: context.DocForm.results };
+  return { table, ths, rows, body: table.tBodies[0], warnings, results: context.DocForm._results };
 }
 
 function enhanceTable(header, cells) {

@@ -128,7 +128,7 @@
       removeShortcut: removeShortcut };
     overlay.addEventListener('keydown', function (event) {
       if (event.key !== 'Tab' || event.defaultPrevented) return;
-      var items = DocForm.all('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', overlay)
+      var items = DocForm._all('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', overlay)
         .filter(function (el) { return !el.disabled && el.getClientRects().length; });
       if (!items.length) return;
       var first = items[0];
@@ -190,7 +190,7 @@
   }
 
   DocForm.register('zoom', function () {
-    DocForm.all(TRIGGERS).forEach(function (el) {
+    DocForm._all(TRIGGERS).forEach(function (el) {
       if (!isTrigger(el)) return;
       var target = zoomTarget(el);
       if (!target) return;
@@ -214,7 +214,7 @@
     });
   });
 
-  DocForm.zoom = {
+  DocForm._zoom = {
     open: function (target) {
       var el = component.target(target, 'zoom', true);
       return !!el && requestOpen(el, document.activeElement, 'api');

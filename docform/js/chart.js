@@ -1,5 +1,5 @@
 // SVG line, bar, scatter, and pie charts from a JSON script or table inside a [data-df-chart] element, or
-// DocForm.chart(el, spec). Hovering or the arrow keys show a readout; the Table button swaps the plot for its data.
+// DocForm._chart(el, spec). Hovering or the arrow keys show a readout; the Table button swaps the plot for its data.
 // Line charts with gaps: 'break' end a segment at explicit missing values; referenceLines mark labelled values.
 // With a selection group, a click, Enter, or Space on a keyed point selects that key in DocForm.selection.
 // x: { type: 'time' } on line and scatter charts places zoned timestamps by elapsed time and shows them in UTC.
@@ -383,7 +383,7 @@
       if (!time) return toNumber(v);
       var at = v == null ? null : toTime(v);
       if (v != null && at === null) {
-        DocForm.warnOnce('chart-time-bound:' + v, 'Chart time bound ' + JSON.stringify(v) + ' is not a timestamp; it is ignored.');
+        DocForm._warnOnce('chart-time-bound:' + v, 'Chart time bound ' + JSON.stringify(v) + ' is not a timestamp; it is ignored.');
       }
       return at;
     };
@@ -472,13 +472,13 @@
     var breaks = type === 'line' && spec.gaps === 'break';
     var time = axisType(spec.x) === 'time';
     if (time && type === 'bar') {
-      DocForm.warnOnce('chart-time-bar', 'Time axes apply to line and scatter charts; this bar chart keeps text categories.');
+      DocForm._warnOnce('chart-time-bar', 'Time axes apply to line and scatter charts; this bar chart keeps text categories.');
       time = false;
     }
     var xLog = axisType(spec.x) === 'log';
     var yLog = axisType(spec.y) === 'log';
     if ((xLog || yLog) && type === 'bar') {
-      DocForm.warnOnce('chart-log-bar', 'Log axes apply to line and scatter charts; this bar chart keeps linear axes.');
+      DocForm._warnOnce('chart-log-bar', 'Log axes apply to line and scatter charts; this bar chart keeps linear axes.');
       xLog = yLog = false;
     }
     var categories = Array.isArray(spec.categories) ? spec.categories.map(String) : null;
@@ -508,7 +508,7 @@
         if (time) {
           var at = toTime(x);
           if (at === null) {
-            DocForm.warnOnce('chart-time:' + x, 'Chart time ' + JSON.stringify(x) + ' needs epoch milliseconds or an ISO ' +
+            DocForm._warnOnce('chart-time:' + x, 'Chart time ' + JSON.stringify(x) + ' needs epoch milliseconds or an ISO ' +
               'timestamp with Z or an offset such as +09:00; the point is skipped.');
             return;
           }
@@ -561,16 +561,16 @@
       var value = axis === 'x' && categorical ? (r.value == null ? null : String(r.value)) :
         axis === 'x' && time ? toTime(r.value) : toNumber(r.value);
       if (!axis || value === null) {
-        DocForm.warnOnce('chart-ref', 'Chart reference lines need an axis of "x" or "y" and a value on that axis.');
+        DocForm._warnOnce('chart-ref', 'Chart reference lines need an axis of "x" or "y" and a value on that axis.');
         return;
       }
       refs.push({ axis: axis, value: value, label: r.label == null ? '' : String(r.label) });
     });
     if (series.length > COLORS) {
-      DocForm.warnOnce('chart-series', 'Charts have ' + COLORS + ' series colours; later series are drawn gray.');
+      DocForm._warnOnce('chart-series', 'Charts have ' + COLORS + ' series colours; later series are drawn gray.');
     }
     if (spec.brush && categorical) {
-      DocForm.warnOnce('chart-brush', 'Range brushing needs a numeric or time x axis; this chart has text categories.');
+      DocForm._warnOnce('chart-brush', 'Range brushing needs a numeric or time x axis; this chart has text categories.');
     }
     var xAxis = axisSpec(spec.x, time, xLog);
     if (time) {
@@ -605,7 +605,7 @@
       height: isNum(spec.height) && spec.height > 80 ? spec.height : bars.height
     };
     if (model.stack === 'percent' && (model.y.min !== null || model.y.max !== null)) {
-      DocForm.warnOnce('chart-percent-bounds', 'Percent stacked bars always span 0–100%; y min and max are ignored.');
+      DocForm._warnOnce('chart-percent-bounds', 'Percent stacked bars always span 0–100%; y min and max are ignored.');
       model.y.min = model.y.max = null;
     }
     model.errors = errors.concat(logErrors(model, spec, baseOptions?.allowLogZeroY));
@@ -623,7 +623,7 @@
     var stack = spec.stack == null || spec.stack === false || spec.stack === 'none' ? null : spec.stack;
     if (type !== 'bar') {
       if (orientation !== 'vertical' || stack) {
-        DocForm.warnOnce('chart-bar-layout', 'Orientation and stacking apply to bar charts; other chart types ignore them.');
+        DocForm._warnOnce('chart-bar-layout', 'Orientation and stacking apply to bar charts; other chart types ignore them.');
       }
       return out;
     }
@@ -784,7 +784,7 @@
   function addon(feature, parts) {
     var problem = addonProblem(feature, parts);
     if (problem) {
-      DocForm.warnOnce('chart-addon:' + feature + ':' + problem, 'Chart add-on ' + JSON.stringify(feature) + ' was not registered: ' + problem);
+      DocForm._warnOnce('chart-addon:' + feature + ':' + problem, 'Chart add-on ' + JSON.stringify(feature) + ' was not registered: ' + problem);
       return false;
     }
     var types = parts.types || {};
@@ -845,7 +845,7 @@
   function report(model, host, update) {
     if (!model.errors.length) return true;
     var text = model.errors.join(' ');
-    DocForm.warnOnce('chart-invalid:' + text, (update ? 'Chart update ignored; the last valid chart stays. ' :
+    DocForm._warnOnce('chart-invalid:' + text, (update ? 'Chart update ignored; the last valid chart stays. ' :
       'Chart not drawn; its own content stays. ') + text, host);
     return false;
   }
@@ -1447,7 +1447,7 @@
       before.el.removeAttribute('opacity');
       if (layer) layer.insertBefore(target, layer.firstChild);
       target.setAttribute('pointer-events', 'none');
-      [target].concat(DocForm.all('[' + GROUP + '][' + KEY + ']', target)).forEach(function (el) {
+      [target].concat(DocForm._all('[' + GROUP + '][' + KEY + ']', target)).forEach(function (el) {
         el.removeAttribute(GROUP);
         el.removeAttribute(KEY);
       });
@@ -2199,7 +2199,7 @@
     chart.tip.hidden = true;
     chart.box.classList.remove('is-hovering');
     if (chart.overlay) chart.overlay.textContent = '';
-    if (chart.marks) DocForm.all('.is-active', chart.marks).forEach(function (el) { el.classList.remove('is-active'); });
+    if (chart.marks) DocForm._all('.is-active', chart.marks).forEach(function (el) { el.classList.remove('is-active'); });
   }
 
   function row(tip, s, value, type) {
@@ -2223,7 +2223,7 @@
     chart.active = index;
     chart.pointerY = pointerY;
     chart.overlay.textContent = '';
-    DocForm.all('.is-active', chart.marks).forEach(function (el) { el.classList.remove('is-active'); });
+    DocForm._all('.is-active', chart.marks).forEach(function (el) { el.classList.remove('is-active'); });
     chart.box.classList.add('is-hovering');
     var tip = chart.tip;
     tip.textContent = '';
@@ -2266,7 +2266,7 @@
           { x: spot.cx - g.band / 2, y: g.top, width: g.band, height: g.bottom - g.top, class: 'df-chart-band' }, chart.overlay);
         chart.marks.parentNode.insertBefore(chart.overlay, chart.marks);
         if (spot.el) spot.el.classList.add('is-active');
-        else DocForm.all('.df-chart-bar', chart.marks).forEach(function (el) {
+        else DocForm._all('.df-chart-bar', chart.marks).forEach(function (el) {
           if (el.getAttribute('data-df-x') === String(spot.x)) el.classList.add('is-active');
         });
       } else {
@@ -2504,9 +2504,9 @@
     chart.seriesItems = [];
     chart.seriesChoice = null;
     var mark = model.type === 'line' ? 'line' : model.type === 'bar' && !def?.categoryMarks ? 'bar' : 'dot';
-    if (model.toggles && DocForm.choices) {
+    if (model.toggles && DocForm._choices) {
       // Toggles are a shared multiple-choice chip group: a chosen chip is a shown series or slice.
-      chart.seriesChoice = DocForm.choices.create({
+      chart.seriesChoice = DocForm._choices.create({
         label: model.type === 'pie' ? 'Slices shown' : 'Series shown',
         hideLabel: true,
         multiple: true,
@@ -2587,7 +2587,7 @@
       chart.table.appendChild(table);
       chart.revealTable = revealInOrder(rows, function (entry) {
         entry.body.appendChild(entry.row);
-        if (DocForm._selection) DocForm.all('[' + GROUP + '][' + KEY + ']', entry.row).forEach(DocForm._selection.sync);
+        if (DocForm._selection) DocForm._all('[' + GROUP + '][' + KEY + ']', entry.row).forEach(DocForm._selection.sync);
       }, function (entry) { entry.row.remove(); });
       chart.revealTable(chart.playhead);
     } else if (sourceShown(chart)) chart.table.appendChild(chart.sourceTable);
@@ -3033,9 +3033,9 @@
   }
 
   function overrides(host, spec) {
-    var type = DocForm.data(host, 'chart', '');
+    var type = DocForm._data(host, 'chart', '');
     if (Object.hasOwn(TYPES, type) || Object.hasOwn(addons, type) || addonFeature(type)) spec.type = type;
-    var height = DocForm.data(host, 'height', null);
+    var height = DocForm._data(host, 'height', null);
     if (height !== null) {
       if (DocForm._boot) {
         var h = /^[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?$/i.test(height.trim()) ? Number(height) : NaN;
@@ -3045,18 +3045,18 @@
         spec.height = parseFloat(height);
       }
     }
-    var gaps = DocForm.data(host, 'gaps', null);
+    var gaps = DocForm._data(host, 'gaps', null);
     if (gaps !== null) spec.gaps = gaps;
     ['orientation', 'stack'].forEach(function (name) {
-      var value = DocForm.data(host, name, null);
+      var value = DocForm._data(host, name, null);
       if (value !== null) spec[name] = value.trim();
     });
-    var group = DocForm.data(host, 'selection-group', null);
+    var group = DocForm._data(host, 'selection-group', null);
     if (group !== null) spec.selectionGroup = group;
     ['brush', 'rescale', 'toggles'].forEach(function (name) {
-      if (DocForm.data(host, name, null) !== null) spec[name] = DocForm.flag(host, name);
+      if (DocForm._data(host, name, null) !== null) spec[name] = DocForm._flag(host, name);
     });
-    var refs = DocForm.data(host, 'reference-lines', null);
+    var refs = DocForm._data(host, 'reference-lines', null);
     if (refs !== null) {
       try {
         var lines = JSON.parse(refs);
@@ -3064,7 +3064,7 @@
         spec.referenceLines = lines;
       } catch (e) {
         if (DocForm._boot) invalidOption(host, 'referenceLines', 'Use a JSON array of reference lines or null.', refs);
-        else DocForm.warnOnce('chart-refs:' + e.message, 'Chart reference lines are not valid JSON: ' + e.message, host);
+        else DocForm._warnOnce('chart-refs:' + e.message, 'Chart reference lines are not valid JSON: ' + e.message, host);
       }
     }
     var axisOf = function (axis) {
@@ -3073,9 +3073,9 @@
       return spec[axis];
     };
     ['x', 'y'].forEach(function (axis) {
-      var label = DocForm.data(host, axis + '-label', null);
+      var label = DocForm._data(host, axis + '-label', null);
       if (label !== null) axisOf(axis).label = label;
-      var kind = DocForm.data(host, axis + '-type', null);
+      var kind = DocForm._data(host, axis + '-type', null);
       if (kind !== null) axisOf(axis).type = kind;
     });
     return spec;
@@ -3199,11 +3199,11 @@
 
   function bindIssue(host, message) {
     if (DocForm._component) DocForm._component.issue('chart', host, message, 'Check data-df-chart-bind and its parameter scope.');
-    else DocForm.warnOnce('chart-bind:' + message, message, host);
+    else DocForm._warnOnce('chart-bind:' + message, message, host);
   }
 
   function bindMap(host) {
-    var raw = DocForm.data(host, 'chart-bind', null);
+    var raw = DocForm._data(host, 'chart-bind', null);
     if (raw !== null) {
       try { return JSON.parse(raw); } catch (e) { return undefined; }
     }
@@ -3282,7 +3282,7 @@
   function animateAttribute(host) {
     if (!host.hasAttribute || !host.hasAttribute('data-df-animate')) return null;
     return DocForm._boot && DocForm._component ? DocForm._component.flag(host, 'animate', 'chart', true) :
-      DocForm.flag(host, 'animate');
+      DocForm._flag(host, 'animate');
   }
 
   function readMarkup(host, options) {
@@ -3293,23 +3293,23 @@
       try {
         spec = JSON.parse(script.textContent);
       } catch (e) {
-        DocForm.warnOnce('chart-json:' + e.message, 'Chart data is not valid JSON: ' + e.message, host);
+        DocForm._warnOnce('chart-json:' + e.message, 'Chart data is not valid JSON: ' + e.message, host);
         return null;
       }
     } else if (table) {
-      var cells = DocForm.all('tr', table).map(function (tr) { return DocForm.all('th, td', tr); });
-      var keys = cells.map(function (r) { return r.map(function (cell) { return DocForm.data(cell, 'key', '').trim() || null; }); });
-      var named = DocForm.data(host, 'chart', '');
+      var cells = DocForm._all('tr', table).map(function (tr) { return DocForm._all('th, td', tr); });
+      var keys = cells.map(function (r) { return r.map(function (cell) { return DocForm._data(cell, 'key', '').trim() || null; }); });
+      var named = DocForm._data(host, 'chart', '');
       var type = named === 'pie' ? 'pie' : null;
       var tableHook = Object.hasOwn(addons, named) ? addons[named].fromTable : null;
       var text = cells.map(function (r) { return r.map(cellText); });
       spec = tableHook ? tableHook(text, keys) : fromTable(text, type, keys);
-      var heads = DocForm.all('tr', table)[0];
-      (type !== 'pie' && !tableHook && heads ? DocForm.all('th, td', heads) : []).slice(1).forEach(function (cell, i) {
+      var heads = DocForm._all('tr', table)[0];
+      (type !== 'pie' && !tableHook && heads ? DocForm._all('th, td', heads) : []).slice(1).forEach(function (cell, i) {
         var s = spec.series[i];
         if (!s) return;
-        s.role = DocForm.data(cell, 'role', null);
-        s.color = DocForm.data(cell, 'color', null);
+        s.role = DocForm._data(cell, 'role', null);
+        s.color = DocForm._data(cell, 'color', null);
       });
     } else if (!options) return null;
     spec = overrides(host, configuredSpec(host, spec, options));
@@ -3329,8 +3329,8 @@
     var table = input.table;
     // Keyed source cells join the group too, so the table view shows the same selection.
     if (table && model.selectionGroup && model.selectionMode !== 'publish') {
-      DocForm.all('[' + KEY + ']', table).forEach(function (cell) {
-        tagKey(model, cell, { key: DocForm.data(cell, 'key') });
+      DocForm._all('[' + KEY + ']', table).forEach(function (cell) {
+        tagKey(model, cell, { key: DocForm._data(cell, 'key') });
       });
     }
     if (!DocForm._dataViews) return build(host, model, table, input.spec, input.useSourceTable);
@@ -3631,7 +3631,7 @@
   function chart(target, spec) {
     var host = typeof target === 'string' ? document.getElementById(target) : target;
     if (!host || !charts) {
-      DocForm.warnOnce('chart-target:' + target, 'DocForm.chart could not find its element.', target);
+      DocForm._warnOnce('chart-target:' + target, 'DocForm._chart could not find its element.', target);
       return null;
     }
     var controller = chartControllers.get(host);
@@ -3680,10 +3680,12 @@
     between: between, ease: ease, parseColor: parseColor, markId: markId, addMark: addMark, match: matchMarks,
     allowed: motionAllowed, resolve: resolveMotion, entrance: entranceChanges
   };
-  chart.addon = addon;
-  chart.addons = function () { return Array.from(addonFeatures); };
-  chart.scale = function (name) { return Object.hasOwn(scales, name) ? scales[name] : null; };
-  chart.legend = function (name) { return Object.hasOwn(legends, name) ? legends[name] : null; };
+  DocForm.chart = {
+    addon: addon,
+    addons: function () { return Array.from(addonFeatures); },
+    scale: function (name) { return Object.hasOwn(scales, name) ? scales[name] : null; },
+    legend: function (name) { return Object.hasOwn(legends, name) ? legends[name] : null; }
+  };
   scales.linear = linear;
   scales.log = log;
   scales.time = linear;
@@ -3692,7 +3694,7 @@
     svg: svg, html: html, paint: paint, legendKey: key, tagKey: tagKey, barPath: barPath, whisker: whisker,
     ticks: ticks, logTicks: logTicks, timeTicks: timeTicks, tickFormat: tickFormat, logTickFormat: logTickFormat,
     format: format, toNumber: toNumber, isNum: isNum, extent: extent, intervalReadout: intervalReadout, row: row,
-    markId: markId, addMark: addMark, scale: chart.scale, COLORS: COLORS, CHAR: CHAR, inspect: inspectSpot, hide: hide
+    markId: markId, addMark: addMark, scale: DocForm.chart.scale, COLORS: COLORS, CHAR: CHAR, inspect: inspectSpot, hide: hide
   };
   chart.get = function (target) {
     var el = typeof target === 'string' ? document.getElementById(target) : target;
@@ -3707,7 +3709,7 @@
   };
   chart._positionHosts = function (name, pending) {
     var group = xGroups.get(name);
-    return DocForm.all('[data-df-x-group]').filter(function (host) {
+    return DocForm._all('[data-df-x-group]').filter(function (host) {
       return (group && group.members.has(host)) ||
         (pending && host.hasAttribute('data-df-chart') && xGroupName(host) === name);
     });
@@ -3793,11 +3795,11 @@
     var input = readMarkup(host);
     return input && chartModel(host, input.spec);
   };
-  DocForm.chart = chart;
+  DocForm._chart = chart;
 
   if (DocForm._items) DocForm._items.scan('chart', function () {
-    DocForm.all('[data-df-chart]').forEach(function (host) {
-      DocForm._selection.ensure(DocForm.data(host, 'selection-group', null));
+    DocForm._all('[data-df-chart]').forEach(function (host) {
+      DocForm._selection.ensure(DocForm._data(host, 'selection-group', null));
       var model = chart._selectionModel(host);
       if (!model || model.errors.length || !model.selectionGroup) return;
       var keys = model.series.flatMap(function (series) {
@@ -3810,7 +3812,7 @@
   });
 
   DocForm.register('chart', function () {
-    DocForm.all('[data-df-chart]').forEach(function (host) {
+    DocForm._all('[data-df-chart]').forEach(function (host) {
       if (!chart.get(host)) fromMarkup(host);
     });
   });

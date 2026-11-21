@@ -10,7 +10,7 @@ const context = vm.createContext({ URL, console: { warn: (message) => warnings.p
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('sections.js'), context);
-const sections = context.DocForm.sections;
+const sections = context.DocForm._sections;
 
 test('the colour cycle keeps known named colours in order and falls back to the default', () => {
   assert.deepEqual([...sections.cycle(' Green, red  teal blue ')], ['green', 'red', 'blue']);

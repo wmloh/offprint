@@ -301,7 +301,7 @@
       }
       var problem = contourProblem(grid);
       if (problem) {
-        DocForm.warnOnce('chart-heatmap-contours:' + problem, 'Heatmap contours were skipped because ' + problem + '.');
+        DocForm._warnOnce('chart-heatmap-contours:' + problem, 'Heatmap contours were skipped because ' + problem + '.');
       } else if (Math.min.apply(null, values) !== Math.max.apply(null, values)) {
         contours = { levels: contourLevels(spec.contours, scale, values, kit), labels: spec.contours.labels === true };
       }
@@ -629,7 +629,7 @@
     }
   }
 
-  var format = function (v, axis) { return DocForm.chart.format(v, axis); };
+  var format = function (v, axis) { return DocForm._chart.format(v, axis); };
 
   function legend(chart, el, kit) {
     var state = stateOf(chart);
@@ -643,11 +643,11 @@
     });
     state.contourChoice = null;
     var info = chart.model.heatmap;
-    if (info.contours && info.contours.levels.length && DocForm.choices) {
+    if (info.contours && info.contours.levels.length && DocForm._choices) {
       // One chip hides and shows every contour line and label together.
       var swatch = kit.html('span', 'df-chart-key df-heatmap-contour-key');
       swatch.setAttribute('aria-hidden', 'true');
-      state.contourChoice = DocForm.choices.create({
+      state.contourChoice = DocForm._choices.create({
         label: 'Contour lines shown', hideLabel: true, multiple: true, display: 'chips',
         className: 'df-chart-series-toggles df-heatmap-contour-toggle',
         options: [{ value: 'on', label: 'Contour lines', swatch: swatch }],
@@ -815,9 +815,9 @@
   });
 
   // Reads or sets the value range of a heatmap's colour-scale filter: null shows every value.
-  DocForm.chart.heatmap = {
+  DocForm._chart._heatmap = {
     MAX_CELLS: MAX_CELLS, pivot: pivot, scale: scaleFor, contourSegments: contourSegments, contourLevels: function (option, scale, values) {
-      return contourLevels(option, scale, values, { ticks: DocForm.chart.ticks, logTicks: DocForm.chart.logTicks });
+      return contourLevels(option, scale, values, { ticks: DocForm._chart.ticks, logTicks: DocForm._chart.logTicks });
     },
     valueRange: function (target, range) {
       var host = typeof target === 'string' ? root.document.getElementById(target) : target;

@@ -46,7 +46,7 @@
       return {
         key: el.getAttribute('data-df-key') ?? el.id,
         from: el.getAttribute('data-df-from'), to: el.getAttribute('data-df-to'),
-        label: DocForm.data(el, 'label', el.textContent), initial: items.flag(el, 'initial', 'sequence')
+        label: DocForm._data(el, 'label', el.textContent), initial: items.flag(el, 'initial', 'sequence')
       };
     }) : [], host);
   }
@@ -108,6 +108,6 @@
     };
   }
 
-  DocForm.sequenceDiagram = diagram.recordDiagram('sequence', markup,
+  DocForm._sequenceDiagram = diagram.recordDiagram('sequence', markup,
     { key: 'key', from: 'from', to: 'to', label: 'label' }, prepare, draw);
 })(typeof window !== 'undefined' ? window : globalThis);

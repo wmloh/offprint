@@ -232,13 +232,13 @@
     var head = table.tHead ? table.tHead.rows[table.tHead.rows.length - 1] : null;
     var body = table.tBodies[0];
     if (!head || !body) {
-      DocForm.warnOnce('results-head', 'A results table needs a thead and a tbody.', table);
+      DocForm._warnOnce('results-head', 'A results table needs a thead and a tbody.', table);
       return;
     }
     var rows = Array.prototype.slice.call(body.rows);
     var heatAll = table.getAttribute('data-df-heat');
     var filterAll = table.getAttribute('data-df-filters');
-    var tint = DocForm.data(table, 'heat-color', null);
+    var tint = DocForm._data(table, 'heat-color', null);
     if (tint) table.style.setProperty('--df-heat-color', 'var(--df-' + tint + ')');
     table.classList.add('df-results');
 
@@ -254,19 +254,19 @@
       var numeric = numericColumn(typeTexts);
       var time = !numeric && timeColumn(typeTexts);
       var values = keys.map(function (t) { return numeric ? parseCell(t) : time ? timeValue(t) : t; });
-      var bestDir = direction(DocForm.data(th, 'best', null));
+      var bestDir = direction(DocForm._data(th, 'best', null));
       var heatAttr = th.getAttribute('data-df-heat');
       var rangeAttr = th.getAttribute('data-df-heat-range');
       var range = rangeAttr !== null ? heatRange(rangeAttr) : null;
-      if (rangeAttr !== null && !range) DocForm.warnOnce('results-range:' + rangeAttr, 'Ignoring heat range "' + rangeAttr + '": use two increasing numbers such as "0, 60".', th);
+      if (rangeAttr !== null && !range) DocForm._warnOnce('results-range:' + rangeAttr, 'Ignoring heat range "' + rangeAttr + '": use two increasing numbers such as "0, 60".', th);
       var heatOn = numeric && (heatAttr !== null ? heatAttr !== 'false' : !!range || (heatAll !== null && heatAll !== 'false' && c > 0));
       var heatDir = direction(heatAttr) || bestDir || direction(heatAll) || 'max';
-      var cellTint = DocForm.data(th, 'heat-color', null);
+      var cellTint = DocForm._data(th, 'heat-color', null);
       var ruleAttr = th.getAttribute('data-df-threshold');
       var rule = ruleAttr !== null ? threshold(ruleAttr) : null;
-      if (ruleAttr !== null && !rule) DocForm.warnOnce('results-threshold:' + ruleAttr, 'Ignoring threshold "' + ruleAttr + '": use <, <=, >, or >= and a number, such as "<= 25".', th);
+      if (ruleAttr !== null && !rule) DocForm._warnOnce('results-threshold:' + ruleAttr, 'Ignoring threshold "' + ruleAttr + '": use <, <=, >, or >= and a number, such as "<= 25".', th);
       if (rule && !numeric) {
-        DocForm.warnOnce('results-threshold-text', 'A threshold needs a number column; ignoring it.', th);
+        DocForm._warnOnce('results-threshold-text', 'A threshold needs a number column; ignoring it.', th);
         rule = null;
       }
       var filterAttr = th.getAttribute('data-df-filter');
@@ -379,7 +379,7 @@
     // The rule sits under the header text so readers can see what Pass means.
     columns.forEach(function (col) {
       if (!col.rule) return;
-      var label = DocForm.data(col.th, 'threshold-label', '').trim();
+      var label = DocForm._data(col.th, 'threshold-label', '').trim();
       var note = document.createElement('span');
       note.className = 'df-rule';
       note.textContent = (label || 'Pass') + ': ' + SYMBOLS[col.rule.op] + ' ' + col.rule.text;
@@ -409,7 +409,7 @@
     var chips = [];
     parseChips(chipsAttr).forEach(function (chip) {
       if (chip.error) {
-        DocForm.warnOnce('results-chip:' + chip.text, 'Ignoring filter chip "' + chip.text + '": ' + chip.error, table);
+        DocForm._warnOnce('results-chip:' + chip.text, 'Ignoring filter chip "' + chip.text + '": ' + chip.error, table);
         return;
       }
       var tests = [];
@@ -420,7 +420,7 @@
         if (made.error) problem = problem || made.error;
         else tests.push({ col: col, test: made.test });
       });
-      if (problem) DocForm.warnOnce('results-chip:' + chip.label + ':' + problem, 'Ignoring filter chip "' + chip.label + '": ' + problem, table);
+      if (problem) DocForm._warnOnce('results-chip:' + chip.label + ':' + problem, 'Ignoring filter chip "' + chip.label + '": ' + problem, table);
       else chips.push({ label: chip.label, tests: tests, on: false });
     });
     var filtered = columns.filter(function (col) { return col.filter; });
@@ -442,7 +442,7 @@
     bar.setAttribute('aria-label', 'Table filters');
     var chipGroup = null;
     if (chips.length) {
-      chipGroup = DocForm.choices.create({
+      chipGroup = DocForm._choices.create({
         label: 'Quick filters',
         hideLabel: true,
         multiple: true,
@@ -645,7 +645,7 @@
       });
       el.appendChild(tools);
       // Value lists can be long, so they stay chips that wrap inside the scrolling menu.
-      var values = DocForm.choices.create({
+      var values = DocForm._choices.create({
         label: 'Values shown',
         hideLabel: true,
         multiple: true,
@@ -856,7 +856,7 @@
     var controller = runtime.controller('results', table, {
       prepare: function (records) {
         if (uploadInputs.has(records)) {
-          var input = data.input(uploadInputs.get(records), DocForm.data(table, 'source', null), 0);
+          var input = data.input(uploadInputs.get(records), DocForm._data(table, 'source', null), 0);
           if (input.bytes > caps.maxBytes) throw new Error('The file exceeds this table’s size limit.');
           var value = data.transform(options, table, input);
           if (filter && value !== input.snapshot.value && data.size(JSON.stringify(value)) > caps.maxBytes) {
@@ -931,7 +931,7 @@
     return controller.api;
   }
 
-  DocForm.results = {
+  DocForm._results = {
     enhance: enhance,
     mount: mount,
     get: function (target) { return resultViews.get(DocForm._dataViews.target(target)) || null; },
@@ -959,7 +959,7 @@
   };
 
   DocForm.register('results', function () {
-    DocForm.all('table[data-df-results]').forEach(function (table) {
+    DocForm._all('table[data-df-results]').forEach(function (table) {
       if (!DocForm._dataViews) enhance(table);
       else if (!table.classList.contains('df-results') &&
         !table.closest('[data-df-data-view]:not(.df-data-ready)')) mount(table);

@@ -259,7 +259,7 @@
     }
 
     items.scan(feature, function () {
-      DocForm.all(selector).forEach(function (host) {
+      DocForm._all(selector).forEach(function (host) {
         var next = null;
         try {
           var model = host.hasAttribute('data-df-source') ? source(host).read() : readMarkup(host);
@@ -345,7 +345,7 @@
       }
     }
 
-    DocForm.register(feature, function () { DocForm.all(selector).forEach(mount); });
+    DocForm.register(feature, function () { DocForm._all(selector).forEach(mount); });
     return { get: function (target) { return controllers.get(items.target(target)) || null; } };
   }
 

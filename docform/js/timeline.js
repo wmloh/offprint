@@ -131,7 +131,7 @@
       return {
         key: el.getAttribute('data-df-key') ?? el.id,
         start: el.getAttribute('data-df-start'), end: el.getAttribute('data-df-end'),
-        lane: el.getAttribute('data-df-lane'), label: DocForm.data(el, 'label', el.textContent),
+        lane: el.getAttribute('data-df-lane'), label: DocForm._data(el, 'label', el.textContent),
         initial: items.flag(el, 'initial', FEATURE)
       };
     }) : [];
@@ -349,7 +349,7 @@
   }
 
   items.scan(FEATURE, function () {
-    DocForm.all('.df-timeline').forEach(function (host) {
+    DocForm._all('.df-timeline').forEach(function (host) {
       try {
         var model;
         if (host.hasAttribute('data-df-source')) model = sourceBinding(host).read();
@@ -368,10 +368,10 @@
       }
     });
   });
-  DocForm._timeline = { scale: makeScale, ticks: axisTicks, layout: layout,
-    coords: function (host, x, y) { var view = views.get(host); return view ? view.coords(x, y) : null; } };
-  DocForm.timeline = {
+  DocForm._timeline = {
+    scale: makeScale, ticks: axisTicks, layout: layout,
+    coords: function (host, x, y) { var view = views.get(host); return view ? view.coords(x, y) : null; },
     get: function (target) { return controllers.get(items.target(target)) || null; }
   };
-  DocForm.register(FEATURE, function () { DocForm.all('.df-timeline').forEach(setup); });
+  DocForm.register(FEATURE, function () { DocForm._all('.df-timeline').forEach(setup); });
 })(typeof window !== 'undefined' ? window : globalThis);

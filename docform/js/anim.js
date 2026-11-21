@@ -31,7 +31,7 @@
   function easing(name) {
     if (typeof name === 'function') return name;
     if (EASINGS[name]) return EASINGS[name];
-    DocForm.warnOnce('easing:' + name, 'Unknown easing "' + name + '"; using ease. Choose one of ' + Object.keys(EASINGS).join(', ') + '.');
+    DocForm._warnOnce('easing:' + name, 'Unknown easing "' + name + '"; using ease. Choose one of ' + Object.keys(EASINGS).join(', ') + '.');
     return EASINGS.ease;
   }
 
@@ -155,19 +155,19 @@
     var map = new Map();
     tl.actions.forEach(function (a) {
       if (!a.kind) {
-        DocForm.warnOnce('anim-kind:' + JSON.stringify(a.action), 'An animation action needs one of ' + KINDS.join(', ') + '.');
+        DocForm._warnOnce('anim-kind:' + JSON.stringify(a.action), 'An animation action needs one of ' + KINDS.join(', ') + '.');
         return;
       }
       var selector = a.action[a.kind];
-      var targets = DocForm.all(selector, figure);
+      var targets = DocForm._all(selector, figure);
       if (!targets.length) {
         var message = 'No animation element matches "' + selector + '".';
         if (strict) throw new Error(message);
-        DocForm.warnOnce('anim-target:' + figure.id + selector, message);
+        DocForm._warnOnce('anim-target:' + figure.id + selector, message);
       }
       var prop = a.kind === 'attr' ? a.action.name : a.kind;
       if (a.kind === 'attr' && !prop) {
-        DocForm.warnOnce('anim-attr:' + selector, 'An attr action on "' + selector + '" needs a name.');
+        DocForm._warnOnce('anim-attr:' + selector, 'An attr action on "' + selector + '" needs a name.');
         return;
       }
       targets.forEach(function (el) {
@@ -256,7 +256,7 @@
       if (changed) {
         shown = at;
         var text = at ? tl.captions[at - 1] : options.label || '';
-        if (DocForm.math && DocForm.math.mixed) caption.innerHTML = DocForm.math.mixed(text);
+        if (DocForm._math && DocForm._math.mixed) caption.innerHTML = DocForm._math.mixed(text);
         else caption.textContent = text;
         caption.hidden = !text;
         sequence.showDetails(notes, at);
@@ -501,7 +501,7 @@
     return Object.fromEntries(Object.entries(value).map(function (entry) { return [entry[0], copy(entry[1])]; }));
   }
 
-  DocForm.animation = {
+  DocForm._animation = {
     mount: function (target, options) {
       var figure = component.target(target, 'animation', true);
       if (!figure) return null;
@@ -554,13 +554,13 @@
       }
       steps = copy(steps);
       var markup = figure.querySelector(':scope > [data-df-animation-steps]');
-      var entries = markup ? DocForm.all(':scope > [data-df-key]', markup) : [];
+      var entries = markup ? DocForm._all(':scope > [data-df-key]', markup) : [];
       var notes = keys.map(function (key, index) {
-        var item = entries.find(function (entry) { return items.key(DocForm.data(entry, 'key')) === key; });
+        var item = entries.find(function (entry) { return items.key(DocForm._data(entry, 'key')) === key; });
         var step = index ? steps[index - 1] : animation;
         if (item) {
           step.label = sequence.label(item) || step.label;
-          step.detail = DocForm.data(item, 'detail', step.detail);
+          step.detail = DocForm._data(item, 'detail', step.detail);
           step.initial = items.flag(item, 'initial', 'animation', step.initial);
         }
         return component.target(step.detail);

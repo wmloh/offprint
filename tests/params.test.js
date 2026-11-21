@@ -62,10 +62,10 @@ function page({ hosts = [], scoped = [], chosen = [], presets = [], bound = [], 
   ctx.window = ctx;
   vm.runInContext(read('core.js'), ctx);
   vm.runInContext(read('params.js'), ctx);
-  if (setup) setup(ctx.DocForm.parameters, events);
+  if (setup) setup(ctx.DocForm._parameters, events);
   boot.initialize();
   after.forEach((fn) => fn());
-  return { parameters: ctx.DocForm.parameters, warned, events };
+  return { parameters: ctx.DocForm._parameters, warned, events };
 }
 
 test('legacy parameter hosts and per-control options are ignored', () => {

@@ -15,8 +15,8 @@ Loads with `base` (reading profile and `docform.css`); no script. Put `.df-butto
 
 ## Step pill
 
-- `.df-pill` from `DocForm._pill.create(className, label, parts, controlsIds?)` (core.js, internal): frosted, bordered group (`role="group"`, aria-label) with `margin-inline-start: auto`, so it sits right-aligned above stepped content. Used by [steppers](../interact/worked-examples.md), [chart playback](../data/chart-playback.md), and [scenarios](../interact/scenarios.md).
-- Parts: `{name, label, run, icon?}` → 30 px round `.df-pill-button.df-pill-<name>` with a 16 px stroke icon (`reset`, `previous`, `next`, `play`, `pause`), `aria-label` and `title` tooltip; or `'count'` → `.df-pill-count`, a status with `role="status"` in the [eyebrow](text-roles.md) style. `DocForm._pill.icon(button, icon, label)` swaps icon and label in place.
+- `.df-pill` is a frosted, bordered group (`role="group"`, aria-label) with `margin-inline-start: auto`, so it sits right-aligned above stepped content. Used by [steppers](../interact/worked-examples.md), [chart playback](../data/chart-playback.md), and [scenarios](../interact/scenarios.md).
+- The icon buttons have accessible labels. The count uses the [eyebrow](text-roles.md) style and announces step changes.
 - Buttons use `aria-disabled="true"` (35 % opacity, clicks ignored) so focus stays at ends. `:focus-visible` draws a `--df-focus` ring.
 
 [Tags](../reading/tags.md) · [Colour roles](roles.md) · [Stylesheet](../../css/buttons.css) · [PCA telemetry example](../../../examples/pca/pages/telemetry.html#jump-to-alert)

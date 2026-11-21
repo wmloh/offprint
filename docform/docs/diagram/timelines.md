@@ -32,8 +32,8 @@ Enable `data` and set `data-df-source="name"` on the host. An optional authored 
 
 Source replacement and reset preserve the selected key when present, otherwise use a matching followed group key or the first event. Invalid replacements are rejected by the source transaction. The timeline follows the shared source's size and row limits.
 
-## API
+## Events
 
-`DocForm.timeline.get(idOrHost)` returns the selector or `null`. Methods `select(key)`, `reset()`, `snapshot()`, `subscribe(fn, {immediate?})`. Snapshot `{key, index, label, lane, start, end}`; date positions are UTC milliseconds. `df:timeline:change` bubbles with `{current, previous, origin}`.
+`df:timeline:change` bubbles from the diagram with `{current, previous, origin}` and `{key, index, label, lane, start, end}` states. Date positions use UTC milliseconds.
 
 [Detail panes](../interact/detail-panes.md) · [Linked selection](../interact/linked-highlighting.md) · [Named data sources](../data/data-blocks.md)

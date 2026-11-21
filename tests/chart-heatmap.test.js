@@ -9,8 +9,8 @@ const warnings = [];
 const context = vm.createContext({ URL, console: { warn: (message) => warnings.push(message) } });
 context.window = context;
 ['core.js', 'chart.js', 'chart-heatmap.js'].forEach((file) => vm.runInContext(read(file), context));
-const chart = context.DocForm.chart;
-const heatmap = chart.heatmap;
+const chart = context.DocForm._chart;
+const heatmap = chart._heatmap;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 test('colour scales map sequential, diverging, and log values to a hue and strength', () => {

@@ -219,7 +219,7 @@
 
   function hostsWithAPI(target, cls, api) {
     if (!api || typeof api.get !== 'function') return [];
-    var hosts = DocForm.all('.' + cls, target);
+    var hosts = DocForm._all('.' + cls, target);
     if (target.classList.contains(cls)) hosts.unshift(target);
     return hosts.filter(function (host) { return !!api.get(host); });
   }
@@ -230,8 +230,8 @@
     var target = detail.target;
     var s = {
       overlay: overlay, target: target, state: createState(), pointer: null, frame: 0, trail: [], ruler: null,
-      charts: hostsWithAPI(target, 'df-chart', DocForm.chart),
-      timelines: hostsWithAPI(target, 'df-timeline', DocForm.timeline),
+      charts: hostsWithAPI(target, 'df-chart', DocForm._chart),
+      timelines: hostsWithAPI(target, 'df-timeline', DocForm._timeline),
       observer: null, clone: null, buttons: {}, swatches: []
     };
     s.crosshair = s.timelines.length > 0 || s.charts.length > 0;
@@ -501,8 +501,8 @@
     clone.style.maxWidth = 'none';
     clone.style.maxHeight = 'none';
     clone.style.margin = '0';
-    var from = DocForm.all('input, select, textarea, canvas', target);
-    var to = DocForm.all('input, select, textarea, canvas', clone);
+    var from = DocForm._all('input, select, textarea, canvas', target);
+    var to = DocForm._all('input, select, textarea, canvas', clone);
     from.forEach(function (el, i) {
       var copy = to[i];
       if (!copy || copy.tagName !== el.tagName) return;
@@ -550,7 +550,7 @@
       if (hit) rows = [[hit.label, hit.value], ['Lane', hit.lane]];
     }
     for (var j = 0; j < s.charts.length && !hit; j++) {
-      var api = DocForm.chart.get(s.charts[j]);
+      var api = DocForm._chart.get(s.charts[j]);
       hit = api && api.coords(x, y);
       if (hit) {
         var model = api.model();
@@ -591,7 +591,7 @@
       var r = el.getBoundingClientRect();
       return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
     };
-    var found = DocForm.all('svg, img', target).filter(function (el) {
+    var found = DocForm._all('svg, img', target).filter(function (el) {
       return !(el.tagName.toLowerCase() === 'svg' && el.parentNode && el.parentNode.closest && el.parentNode.closest('svg')) && inside(el);
     });
     if (target.tagName === 'IMG' && inside(target)) found.push(target);
@@ -674,7 +674,7 @@
 
   if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
     if (DocForm._boot) {
-      DocForm.zoom.subscribe(function (current) { if (current) start(current); });
+      DocForm._zoom.subscribe(function (current) { if (current) start(current); });
       document.addEventListener('df:zoom:closing', stop);
     } else {
       document.addEventListener('df:zoomopen', function (event) { if (event.detail) start(event.detail); });
@@ -682,7 +682,7 @@
     }
   }
 
-  DocForm.zoomTools = {
+  DocForm._zoomTools = {
     tools: TOOLS.map(function (t) { return t.id; }),
     colors: COLORS.slice(),
     limits: { min: ZOOM.min, max: ZOOM.max, start: ZOOM.start },

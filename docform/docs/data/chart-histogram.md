@@ -1,6 +1,6 @@
 # Histograms
 
-Enable `"chart-histogram": true` in site or page features. Use `data-df-chart="histogram"` with a direct JSON spec, or `DocForm.chart(host, {type: "histogram", ...})`. A sibling HTML table inside the chart host provides a static fallback. The chart generates its interactive Table view from the current bins.
+Enable `"chart-histogram": true` in site or page features. Use `data-df-chart="histogram"` with a direct JSON spec. A sibling HTML table inside the chart host provides a static fallback. The chart generates its interactive Table view from the current bins.
 
 - Raw input uses `data: [1, 2, 2, 6]` or `series: [{key, name, data, role?, color?}]`. Observations must be finite numbers. All series share edges derived from pooled observations.
 - Pre-binned input uses `edges: [1, 3, 10], counts: [3, 1]` or shared `edges` and `series: [{key, name, counts}]`. Require one nonnegative safe integer count per bin. A named source may supply either shape via a [full-spec transform](charts.md#named-source).
@@ -23,4 +23,4 @@ Enable [parameters](../interact/parameters.md), define an integer range (for exa
 </div>
 ```
 
-A script can do the same with `scope.subscribe` and `chart.update(Object.assign(chart.spec(), {bins}))`. The chart host has ID `distribution` and the range parameter is `bins` in scope `histogram`. The [charts guide](../../../docs/pages/data/charts.html#histograms) shows the complete example.
+The chart host has ID `distribution` and the range parameter is `bins` in scope `histogram`. The [charts guide](../../../docs/pages/data/charts.html#histograms) shows the complete example.

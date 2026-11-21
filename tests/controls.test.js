@@ -35,7 +35,7 @@ function load(stored = {}, session = null) {
   const context = vm.createContext({ window, URL, console: { warn() {} } });
   vm.runInContext(core, context);
   vm.runInContext(controls, context);
-  return { controls: window.DocForm.controls, store, classes };
+  return { controls: window.DocForm._controls, store, classes };
 }
 
 const plain = (value) => JSON.parse(JSON.stringify(value));

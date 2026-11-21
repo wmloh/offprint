@@ -23,4 +23,4 @@ Enable `figure-steps`. Direct children of `.df-figure-steps` are a `figure`, a `
 - A separate [detail pane](detail-panes.md) can follow the steps with `data-df-detail-for="<wrapper id>"` and keys matching the step keys.
 - Use `DocForm.sequence.get(idOrWrapper)` for the [shared controller and event](step-contract.md). The step pill under the figure lets readers navigate in order.
 
-[Animations](animations.md) · [Card panels](card-panels.md) · [Worked-example steppers](worked-examples.md) · [PCA projection example](../../../examples/pca/pages/fit.html#fit-story) · [Source](../../js/steps.js)
+[Animations](animations.md) · [Card panels](card-panels.md) · [Worked-example steppers](worked-examples.md) · [Source](../../js/steps.js)

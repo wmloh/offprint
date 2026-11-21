@@ -1,11 +1,18 @@
-/* Floating control pill, focus mode, and the hideable navigation panel from controls.js. */
-/* The pill sits at the top-left of the content area: beside the sidebar, or at the screen edge without one. */
-.df-controls {
+/* Floating controls, focus mode, and the hideable navigation panel from controls.js. */
+/* Keep both pills beside the sidebar, or at the screen edge without one. */
+.df-controls-bar {
   position: fixed;
   top: var(--df-space-3);
   left: var(--df-space-3);
   z-index: 30;
   transition: left 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--df-space-2);
+}
+
+.df-controls,
+.df-controls-pager {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -38,6 +45,11 @@
 .df-controls-btn:hover {
   background: var(--df-bg-hover);
   color: var(--df-text);
+}
+
+.df-controls-pager .df-controls-btn:focus-visible {
+  outline: 2px solid var(--df-blue);
+  outline-offset: -2px;
 }
 
 .df-controls-btn[aria-pressed="true"] {
@@ -114,7 +126,7 @@
     grid-template-columns: 0 minmax(0, 1fr);
   }
 
-  html:has(body > .df-sidebar):not(.df-nav-hidden) .df-controls {
+  html:has(body > .df-sidebar):not(.df-nav-hidden) .df-controls-bar {
     left: calc(var(--df-sidebar-width) + var(--df-space-3));
   }
 
@@ -136,16 +148,26 @@ html.df-has-controls .df-nav-toggle {
   }
 
   /* Above the open drawer and its backdrop, beside the drawer's edge, so its button can close it. */
-  .df-nav-open .df-controls {
+  .df-nav-open .df-controls-bar {
     z-index: 45;
     left: min(calc(min(calc(var(--df-sidebar-width) + 40px), 85vw) + var(--df-space-3)), calc(100vw - 160px));
+  }
+
+  .df-nav-open .df-controls-pager {
+    display: none;
+  }
+}
+
+@media print {
+  .df-controls-pager {
+    display: none;
   }
 }
 
 .df-controls-init body,
 .df-controls-init body > .df-page,
 .df-controls-init .df-sidebar,
-.df-controls-init .df-controls,
+.df-controls-init .df-controls-bar,
 .df-controls-init .df-focus-block {
   transition: none !important;
 }

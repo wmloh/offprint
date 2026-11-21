@@ -30,8 +30,6 @@ Enable `data` for the registry, `data-view` for raw views, and each consuming fe
 - Comparisons are type-exact. Choices within one multiselect combine with OR. Different fields and fixed predicates combine with AND. Empty choices match zero rows. Filters apply to record transforms before view mapping. Full-spec transforms handle any filtering themselves.
 - Source and local record replacements are validated against the current scope. Scope updates prepare all bound views before committing the controls and views together. An incompatible update preserves the old state. Reset of the scope restores defaults, while Reset of a local override restores the latest shared data under the current filters.
 
-[Held-out results example](../../../examples/transformers/pages/diagnostics.html#heldout-results)
-
 ## Raw rendering
 
 - `data-df-data-view="auto|table|code|tree"` selects the view. Auto renders tabular data as a table and other values as code. A nested table request or a missing tree feature falls back to code. Typed values display as JSON in code mode.
@@ -39,4 +37,4 @@ Enable `data` for the registry, `data-view` for raw views, and each consuming fe
 - Use `maxSize` or `data-df-max-size` (default 1 MiB), and `maxRows` or `data-df-max-rows` (default 5000). Initial oversized raw views offer Show anyway. Tables and code load in batches with Show more. Tree limits apply per branch.
 - `df:data-view:render` bubbles after the view and any nested enhancements are ready. Detail is `{current, previous, origin}` with `{name, view, total, shown}` states.
 
-[File wrappers](../tools/file-wrapper.md) · [Charts](charts.md) · [Results](results-tables.md) · [Scenarios](../interact/scenarios.md) · [Dropzones](dropzones.md) · [Example](../../../examples/transformers/pages/diagnostics.html#shared-runs)
+[File wrappers](../tools/file-wrapper.md) · [Charts](charts.md) · [Results](results-tables.md) · [Scenarios](../interact/scenarios.md) · [Dropzones](dropzones.md)

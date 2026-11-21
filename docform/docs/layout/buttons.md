@@ -19,4 +19,4 @@ Loads with `base` (reading profile and `docform.css`); no script. Put `.df-butto
 - The icon buttons have accessible labels. The count uses the [eyebrow](text-roles.md) style and announces step changes.
 - Buttons use `aria-disabled="true"` (35 % opacity, clicks ignored) so focus stays at ends. `:focus-visible` draws a `--df-focus` ring.
 
-[Tags](../reading/tags.md) · [Colour roles](roles.md) · [Stylesheet](../../css/buttons.css) · [PCA telemetry example](../../../examples/pca/pages/telemetry.html#jump-to-alert)
+[Tags](../reading/tags.md) · [Colour roles](roles.md) · [Stylesheet](../../css/buttons.css)

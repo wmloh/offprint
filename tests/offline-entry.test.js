@@ -27,6 +27,8 @@ function element(tag) {
     },
     get id() { return this.getAttribute('id') || ''; },
     set id(value) { this.setAttribute('id', value); },
+    get title() { return this.getAttribute('title') || ''; },
+    set title(value) { this.setAttribute('title', value); },
     get parentElement() { return this.parentNode || null; },
     get nextSibling() { return this.parentNode?.childNodes[this.parentNode.childNodes.indexOf(this) + 1] || null; },
     get firstChild() { return this.childNodes[0] || null; },
@@ -42,7 +44,8 @@ function element(tag) {
     matches(selector) { return selector === tag || selector === '.' + this.className; },
     closest() { return null; },
     contains(child) { return this === child || this.childNodes.some(node => node.contains?.(child)); },
-    getBoundingClientRect() { return { height: 10, width: 10 }; },
+    getClientRects() { return [this.getBoundingClientRect()]; },
+    getBoundingClientRect() { return { top: 0, left: 0, bottom: 10, height: 10, width: 10 }; },
     focus() { this.focused = true; },
     appendChild(child) { return this.insertBefore(child, null); },
     before(child) { this.parentNode?.insertBefore(child, this); },
@@ -207,7 +210,11 @@ test('standalone reading profile applies early theme and renders citations with 
   p.DF.setup(DF => {
     order.push('setup');
     assert.equal(DF._site.provided, false);
-    DF._tooltips.attach = (link, title, text, options) => { preview = options.content; };
+    const attach = DF._tooltips.attach;
+    DF._tooltips.attach = (link, title, text, options) => {
+      if (link.className === 'df-cite-link') preview = options.content;
+      else return attach(link, title, text, options);
+    };
     throw new Error('Example callback failure');
   });
   p.DF.setup(() => order.push('next setup'));
@@ -244,6 +251,99 @@ test('nested none profile clears inherited choices and loads playback after its 
     'docform/css/detail.css', 'docform/js/detail.js', 'docform/css/steps.css', 'docform/js/steps.js']);
   assert.equal(typeof p.DF._chartPlayback.mount, 'function');
   assert.equal(p.DF.diagnostics.list().length, 0);
+});
+
+test('floating page links match the bottom pager and respect page boundaries and opt-out', async () => {
+  const home = { path: 'index.html', title: 'Home' };
+  const current = { path: 'pages/chapter.html', title: 'Chapter' };
+  const end = { path: 'end.html', title: 'End' };
+  const prev = ['prev', new URL(home.path, repo).href];
+  const next = ['next', new URL(end.path, repo).href];
+  const links = pager => pager?.children.map(link => [link.rel, link.href]);
+
+  for (const { pages, noPager, controls = true, expected } of [
+    { pages: [home, current, end], expected: [prev, next] },
+    { pages: [current, end], expected: [next] },
+    { pages: [home, current], expected: [prev] },
+    { pages: [home, current, end], noPager: true },
+    { pages: [home, end] },
+    { pages: [current] },
+    { pages: [home, current, end], controls: false, expected: [prev, next] }
+  ]) {
+    const p = page({ nested: true, site: { pages, features: { controls } } });
+    const main = p.body.appendChild(element('main'));
+    const query = p.document.querySelector;
+    p.document.querySelector = selector => {
+      if (selector === 'main') return main;
+      if (selector === '.df-sidebar') return p.body.children.find(el => el.className === 'df-sidebar') || null;
+      return query(selector);
+    };
+    if (noPager) main.setAttribute('data-df-no-pager', '');
+    await p.start();
+
+    const bar = p.body.children.find(el => el.className === 'df-controls-bar');
+    const quick = bar?.children[1];
+    const bottom = main.children.find(el => el.className === 'df-pager');
+    assert.equal(bar?.firstChild.className, controls ? 'df-controls' : undefined);
+    assert.deepEqual(links(bottom), expected);
+    assert.deepEqual(links(quick), controls ? expected : undefined);
+    if (quick) {
+      assert.equal(quick.className, 'df-controls-pager');
+      assert.deepEqual(quick.children.map(link => link.getAttribute('aria-label')),
+        expected.map(([rel]) => rel === 'prev' ? 'Previous page: Home' : 'Next page: End'));
+    }
+    assert.equal(p.DF.diagnostics.list().length, 0);
+  }
+});
+
+test('floating controls show shared tooltip cards with current labels and effective shortcuts', async () => {
+  const p = page({
+    site: { pages: ['index.html', { path: 'next.html', title: 'Next chapter' }] },
+    config: { options: { shortcuts: { 'controls.theme': 'y' } } }
+  });
+  const heading = p.body.appendChild(element('h2'));
+  p.body.querySelectorAll = selector => selector === 'h2, h3' ? [heading] : [];
+  const query = p.document.querySelector;
+  p.document.querySelector = selector => selector === '.df-sidebar'
+    ? p.body.children.find(el => el.className === 'df-sidebar') || null
+    : query(selector);
+  await p.start();
+
+  const [pill, pager] = p.body.children.find(el => el.className === 'df-controls-bar').children;
+  const [progress, nav, focus, search, theme] = pill.children;
+  const next = pager.firstChild;
+  const showHint = el => {
+    assert.equal(el.hasAttribute('title'), false);
+    el.dispatchEvent(new Event('focus'));
+    const card = p.body.children.find(child => child.className === 'df-tooltip' && !child.hidden);
+    assert.equal(card?.getAttribute('role'), 'tooltip');
+    return card;
+  };
+  assert.equal(showHint(nav).textContent, 'Navigation shown. Select to hide (N)');
+  const focusCard = showHint(focus);
+  assert.equal(focusCard.textContent, 'Turn on focus mode (F)');
+  p.DF._controls.setFocus(true);
+  assert.equal(focusCard.textContent, 'Turn off focus mode (F)');
+  assert.equal(showHint(search).textContent, 'Search (S)');
+  const themeCard = showHint(theme);
+  assert.equal(themeCard.textContent, 'Theme: Light. Switch to Dark. (Y)');
+  assert.equal(theme.getAttribute('aria-keyshortcuts'), 'Y');
+  p.DF._theme.set('dark');
+  assert.equal(themeCard.textContent, 'Theme: Dark. Switch to Light. (Y)');
+  assert.equal(theme.hasAttribute('title'), false);
+  assert.equal(showHint(next).textContent, 'Next page: Next chapter');
+  assert.equal(progress.tabIndex, undefined);
+  assert.equal(progress.hasAttribute('title'), false);
+  progress.dispatchEvent(new Event('mouseenter'));
+  await new Promise(resolve => setTimeout(resolve, 150));
+  const progressCard = p.body.children.find(child => child.className === 'df-tooltip' && !child.hidden);
+  assert.equal(progressCard?.textContent, 'Read 100%');
+
+  const fallback = page({ config: { profile: 'none', features: { controls: true, theme: true } } });
+  await fallback.start();
+  const fallbackPill = fallback.body.children.find(el => el.className === 'df-controls-bar').firstChild;
+  assert.equal(fallbackPill.firstChild.title, 'Read 100%');
+  assert.equal(fallbackPill.lastChild.title, 'Theme: Light. Switch to Dark. (T)');
 });
 
 test('required failures preserve fallbacks and independent features still reach ready', async () => {
@@ -319,12 +419,13 @@ test('mixed features load all shipped assets and register data before author set
     'glossary math parameters peek-bubbles pipeline results reveals scenarios selection sequence split-views stepper tabs timeline tree tree-diagram zoom-tools')
     .split(' ').map(key => [key, true]));
   const p = page({ nested: true, site: { features, assets: { data: {
-    runs: { source: 'examples/transformers/assets/runs.csv', output: 'examples/transformers/assets/generated/runs.js' }
+    'Reference counts': { source: 'docs/assets/data/feature-groups.csv', output: 'docs/assets/generated/reference-counts.js' }
   } } }, storage: { 'docform-theme': 'light' }, dark: true });
   assert.equal(p.html.getAttribute('data-df-theme'), 'light');
   p.DF.setup(DF => {
-    assert.match(DF.data.source('runs').snapshot().text, /r01,2026-11-14/);
-    assert.equal(DF.data.source('runs').snapshot().value[0].run, 'r01');
+    const snapshot = DF.data.source('Reference counts').snapshot();
+    assert.match(snapshot.text, /group,references/);
+    assert.equal(snapshot.value[0].group, 'setup');
     assert.equal(DF.data.define('setup-records', { type: 'value', value: [{ id: 'sample' }] }).snapshot().revision, 0);
     assert.equal(DF.data.define('readings', { type: 'csv', text: 'x,y\n1,2' }).snapshot().name, 'readings');
     assert.equal(typeof DF._animation.mount, 'function');
@@ -338,7 +439,7 @@ test('mixed features load all shipped assets and register data before author set
   await p.start();
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
   assert.equal(p.DF.data.source('readings').snapshot().text, 'x,y\n1,2');
-  assert.deepEqual(Array.from(p.DF.data.names()), ['runs', 'setup-records', 'readings']);
+  assert.deepEqual(Array.from(p.DF.data.names()), ['Reference counts', 'setup-records', 'readings']);
   assert.equal(new Set(p.loads).size, p.loads.length);
   assert.ok(p.loads.includes('docform/js/scenarios.js'));
   assert.deepEqual(p.loads.filter(path => /^docform\/js\/(detail|diagram|pipeline|sequence-diagram|timeline|tree-diagram)\.js$/.test(path)), [

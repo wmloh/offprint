@@ -39,4 +39,4 @@ Opt in with `data-df-chart-playback="state"` (or `mode: "state"`; default `"play
 
 - Use `DocForm.sequence.get(idOrElement)` for the [shared controller](../interact/step-contract.md). Its read-only `position` gives the playhead x value, the state position, or `null` when suspended. `next()` jumps without animation.
 
-[Charts](charts.md) · [Training example](../../../examples/transformers/pages/diagnostics.html#guided-training) · [Source](../../js/chart-playback.js)
+[Charts](charts.md) · [Source](../../js/chart-playback.js)

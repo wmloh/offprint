@@ -1,5 +1,0 @@
-actual,predicted,count,share
-common,common,10,100
-common,rare,0,0
-rare,common,1,10
-rare,rare,9,90

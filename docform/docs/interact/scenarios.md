@@ -20,4 +20,4 @@ Enable `scenarios`, which includes `chart`. Use a table with one `thead` row of 
 - A mapped outcome can declare `interval: {lower, upper, label?, count?}` for absolute estimates and `pairedDifference: {field, baselineKeyField, interval?}` for a supplied variant-minus-baseline estimate. Bounds and counts map exact fields as in [charts](../data/charts.md#supplied-uncertainty). Each supplied paired estimate must be finite and name the configured `baselineKey` in its variant's `baselineKeyField`. Its interval is independent of the absolute interval. A null paired estimate with no bounds keeps the ordinary comparison. Invalid paired input rejects the replacement.
 - Use `DocForm.sequence.get(idOrElement)` for the [shared step controller and event](step-contract.md). Bubbling `df:scenarios:change` reports `{current, previous, origin}` with `{key, index, label, total}` states. Shared replacements retain the selected variant when its key still exists.
 
-[Charts](../data/charts.md) · [Paired-loss example](../../../examples/transformers/pages/diagnostics.html#paired-loss) · [Source](../../js/scenarios.js)
+[Charts](../data/charts.md) · [Source](../../js/scenarios.js)

@@ -30,4 +30,4 @@ Set `options.matrix.instances.confusion.mapping`.
 - Standard input size and row limits apply. Set `maxCells` or `data-df-max-cells` to a positive integer dense-grid cap (default 5000). Record transforms can supply rows or use `transformOutput: "spec"` for `{records, mapping}`.
 - Shared replacements retain a compatible measure. Bubbling `df:matrix:change` reports `{current, previous, origin}` with `{key, index, label, total}` states.
 
-[Named data](data-blocks.md) · [Confusion matrix example](../../../examples/transformers/pages/diagnostics.html#token-confusion) · [Source](../../js/matrix.js)
+[Named data](data-blocks.md) · [Source](../../js/matrix.js)

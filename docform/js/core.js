@@ -149,11 +149,14 @@
     return entry ? entry.keys.slice() : [];
   }
 
-  function shortcutHint(el, id, label) {
+  function shortcutHint(el, id, label, nativeTitle) {
     var keys = shortcutKeys(id);
     if (keys.length) el.setAttribute('aria-keyshortcuts', keys.join(' '));
     else el.removeAttribute('aria-keyshortcuts');
-    if (label) el.title = label + (keys.length ? ' (' + keys.join(' / ') + ')' : '');
+    if (!label) return;
+    var hint = label + (keys.length ? ' (' + keys.join(' / ') + ')' : '');
+    if (nativeTitle !== false) el.title = hint;
+    return hint;
   }
 
   function transaction(fn) {

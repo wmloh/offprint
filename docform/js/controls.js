@@ -1,4 +1,4 @@
-// Floating control pill: reading progress, navigation panel, focus mode, theme, and keyboard shortcuts.
+// Floating reading controls and page navigation.
 (function (root) {
   'use strict';
 
@@ -31,6 +31,8 @@
   var SVG = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
     'stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">';
   var ICONS = {
+    prev: SVG + '<path d="M12.5 8h-9m4-4-4 4 4 4"/></svg>',
+    next: SVG + '<path d="M3.5 8h9m-4-4 4 4-4 4"/></svg>',
     nav: SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6 2.5v11M3.5 5.5h0.5M3.5 8h0.5"/></svg>',
     navHidden: SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="m7 5.5-2.5 2.5L7 10.5"/></svg>',
     navAuto: SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6 3v10" stroke-dasharray="1.2 2"/><path d="m8.5 5.5 2.5 2.5-2.5 2.5"/></svg>',
@@ -208,9 +210,40 @@
     return button;
   }
 
-  function label(button, text, key) {
-    button.setAttribute('aria-label', text);
-    DocForm._shortcutHint(button, 'controls.' + key, text);
+  function controlHint(el, shortcut) {
+    var content = DocForm._tooltips ? make('span') : null;
+    if (content) {
+      DocForm._tooltips.attach(el, '', '', {
+        content: function () { return content; },
+        describe: false,
+        focusable: false
+      });
+    }
+    return function (text) {
+      if (shortcut) text = DocForm._shortcutHint(el, shortcut, text, !content);
+      if (content) {
+        el.removeAttribute('title');
+        content.textContent = text;
+      } else if (!shortcut) {
+        el.title = text;
+      }
+    };
+  }
+
+  function appendPagePill(bar) {
+    var links = DocForm._navigation && DocForm._navigation.pageLinks;
+    if (!links || !links.length) return;
+    var pager = bar.appendChild(make('nav', 'df-controls-pager'));
+    pager.setAttribute('aria-label', 'Quick page navigation');
+    links.forEach(function (entry) {
+      var link = pager.appendChild(make('a', 'df-controls-btn'));
+      var label = entry.label + ' page: ' + entry.page.title;
+      link.href = entry.page.href;
+      link.rel = entry.rel;
+      link.setAttribute('aria-label', label);
+      link.innerHTML = ICONS[entry.rel];
+      controlHint(link)(label);
+    });
   }
 
   function nearNavEdge(x, width, open) {
@@ -299,6 +332,7 @@
       '<circle class="df-progress-bar" cx="10" cy="10" r="7" pathLength="100" stroke-dasharray="100" ' +
       'stroke-dashoffset="100" transform="rotate(-90 10 10)"/></svg>';
     var bar = box.querySelector('.df-progress-bar');
+    var hint = controlHint(box);
     var shown = -1;
     return {
       el: box,
@@ -308,7 +342,7 @@
         shown = pct;
         bar.setAttribute('stroke-dashoffset', String(100 - pct));
         box.setAttribute('aria-valuenow', String(pct));
-        box.title = 'Read ' + pct + '%';
+        hint('Read ' + pct + '%');
       }
     };
   }
@@ -357,6 +391,8 @@
     var actions = {};
     var navButton = null;
     var focusButton = null;
+    var navHint;
+    var focusHint;
     var sections = headings.length ? focusSections(main, headings) : null;
     var lastJump = null;
     var pending = false;
@@ -379,14 +415,18 @@
         navButton.innerHTML = mode === 'auto' ? ICONS.navAuto : mode === 'hidden' ? ICONS.navHidden : ICONS.nav;
       }
       navButton.setAttribute('aria-expanded', String(open));
-      label(navButton, d ? (open ? 'Close navigation' : 'Open navigation') : NAV_LABELS[mode], 'nav');
+      var text = d ? (open ? 'Close navigation' : 'Open navigation') : NAV_LABELS[mode];
+      navButton.setAttribute('aria-label', text);
+      navHint(text);
       sidebar.inert = !d && !open;
     }
 
     function syncFocus() {
       if (!focusButton) return;
       focusButton.setAttribute('aria-pressed', String(state.focus));
-      label(focusButton, state.focus ? 'Turn off focus mode' : 'Turn on focus mode', 'focus');
+      var text = state.focus ? 'Turn off focus mode' : 'Turn on focus mode';
+      focusButton.setAttribute('aria-label', text);
+      focusHint(text);
       if (sections) {
         sections.reset();
         if (state.focus) sections.update();
@@ -396,6 +436,7 @@
     if (sidebar) {
       if (!sidebar.id) sidebar.id = 'df-sidebar';
       navButton = pill.appendChild(iconButton('nav'));
+      navHint = controlHint(navButton, 'controls.nav');
       navButton.setAttribute('aria-controls', sidebar.id);
       actions.nav = function () {
         var d = drawer();
@@ -410,6 +451,7 @@
 
     if (sections) {
       focusButton = pill.appendChild(iconButton('focus'));
+      focusHint = controlHint(focusButton, 'controls.focus');
       actions.focus = function () { setFocus(!state.focus); };
       focusButton.addEventListener('click', actions.focus);
     }
@@ -419,7 +461,7 @@
       searchButton.type = 'button';
       searchButton.innerHTML = DocForm._search.icon;
       searchButton.setAttribute('aria-label', 'Search');
-      DocForm._shortcutHint(searchButton, 'search.open', 'Search');
+      controlHint(searchButton, 'search.open')('Search');
       searchButton.addEventListener('click', function () { DocForm._search.open(searchButton); });
     }
 
@@ -464,10 +506,16 @@
       var binding = SHORTCUTS[id];
       DocForm.shortcuts.register({ id: 'controls.' + id, key: binding[0], label: binding[1], run: actions[id] });
     });
-    if (themeButton) DocForm._shortcutHint(themeButton, 'controls.theme');
+    if (themeButton) {
+      var themeHint = controlHint(themeButton, 'controls.theme');
+      theme.subscribe(function () { themeHint(themeButton.getAttribute('aria-label')); }, { immediate: true });
+    }
 
     listeners.push(syncNav, syncFocus);
-    document.body.appendChild(pill);
+    var bar = make('div', 'df-controls-bar');
+    bar.appendChild(pill);
+    appendPagePill(bar);
+    document.body.appendChild(bar);
     html.classList.add('df-has-controls');
     syncNav();
     syncFocus();

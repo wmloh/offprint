@@ -288,22 +288,25 @@
   }
 
   function renderPager(main, order, index) {
-    if (index < 0 || DocForm._component.closestFlag(main, 'no-pager', 'navigation')) return;
+    if (index < 0 || DocForm._component.closestFlag(main, 'no-pager', 'navigation')) return [];
     var prev = order[index - 1];
     var next = order[index + 1];
-    if (!prev && !next) return;
+    var links = [];
+    if (prev) links.push({ page: prev, rel: 'prev', label: 'Previous' });
+    if (next) links.push({ page: next, rel: 'next', label: 'Next' });
+    if (!links.length) return links;
     var pager = make('nav', 'df-pager');
     pager.setAttribute('aria-label', 'Previous and next pages');
-    [[prev, 'prev', 'Previous'], [next, 'next', 'Next']].forEach(function (entry) {
-      if (!entry[0]) return;
-      var link = make('a', 'df-pager-link df-pager-' + entry[1]);
-      link.href = entry[0].href;
-      link.rel = entry[1];
-      link.appendChild(make('span', 'df-pager-dir', entry[2]));
-      link.appendChild(make('span', 'df-pager-title', entry[0].title));
+    links.forEach(function (entry) {
+      var link = make('a', 'df-pager-link df-pager-' + entry.rel);
+      link.href = entry.page.href;
+      link.rel = entry.rel;
+      link.appendChild(make('span', 'df-pager-dir', entry.label));
+      link.appendChild(make('span', 'df-pager-title', entry.page.title));
       pager.appendChild(link);
     });
     main.appendChild(pager);
+    return links;
   }
 
   function renderRail(headings) {
@@ -625,7 +628,8 @@
     outlineSections: outlineSections,
     clampWidth: clampWidth,
     headingUrl: headingUrl,
-    drawer: null
+    drawer: null,
+    pageLinks: []
   };
 
   DocForm.register('nav', function (site) {
@@ -671,7 +675,7 @@
     }
 
     spy(anchorHeadings.filter(function (h) { return h.level < 3; }), links, sidebar, main);
-    renderPager(main, site.order, index);
+    DocForm._navigation.pageLinks = renderPager(main, site.order, index);
     DocForm._navigation.drawer = drawer(sidebar);
     resizer(sidebar);
   });

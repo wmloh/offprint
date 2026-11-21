@@ -63,4 +63,4 @@ See [Dot and interval plots](chart-intervals.md) for ranked categories with whis
 - Set `data-df-x-group="training-step"` on mounted continuous linear-x charts with common x units. Pointer inspection shares the position in data units and keyboard inspection shares the actual sample x. Followers show the cursor where their viewport includes it and keep their own brush and scale.
 - `df:chart:x` on `document` carries `{group, current, previous, origin}` with `{x}` states. A [playback controller](chart-playback.md) can drive the reveal across the group.
 
-[Dropzone replacement and Reset](dropzones.md) · [Scenarios](../interact/scenarios.md) · [Training example](../../../examples/transformers/pages/diagnostics.html#guided-training) · [Source](../../js/chart.js)
+[Dropzone replacement and Reset](dropzones.md) · [Scenarios](../interact/scenarios.md) · [Source](../../js/chart.js)

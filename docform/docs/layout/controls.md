@@ -9,8 +9,10 @@ Enable the `controls` feature. The module inserts the top-left pill without auth
 | `J` / `K` | At least one `h2` or `h3`. Jump to the next or previous heading. |
 | `T` | `theme`. Switch light/dark. |
 | `S` | `search` handles the shortcut and provides the pill button. |
+| Previous / Next | `navigation` and an adjacent page in the manifest reading order. Arrow links appear in a separate pill to the right. Each link names its destination and the pill hides while the narrow-screen drawer is open. |
 
 - [Keyboard shortcuts](../interact/shortcuts.md) lists the binding IDs and remapping options. The progress ring reflects the scroll position over the scrollable page height.
+- When `tooltips` is active, the floating pills use the same tooltip cards as inline tips. Button hints show effective shortcut keys, and the progress hint updates as you scroll.
 - Focus mode blurs top-level content blocks outside the section at the viewport centre and outside the central 20–80% viewport band. The title stays sharp. Hover reveals a dimmed block. Section lines are in a separate layer and are never blurred or dimmed.
 - Auto sidebar opens at the first 8 px on the left, stays open during pointer or keyboard interaction, and closes on leaving. A plain pointer click on a sidebar link to another page stores a timestamp in `sessionStorage` (`docform-nav-peek`, read and cleared on load, honoured within 5 s); the next page then starts peeking and closes on the first pointer move outside the panel. Page scrollbar reveals within 40 px of the right edge.
 - Set initial `focus` and `navMode` in `options.controls`. Saved preferences take precedence.

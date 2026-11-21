@@ -11,7 +11,7 @@ docform/: Copyable offline library folder
     roles.css: Roles legend styles
     nav.css: Sidebar tree with group dividers and section links, numbered subsection rail, resize handle, heading links, prev/next links, and drawer
     theme.css: Theme toggle button styles
-    controls.css: Top-left frosted control pill, progress ring, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
+    controls.css: Top-left frosted reading and page navigation pills, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
     math.css: Display math layout and inline TeX error styles
     blocks.css: Inline tags with class-shape markers and unclassified outlines, callouts, and the no-script tinted card look of details
     tooltip.css: Tooltip box with a glossary tag line, hold-to-expand card with progress ring, and dotted term underlines (fainter for auto-linked terms, red for untagged tips, none on tags)
@@ -54,7 +54,7 @@ docform/: Copyable offline library folder
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
-    controls.js: Control pill with reading progress, focus mode, three saved sidebar modes with auto-hide carried across sidebar navigation, search and theme buttons, and shortcuts
+    controls.js: Reading controls, floating previous and next page links, saved sidebar modes, and heading shortcuts
     math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
     tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text and required glossary tags, glossary-labelled tags, required tag classes and tooltips with warned fallbacks, opt-in automatic term linking, and lazy HTML cards for other modules
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
@@ -108,7 +108,4 @@ docs/: Human-facing beginner DocForm HTML site with a Start here orientation and
   index.html: Welcome page
   pages/: Start here, hierarchy, feature guide, recipe, and reference pages in group folders, plus the glossary page
   assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index
-examples/: Offline example sites with index.html entry points, chapters in pages/, and supporting files in assets/
-  pca/: Pump monitoring case study with interactive projection cards, baseline recipe cards with language tabs, residual exercises, threshold comparisons, linked telemetry, figure zoom, and an offline glossary and generated search
-  transformers/: Decoder-only guide with linked attention, decoding presets, and training diagnostics with synchronized playback, uncertainty, shared filters, paired comparisons, matrices, and offline file replacement
 tests/: Built-in node:test checks of module logic

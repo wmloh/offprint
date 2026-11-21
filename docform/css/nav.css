@@ -315,7 +315,7 @@ button.df-nav-label {
   user-select: none;
 }
 
-.df-nav-resizing :is(body, body > .df-page, .df-sidebar, .df-controls, .df-nav-resize) {
+.df-nav-resizing :is(body, body > .df-page, .df-sidebar, .df-controls-bar, .df-nav-resize) {
   transition: none !important;
 }
 

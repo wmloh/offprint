@@ -25,4 +25,4 @@ Enable `results`. Use `table[data-df-results]` with a header and body. Enhanceme
 - Use instance `filter: {scope, fields, where?}` or `filter: {where}` to apply [shared record filters](data-blocks.md#record-filters) before table-local filters. Empty matches produce an empty result. Sort, filters, and chips retain compatible state through scope changes.
 - A local file override uses the configured mapping. Reset restores the latest shared rows or the original authored table with its reader state. With `transformOutput: "spec"`, a source transform returns `{records, mapping}`.
 
-[Concept tables](concept-tables.md) · [Dropzone targets](dropzones.md) · [Run filter example](../../../examples/transformers/pages/diagnostics.html#run-filters) · [Source](../../js/results.js)
+[Concept tables](concept-tables.md) · [Dropzone targets](dropzones.md) · [Source](../../js/results.js)

@@ -18,4 +18,4 @@ Enable `dropzone` and any target feature. A dropzone reads one local file using 
 - `data-df-accept` takes comma- or space-separated type names, default CSV, JSON, and YAML. Extensions take priority over MIME, including both `.yaml` and `.yml`. `data-df-max-size` defaults to 1 MiB. `data-df-max-rows` defaults to 5000. Bound view caps still apply.
 - A new choice or Reset invalidates older reads for the destination. A successful API update also supersedes pending reads. Rejected uploads preserve the last accepted data, and a zone can reset only a replacement it still owns.
 
-[Named sources](data-blocks.md) · [Charts](charts.md) · [Results](results-tables.md) · [Offline example](../../../examples/transformers/pages/diagnostics.html#shared-runs)
+[Named sources](data-blocks.md) · [Charts](charts.md) · [Results](results-tables.md)

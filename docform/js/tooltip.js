@@ -20,7 +20,7 @@
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'code', 'pre', 'kbd', 'samp', 'a', 'button', 'label', 'summary',
     'script', 'style', 'textarea', 'select', 'svg', 'math', 'nav', '[role="tooltip"]',
     '.df-math', '.katex', '.df-term', '.df-tip', '[data-df-term]', '[data-df-tip]',
-    '[data-df-template]', '[data-df-bind]', '[data-df-param]', '[data-df-parameter]', '.df-sidebar', '.df-controls',
+    '[data-df-template]', '[data-df-bind]', '[data-df-parameter]', '.df-sidebar', '.df-controls',
     '.df-legend', '.df-bubble', '.df-tag', '[data-df-autolink="false"]'
   ].join(', ');
   var TAG_SKIP = '[role="tooltip"], .df-tooltip, [data-df-template], [data-df-autolink="false"]';
@@ -570,7 +570,7 @@
     };
   }
 
-  DocForm.tooltips = DocForm.tooltip = {
+  DocForm.tooltips = {
     termKey: termKey,
     glossary: glossary,
     lookup: lookup,

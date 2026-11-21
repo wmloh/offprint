@@ -613,7 +613,7 @@
     sync();
   }
 
-  DocForm.navigation = DocForm.nav = {
+  DocForm.navigation = {
     slugify: slugify,
     uniqueSlug: uniqueSlug,
     pageKey: pageKey,
@@ -670,7 +670,7 @@
 
     spy(anchorHeadings.filter(function (h) { return h.level < 3; }), links, sidebar, main);
     renderPager(main, site.order, index);
-    DocForm.nav.drawer = drawer(sidebar);
+    DocForm.navigation.drawer = drawer(sidebar);
     resizer(sidebar);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

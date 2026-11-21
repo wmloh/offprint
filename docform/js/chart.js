@@ -3550,7 +3550,7 @@
       upload: function (entry, cap) {
         if (!options.mapping && options.transform === undefined) return null;
         var dataset = data.input(entry, data.key(host.getAttribute('data-df-source')), 0);
-        var caps = DocForm.dataset.limits(host, options);
+        var caps = DocForm._dataSource.limits(host, options);
         if (dataset.bytes > caps.maxBytes) throw new Error('The file exceeds this chart’s size limit.');
         var value = data.transform(options, host, dataset);
         if (options.transformOutput === 'spec') return { spec: value, rows: null, total: null };

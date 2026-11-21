@@ -10,7 +10,7 @@ const context = vm.createContext({ URL, console: { warn: (message) => warnings.p
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('anim.js'), context);
-const anim = context.DocForm.anim;
+const anim = context.DocForm._animationMath;
 const json = (value) => JSON.parse(JSON.stringify(value));
 
 test('easings start at 0, end at 1, and keep their shape', () => {

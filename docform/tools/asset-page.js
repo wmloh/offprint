@@ -1,7 +1,6 @@
-(function () {
+window.DocForm.ready(function (DF) {
   'use strict';
 
-  var DF = window.DocForm;
   var build = DF._assetBuild;
   var folder = document.getElementById('folder');
   var open = document.getElementById('open');
@@ -301,4 +300,4 @@
       status.textContent = 'Saved ' + saved + ' of ' + selected.length + ' selected outputs in ' + handle.name + '.';
     }
   });
-})();
+});

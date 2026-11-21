@@ -123,7 +123,7 @@
       return null;
     }
     var options = data.options('matrix', table, instance);
-    var caps = DocForm.dataset.limits(table, options);
+    var caps = DocForm._dataSource.limits(table, options);
     var positiveInteger = function (value) { return Number.isSafeInteger(value) && value > 0; };
     var maxCells = component.option('matrix', table, 'maxCells', 5000, positiveInteger, instance);
     maxCells = component.number(table, 'max-cells', 'matrix', maxCells, positiveInteger);

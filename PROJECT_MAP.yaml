@@ -90,7 +90,6 @@ docform/: Copyable offline library folder
     assets.html: Folder selection, asset status and diagnostics, and selective save, download, or copy
     asset-build.js: Manifest discovery, output planning, deterministic search and data serialization, and stale checks
     asset-page.js: Asset tool page controller for folder access, previews, and exports
-    search-index.html, data-file.html: Redirects from the former builder and converter to the asset tool
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Agent-facing setup, layout, reading, interaction, diagram, data, and offline tool references

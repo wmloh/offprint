@@ -171,7 +171,7 @@ const pages = [
 
 test('merging keeps manifest definitions first, folds inline tips by underlined text, and lists variants', () => {
   const { DocForm } = load();
-  const terms = DocForm.tooltip.glossary({
+  const terms = DocForm.tooltips.glossary({
     vector: 'A list of numbers, such as $(2, 1)$.',
     basis: { title: 'Basis', text: 'Independent spanning vectors.', more: '<p>More.</p>' }
   });
@@ -193,7 +193,7 @@ test('merging keeps manifest definitions first, folds inline tips by underlined 
 
 test('back-links group uses by page with section links, and unknown term names add nothing', () => {
   const { DocForm } = load();
-  const entries = DocForm.glossary.merge(DocForm.tooltip.glossary({ vector: 'A list.' }), pages);
+  const entries = DocForm.glossary.merge(DocForm.tooltips.glossary({ vector: 'A list.' }), pages);
   assert.deepEqual(json(entries.find((e) => e.key === 'vector').uses), [
     {
       title: 'Vectors', href: 'file:///n/vectors.html', intro: true,
@@ -239,7 +239,7 @@ test('letters group accented and non-Latin titles, put symbols last, and fill th
   assert.equal(letter('élan'), 'E');
   assert.equal(letter('$k$-means'), '#');
   assert.equal(letter('  ω'), 'Ω');
-  const list = groups(merge(DocForm.tooltip.glossary({ zeta: 'z', Alpha: 'a', 'élan': 'e', apex: 'x', '3-cycle': 'c', ω: 'o' }), null));
+  const list = groups(merge(DocForm.tooltips.glossary({ zeta: 'z', Alpha: 'a', 'élan': 'e', apex: 'x', '3-cycle': 'c', ω: 'o' }), null));
   assert.deepEqual(json(list.map((g) => [g.letter, g.entries.map((e) => e.title)])),
     [['A', ['Alpha', 'apex']], ['E', ['élan']], ['Z', ['zeta']], ['Ω', ['ω']], ['#', ['3-cycle']]]);
   const bar = jumps(list);
@@ -249,7 +249,7 @@ test('letters group accented and non-Latin titles, put symbols last, and fill th
 
 test('without an index, or with an index built before glossary data, only manifest entries show with a notice', () => {
   const { DocForm } = load();
-  const terms = DocForm.tooltip.glossary({ vector: 'A list.' });
+  const terms = DocForm.tooltips.glossary({ vector: 'A list.' });
   const { merge, notice } = DocForm.glossary;
   assert.deepEqual(json(merge(terms, null).map((e) => [e.title, e.uses.length])), [['vector', 0]]);
   assert.match(notice(null), /no search index/);
@@ -295,7 +295,7 @@ test('the glossaryPage setting adds the page last in the tree unless it is alrea
 test('entry tags are a union with manifest tags first, variants keep their own, and the filter matches any tag', () => {
   const { DocForm } = load();
   const registry = { glossary: { maths: {}, geometry: {}, computing: {} } };
-  const terms = DocForm.tooltip.glossary({ norm: { text: 'A length.', tags: ['Maths'] }, rank: 'Independent columns.' });
+  const terms = DocForm.tooltips.glossary({ norm: { text: 'A length.', tags: ['Maths'] }, rank: 'Independent columns.' });
   const entries = DocForm.glossary.merge(terms, [{
     href: 'file:///n/a.html', title: 'A', sections: [],
     terms: [

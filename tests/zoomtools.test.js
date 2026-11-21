@@ -87,7 +87,7 @@ function setup(chartHit) {
   });
   context.window = context;
   vm.runInContext(source, context);
-  const tools = DocForm.zoomtools;
+  const tools = DocForm.zoomTools;
 
   const overlay = new El('div');
   overlay.className = 'df-zoom';

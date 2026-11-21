@@ -1,5 +1,5 @@
 // Tree view for nested data: DocForm.tree.build(value, options) returns a collapsible, keyboard-navigable tree
-// (the WAI-ARIA tree pattern) with Expand all and Collapse all buttons. data.js uses it for data-df-view="tree".
+// (the WAI-ARIA tree pattern) with Expand all and Collapse all buttons. data.js uses it for data-df-data-view="tree".
 // Children are drawn when a node first opens, and each node lists at most maxItems children before a Show more item.
 (function (root) {
   'use strict';

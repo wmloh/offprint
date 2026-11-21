@@ -70,10 +70,15 @@ const many = choices('Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta'
 function page(define, hosts, { popover = false } = {}) {
   const frames = [];
   const warned = [];
-  let start;
+  const after = [];
+  const boot = {
+    canInitialize: () => true, optionLayers: () => [],
+    report: (_, feature, host, message) => warned.push(message),
+    moduleFailed: (_, error) => { throw error; },
+    after: (_, fn) => after.push(fn)
+  };
   const document = {
     readyState: 'loading', activeElement: null,
-    addEventListener: (_, fn) => { start = fn; },
     createElement: (tag) => {
       const el = new El(document, tag);
       if (popover) {
@@ -90,7 +95,7 @@ function page(define, hosts, { popover = false } = {}) {
     dispatchEvent() {}
   };
   document.body = new El(document, 'body');
-  const ctx = vm.createContext({ URL, document, requestAnimationFrame: (fn) => frames.push(fn),
+  const ctx = vm.createContext({ URL, document, DocForm: { _boot: boot }, requestAnimationFrame: (fn) => frames.push(fn),
     location: { href: 'file:///page.html' }, console: { warn: (m) => warned.push(m) } });
   ctx.window = ctx;
   vm.runInContext(read('core.js'), ctx);
@@ -110,7 +115,8 @@ function page(define, hosts, { popover = false } = {}) {
       else el.setAttribute(name, value);
     }
   });
-  start();
+  boot.initialize();
+  after.forEach((fn) => fn());
   return { scope, nodes, frames, warned, document, follows };
 }
 

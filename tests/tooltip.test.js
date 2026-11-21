@@ -12,7 +12,7 @@ function load() {
   context.window = context;
   vm.runInContext(read('core.js'), context);
   vm.runInContext(read('tooltip.js'), context);
-  return { tip: context.DocForm.tooltip, warnings };
+  return { tip: context.DocForm.tooltips, warnings };
 }
 
 const json = (value) => JSON.parse(JSON.stringify(value));

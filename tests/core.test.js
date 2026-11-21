@@ -75,7 +75,7 @@ test('page paths resolve against the manifest and keep reading order', () => {
 
 test('roles are lowercased and invalid entries warn once', () => {
   const { DocForm, warnings } = load();
-  const raw = { roles: { Theorem: 'Purple', bad: 'teal', 'no spaces': 'red' } };
+  const raw = { options: { roles: { colors: { Theorem: 'Purple', bad: 'teal', 'no spaces': 'red' } } } };
   const site = DocForm.normalizeSite(raw, 'file:///x/site.js');
   DocForm.normalizeSite(raw, 'file:///x/site.js');
   assert.deepEqual(plain(site.roles), { theorem: 'purple' });
@@ -84,7 +84,7 @@ test('roles are lowercased and invalid entries warn once', () => {
 
 test('unknown role lookups warn once and return null', () => {
   const { DocForm, warnings } = load();
-  const site = DocForm.normalizeSite({ roles: { proof: 'gray' } }, 'file:///x/site.js');
+  const site = DocForm.normalizeSite({ options: { roles: { colors: { proof: 'gray' } } } }, 'file:///x/site.js');
   assert.equal(DocForm.roleColor('Proof', site), 'gray');
   assert.equal(DocForm.roleColor('lemma', site), null);
   assert.equal(DocForm.roleColor('lemma', site), null);
@@ -93,7 +93,7 @@ test('unknown role lookups warn once and return null', () => {
 
 test('non-object manifest fields are ignored with a warning', () => {
   const { DocForm, warnings } = load();
-  const site = DocForm.normalizeSite({ pages: 'index.html', glossary: [], macros: null }, 'file:///x/site.js');
+  const site = DocForm.normalizeSite({ pages: 'index.html', options: { tooltips: { terms: [] }, math: { macros: null } } }, 'file:///x/site.js');
   assert.deepEqual(plain(site.pages), []);
   assert.deepEqual(plain(site.glossary), {});
   assert.deepEqual(plain(site.macros), {});
@@ -125,13 +125,39 @@ test('copyText uses the clipboard and falls back to execCommand when it is refus
 test('bibliography, refs, and the search index path are read from the manifest', () => {
   const { DocForm } = load();
   const site = DocForm.normalizeSite({
-    bibliography: { a: 'Entry' },
-    refs: { equations: 'all' },
-    search: 'search-index.js'
+    options: { citations: { entries: { a: 'Entry' } }, references: { equations: 'all' } },
+    assets: { search: { output: 'search-index.js' } }
   }, 'file:///repo/docs/site.js');
   assert.deepEqual(plain(site.bibliography), { a: 'Entry' });
   assert.deepEqual(plain(site.refs), { equations: 'all' });
   assert.equal(site.search, 'file:///repo/docs/search-index.js');
+});
+
+test('legacy top-level manifest keys do not supply feature options', () => {
+  const { DocForm, warnings } = load();
+  const site = DocForm.normalizeSite({
+    roles: { example: 'blue' },
+    glossary: { example: 'Definition' },
+    terms: { hold: 1, autoLink: true },
+    macros: { R: 'legacy macro' },
+    bibliography: { a: 'Entry' },
+    refs: { equations: 'all' },
+    search: 'legacy.js'
+  }, 'file:///repo/docs/site.js');
+  for (const key of ['roles', 'glossary', 'terms', 'macros', 'bibliography', 'refs']) {
+    assert.deepEqual(plain(site[key]), {}, key);
+  }
+  assert.equal(site.search, null);
+  assert.deepEqual(warnings, []);
+});
+
+test('core does not register a standalone page startup handler', () => {
+  const listeners = [];
+  const document = { readyState: 'loading', addEventListener: (...args) => listeners.push(args) };
+  const window = {};
+  vm.runInNewContext(source, { window, document, URL });
+  assert.deepEqual(listeners, []);
+  assert.equal(window.DocForm.site, null);
 });
 
 test('max-width attributes accept positive lengths and percentages only', () => {

@@ -55,7 +55,6 @@ Enable `features.parameters` with the [offline entry](../setup/include-order.md)
 - `data-df-choice="key"` on a `fieldset` binds a `select` (radios) or `multiselect` (checkboxes) definition; any other host tag, a missing `choices` feature, or a non-choice definition reports an issue. Scope resolves like controls, including `data-df-parameter-scope` on the fieldset itself.
 - `legend` is the label (math-aware when generated); without one, the key is used. Authored `label > input` items are the no-script view: reused in place as chips when their values and input types match the definition exactly, otherwise removed and regenerated with an issue. Authored `checked` is display-only; the definition default sets state.
 - Rendering, display choice (`data-df-choice-display`, chips ≤ 7 choices and ≤ 80 label chars), keyboard, glider, combobox, and ripple: see [Choice groups](choices.md). Selection-group definitions mark each chip or combobox option with `data-df-selection-group` and `data-df-key`.
-- Removed: `data-df-parameter-style`, native `select` hosts, `.df-param-select`, `.df-param-multiselect`, and legacy `data-df-param` with `data-df-type="select"` (now warns).
 
 ## Linking without scripts
 

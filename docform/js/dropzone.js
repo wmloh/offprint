@@ -6,23 +6,23 @@
   'use strict';
 
   var DocForm = root.DocForm;
-  if (!DocForm || !DocForm.dataset) {
+  if (!DocForm || !DocForm._dataSource) {
     if (typeof console !== 'undefined') console.warn('[docform] dropzone.js needs core.js and data.js loaded before it.');
     return;
   }
 
-  var data = DocForm.dataset;
+  var data = DocForm.data;
+  var source = DocForm._dataSource;
   var TYPES = ['csv', 'json', 'yaml'];
   var NAMES = { csv: 'CSV', json: 'JSON', yaml: 'YAML' };
   var EXTENSIONS = { csv: ['.csv'], json: ['.json'], yaml: ['.yaml', '.yml'] };
-  var COPIED = ['data-df-view', 'data-df-max-rows', 'data-df-max-size', 'data-df-tree-depth'];
   var runtime = DocForm._dataViews;
   var legacyDestinations = new WeakMap();
 
   // "csv json" or "csv, yaml" -> types in that order; empty or missing means all three.
   function accepted(value) {
     var list = String(value == null ? '' : value).split(/[\s,]+/).filter(Boolean).map(function (v) {
-      var t = data.type(v.replace(/^\./, ''));
+      var t = source.type(v.replace(/^\./, ''));
       if (!t) DocForm.warnOnce('dropzone-accept:' + v, 'Ignoring "' + v + '" in data-df-accept; use csv, json, or yaml.');
       return t;
     }).filter(function (t, i, all) { return t && all.indexOf(t) === i; });
@@ -39,8 +39,8 @@
   // The data type of a file from its extension, else its MIME type; null when it is not one the zone accepts.
   function fileType(name, mime, accept) {
     var ext = String(name || '').match(/\.(\w+)$/);
-    var t = ext ? data.type(ext[1]) : null;
-    if (!ext && mime) t = data.type(String(mime).split(';')[0]);
+    var t = ext ? source.type(ext[1]) : null;
+    if (!ext && mime) t = source.type(String(mime).split(';')[0]);
     return t && accept.indexOf(t) >= 0 ? t : null;
   }
 
@@ -50,7 +50,7 @@
     var t = fileType(file.name, file.type, accept);
     if (!t) return { error: label + ' is not a ' + listNames(accept) + ' file.' };
     if (file.size > maxBytes) {
-      return { error: label + ' is ' + data.formatSize(file.size) + ', over this file box\'s ' + data.formatSize(maxBytes) + ' limit.' };
+      return { error: label + ' is ' + source.formatSize(file.size) + ', over this file box\'s ' + source.formatSize(maxBytes) + ' limit.' };
     }
     return { type: t };
   }
@@ -117,12 +117,6 @@
     if (api) return api;
     var inner = el.querySelector && el.querySelector('.df-chart');
     return inner ? DocForm.chart.get(inner) : null;
-  }
-
-  function blockOf(el) {
-    if (data.isBlock(el)) return el;
-    var inner = el.querySelector && el.querySelector('.df-data');
-    return inner && data.isBlock(inner) ? inner : null;
   }
 
   function controls(api, kind, convert) {
@@ -201,16 +195,8 @@
         }
       };
     }
-    var view = DocForm.dataView.get(el);
+    var view = DocForm.dataView.get(el) || DocForm.dataView.get(el.querySelector && el.querySelector('.df-data'));
     if (view) return controls(view, 'data', function (entry) { return { input: entry }; });
-    var block = blockOf(el);
-    if (block) {
-      return {
-        kind: 'data',
-        feed: function (entry) { data.show(block, entry); return ''; },
-        restore: function () { data.restore(block); }
-      };
-    }
     var table = el.tagName === 'TABLE' ? el : el.querySelector && el.querySelector('table[data-df-results]');
     var results = table && DocForm.results && DocForm.results.get(table);
     if (results) return controls(results, 'table', function (entry) {
@@ -225,7 +211,7 @@
           if (!data.table(parsed)) throw new Error('a results table needs CSV or a list of flat records.');
           var next = document.createElement('div');
           next.className = 'df-dropzone-table';
-          data.show(next, entry, template);
+          source.showFile(next, entry, { view: 'table', limits: source.limits(next), open: 1 }, template);
           (host || table).replaceWith(next);
           host = next;
           // The static table's filter bar sits beside it, so it hides while the table is away.
@@ -253,7 +239,7 @@
 
   function setup(zone) {
     var accept = accepted(DocForm.data(zone, 'accept', ''));
-    var caps = data.limits(zone, DocForm._dataSource.options('dropzone', zone));
+    var caps = source.limits(zone, source.options('dropzone', zone));
     var targetId = DocForm.data(zone, 'target', '').trim();
     var sourceName = DocForm.data(zone, 'target-source', '').trim();
     var hasTarget = zone.hasAttribute('data-df-target');
@@ -262,7 +248,7 @@
     if (invalid) runtime.issue('dropzone', zone, 'Choose one valid file destination.');
     var target = null;
     var template = null;
-    var display = DocForm._boot && !hasTarget && !hasSource ? DocForm._dataSource.fileDisplay(zone, caps) : null;
+    var display = !hasTarget && !hasSource ? source.fileDisplay(zone, caps) : null;
     if (!invalid && targetId) {
       target = DocForm._component.target(targetId, 'dropzone', true);
       var table = target && (target.tagName === 'TABLE' ? target : target.querySelector('table[data-df-results]'));
@@ -292,7 +278,7 @@
     input.hidden = true;
     input.setAttribute('accept', accept.map(function (t) { return EXTENSIONS[t].join(','); }).join(','));
     hint.appendChild(choose);
-    hint.appendChild(document.createTextNode(' ' + listNames(accept) + ', up to ' + data.formatSize(caps.maxBytes) +
+    hint.appendChild(document.createTextNode(' ' + listNames(accept) + ', up to ' + source.formatSize(caps.maxBytes) +
       '. The file stays on this computer.'));
     area.appendChild(hint);
     area.appendChild(input);
@@ -324,9 +310,9 @@
     function destination() {
       if (invalid) throw new Error('Choose one valid file destination.');
       if (hasSource) {
-        var source = DocForm.data.source(sourceName);
-        if (!source) throw new Error('No data source named "' + sourceName + '" is registered.');
-        return controls(source, 'source', function (entry) { return { input: entry }; });
+        var controller = data.source(sourceName);
+        if (!controller) throw new Error('No data source named "' + sourceName + '" is registered.');
+        return controls(controller, 'source', function (entry) { return { input: entry }; });
       }
       if (hasTarget) {
         var result = target && link(target, template);
@@ -386,15 +372,10 @@
           if (output) output.replaceWith(next);
           else zone.appendChild(next);
           output = next;
-          if (display) DocForm._dataSource.showFile(output, entry, display);
-          else {
-            COPIED.forEach(function (a) { if (zone.hasAttribute(a)) next.setAttribute(a, zone.getAttribute(a)); });
-            if (!next.hasAttribute('data-df-max-size')) next.setAttribute('data-df-max-size', String(caps.maxBytes));
-            data.show(output, entry);
-          }
+          source.showFile(output, entry, display);
         }
         zone.classList.add('is-loaded');
-        say('Showing "' + file.name + '" (' + data.formatSize(file.size) + ')' + (linked ? ' in place of the page\'s data' : '') +
+        say('Showing "' + file.name + '" (' + source.formatSize(file.size) + ')' + (linked ? ' in place of the page\'s data' : '') +
           '.' + (note ? ' ' + note : ''), false, true);
       };
       try { reader.readAsText(file); }

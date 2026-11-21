@@ -478,15 +478,10 @@
     return slot;
   }
 
-  DocForm.refs = {
-    label: label,
+  DocForm._references = {
     numberItems: numberItems,
-    citeKeys: citeKeys,
     assignNumbers: assignNumbers,
-    authorList: authorList,
-    joinAuthors: joinAuthors,
-    formatEntry: formatEntry,
-    citationText: citationText
+    joinAuthors: joinAuthors
   };
 
   function pageRoots() {

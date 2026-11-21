@@ -109,12 +109,12 @@
   }
 
   function setFocus(on) {
-    if (boot && typeof on !== 'boolean') return false;
+    if (typeof on !== 'boolean') return false;
     state.focus = !!on;
-    save(KEYS.focus, state.focus ? 'on' : boot ? 'off' : null);
+    save(KEYS.focus, state.focus ? 'on' : 'off');
     applyClasses();
     listeners.forEach(function (fn) { fn(); });
-    return boot ? true : state.focus;
+    return true;
   }
 
   function setNav(shown) {
@@ -123,13 +123,13 @@
   }
 
   function setNavMode(mode) {
-    if (boot && (typeof mode !== 'string' || !hasOwn.call(NAV_MODES, mode))) return false;
+    if (typeof mode !== 'string' || !hasOwn.call(NAV_MODES, mode)) return false;
     state.navMode = navMode(mode);
     state.peeking = false;
-    save(KEYS.nav, !boot && state.navMode === 'shown' ? null : state.navMode);
+    save(KEYS.nav, state.navMode);
     applyClasses();
     listeners.forEach(function (fn) { fn(); });
-    return boot ? true : state.navMode;
+    return true;
   }
 
   // The focused section is the last heading at or above the viewport centre (-1 is the text before any heading),
@@ -368,7 +368,7 @@
     var sidebar = document.querySelector('.df-sidebar');
     var headings = DocForm.all('h2, h3', main).filter(function (h) { return !h.closest('.df-sidebar'); });
     var drawerMode = root.matchMedia ? root.matchMedia(DRAWER) : null;
-    var theme = boot ? DocForm.theme : root.DocFormTheme;
+    var theme = DocForm.theme;
     var pill = make('div', 'df-controls');
     var progressRing = ring();
     var actions = {};
@@ -420,8 +420,7 @@
         else setNavMode(NAV_MODES[state.navMode]);
       };
       navButton.addEventListener('click', actions.nav);
-      if (boot && DocForm.navigation && DocForm.navigation.drawer) DocForm.navigation.drawer.subscribe(syncNav);
-      else if (!boot) document.addEventListener('df:drawer', syncNav);
+      if (DocForm.navigation && DocForm.navigation.drawer) DocForm.navigation.drawer.subscribe(syncNav);
       if (drawerMode) drawerMode.addEventListener('change', syncNav);
       watchAutoNav(sidebar, navButton, drawerMode, syncNav);
     }
@@ -446,8 +445,7 @@
       var themeButton = make('button', 'df-controls-btn');
       themeButton.setAttribute('aria-keyshortcuts', 'T');
       pill.appendChild(themeButton);
-      if (boot) theme.mount(themeButton);
-      else theme.toggle(themeButton);
+      theme.mount(themeButton);
       actions.theme = function () { themeButton.click(); };
     }
 
@@ -525,13 +523,6 @@
   applyClasses();
 
   DocForm.register('controls', function () {
-    if (boot) {
-      boot.after('controls', render);
-      return;
-    }
-    // Waits for the other modules' synchronous setup, such as nav.js creating the sidebar.
-    Promise.resolve().then(render).catch(function (e) {
-      DocForm.warnOnce('init:controls', 'Module "controls" failed to initialise.', e);
-    });
+    boot.after('controls', render);
   });
 })(typeof window !== 'undefined' ? window : globalThis);

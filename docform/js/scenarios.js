@@ -320,7 +320,7 @@
     if (named && !data) { runtime.issue('scenarios', table, 'Enable data to use a named scenario source.'); return null; }
     var options = data ? data.options('scenarios', table, instance) : instance || {};
     var mode = table.getAttribute('data-df-scenarios') || options.mode || '';
-    var caps = data ? DocForm.dataset.limits(table, options) : null;
+    var caps = data ? DocForm._dataSource.limits(table, options) : null;
     var original = { model: read(table), sections: [table.tHead].concat(Array.from(table.tBodies)).filter(Boolean) };
     var current = original;
     var visual;

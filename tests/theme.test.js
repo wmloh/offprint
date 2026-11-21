@@ -4,12 +4,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const core = fs.readFileSync(path.join(__dirname, '../docform/js/core.js'), 'utf8');
 const source = fs.readFileSync(path.join(__dirname, '../docform/js/theme.js'), 'utf8');
 
 function load({ stored = null, dark = false, storage } = {}) {
   const store = new Map(stored === null ? [] : [['docform-theme', stored]]);
   const attrs = {};
   const window = {
+    DocForm: { _boot: {} },
     localStorage: storage || {
       getItem: (key) => (store.has(key) ? store.get(key) : null),
       setItem: (key, value) => store.set(key, String(value)),
@@ -25,8 +27,10 @@ function load({ stored = null, dark = false, storage } = {}) {
       }
     }
   };
-  vm.runInNewContext(source, { window });
-  return { theme: window.DocFormTheme, store, attrs };
+  const context = vm.createContext({ window });
+  vm.runInContext(core, context);
+  vm.runInContext(source, context);
+  return { theme: window.DocForm.theme, store, attrs };
 }
 
 test('only light and dark exist; unknown values fall back to the OS preference', () => {
@@ -62,6 +66,6 @@ test('blocked storage still switches themes without throwing', () => {
   const blocked = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); }, removeItem() { throw new Error('denied'); } };
   const { theme, attrs } = load({ storage: blocked, dark: true });
   assert.equal(theme.get(), 'dark');
-  assert.equal(theme.set('light'), 'light');
+  assert.equal(theme.set('light'), true);
   assert.equal(attrs['data-df-theme'], 'light');
 });

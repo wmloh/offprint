@@ -17,7 +17,7 @@ function load({ withKatex = true, macros } = {}) {
   if (withKatex) vm.runInContext(katex, context);
   vm.runInContext(math, context);
   const DocForm = context.DocForm;
-  DocForm.site = DocForm.normalizeSite({ macros }, 'file:///x/site.js');
+  DocForm.site = DocForm.normalizeSite({ options: { math: { macros } } }, 'file:///x/site.js');
   return { DocForm, warnings };
 }
 

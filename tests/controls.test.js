@@ -84,7 +84,7 @@ test('section jumps skip the heading already at the top and step back from mid-s
   assert.equal(controls.progress(0, 0), 1);
 });
 
-test('focus mode and the hidden sidebar persist, apply on load, and clear their keys when reset', () => {
+test('focus mode and the hidden sidebar persist, apply on load, and store explicit settings when reset', () => {
   const fresh = load();
   assert.deepEqual(plain(fresh.controls.state()), { focus: false, nav: true });
   fresh.controls.setNav(false);
@@ -98,13 +98,14 @@ test('focus mode and the hidden sidebar persist, apply on load, and clear their 
   assert.ok(next.classes.has('df-nav-hidden') && next.classes.has('df-focus-mode'));
   next.controls.setNav(true);
   next.controls.setFocus(false);
-  assert.equal(next.store.size, 0);
+  assert.equal(next.store.get('docform-focus'), 'off');
+  assert.equal(next.store.get('docform-nav'), 'shown');
   assert.equal(next.classes.has('df-nav-hidden') || next.classes.has('df-focus-mode'), false);
 });
 
 test('auto-hide persists with the sidebar initially closed and keeps the subsection rail outside its trigger', () => {
   const fresh = load();
-  assert.equal(fresh.controls.setNavMode('auto'), 'auto');
+  assert.equal(fresh.controls.setNavMode('auto'), true);
   assert.equal(fresh.store.get('docform-nav'), 'auto');
   assert.ok(fresh.classes.has('df-nav-hidden'));
 
@@ -115,8 +116,8 @@ test('auto-hide persists with the sidebar initially closed and keeps the subsect
   assert.equal(next.controls.nearNavEdge(10, 260, false), false);
   assert.equal(next.controls.nearNavEdge(264, 260, true), true);
   assert.equal(next.controls.nearNavEdge(265, 260, true), false);
-  assert.equal(next.controls.setNavMode('shown'), 'shown');
-  assert.equal(next.store.has('docform-nav'), false);
+  assert.equal(next.controls.setNavMode('shown'), true);
+  assert.equal(next.store.get('docform-nav'), 'shown');
 });
 
 test('a recent sidebar link click opens the next auto-hide page with the panel shown, once', () => {

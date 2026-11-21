@@ -166,7 +166,7 @@
     trackReveals(targets);
   });
 
-  DocForm.reveal = {
+  DocForm._reveal = {
     revealVisible: revealVisible,
     splitColumns: splitColumns,
     calloutVisible: calloutVisible,

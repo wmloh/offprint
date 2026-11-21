@@ -273,7 +273,7 @@
     update();
   }
 
-  DocForm.peekBubbles = DocForm.bubble = {
+  DocForm.peekBubbles = {
     pick: pick,
     band: Object.assign({}, BAND),
     most: MOST

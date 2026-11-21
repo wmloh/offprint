@@ -4,36 +4,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-// Just enough DOM for data.js to draw a code view.
-class El {
-  constructor(tag) {
-    const classes = new Set();
-    this.tagName = tag.toUpperCase();
-    this.attrs = new Map();
-    this.kids = [];
-    this.text = '';
-    this.classList = { add: (...names) => names.forEach((n) => classes.add(n)), contains: (n) => classes.has(n) };
-  }
-  get textContent() { return this.text + this.kids.map((k) => k.textContent).join(''); }
-  set textContent(v) { this.kids = []; this.text = String(v); }
-  set className(v) { this.classList.add(...String(v).split(' ')); }
-  getAttribute(n) { return this.attrs.has(n) ? this.attrs.get(n) : null; }
-  setAttribute(n, v) { this.attrs.set(n, String(v)); }
-  hasAttribute(n) { return this.attrs.has(n); }
-  appendChild(k) { this.kids.push(k); return k; }
-  querySelector() { return null; }
-}
-
 const read = (file) => fs.readFileSync(path.join(__dirname, '../docform', file), 'utf8');
 const context = vm.createContext({ URL, TextEncoder, WeakMap, console: { warn() {} } });
 context.window = context;
-context.document = { createElement: (tag) => new El(tag), readyState: 'loading', addEventListener() {} };
 vm.runInContext(read('vendor/js-yaml/js-yaml.min.js'), context);
 vm.runInContext(read('js/core.js'), context);
 vm.runInContext(read('js/data.js'), context);
 vm.runInContext(read('js/chart.js'), context);
 vm.runInContext(read('js/dropzone.js'), context);
-const { dataset, dropzone, chart } = context.DocForm;
+const { data, dropzone, chart } = context.DocForm;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 const csv = { name: 'mine.csv', type: 'csv', text: 'epoch,train,val\n1,0.6,0.55\n2,0.7,0.61\n3,0.8,0.64\n' };
 
@@ -57,7 +36,7 @@ test('tabular files become chart series that keep the chart\'s look but not its 
     referenceLines: [{ axis: 'y', value: 0.6, label: 'Target' }],
     series: [{ name: 'val', color: 'red', data: [[1, 0.5]] }], categories: ['a']
   };
-  const made = dropzone.chartSpec(dataset.parse(csv.text, 'csv'), base, 2);
+  const made = dropzone.chartSpec(data.parse(csv.text, 'csv'), base, 2);
   assert.deepEqual([made.rows, made.total], [2, 3]);
   assert.deepEqual(plain(made.spec.x), { label: 'Epoch' });
   assert.deepEqual(plain(made.spec.y), { type: 'log' });
@@ -65,11 +44,11 @@ test('tabular files become chart series that keep the chart\'s look but not its 
   assert.deepEqual(plain(made.spec.referenceLines), plain(base.referenceLines));
   assert.deepEqual([...made.spec.series].map((s) => [s.name, s.color, s.data.length]), [['train', undefined, 2], ['val', 'red', 2]]);
   assert.deepEqual(plain(chart.validate(made.spec)), []);
-  assert.equal(dropzone.chartSpec(dataset.parse(csv.text, 'csv'), { x: {} }).spec.x.label, 'epoch');
-  const spec = dropzone.chartSpec(dataset.parse('{"type": "bar", "series": [{"name": "s", "data": [["a", 1]]}]}', 'json'), base);
+  assert.equal(dropzone.chartSpec(data.parse(csv.text, 'csv'), { x: {} }).spec.x.label, 'epoch');
+  const spec = dropzone.chartSpec(data.parse('{"type": "bar", "series": [{"name": "s", "data": [["a", 1]]}]}', 'json'), base);
   assert.deepEqual([spec.spec.type, spec.spec.series[0].name, spec.spec.x.label], ['bar', 's', 'Epoch']);
-  assert.throws(() => dropzone.chartSpec(dataset.parse('a: {b: 1}', 'yaml'), base), /needs a table/);
-  assert.throws(() => dropzone.chartSpec(dataset.parse('only\n1\n', 'csv'), base), /at least one series/);
+  assert.throws(() => dropzone.chartSpec(data.parse('a: {b: 1}', 'yaml'), base), /needs a table/);
+  assert.throws(() => dropzone.chartSpec(data.parse('only\n1\n', 'csv'), base), /at least one series/);
 });
 
 test('a linked chart takes the file and Reset hands back its original spec', () => {
@@ -92,31 +71,12 @@ test('a linked chart takes the file and Reset hands back its original spec', () 
 
 test('pie file replacements accept label and value tables or a full pie spec', () => {
   const base = { type: 'pie', toggles: true, data: [{ label: 'North', value: 3, key: 'n', color: 'blue' }] };
-  const made = dropzone.chartSpec(dataset.parse('Label,Total\nNorth,5\nSouth,2', 'csv'), base, 2);
+  const made = dropzone.chartSpec(data.parse('Label,Total\nNorth,5\nSouth,2', 'csv'), base, 2);
   assert.deepEqual([made.rows, made.total], [2, 2]);
   assert.equal(made.spec.y.label, 'Total');
   assert.deepEqual(plain(made.spec.data[0]), { label: 'North', value: '5', key: 'n', color: 'blue' });
   assert.deepEqual(plain(chart.validate(made.spec)), []);
-  const full = dropzone.chartSpec(dataset.parse('{"type":"pie","data":[{"label":"East","value":7}]}', 'json'), base);
+  const full = dropzone.chartSpec(data.parse('{"type":"pie","data":[{"label":"East","value":7}]}', 'json'), base);
   assert.deepEqual(plain(full.spec.data), [{ label: 'East', value: 7 }]);
   assert.equal(full.spec.toggles, true);
-});
-
-test('a linked data block shows the file and restores its own data', () => {
-  dataset.add('curve', 'epoch,val\n1,0.5\n', 'csv');
-  const block = context.document.createElement('div');
-  block.setAttribute('data-df-data', 'curve');
-  block.setAttribute('data-df-view', 'code');
-  dataset.render(block);
-  assert.equal(block.textContent, 'epoch,val\n1,0.5');
-  assert.equal(dataset.restore(block), false);
-  const link = dropzone.link(block);
-  assert.equal(link.kind, 'data');
-  link.feed(csv);
-  assert.match(block.textContent, /^epoch,train,val\n1,0.6/);
-  link.feed({ name: 'two.csv', type: 'csv', text: 'a,b\n1,2' });
-  assert.equal(block.textContent, 'a,b\n1,2');
-  link.restore();
-  assert.equal(block.textContent, 'epoch,val\n1,0.5');
-  assert.equal(dropzone.link(context.document.createElement('p')), null);
 });

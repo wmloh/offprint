@@ -2,25 +2,15 @@
   'use strict';
 
   var DocForm = root.DocForm;
-  if (!DocForm) {
-    if (typeof console !== 'undefined') console.warn('[docform] params.js needs core.js loaded before it.');
-    return;
-  }
+  var boot = DocForm && DocForm._boot;
+  if (!boot) return;
 
   var NAME_RE = /^[A-Za-z_$][\w$]*$/;
   var TEMPLATE_RE = /\{\{([\s\S]+?)\}\}/g;
   var hasOwn = Object.prototype.hasOwnProperty;
-  var values = Object.create(null);
-  var digits = Object.create(null);
-  var controls = Object.create(null);
-  var presets = [];
-  var listeners = [];
-  var bindings = [];
   var started = false;
-  var pending = false;
   var compiled = Object.create(null);
   var count = 0;
-  var boot = DocForm._boot;
   var scopes = new Map();
   var scopeMarker = 'data-df-parameter-scope';
 
@@ -68,19 +58,10 @@
 
   // Replaces each {{expression}} or {{expression|places}} in the template with its formatted value.
   function fill(template, scope, precision) {
-    precision = precision || digits;
     return String(template).replace(TEMPLATE_RE, function (all, body) {
       var m = body.match(/^([\s\S]*?[^|])\|\s*(\d+)\s*$/);
       return m ? show(m[1], scope, parseInt(m[2], 10), precision) : show(body, scope, null, precision);
     });
-  }
-
-  function snapshot() {
-    return { ...values };
-  }
-
-  function ready(listener) {
-    return listener.names.every(function (n) { return hasOwn.call(values, n); });
   }
 
   function renderBindings(list, scope, precision) {
@@ -94,58 +75,6 @@
     });
   }
 
-  function updateBindings() {
-    pending = false;
-    renderBindings(bindings, snapshot(), digits);
-  }
-
-  function schedule() {
-    if (pending || !started) return;
-    pending = true;
-    if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(updateBindings);
-    else updateBindings();
-  }
-
-  function quote(value) {
-    return typeof value === 'string' ? '"' + value + '"' : String(value);
-  }
-
-  // Returns { value } with the typed value, or { error } when no control of that name accepts it.
-  function check(name, value) {
-    if (!NAME_RE.test(name)) return { error: 'Parameter "' + name + '" must be a valid identifier such as theta or a_1.' };
-    var group = controls[name];
-    var type = group ? group.type : 'range';
-    if (type === 'range') {
-      if ((typeof value !== 'number' && typeof value !== 'string') || String(value).trim() === '' || !isFinite(Number(value))) {
-        return { error: 'Parameter "' + name + '" needs a finite number, not ' + quote(value) + '.' };
-      }
-      value = Number(value);
-    } else if (type === 'toggle' && typeof value !== 'boolean') {
-      return { error: 'Toggle "' + name + '" needs true or false, not ' + quote(value) + '.' };
-    } else if (type === 'select' && typeof value !== 'string') {
-      return { error: 'Choice "' + name + '" needs a string value, not ' + quote(value) + '.' };
-    }
-    var bad = group && group.items.filter(function (c) { return !c.accepts(value); })[0];
-    if (bad) return { error: 'Parameter "' + name + '" cannot be ' + quote(value) + '; ' + bad.expects + '.' };
-    return { value: value };
-  }
-
-  // Validates every entry before any state changes, so a rejected update leaves all parameters as they were.
-  function checkAll(update) {
-    if (update === null || typeof update !== 'object' || Array.isArray(update)) return { error: 'must be an object of parameter values.' };
-    var names = Object.keys(update);
-    if (!names.length) return { error: 'must set at least one parameter.' };
-    var next = Object.create(null);
-    for (var i = 0; i < names.length; i++) {
-      var name = names[i];
-      if (!controls[name] && !hasOwn.call(values, name)) return { error: 'sets unknown parameter "' + name + '".' };
-      var result = check(name, update[name]);
-      if (result.error) return result;
-      next[name] = result.value;
-    }
-    return { values: next };
-  }
-
   function same(a, b) {
     return Object.keys(a).every(function (n) { return hasOwn.call(b, n) && sameValue(b[n], a[n]); });
   }
@@ -155,68 +84,11 @@
       a.every(function (value, i) { return value === b[i]; }));
   }
 
-  function markPresets() {
-    renderPresets(presets, values);
-  }
-
   function renderPresets(list, current) {
     list.forEach(function (p) {
       if (same(p.values, current)) p.el.setAttribute('aria-current', 'true');
       else p.el.removeAttribute('aria-current');
     });
-  }
-
-  // Calls each affected listener once with the full snapshot, the single changed name (or null), and every changed name.
-  function commit(next, changed, source) {
-    changed.forEach(function (name) {
-      values[name] = next[name];
-      (controls[name] ? controls[name].items : []).forEach(function (c) { c.show(next[name], source); });
-    });
-    markPresets();
-    if (!started || !changed.length) return;
-    var single = changed.length === 1 ? changed[0] : null;
-    listeners.slice().forEach(function (l) {
-      var hit = changed.some(function (n) { return l.names.indexOf(n) >= 0; });
-      if (hit && ready(l)) l.fn(snapshot(), single, changed.slice());
-    });
-    schedule();
-  }
-
-  function set(name, value, source) {
-    var result = check(name, value);
-    if (result.error) {
-      DocForm.warnOnce('param-value:' + name + ':' + quote(value), result.error);
-      return false;
-    }
-    var next = Object.create(null);
-    next[name] = result.value;
-    commit(next, [name], source);
-    return true;
-  }
-
-  function apply(update, label) {
-    var result = checkAll(update);
-    if (result.error) {
-      var what = label ? 'Preset "' + label + '" ' : 'Parameter update ';
-      DocForm.warnOnce('param-apply:' + (label || '') + ':' + result.error, what + result.error);
-      return false;
-    }
-    var changed = Object.keys(result.values).filter(function (n) {
-      return !hasOwn.call(values, n) || values[n] !== result.values[n];
-    });
-    commit(result.values, changed, null);
-    return true;
-  }
-
-  // Calls fn(values, changedName, changedNames) once all named parameters exist and whenever any of them change.
-  function on(names, fn) {
-    var listener = { names: [].concat(names), fn: fn };
-    listeners.push(listener);
-    if (started && ready(listener)) fn(snapshot(), null, listener.names.slice());
-    return function off() {
-      var i = listeners.indexOf(listener);
-      if (i >= 0) listeners.splice(i, 1);
-    };
   }
 
   function labelFor(text, id, tag) {
@@ -228,91 +100,6 @@
     return label;
   }
 
-  function rangeControl(host, name, input) {
-    var min = DocForm.num(host, 'min', 0);
-    var max = DocForm.num(host, 'max', 1);
-    var step = DocForm.data(host, 'step', null);
-    if (step === null || !(parseFloat(step) > 0)) step = String(Math.round((max - min) / 100 * 1e6) / 1e6 || 1);
-    if (!(name in digits)) digits[name] = DocForm.num(host, 'digits', digitsOf(step));
-    input.type = 'range';
-    input.min = String(min);
-    input.max = String(max);
-    input.step = step;
-    input.value = String(hasOwn.call(values, name) ? values[name] : DocForm.num(host, 'value', min));
-
-    var output = document.createElement('output');
-    output.className = 'df-param-value';
-    output.htmlFor = input.id;
-    input.addEventListener('input', function () { set(name, input.valueAsNumber, input); });
-    return {
-      output: output,
-      initial: function () { return input.valueAsNumber; },
-      accepts: function (v) { return v >= min && v <= max; },
-      expects: 'use a number from ' + format(min) + ' to ' + format(max),
-      show: function (v, source) {
-        if (input !== source) input.value = String(v);
-        output.textContent = format(v, digits[name]);
-      }
-    };
-  }
-
-  function toggleControl(host, name, input) {
-    input.type = 'checkbox';
-    input.setAttribute('role', 'switch');
-    input.className += ' df-param-switch';
-    var raw = DocForm.data(host, 'value', 'false');
-    if (raw !== 'true' && raw !== 'false') {
-      DocForm.warnOnce('param-initial:' + name, 'Toggle "' + name + '" needs data-df-value="true" or "false"; using false.');
-    }
-    input.addEventListener('change', function () { set(name, input.checked, input); });
-    return {
-      initial: function () { return raw === 'true'; },
-      accepts: function () { return true; },
-      expects: 'use true or false',
-      show: function (v) { input.checked = v; }
-    };
-  }
-
-  function control(host) {
-    var name = host.getAttribute('data-df-param').trim();
-    if (!NAME_RE.test(name)) {
-      DocForm.warnOnce('param-name:' + name, 'Parameter "' + name + '" must be a valid identifier such as theta or a_1.');
-      return;
-    }
-    var type = DocForm.data(host, 'type', 'range');
-    if (type !== 'range' && type !== 'toggle') {
-      DocForm.warnOnce('param-type:' + name, 'Parameter "' + name + '" has unknown type "' + type + '"; use range or toggle, or a data-df-choice fieldset for choices.');
-      return;
-    }
-    if (controls[name] && controls[name].type !== type) {
-      DocForm.warnOnce('param-mixed:' + name, 'Parameter "' + name + '" is already a ' + controls[name].type + '; ignoring this ' + type + '.');
-      return;
-    }
-
-    var id = 'df-param-' + name + '-' + (++count);
-    var input = document.createElement('input');
-    input.className = 'df-param-input';
-    input.id = id;
-    var make = type === 'toggle' ? toggleControl : rangeControl;
-    var c = make(host, name, input);
-    if (!c) return;
-
-    var label = labelFor(DocForm.data(host, 'label', name), id);
-    host.textContent = '';
-    host.classList.add('df-param');
-    host.classList.add('df-param-' + type);
-    host.appendChild(label);
-    host.appendChild(input);
-    if (c.output) host.appendChild(c.output);
-
-    var group = controls[name] = controls[name] || { type: type, items: [] };
-    group.items.push(c);
-    var start = c.initial();
-    // A later control of the same name adopts the current value when it can.
-    if (hasOwn.call(values, name) && check(name, values[name]).value !== undefined) start = values[name];
-    if (!set(name, start)) group.items.splice(group.items.indexOf(c), 1);
-  }
-
   function preset(button, scope) {
     var label = button.textContent.trim() || button.getAttribute('data-df-preset');
     var update;
@@ -322,20 +109,17 @@
       update = undefined;
     }
     var result = update === undefined ? { error: 'must be valid JSON.' }
-      : scope ? scope.validate(update, true) : checkAll(update);
+      : scope.validate(update, true);
     button.classList.add('df-preset');
     if (!button.hasAttribute('type')) button.setAttribute('type', 'button');
     if (result.error) {
-      if (scope) parameterIssue(button, 'Preset "' + label + '" ' + result.error);
-      else DocForm.warnOnce('param-preset:' + label + ':' + result.error, 'Preset "' + label + '" ' + result.error);
+      parameterIssue(button, 'Preset "' + label + '" ' + result.error);
       button.setAttribute('aria-disabled', 'true');
       return;
     }
-    var list = scope ? scope.presets : presets;
-    list.push({ el: button, values: result.values });
+    scope.presets.push({ el: button, values: result.values });
     button.addEventListener('click', function () {
-      if (scope) scope.write(result.values, 'user');
-      else apply(result.values, label);
+      scope.write(result.values, 'user');
     });
   }
 
@@ -353,8 +137,7 @@
   }
 
   function parameterIssue(host, message) {
-    if (boot) boot.report('parameter-input', 'parameters', host, message, 'Check the parameter scope, definition, or value.', message);
-    else DocForm.warnOnce('parameter:' + message, message, host || undefined);
+    boot.report('parameter-input', 'parameters', host, message, 'Check the parameter scope, definition, or value.', message);
   }
 
   function record(value) {
@@ -824,7 +607,7 @@
     return scope.api;
   }
 
-  function resolveScope(el, allowLegacy) {
+  function resolveScope(el) {
     var name = DocForm.data(el, 'scope', null);
     if (name === null) {
       for (var node = el; node; node = node.parentElement) {
@@ -832,7 +615,6 @@
         if (name !== null) break;
       }
     }
-    if (name === null && allowLegacy && !scopes.has('page')) return undefined;
     var key = name === null ? 'page' : scopeName(name);
     var scope = scopes.get(key);
     if (!scope) parameterIssue(el, 'Unknown parameter scope "' + key + '".');
@@ -859,11 +641,11 @@
   };
   // The scope an element resolves to, as a link other features can join; null after reporting an unknown scope.
   DocForm._parameterLink = function (el) {
-    var scope = resolveScope(el, false);
+    var scope = resolveScope(el);
     return scope ? scope.link() : null;
   };
   DocForm._parameterScope = function (el) {
-    var scope = resolveScope(el, false);
+    var scope = resolveScope(el);
     return scope ? scope.api : null;
   };
 
@@ -872,38 +654,25 @@
     scopes.forEach(function (scope) { scope.groupDomains(); });
   });
 
-  var configured = (boot ? DocForm.site : root.DocFormSite) || {};
+  var configured = DocForm.site || {};
   if (configured.parameterScopes !== undefined) {
     if (record(configured.parameterScopes)) {
       Object.keys(configured.parameterScopes).forEach(function (name) { define(name, configured.parameterScopes[name]); });
     } else parameterIssue(null, 'Parameter scopes must be an object keyed by scope name.');
   }
-  if (boot) boot.after('parameters', finishScopes);
-
-  DocForm.params = {
-    get: function (name) { return values[name]; },
-    set: function (name, value) { return set(name, value, null); },
-    apply: function (update) { return apply(update, null); },
-    values: snapshot,
-    on: on,
-    format: format,
-    digitsOf: digitsOf,
-    evaluate: evaluate,
-    fill: fill
-  };
+  boot.after('parameters', finishScopes);
 
   DocForm.register('params', function () {
-    DocForm.all('[data-df-param]').forEach(control);
     DocForm.all('[data-df-parameter]').forEach(function (el) {
-      var scope = resolveScope(el, false);
+      var scope = resolveScope(el);
       if (scope) scope.control(el);
     });
     DocForm.all('[data-df-choice]').forEach(function (el) {
-      var scope = resolveScope(el, false);
+      var scope = resolveScope(el);
       if (scope) scope.choice(el);
     });
     DocForm.all('[data-df-preset]').forEach(function (el) {
-      var scope = resolveScope(el, true);
+      var scope = resolveScope(el);
       if (scope === null) {
         el.classList.add('df-preset');
         el.setAttribute('aria-disabled', 'true');
@@ -911,11 +680,11 @@
       } else preset(el, scope);
     });
     DocForm.all('[data-df-bind], [data-df-template]').forEach(function (el) {
-      var scope = resolveScope(el, true);
-      if (scope !== null) bind(el, scope ? scope.bindings : bindings);
+      var scope = resolveScope(el);
+      if (scope) bind(el, scope.bindings);
     });
     DocForm.all('[data-df-show-when]').forEach(function (el) {
-      var scope = resolveScope(el, false);
+      var scope = resolveScope(el);
       if (scope) showWhen(el, scope.shows);
     });
     started = true;
@@ -925,9 +694,5 @@
       scope.renderShows(false);
       scope.joinGroups();
     });
-    markPresets();
-    listeners.slice().forEach(function (l) { if (ready(l)) l.fn(snapshot(), null, l.names.slice()); });
-    updateBindings();
-    if (!boot) finishScopes();
   });
 })(typeof window !== 'undefined' ? window : globalThis);

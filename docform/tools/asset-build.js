@@ -141,7 +141,7 @@
           var file = resolve(item.source, manifest);
           job.inputs = [{ file: file }];
           var ext = /\.([^.\/]+)$/.exec(file);
-          var type = DF.dataset.type(item.type === undefined ? ext && ext[1] : item.type);
+          var type = DF._dataSource.type(item.type === undefined ? ext && ext[1] : item.type);
           if (!name || name.trim() !== name) throw Error('Use a nonempty, trimmed source name.');
           if (!type) throw Error('Set type to csv, json, or yaml, or use a matching source extension.');
           job.config = { name: name, type: type };
@@ -267,10 +267,10 @@
         payload = { type: job.config.type, text: raw.text };
         try {
           var parsed = DF._dataSource.input(payload, job.name, 0).parsed;
-          var table = DF.dataset.table(parsed);
+          var table = DF.data.table(parsed);
           var rows = table ? table.cells.length : raw.text.split('\n').length;
-          var caps = DF.dataset.defaults;
-          if (raw.bytes > caps.maxBytes) job.warnings.push('Source exceeds the default ' + DF.dataset.formatSize(caps.maxBytes) + ' size cap.');
+          var caps = DF._dataSource.defaults;
+          if (raw.bytes > caps.maxBytes) job.warnings.push('Source exceeds the default ' + DF._dataSource.formatSize(caps.maxBytes) + ' size cap.');
           if (rows > caps.maxRows) job.warnings.push('Source exceeds the default ' + caps.maxRows + ' ' + (table ? 'row' : 'line') + ' cap.');
         } catch (error) {
           job.errors.push('Cannot parse ' + job.inputs[0].file + ' as ' + job.config.type + ' — ' + error.message);

@@ -7,6 +7,7 @@ const { createHash, webcrypto } = require('node:crypto');
 function load() {
   const context = vm.createContext({ URL, crypto: webcrypto, TextDecoder, console: { warn() {} } });
   context.window = context;
+  context.DocForm = { _boot: { report() {}, optionLayers: () => [] } };
   for (const path of ['vendor/js-yaml/js-yaml.min.js', 'js/core.js', 'js/tooltip.js',
     'js/search.js', 'js/data.js', 'tools/asset-build.js']) {
     const file = new URL('../docform/' + path, 'file://' + __filename);
@@ -19,7 +20,7 @@ function html(text) {
   const scripts = Array.from(text.matchAll(/<script src="([^"]+)" data-df-site>/g), match => ({
     getAttribute: () => match[1]
   }));
-  const body = { querySelector: () => null, querySelectorAll: () => [], closest: () => null };
+  const body = { hasAttribute: () => false, querySelector: () => null, querySelectorAll: () => [], closest: () => null };
   return {
     body,
     querySelector: () => null,
@@ -95,7 +96,7 @@ test('nested outputs are reproducible, independent across sites, and load throug
   const inspect = (tree = files) => build.inspect(tree, site, manifest, [], html);
   const first = await inspect();
   const [search, runs, values] = first.jobs;
-  assert.deepEqual(statuses(first), ['missing', 'missing', 'missing']);
+  assert.deepEqual(statuses(first), ['missing', 'missing', 'missing'], first.jobs.flatMap(job => job.errors).join('\n'));
   assert.deepEqual(paths(first.jobs), ['search-index.js', 'assets/detail/runs.js', 'config/assets/values.js']);
   assert.deepEqual(paths(build.selected(first.jobs, new Set([search.output, values.output]))), [search.output, values.output]);
 
@@ -104,15 +105,14 @@ test('nested outputs are reproducible, independent across sites, and load throug
   assert.deepEqual(Array.from(context.DocFormSearch.pages, page => page.path),
     ['../index.html', '../docs/Chapter%20%231.html', '../glossary/index.html']);
   assert.equal(context.DocFormSearch.metadata.inputs[0].sha256, createHash('sha256').update('First site').digest('hex'));
-  assert.equal(runtime.dataset.get('runs').text, 'run,time\nA,12\n');
-  assert.equal(runtime.dataset.get('values').type, 'yaml');
+  assert.equal(runtime._boot.registerData('runs').snapshot().text, 'run,time\nA,12\n');
+  assert.equal(runtime._boot.registerData('values').snapshot().type, 'yaml');
   runtime.search.load(index => assert.equal(index.pages[0].sections[0].text, 'First site'));
   context.DocFormSearch.version++;
   runtime.search.load(index => assert.equal(index, null));
   context.DocFormData.values.version++;
-  // Previously registered data stays cached. An unread wrapper is declined on lookup.
   context.DocFormData.unsupported = context.DocFormData.values;
-  assert.equal(runtime.dataset.get('unsupported'), null);
+  assert.equal(runtime._boot.registerData('unsupported'), null);
 
   for (const job of build.selected(first.jobs, new Set([search.output, values.output]))) files.set(job.output, file(job.script));
   assert.deepEqual(statuses(await inspect()), ['current', 'missing', 'current']);

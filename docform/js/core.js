@@ -566,14 +566,14 @@
     var source = provided ? raw : {};
     options = options || source.options || {};
     var tooltips = options.tooltips || {};
-    var terms = plainObject(source.terms, 'terms');
+    var terms = {};
     ['autoLink', 'hold'].forEach(function (key) {
       if (hasOwn.call(tooltips, key)) terms[key] = tooltips[key];
     });
-    var search = source.assets && source.assets.search && source.assets.search.output || source.search;
+    var search = source.assets && source.assets.search && source.assets.search.output;
     var order = [];
     var pages = normalizePages(source.pages, base, order, 'pages');
-    var roles = normalizeRoles(options.roles && options.roles.colors !== undefined ? options.roles.colors : source.roles);
+    var roles = normalizeRoles(options.roles && options.roles.colors);
     return {
       provided: provided,
       base: base,
@@ -584,12 +584,11 @@
       roles: roles,
       roleTips: normalizeRoleTips(options.roles && options.roles.tips, roles),
       tags: normalizeTags(options.tags, roles),
-      glossary: plainObject(tooltips.terms === undefined ? source.glossary : tooltips.terms, 'glossary'),
+      glossary: plainObject(tooltips.terms, 'glossary'),
       terms: terms,
-      macros: plainObject(options.math && options.math.macros !== undefined ? options.math.macros : source.macros, 'macros'),
-      bibliography: plainObject(options.citations && options.citations.entries !== undefined ?
-        options.citations.entries : source.bibliography, 'bibliography'),
-      refs: Object.assign(plainObject(source.refs, 'refs'), plainObject(options.references, 'options.references')),
+      macros: plainObject(options.math && options.math.macros, 'macros'),
+      bibliography: plainObject(options.citations && options.citations.entries, 'bibliography'),
+      refs: plainObject(options.references, 'options.references'),
       search: typeof search === 'string' && search ? resolvePath(search, base) : null
     };
   }
@@ -727,14 +726,6 @@
     });
   }
 
-  function start() {
-    var script = document.querySelector('script[data-df-site]');
-    DocForm.page = root.location.href;
-    DocForm.site = normalizeSite(root.DocFormSite, script && script.src ? script.src : DocForm.page);
-    DocForm.site.selectionGroups = root.DocFormSite && root.DocFormSite.selectionGroups;
-    initialize();
-  }
-
   var PILL_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
     'stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">';
   var PILL_ICONS = {
@@ -855,9 +846,6 @@
     boot.initialize = initialize;
     boot.prepareSelection = prepareSelection;
     boot.registered = function (name) { return modules.some(function (mod) { return mod.name === name; }); };
-    DocForm.util = { slug: slug, uniqueSlug: uniqueSlug, copyText: copyText };
-  } else if (typeof document !== 'undefined') {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-    else start();
   }
+  DocForm.util = { slug: slug, uniqueSlug: uniqueSlug, copyText: copyText };
 })(typeof window !== 'undefined' ? window : globalThis);

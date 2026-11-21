@@ -569,7 +569,7 @@
   function enhance(pre) {
     if (mounted.has(pre)) return pre;
     // Data placeholders render their own code views from data.js.
-    if (!pre.parentNode || pre.closest('.df-code, [data-df-data]:not(.df-data-ready), [data-df-data-view]:not(.df-data-ready)') ||
+    if (!pre.parentNode || pre.closest('.df-code, [data-df-data-view]:not(.df-data-ready)') ||
       pre.hasAttribute('data-df-source') ||
       (boot ? component.flag(pre, 'no-code', 'code') : pre.hasAttribute('data-df-no-code'))) return null;
     var code = pre.querySelector(':scope > code');

@@ -1,4 +1,4 @@
-Offline setup	Load DocForm offline, register author hooks, and migrate per-file includes	setup/setup.md
+Offline setup	Load DocForm offline and register author hooks	setup/setup.md
 Include order	Choose feature profiles and resolve dependencies	setup/include-order.md
 Site manifest	Configure pages, features, registries, and generated assets	setup/manifest.md
 Base layout	Style the reading column, typography, lists, tables, and figure widths	layout/base.md

@@ -228,8 +228,7 @@
 
   function enhance(table, settings) {
     settings = settings || {};
-    // Data placeholders build their tables in data.js and enhance them once filled.
-    if (table.classList.contains('df-results') || table.closest('[data-df-data]:not(.df-data-ready)')) return;
+    if (table.classList.contains('df-results')) return;
     var head = table.tHead ? table.tHead.rows[table.tHead.rows.length - 1] : null;
     var body = table.tBodies[0];
     if (!head || !body) {
@@ -767,7 +766,7 @@
     }
     var template = authoredHead ? table.tHead.cloneNode(true) : document.createElement('thead');
     if (!template.rows.length) template.insertRow();
-    var caps = data ? DocForm.dataset.limits(table, options) : { maxBytes: 1024 * 1024, maxRows: 5000 };
+    var caps = data ? DocForm._dataSource.limits(table, options) : { maxBytes: 1024 * 1024, maxRows: 5000 };
 
     function prepare(records, mapping, parsed, values) {
       if (!Array.isArray(records) || records.some(function (record) {
@@ -963,7 +962,7 @@
     DocForm.all('table[data-df-results]').forEach(function (table) {
       if (!DocForm._dataViews) enhance(table);
       else if (!table.classList.contains('df-results') &&
-        !table.closest('[data-df-data-view]:not(.df-data-ready), [data-df-data]:not(.df-data-ready)')) mount(table);
+        !table.closest('[data-df-data-view]:not(.df-data-ready)')) mount(table);
     });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

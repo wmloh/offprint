@@ -683,7 +683,7 @@
     }
   }
 
-  DocForm.zoomTools = DocForm.zoomtools = {
+  DocForm.zoomTools = {
     tools: TOOLS.map(function (t) { return t.id; }),
     colors: COLORS.slice(),
     limits: { min: ZOOM.min, max: ZOOM.max, start: ZOOM.start },

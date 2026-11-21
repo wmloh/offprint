@@ -9,7 +9,7 @@ const context = vm.createContext({ URL, console: { warn() {} } });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('reveal.js'), context);
-const reveal = context.DocForm.reveal;
+const reveal = context.DocForm._reveal;
 
 test('a block enters the centre band, stays through a narrower edge, and replays after leaving', () => {
   const v = (top, bottom, shown) => reveal.revealVisible(top, bottom, 800, 400, 400, shown);

@@ -1,9 +1,9 @@
-// Load in <head>, after the stylesheets and without defer, so the saved theme applies before first paint.
-// Standalone: it does not need core.js, and attaches itself as DocForm.theme when core is present.
 (function (root) {
   'use strict';
 
-  if (root.DocFormTheme) return;
+  var DocForm = root.DocForm;
+  var boot = DocForm && DocForm._boot;
+  if (!boot || DocForm.theme) return;
 
   var MODES = ['light', 'dark'];
   var KEY = 'docform-theme';
@@ -16,13 +16,12 @@
     dark: SVG + '<path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z"/></svg>'
   };
   var doc = root.document;
-  var boot = root.DocForm && root.DocForm._boot;
-  var component = boot && root.DocForm._component;
+  var component = DocForm._component;
   var mode = 'light';
   var toggles = new Map();
 
   function snapshot() { return Object.freeze({ mode: mode }); }
-  var changes = component && component.signal('theme', null, snapshot);
+  var changes = component.signal('theme', null, snapshot);
 
   // Unknown or missing values fall back to the OS preference, so the result is always light or dark.
   function normalize(value, dark) {
@@ -48,7 +47,7 @@
     } catch (e) {
       // Blocked storage: start from the OS preference.
     }
-    return normalize(MODES.indexOf(stored) >= 0 ? stored : boot && boot.themeDefault, prefersDark());
+    return normalize(MODES.indexOf(stored) >= 0 ? stored : boot.themeDefault, prefersDark());
   }
 
   function write(value) {
@@ -70,22 +69,6 @@
     button.innerHTML = ICONS[mode] + '<span class="df-theme-toggle-label">' + LABELS[mode] + '</span>';
     button.setAttribute('aria-label', text);
     button.title = text;
-  }
-
-  function announce() {
-    if (!doc || typeof root.CustomEvent !== 'function') return;
-    doc.dispatchEvent(new root.CustomEvent('df:themechange', {
-      detail: { mode: mode, theme: mode }
-    }));
-  }
-
-  function set(value) {
-    if (component) return change(value, 'api', true);
-    apply(value);
-    write(mode);
-    paintToggles();
-    announce();
-    return mode;
   }
 
   function paintToggles() {
@@ -119,8 +102,7 @@
     button.type = 'button';
     button.classList.add('df-theme-toggle');
     button.addEventListener('click', function () {
-      if (component) change(next(mode), 'user', true);
-      else set(next(mode));
+      change(next(mode), 'user', true);
     });
     toggles.set(host, button);
     toggles.set(button, button);
@@ -130,21 +112,17 @@
 
   function start() {
     Array.prototype.forEach.call(doc.querySelectorAll('[data-df-theme-toggle]'), function (host) {
-      if (!component || component.flag(host, 'theme-toggle', 'theme')) renderToggle(host);
+      if (component.flag(host, 'theme-toggle', 'theme')) renderToggle(host);
     });
-    if (root.DocForm) root.DocForm.theme = api;
     root.addEventListener('storage', function (event) {
       if (event.key !== KEY && event.key !== null) return;
-      if (component) change(read(), 'storage', false);
-      else {
-        apply(read());
-        paintToggles();
-        announce();
-      }
+      change(read(), 'storage', false);
     });
   }
 
-  var api = {
+  apply(read());
+
+  DocForm.theme = {
     modes: MODES.slice(),
     key: KEY,
     normalize: normalize,
@@ -152,26 +130,14 @@
     prefersDark: prefersDark,
     get: function () { return mode; },
     current: function () { return mode; },
-    set: set,
-    toggle: renderToggle
-  };
-
-  apply(read());
-
-  if (boot) {
-    api.snapshot = snapshot;
-    api.subscribe = changes.subscribe;
-    api.mount = function (target) {
+    set: function (value) { return change(value, 'api', true); },
+    toggle: renderToggle,
+    snapshot: snapshot,
+    subscribe: changes.subscribe,
+    mount: function (target) {
       var host = component.target(target, 'theme', true);
       return host ? renderToggle(host) : null;
-    };
-    root.DocForm.theme = api;
-    root.DocForm.register('theme', start);
-  } else {
-    root.DocFormTheme = api;
-    if (doc && doc.addEventListener) {
-      if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start);
-      else start();
     }
-  }
+  };
+  DocForm.register('theme', start);
 })(typeof window !== 'undefined' ? window : globalThis);

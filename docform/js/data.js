@@ -1,8 +1,4 @@
-// Data files: CSV, JSON, and YAML text registered under a name and shown as results tables, highlighted code, or a
-// tree (data-df-view="tree", drawn by tree.js).
-// Sources are wrapped .js files that set window.DocFormData[name] (made by docform/tools/assets.html),
-// <script type="text/csv" data-df-data="name"> blocks, and <pre data-df-data> blocks
-// that also render in place. Any other element with data-df-data="name" is a placeholder for that data.
+// Named CSV, JSON, YAML, and typed data sources, with table, code, and tree views.
 (function (root) {
   'use strict';
 
@@ -20,7 +16,6 @@
     'text/yaml': 'yaml', 'application/yaml': 'yaml', 'text/x-yaml': 'yaml', 'application/x-yaml': 'yaml'
   };
   var hasOwn = Object.prototype.hasOwnProperty;
-  var store = Object.create(null);
   var defaults = { maxBytes: 1024 * 1024, maxRows: 5000 };
   var sources = new Map();
   var invalidSources = new Map();
@@ -88,47 +83,6 @@
       if (indent === null || n < indent) indent = n;
     });
     return lines.map(function (line) { return line.slice(indent || 0); }).join('\n');
-  }
-
-  function add(name, text, kind) {
-    var key = String(name == null ? '' : name).trim();
-    if (!key || typeof text !== 'string') {
-      DocForm.warnOnce('data-add:' + key, 'Data needs a name and text; ignoring "' + key + '".');
-      return null;
-    }
-    if (store[key]) {
-      DocForm.warnOnce('data-dup:' + key, 'Data "' + key + '" is registered more than once; keeping the first.');
-      return store[key];
-    }
-    var given = kind == null ? null : type(kind);
-    if (kind != null && !given) DocForm.warnOnce('data-type:' + kind, 'Unknown data type "' + kind + '"; use csv, json, or yaml.');
-    store[key] = { name: key, type: given || sniff(text, key), text: text };
-    return store[key];
-  }
-
-  // Registered data by name: added entries first, then window.DocFormData, read lazily so file order is free.
-  function get(name) {
-    var key = String(name == null ? '' : name).trim();
-    if (store[key]) return store[key];
-    var globals = root.DocFormData;
-    if (!globals || typeof globals !== 'object' || !hasOwn.call(globals, key)) return null;
-    var entry = globals[key];
-    if (typeof entry === 'string') return add(key, entry);
-    if (entry && (entry.format !== undefined || entry.version !== undefined) &&
-        (entry.format !== 'docform-data' || entry.version !== 1)) {
-      DocForm.warnOnce('data-version:' + key, 'Regenerate the data wrapper for "' + key + '" with the current asset tool.');
-      return null;
-    }
-    if (entry && typeof entry.text === 'string') return add(key, entry.text, entry.type);
-    DocForm.warnOnce('data-entry:' + key, 'window.DocFormData["' + key + '"] needs a text string; ignoring it.');
-    return null;
-  }
-
-  function names() {
-    var out = Object.keys(store);
-    var globals = root.DocFormData;
-    if (globals && typeof globals === 'object') Object.keys(globals).forEach(function (k) { if (out.indexOf(k) < 0) out.push(k); });
-    return out;
   }
 
   // Unquoted fields become numbers, booleans, or null when empty; quoted fields and codes with leading zeros stay text.
@@ -436,8 +390,24 @@
   }
 
   function registerWrapped(name) {
-    var entry = get(name);
-    return entry && define(name, entry);
+    var globals = root.DocFormData;
+    if (!globals || !hasOwn.call(globals, name)) return null;
+    var entry = globals[name];
+    if (typeof entry === 'string') return define(name, { type: sniff(entry, name), text: entry });
+    if (entry && (entry.format !== undefined || entry.version !== undefined) &&
+        (entry.format !== 'docform-data' || entry.version !== 1)) {
+      DocForm.warnOnce('data-version:' + name, 'Regenerate the data wrapper for "' + name + '" with the current asset tool.');
+      return null;
+    }
+    if (entry && typeof entry.text === 'string') {
+      var kind = type(entry.type);
+      if (entry.type != null && !kind) {
+        DocForm.warnOnce('data-type:' + entry.type, 'Unknown data type "' + entry.type + '"; use csv, json, or yaml.');
+      }
+      return define(name, { type: kind || sniff(entry.text, name), text: entry.text });
+    }
+    DocForm.warnOnce('data-entry:' + name, 'window.DocFormData["' + name + '"] needs a text string; ignoring it.');
+    return null;
   }
 
   function defineTransform(name, fn) {
@@ -607,7 +577,7 @@
     return tabular ? 'table' : 'code';
   }
 
-  // Per-block caps from data-df-max-size and data-df-max-rows, else DocForm.dataset.defaults.
+  // Per-block caps from data-df-max-size and data-df-max-rows, with shared defaults.
   function limits(el, options) {
     var out = { maxBytes: defaults.maxBytes, maxRows: defaults.maxRows };
     options = options || {};
@@ -645,8 +615,6 @@
   }
 
   // DOM rendering below.
-
-  var STATE = typeof WeakMap === 'function' ? new WeakMap() : null;
 
   function make(tag, cls, text) {
     var el = document.createElement(tag);
@@ -751,24 +719,18 @@
     return box;
   }
 
-  function enhanceAll(el, modern) {
+  function enhanceAll(el) {
     if (DocForm.results && DocForm.results.enhance) DocForm.all('table[data-df-results]', el).forEach(function (table) {
-      DocForm.results.enhance(table, { silent: modern });
+      DocForm.results.enhance(table, { silent: true });
     });
     if (DocForm.code) DocForm.all('pre', el).forEach(DocForm.code.mount);
   }
 
-  function emit(state, detail) {
-    if (state.modern) {
-      state.snapshot = detail.error ? null : {
-        name: state.name, view: detail.view, total: detail.rows ?? null,
-        shown: detail.rows == null ? null : Math.min(detail.rows, state.shown || state.limits.maxRows)
-      };
-      return;
-    }
-    if (typeof CustomEvent !== 'function') return;
-    detail.name = state.name;
-    state.el.dispatchEvent(new CustomEvent('df:datarender', { bubbles: true, detail: detail }));
+  function recordView(state, detail) {
+    state.snapshot = detail.error ? null : {
+      name: state.name, view: detail.view, total: detail.rows ?? null,
+      shown: detail.rows == null ? null : Math.min(detail.rows, state.shown || state.limits.maxRows)
+    };
   }
 
   function changed(state, origin) {
@@ -802,7 +764,7 @@
       });
       note.appendChild(go);
       el.appendChild(note);
-      emit(state, { view: null, error: 'size' });
+      recordView(state, { view: null, error: 'size' });
       return;
     }
     var limit = state.shown || state.limits.maxRows;
@@ -817,34 +779,29 @@
       pre.setAttribute('data-df-no-code', '');
       el.appendChild(pre);
       if (raw.total > limit) el.appendChild(moreControl(state, limit, raw.total, 'lines'));
-      emit(state, { view: 'raw', error: e.message });
+      recordView(state, { view: 'raw', error: e.message });
       return;
     }
     var shown = state.grid && (state.view === 'auto' || state.view === 'table') ? 'table' : view(parsed, state.view);
     if (shown === 'tree' && !DocForm.tree) {
-      if (state.modern) runtime.issue('data-view', el, 'Enable the tree feature for tree views. Showing code.');
-      else DocForm.warnOnce('data-tree', 'data-df-view="tree" needs docform/js/tree.js; showing code instead.', el);
+      runtime.issue('data-view', el, 'Enable the tree feature for tree views. Showing code.');
       shown = 'code';
     }
     if (shown === 'tree') {
       el.appendChild(DocForm.tree.build(valueOf(parsed), { label: 'Data ' + label, open: state.open, maxItems: state.limits.maxRows }));
-      emit(state, { view: 'tree' });
+      recordView(state, { view: 'tree' });
     } else if (shown === 'table') {
       var data = state.grid || table(parsed);
       el.appendChild(buildTable(state, data, limit));
       if (data.cells.length > limit) el.appendChild(moreControl(state, limit, data.cells.length, 'rows'));
-      emit(state, { view: 'table', rows: data.cells.length });
+      recordView(state, { view: 'table', rows: data.cells.length });
     } else {
       var lines = linesOf(entry.text, limit);
       el.appendChild(buildCode(entry.type === 'value' ? 'json' : entry.type, lines.text));
       if (lines.total > limit) el.appendChild(moreControl(state, limit, lines.total, 'lines'));
-      emit(state, { view: 'code', rows: lines.total });
+      recordView(state, { view: 'code', rows: lines.total });
     }
-    enhanceAll(el, state.modern);
-  }
-
-  function scriptType(el) {
-    return type(DocForm.data(el, 'type', null)) || type(el.getAttribute('type'));
+    enhanceAll(el);
   }
 
   function tableMapping(value, mapping, template, parsed) {
@@ -880,7 +837,7 @@
     var fallback = Array.from(el.childNodes);
     var initiallyHidden = el.hidden;
     var template = el.querySelector(':scope > table');
-    var state = { name: name, view: mode, template: template, modern: true,
+    var state = { name: name, view: mode, template: template,
       limits: limits(el, options), open: treeDepth('data-view', el, instance), el: el };
 
     function prepare(input, value) {
@@ -948,120 +905,25 @@
     return controller.api;
   }
 
-  // given and template, from DocForm.dataset.show, draw an entry that is not registered into any element.
-  function setup(el, given, template, display) {
-    var name = given ? given.name : DocForm.data(el, 'data', '').trim();
-    var entry;
-    var host = el;
-    if (given) {
-      entry = given;
-    } else if (el.tagName === 'PRE') {
-      // An inline block renders its own text and also registers it when the name is free.
-      var text = dedent(el.textContent);
-      var kind = scriptType(el) || sniff(text, name);
-      entry = { name: name, type: kind, text: text };
-      if (name && !store[name] && !get(name)) add(name, text, kind);
-      host = make('div');
-      Array.prototype.forEach.call(el.attributes, function (a) { host.setAttribute(a.name, a.value); });
-      el.replaceWith(host);
-    } else {
-      entry = get(name);
-      var given = type(DocForm.data(el, 'type', null));
-      if (entry && given && given !== entry.type) entry = { name: entry.name, type: given, text: entry.text };
-    }
-    var requested = display ? display.view : DocForm.data(host, 'view', 'auto').trim().toLowerCase();
-    if (VIEWS.indexOf(requested) < 0) {
-      DocForm.warnOnce('data-view:' + requested, 'Unknown data-df-view "' + requested + '"; use auto, table, code, or tree.', host);
-      requested = 'auto';
-    }
-    template = template || host.querySelector('table');
+  function showFile(host, entry, display, template) {
     var state = {
       el: host,
-      name: name,
+      name: entry.name,
       entry: entry,
-      view: requested,
+      view: display.view,
       template: template && template.tHead ? template.cloneNode(true) : null,
-      limits: display ? display.limits : limits(host),
-      open: display ? display.open : DocForm.num(host, 'tree-depth', 1),
+      limits: display.limits,
+      open: display.open,
       shown: 0,
       force: false,
       parsed: null
     };
-    if (display) {
-      state.modern = true;
-      state.fileSignal = runtime.signal('data-view', host, function () { return state.snapshot || null; },
-        { action: 'render' });
-    }
+    state.fileSignal = runtime.signal('data-view', host, function () { return state.snapshot || null; },
+      { action: 'render' });
     host.classList.add('df-data', 'df-data-ready');
-    if (!entry) DocForm.warnOnce('data-missing:' + name, 'No data named "' + name + '" is registered.', host);
-    if (STATE) STATE.set(host, state);
     draw(state);
-    if (display) changed(state, 'drop');
+    changed(state, 'drop');
   }
-
-  function render(el) {
-    var state = STATE && STATE.get(el);
-    if (!state) return setup(el);
-    state.entry = get(state.name) || state.entry;
-    state.parsed = null;
-    state.shown = 0;
-    draw(state);
-  }
-
-  // Draws another entry ({ name, type, text }) in a block, such as a file a reader dropped. The block keeps its view,
-  // limits, and table header, and restore() brings back what it showed first. An element that is not yet a data
-  // block becomes one, using template (a table with a thead) for its columns when given.
-  function show(el, entry, template) {
-    var state = STATE && STATE.get(el);
-    if (!state) return setup(el, entry, template ? template.cloneNode(true) : null);
-    if (!hasOwn.call(state, 'saved')) state.saved = state.entry;
-    state.entry = entry;
-    state.parsed = null;
-    state.shown = 0;
-    state.force = false;
-    draw(state);
-  }
-
-  function restore(el) {
-    var state = STATE && STATE.get(el);
-    if (!state || !hasOwn.call(state, 'saved')) return false;
-    state.entry = state.saved;
-    delete state.saved;
-    state.parsed = null;
-    state.shown = 0;
-    state.force = false;
-    draw(state);
-    return true;
-  }
-
-  function isBlock(el) {
-    return !!(STATE && el && STATE.get(el));
-  }
-
-  DocForm.dataset = {
-    defaults: defaults,
-    add: add,
-    get: get,
-    names: names,
-    type: type,
-    sniff: sniff,
-    size: size,
-    parseSize: parseSize,
-    formatSize: formatSize,
-    dedent: dedent,
-    parse: parse,
-    parseCsv: parseCsv,
-    parseJson: parseJson,
-    parseYaml: parseYaml,
-    table: table,
-    valueOf: valueOf,
-    view: view,
-    limits: limits,
-    render: render,
-    show: show,
-    restore: restore,
-    isBlock: isBlock
-  };
 
   Object.assign(DocForm.data, {
     define: define, source: source, defineTransform: defineTransform,
@@ -1070,11 +932,13 @@
   });
   DocForm._dataSource = {
     binding: binding, options: optionsFor, fields: mappedFields, key: keyOf, input: readInput,
-    columns: tableMapping, interval: mappedInterval, transform: transformValue, filter: recordFilter, size: size,
+    columns: tableMapping, interval: mappedInterval, transform: transformValue, filter: recordFilter,
+    defaults: defaults, limits: limits, type: type, size: size, formatSize: formatSize,
+    sniff: sniff, parseSize: parseSize, dedent: dedent, view: view,
     fileDisplay: function (el, caps) {
       return { view: viewMode('dropzone', el), open: treeDepth('dropzone', el), limits: caps };
     },
-    showFile: function (host, entry, display) { setup(host, entry, null, display); }
+    showFile: showFile
   };
   DocForm.dataView = {
     mount: mountView,
@@ -1094,10 +958,6 @@
       if (kind) define(name, { type: kind, text: text });
       else runtime.issue('data', el, 'Use a CSV, JSON, or YAML data MIME type.');
     });
-    DocForm.all('script[data-df-data]').forEach(function (el) {
-      var name = DocForm.data(el, 'data', '').trim();
-      add(name, dedent(el.textContent), scriptType(el));
-    });
   }
 
   var boot = DocForm._boot;
@@ -1105,11 +965,7 @@
     boot.readData = readInline;
     boot.registerData = registerWrapped;
   }
-  DocForm.register(boot ? 'data-view' : 'data', function () {
-    if (!boot) readInline();
+  DocForm.register('data-view', function () {
     DocForm.all('[data-df-data-view]:not([data-df-dropzone])').forEach(function (el) { mountView(el); });
-    DocForm.all('[data-df-data]:not(script):not(.df-data-ready)').forEach(function (el) {
-      setup(el);
-    });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

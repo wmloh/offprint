@@ -19,8 +19,8 @@ function load() {
 
 test('roles become root variables and case-insensitive accent rules', () => {
   const { DocForm, warnings } = load();
-  const site = DocForm.normalizeSite({ roles: { Theorem: 'purple', 'key-idea': 'yellow' } }, 'file:///x/site.js');
-  const css = DocForm.roleCss(site.roles);
+  const site = DocForm.normalizeSite({ options: { roles: { colors: { Theorem: 'purple', 'key-idea': 'yellow' } } } }, 'file:///x/site.js');
+  const css = DocForm.roles.css(site.roles);
   assert.match(css, /^:root\{--df-role-theorem:var\(--df-purple\);--df-role-theorem-bg:var\(--df-purple-bg\);--df-role-key-idea:var\(--df-yellow\);/);
   assert.ok(css.includes('[data-df-role][data-df-role="theorem" i]{--df-accent:var(--df-role-theorem);--df-accent-bg:var(--df-role-theorem-bg);}'));
   assert.ok(css.includes('[data-df-role="key-idea" i]'));
@@ -29,7 +29,7 @@ test('roles become root variables and case-insensitive accent rules', () => {
 
 test('no roles produce no stylesheet', () => {
   const { DocForm } = load();
-  assert.equal(DocForm.roleCss({}), '');
+  assert.equal(DocForm.roles.css({}), '');
 });
 
 test('every named colour has text and background tokens and a data-df-color rule', () => {

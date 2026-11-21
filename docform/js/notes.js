@@ -140,7 +140,7 @@
   }
 
   var layoutPage = null;
-  DocForm.sidenotes = DocForm.notes = {
+  DocForm.sidenotes = {
     fits: fits, width: WIDTH, gap: GAP, edge: EDGE,
     layout: function () {
       if (!layoutPage) return false;

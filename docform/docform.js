@@ -415,7 +415,7 @@
     var pageSearch = config.page.options && config.page.options.search;
     var localSearch = localPath(pageSearch && pageSearch.index, pageURL, 'search', 'options.search.index');
     var search = pageSearch && pageSearch.index === null ? null : localSearch ||
-      localPath(declared.search && declared.search.output || site.search, siteURL, 'search', 'assets.search.output');
+      localPath(declared.search && declared.search.output, siteURL, 'search', 'assets.search.output');
     var data = Object.create(null);
     if (object(declared.data)) Object.keys(declared.data).forEach(function (name) {
       var item = declared.data[name];

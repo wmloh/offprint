@@ -148,6 +148,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
   vm.runInContext(entry, context);
   return {
     DF: context.DocForm, html, body, citation, events, loads, ids, document,
+    runScript(url) { vm.runInContext(fs.readFileSync(url, 'utf8'), context, { filename: url.pathname }); },
     async start() {
       document.readyState = 'interactive';
       const done = new Promise(resolve => context.DocForm.ready(resolve));
@@ -283,10 +284,10 @@ test('mixed features load all shipped assets and register data before author set
   } } }, storage: { 'docform-theme': 'light' }, dark: true });
   assert.equal(p.html.getAttribute('data-df-theme'), 'light');
   p.DF.setup(DF => {
-    assert.match(DF.dataset.get('runs').text, /r01,2026-11-14/);
+    assert.match(DF.data.source('runs').snapshot().text, /r01,2026-11-14/);
     assert.equal(DF.data.source('runs').snapshot().value[0].run, 'r01');
     assert.equal(DF.data.define('setup-records', { type: 'value', value: [{ id: 'sample' }] }).snapshot().revision, 0);
-    assert.equal(DF.dataset.add('readings', 'x,y\n1,2', 'csv').name, 'readings');
+    assert.equal(DF.data.define('readings', { type: 'csv', text: 'x,y\n1,2' }).snapshot().name, 'readings');
     assert.equal(typeof DF.animation.mount, 'function');
     assert.equal(typeof DF.chart.mount, 'function');
     assert.equal(typeof DF.dropdowns.mount, 'function');
@@ -294,11 +295,97 @@ test('mixed features load all shipped assets and register data before author set
   });
   await p.start();
   assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
-  assert.equal(p.DF.dataset.get('readings').text, 'x,y\n1,2');
-  assert.deepEqual(Array.from(p.DF.data.names()), ['runs', 'setup-records']);
+  assert.equal(p.DF.data.source('readings').snapshot().text, 'x,y\n1,2');
+  assert.deepEqual(Array.from(p.DF.data.names()), ['runs', 'setup-records', 'readings']);
   assert.equal(new Set(p.loads).size, p.loads.length);
   assert.ok(p.loads.includes('docform/js/scenarios.js'));
   assert.ok(p.loads.includes('docform/js/zoomtools.js'));
+  for (const alias of ['anim', 'bubble', 'dataset', 'nav', 'notes', 'params', 'refs', 'reveal', 'roleCss', 'tooltip', 'zoomtools']) {
+    assert.equal(Object.hasOwn(p.DF, alias), false, alias);
+  }
+});
+
+test('only current source and view attributes register and render data', async () => {
+  const p = page({ config: { profile: 'none', features: { 'data-view': true, dropzone: true } } });
+  const oldSource = element('script');
+  oldSource.setAttribute('data-df-data', 'old');
+  oldSource.setAttribute('type', 'text/csv');
+  oldSource.textContent = 'a,b\n1,2';
+  const source = element('script');
+  source.setAttribute('data-df-source', 'current');
+  source.setAttribute('data-df-type', 'json');
+  source.setAttribute('type', 'text/csv');
+  source.textContent = 'a,b\n1,2';
+  const oldView = element('div');
+  oldView.setAttribute('data-df-data', 'current');
+  oldView.setAttribute('data-df-view', 'code');
+  oldView.textContent = 'Old fallback';
+  const view = element('div');
+  view.setAttribute('data-df-source', 'current');
+  view.setAttribute('data-df-data-view', 'code');
+  view.setAttribute('data-df-view', 'tree');
+  view.setAttribute('data-df-type', 'json');
+  const bare = element('div');
+  bare.setAttribute('data-df-source', 'current');
+  bare.setAttribute('data-df-view', 'code');
+  bare.textContent = 'Bare fallback';
+  const capped = element('div');
+  capped.setAttribute('data-df-source', 'current');
+  capped.setAttribute('data-df-data-view', 'code');
+  capped.setAttribute('data-df-max-size', '1 B');
+  const nodes = [oldSource, source, oldView, view, bare, capped];
+  p.body.querySelectorAll = selector => {
+    switch (selector) {
+      case 'script[data-df-source], pre[data-df-source]':
+        return nodes.filter(node => node.tagName === 'SCRIPT' && node.hasAttribute('data-df-source'));
+      case '[data-df-data-view]:not([data-df-dropzone])':
+        return nodes.filter(node => node.hasAttribute('data-df-data-view'));
+      default:
+        return nodes.filter(node => selector.startsWith('[data-df-data]') && node.hasAttribute('data-df-data'));
+    }
+  };
+  await p.start();
+  assert.equal(p.DF.data.source('old'), null);
+  assert.equal(oldView.textContent, 'Old fallback');
+  assert.equal(bare.textContent, 'Bare fallback');
+  assert.equal(p.DF.data.source('current').snapshot().type, 'csv');
+  const controller = p.DF.dataView.get(view);
+  assert.equal(controller.snapshot().view, 'code');
+  assert.equal(view.textContent, 'a,b\n1,2');
+  assert.match(capped.textContent, /over this block's 1 byte limit/);
+  assert.equal(capped.firstChild.lastChild.textContent, 'Show anyway');
+  const target = p.DF.dropzone.link(view);
+  const zone = element('div');
+  assert.equal(target.kind, 'data');
+  assert.equal(target.feed({ type: 'csv', text: 'a,b\n3,4' }, {}, zone, target.reserve()), '');
+  assert.equal(view.textContent, 'a,b\n3,4');
+  target.restore(zone, target.reserve());
+  assert.equal(view.textContent, 'a,b\n1,2');
+});
+
+test('the asset tool loads through the offline entry and wires its folder input', async () => {
+  const url = new URL('tools/assets.html', library);
+  const markup = fs.readFileSync(url, 'utf8');
+  const config = JSON.parse(markup.match(/<script type="application\/json" data-df-page>([\s\S]*?)<\/script>/)[1]);
+  const p = page({ config });
+  for (const [, tag, id] of markup.matchAll(/<(\w+)[^>]*? id="([^"]+)"/g)) p.ids.set(id, element(tag));
+  const scripts = Array.from(markup.matchAll(/<script src="([^"]+)"/g), match => match[1]);
+  assert.deepEqual(scripts, ['../docform.js', 'asset-build.js', 'asset-page.js']);
+  scripts.slice(1).forEach(src => p.runScript(new URL(src, url)));
+
+  await p.start();
+  assert.deepEqual(Array.from(p.DF.diagnostics.list()), []);
+  const folder = p.ids.get('folder');
+  folder.files = [{}];
+  folder.dispatchEvent(new Event('change'));
+  assert.match(p.ids.get('status').textContent, /Choose a site folder/);
+});
+
+test('legacy search manifest keys do not load an index', async () => {
+  const p = page({ site: { search: 'legacy.js' } });
+  await p.start();
+  assert.equal(p.DF.site.search, null);
+  assert.equal(p.loads.some(asset => asset.endsWith('legacy.js')), false);
 });
 
 const matrixMapping = {

@@ -500,39 +500,10 @@
   }
 
   // Builds a step-timeline animation on the figure with this id (or element). Safe to call before the DOM is ready.
-  function anim(id, steps, options) {
-    options = options || {};
-    var ctl = {};
-    ['play', 'pause', 'next', 'prev', 'go', 'to', 'seek'].forEach(function (name) { ctl[name] = function () {}; });
-    function start() {
-      var figure = typeof id === 'string' ? document.getElementById(id) : id;
-      if (!figure) {
-        DocForm.warnOnce('anim:' + id, 'No animation figure with id "' + id + '".');
-        return;
-      }
-      setup(figure, steps, options, ctl);
-      controllers.set(figure, ctl);
-    }
-    var ready = typeof id !== 'string' || document.getElementById(id);
-    if (ready || document.readyState !== 'loading') start();
-    else document.addEventListener('DOMContentLoaded', start);
-    return ctl;
-  }
-
-  var controllers = new WeakMap();
-
-  anim.get = function (figure) { return controllers.get(figure) || null; };
-  anim.easings = EASINGS;
-  anim.easing = easing;
-  anim.lerp = lerp;
-  anim.timeline = timeline;
-  anim.locate = locate;
-  anim.chain = chain;
-  anim.value = value;
-  anim.stepTime = stepTime;
-  anim.path = path;
-  anim.hoverPlays = hoverPlays;
-  DocForm.anim = anim;
+  DocForm._animationMath = {
+    easings: EASINGS, easing: easing, lerp: lerp, timeline: timeline, locate: locate,
+    chain: chain, value: value, stepTime: stepTime, path: path, hoverPlays: hoverPlays
+  };
 
   var keyed = new WeakMap();
   var linkedSteps = new WeakMap();

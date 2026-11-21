@@ -73,7 +73,6 @@
     });
   }
 
-  DocForm.roleCss = roleCss;
   DocForm.roles = {
     color: function (name, colors) {
       var map = colors === undefined ? (DocForm.site || {}).roles : DocForm._normalizeRoles(colors);

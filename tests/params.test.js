@@ -5,45 +5,6 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
-const warnings = [];
-const context = vm.createContext({ URL, console: { warn: (message) => warnings.push(message) } });
-context.window = context;
-vm.runInContext(read('core.js'), context);
-vm.runInContext(read('params.js'), context);
-const params = context.DocForm.params;
-
-test('slider steps imply decimal places', () => {
-  assert.deepEqual(['1', '0.5', '0.05', '10', '1e-3'].map(params.digitsOf), [0, 1, 2, 0, 3]);
-});
-
-test('values format with fixed or trimmed decimals and no negative zero', () => {
-  assert.equal(params.format(3.14159, 2), '3.14');
-  assert.equal(params.format(2, 2), '2.00');
-  assert.equal(params.format(1 / 3), '0.333');
-  assert.equal(params.format(2.5), '2.5');
-  assert.equal(params.format(-0.0001, 2), '0.00');
-  assert.equal(params.format(-0.0001), '0');
-  assert.equal(params.format(NaN), '?');
-  assert.equal(params.format(Infinity), '∞');
-  assert.equal(params.format('text'), 'text');
-});
-
-test('templates substitute expressions with Math in scope and optional places', () => {
-  const scope = { a: 3, b: 4, theta: Math.PI / 6 };
-  assert.equal(params.fill('c = \\sqrt{ {{a}}^2 + {{b}}^2 } = {{sqrt(a*a + b*b)}}', scope), 'c = \\sqrt{ 3^2 + 4^2 } = 5');
-  assert.equal(params.fill('{{sin(theta)|3}} and {{PI|2}}', scope), '0.500 and 3.14');
-  assert.equal(params.fill('{{a > 2 ? "big" : "small"}}', scope), 'big');
-  assert.equal(params.fill('{{ a || 1 }}', scope), '3');
-  assert.equal(params.fill('no braces {here}', scope), 'no braces {here}');
-});
-
-test('bad expressions show a placeholder and warn once', () => {
-  const before = warnings.length;
-  assert.equal(params.fill('{{missing + 1}} {{missing + 1}}', { a: 1 }), '? ?');
-  assert.equal(warnings.length, before + 1);
-  assert.match(warnings.at(-1), /Cannot evaluate "missing \+ 1"/);
-});
-
 class FakeElement extends EventTarget {
   constructor(tag, attrs = {}, children = []) {
     super();
@@ -74,11 +35,16 @@ class FakeElement extends EventTarget {
 // Loads fresh core and params modules over the given hosts, presets, and bindings, then starts the page.
 function page({ hosts = [], scoped = [], chosen = [], presets = [], bound = [], frames, setup }) {
   const warned = [];
-  let start;
+  const after = [];
+  const boot = {
+    canInitialize: () => true, optionLayers: () => [],
+    report: (_, feature, host, message) => warned.push(message),
+    moduleFailed: (_, error) => { throw error; },
+    after: (_, fn) => after.push(fn)
+  };
   const events = [];
   const document = {
     readyState: 'loading',
-    addEventListener: (_, fn) => { start = fn; },
     querySelector: () => null,
     createElement: (tag) => new FakeElement(tag),
     dispatchEvent: (event) => events.push(event),
@@ -91,93 +57,53 @@ function page({ hosts = [], scoped = [], chosen = [], presets = [], bound = [], 
       return [];
     }
   };
-  const ctx = vm.createContext({ URL, document, CustomEvent, requestAnimationFrame: frames && ((fn) => frames.push(fn)),
+  const ctx = vm.createContext({ URL, document, CustomEvent, DocForm: { _boot: boot }, requestAnimationFrame: frames && ((fn) => frames.push(fn)),
     location: { href: 'file:///page.html' }, console: { warn: (m) => warned.push(m) } });
   ctx.window = ctx;
   vm.runInContext(read('core.js'), ctx);
   vm.runInContext(read('params.js'), ctx);
-  const calls = [];
-  ctx.DocForm.params.on(['k', 'flag'], (values, name, changed) => calls.push({ values: { ...values }, name, changed: [...changed] }));
   if (setup) setup(ctx.DocForm.parameters, events);
-  start();
-  return { params: ctx.DocForm.params, parameters: ctx.DocForm.parameters, warned, calls, events };
+  boot.initialize();
+  after.forEach((fn) => fn());
+  return { parameters: ctx.DocForm.parameters, warned, events };
 }
 
-function choicePage(extraPresets = []) {
-  const slider = new FakeElement('div', { 'data-df-param': 'k', 'data-df-min': '0', 'data-df-max': '5', 'data-df-step': '0.5', 'data-df-value': '2' });
-  const toggle = new FakeElement('div', { 'data-df-param': 'flag', 'data-df-type': 'toggle', 'data-df-value': 'true' });
-  const select = new FakeElement('div', { 'data-df-param': 'mode', 'data-df-type': 'select' });
-  const preset = (values, label) => {
-    const el = new FakeElement('button', { 'data-df-preset': JSON.stringify(values) });
-    el.textContent = label;
-    return el;
+test('legacy parameter hosts and per-control options are ignored', () => {
+  const legacyAttrs = {
+    'data-df-type': 'toggle', 'data-df-min': '10', 'data-df-max': '20', 'data-df-step': '5',
+    'data-df-value': '15', 'data-df-digits': '2', 'data-df-label': 'Old label'
   };
-  const presets = [preset({ k: 4, flag: false }, 'Quick'), preset({ k: 2 }, 'Default k'), ...extraPresets.map((p) => {
-    const el = new FakeElement('button', { 'data-df-preset': p });
-    el.textContent = 'Broken';
-    return el;
-  })];
-  const text = new FakeElement('span', { 'data-df-template': '{{k}} {{flag ? "on" : "off"}}' });
-  return { slider, toggle, select, presets, text, ...page({ hosts: [slider, select, toggle], presets, bound: [text] }) };
-}
-
-test('page toggle controls hold typed values, and page selects point authors to choice fieldsets', () => {
-  const { params, toggle, select, text, calls, presets, warned } = choicePage();
-  assert.deepEqual({ ...params.values() }, { k: 2, flag: true });
-  assert.equal(text.textContent, '2.0 on');
-  assert.equal(calls.length, 1);
-  assert.equal(presets[1].getAttribute('aria-current'), 'true');
-  assert.equal(select.children.length, 0);
-  assert.match(warned.join('\n'), /"mode" has unknown type "select".*data-df-choice fieldset/);
-
-  const box = toggle.find('input');
-  assert.equal(box.getAttribute('role'), 'switch');
-  box.checked = false;
-  box.dispatchEvent(new Event('change'));
-  assert.equal(params.get('flag'), false);
-  assert.equal(text.textContent, '2.0 off');
-  assert.deepEqual(calls.at(-1), { values: { k: 2, flag: false }, name: 'flag', changed: ['flag'] });
+  const legacy = new FakeElement('div', { ...legacyAttrs, 'data-df-param': 'k' });
+  legacy.textContent = 'Authored fallback';
+  const current = new FakeElement('div', { ...legacyAttrs, 'data-df-parameter': 'k' });
+  const { parameters, warned } = page({ hosts: [legacy], scoped: [current], setup(api) {
+    api.define('page', { k: { type: 'range', min: 0, max: 5, step: 0.5, default: 2 } });
+  } });
+  assert.deepEqual(legacy.children, []);
+  assert.equal(legacy.textContent, 'Authored fallback');
+  assert.equal(current.find('input').type, 'range');
+  assert.deepEqual(['min', 'max', 'step', 'value'].map(key => current.find('input')[key]), ['0', '5', '0.5', '2']);
+  assert.equal(current.find('label').textContent, 'k');
+  assert.equal(current.find('output').textContent, '2.0');
+  assert.equal(parameters.scope().get('k'), 2);
+  assert.deepEqual(warned, []);
 });
 
-test('set rejects values that a control of that name cannot show', () => {
-  const { params, warned, calls } = choicePage();
-  assert.equal(params.set('flag', 'true'), false);
-  assert.equal(params.set('k', 9), false);
-  assert.equal(params.set('k', '3.5'), true);
-  assert.deepEqual({ ...params.values() }, { k: 3.5, flag: true });
-  assert.equal(calls.length, 2);
-  assert.match(warned.join('\n'), /true or false[\s\S]*from 0 to 5/);
-});
-
-test('presets update every control and notify each subscriber once', () => {
-  const { params, slider, toggle, presets, text, calls } = choicePage();
-  presets[0].click();
-  assert.equal(calls.length, 2);
-  assert.deepEqual(calls[1], { values: { k: 4, flag: false }, name: null, changed: ['k', 'flag'] });
-  assert.equal(slider.find('input').value, '4');
-  assert.equal(slider.find('output').textContent, '4.0');
-  assert.equal(toggle.find('input').checked, false);
-  assert.equal(text.textContent, '4.0 off');
-  assert.equal(presets[0].getAttribute('aria-current'), 'true');
-  assert.equal(presets[1].getAttribute('aria-current'), null);
-
-  presets[0].click();
-  assert.equal(calls.length, 2);
-  presets[1].click();
-  assert.deepEqual(calls.at(-1), { values: { k: 2, flag: false }, name: 'k', changed: ['k'] });
-});
-
-test('invalid presets are disabled and rejected updates change nothing', () => {
-  const bad = ['{"k": 9}', '{"flag": 1}', '{"other": 1}', '{}', '[1]', 'not json'];
-  const { params, presets, warned, calls } = choicePage(bad);
-  const broken = presets.slice(2);
-  assert.deepEqual(broken.map((b) => b.getAttribute('aria-disabled')), bad.map(() => 'true'));
-  assert.equal(presets[0].getAttribute('aria-disabled'), null);
-  broken.forEach((b) => b.click());
-  assert.equal(params.apply({ k: 1, flag: 'x' }), false);
-  assert.deepEqual({ ...params.values() }, { k: 2, flag: true });
-  assert.equal(calls.length, 1);
-  assert.match(warned.join('\n'), /unknown parameter "other"[\s\S]*at least one[\s\S]*an object[\s\S]*valid JSON/);
+test('scoped templates format expressions and report repeated errors once', () => {
+  const template = new FakeElement('span', {
+    'data-df-template': '{{sqrt(a*a + b*b)}} {{sin(theta)|3}} {{a || 1}} {{a > 2 ? "big" : "small"}}'
+  });
+  const invalid = new FakeElement('span', { 'data-df-template': '{{missing + 1}} {{missing + 1}}' });
+  const { warned } = page({ bound: [template, invalid], setup(api) {
+    api.define('page', {
+      a: { type: 'number', default: 3 }, b: { type: 'number', default: 4 },
+      theta: { type: 'number', default: Math.PI / 6 }
+    });
+  } });
+  assert.equal(template.textContent, '5 0.500 3 big');
+  assert.equal(invalid.textContent, '? ?');
+  assert.equal(warned.length, 1);
+  assert.match(warned[0], /Cannot evaluate "missing \+ 1"/);
 });
 
 test('scoped markup resolves nesting and explicit targets and uses one definition per scope', () => {

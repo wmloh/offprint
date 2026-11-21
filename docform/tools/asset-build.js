@@ -294,5 +294,5 @@
     return jobs.filter(function (job) { return job.status !== 'blocked' && choices.has(job.output); });
   }
 
-  DF._assetBuild = { discover: discover, inspect: inspect, parseManifest: parseManifest, selected: selected };
+  DF._assetBuild = { discover: discover, inspect: inspect, parseHTML: html, parseManifest: parseManifest, selected: selected };
 })(window);

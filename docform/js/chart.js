@@ -1356,7 +1356,7 @@
 
   function motionEnv(chart) {
     return {
-      reduced: media('(prefers-reduced-motion: reduce)'),
+      reduced: DocForm._boot?.replaying || media('(prefers-reduced-motion: reduce)'),
       print: media('print'),
       zoomed: !!(chart && chart.box.closest && chart.box.closest('.df-zoom')),
       frames: typeof root.requestAnimationFrame === 'function' && typeof root.cancelAnimationFrame === 'function'
@@ -1534,6 +1534,7 @@
     if (chart.motion !== undefined) root.cancelAnimationFrame(chart.motion);
     chart.motion = undefined;
     chart.finishMotion = null;
+    chart.snapshotFrame = null;
     moving.delete(chart);
   }
 
@@ -1570,6 +1571,7 @@
   }
 
   function mountFrame(chart, frame, markMap, previous) {
+    if (previous) chart.snapshotFrame = frame.cloneNode(true);
     var motion = previous ? plan(previous, markMap, chart.marks) : null;
     chart.markMap = markMap;
     if (chart.svg) chart.plot.replaceChild(frame, chart.svg);
@@ -1625,7 +1627,10 @@
     if (!chart.entrance || !chart.svg) return;
     var go = motionAllowed(chart.model, motionEnv(chart)) && chart.playhead === null && chart.motion === undefined;
     cancelEntrance(chart);
-    if (go) play(chart, entranceChanges(chart.markMap), ENTRANCE);
+    if (go) {
+      chart.snapshotFrame = chart.svg.cloneNode(true);
+      play(chart, entranceChanges(chart.markMap), ENTRANCE);
+    }
   }
 
   // Printing and opening the zoom view show every chart as drawn: waiting charts appear and motion jumps to its end.
@@ -3817,6 +3822,10 @@
     }
     var input = readMarkup(host);
     return input && chartModel(host, input.spec);
+  };
+  chart.snapshotFrame = function (host) {
+    var instance = charts.get(host);
+    return instance && instance.motion !== undefined ? instance.snapshotFrame : null;
   };
   DocForm._chart = chart;
 

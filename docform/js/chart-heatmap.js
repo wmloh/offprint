@@ -607,6 +607,7 @@
     paintRange(chart);
     if (live) {
       if (state.announced === undefined) state.announced = previous;
+      state.trackRange?.('hover');
       return true;
     }
     state.announced = undefined;

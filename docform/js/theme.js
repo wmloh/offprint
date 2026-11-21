@@ -41,6 +41,7 @@
   }
 
   function read() {
+    if (boot.replaying) return normalize(boot.themeDefault, prefersDark());
     var stored = null;
     try {
       stored = root.localStorage.getItem(KEY);
@@ -51,6 +52,7 @@
   }
 
   function write(value) {
+    if (boot.replaying) return;
     if (DocForm._readerState?.isolated()) return;
     try {
       root.localStorage.setItem(KEY, value);

@@ -505,6 +505,7 @@
   }
 
   function loadWidth() {
+    if (DocForm._boot?.replaying) return null;
     try {
       var value = parseFloat(root.localStorage.getItem(WIDTH_KEY));
       return isFinite(value) ? value : null;
@@ -514,6 +515,7 @@
   }
 
   function saveWidth(value) {
+    if (DocForm._boot?.replaying) return;
     try {
       if (value === null) root.localStorage.removeItem(WIDTH_KEY);
       else root.localStorage.setItem(WIDTH_KEY, String(value));

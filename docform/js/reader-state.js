@@ -128,9 +128,14 @@
     if (started) entry.value = snapshot();
     adapters.set(id.key, entry);
     return function (origin) {
-      if (!started || mode === 'replay' || muted ||
-          ['init', 'storage', 'source', 'drop', 'hover'].includes(origin)) return;
+      if (!started || mode === 'replay') return;
+      if (muted || origin === 'hover') {
+        entry.preview = true;
+        return;
+      }
+      if (['init', 'storage', 'source', 'drop'].includes(origin)) return;
       var value = snapshot();
+      entry.preview = false;
       if (value === undefined || (same(value, entry.value) && (!options.reassert || entry.touched || origin === 'group'))) return;
       entry.touched = true;
       entry.value = value;
@@ -393,7 +398,7 @@
     var payloads = new Map();
     adapters.forEach(function (entry, key) {
       if (!entry.snapshot) return;
-      var value = entry.current && entry.current() ? entry.snapshot() : entry.value;
+      var value = !entry.preview && entry.current && entry.current() ? entry.snapshot() : entry.value;
       if (value === undefined) return;
       saved.views.push([key, { stamp: entry.id.stamp, value: value }]);
     });
@@ -401,7 +406,10 @@
       saved.imports.push([key, item]);
       payloads.set(key, text);
     });
-    return { status: 'live', record: saved, payloads: payloads };
+    var preview = Array.from(adapters.values()).some(function (entry) {
+      return entry.preview && !same(entry.value, entry.snapshot());
+    });
+    return { status: 'live', record: saved, payloads: payloads, preview: preview };
   }
 
   function replay(saved) {

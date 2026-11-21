@@ -6,6 +6,7 @@
 
   var entry = doc.currentScript;
   var exportContext = doc.documentElement.hasAttribute('data-df-export-replay') && root.DocFormExportContext;
+  var replaying = !!exportContext;
   var pageURL = exportContext && exportContext.pageURL || root.location.href;
   var library = new URL('.', entry.src);
   var siteScript = doc.querySelector('script[data-df-site]');
@@ -279,7 +280,7 @@
     }
     var stored;
     var dark = false;
-    try { stored = root.localStorage.getItem('docform-theme'); } catch (error) {}
+    try { if (!replaying) stored = root.localStorage.getItem('docform-theme'); } catch (error) {}
     try { dark = root.matchMedia('(prefers-color-scheme: dark)').matches; } catch (error) {}
     var defaultMode = themeMode(config);
     appliedTheme = stored === 'light' || stored === 'dark' ? stored : defaultMode || (dark ? 'dark' : 'light');
@@ -313,6 +314,7 @@
           el.href = url;
         } else {
           el.async = false;
+          if (replaying) el.nonce = entry.nonce;
           el.src = url;
         }
         doc.head.appendChild(el);
@@ -447,6 +449,8 @@
   }
 
   var boot = DF._boot = {
+    entryURL: entry.src,
+    replaying: replaying,
     enabled: function (id) { return active.has(id) && !failed.has(id); },
     canInitialize: function (name) {
       var id = own(moduleFeatures, name) ? moduleFeatures[name] : name;
@@ -462,7 +466,9 @@
     chartFeature: function (type) {
       return Object.keys(catalog).find(function (id) { return (catalog[id].chartTypes || []).indexOf(type) >= 0; }) || null;
     },
-    load: function (url) { return load(url, false); },
+    load: function (url) {
+      return replaying ? exportContext.loadAsset('search', url) : load(url, false);
+    },
     report: report,
     merge: merge,
     optionLayers: function (feature, id) {
@@ -511,7 +517,8 @@
     if (active.has('data')) {
       for (var name of Object.keys(DF._site.assets.data)) {
         var url = DF._site.assets.data[name].output;
-        if (!await load(url, false)) assetFailure('data', url);
+        var loaded = replaying ? await exportContext.loadAsset('data', url, name) : await load(url, false);
+        if (!loaded) assetFailure('data', url);
         else if (!boot.registerData(name)) report('data-wrapper', 'data', url,
           'Data wrapper did not register "' + name + '".', 'Regenerate the classic data wrapper with that name.', name);
       }

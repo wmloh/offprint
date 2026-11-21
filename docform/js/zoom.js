@@ -221,6 +221,7 @@
     },
     close: function () { return close('api'); },
     isOpen: function () { return !!open; },
+    snapshotPlacement: function () { return open && { target: open.target, placeholder: open.placeholder }; },
     snapshot: snapshot,
     subscribe: changes.subscribe,
     current: snapshot

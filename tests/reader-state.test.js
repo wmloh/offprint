@@ -100,6 +100,31 @@ function registerImport(page, destination, replay = () => true) {
   return page.state.registerImport(destination, page.zone, 'CSV source', replay, file => file.type === 'csv');
 }
 
+test('capture identifies transient previews and keeps their committed controller values', async () => {
+  const db = indexedDB();
+  const live = page(db, chapter);
+  const tab = controller(live.state, 'tabs', live.tabs, 'overview', { current: () => true, reassert: true });
+  live.state.start();
+  tab.select('runs');
+  live.state.transient(() => tab.select('preview'));
+
+  const capture = live.state.capture();
+  assert.equal(capture.preview, true);
+  assert.equal(capture.record.views[0][1].value, 'runs');
+  assert.equal(tab.get(), 'preview');
+
+  const rendered = page(db, chapter, { isolated: true });
+  const restored = controller(rendered.state, 'tabs', rendered.tabs, 'overview');
+  rendered.state.start();
+  assert.equal(rendered.state.replay(capture).issues.length, 0);
+  assert.equal(restored.get(), 'runs');
+
+  tab.select('preview');
+  assert.equal(live.state.capture().preview, false);
+  assert.equal(live.state.capture().record.views[0][1].value, 'preview');
+  await live.state.clear();
+});
+
 test('committed views restore only in the matching export context, after shared data', async () => {
   const db = indexedDB();
   const live = page(db, chapter + '#heading');

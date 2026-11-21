@@ -379,6 +379,7 @@
   var hideTimer = 0;
   var holding = null;
   var holdEnded = 0;
+  var attached = new WeakMap();
 
   function position(item) {
     var rects = item.el.getClientRects();
@@ -502,6 +503,8 @@
       delay: options.delay == null ? SHOW_DELAY : options.delay,
       enabled: options.enabled || null
     };
+    if (!attached.has(el)) attached.set(el, new Set());
+    attached.get(el).add(record);
     if (options.describe !== false) {
       // Screen readers read the description from the box, so it cannot wait for the first hover.
       if (record.content) fill(record);
@@ -551,6 +554,7 @@
     return function () {
       if (item.disposed) return;
       item.disposed = true;
+      attached.get(el).delete(record);
       if (active === item) hide(true);
       if (holding && holding.item === item) cancelHold();
       listeners.forEach(function (entry) { el.removeEventListener(entry[0], entry[1]); });
@@ -571,6 +575,23 @@
   }
 
   DocForm._tooltips = {
+    snapshot: function (anchor, output) {
+      return Array.from(attached.get(anchor) || [], function (record) {
+        var copy = output.importNode(record.box, true);
+        if (record.content) fill({ body: copy.querySelector('.df-tooltip-body'), content: record.content });
+        var more = copy.querySelector('.df-tooltip-more');
+        if (more) {
+          if (!record.filled) rich(more, record.more);
+          more.hidden = false;
+        }
+        copy.querySelector('.df-tooltip-ring')?.remove();
+        copy.removeAttribute('style');
+        copy.removeAttribute('data-df-side');
+        copy.classList.remove('is-clipped', 'is-expanded');
+        copy.hidden = false;
+        return copy;
+      });
+    },
     termKey: termKey,
     glossary: glossary,
     lookup: lookup,

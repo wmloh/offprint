@@ -188,7 +188,7 @@
   }
 
   function samePage(url) {
-    return url.href.split('#')[0] === String(root.location.href).split('#')[0];
+    return url.href.split('#')[0] === String(DocForm._page || root.location.href).split('#')[0];
   }
 
   function flash(el) {
@@ -218,7 +218,7 @@
         var raw = a.getAttribute('href');
         var url;
         try {
-          url = new URL(raw, root.location.href);
+          url = new URL(raw, document.querySelector('base[href]')?.href || DocForm._page || root.location.href);
         } catch (e) {
           return;
         }

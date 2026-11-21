@@ -1,5 +1,5 @@
 docform/: Copyable offline library folder
-  docform.js: Offline entry with feature profiles, chart add-on feature entries, local asset loading, author lifecycle hooks, and diagnostics
+  docform.js: Offline entry with feature profiles, local asset loading, author lifecycle hooks, diagnostics, and lazy standalone export controls
   docform.css: Optional static reading-profile styles
   site.template.js: Starter JSON site manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
@@ -113,6 +113,6 @@ docform/: Copyable offline library folder
     extend/: Public extension API, lifecycle hooks, shared controllers, events, and chart add-on registration
 docs/: Human-facing beginner DocForm HTML site with a Start here orientation and live examples
   index.html: Welcome page
-  pages/: Start here, hierarchy, feature guide, recipe, and reference pages in group folders, plus the glossary page
+  pages/: Start here and standalone export instructions, hierarchy, feature guides, recipes, references, and glossary
   assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index
 tests/: Built-in node:test checks of module logic

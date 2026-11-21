@@ -220,6 +220,29 @@ test('a delayed reset cannot delete an import replaced by another reader', async
   assert.equal(saved.payloads.get('shared'), 'id\nsecond');
 });
 
+test('reset removes an accepted import from sibling-page replay', async () => {
+  const db = indexedDB();
+  const live = page(db, chapter);
+  const tab = controller(live.state, 'tabs', live.tabs, 'overview');
+  const remember = registerImport(live, 'shared');
+  live.state.start();
+  tab.select('runs');
+  remember({ type: 'csv', name: 'runs.csv', text: 'id\nselected' });
+
+  const sibling = page(db, review);
+  sibling.state.start();
+  await live.state.read(chapter);
+  assert.equal((await sibling.state.read(chapter)).payloads.get('shared'), 'id\nselected');
+
+  live.state.removeImport(live.zone);
+  await live.state.read(chapter);
+  const saved = await sibling.state.read(chapter);
+  assert.equal(saved.record.views[0][1].value, 'runs');
+  assert.equal(saved.record.imports.length, 0);
+  assert.equal(saved.payloads.size, 0);
+  assert.equal(db.stores.get('imports').size, 0);
+});
+
 test('unavailable storage leaves live committed state available and clear reports failure', async () => {
   const live = page(undefined, chapter);
   const tab = controller(live.state, 'tabs', live.tabs, 'overview');

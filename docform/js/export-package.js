@@ -25,12 +25,12 @@
   }
 
   function fileKey(url, page) {
-    if (url?.protocol !== 'file:' || url.host) return null;
+    if (url?.protocol !== 'file:') return null;
     try {
       var segments = url.pathname.split('/').map(decodeURIComponent);
       if (segments.some(function (part) { return /[\/\\\x00-\x1f]/.test(part); })) return null;
       if (page && !segments.at(-1)) segments[segments.length - 1] = 'index.html';
-      return segments.join('/');
+      return (url.host ? '//' + url.host : '') + segments.join('/');
     } catch (error) { return null; }
   }
 
@@ -47,8 +47,9 @@
     }));
     var current = fileKey(pageURL, true);
     var segments = current?.split('/') || [];
+    var firstFolder = pageURL?.host ? 3 : 1;
     var match = segments.findLastIndex(function (part, index) {
-      return part === name && paths.has(segments.slice(index + 1).join('/'));
+      return index >= firstFolder && part === name && paths.has(segments.slice(index + 1).join('/'));
     });
     if (match < 0) throw Error('The selected folder does not contain the open DocForm page.');
     var base = segments.slice(0, match + 1).join('/') + '/';

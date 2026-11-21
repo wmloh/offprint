@@ -100,6 +100,20 @@ test('a standalone page supplies its own title and single selectable page', asyn
   await assert.rejects(prepared.build([]), /Select at least one page/);
 });
 
+test('a Windows network-share folder resolves pages on the same host only', async () => {
+  const runtime = load(new Map([['home', { title: 'Home', manifest: 'site.js' }]]));
+  runtime._page = 'file://wsl.localhost/Ubuntu/project/index.html';
+  runtime._site = { provided: true, base: 'file://wsl.localhost/Ubuntu/project/site.js' };
+  const manifest = { pages: ['chapter.html', 'file://other-host/Ubuntu/project/chapter.html'] };
+  const prepared = await runtime._exportPackage.prepare([
+    file('project/index.html', 'home'),
+    file('project/site.js', 'window.DocFormSite = ' + JSON.stringify(manifest) + ';'),
+    file('project/chapter.html', 'chapter')
+  ]);
+  assert.deepEqual(Array.from(prepared.tree, page => page.available), [true, false, true]);
+  assert.equal(prepared.tree[2].id, prepared.active);
+});
+
 test('nested CSS imports keep conditions and embed resources relative to each source file', async () => {
   const runtime = load();
   const files = new Map([

@@ -21,6 +21,7 @@ Cross-references	Number figures, tables, and equations and preview references	re
 Citations	Cite numbered sources and build a page bibliography	reading/citations.md
 Sidenotes	Show notes in the margin or at their markers	reading/sidenotes.md
 Search	Find text on the current page and in an offline site index	reading/search.md
+Keyboard shortcuts	Register, scope, and remap keyboard shortcuts	interact/shortcuts.md
 Dropdowns	Open nested menus of links and actions	interact/dropdowns.md
 Editable text	Edit single-line or multiline text with optional syntax highlighting	interact/editable-text.md
 Tabs	Switch keyed panels and synchronize them by selection group	interact/tabs.md

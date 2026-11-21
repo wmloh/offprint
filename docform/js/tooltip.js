@@ -648,8 +648,10 @@
       });
     });
 
-    document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && active) hide(true);
+    DocForm.shortcuts.register({
+      id: 'tooltips.dismiss', key: 'Escape', label: 'Dismiss tooltip',
+      scope: function () { return active && active.el; },
+      run: function () { hide(true); }
     });
     document.addEventListener('pointermove', function (event) {
       if (holding && holding.id === event.pointerId &&

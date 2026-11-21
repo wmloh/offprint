@@ -47,13 +47,13 @@
     if (!open || open.finish) return;
     var state = open;
     var previous = snapshot();
+    state.removeShortcut();
     state.overlay.classList.remove('is-open');
     document.documentElement.classList.remove('df-zoom-open');
     state.finish = function () {
       if (open !== state) return;
       open = null;
       clearTimeout(state.timer);
-      document.removeEventListener('keydown', state.onKey, true);
       if (state.placeholder.parentNode) state.placeholder.parentNode.replaceChild(state.target, state.placeholder);
       state.target.classList.remove('df-zoomed');
       state.overlay.remove();
@@ -106,8 +106,7 @@
     var closeButton = document.createElement('button');
     closeButton.type = 'button';
     closeButton.className = 'df-zoom-close';
-    closeButton.setAttribute('aria-label', 'Close (Esc)');
-    closeButton.title = 'Close (Esc)';
+    closeButton.setAttribute('aria-label', 'Close');
     closeButton.innerHTML = CLOSE_ICON;
 
     target.parentNode.replaceChild(placeholder, target);
@@ -118,24 +117,24 @@
     document.body.appendChild(overlay);
     document.documentElement.classList.add('df-zoom-open');
 
-    var onKey = function (event) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopPropagation();
-        close('user');
-      } else if (event.key === 'Tab') {
-        // Keeps keyboard focus inside the zoom view.
-        var items = DocForm.all('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', overlay)
-          .filter(function (el) { return !el.disabled && el.getClientRects().length; });
-        if (!items.length) return;
-        var first = items[0];
-        var last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-      }
-    };
-    open = { target: target, placeholder: placeholder, overlay: overlay, stage: stage, opener: opener, onKey: onKey };
-    document.addEventListener('keydown', onKey, true);
+    var removeShortcut = DocForm.shortcuts.register({
+      id: 'zoom.close', key: 'Escape', label: 'Close enlarged figure', scope: overlay, editable: true,
+      active: function () { return true; },
+      run: function () { close('user'); }
+    });
+    DocForm._shortcutHint(closeButton, 'zoom.close', 'Close');
+    open = { target: target, placeholder: placeholder, overlay: overlay, stage: stage, opener: opener,
+      removeShortcut: removeShortcut };
+    overlay.addEventListener('keydown', function (event) {
+      if (event.key !== 'Tab' || event.defaultPrevented) return;
+      var items = DocForm.all('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', overlay)
+        .filter(function (el) { return !el.disabled && el.getClientRects().length; });
+      if (!items.length) return;
+      var first = items[0];
+      var last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
     overlay.addEventListener('click', function (event) {
       if (event.target === overlay || event.target === stage) close('user');
     });
@@ -201,12 +200,12 @@
       if (!target) return;
       requestOpen(target, target, 'user');
     });
-    document.addEventListener('keydown', function (event) {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      var el = event.target;
-      if (!el || !el.classList || !el.classList.contains('df-zoomable') || el.closest('.df-zoom')) return;
-      event.preventDefault();
-      requestOpen(el, el, 'user');
+    DocForm.shortcuts.register({
+      id: 'zoom.open', key: ['Enter', 'Space'], label: 'Enlarge focused figure', scope: document.body,
+      when: function (event, el) {
+        return el && el.classList && el.classList.contains('df-zoomable') && !el.closest('.df-zoom');
+      },
+      run: function (event, el) { requestOpen(el, el, 'user'); }
     });
   });
 

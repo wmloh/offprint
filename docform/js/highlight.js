@@ -262,12 +262,13 @@
       var control = controlFor(event.target);
       if (control) toggle(control);
     });
-    document.addEventListener('keydown', function (event) {
-      if (event.defaultPrevented || (event.key !== 'Enter' && event.key !== ' ')) return;
-      var control = controlFor(event.target);
-      if (!control || control !== event.target || control.matches('button')) return;
-      event.preventDefault();
-      if (!event.repeat) toggle(control);
+    DocForm.shortcuts.register({
+      id: 'selection.activate', key: ['Enter', 'Space'], label: 'Toggle selection',
+      scope: function (event, target) {
+        var control = target && controlFor(target);
+        return control === target && control && !control.matches('button') ? control : null;
+      },
+      run: function (event, target) { if (!event.repeat) toggle(target); }
     });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

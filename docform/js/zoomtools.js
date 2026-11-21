@@ -37,7 +37,6 @@
   var ZOOM = { min: 1.5, max: 6, step: 1.25, start: 2.5 };
   var LENS = 180;
   var TRAIL_MS = 320;
-  var EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]';
   // Attributes a clone must not keep: they name other elements, join form groups, or run code.
   var DROP = { name: 1, for: 1, form: 1, autofocus: 1, 'aria-labelledby': 1, 'aria-describedby': 1, 'aria-controls': 1,
     'aria-owns': 1, 'aria-activedescendant': 1, 'aria-details': 1, 'aria-errormessage': 1, 'aria-flowto': 1 };
@@ -48,12 +47,6 @@
 
   function toolOf(id) {
     for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i].id === id) return TOOLS[i];
-    return null;
-  }
-
-  function toolForKey(key) {
-    key = typeof key === 'string' ? key.toLowerCase() : '';
-    for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i].key === key) return TOOLS[i].id;
     return null;
   }
 
@@ -259,18 +252,35 @@
     var pill = s.pill = make('div', 'df-zoomtools');
     pill.setAttribute('role', 'toolbar');
     pill.setAttribute('aria-label', 'Presentation tools');
+    s.shortcuts = [];
+    function bind(id, key, label, run, when) {
+      var name = 'zoom-tools.' + id;
+      s.shortcuts.push(DocForm.shortcuts.register({
+        id: name, key: key, label: label, scope: overlay, active: function () { return true; },
+        exactShift: true, when: when, run: run
+      }));
+      return name;
+    }
     TOOLS.forEach(function (t) {
       var icon = t.id === 'measure' ? (s.charts.length ? 'crosshair' : 'ruler') : t.id;
       var label = t.id === 'measure' && !s.charts.length ? 'Ruler' : t.label;
-      var b = button('df-zoomtools-btn', label + ' (' + t.key.toUpperCase() + ')', icon, pill);
+      var b = button('df-zoomtools-btn', label, icon, pill);
       b.setAttribute('aria-label', label);
-      b.setAttribute('aria-keyshortcuts', t.key.toUpperCase());
+      DocForm._shortcutHint(b, bind(t.id, t.key, label, function () { choose(t.id); }), label);
       b.setAttribute('data-tool', t.id);
       b.addEventListener('click', function () { choose(t.id); });
       s.buttons[t.id] = b;
     });
     s.zoomText = make('span', 'df-zoomtools-zoom', pill);
-    s.zoomText.title = 'Scroll or press [ and ] to change';
+    var canMagnify = function () { return s.state.tool === 'magnifier'; };
+    var zoomOut = bind('zoom-out', '[', 'Decrease magnification', function () {
+      setZoom(magnify(s.state.zoom, 1));
+    }, canMagnify);
+    var zoomIn = bind('zoom-in', ']', 'Increase magnification', function () {
+      setZoom(magnify(s.state.zoom, -1));
+    }, canMagnify);
+    var zoomKeys = DocForm.shortcuts.keys(zoomOut).concat(DocForm.shortcuts.keys(zoomIn));
+    s.zoomText.title = 'Scroll to change magnification' + (zoomKeys.length ? ' (' + zoomKeys.join(' / ') + ')' : '');
     s.inkTools = make('div', 'df-zoomtools-group', pill);
     s.swatchBox = make('div', 'df-zoomtools-swatches', s.inkTools);
     s.swatchBox.setAttribute('role', 'group');
@@ -286,10 +296,13 @@
       });
       s.swatches.push(b);
     });
-    s.undo = button('df-zoomtools-btn', 'Undo (Ctrl+Z)', 'undo', s.inkTools);
+    function undoInk() { if (undo(s.state)) drawInk(); refresh(); }
+    s.undo = button('df-zoomtools-btn', 'Undo', 'undo', s.inkTools);
     s.undo.setAttribute('aria-label', 'Undo');
-    s.undo.setAttribute('aria-keyshortcuts', 'Control+Z Meta+Z');
-    s.undo.addEventListener('click', function () { if (undo(s.state)) drawInk(); refresh(); });
+    DocForm._shortcutHint(s.undo, bind('undo', ['Control+Z', 'Meta+Z'], 'Undo ink', undoInk, function () {
+      return s.state.strokes.length > 0;
+    }), 'Undo');
+    s.undo.addEventListener('click', undoInk);
     s.clear = button('df-zoomtools-btn', 'Clear ink', 'clear', s.inkTools);
     s.clear.addEventListener('click', function () { clear(s.state); drawInk(); refresh(); });
 
@@ -301,7 +314,6 @@
       setZoom(magnify(s.state.zoom, event.deltaY));
     };
     s.onDown = function (event) { down(event); };
-    s.onKey = function (event) { key(event); };
     s.onInput = function () { if (s.sync) s.sync.mark(); };
     overlay.addEventListener('pointermove', s.onMove);
     overlay.addEventListener('pointerleave', s.onLeave);
@@ -309,7 +321,6 @@
     s.layer.addEventListener('pointerdown', s.onDown);
     target.addEventListener('input', s.onInput);
     target.addEventListener('change', s.onInput);
-    document.addEventListener('keydown', s.onKey);
 
     overlay.appendChild(s.layer);
     overlay.appendChild(s.lens);
@@ -330,7 +341,7 @@
     s.overlay.removeEventListener('wheel', s.onWheel, { passive: false });
     s.target.removeEventListener('input', s.onInput);
     s.target.removeEventListener('change', s.onInput);
-    document.removeEventListener('keydown', s.onKey);
+    s.shortcuts.forEach(function (remove) { remove(); });
     [s.layer, s.lens, s.dot, s.readout, s.pill].forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
     TOOLS.forEach(function (t) { s.overlay.classList.remove('is-tool-' + t.id); });
     s.overlay.classList.remove('is-tool-ruler');
@@ -375,34 +386,6 @@
     s.state.zoom = z;
     refresh();
     wake();
-  }
-
-  function isEditable(el) {
-    return !!el && (el.isContentEditable || (typeof el.closest === 'function' && !!el.closest(EDITABLE)));
-  }
-
-  function key(event) {
-    var s = session;
-    if (!s || event.defaultPrevented || event.altKey || event.isComposing || isEditable(event.target)) return;
-    var k = typeof event.key === 'string' ? event.key.toLowerCase() : '';
-    if ((event.ctrlKey || event.metaKey) && k === 'z' && !event.shiftKey) {
-      if (!s.state.strokes.length) return;
-      event.preventDefault();
-      undo(s.state);
-      drawInk();
-      refresh();
-      return;
-    }
-    if (event.ctrlKey || event.metaKey) return;
-    if (s.state.tool === 'magnifier' && (k === '[' || k === ']')) {
-      event.preventDefault();
-      setZoom(magnify(s.state.zoom, k === ']' ? -1 : 1));
-      return;
-    }
-    var id = toolForKey(k);
-    if (!id || event.shiftKey) return;
-    event.preventDefault();
-    choose(id);
   }
 
   function hidePointer() {
@@ -687,7 +670,6 @@
     tools: TOOLS.map(function (t) { return t.id; }),
     colors: COLORS.slice(),
     limits: { min: ZOOM.min, max: ZOOM.max, start: ZOOM.start },
-    toolForKey: toolForKey,
     magnify: magnify,
     trail: trail,
     pathOf: pathOf,

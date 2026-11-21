@@ -32,6 +32,7 @@ Use one `window.DocFormSite = <JSON object>;` assignment. The asset tool require
 | `options.math.macros` | KaTeX macro map. Use doubled backslashes in JS string literals, for example `'\\R': '\\mathbb{R}'`. [Math](../reading/math.md) |
 | `options.citations.entries` | Map of citation keys to strings or structured entries. [Citations](../reading/citations.md) |
 | `options.references` | `{equations?: 'all' \| 'labeled'}`. `all` makes every eligible display equation count. The default counts labeled or explicitly opted-in display equations. [References](../reading/references.md) |
+| `options.shortcuts` | Map shortcut IDs to key strings or `null` to disable. Page entries override site entries by ID. [Keyboard shortcuts](../interact/shortcuts.md) |
 | `options[feature].instances[id]` | Instance options by plain host ID, including `mapping`, `transform`, and view-specific options. [Charts](../data/charts.md), [playback](../data/chart-playback.md), [results](../data/results-tables.md), [scenarios](../interact/scenarios.md), [matrix](../data/matrix.md). |
 | `selectionGroups` | Named group options `{initial?: string \| null, persist?: boolean}`. Site and page definitions merge by group and field. [Linked selection](../interact/linked-highlighting.md) |
 | `parameterScopes` | Named maps of parameter definitions. Site and page entries merge by scope, parameter, and field. Named charts and results can bind `select` and `multiselect` values through their instance filters. [Parameters](../interact/parameters.md) |

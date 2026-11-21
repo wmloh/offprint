@@ -1,6 +1,6 @@
 # Search palette
 
-Enable the `search` feature. Press S or use the optional control pill button to open it. Up/Down selects a result, Enter opens it, and Escape closes the palette. A blank query lists manifest pages in reading order or current-page entries when there is no page tree.
+Enable the `search` feature. Press S or use the optional control pill button to open it. Up/Down selects a result, Enter opens it, and Escape or the Close button dismisses the palette. A blank query lists manifest pages in reading order or current-page entries when there is no page tree. [Remap search shortcuts](../interact/shortcuts.md).
 
 - Every query word must match across the section title, page title, or body. Matching is case-insensitive and ranks title hits ahead of prose. Up to 30 results show snippets with matching text emphasized.
 - Search reads the current page live plus other pages from `window.DocFormSearch`. Set `assets.search.output` to the manifest-relative generated index path for lazy classic-script loading. A page can set page-relative `options.search.index`. Without usable index data, query results come from the current page.

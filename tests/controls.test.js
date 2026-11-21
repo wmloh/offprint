@@ -137,29 +137,3 @@ test('a recent sidebar link click opens the next auto-hide page with the panel s
   assert.equal(controls.leavesPage('file:///d/b.html#x', 'file:///d/a.html'), true);
   assert.equal(controls.leavesPage('file:///d/a.html#x', 'file:///d/a.html#y'), false);
 });
-
-test('shortcuts dispatch single keys and ignore modifiers, handled events, and form fields', () => {
-  const { controls } = load();
-  const field = { closest: (selector) => (selector.includes('input') ? {} : null) };
-  const button = { closest: () => null };
-  const calls = [];
-  const actions = { theme: () => calls.push('theme'), next: () => calls.push('next') };
-  const key = (k, extra = {}) => {
-    const event = { key: k, target: button, prevented: false, ...extra };
-    event.preventDefault = () => { event.prevented = true; };
-    return event;
-  };
-
-  const handled = key('T');
-  assert.equal(controls.dispatch(handled, actions), 'theme');
-  assert.equal(handled.prevented, true);
-  assert.equal(controls.dispatch(key('j'), actions), 'next');
-  assert.equal(controls.dispatch(key('f'), actions), null);
-  assert.equal(controls.dispatch(key('t', { ctrlKey: true }), actions), null);
-  assert.equal(controls.dispatch(key('t', { defaultPrevented: true }), actions), null);
-  assert.equal(controls.dispatch(key('t', { target: field }), actions), null);
-  assert.equal(controls.dispatch(key('t', { target: { isContentEditable: true } }), actions), null);
-  assert.equal(controls.shortcut(key('n')), 'nav');
-  assert.equal(controls.shortcut(key('k')), 'prev');
-  assert.deepEqual(calls, ['theme', 'next']);
-});

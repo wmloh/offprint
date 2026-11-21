@@ -383,7 +383,7 @@
       return component.transaction(function () { return action(method, from, arg); });
     }
 
-    function apply(key, from) {
+    function applyStep(key, from) {
       var at = keys.indexOf(key);
       if (at < 0 || (index() === at && (from === 'group' || (selected === at && !playing && target === null)))) return null;
       origin = from;
@@ -403,7 +403,7 @@
       pause: function (from) { return action('pause', from); },
       next: function (from) { return action('next', from); },
       prev: function (from) { return action('prev', from); },
-      apply: apply
+      apply: applyStep
     });
     var api = entry.controller;
     api.figure = figure;
@@ -419,7 +419,7 @@
       timeline: { get: function () { return copy(tl); } },
       time: { get: function () { return t; } }
     });
-    binding.follow(apply);
+    binding.follow(applyStep);
     var held = false;
     var pill = sequence.pill(entry, {
       label: 'Animation steps', controls: figure.id, playAt: 1, omit: ['reset'],

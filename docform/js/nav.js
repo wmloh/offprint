@@ -475,8 +475,10 @@
     setOpen(false, false, 'init');
     button.addEventListener('click', function () { toggle(button, 'user'); });
     backdrop.addEventListener('click', function () { close(true, 'user'); });
-    document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && isOpen()) close(true, 'user');
+    DocForm.shortcuts.register({
+      id: 'navigation.close-drawer', key: 'Escape', label: 'Close navigation drawer',
+      scope: function () { return isOpen() && sidebar; },
+      run: function () { close(true, 'user'); }
     });
     sidebar.addEventListener('click', function (event) {
       if (isOpen() && event.target.closest('a[href]')) close(false, 'user');

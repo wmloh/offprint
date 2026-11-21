@@ -351,6 +351,7 @@
     icon.innerHTML = ICON;
     var input = make('input', 'df-search-input');
     input.type = 'search';
+    input.autofocus = true;
     input.placeholder = 'Search pages and sections';
     input.autocomplete = 'off';
     input.spellcheck = false;
@@ -365,8 +366,16 @@
     var status = make('div', 'df-search-status');
     status.setAttribute('aria-live', 'polite');
     var foot = make('div', 'df-search-foot');
-    foot.innerHTML = '<span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span>' +
-      '<span><kbd>Esc</kbd> close</span>';
+    foot.innerHTML = '<span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span>';
+    var closeButton = make('button', 'df-button df-search-close');
+    closeButton.type = 'button';
+    closeButton.textContent = 'Close';
+    DocForm._shortcutHint(closeButton, 'search.close', 'Close search');
+    closeButton.addEventListener('click', close);
+    foot.appendChild(closeButton);
+    dialog.addEventListener('cancel', function (event) {
+      if (!DocForm.shortcuts.keys('search.close').includes('Escape')) event.preventDefault();
+    });
     bar.appendChild(icon);
     bar.appendChild(input);
     dialog.appendChild(bar);
@@ -505,14 +514,6 @@
     return ui && ui.dialog.open ? close() : open(opener);
   }
 
-  function isShortcut(event) {
-    var target = event && event.target;
-    var editable = !!(target && (target.isContentEditable ||
-      typeof target.closest === 'function' && target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]')));
-    return !!event && !event.defaultPrevented && !event.ctrlKey && !event.metaKey && !event.altKey &&
-      !event.isComposing && !editable && typeof event.key === 'string' && event.key.toLowerCase() === 's';
-  }
-
   // Indexed pages with resolved URLs, for other modules such as the sidebar and glossary:
   // callback([{ href, title, sections, terms }]|null). `terms` is null for an index built before terms were recorded.
   function pages(callback) {
@@ -536,7 +537,6 @@
     rank: rank,
     highlight: highlight,
     snippet: snippet,
-    isShortcut: isShortcut,
     load: load,
     find: find,
     pages: pages,
@@ -547,10 +547,11 @@
   };
 
   DocForm.register('search', function () {
-    document.addEventListener('keydown', function (event) {
-      if (!isShortcut(event) || event.isComposing) return;
-      event.preventDefault();
-      toggle();
+    DocForm.shortcuts.register({ id: 'search.open', key: 's', label: 'Open search', run: function () { open(); } });
+    DocForm.shortcuts.register({
+      id: 'search.close', key: 'Escape', label: 'Close search', editable: true,
+      scope: function () { return ui && ui.dialog.open ? ui.dialog : null; },
+      run: close
     });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

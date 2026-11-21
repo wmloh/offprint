@@ -33,7 +33,10 @@ function element(tag, group, key, attrs = {}) {
         default: throw new Error(`Unexpected selector ${selector}`);
       }
     },
+    contains(node) { return this === node || descendants(this).includes(node); },
     closest(selector) {
+      if (selector === '[contenteditable]' || selector.startsWith('input,') ||
+        selector === 'dialog:modal' || selector.startsWith(':popover-open')) return null;
       return this.matches(selector) ? this : this.parent?.closest(selector);
     }
   };
@@ -86,6 +89,7 @@ function selectionPage(nodes, groups = {}, store = new Map()) {
   function dispatch(type, target, props) {
     const event = new Event(type, { cancelable: true });
     Object.defineProperty(event, 'target', { value: target });
+    event.composedPath = () => [target, document];
     document.dispatchEvent(Object.assign(event, props));
     return event;
   }

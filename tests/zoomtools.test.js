@@ -4,7 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const source = fs.readFileSync(path.join(__dirname, '../docform/js/zoomtools.js'), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const source = read('zoomtools.js');
+const core = read('core.js');
 
 // Just enough DOM for zoomtools.js: elements, simple selectors, cloning, and events.
 class El extends EventTarget {
@@ -38,6 +40,7 @@ class El extends EventTarget {
   set textContent(v) { this.children.forEach((c) => { c.parentNode = null; }); this.children = []; this.text = String(v); }
   appendChild(c) { if (c.parentNode) c.parentNode.removeChild(c); this.children.push(c); c.parentNode = this; return c; }
   removeChild(c) { this.children.splice(this.children.indexOf(c), 1); c.parentNode = null; return c; }
+  contains(el) { return this === el || this.descendants().includes(el); }
   descendants() { return this.children.flatMap((c) => [c, ...c.descendants()]); }
   matches(selector) {
     return selector.split(',').map((s) => s.trim()).some((s) => s === '*' ||
@@ -71,7 +74,7 @@ function setup(chartHit) {
     observe() { this.on = true; }
     disconnect() { this.on = false; }
   }
-  const DocForm = {
+  const api = {
     all: (selector, scope) => scope.querySelectorAll(selector),
     chart: chartHit ? {
       get: (host) => host.classList.contains('df-chart') ? {
@@ -81,13 +84,15 @@ function setup(chartHit) {
     } : undefined
   };
   const context = vm.createContext({
-    DocForm, document, MutationObserver, Map, Set,
+    document, MutationObserver, Map, Set,
     performance: { now: () => 1000 }, innerWidth: 1920, innerHeight: 1080,
     requestAnimationFrame: (fn) => frames.push(fn), cancelAnimationFrame() {}
   });
   context.window = context;
+  vm.runInContext(core, context);
+  Object.assign(context.DocForm, api);
   vm.runInContext(source, context);
-  const tools = DocForm.zoomTools;
+  const tools = context.DocForm.zoomTools;
 
   const overlay = new El('div');
   overlay.className = 'df-zoom';
@@ -116,11 +121,9 @@ function setup(chartHit) {
   return { tools, document, overlay, target, find, findAll, open, close, key, pointer, tick, pressed, observers };
 }
 
-test('keys pick tools, magnification stays within bounds, and the laser trail fades', () => {
+test('magnification stays within bounds and the laser trail fades', () => {
   const { tools } = setup();
   assert.deepEqual([...tools.tools], ['cursor', 'magnifier', 'laser', 'pen', 'highlighter', 'measure']);
-  assert.deepEqual(['V', 'm', 'L', 'p', 'h', 'c', 'x', ''].map(tools.toolForKey),
-    ['cursor', 'magnifier', 'laser', 'pen', 'highlighter', 'measure', null, null]);
 
   let z = tools.limits.start;
   for (let i = 0; i < 20; i++) z = tools.magnify(z, -1);

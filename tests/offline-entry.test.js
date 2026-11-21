@@ -79,6 +79,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
   const siteConfig = config => ({ type: 'application/json', textContent: JSON.stringify(config) });
   const events = [];
   const loads = [];
+  const keyboards = [];
   const head = element('head');
   const body = element('body');
   const html = element('html');
@@ -110,7 +111,10 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
       if (selector.startsWith('link[rel') && staticCSS) return [{ href: new URL('docform.css', library).href }];
       return body.querySelectorAll(selector);
     },
-    addEventListener(type, callback) { if (type === 'DOMContentLoaded') launch = callback; },
+    addEventListener(type, callback, capture) {
+      if (type === 'DOMContentLoaded') launch = callback;
+      if (type === 'keydown') keyboards.push({ callback, capture });
+    },
     removeEventListener() {},
     dispatchEvent(event) { events.push(event); },
     createElement: element,
@@ -147,7 +151,14 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
   };
   vm.runInContext(entry, context);
   return {
-    DF: context.DocForm, html, body, citation, events, loads, ids, document,
+    DF: context.DocForm, html, body, citation, events, loads, ids, document, keyboards,
+    key(key, target = body, props = {}) {
+      const event = Object.assign(new Event('keydown', { cancelable: true }), { key }, props);
+      Object.defineProperty(event, 'target', { value: target });
+      if (props.handled) event.preventDefault();
+      keyboards.forEach(({ callback }) => callback(event));
+      return event;
+    },
     runScript(url) { vm.runInContext(fs.readFileSync(url, 'utf8'), context, { filename: url.pathname }); },
     async start() {
       document.readyState = 'interactive';
@@ -658,8 +669,133 @@ test('custom reading extensions mount code once, dispose tooltips, and resolve l
   assert.match(DF.roles.css({ warning: 'red' }), /--df-role-warning:var\(--df-red\)/);
 });
 
+test('shortcuts use a single capture listener and route to the innermost active scope', async () => {
+  const p = page({ entryProfile: 'none' });
+  const outer = p.body.appendChild(element('div'));
+  const inner = outer.appendChild(element('div'));
+  const button = inner.appendChild(element('button'));
+  const calls = [];
+  let opened = false;
+  let remove;
+  p.DF.setup(({ shortcuts }) => {
+    const register = (id, scope, active) => shortcuts.register({ id, key: 'A', scope, active, run: () => calls.push(id) });
+    register('global');
+    register('outer', outer);
+    remove = register('inner', inner, () => opened);
+  });
+  await p.start();
+  assert.deepEqual(p.keyboards.map(({ capture }) => capture), [true]);
+  assert.equal(p.key('a', button).defaultPrevented, true);
+  p.key('a', outer);
+  p.key('a');
+  opened = true;
+  p.key('a', outer);
+  remove();
+  p.key('A', button, { shiftKey: true });
+  assert.deepEqual(calls, ['inner', 'outer', 'global', 'inner', 'outer']);
+  assert.equal(p.DF.diagnostics.list().length, 0);
+});
+
+test('shortcuts preserve editable, composed, handled and unbound modifier keystrokes', async () => {
+  const p = page({ entryProfile: 'none' });
+  const textbox = p.body.appendChild(element('input'));
+  textbox.closest = selector => selector.startsWith('input,') ? textbox : null;
+  const editor = p.body.appendChild(element('div'));
+  editor.isContentEditable = true;
+  const calls = [];
+  p.DF.setup(({ shortcuts }) => {
+    shortcuts.register({ id: 'plain', key: 'X', run: () => calls.push('plain') });
+    shortcuts.register({ id: 'chord', key: 'Ctrl+Shift+X', run: () => calls.push('chord') });
+  });
+  await p.start();
+  p.key('x', textbox);
+  p.key('x', editor);
+  p.key('x', p.body, { composedPath: () => [textbox, p.body] });
+  p.key('x', p.body, { isComposing: true });
+  p.key('x', p.body, { getModifierState: key => key === 'AltGraph' });
+  p.key('x', p.body, { handled: true });
+  p.key('x', p.body, { ctrlKey: true });
+  p.key('x', p.body, { metaKey: true });
+  p.key('x', p.body, { altKey: true });
+  p.key('x', textbox, { ctrlKey: true, shiftKey: true });
+  assert.deepEqual(calls, []);
+  p.key('X', p.body, { ctrlKey: true, shiftKey: true });
+  p.key('x');
+  assert.deepEqual(calls, ['chord', 'plain']);
+});
+
+test('shortcut options merge per ID and report a duplicate effective key in the same scope', async () => {
+  const p = page({
+    site: { profile: 'none', options: { shortcuts: { primary: 'x', secondary: 'z', hidden: 'b' } } },
+    config: { options: { shortcuts: { secondary: 'X', hidden: null, chord: 'Ctrl++', invalid: false } } }
+  });
+  const calls = [];
+  p.DF.setup(({ shortcuts }) => {
+    for (const [id, key] of Object.entries({ primary: 'p', secondary: 's', hidden: 'h', chord: 'C', invalid: 'I' })) {
+      shortcuts.register({ id, key, run: () => calls.push(id) });
+    }
+  });
+  await p.start();
+  assert.deepEqual([...p.DF.shortcuts.keys('primary')], ['X']);
+  assert.deepEqual([...p.DF.shortcuts.keys('secondary')], []);
+  assert.deepEqual([...p.DF.shortcuts.keys('hidden')], []);
+  assert.deepEqual([...p.DF.shortcuts.keys('chord')], ['Control++']);
+  for (const key of ['p', 's', 'z', 'b', 'h', '+']) assert.equal(p.key(key).defaultPrevented, false);
+  assert.equal(p.key('X').defaultPrevented, true);
+  assert.equal(p.key('+', p.body, { ctrlKey: true }).defaultPrevented, true);
+  assert.equal(p.key('i').defaultPrevented, true);
+  assert.deepEqual(calls, ['primary', 'chord', 'invalid']);
+  const reports = p.DF.diagnostics.list();
+  assert.deepEqual(Array.from(reports, report => [report.code, report.feature]),
+    [['shortcut-conflict', 'shortcuts'], ['shortcut-key', 'shortcuts']]);
+  assert.match(reports[0].message, /primary.*secondary/);
+  assert.equal(p.events.filter(event => event.type === 'df:diagnostic').length, 2);
+});
+
+test('search remaps its opening key and honors a disabled Escape while the typing field is focused', async () => {
+  const p = page({
+    site: { profile: 'none', features: { search: true }, options: { shortcuts: { 'search.open': 'g' } } },
+    config: { options: { shortcuts: { 'search.close': null } } }
+  });
+  let dialog;
+  let input;
+  p.document.createTreeWalker = () => ({ nextNode: () => null });
+  const create = p.document.createElement;
+  p.document.createElement = tag => {
+    const el = create(tag);
+    el.scrollIntoView = () => {};
+    if (tag === 'dialog') {
+      dialog = el;
+      el.showModal = () => { el.open = true; };
+      el.close = () => { el.open = false; };
+    }
+    if (tag === 'input') {
+      input = el;
+      el.value = '';
+      el.select = () => {};
+      el.closest = selector => selector.startsWith('input,') ? el : selector === 'dialog:modal' ? dialog : null;
+    }
+    return el;
+  };
+  await p.start();
+  assert.equal(p.key('s').defaultPrevented, false);
+  assert.equal(p.key('g').defaultPrevented, true);
+  assert.equal(dialog.open, true);
+  assert.equal(p.key('g', input).defaultPrevented, false);
+  assert.equal(p.key('Escape', input).defaultPrevented, false);
+  const cancel = new Event('cancel', { cancelable: true });
+  dialog.dispatchEvent(cancel);
+  assert.equal(cancel.defaultPrevented, true);
+  assert.equal(dialog.open, true);
+  const closeButton = dialog.lastChild.lastChild;
+  assert.equal(closeButton.getAttribute('aria-keyshortcuts'), null);
+  closeButton.dispatchEvent(new Event('click'));
+  assert.equal(dialog.open, false);
+});
+
 test('custom figures expose keyed animation state and committed zoom lifecycle events', async () => {
-  const p = page({ config: { profile: 'none', features: { animation: true, zoom: true } } });
+  const p = page({ config: { profile: 'none', features: { animation: true, zoom: true },
+    options: { shortcuts: { 'zoom.close': 'q' } } } });
   const figure = p.body.appendChild(element('figure'));
   const svg = figure.appendChild(element('svg'));
   figure.querySelector = selector => selector === 'svg' ? svg : null;
@@ -690,7 +826,9 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
   assert.equal(zoom.open('custom-figure'), true);
   const open = zoom.snapshot();
   assert.equal(zoom.open(figure), true);
-  assert.equal(zoom.close(), true);
+  assert.equal(open.overlay.lastChild.getAttribute('aria-keyshortcuts'), 'Q');
+  assert.equal(p.key('Escape', open.overlay).defaultPrevented, false);
+  assert.equal(p.key('q', open.overlay).defaultPrevented, true);
   assert.equal(p.events.at(-1).type, 'df:zoom:closing');
   assert.equal(figure.parentNode, open.stage);
   open.overlay.dispatchEvent(new Event('transitionend'));

@@ -31,7 +31,7 @@ docform/: Copyable offline library folder
     bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered and scrolling that passes to the page at their ends
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
-    search.css: Animated frosted S-key search dialog with highlighted results
+    search.css: Animated frosted search dialog with highlighted results
     chart.css: Chart legend, opt-in series and slice toggle chips, plot marks hidden until their entrance except in print and lens clones, reference lines, selection, range brush, shared cursor, readout, and table view
     chart-intervals.css: Interval whisker and lollipop stem styling
     chart-histogram.css: Overlaid histogram bar opacity and active-bin styling
@@ -47,7 +47,7 @@ docform/: Copyable offline library folder
     dropzone.css: Dashed file drop area, status line with Reset, and the dropped file's view
     glossary.css: Glossary page tag filter chips, letter jumps, letter groups, definitions with tags, variant definitions, and used-on links
   js/: Per-module classic scripts on a shared DocForm namespace
-    core.js: DocForm namespace, module registry, data-df-* and clipboard helpers, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
+    core.js: DocForm namespace, module and shortcut registries, data-df-* and clipboard helpers, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
@@ -70,7 +70,7 @@ docform/: Copyable offline library folder
     bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
-    search.js: S-key search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
+    search.js: Search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
     chart.js: SVG line, scatter, pie, and vertical or horizontal grouped, stacked, and percent bar charts with default-on keyed tweens and scroll entrances, add-on chart type, scale, and legend registration, named data mappings, declarative parameter bindings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
     chart-intervals.js: Ranked dot and lollipop plots with supplied intervals and dodged series in either orientation
     chart-histogram.js: Raw and pre-binned distributions with live binning, continuous log axes, and overlaid or stacked bars
@@ -95,6 +95,7 @@ docform/: Copyable offline library folder
   docs/: Agent-facing setup, layout, reading, interaction, diagram, data, and offline tool references
     LIB_MAP.tsv: Index of agent references by component, description, and relative path
     interact/step-contract.md: Shared step markup, selection binding, controller, and event
+    interact/shortcuts.md: Shortcut scopes, defaults, conflict diagnostics, and manifest remapping
 docs/: Human-facing beginner DocForm HTML site with a Start here orientation and live examples
   index.html: Welcome page
   pages/: Start here, hierarchy, feature guide, recipe, and reference pages in group folders, plus the glossary page

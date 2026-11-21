@@ -19,8 +19,10 @@
   var NAV_EDGE = 8;
   // Milliseconds after a sidebar link click within which the next page opens with the auto-hide panel still shown.
   var PEEK_CARRY = 5000;
-  var SHORTCUTS = { t: 'theme', f: 'focus', n: 'nav', j: 'next', k: 'prev' };
-  var EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]';
+  var SHORTCUTS = {
+    theme: ['t', 'Toggle theme'], focus: ['f', 'Toggle focus mode'], nav: ['n', 'Toggle navigation'],
+    next: ['j', 'Next heading'], prev: ['k', 'Previous heading']
+  };
   var JUMP_CHAIN = 1000;
   // Fractions of the viewport height: blocks overlapping this central band stay sharp in focus mode.
   var FOCUS_BAND = [0.2, 0.8];
@@ -193,44 +195,22 @@
     html.addEventListener('pointerleave', function () { set(false); });
   }
 
-  function isEditable(target) {
-    if (!target) return false;
-    if (target.isContentEditable) return true;
-    return typeof target.closest === 'function' && !!target.closest(EDITABLE);
-  }
-
-  function shortcut(event) {
-    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return null;
-    if (isEditable(event.target)) return null;
-    var key = typeof event.key === 'string' ? event.key.toLowerCase() : '';
-    return hasOwn.call(SHORTCUTS, key) ? SHORTCUTS[key] : null;
-  }
-
-  function dispatch(event, actions) {
-    var action = shortcut(event);
-    if (!action || typeof actions[action] !== 'function') return null;
-    event.preventDefault();
-    actions[action]();
-    return action;
-  }
-
   function make(tag, className) {
     var el = document.createElement(tag);
     if (className) el.className = className;
     return el;
   }
 
-  function iconButton(name, key) {
+  function iconButton(name) {
     var button = make('button', 'df-controls-btn df-controls-' + name);
     button.type = 'button';
     button.innerHTML = ICONS[name];
-    button.setAttribute('aria-keyshortcuts', key.toUpperCase());
     return button;
   }
 
   function label(button, text, key) {
     button.setAttribute('aria-label', text);
-    button.title = text + ' (' + key.toUpperCase() + ')';
+    DocForm._shortcutHint(button, 'controls.' + key, text);
   }
 
   function nearNavEdge(x, width, open) {
@@ -280,11 +260,14 @@
     document.addEventListener('focusout', function () {
       if (state.peeking) Promise.resolve().then(update);
     });
-    document.addEventListener('keydown', function (event) {
-      if (event.key !== 'Escape' || event.defaultPrevented || !state.peeking) return;
-      if (navHasFocus(false)) button.focus({ preventScroll: true });
-      x = Infinity;
-      peek(false);
+    DocForm.shortcuts.register({
+      id: 'controls.close-peek', key: 'Escape', label: 'Close auto-hide navigation',
+      scope: function () { return state.peeking && sidebar; },
+      run: function () {
+        if (navHasFocus(false)) button.focus({ preventScroll: true });
+        x = Infinity;
+        peek(false);
+      }
     });
     if (drawerMode) drawerMode.addEventListener('change', function () {
       x = Infinity;
@@ -396,14 +379,14 @@
         navButton.innerHTML = mode === 'auto' ? ICONS.navAuto : mode === 'hidden' ? ICONS.navHidden : ICONS.nav;
       }
       navButton.setAttribute('aria-expanded', String(open));
-      label(navButton, d ? (open ? 'Close navigation' : 'Open navigation') : NAV_LABELS[mode], 'n');
+      label(navButton, d ? (open ? 'Close navigation' : 'Open navigation') : NAV_LABELS[mode], 'nav');
       sidebar.inert = !d && !open;
     }
 
     function syncFocus() {
       if (!focusButton) return;
       focusButton.setAttribute('aria-pressed', String(state.focus));
-      label(focusButton, state.focus ? 'Turn off focus mode' : 'Turn on focus mode', 'f');
+      label(focusButton, state.focus ? 'Turn off focus mode' : 'Turn on focus mode', 'focus');
       if (sections) {
         sections.reset();
         if (state.focus) sections.update();
@@ -412,7 +395,7 @@
 
     if (sidebar) {
       if (!sidebar.id) sidebar.id = 'df-sidebar';
-      navButton = pill.appendChild(iconButton('nav', 'n'));
+      navButton = pill.appendChild(iconButton('nav'));
       navButton.setAttribute('aria-controls', sidebar.id);
       actions.nav = function () {
         var d = drawer();
@@ -426,7 +409,7 @@
     }
 
     if (sections) {
-      focusButton = pill.appendChild(iconButton('focus', 'f'));
+      focusButton = pill.appendChild(iconButton('focus'));
       actions.focus = function () { setFocus(!state.focus); };
       focusButton.addEventListener('click', actions.focus);
     }
@@ -435,15 +418,13 @@
       var searchButton = pill.appendChild(make('button', 'df-controls-btn df-controls-search'));
       searchButton.type = 'button';
       searchButton.innerHTML = DocForm.search.icon;
-      searchButton.setAttribute('aria-keyshortcuts', 'S');
       searchButton.setAttribute('aria-label', 'Search');
-      searchButton.title = 'Search (S)';
+      DocForm._shortcutHint(searchButton, 'search.open', 'Search');
       searchButton.addEventListener('click', function () { DocForm.search.open(searchButton); });
     }
 
     if (theme && typeof theme.toggle === 'function') {
       var themeButton = make('button', 'df-controls-btn');
-      themeButton.setAttribute('aria-keyshortcuts', 'T');
       pill.appendChild(themeButton);
       theme.mount(themeButton);
       actions.theme = function () { themeButton.click(); };
@@ -479,6 +460,12 @@
       root.requestAnimationFrame(update);
     }
 
+    Object.keys(actions).forEach(function (id) {
+      var binding = SHORTCUTS[id];
+      DocForm.shortcuts.register({ id: 'controls.' + id, key: binding[0], label: binding[1], run: actions[id] });
+    });
+    if (themeButton) DocForm._shortcutHint(themeButton, 'controls.theme');
+
     listeners.push(syncNav, syncFocus);
     document.body.appendChild(pill);
     html.classList.add('df-has-controls');
@@ -487,7 +474,6 @@
     update();
     root.addEventListener('scroll', schedule, { passive: true });
     root.addEventListener('resize', schedule);
-    document.addEventListener('keydown', function (event) { dispatch(event, actions); });
     // Saved states apply without animating; transitions start after the first frames.
     root.requestAnimationFrame(function () {
       root.requestAnimationFrame(function () { html.classList.remove('df-controls-init'); });
@@ -496,7 +482,6 @@
 
   DocForm.controls = {
     keys: KEYS,
-    shortcuts: Object.assign({}, SHORTCUTS),
     pickFocus: pickFocus,
     blockSpans: blockSpans,
     dimmed: dimmed,
@@ -506,8 +491,6 @@
     leavesPage: leavesPage,
     nearScrollbar: nearScrollbar,
     progress: progress,
-    shortcut: shortcut,
-    dispatch: dispatch,
     state: function () { return { focus: state.focus, nav: navShown() }; },
     snapshot: function () { return Object.freeze({ focus: state.focus, nav: navShown(), navMode: state.navMode }); },
     setFocus: setFocus,

@@ -47,6 +47,31 @@
     <p>The site settings, also called the <span data-df-term="site settings">manifest</span>, hold shared choices. They give the site its title and page order, choose a glossary page, and keep lists of terms, sources, and reusable controls. They also describe which prepared search and data files the site uses and where those files belong.</p>
     <p>Page settings apply to a single page. This page adds TeX math for the formula below. The other reference pages use the same site settings and keep their own feature choices.</p>
 
+    <h2 id="keyboard-shortcuts">Keyboard shortcuts</h2>
+    <p>Shortcuts follow where you are. <kbd>Esc</kbd> closes search when the search palette is open. In an enlarged figure it closes the figure view. If a smaller component inside the view also uses that key, it gets the key first. DocForm leaves ordinary typing alone in text fields.</p>
+    <figure>
+      <table>
+        <thead><tr><th scope="col">Where</th><th scope="col">Default keys</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Reading a page</th><td><kbd>T</kbd> changes theme, <kbd>F</kbd> toggles focus mode, <kbd>N</kbd> toggles navigation, <kbd>J</kbd> and <kbd>K</kbd> jump between headings, and <kbd>S</kbd> opens search.</td></tr>
+          <tr><th scope="row">Open panel</th><td><kbd>Esc</kbd> dismisses search, the navigation drawer, the visible auto-hide sidebar, or a tooltip.</td></tr>
+          <tr><th scope="row">Focused figure or linked choice</th><td><kbd>Enter</kbd> or <kbd>Space</kbd> enlarges a figure or activates a custom linked choice.</td></tr>
+          <tr><th scope="row">Enlarged figure</th><td><kbd>Esc</kbd> closes it. When presentation tools are enabled, <kbd>V</kbd>, <kbd>M</kbd>, <kbd>L</kbd>, <kbd>P</kbd>, <kbd>H</kbd>, and <kbd>C</kbd> choose tools. <kbd>[</kbd> and <kbd>]</kbd> adjust the magnifier. <kbd>Ctrl</kbd>+<kbd>Z</kbd> or <kbd>Cmd</kbd>+<kbd>Z</kbd> undoes an ink stroke.</td></tr>
+        </tbody>
+      </table>
+      <figcaption>Keys are available when their features are enabled.</figcaption>
+    </figure>
+    <p>Ask your agent to change a shortcut in the site settings or just on one page. This example moves Search to <kbd>G</kbd> and turns off the key for focus mode. The on-screen buttons still work.</p>
+    <pre><code class="language-json">{
+  "options": {
+    "shortcuts": {
+      "search.open": "G",
+      "controls.focus": null
+    }
+  }
+}</code></pre>
+    <p>If two actions use the same key in the same part of the page, DocForm keeps the first binding and records a problem report. The full list of setting names is in the <a href="../../../docform/docs/interact/shortcuts.md">shortcut reference</a>.</p>
+
     <h2 id="startup">Startup and ready stages</h2>
     <ol>
       <li><strong>Load.</strong> DocForm reads the settings and opens the selected features and prepared data from the site folder.</li>

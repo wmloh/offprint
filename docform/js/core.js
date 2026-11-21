@@ -21,6 +21,141 @@
   var selectionScans = [];
   var initialItems = null;
 
+  var shortcuts = new Map();
+  var shortcutListener = false;
+  var modifiers = ['Control', 'Alt', 'Shift', 'Meta'];
+  var modifierNames = { ctrl: 'Control', control: 'Control', alt: 'Alt', shift: 'Shift', cmd: 'Meta', meta: 'Meta' };
+  var editable = 'input, textarea, select, [role="textbox"], [role="searchbox"], [role="combobox"]';
+
+  function keyName(key) {
+    if (key === ' ' || key.toLowerCase() === 'space') return 'Space';
+    if (/^\S$/u.test(key)) return key.toUpperCase();
+    if (!/^[a-z][a-z0-9]*$/i.test(key)) return null;
+    return key.toLowerCase().replace(/^(arrow|page|caps|num|scroll|context|audio)([a-z])|^./, function (text, start, next) {
+      return text[0].toUpperCase() + (start ? start.slice(1) + next.toUpperCase() : '');
+    });
+  }
+
+  function shortcutKey(binding) {
+    if (typeof binding !== 'string') return null;
+    var parts = (binding === ' ' ? binding : binding.trim()).split(/\+(?=.)/);
+    var name = parts.pop();
+    var key = keyName(name);
+    if (!key) return null;
+    var flags = parts.map(function (part) {
+      return modifierNames[part.toLowerCase()];
+    });
+    if (flags.some(function (flag) { return !modifiers.includes(flag); }) || new Set(flags).size !== flags.length) return null;
+    return modifiers.filter(function (flag) { return flags.includes(flag); }).concat(key).join('+');
+  }
+
+  function editableTarget(target) {
+    if (!target || typeof target.closest !== 'function') return !!(target && target.isContentEditable);
+    var region = target.closest('[contenteditable]');
+    return target.isContentEditable || !!target.closest(editable) ||
+      (typeof target.isContentEditable !== 'boolean' && region && region.getAttribute('contenteditable') !== 'false');
+  }
+
+  function shortcutIssue(code, target, message, input) {
+    if (boot) boot.report(code, 'shortcuts', target, message, 'Check options.shortcuts and shortcut registrations.', input);
+    else warnOnce(code + ':' + input, message, target || undefined);
+  }
+
+  function shortcutConflict(scope, key, first, second) {
+    shortcutIssue('shortcut-conflict', scope, 'Shortcut "' + key + '" is assigned to "' + first +
+      '" and "' + second + '" in the same scope. The first binding wins.', [key, first, second]);
+  }
+
+  function registerShortcut(spec) {
+    var scope = spec.scope === undefined ? 'global' : spec.scope;
+    var id = spec.id;
+    if (typeof id !== 'string' || !id || typeof spec.run !== 'function' ||
+        (scope !== 'global' && typeof scope !== 'function' && !(scope && typeof scope.contains === 'function'))) {
+      throw new TypeError('A shortcut needs an ID, a callback, and a valid scope.');
+    }
+    if (shortcuts.has(id)) throw new Error('Shortcut ID "' + id + '" is already registered.');
+    var options = DocForm.site && DocForm.site.options && DocForm.site.options.shortcuts;
+    var override = options && hasOwn.call(options, id) ? options[id] : undefined;
+    if (override !== undefined && override !== null && !shortcutKey(override)) {
+      shortcutIssue('shortcut-key', 'options.shortcuts', 'Invalid key for shortcut "' + id + '". Using its default.', id);
+      override = undefined;
+    }
+    var keys = override === null ? [] : [].concat(override === undefined ? spec.key : override).map(shortcutKey);
+    if (keys.includes(null)) throw new TypeError('Invalid default key for shortcut "' + id + '".');
+    keys = Array.from(new Set(keys)).filter(function (key) {
+      for (var entry of shortcuts.values()) {
+        if (entry.scope !== scope || !entry.keys.includes(key)) continue;
+        shortcutConflict(scope, key, entry.id, id);
+        return false;
+      }
+      return true;
+    });
+    var entry = Object.assign({}, spec, { scope: scope, keys: keys });
+    shortcuts.set(id, entry);
+    if (!shortcutListener && root.document) {
+      root.document.addEventListener('keydown', dispatchShortcut, true);
+      shortcutListener = true;
+    }
+    return function () { if (shortcuts.get(id) === entry) shortcuts.delete(id); };
+  }
+
+  function dispatchShortcut(event) {
+    if (event.defaultPrevented || event.isComposing || typeof event.key !== 'string' ||
+        event.key === 'Dead' || event.key === 'Process' || event.key === 'Unidentified' ||
+        event.getModifierState && event.getModifierState('AltGraph')) return;
+    var prefix = [event.ctrlKey && 'Control', event.altKey && 'Alt', event.shiftKey && 'Shift', event.metaKey && 'Meta']
+      .filter(Boolean);
+    var key = shortcutKey(prefix.concat(event.key === ' ' ? 'Space' : event.key).join('+'));
+    var shifted = prefix.length === 1 && event.shiftKey && /^\S$/u.test(event.key) ? keyName(event.key) : null;
+    var path = event.composedPath ? event.composedPath() : [];
+    var target = path[0] || event.target;
+    var inField = editableTarget(target);
+    var modal = target && target.closest && target.closest('dialog:modal');
+    // Open popovers own Escape, including native light dismissal.
+    if (key === 'Escape' && target && target.closest && target.closest(':popover-open, .df-filter-menu')) return;
+    var candidates = new Map();
+    shortcuts.forEach(function (entry) {
+      var exact = entry.keys.includes(key);
+      if (!exact && (!shifted || !entry.keys.includes(shifted) || entry.exactShift)) return;
+      if (inField && !(entry.editable === true && (key === 'Escape' || prefix.some(function (flag) { return flag !== 'Shift'; })))) return;
+      var scope = typeof entry.scope === 'function' ? entry.scope(event, target) : entry.scope;
+      if (!scope || modal && (scope === 'global' || !modal.contains(scope))) return;
+      var focused = scope !== 'global' && (path.includes(scope) || !!target && scope.contains(target));
+      if (!focused && scope !== 'global' && typeof entry.scope !== 'function' && !(entry.active && entry.active())) return;
+      if (entry.when && !entry.when(event, target)) return;
+      var first = candidates.get(scope);
+      if (!first || exact && !first.exact) {
+        candidates.set(scope, { entry: entry, scope: scope, focused: focused, exact: exact });
+      } else if (exact === first.exact) {
+        shortcutConflict(scope, exact ? key : shifted, first.entry.id, entry.id);
+      }
+    });
+    var scoped = Array.from(candidates.values()).filter(function (candidate) { return candidate.scope !== 'global'; });
+    var innermost = scoped.filter(function (candidate) {
+      return !scoped.some(function (other) {
+        return other !== candidate && candidate.scope.contains(other.scope);
+      });
+    });
+    var winner = innermost.find(function (candidate) { return candidate.focused; }) ||
+      innermost[0] || candidates.get('global');
+    if (!winner) return;
+    event.preventDefault();
+    event.stopPropagation();
+    winner.entry.run(event, target);
+  }
+
+  function shortcutKeys(id) {
+    var entry = shortcuts.get(id);
+    return entry ? entry.keys.slice() : [];
+  }
+
+  function shortcutHint(el, id, label) {
+    var keys = shortcutKeys(id);
+    if (keys.length) el.setAttribute('aria-keyshortcuts', keys.join(' '));
+    else el.removeAttribute('aria-keyshortcuts');
+    if (label) el.title = label + (keys.length ? ' (' + keys.join(' / ') + ')' : '');
+  }
+
   function transaction(fn) {
     if (preparingData) throw new Error('Data transforms cannot change controller state.');
     transactions.push(fn);
@@ -1049,6 +1184,8 @@
     },
     _interval: { normalize: estimateInterval, text: intervalText },
     _maxWidth: maxWidthValue,
+    shortcuts: { register: registerShortcut, keys: shortcutKeys },
+    _shortcutHint: shortcutHint,
     sequence: { get: sequenceGet },
     _sequence: {
       define: defineSequence, indexed: indexedSequence, binding: sequenceBinding, start: startSequence,

@@ -517,6 +517,7 @@
 
     listeners.push(syncNav, syncFocus);
     var bar = make('div', 'df-controls-bar');
+    boot.mountExport?.(pill, true);
     DocForm._readerState?.mountClear(pill, true);
     bar.appendChild(pill);
     appendPagePill(bar);

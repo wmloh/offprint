@@ -1,0 +1,133 @@
+.df-export-dialog {
+  box-sizing: border-box;
+  width: min(42rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--df-border-strong, GrayText);
+  border-radius: 12px;
+  background: var(--df-bg, Canvas);
+  color: var(--df-text, CanvasText);
+  box-shadow: 0 24px 64px #0003;
+  font: 0.9375rem/1.45 var(--df-font, system-ui);
+}
+
+.df-export-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.df-export-dialog::backdrop {
+  background: #0004;
+  backdrop-filter: blur(3px);
+}
+
+.df-export-dialog > header,
+.df-export-dialog > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-color: var(--df-border, GrayText);
+}
+
+.df-export-dialog > header {
+  border-bottom: 1px solid var(--df-border, GrayText);
+}
+
+.df-export-dialog > footer {
+  flex-wrap: wrap;
+  border-top: 1px solid var(--df-border, GrayText);
+}
+
+.df-export-dialog > footer > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.df-export-dialog :is(h2, h3, p) {
+  margin: 0;
+}
+
+.df-export-dialog h2 { font-size: 1.2rem; }
+.df-export-dialog h3 { font-size: 1rem; }
+.df-export-dialog h2::before { content: none; }
+
+.df-export-dialog .df-button {
+  min-height: 2.25rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--df-border, GrayText);
+  border-radius: 999px;
+  background: var(--df-blue-bg, ButtonFace);
+  color: var(--df-text, ButtonText);
+  font: inherit;
+}
+
+.df-export-dialog .df-button:enabled { cursor: pointer; }
+.df-export-dialog .df-button:hover:enabled { border-color: var(--df-blue, Highlight); }
+.df-export-dialog .df-button:disabled { opacity: 0.55; }
+.df-export-dialog :focus-visible { outline: 2px solid var(--df-blue, Highlight); outline-offset: 2px; }
+.df-export-dialog [hidden] { display: none !important; }
+
+.df-export-content {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+}
+
+.df-export-content > p,
+.df-export-dialog fieldset,
+.df-export-dialog section {
+  margin-block: 0 0.75rem;
+}
+
+.df-export-folder {
+  margin-inline-start: 0.65rem;
+  overflow-wrap: anywhere;
+}
+
+.df-export-dialog fieldset,
+.df-export-dialog section {
+  min-width: 0;
+  margin-block-start: 1rem;
+  margin-inline: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--df-border, GrayText);
+  border-radius: var(--df-radius-lg, 8px);
+}
+
+.df-export-dialog legend { font-weight: 600; }
+.df-export-dialog ul { margin-block: 0.25rem; padding-inline-start: 1.35em; }
+.df-export-dialog fieldset ul { list-style: none; padding-inline-start: 0.85em; }
+.df-export-dialog fieldset > ul { padding-inline-start: 0; }
+
+.df-export-dialog fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  cursor: pointer;
+}
+
+.df-export-dialog fieldset input {
+  flex: none;
+  margin: 0;
+  accent-color: var(--df-blue, Highlight);
+}
+
+.df-export-dialog fieldset small {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--df-text-label, CanvasText);
+}
+
+.df-export-dialog details {
+  margin-block: 0.5rem 0;
+  padding: 0.25rem 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.df-export-dialog summary { cursor: pointer; }
+.df-export-dialog summary::before { content: none; }

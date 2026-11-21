@@ -5,7 +5,7 @@
   var DF = root.DocForm;
   var document = root.document;
   var chrome = '.df-sidebar,.df-nav-toggle,.df-controls,.df-controls-bar,.df-heading-link,' +
-    '.df-pager,.df-section-lines,.df-section-rail,.df-search,.df-zoom,[data-df-reader-state-control]';
+    '.df-pager,.df-section-lines,.df-section-rail,.df-search,.df-zoom,[data-df-reader-state-control],[data-df-export-control]';
   var transient = '.df-tooltip,.df-chart-tip,.df-chart-hover,.df-chart-x-cursor,.df-chart-brush,.df-step-indicator,' +
     '.df-step-label-bold,.df-code-copy,.df-step-search,.df-tree-bar,.df-tree-twisty,.df-choices-glider,' +
     '.df-dropzone-hint,.df-dropzone-prompt,' +
@@ -115,7 +115,8 @@
   }
 
   function stylesheetRecords(document) {
-    return Array.from(document.querySelectorAll('style,link[rel~="stylesheet"][href]:not([disabled])'), function (node) {
+    var nodes = document.querySelectorAll('style,link[rel~="stylesheet"][href]:not([disabled],[data-df-export-control])');
+    return Array.from(nodes, function (node) {
       return { href: node.localName === 'link' ? node.href : null, text: node.localName === 'style' ? node.textContent : null,
         media: node.media || '' };
     });
@@ -265,7 +266,8 @@
   function scriptIssues(source, library, siteURL, issues) {
     source.querySelectorAll('script').forEach(function (node) {
       var src = node.getAttribute('src');
-      if (node.matches(declarative) || (src && (node.hasAttribute('data-df-site') && sameURL(node.src, siteURL) ||
+      if (node.matches(declarative + ',[data-df-runtime-asset]') ||
+          (src && (node.hasAttribute('data-df-site') && sameURL(node.src, siteURL) ||
           sameURL(node.src, library) || /(?:^|\/)docform\.js$/.test(src) && node.closest('head')))) return;
       issue(issues, 'custom-script', node, 'Author-script behavior uses the available static markup.');
     });

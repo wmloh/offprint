@@ -161,6 +161,8 @@
     if (!clearMounted) {
       var parent = root.document.querySelector('main, .df-page') || root.document.body;
       var controls = parent.appendChild(root.document.createElement('div'));
+      controls.setAttribute('data-df-reader-state-control', '');
+      DF._boot?.mountExport?.(controls);
       mountClear(controls);
     }
   }

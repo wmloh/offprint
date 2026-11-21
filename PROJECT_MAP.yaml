@@ -12,6 +12,7 @@ docform/: Copyable offline library folder
     nav.css: Sidebar tree with group dividers and section links, numbered subsection rail, resize handle, heading links, prev/next links, and drawer
     theme.css: Theme toggle button styles
     controls.css: Top-left frosted reading and page navigation pills, hover-aware focus-mode blur, hideable sidebar, and near-edge page scrollbar
+    export-dialog.css: Responsive reader export dialog, page picker, and preview
     math.css: Display math layout and inline TeX error styles
     blocks.css: Inline tags with class-shape markers and unclassified outlines, callouts, and the no-script tinted card look of details
     tooltip.css: Tooltip box with a glossary tag line, hold-to-expand card with progress ring, and dotted term underlines (fainter for auto-linked terms, red for untagged tips, none on tags)
@@ -55,6 +56,7 @@ docform/: Copyable offline library folder
     export-package.js: Folder and manifest selection, standalone HTML packaging, link rewriting, and build diagnostics
     export-resources.js: Offline embedding of stylesheets, fonts, and images
     export-reader.js: Standalone page navigation, fragment history, and tooltip controls
+    export-dialog.js: Lazy reader export dialog with source folder selection, grouped page selection, preview, cancellation, and download
     core.js: DocForm namespace, module and shortcut registries, data-df-* and clipboard helpers, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer

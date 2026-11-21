@@ -458,7 +458,9 @@
       if (!chosen.has(page.id)) continue;
       signal?.throwIfAborted();
       var report = reportFor(page);
-      options?.onProgress?.({ completed: completed++, total: chosen.size, page: page.id, title: page.title });
+      await options?.onProgress?.({ phase: 'capture', completed: completed++, total: chosen.size,
+        page: page.id, title: page.title });
+      signal?.throwIfAborted();
       try {
         var file = folder.file(address(page.url), true);
         if (!file) throw Error('The page file was not found in the selected folder.');
@@ -487,20 +489,27 @@
     }
     // Collect destinations after removing non-reader markup and replacing playback media.
     for (var page of pages.values()) {
+      await options?.onProgress?.({ phase: 'assets', completed: completed, total: chosen.size,
+        page: page.id, title: page.title });
+      signal?.throwIfAborted();
       await assets(page, folder, resources, page.report, signal);
       page.targets = targets(page.document);
     }
     for (var page of pages.values()) {
+      await options?.onProgress?.({ phase: 'links', completed: completed, total: chosen.size,
+        page: page.id, title: page.title });
+      signal?.throwIfAborted();
       for (var link of page.document.body.querySelectorAll('a[href],area[href],a[*|href]')) {
         rewriteLink(link, link.hasAttribute('href') ? 'href' : 'xlink:href', page, pages, page.report);
       }
       await styles(page, resources, page.report);
     }
+    await options?.onProgress?.({ phase: 'serialize', completed: completed, total: chosen.size });
     signal?.throwIfAborted();
     var included = Array.from(pages.values());
     var blob = new Blob([serialize(site.title, site.tree, site.active, included)], { type: 'text/html;charset=utf-8' });
     var filename = site.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '-').trim().replace(/[. ]+$/, '').slice(0, 120);
-    options?.onProgress?.({ completed: chosen.size, total: chosen.size });
+    options?.onProgress?.({ phase: 'done', completed: completed, total: chosen.size });
     return { blob: blob, bytes: blob.size, filename: (filename || 'DocForm export') + '.html', issues: issues,
       pages: included.map(function (page) {
         return { id: page.id, title: page.snapshot.title || page.title, view: page.snapshot.view, imports: page.snapshot.imports };
@@ -508,19 +517,22 @@
   }
 
   async function prepare(files, options) {
+    var signal = options?.signal;
+    signal?.throwIfAborted();
     var url = address(DF._page);
     var folder = folderFromFiles(files, url, options?.folderName);
-    var base = new URL('.', DF._boot.entryURL);
     var loaded = await Promise.all([
       ['_assetBuild', 'tools/asset-build.js'], ['_pageSnapshot', 'js/page-snapshot.js'],
       ['_exportResources', 'js/export-resources.js'], ['_exportReader', 'js/export-reader.js']
     ].map(async function ([key, path]) {
-      return DF[key] || await DF._boot.load(new URL(path, base).href) && DF[key];
+      return DF[key] || await DF._boot.loadExport(path) && DF[key];
     }));
+    signal?.throwIfAborted();
     if (loaded.some(function (dependency) { return !dependency; })) throw Error('The DocForm export tools could not be loaded.');
     var manifestCache = new Map();
     var source = DF._assetBuild.parseHTML(await folder.file(url, true).text());
     var configuration = await config(source, url, folder, manifestCache);
+    signal?.throwIfAborted();
     var expected = DF._site.provided ? address(DF._site.base) : null;
     if (fileKey(expected) !== fileKey(address(configuration.siteURL)) && (expected || configuration.site)) {
       throw Error('The selected page does not use the manifest of the open DocForm page.');

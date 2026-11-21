@@ -302,13 +302,21 @@
       });
   }
 
-  function load(url, css) {
+  function load(url, css, exportUI) {
     var key = keyOf(url);
     if (!assets.has(key)) {
       assets.set(key, new Promise(function (resolve) {
         var el = doc.createElement(css ? 'link' : 'script');
         el.onload = function () { resolve(true); };
-        el.onerror = function () { resolve(false); };
+        el.onerror = function () {
+          if (exportUI) {
+            assets.delete(key);
+            el.remove();
+          }
+          resolve(false);
+        };
+        el.setAttribute('data-df-runtime-asset', '');
+        if (exportUI) el.setAttribute('data-df-export-control', '');
         if (css) {
           el.rel = 'stylesheet';
           el.href = url;
@@ -321,6 +329,40 @@
       }));
     }
     return assets.get(key);
+  }
+
+  function loadExport(path, css) {
+    return load(new URL(path, library).href, css, true);
+  }
+
+  function mountExport(parent, iconOnly) {
+    if (replaying) return;
+    var button = doc.createElement('button');
+    button.type = 'button';
+    button.className = iconOnly ? 'df-controls-btn' : 'df-button';
+    button.setAttribute('data-df-export-control', '');
+    button.setAttribute('aria-haspopup', 'dialog');
+    if (iconOnly) {
+      button.title = 'Export';
+      button.setAttribute('aria-label', 'Export');
+      button.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" ' +
+        'fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M8 2v8m-3-3 3 3 3-3M2.5 10v3.5h11V10"/></svg>';
+    } else button.textContent = 'Export';
+    button.addEventListener('click', async function () {
+      if (button.hasAttribute('aria-busy')) return;
+      button.setAttribute('aria-busy', 'true');
+      try {
+        var loaded = await Promise.all([loadExport('js/export-dialog.js'), loadExport('css/export-dialog.css', true)]);
+        if (!loaded.every(Boolean) || !DF._exportDialog) throw Error('The DocForm export dialog could not load.');
+        DF._exportDialog.open(button);
+      } catch (error) {
+        root.alert(error.message + ' Check the local DocForm files and try again.');
+      } finally {
+        button.removeAttribute('aria-busy');
+      }
+    });
+    parent.appendChild(button);
   }
 
   function assetFailure(feature, url) {
@@ -469,6 +511,8 @@
     load: function (url) {
       return replaying ? exportContext.loadAsset('search', url) : load(url, false);
     },
+    loadExport: loadExport,
+    mountExport: mountExport,
     report: report,
     merge: merge,
     optionLayers: function (feature, id) {

@@ -44,10 +44,14 @@ function element(tag) {
     matches(selector) { return selector === tag || selector === '.' + this.className; },
     closest() { return null; },
     contains(child) { return this === child || this.childNodes.some(node => node.contains?.(child)); },
+    get isConnected() { return !!this.parentNode; },
     getClientRects() { return [this.getBoundingClientRect()]; },
     getBoundingClientRect() { return { top: 0, left: 0, bottom: 10, height: 10, width: 10 }; },
     focus() { this.focused = true; },
     appendChild(child) { return this.insertBefore(child, null); },
+    append(...items) {
+      items.forEach(item => this.appendChild(typeof item === 'string' ? { textContent: item } : item));
+    },
     before(child) { this.parentNode?.insertBefore(child, this); },
     insertBefore(child, before) {
       child.parentNode?.removeChild(child);
@@ -75,7 +79,7 @@ function element(tag) {
   };
 }
 
-function page({ nested, site, config, lateConfig, entryProfile, fail = [], storage, dark, staticCSS, cite } = {}) {
+function page({ nested, site, config, lateConfig, entryProfile, fail = [], storage, dark, staticCSS, cite, download } = {}) {
   const location = new URL(nested ? 'pages/chapter.html' : 'index.html', repo);
   const source = new URL(nested ? '../docform/docform.js' : 'docform/docform.js', location);
   const siteScript = site ? { src: new URL(nested ? '../site.js' : 'site.js', location).href } : null;
@@ -122,12 +126,21 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     },
     removeEventListener() {},
     dispatchEvent(event) { events.push(event); },
-    createElement: element,
+    createElement(tag) {
+      const node = element(tag);
+      node.focus = () => { document.activeElement = node; };
+      node.click = () => tag === 'a' && download ? download(node) : node.dispatchEvent(new Event('click'));
+      if (tag === 'dialog') {
+        node.showModal = () => { node.open = true; };
+        node.close = () => { node.open = false; node.dispatchEvent(new Event('close')); };
+      }
+      return node;
+    },
     createElementNS: (_, tag) => element(tag),
     createTextNode: textContent => ({ textContent })
   };
   const context = vm.createContext({
-    document, location, URL, setTimeout, clearTimeout, queueMicrotask,
+    document, location, URL, AbortController, setTimeout, clearTimeout, queueMicrotask,
     CustomEvent: class extends Event {
       constructor(type, { detail, bubbles }) { super(type, { bubbles }); this.detail = detail; }
     },
@@ -344,7 +357,115 @@ test('floating controls show shared tooltip cards with current labels and effect
   const fallbackPill = fallback.body.children.find(el => el.className === 'df-controls-bar').firstChild;
   assert.equal(fallbackPill.firstChild.title, 'Read 100%');
   assert.equal(fallbackPill.children[1].title, 'Theme: Light. Switch to Dark. (T)');
-  assert.equal(fallbackPill.children[2].getAttribute('aria-label'), 'Clear saved views and imports');
+  assert.ok(fallbackPill.children.some(el => el.getAttribute('aria-label') === 'Clear saved views and imports'));
+  assert.ok(fallbackPill.children.some(el => el.getAttribute('aria-label') === 'Export'));
+});
+
+test('the lazy export dialog handles folder recovery, mixed groups, cancellation and the reviewed download', async () => {
+  const downloads = [];
+  const p = page({ entryProfile: 'none', download: link => downloads.push([link.download, link.href]) });
+  const settle = () => new Promise(resolve => setImmediate(resolve));
+  function descendants(node) {
+    return node.children.flatMap(child => [child, ...descendants(child)]);
+  }
+  await p.start();
+  const opener = descendants(p.body).find(el => el.textContent === 'Export' && el.tagName === 'BUTTON');
+  assert.ok(opener);
+  assert.equal(p.loads.some(path => path.includes('export-')), false);
+  opener.click();
+  await settle();
+  const modal = p.body.children.find(el => el.tagName === 'DIALOG');
+  assert.ok(modal.open);
+  assert.deepEqual(p.loads.filter(path => path.includes('export-')),
+    ['docform/js/export-dialog.js', 'docform/css/export-dialog.css']);
+
+  const find = (tag, title) => descendants(modal).find(el => el.tagName === tag &&
+    (title === undefined || el.textContent === title));
+  const folderInput = find('INPUT');
+  const choose = find('BUTTON', 'Choose source folder');
+  const build = find('BUTTON', 'Build preview');
+  const stop = find('BUTTON', 'Cancel');
+  const download = find('BUTTON', 'Download HTML');
+  const status = descendants(modal).find(el => el.getAttribute('role') === 'status');
+  assert.equal(p.document.activeElement, choose);
+  folderInput.dispatchEvent(new Event('cancel'));
+  assert.match(status.textContent, /Folder selection cancelled/);
+  const leaf = (id, title, available = true) => ({ id, title, available, children: [] });
+  const selected = [];
+  const blob = new Blob(['<!doctype html>']);
+  p.DF._exportPackage = {
+    async prepare(files) {
+      if (!files[0].webkitRelativePath.startsWith('source/')) throw new Error('Wrong folder');
+      return {
+        active: 'home',
+        tree: [{ title: 'Book', children: [leaf('home', 'Home'), {
+          title: 'Part', children: [leaf('chapter', 'Chapter'), leaf('missing', 'Hidden page', false)]
+        }] }],
+        async build(ids, { signal }) {
+          selected.push(Array.from(ids));
+          if (selected.length === 1) throw new Error('Build failed');
+          if (selected.length === 2) {
+            await new Promise(resolve => signal.addEventListener('abort', resolve, { once: true }));
+            signal.throwIfAborted();
+          }
+          return { filename: 'Book.html', blob, bytes: blob.size,
+            pages: [{ title: 'Home', view: 'live', imports: [{ name: 'input.csv', target: 'runs' }] },
+              { title: 'Chapter', view: 'saved', imports: [] }],
+            issues: [{ title: 'Home', code: 'unavailable-link', target: 'omitted.html', message: 'Unavailable.' }] };
+        }
+      };
+    }
+  };
+  const selectFolder = async path => {
+    folderInput.files = [{ webkitRelativePath: path + '/index.html' }];
+    folderInput.dispatchEvent(new Event('change'));
+    await settle();
+  };
+  await selectFolder('wrong');
+  assert.match(status.textContent, /Wrong folder/);
+  assert.equal(build.hidden, true);
+  await selectFolder('source');
+  const picker = find('FIELDSET');
+  const [group, home, part, chapter] = descendants(picker).filter(el => el.type === 'checkbox');
+  assert.equal(home.checked, true);
+  assert.equal(chapter.checked, false);
+  assert.equal(group.indeterminate, true);
+  assert.equal(part.checked, false);
+  assert.doesNotMatch(picker.textContent, /Hidden page/);
+  group.checked = true;
+  group.dispatchEvent(new Event('change'));
+  assert.equal(part.checked, true);
+  assert.equal(chapter.checked, true);
+  assert.equal(group.indeterminate, false);
+  build.click();
+  await settle();
+  assert.match(status.textContent, /Build failed/);
+  assert.equal(build.textContent, 'Retry preview');
+  build.click();
+  stop.click();
+  await settle();
+  assert.match(status.textContent, /Export cancelled/);
+  assert.equal(download.hidden, true);
+  build.click();
+  await settle();
+  assert.deepEqual(selected, Array.from({ length: 3 }, () => ['home', 'chapter']));
+  assert.equal(download.hidden, false);
+  assert.match(modal.textContent, /Current view/);
+  assert.match(modal.textContent, /Saved view/);
+  assert.match(modal.textContent, /input\.csv/);
+  assert.match(modal.textContent, /1 disabled link/);
+  assert.match(modal.textContent, /omitted\.html/);
+  assert.match(modal.textContent, /15 bytes/);
+  download.click();
+  assert.equal(downloads[0][0], 'Book.html');
+  assert.match(downloads[0][1], /^blob:/);
+  chapter.checked = false;
+  chapter.dispatchEvent(new Event('change'));
+  assert.equal(download.hidden, true);
+  assert.equal(group.indeterminate, true);
+  find('BUTTON', 'Close').click();
+  assert.equal(p.document.activeElement, opener);
+  assert.equal(modal.isConnected, false);
 });
 
 test('required failures preserve fallbacks and independent features still reach ready', async () => {
@@ -689,7 +810,7 @@ test('invalid matrix replacements roll back and authored content survives failed
     const fallback = matrixPage(inputs);
     await fallback.start();
     assert.ok(fallback.body.firstChild === fallback.table);
-    assert.equal(fallback.body.lastChild.firstChild.getAttribute('aria-label'), 'Clear saved views and imports');
+    assert.ok(fallback.body.lastChild.children.some(el => el.getAttribute('aria-label') === 'Clear saved views and imports'));
     assert.deepEqual(fallback.table.children, [fallback.caption, fallback.fallbackHead, fallback.fallbackBody]);
     if (inputs.input) {
       const api = fallback.DF._matrix.get(fallback.table);
@@ -799,7 +920,7 @@ test('custom reading extensions mount code once, dispose tooltips, and resolve l
   dispose();
   dispose();
   assert.equal(term.getAttribute('aria-describedby'), 'prior');
-  assert.equal(p.body.childNodes.filter(node => !node.firstChild?.hasAttribute?.('data-df-reader-state-control')).length, 2);
+  assert.equal(p.body.childNodes.filter(node => !node.hasAttribute('data-df-reader-state-control')).length, 2);
   const math = p.body.appendChild(element('span'));
   p.ids.set('math:x', math);
   assert.equal(DF._math.set('math:x', 'x^2'), true);

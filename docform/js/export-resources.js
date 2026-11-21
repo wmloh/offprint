@@ -24,12 +24,26 @@
       });
   }
 
-  function dataURL(type, bytes) {
+  function binaryString(bytes) {
     var chunks = [];
     for (var offset = 0; offset < bytes.length; offset += 8192) {
       chunks.push(String.fromCharCode.apply(null, bytes.subarray(offset, offset + 8192)));
     }
-    return 'data:' + type + ';base64,' + root.btoa(chunks.join(''));
+    return chunks.join('');
+  }
+
+  function imageOrFontDataURL(value) {
+    var comma = value.indexOf(',');
+    if (comma < 0) return value;
+    var type = value.slice(5, comma);
+    var base64 = /;base64$/i.test(type);
+    if (base64) type = type.slice(0, -7);
+    type = type.replace(/^[^;]+/, function (mime) { return mime.toLowerCase(); });
+    var payload = value.slice(comma + 1).replace(/%([\da-f]{2})|[^\x00-\x7f]+/gi, function (match, hex) {
+      return hex ? String.fromCharCode(parseInt(hex, 16)) : binaryString(new TextEncoder().encode(match));
+    });
+    try { return 'data:' + type + ';base64,' + root.btoa(base64 ? root.atob(payload) : payload); }
+    catch (error) { return value; }
   }
 
   function candidates(value) {
@@ -55,6 +69,17 @@
   function setup(folder, signal) {
     var embedded = new Map();
     var sheets = new Map();
+    var assetIDs = new Map();
+    var assets = [];
+
+    function store(payload, suffix) {
+      var key = typeof payload === 'string' ? payload : JSON.stringify(payload);
+      if (!assetIDs.has(key)) {
+        assetIDs.set(key, assets.length);
+        assets.push(payload);
+      }
+      return [assetIDs.get(key), suffix || ''];
+    }
 
     function resolve(value, base, report) {
       try { return new URL(value, base); }
@@ -66,7 +91,10 @@
       var url = resolve(value, base, report);
       if (!url) return null;
       if (/^data:(?:image\/|font\/|application\/(?:font-|vnd\.ms-fontobject))/i.test(url.href) &&
-          (kind !== 'image' || /^data:image\//i.test(url.href))) return url.href;
+          (kind !== 'image' || /^data:image\//i.test(url.href))) {
+        var data = url.href.split('#', 1)[0];
+        return [store(imageOrFontDataURL(data), url.href.slice(data.length))];
+      }
       var type = mime[/\.([^.\/]+)$/.exec(url.pathname.toLowerCase())?.[1]];
       if (url.protocol !== 'file:') {
         report('unsupported-resource', value, 'Only local images and fonts can be embedded.');
@@ -76,9 +104,13 @@
         var file = folder.file(url);
         if (file) {
           try {
-            if (!embedded.has(file)) embedded.set(file, dataURL(type, new Uint8Array(await file.arrayBuffer())));
+            if (!embedded.has(file)) {
+              var bytes = new Uint8Array(await file.arrayBuffer());
+              signal?.throwIfAborted();
+              embedded.set(file, 'data:' + type + ';base64,' + root.btoa(binaryString(bytes)));
+            }
             signal?.throwIfAborted();
-            return embedded.get(file) + url.hash;
+            return [store(embedded.get(file), url.hash)];
           } catch (error) {
             signal?.throwIfAborted();
             report('unreadable-resource', value, 'The resource could not be read.');
@@ -115,23 +147,24 @@
         return null;
       }
       signal?.throwIfAborted();
-      return css(text, url.href, report, new Set([...parents, file]));
+      return [store(await css(text, url.href, report, new Set([...parents, file])))];
     }
 
     async function css(text, base, report, parents, ids) {
-      var out = '';
+      var parts = [];
+      var literal = '';
       var end = 0;
       var functions = [];
       for (var match of text.matchAll(cssTokens)) {
         signal?.throwIfAborted();
         var token = match[0];
-        var replacement = token;
+        var replacement = null;
         if (/^@import\b/i.test(token)) {
           var address = new RegExp(cssString.source + '|' + cssURL.source, 'i')
             .exec(token.replace(/^@import\b(?:\s|\/\*[\s\S]*?\*\/)*/i, ''))[0];
           var imported = await stylesheet(unquote(address.replace(/^url\(([\s\S]*)\)$/i, '$1')),
             base, report, parents);
-          replacement = '@import url("' + (imported === null ? 'data:text/css,' : cssData(imported)) + '")';
+          replacement = ['@import url(', ...(imported || ['"data:text/css,"']), ')'];
         } else if (/^url\(/i.test(token)) {
           var value = unquote(token.slice(4, -1));
           var embeddedURL;
@@ -139,41 +172,54 @@
             var id = ids.get(value.slice(1));
             embeddedURL = id ? '#' + id : null;
           } else embeddedURL = await resource(value, base, report);
-          replacement = 'url(' + quoteCSS(embeddedURL || 'data:,') + ')';
+          replacement = ['url(', ...cssURLParts(embeddedURL), ')'];
         } else if (/^["']/.test(token) && /^(?:-webkit-)?image-set\($/i.test(functions.at(-1))) {
-          replacement = quoteCSS(await resource(unquote(token), base, report, 'image') || 'data:,');
+          replacement = cssURLParts(await resource(unquote(token), base, report, 'image'));
         } else if (token.endsWith('(')) functions.push(token);
         else if (token === ')') functions.pop();
-        out += text.slice(end, match.index) + replacement;
+        if (!replacement) continue;
+        literal += text.slice(end, match.index);
+        for (var part of replacement) {
+          if (typeof part === 'string') literal += part;
+          else {
+            parts.push(literal, part);
+            literal = '';
+          }
+        }
         end = match.index + token.length;
       }
-      return out + text.slice(end);
+      parts.push(literal + text.slice(end));
+      return parts;
     }
 
     async function srcset(value, base, report) {
       var result = [];
       for (var [url, descriptor] of candidates(value)) {
         var address = await resource(url, base, report, 'image');
-        if (address) result.push(address + (descriptor ? ' ' + descriptor : ''));
+        if (!address) continue;
+        if (result.length) result.push(', ');
+        if (typeof address === 'string') result.push(address);
+        else result.push(...address);
+        if (descriptor) result.push(' ' + descriptor);
       }
-      return result.join(', ');
+      return result.length ? result : null;
     }
 
-    return { resource: resource, srcset: srcset,
+    return { assets: assets, resource: resource, srcset: srcset,
       css: function (value, base, report, ids) { return css(value, base, report, new Set(), ids); },
+      inlineStylesheet: async function (value, base, report) {
+        return [store(await css(value, base, report, new Set()))];
+      },
       stylesheet: function (value, base, report) { return stylesheet(value, base, report, new Set()); }
     };
   }
 
-  function quoteCSS(value) {
-    return '"' + value.replace(/["\\\n\r\f]/g, function (character) {
+  function cssURLParts(value) {
+    if (Array.isArray(value)) return value;
+    return ['"' + (value || 'data:,').replace(/["\\\n\r\f]/g, function (character) {
       return '\\' + character.codePointAt(0).toString(16) + ' ';
-    }) + '"';
+    }) + '"'];
   }
 
-  function cssData(text) {
-    return dataURL('text/css;charset=utf-8', new TextEncoder().encode(text));
-  }
-
-  root.DocForm._exportResources = { setup: setup, cssData: cssData };
+  root.DocForm._exportResources = { setup: setup };
 })(window);

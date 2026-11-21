@@ -3,10 +3,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function load(sourceDocs = new Map()) {
+function load(sourceDocs = new Map(), createExportDocument) {
   const document = {
     implementation: {
-      createHTMLDocument() {
+      createHTMLDocument(title) {
+        if (title && createExportDocument) return createExportDocument(title);
         return {
           documentElement: {},
           get title() { return sourceDocs.get(this.documentElement.innerHTML)?.title || ''; },
@@ -19,7 +20,7 @@ function load(sourceDocs = new Map()) {
       }
     }
   };
-  const context = vm.createContext({ URL, TextEncoder, btoa, document });
+  const context = vm.createContext({ URL, TextEncoder, atob, btoa, Blob, document });
   context.window = context;
   context.DocForm = {
     _boot: { entryURL: 'file:///work/project/docform/docform.js' },
@@ -35,6 +36,10 @@ function load(sourceDocs = new Map()) {
 
 function file(path, text) {
   return { webkitRelativePath: path, text: async () => text };
+}
+
+function assembleValue(runtime, resources, parts, css = false) {
+  return runtime._exportReader.assemble([[css, parts]], resources.assets).replaceAll('&quot;', '"');
 }
 
 const library = [file('docform/docform.js', ''), file('docform/css/base.css', 'base')];
@@ -144,8 +149,9 @@ test('nested CSS imports keep conditions and embed resources relative to each so
   ]);
   const issues = [];
   const resources = runtime._exportResources.setup({ file: url => files.get(url.pathname) });
-  const css = await resources.stylesheet('../css/outer.css', 'file:///site/docs/page.html',
+  const sheet = await resources.stylesheet('../css/outer.css', 'file:///site/docs/page.html',
     (...args) => issues.push(args));
+  const css = Buffer.from(assembleValue(runtime, resources, sheet).split(',')[1], 'base64').toString();
   assert.match(css, /layer\(print\) print/);
   const bytes = /data:text\/css;charset=utf-8;base64,([^"]+)/.exec(css)[1];
   const embedded = Buffer.from(bytes, 'base64').toString();
@@ -159,14 +165,86 @@ test('nested CSS imports keep conditions and embed resources relative to each so
 
 test('responsive image candidates preserve data URLs and descriptors while omitting missing files', async () => {
   const runtime = load();
-  const stored = new Blob(['two']);
-  const resources = runtime._exportResources.setup({ file: url => url.pathname === '/site/large.png' ? stored : null });
+  const files = new Map([
+    ['/site/large.png', new Blob(['two'])],
+    ['/site/copy.png', new Blob(['two'])]
+  ]);
+  const resources = runtime._exportResources.setup({ file: url => files.get(url.pathname) });
   const issues = [];
   const result = await resources.srcset('data:image/png;base64,b25l 1x, large.png 2x, missing.png 3x',
     'file:///site/index.html', (...args) => issues.push(args));
-  assert.equal(result, 'data:image/png;base64,b25l 1x, data:image/png;base64,dHdv 2x');
+  assert.equal(assembleValue(runtime, resources, result), 'data:image/png;base64,b25l 1x, data:image/png;base64,dHdv 2x');
   assert.equal(issues[0][0], 'missing-resource');
+  const shared = await resources.srcset('copy.png#first 1x, data:image/png,%74wo#second 2x',
+    'file:///site/index.html', (...args) => issues.push(args));
+  assert.equal(assembleValue(runtime, resources, shared),
+    'data:image/png;base64,dHdv#first 1x, data:image/png;base64,dHdv#second 2x');
+  assert.equal(resources.assets.length, 2);
   const remapped = await resources.css('fill:url(#paint); stroke:url(#missing)', 'file:///site/drawing.svg',
     (...args) => issues.push(args), new Map([['paint', 'export-paint']]));
-  assert.equal(remapped, 'fill:url("#export-paint"); stroke:url("data:,")');
+  assert.equal(assembleValue(runtime, resources, remapped, true), 'fill:url("#export-paint"); stroke:url("data:,")');
+});
+
+test('a cancelled export can be rebuilt with a fresh bundle and exact download size', async () => {
+  function element(tag, text = '') {
+    const attributes = new Map();
+    return {
+      children: [], dataset: {}, matches: () => false, querySelectorAll: () => [], contains: () => true,
+      hasAttribute(name) { return attributes.has(name); },
+      setAttribute(name, value) { attributes.set(name, { name, value }); },
+      getAttributeNode(name) { return attributes.get(name); },
+      get attributes() { return attributes.values(); },
+      set id(value) { this.setAttribute('id', value); },
+      set type(value) { this.setAttribute('type', value); },
+      set rel(value) { this.setAttribute('rel', value); },
+      set media(value) { this.setAttribute('media', value); },
+      append(...children) { this.children.push(...children); },
+      prepend(child) { this.children.unshift(child); },
+      get outerHTML() {
+        const attrs = Array.from(attributes.values(), attr => ` ${attr.name}="${attr.value}"`).join('');
+        return `<${tag}${attrs}>${this.textContent || text}${this.children.map(child => child.outerHTML).join('')}</${tag}>`;
+      }
+    };
+  }
+  function exportDocument(title) {
+    const html = element('html');
+    const head = element('head');
+    const body = element('body');
+    body.replaceWith = () => {};
+    head.append(element('title', title));
+    html.append(head, body);
+    return { documentElement: html, head, body, createElement: element, importNode: node => node,
+      getElementById: () => null, querySelectorAll: () => [] };
+  }
+  const runtime = load(new Map([['only', { title: 'An example' }]]), exportDocument);
+  runtime._page = 'file:///work/project/index.html';
+  runtime._site = { provided: false };
+  let css = 'p::before{content:"cancelled"}';
+  runtime._pageSnapshot.capture = async () => ({
+    title: 'An example', issues: [], htmlAttributes: [], body: element('body'), imports: [],
+    styles: [{ text: css }, { text: css, media: 'print' }]
+  });
+  const signal = new AbortController();
+  const prepared = await runtime._exportPackage.prepare([file('project/index.html', 'only')], { library });
+  const phases = [];
+  await assert.rejects(prepared.build([prepared.active], { signal: signal.signal, onProgress(event) {
+    phases.push(event.phase);
+    if (event.phase === 'serialize') signal.abort();
+  } }), { name: 'AbortError' });
+  assert.deepEqual(phases, ['capture', 'assets', 'links', 'serialize']);
+
+  css = 'p::before{content:"</script> café"}';
+  const result = await prepared.build([prepared.active]);
+  const html = await result.blob.text();
+  assert.equal(result.bytes, result.blob.size);
+  assert.equal(result.bytes, Buffer.byteLength(html));
+  const bundle = JSON.parse(/<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(html)[1]);
+  assert.deepEqual(bundle.assets[0], [css]);
+  assert.equal(bundle.assets.length, 2);
+  assert.match(bundle.assets[1][0], /^\.df-export-pop/);
+  assert.doesNotMatch(html, /cancelled/);
+  const frame = runtime._exportReader.assemble(bundle.pages[0].markup, bundle.assets);
+  const dataURL = 'data:text/css;charset=utf-8;base64,' + Buffer.from(css).toString('base64');
+  assert.equal(frame.split(dataURL).length, 3);
+  assert.match(frame, new RegExp(`href="${dataURL}" media="print"`));
 });

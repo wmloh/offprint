@@ -1,9 +1,47 @@
 (function (root) {
   'use strict';
 
-  function reader() {
-    var templates = Array.from(document.querySelectorAll('template[data-page]'));
-    var pages = new Map(templates.map(function (node) { return [node.dataset.page, node]; }));
+  function assemble(markup, assets) {
+    var sheets = new Map();
+
+    function assetURL(reference) {
+      var [id, suffix] = reference;
+      var asset = assets[id];
+      if (typeof asset === 'string') return asset + suffix;
+      if (!sheets.has(id)) {
+        var bytes = new TextEncoder().encode(expand(asset, true));
+        var chunks = [];
+        for (var offset = 0; offset < bytes.length; offset += 8192) {
+          chunks.push(String.fromCharCode.apply(null, bytes.subarray(offset, offset + 8192)));
+        }
+        sheets.set(id, 'data:text/css;charset=utf-8;base64,' + btoa(chunks.join('')));
+      }
+      return sheets.get(id) + suffix;
+    }
+
+    function expand(parts, css) {
+      return parts.map(function (part) {
+        if (typeof part === 'string') return part;
+        var url = assetURL(part);
+        if (!css) return url;
+        return '"' + url.replace(/["\\\n\r\f]/g, function (character) {
+          return '\\' + character.codePointAt(0).toString(16) + ' ';
+        }) + '"';
+      }).join('');
+    }
+
+    return markup.map(function (part) {
+      if (typeof part === 'string') return part;
+      var [css, value] = part;
+      return expand(value, css).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r/g, '&#13;');
+    }).join('');
+  }
+
+  function reader(assemble) {
+    var bundle = JSON.parse(document.querySelector('#export-bundle').textContent);
+    document.querySelector('#export-bundle').remove();
+    var pages = new Map(bundle.pages.map(function (page) { return [page.id, page]; }));
     var host = document.querySelector('#export-page');
     var contents = document.querySelector('#export-contents');
     var previous = document.querySelector('#export-previous');
@@ -18,8 +56,8 @@
     function leg(link, page, label) {
       link.hidden = !page;
       if (!page) return;
-      link.href = '#' + page.dataset.page;
-      link.textContent = label + ' · ' + page.dataset.title;
+      link.href = '#' + page.id;
+      link.textContent = label + ' · ' + page.title;
     }
 
     function destination() {
@@ -153,9 +191,11 @@
       }
       active = page;
       ready = false;
-      var template = pages.get(page);
-      var index = templates.indexOf(template);
-      frame = template.content.firstElementChild.cloneNode();
+      var record = pages.get(page);
+      var index = bundle.pages.indexOf(record);
+      frame = document.createElement('iframe');
+      frame.title = record.title;
+      frame.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
       var current = frame;
       frame.addEventListener('load', function () {
         if (current !== frame || current.contentDocument?.URL !== 'about:srcdoc') return;
@@ -165,10 +205,11 @@
         ready = true;
         scroll(destination()[1]);
       });
+      frame.srcdoc = assemble(record.markup, bundle.assets);
       host.replaceChildren(frame);
-      status.textContent = template.dataset.title;
-      leg(previous, templates[index - 1], 'Previous');
-      leg(next, templates[index + 1], 'Next');
+      status.textContent = record.title;
+      leg(previous, bundle.pages[index - 1], 'Previous');
+      leg(next, bundle.pages[index + 1], 'Next');
       contents.querySelectorAll('a').forEach(function (link) {
         if (link.hash === '#' + page) link.setAttribute('aria-current', 'page');
         else link.removeAttribute('aria-current');
@@ -180,5 +221,5 @@
     render();
   }
 
-  root.DocForm._exportReader = reader;
+  root.DocForm._exportReader = { run: reader, assemble: assemble };
 })(window);

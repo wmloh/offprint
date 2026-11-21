@@ -319,6 +319,7 @@
         var name = attr.name.toLowerCase();
         var value = attr.value;
         var replacement = value;
+        var css = false;
         if (/^on/.test(name) || ['autofocus', 'autoplay', 'ping', 'target', 'srcdoc', 'action', 'formaction', 'xml:base',
           'data-export-destination', 'data-export-disabled'].includes(name)) {
           replacement = null;
@@ -344,14 +345,18 @@
             await resources.resource(value, base, report, 'image') : null;
         } else if (name === 'srcset') {
           replacement = node.matches('img,picture source') ?
-            await resources.srcset(value, base, report) || null : null;
+            await resources.srcset(value, base, report) : null;
         } else if (name === 'style' || node.namespaceURI === svg && /url\(/i.test(value)) {
+          css = true;
           replacement = await resources.css(value, base, report, ids);
         } else if (ids && ['aria-labelledby', 'aria-describedby'].includes(name)) {
           replacement = value.split(/\s+/).map(function (id) { return ids.get(id); }).filter(Boolean).join(' ') || null;
         }
         if (replacement === null) node.removeAttributeNode(attr);
-        else if (replacement !== value) attr.value = replacement;
+        else if (Array.isArray(replacement)) {
+          if (replacement.some(Array.isArray)) page.attributes.set(attr, [css, replacement]);
+          else attr.value = replacement.join('');
+        } else if (replacement !== value) attr.value = replacement;
       }
     }
   }
@@ -365,7 +370,7 @@
     doc.body.replaceWith(doc.importNode(snapshot.body, true));
     var description = 'df-export-unavailable';
     while (doc.getElementById(description)) description += '-';
-    return { ...page, document: doc, description: description, snapshot: snapshot,
+    return { ...page, document: doc, description: description, snapshot: snapshot, attributes: new Map(),
       base: address(snapshot.baseURL, page.url) || address(page.url) };
   }
 
@@ -375,19 +380,36 @@
     }));
   }
 
-  async function styles(page, resources, report) {
+  async function styles(page, resources, report, signal) {
     var doc = page.document;
-    for (var record of page.snapshot.styles) {
-      var text = record.href ? await resources.stylesheet(record.href, page.base, report) :
-        await resources.css(record.text, page.base, report);
-      if (text === null) continue;
+    for (var record of [...page.snapshot.styles, { text: tipCSS }]) {
+      signal?.throwIfAborted();
+      var reference = record.href ? await resources.stylesheet(record.href, page.base, report) :
+        await resources.inlineStylesheet(record.text, page.base, report);
+      if (reference === null) continue;
       var sheet = create(doc, 'link');
       sheet.rel = 'stylesheet';
-      sheet.href = DF._exportResources.cssData(text);
+      sheet.setAttribute('href', '');
+      page.attributes.set(sheet.getAttributeNode('href'), [false, reference]);
       if (record.media) sheet.media = record.media;
       doc.head.append(sheet);
     }
-    doc.head.append(create(doc, 'style', tipCSS));
+  }
+
+  function pageMarkup(page) {
+    var html = page.document.documentElement;
+    var markup = '<!doctype html>\n' + html.outerHTML;
+    if (!page.attributes.size) return [markup];
+    // Mark only known attribute values, then split away the markers before saving.
+    var prefix = 'df-export-asset-';
+    while (markup.includes(prefix)) prefix += '-';
+    var values = [];
+    for (var [attr, parts] of page.attributes) {
+      attr.value = prefix + values.length + '-ref';
+      values.push(parts);
+    }
+    return ('<!doctype html>\n' + html.outerHTML).split(new RegExp(prefix + '(\\d+)-ref', 'g'))
+      .map(function (part, index) { return index % 2 ? values[Number(part)] : part; });
   }
 
   function contentsList(doc, tree, pages) {
@@ -410,7 +432,7 @@
     return list;
   }
 
-  function serialize(title, tree, active, pages) {
+  function serialize(title, tree, active, pages, assets) {
     var doc = document.implementation.createHTMLDocument(title);
     doc.documentElement.lang = 'en';
     meta(doc, 'charset', 'utf-8');
@@ -442,18 +464,15 @@
     host.id = 'export-page';
     host.dataset.initial = pages.find(function (page) { return page.id === active; })?.id || pages[0].id;
     doc.body.append(header, host, create(doc, 'noscript', 'Enable JavaScript to use the standalone reader.'));
-    for (var page of pages) {
-      var template = create(doc, 'template');
-      template.dataset.page = page.id;
-      template.dataset.title = page.snapshot.title || page.title;
-      var frame = create(doc, 'iframe');
-      frame.title = template.dataset.title;
-      frame.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
-      frame.srcdoc = '<!doctype html>\n' + page.document.documentElement.outerHTML;
-      template.content.append(frame);
-      doc.body.append(template);
-    }
-    doc.body.append(create(doc, 'script', '(' + DF._exportReader.toString() + ')();'));
+    var bundle = create(doc, 'script', JSON.stringify({
+      assets: assets,
+      pages: pages.map(function (page) { return { id: page.id, title: page.title, markup: page.markup }; })
+    }).replace(/</g, '\\u003c'));
+    bundle.id = 'export-bundle';
+    bundle.type = 'application/json';
+    doc.body.append(bundle);
+    var reader = DF._exportReader;
+    doc.body.append(create(doc, 'script', '(' + reader.run.toString() + ')(' + reader.assemble.toString() + ');'));
     return '<!doctype html>\n' + doc.documentElement.outerHTML;
   }
 
@@ -525,17 +544,26 @@
       for (var link of page.document.body.querySelectorAll('a[href],area[href],a[*|href]')) {
         rewriteLink(link, link.hasAttribute('href') ? 'href' : 'xlink:href', page, pages, page.report);
       }
-      await styles(page, resources, page.report);
+      await styles(page, resources, page.report, signal);
+      signal?.throwIfAborted();
+      page.markup = pageMarkup(page);
+      page.attributes.clear();
+      page.document = null;
     }
     await options?.onProgress?.({ phase: 'serialize', completed: completed, total: chosen.size });
     signal?.throwIfAborted();
-    var included = Array.from(pages.values());
-    var blob = new Blob([serialize(site.title, site.tree, site.active, included)], { type: 'text/html;charset=utf-8' });
+    var included = Array.from(pages.values(), function (page) {
+      return { id: page.id, title: page.snapshot.title || page.title, markup: page.markup,
+        view: page.snapshot.view, imports: page.snapshot.imports };
+    });
+    var blob = new Blob([serialize(site.title, site.tree, site.active, included, resources.assets)],
+      { type: 'text/html;charset=utf-8' });
+    signal?.throwIfAborted();
     var filename = site.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '-').trim().replace(/[. ]+$/, '').slice(0, 120);
     options?.onProgress?.({ phase: 'done', completed: completed, total: chosen.size });
     return { blob: blob, bytes: blob.size, filename: (filename || 'DocForm export') + '.html', issues: issues,
       pages: included.map(function (page) {
-        return { id: page.id, title: page.snapshot.title || page.title, view: page.snapshot.view, imports: page.snapshot.imports };
+        return { id: page.id, title: page.title, view: page.view, imports: page.imports };
       }) };
   }
 

@@ -331,6 +331,8 @@
     }
 
     function follow(key, origin) {
+      // The saved selection can still point at the last checkpoint while the playhead is between stops.
+      if (DocForm._readerState?.restoring('sequence', host)) return null;
       var stop = stopWithKey(key);
       return range && stop ? arrive(stop.x, origin) : null;
     }
@@ -553,9 +555,17 @@
           if (value === null) return !range;
           if (!range || !Number.isFinite(value) || value < range[0] || value > range[1] ||
               (instance.state && !Number.isInteger(value))) return false;
-          return component.transaction(function () { return jump(value, 'api'); });
+          return component.transaction(function () {
+            var notify = arrive(value, 'api');
+            if (notify) notify();
+            return true;
+          });
         },
-        order: instance.state ? -30 : 5, current: function () { return true; }
+        order: instance.state ? -30 : 5, current: function () { return true; },
+        revision: function () {
+          var revisions = instance.chartHosts.map(DocForm._chart._authoredRevision);
+          return revisions.some(Boolean) ? JSON.stringify(revisions) : null;
+        }
       }
     });
     var api = entry.controller;

@@ -20,6 +20,7 @@
   var CLOSE_MS = 260;
 
   var open = null;
+  var deactivate;
   var component = DocForm._component;
   var boot = DocForm._boot;
   var changes = component.signal('zoom', null, snapshot);
@@ -44,29 +45,39 @@
     return text ? 'Enlarged: ' + text : 'Enlarged figure';
   }
 
-  function beginClose(origin) {
-    if (!open || open.finish) return;
+  function beginClose(origin, dispose) {
+    if (!open) return;
+    if (open.finish) {
+      if (dispose) open.finish(false);
+      return;
+    }
     var state = open;
     var previous = snapshot();
     state.removeShortcut();
+    root.cancelAnimationFrame(state.frame);
     state.overlay.classList.remove('is-open');
     document.documentElement.classList.remove('df-zoom-open');
-    state.finish = function () {
+    state.finish = function (restoreFocus) {
       if (open !== state) return;
       open = null;
+      state.listeners.abort();
       clearTimeout(state.timer);
       if (state.placeholder.parentNode) state.placeholder.parentNode.replaceChild(state.target, state.placeholder);
       state.target.classList.remove('df-zoomed');
       state.overlay.remove();
-      if (state.opener && typeof state.opener.focus === 'function') state.opener.focus({ preventScroll: true });
+      if (restoreFocus && state.opener?.isConnected) state.opener.focus?.({ preventScroll: true });
       changes.emit(null, previous, origin);
     };
-    state.overlay.addEventListener('transitionend', function (event) {
-      if (event.target === state.overlay) component.transaction(state.finish);
-    });
-    state.timer = setTimeout(function () { component.transaction(state.finish); }, CLOSE_MS + 80);
     if (!boot) emit('df:zoomclose', state);
     closing.emit(null, previous, origin);
+    if (dispose) state.finish(false);
+    else {
+      var finish = function () { component.transaction(function () { state.finish(true); }); };
+      state.overlay.addEventListener('transitionend', function (event) {
+        if (event.target === state.overlay) finish();
+      }, { signal: state.listeners.signal });
+      state.timer = setTimeout(finish, CLOSE_MS + 80);
+    }
   }
 
   function close(origin) {
@@ -124,8 +135,9 @@
       run: function () { close('user'); }
     });
     DocForm._shortcutHint(closeButton, 'zoom.close', 'Close');
-    open = { target: target, placeholder: placeholder, overlay: overlay, stage: stage, opener: opener,
-      removeShortcut: removeShortcut };
+    var state = open = { target: target, placeholder: placeholder, overlay: overlay, stage: stage, opener: opener,
+      removeShortcut: removeShortcut, listeners: new AbortController() };
+    var options = { signal: state.listeners.signal };
     overlay.addEventListener('keydown', function (event) {
       if (event.key !== 'Tab' || event.defaultPrevented) return;
       var items = DocForm._all('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', overlay)
@@ -135,14 +147,14 @@
       var last = items[items.length - 1];
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    });
+    }, options);
     overlay.addEventListener('click', function (event) {
       if (event.target === overlay || event.target === stage) close('user');
-    });
-    closeButton.addEventListener('click', function () { close('user'); });
+    }, options);
+    closeButton.addEventListener('click', function () { close('user'); }, options);
     // Two frames let the start state paint before the open transition.
-    root.requestAnimationFrame(function () {
-      root.requestAnimationFrame(function () {
+    state.frame = root.requestAnimationFrame(function () {
+      state.frame = root.requestAnimationFrame(function () {
         if (open && open.overlay === overlay && !open.finish) overlay.classList.add('is-open');
       });
     });
@@ -161,7 +173,7 @@
       }
       if (open) {
         beginClose(origin);
-        open.finish();
+        open.finish(true);
       }
       if (!target.parentNode) return false;
       show(target, opener, origin);
@@ -198,20 +210,25 @@
       target.classList.add('df-zoomable');
       if (!target.hasAttribute('tabindex')) target.tabIndex = 0;
     });
-    document.addEventListener('click', function (event) {
+    function click(event) {
       if (event.defaultPrevented || event.button !== 0) return;
       var trigger = triggerFor(event.target);
       var target = trigger && zoomTarget(trigger);
       if (!target) return;
       requestOpen(target, target, 'user');
-    });
-    DocForm.shortcuts.register({
+    }
+    document.addEventListener('click', click);
+    var removeShortcut = DocForm.shortcuts.register({
       id: 'zoom.open', key: ['Enter', 'Space'], label: 'Enlarge focused figure', scope: document.body,
       when: function (event, el) {
         return el && el.classList && el.classList.contains('df-zoomable') && !el.closest('.df-zoom');
       },
       run: function (event, el) { requestOpen(el, el, 'user'); }
     });
+    deactivate = function () {
+      document.removeEventListener('click', click);
+      removeShortcut();
+    };
   });
 
   DocForm._zoom = {
@@ -220,6 +237,11 @@
       return !!el && requestOpen(el, document.activeElement, 'api');
     },
     close: function () { return close('api'); },
+    dispose: function () {
+      deactivate?.();
+      deactivate = null;
+      component.transaction(function () { beginClose('dispose', true); });
+    },
     isOpen: function () { return !!open; },
     snapshotPlacement: function () { return open && { target: open.target, placeholder: open.placeholder }; },
     snapshot: snapshot,

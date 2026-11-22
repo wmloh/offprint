@@ -27,6 +27,7 @@ function element(tag) {
     offsetHeight: 48,
     childNodes: [],
     get children() { return this.childNodes.filter(node => node.nodeType === 1); },
+    get attributes() { return Array.from(attrs, ([name, value]) => ({ name, value })); },
     get textContent() { return text + this.childNodes.map(node => node.textContent).join(''); },
     set textContent(value) {
       text = String(value);
@@ -114,6 +115,8 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
   const head = element('head');
   const body = element('body');
   const html = element('html');
+  html.appendChild(body);
+  const documentEvents = new EventTarget();
   const citation = cite ? element('cite') : null;
   const bibliography = cite ? element('div') : null;
   const ids = new Map();
@@ -146,9 +149,13 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
       if (type === 'DOMContentLoaded') launch = callback;
       if (type === 'keydown') keyboards.push({ callback, capture });
       if (type === 'click') clicks.push(callback);
+      documentEvents.addEventListener(type, callback, capture);
     },
-    removeEventListener() {},
-    dispatchEvent(event) { events.push(event); },
+    removeEventListener(type, callback, capture) {
+      if (type === 'click' && clicks.includes(callback)) clicks.splice(clicks.indexOf(callback), 1);
+      documentEvents.removeEventListener(type, callback, capture);
+    },
+    dispatchEvent(event) { events.push(event); return documentEvents.dispatchEvent(event); },
     createElement(tag) {
       const node = element(tag);
       node.focus = () => { document.activeElement = node; };
@@ -257,6 +264,92 @@ test('the trusted Interactive loader initializes the feature closure from embedd
   const broken = page({ config, site, interactive: true });
   await assert.rejects(broken.hydrate({ ...payload, modules: payload.modules.slice(0, -1) }, shared,
     new AbortController().signal), /required DocForm feature/);
+});
+
+test('Interactive import replay restores local overrides and shared replacements before rendering the saved view', async () => {
+  const config = { profile: 'none', features: { 'data-view': true, dropzone: true } };
+  const site = { assets: { data: { runs: { output: 'runs.js' }, unused: { output: 'unused.js' } } } };
+  const plan = page({ config, site }).DF._boot.exportPlan(site, config, null, false);
+  const trusted = { window: { DocForm: {} } };
+  vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
+  const shared = plan.scripts.map(path => trusted.window.DocForm._exportRuntime[path]);
+  const baseline = 'name,value\nauthored,1';
+  const local = 'name,value\nlocal café,2';
+  const replacement = 'name,value\nshared,3';
+  const manifest = shared.push(site) - 1;
+  const runs = shared.push({ type: 'csv', text: baseline }) - 1;
+  const changedRuns = shared.push({ type: 'csv', text: 'name,value\nrevised,4' }) - 1;
+  const localIndex = shared.push(local) - 1;
+  const sharedIndex = shared.push(replacement) - 1;
+  const inlineIndex = shared.push('name,value\ninline,5') - 1;
+  const identities = ['local-view', 'shared-view', 'local-box', 'shared-box']
+    .map(id => ({ key: ['id', id], stamp: id }));
+  const localKey = '["target","local-view"]';
+  const sharedKey = '["source","runs"]';
+  const payload = { url: 'file:///original/data.html', siteURL: 'file:///original/site.js', entryURL: entryURL.href,
+    site: manifest, profile: null, features: plan.features, styles: plan.styles,
+    identities, modules: plan.scripts.map((path, i) => [path, i]), data: [['runs', runs]],
+    inlineData: [inlineIndex], imports: [[localKey, localIndex], [sharedKey, sharedIndex]] };
+
+  async function visit(saved, data = payload.data) {
+    const p = page({ config, site, interactive: true, movedURL: 'file:///elsewhere/standalone.html', globals: { TextEncoder } });
+    const nodes = identities.map(({ key: [, id] }, index) => {
+      const node = p.body.appendChild(p.document.createElement('div'));
+      node.id = id;
+      node.setAttribute('data-df-export-identity', index);
+      return node;
+    });
+    const [localView, sharedView, localBox, sharedBox] = nodes;
+    for (const view of [localView, sharedView]) {
+      view.setAttribute('data-df-source', 'runs');
+      view.setAttribute('data-df-data-view', 'code');
+    }
+    for (const box of [localBox, sharedBox]) box.setAttribute('data-df-dropzone', '');
+    localBox.setAttribute('data-df-target', localView.id);
+    sharedBox.setAttribute('data-df-target-source', 'runs');
+    const definition = p.body.appendChild(p.document.createElement('script'));
+    definition.setAttribute('type', 'text/csv');
+    definition.setAttribute('data-df-source', 'inline');
+    definition.setAttribute('data-df-export-data', '0');
+    p.body.querySelectorAll = selector => ({
+      '[data-df-export-data]': [definition],
+      '[data-df-export-identity]': nodes,
+      'script[data-df-source], pre[data-df-source]': [definition],
+      '[data-df-data-view]:not([data-df-dropzone])': [localView, sharedView],
+      '[data-df-dropzone]:not(.df-dropzone)': [localBox, sharedBox]
+    })[selector] || [];
+    const runtime = await p.hydrate({ ...payload, data }, shared, new AbortController().signal, saved);
+    assert.deepEqual(p.loads, []);
+    assert.equal(runtime.data.source('unused'), null);
+    assert.equal(runtime.data.source('inline').snapshot().text, shared[inlineIndex]);
+    return { runtime, localView, sharedView, localBox, sharedBox };
+  }
+
+  const { runtime } = await visit();
+  const seed = runtime._readerState.capture().record;
+  const item = (box, target, text) => ({ host: JSON.stringify(['import', ['id', box]]), stamp: box,
+    target: JSON.stringify(target), revision: [1, box, 1], name: box + '.csv', type: 'csv',
+    bytes: Buffer.byteLength(text) });
+  seed.imports = [
+    [localKey, item('local-box', ['target', 'local-view', 'local-view'], local)],
+    [sharedKey, item('shared-box', ['source', 'runs', 'csv', runtime._readerState.stamp(baseline)], replacement)]
+  ];
+  const opened = await visit(seed);
+  assert.equal(opened.localView.textContent, local);
+  assert.equal(opened.sharedView.textContent, replacement);
+  const captured = opened.runtime._readerState.capture();
+  assert.equal(captured.payloads.get(localKey), local);
+  assert.equal(captured.payloads.get(sharedKey), replacement);
+  const returned = await visit(captured);
+  assert.equal(returned.localView.textContent, local);
+  assert.equal(returned.sharedView.textContent, replacement);
+  const reset = box => descendants(box).find(el => el.className === 'df-button df-dropzone-reset').click();
+  reset(returned.localBox);
+  assert.equal(returned.localView.textContent, replacement);
+  reset(returned.sharedBox);
+  assert.equal(returned.sharedView.textContent, baseline);
+  assert.equal(returned.runtime._readerState.capture().payloads.size, 0);
+  await assert.rejects(visit(seed, [['runs', changedRuns]]), /committed view could not be restored/);
 });
 
 test('Interactive cards restore nested tabs, filters, and a paused SVG position across page visits', async () => {
@@ -379,6 +472,276 @@ test('Interactive cards restore nested tabs, filters, and a paused SVG position 
   assert.equal(restored.buttons[0].getAttribute('aria-selected'), 'true');
   const afterHover = restored.runtime._readerState.capture().record;
   assert.equal(afterHover.views.find(([id]) => JSON.parse(id)[0] === 'cards')[1].value, 'motion');
+});
+
+test('Interactive charts restore linked playback, filters, and nested chart controls offline', async () => {
+  const config = { profile: 'none', features: { data: true, selection: true, parameters: true,
+    'chart-intervals': true, 'chart-histogram': true, 'chart-heatmap': true, 'chart-playback': true, 'zoom-tools': true },
+    options: { chart: { instances: { trace: { mapping: {
+      x: 'x', series: [{ field: 'y', key: 'observed' }], pointKey: 'key'
+    } } } } },
+    parameterScopes: { page: { direction: { type: 'select', choices: [
+      { value: 'vertical', label: 'Vertical' }, { value: 'horizontal', label: 'Horizontal' }
+    ] }, bins: { type: 'range', min: 2, max: 5, step: 1 } } } };
+  const site = { assets: { data: { trace: { output: 'trace.js' } } } };
+  const plan = page({ config, site }).DF._boot.exportPlan(site, config, null, false);
+  const trusted = { window: { DocForm: {} } };
+  vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
+  const shared = plan.scripts.map(path => trusted.window.DocForm._exportRuntime[path]);
+  const manifest = shared.push(site) - 1;
+  const traceText = 'x,y,key\n0,0,start\n5,2,mid\n10,3,end';
+  const original = shared.push({ type: 'csv', text: traceText }) - 1;
+  const revised = shared.push({ type: 'csv', text: traceText.replace('5,2', '5,9') }) - 1;
+  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'tour', 'state-tour']
+    .map(id => ({ key: ['id', id], stamp: id }));
+  const payload = { url: 'file:///original/charts.html', siteURL: 'file:///original/site.js', entryURL: entryURL.href,
+    site: manifest, profile: null, features: plan.features, styles: plan.styles, identities,
+    modules: plan.scripts.map((path, i) => [path, i]) };
+
+  async function visit(saved, source = original, hideHeatmap = false) {
+    const frames = new Map();
+    let nextFrame = 0;
+    const p = page({ config, site, interactive: true, movedURL: 'file:///elsewhere/standalone.html', globals: {
+      performance: { now: () => 0 },
+      requestAnimationFrame(callback) { frames.set(++nextFrame, callback); return nextFrame; },
+      cancelAnimationFrame(id) { frames.delete(id); }
+    } });
+    function add(parent, tag, attrs = {}) {
+      const node = parent.appendChild(p.document.createElement(tag));
+      for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
+      return node;
+    }
+    const detail = add(p.body, 'section');
+    const data = [{ x: 0, y: 1, key: 'start' }, { x: 5, y: 2, key: 'mid' }, { x: 10, y: 4, key: 'end' }];
+    const series = [{ key: 'a', data }, { key: 'b', data: [[0, 2], [5, 3], [10, 5]] }];
+    const sharedPosition = { 'data-df-x-group': 'position', 'data-df-selection-group': 'step' };
+    const specs = [
+      ['line', { 'data-df-source': 'trace', ...sharedPosition }, {}],
+      ['line', sharedPosition, { data }],
+      ['bar', { 'data-df-chart-bind': '{"orientation":"direction"}' }, { data: [['A', 1]] }],
+      ['pie', {}, { data: [{ label: 'A', value: 3 }, { label: 'B', value: 4 }], toggles: true }],
+      ['interval', {}, { data: [['A', 3]] }],
+      ['histogram', { 'data-df-chart-bind': '{"bins":"bins"}' }, { data: [1, 3, 5] }],
+      ['heatmap', {}, { z: [[1, 2], [3, 4]], contours: { levels: [2] } }],
+      ['line', {}, { series, brush: true, toggles: true, motion: false }]
+    ];
+    const charts = specs.map(([type, attrs, spec], i) => {
+      const host = add(detail, 'div', { id: identities[i].key[1], 'data-df-export-identity': i,
+        'data-df-chart': type, ...attrs });
+      const definition = add(host, 'script', { type: 'application/json' });
+      definition.textContent = JSON.stringify(spec);
+      host.querySelector = selector => selector === ':scope > script[type="application/json"]' ? definition : null;
+      return host;
+    });
+    const bins = add(detail, 'input', { 'data-df-parameter': 'bins' });
+    bins.type = 'range';
+    const tour = add(detail, 'ol', { id: 'tour', 'data-df-chart-playback': '', ...sharedPosition,
+      'data-df-duration': '100', 'data-df-export-identity': charts.length });
+    const stops = data.map(({ key, x }) => {
+      const stop = add(tour, 'li', { 'data-df-key': key, 'data-df-x': x });
+      stop.textContent = key;
+      return stop;
+    });
+    tour.querySelectorAll = selector => selector === ':scope > li' ? stops : [];
+    const stateTour = add(detail, 'ol', { id: 'state-tour', 'data-df-chart-playback': 'state',
+      'data-df-target': 'bars', 'data-df-export-identity': charts.length + 1 });
+    const stateNote = add(stateTour, 'li', { 'data-df-key': 'sideways',
+      'data-df-state': '{"params":{"direction":"horizontal"}}' });
+    stateNote.textContent = 'Sideways bars';
+    stateTour.querySelectorAll = selector => selector === ':scope > li' ? [stateNote] : [];
+    if (hideHeatmap) {
+      // A chart inside a hidden card detail has no rendered plot when its state replays.
+      const create = p.document.createElement;
+      p.document.createElement = tag => {
+        const node = create(tag);
+        Object.defineProperty(node, 'clientWidth', { get: () => node.parentNode === charts[6] ? 0 : 400 });
+        return node;
+      };
+    }
+    p.body.querySelectorAll = selector => ({
+      '[data-df-chart]': charts, 'ol[data-df-chart-playback]': [tour, stateTour],
+      '[data-df-x-group]': [charts[0], charts[1], tour],
+      '[data-df-parameter]': [bins], '[data-df-export-identity]': [...charts, tour, stateTour]
+    })[selector] || [];
+    const dataEntries = source === null ? [] : [['trace', source]];
+    const runtime = await p.hydrate({ ...payload, data: dataEntries }, shared, new AbortController().signal, saved);
+    assert.deepEqual(p.loads, []);
+    return { runtime, charts, tour, stops, stateTour, stateNote, bins, frames };
+  }
+
+  const first = await visit();
+  const chart = host => first.runtime._chart.get(host);
+  for (const host of first.charts) assert.ok(chart(host), host.id);
+  assert.deepEqual(first.charts.map(host => chart(host).model().addon ?? chart(host).model().type),
+    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line']);
+  const [trace, linked, bars, pie, , , heatmap, brush] = first.charts;
+  const control = (host, cls) => descendants(host).find(node => node.className?.split(' ').includes(cls) || node.getAttribute('class') === cls);
+  const key = (host, name) => control(host, 'df-chart-plot').dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: name }));
+  const playback = first.runtime.sequence.get(first.tour);
+  assert.ok(playback, first.runtime.diagnostics.list().map(issue => issue.message).join('\n'));
+  assert.equal(playback.select('mid'), true);
+  key(trace, 'Home');
+  assert.equal(control(linked, 'df-chart-x-cursor').getAttribute('display'), 'inline');
+  assert.equal(chart(pie).setSeriesVisible(chart(pie).model().series[0].key, false), true);
+  key(brush, '+');
+  assert.deepEqual(Array.from(chart(brush).range()), [2.5, 7.5]);
+  assert.equal(chart(brush).setSeriesVisible('b', false), true);
+  control(brush, 'df-chart-toggle').click();
+  const statePlayback = first.runtime.sequence.get(first.stateTour);
+  assert.ok(statePlayback, first.runtime.diagnostics.list().map(issue => issue.message).join('\n'));
+  assert.equal(statePlayback.select('sideways'), true);
+  assert.equal(chart(bars).model().orientation, 'horizontal');
+  first.bins.valueAsNumber = 4;
+  first.bins.dispatchEvent(new Event('input'));
+  assert.equal(chart(first.charts[5]).model().histogramEdges.length, 5);
+  key(heatmap, 'PageDown');
+  assert.equal(first.runtime._chart._heatmap.contours(heatmap, false), true);
+  control(heatmap, 'df-chart-toggle').click();
+  assert.equal(playback.play(), true);
+  for (const [id, callback] of Array.from(first.frames)) { first.frames.delete(id); callback(50); }
+  assert.equal(playback.position, 7.5);
+  const record = first.runtime._readerState.capture().record;
+
+  const restored = await visit(record, original, true);
+  const getChart = i => restored.runtime._chart.get(restored.charts[i]);
+  const resumed = restored.runtime.sequence.get(restored.tour);
+  assert.equal(resumed.position, 7.5);
+  assert.equal(resumed.snapshot().playing, false);
+  assert.equal(restored.runtime.selection.group('step').get(), 'mid');
+  assert.equal(getChart(2).model().orientation, 'horizontal');
+  assert.equal(restored.runtime.sequence.get(restored.stateTour).key, 'sideways');
+  assert.equal(restored.stateNote.hidden, false);
+  assert.equal(restored.bins.value, '4');
+  assert.equal(getChart(5).model().histogramEdges.length, 5);
+  assert.equal(getChart(3).visible(getChart(3).model().series[0].key), false);
+  assert.equal(getChart(7).visible('b'), false);
+  assert.deepEqual(Array.from(getChart(7).range()), [2.5, 7.5]);
+  assert.equal(control(restored.charts[7], 'df-chart-toggle').getAttribute('aria-pressed'), 'true');
+  assert.deepEqual(Array.from(restored.runtime._chart._heatmap.valueRange(restored.charts[6])),
+    Array.from(first.runtime._chart._heatmap.valueRange(heatmap)));
+  assert.equal(restored.runtime._chart._heatmap.contours(restored.charts[6]), false);
+  const restoredBrush = restored.charts[7];
+  control(restoredBrush, 'df-chart-toggle').click();
+  const zoom = restored.runtime._zoom;
+  assert.equal(zoom.open(restoredBrush), true);
+  const { overlay } = zoom.snapshot();
+  assert.equal(restored.runtime._zoomTools.use('measure'), true);
+  function crosshair() {
+    const svg = descendants(restoredBrush).find(node => node.localName === 'svg');
+    svg.getBoundingClientRect = () => ({ width: 400, left: 0, top: 0 });
+    overlay.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 200, clientY: 100 }));
+    const readout = control(overlay, 'df-zoomtools-readout');
+    assert.equal(readout.hidden, false);
+    assert.equal(readout.children[0].children[1].textContent, getChart(7).coords(200, 100).xText);
+    return readout.textContent;
+  }
+  const before = crosshair();
+  assert.equal(getChart(7).setRange([3, 4]), true);
+  assert.notEqual(crosshair(), before);
+  zoom.close();
+  overlay.dispatchEvent(new Event('transitionend'));
+  assert.equal(resumed.next(), true);
+  assert.equal(restored.stops[2].hidden, false);
+  const viewOnly = (kind, id) => ({ ...record, views: record.views.filter(([key]) => {
+    const [type, [, name]] = JSON.parse(key);
+    return type === kind && name === id;
+  }) });
+  await assert.rejects(visit(viewOnly('chart', 'trace'), revised), /committed view could not be restored/);
+  await assert.rejects(visit(viewOnly('sequence', 'tour'), revised), /committed view could not be restored/);
+  const groupOnly = await visit(viewOnly('selection', 'step'));
+  assert.equal(groupOnly.runtime.sequence.get(groupOnly.tour).key, 'mid');
+  await assert.rejects(visit(null, null), /chart could not load its data/);
+});
+
+test('Interactive zoom uses the live figure and tears down before the reader replaces its frame', async () => {
+  const config = { profile: 'none', features: { 'zoom-tools': true } };
+  const plan = page({ config }).DF._boot.exportPlan({}, config, null, false);
+  assert.ok(plan.styles.includes('css/zoom.css') && plan.styles.includes('css/zoomtools.css'));
+  const trusted = { window: { DocForm: {} } };
+  vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
+  const shared = plan.scripts.map(path => trusted.window.DocForm._exportRuntime[path]);
+  const url = 'file:///original/figures.html';
+  const payload = { url, siteURL: url, entryURL: entryURL.href, site: null, profile: null, data: [],
+    features: plan.features, styles: plan.styles, modules: plan.scripts.map((path, i) => [path, i]) };
+  const frames = new Map();
+  let nextFrame = 0;
+  let observer;
+  const p = page({ config, interactive: true, movedURL: 'file:///elsewhere/standalone.html', globals: {
+    MutationObserver: class {
+      constructor(callback) { this.changed = callback; observer = this; }
+      observe(target) { this.target = target; }
+      disconnect() { this.target = null; }
+    },
+    requestAnimationFrame(callback) { frames.set(++nextFrame, callback); return nextFrame; },
+    cancelAnimationFrame(id) { frames.delete(id); }
+  } });
+  const figure = p.body.appendChild(p.document.createElement('figure'));
+  const svg = figure.appendChild(p.document.createElement('svg'));
+  const mark = svg.appendChild(p.document.createElement('circle'));
+  figure.getBoundingClientRect = () => ({ left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100 });
+  figure.querySelectorAll = selector => selector === 'svg, img' ? [svg] : [];
+  figure.closest = selector => selector.includes('.df-page figure') ? figure : null;
+  figure.matches = selector => selector === '.df-page img, .df-page figure';
+  p.body.querySelectorAll = selector => selector.startsWith('.df-page img') ? [figure] : [];
+  const controller = new AbortController();
+  const runtime = await p.hydrate(payload, shared, controller.signal);
+  assert.deepEqual(p.loads, []);
+  const zoom = runtime._zoom;
+  const tools = runtime._zoomTools;
+  const find = (host, cls) => descendants(host).find(node => node.className === cls || node.getAttribute('class') === cls);
+  const pointer = (host, type, x, y) => host.dispatchEvent(Object.assign(new Event(type, { cancelable: true }),
+    { clientX: x, clientY: y, button: 0, pointerId: 1 }));
+  function tick() {
+    for (const [id, callback] of Array.from(frames)) if (frames.delete(id)) callback(0);
+  }
+
+  p.click(figure);
+  const { overlay, stage } = zoom.snapshot();
+  assert.equal(figure.parentNode, stage);
+  assert.equal(p.document.activeElement, find(overlay, 'df-zoom-close'));
+  assert.equal(p.key('m', p.document.activeElement).defaultPrevented, true);
+  pointer(overlay, 'pointermove', 50, 50);
+  const lens = find(overlay, 'df-zoomtools-lens-view');
+  mark.setAttribute('cx', '10');
+  tick();
+  assert.equal(descendants(lens).find(node => node.localName === 'circle').getAttribute('cx'), '10');
+  mark.setAttribute('cx', '40');
+  observer.changed();
+  tick();
+  assert.equal(descendants(lens).find(node => node.localName === 'circle').getAttribute('cx'), '40');
+  assert.equal(p.key('Escape', p.document.activeElement).defaultPrevented, true);
+  assert.equal(observer.target, null);
+  assert.equal(lens.parentNode.parentNode, null);
+  overlay.dispatchEvent(new Event('transitionend'));
+  assert.equal(p.document.activeElement, figure);
+  assert.equal(figure.parentNode, p.body);
+  assert.equal(frames.size, 0);
+
+  assert.equal(p.key('Enter', figure).defaultPrevented, true);
+  const reopened = zoom.snapshot().overlay;
+  assert.equal(tools.active(), 'cursor');
+  assert.equal(tools.use('pen'), true);
+  const layer = find(reopened, 'df-zoomtools-layer');
+  let captured;
+  layer.setPointerCapture = id => { captured = id; };
+  layer.hasPointerCapture = id => captured === id;
+  layer.releasePointerCapture = () => { captured = null; };
+  pointer(layer, 'pointerdown', 25, 25);
+  assert.equal(captured, 1);
+  assert.ok(descendants(layer).some(node => node.localName === 'path'));
+  controller.abort();
+  assert.equal(captured, null);
+  assert.equal(tools.active(), null);
+  assert.equal(zoom.snapshot(), null);
+  assert.equal(layer.parentNode, null);
+  assert.equal(reopened.parentNode, null);
+  assert.equal(figure.parentNode, p.body);
+  assert.equal(p.html.classList.contains('df-zoom-open'), false);
+  assert.equal(frames.size, 0);
+  assert.equal(p.key('p', figure).defaultPrevented, false);
+  assert.equal(p.key('Enter', figure).defaultPrevented, false);
+  p.click(figure);
+  assert.equal(zoom.snapshot(), null);
 });
 
 test('Interactive diagrams rebuild and restore their authored controls at a moved file URL', async () => {
@@ -723,6 +1086,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   const leaf = (id, title, available = true) => ({ id, title, available, children: [] });
   const selected = [];
   const modes = [];
+  const consents = [];
   const blob = new Blob(['<!doctype html>']);
   p.DF._exportPackage = {
     async prepare(files) {
@@ -734,15 +1098,19 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
         tree: [{ title: 'Book', children: [leaf('home', 'Home'), {
           title: 'Part', children: [leaf('chapter', 'Chapter'), leaf('missing', 'Hidden page', false)]
         }] }],
-        async build(ids, { signal, mode }) {
+        async build(ids, { signal, mode, includeImports }) {
           selected.push(Array.from(ids));
           modes.push(mode);
+          consents.push(Array.from(includeImports));
           if (selected.length === 1) throw new Error('Build failed');
           if (selected.length === 2) {
             await new Promise(resolve => signal.addEventListener('abort', resolve, { once: true }));
             signal.throwIfAborted();
           }
           return { filename: 'Book.html', blob, bytes: blob.size,
+            importChoices: mode === 'interactive' ? [{ id: 'accepted-revision', name: 'input.csv', bytes: 22,
+              title: 'Home', consumers: ['#runs'], available: true,
+              selected: includeImports.has('accepted-revision'), included: includeImports.has('accepted-revision') }] : [],
             pages: [{ title: 'Home', view: 'live', imports: [{ name: 'input.csv', target: 'runs' }] },
               { title: 'Chapter', view: 'saved', imports: [] }],
             issues: [{ title: 'Home', code: 'unavailable-link', target: 'omitted.html', message: 'Unavailable.' }] };
@@ -805,6 +1173,27 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   await settle();
   assert.equal(modes.at(-1), 'interactive');
   assert.equal(download.hidden, false);
+  const importOptions = descendants(modal).find(el => el.tagName === 'FIELDSET' &&
+    el.firstChild?.textContent === 'Include full imported datasets');
+  const importCheck = () => descendants(importOptions).find(el => el.type === 'checkbox');
+  assert.equal(importCheck().checked, false);
+  assert.match(importOptions.textContent, /input\.csv · 22 bytes.*Home · #runs/);
+  importCheck().checked = true;
+  importCheck().dispatchEvent(new Event('change'));
+  assert.equal(download.hidden, true);
+  download.click();
+  assert.equal(downloads.length, 1);
+  build.click();
+  await settle();
+  assert.deepEqual(consents.at(-1), ['accepted-revision']);
+  assert.equal(importCheck().checked, true);
+  assert.equal(download.hidden, false);
+  importCheck().checked = false;
+  importCheck().dispatchEvent(new Event('change'));
+  assert.equal(download.hidden, true);
+  build.click();
+  await settle();
+  assert.deepEqual(consents.at(-1), []);
   assert.match(modal.textContent, /Saved reading data/);
   const cleared = [];
   p.DF._readerState.clear = async () => cleared.push(true) && true;

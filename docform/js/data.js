@@ -379,7 +379,13 @@
         return commit(Object.assign({}, original, { snapshot: Object.freeze(snapshot) }), true);
       });
     });
-    sources.set(name, { api: api, current: function () { return current; }, bindings: bindings });
+    var signature;
+    sources.set(name, { api: api, current: function () { return current; }, bindings: bindings,
+      authoredRevision: function () {
+        var snapshot = original.snapshot;
+        return signature ??= DocForm._readerState.stamp(snapshot.type + '\n' + (snapshot.text ?? original.display));
+      }
+    });
     return api;
   }
 
@@ -954,6 +960,7 @@
     parse: parse, table: table, valueOf: valueOf
   };
   DocForm._dataSource = {
+    authoredRevision: function (name) { return sources.get(keyOf(name))?.authoredRevision() ?? null; },
     binding: binding, options: optionsFor, fields: mappedFields, key: keyOf, input: readInput,
     columns: tableMapping, interval: mappedInterval, transform: transformValue, filter: recordFilter,
     defaults: defaults, limits: limits, type: type, size: size, formatSize: formatSize,

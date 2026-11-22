@@ -204,6 +204,11 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       querySelectorAll(selector) {
         const descendants = this.children.flatMap(child => [child, ...child.querySelectorAll('*')]);
         if (selector === '*') return descendants;
+        if (selector.startsWith('[data-df-source]:not(')) return descendants.filter(child =>
+          child.localName !== 'script' && child.localName !== 'pre' && child.hasAttribute('data-df-source') ||
+          child.hasAttribute('data-df-dropzone') && child.hasAttribute('data-df-target-source'));
+        if (selector.startsWith('script:not([src])[data-df-source]')) return descendants.filter(child =>
+          child.localName === 'pre' && child.hasAttribute('data-df-source'));
         if (selector === '[data-df-more-id]') return descendants.filter(child => child.hasAttribute('data-df-more-id'));
         if (selector === '[id],a[name]') return descendants.filter(child => child.id);
         if (selector === 'h1,h2,h3') return descendants.filter(child => /^h[123]$/.test(child.localName));
@@ -280,6 +285,21 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       const custom = element('script', 'doNotPackageThisAuthorScript()');
       custom.remove = () => doc.body.children.splice(doc.body.children.indexOf(custom), 1);
       doc.body.append(heading, link, custom);
+      const consumer = element('figure');
+      consumer.id = 'runs-figure';
+      consumer.setAttribute('data-df-chart', 'scatter');
+      consumer.setAttribute('data-df-source', html === 'home' ? 'runs' : 'alias');
+      const chartSpec = element('script', '{"x":"Run","y":"Value","brush":true}');
+      chartSpec.type = 'application/json';
+      chartSpec.namespaceURI = 'http://www.w3.org/1999/xhtml';
+      const matchesSpec = chartSpec.matches;
+      chartSpec.matches = selector => selector.startsWith('script:not([src])') || matchesSpec(selector);
+      consumer.append(chartSpec);
+      const inline = element('pre', 'id,value\ninline-record,7');
+      inline.setAttribute('data-df-source', 'inline');
+      const inlineView = element('div');
+      inlineView.setAttribute('data-df-source', 'inline');
+      doc.body.append(consumer, inline, inlineView);
       if (html === 'home') {
         const panel = element('div');
         panel.className = 'df-card-panel';
@@ -339,12 +359,12 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
         pipeline.append(blocks, details);
         doc.body.append(pipeline);
       }
-      doc.querySelectorAll = selector => selector === 'script[src]' ? [entry] : [];
+      doc.querySelectorAll = selector => selector === 'script[src]' ? [entry] : doc.body.querySelectorAll(selector);
       return doc;
     }
   });
   runtime._boot.exportPlan = () => ({
-    features: ['base', 'tabs'], styles: ['css/tabs.css'],
+    features: ['base', 'tabs', 'data'], styles: ['css/tabs.css'],
     scripts: ['docform.js', 'js/core.js', 'js/reader-state.js', 'js/tabs.js']
   });
   runtime._readerState = { identify: () => new Map() };
@@ -355,6 +375,14 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   let css = 'p::before{content:"cancelled"}';
   let stepCount = 0;
   let committedImport = false;
+  let staleImport = false;
+  let revision = 1;
+  const importText = 'id,name\n1,private full record café <script>';
+  runtime._boot.loadExport('js/page-snapshot.js');
+  const authoredText = 'id,name\n1,authored record';
+  const wrapper = (name, path) => 'Object.defineProperty(window.DocFormData || (window.DocFormData = Object.create(null)), ' +
+    JSON.stringify(name) + ', { configurable: true, enumerable: true, writable: true, value: ' +
+    JSON.stringify({ format: 'docform-data', version: 1, type: 'csv', text: authoredText, metadata: { output: path } }) + ' });';
   runtime._pageSnapshot.capture = async (page, options) => {
     const nested = page.url.endsWith('/nested/index.html');
     const body = element('body');
@@ -381,6 +409,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     const script = element('script', 'sourceScript()');
     script.remove = () => body.children.splice(body.children.indexOf(script), 1);
     body.append(element('p', 'df-export-asset-0-ref &lt;/script&gt; café'), image, svg, script);
+    if (committedImport && nested) body.append(element('p', 'Rendered chart data from import'));
     if (stepCount) {
       const options = Array.from({ length: stepCount }, (_, i) => [`step-${i}`, `Step ${i + 1}`, [i % 2], '']);
       const controls = element('div', 'Step 1');
@@ -398,11 +427,14 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       body.append(controls, alternate);
     }
     return {
-      title: 'An example', issues: [], htmlAttributes: [], body, imports: [],
+      title: 'An example', issues: staleImport && nested ? [{ code: 'saved-import', target: 'shared', message: 'stale' }] : [],
+      htmlAttributes: [], body, imports: [],
       committed: options.interactive ? {
         views: [['tabs', { value: nested ? 'results' : 'overview' }]],
-        imports: committedImport && nested ? [['shared', { name: 'private.csv' }]] : []
+        imports: committedImport && nested ? [['shared', { name: 'private.csv', revision: [revision],
+          bytes: Buffer.byteLength(importText), target: '["source","alias"]' }]] : []
       } : undefined,
+      importPayloads: new Map([['shared', importText]]),
       styles: [{ href: 'base.css' }, { text: overrideCSS }, { text: css, media: 'print' }]
     };
   };
@@ -411,7 +443,9 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     file('project/index.html', 'home'),
     file('project/nested/index.html', 'nested'),
     file('project/omitted.html', 'omitted'),
-    file('project/site.js', 'window.DocFormSite = {"pages":[{"title":"Included group","pages":["index.html","nested/index.html"]},{"title":"Omitted group","pages":["omitted.html"]}]};'),
+    file('project/site.js', 'window.DocFormSite = {"pages":[{"title":"Included group","pages":["index.html","nested/index.html"]},{"title":"Omitted group","pages":["omitted.html"]}],"assets":{"data":{"runs":{"output":"runs.js"},"alias":{"output":"alias.js"},"omitted":{"output":"unused.js"}}}};'),
+    asset('runs.js', wrapper('runs', 'runs.js')),
+    asset('alias.js', wrapper('alias', 'alias.js')),
     asset('base.css', sharedCSS),
     asset('nested/base.css', sharedCSS),
     asset('font.woff2', 'font bytes'),
@@ -518,7 +552,11 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.equal(packed.version, 1);
   assert.equal(packed.mode, 'interactive');
   assert.ok(packed.pages.every(page => page.interactive), JSON.stringify(interactive.issues));
-  assert.equal(packed.shared.length, 5); // The manifest plus four trusted classic scripts.
+  assert.equal(packed.shared.length, 7); // Manifest, four scripts, and two dataset revisions.
+  assert.deepEqual(packed.pages[0].interactive.inlineData, packed.pages[1].interactive.inlineData);
+  assert.equal(packed.shared[packed.pages[0].interactive.inlineData[0]], 'id,value\ninline-record,7');
+  assert.equal(packed.pages[0].interactive.data[0][1], packed.pages[1].interactive.data[0][1]);
+  assert.deepEqual(packed.pages.map(page => page.interactive.data.map(([name]) => name)), [['runs'], ['alias']]);
   assert.deepEqual(packed.pages[0].interactive.modules, packed.pages[1].interactive.modules);
   assert.equal(packed.pages[0].interactive.site, packed.pages[1].interactive.site);
   assert.equal(packed.pages[1].interactive.state.views[0][1].value, 'results');
@@ -527,6 +565,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.doesNotMatch(interactiveHTML, /doNotPackageThisAuthorScript|sourceScript|sourceHandler/);
   assert.doesNotThrow(() => new vm.Script('(' + /<script>\((function reader.*?)<\/script>/s.exec(interactiveHTML)[1]));
   const liveHTML = runtime._exportReader.assemble(packed.pages[0].interactive.markup, packed.assets);
+  assert.match(liveHTML, /data-df-chart="scatter" data-df-source="runs"><script type="application\/json">\{"x":"Run"/);
   assert.match(liveHTML, /class="df-pipe-link" href="#flow-2">Next block/);
   assert.ok(!interactive.issues.some(issue => issue.target === '#flow-2'));
   assert.match(liveHTML, /data-df-key="flow-2"><img src="data:image\/png;base64,ZGV0YWlsIGltYWdl"[^>]*>.*?#page-2\/caf%C3%A9%2Fmore[^>]*>Read the pipeline detail/);
@@ -548,7 +587,33 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const fallbackHTML = await fallback.blob.text();
   assert.equal(readBundle(fallbackHTML).pages[1].interactive, null);
   assert.doesNotMatch(fallbackHTML, /private\.csv/);
+  assert.doesNotMatch(fallbackHTML, /private full record/);
+  assert.match(fallbackHTML, /Rendered chart data from import/);
   assert.ok(fallback.issues.some(issue => issue.page === selected[1] && issue.code === 'interactive-fallback'));
+  const [choice] = fallback.importChoices;
+  assert.equal(choice.selected, false);
+  assert.equal(choice.available, true);
+  assert.equal(choice.bytes, Buffer.byteLength(importText));
+  assert.deepEqual(Array.from(choice.consumers), ['#runs-figure']);
+  const accepted = await prepared.build(selected, { mode: 'interactive', includeImports: [choice.id] });
+  const acceptedHTML = await accepted.blob.text();
+  const acceptedBundle = readBundle(acceptedHTML);
+  assert.equal(accepted.importChoices[0].included, true);
+  assert.equal(acceptedBundle.shared[acceptedBundle.pages[1].interactive.imports[0][1]], importText);
+  assert.equal(accepted.bytes, Buffer.byteLength(acceptedHTML));
+  assert.equal(fallback.bytes, Buffer.byteLength(fallbackHTML));
+  assert.ok(accepted.bytes > fallback.bytes);
+  const revoked = await prepared.build(selected, { mode: 'interactive', includeImports: [] });
+  assert.equal(await revoked.blob.text(), fallbackHTML);
+  revision++;
+  const changed = await prepared.build(selected, { mode: 'interactive', includeImports: [choice.id] });
+  assert.equal(changed.importChoices[0].selected, false);
+  assert.equal(await changed.blob.text(), fallbackHTML);
+  staleImport = true;
+  const stale = await prepared.build(selected, { mode: 'interactive', includeImports: [changed.importChoices[0].id] });
+  assert.equal(stale.importChoices[0].available, false);
+  assert.doesNotMatch(await stale.blob.text(), /private full record/);
+  t.diagnostic(`Consent preview: ${choice.bytes} import bytes, ${fallback.bytes} export bytes without inclusion, ${accepted.bytes} with inclusion.`);
 });
 
 test('Reader routes selected pages and encoded fragments through history and focuses followed links', () => {
@@ -662,7 +727,10 @@ test('Interactive routing cancels stale startup, disposes frames, and restores s
     assert.equal(doc, current.contentDocument);
     assert.equal(shared[0], 'code');
     assert.ok(current.srcdoc.includes(nonce));
-    return new Promise((resolve, reject) => startups.push({ saved, signal, resolve, reject }));
+    const frame = current;
+    const startup = { saved, signal };
+    signal.addEventListener('abort', () => { startup.abortedBeforeDetach = !frame.detached; }, { once: true });
+    return new Promise((resolve, reject) => startups.push(Object.assign(startup, { resolve, reject })));
   }
   function controls() {
     return { mount(doc, page) { mounts.push(page); }, follow() {}, scrolled() {}, page() {} };
@@ -686,8 +754,8 @@ test('Interactive routing cancels stale startup, disposes frames, and restores s
   assert.equal(first.detached, true);
   assert.equal(startups[0].signal.aborted, true);
   startups[0].resolve({ capture() { assert.fail('Cancelled page became active'); } });
-  const page2State = { choice: 'reader selection' };
-  startups[1].resolve({ capture: () => ({ record: page2State }) });
+  const page2State = { record: { choice: 'reader selection' }, payloads: new Map([['shared', 'dataset']]) };
+  startups[1].resolve({ capture: () => page2State });
   await new Promise(setImmediate);
   assert.deepEqual(mounts, ['page-2']);
   assert.equal(current.inert, false);
@@ -701,6 +769,7 @@ test('Interactive routing cancels stale startup, disposes frames, and restores s
   assert.equal(location.hash, '#page-1/caf%C3%A9%2Fmore');
   go(location.hash);
   const failed = current;
+  assert.equal(startups[1].abortedBeforeDetach, true);
   startups[2].reject(Error('Module could not load.'));
   await new Promise(setImmediate);
   assert.equal(failed.detached, true);

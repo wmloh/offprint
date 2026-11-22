@@ -2941,14 +2941,21 @@
       }
     };
     chart.trackView = DocForm._readerState?.watch('chart', host, function () {
-      return { hidden: Object.keys(chart.hidden).sort(), range: chart.api.range(), table: chart.plot.hidden };
+      return { hidden: Object.keys(chart.hidden).sort(), range: chart.api.range(), table: !!chart.plot.hidden };
     }, function (saved) {
       if (!saved || !Array.isArray(saved.hidden) || typeof saved.table !== 'boolean') return false;
       var series = chart.model.filterSeries || chart.model.series.map(function (item) { return item.key; });
       if (saved.hidden.some(function (key) { return !series.includes(key); }) ||
           (saved.table && !chart.model.table)) return false;
-      if (saved.range !== null && (!Array.isArray(saved.range) || saved.range.length !== 2 ||
-          !saved.range.every(Number.isFinite) || !sameRange(saved.range, clampRange(chart.model, ...saved.range)))) return false;
+      if (saved.range !== null) {
+        if (!Array.isArray(saved.range) || saved.range.length !== 2 || !saved.range.every(Number.isFinite) ||
+            saved.range[0] >= saved.range[1]) return false;
+        if (!chart.model.noMatches) {
+          var bounds = domain(chart.model);
+          if (!bounds || saved.range[0] < bounds[0] || saved.range[1] > bounds[1] ||
+              !clampRange(chart.model, ...saved.range)) return false;
+        }
+      }
       var hidden = Object.create(null);
       saved.hidden.forEach(function (key) { hidden[key] = true; });
       chart.hidden = hidden;
@@ -2956,7 +2963,7 @@
       setTable(chart, saved.table);
       refresh(chart, false);
       return true;
-    }, { order: 10, current: function () { return true; } });
+    }, { order: 10, current: function () { return true; }, revision: function () { return authoredRevision(host); } });
 
     function write(fn) {
       function apply() {
@@ -3368,6 +3375,10 @@
   var chartControllers = new WeakMap();
   var namedInputs = new WeakMap();
   var groupedSpecs = new WeakSet();
+
+  function authoredRevision(host) {
+    return DocForm._dataSource?.authoredRevision(host.getAttribute('data-df-source')) ?? null;
+  }
 
   function groupedSeries(rows, mapping, spec, keys, interval) {
     var data = DocForm._dataSource;
@@ -3827,6 +3838,7 @@
     var instance = charts.get(host);
     return instance && instance.motion !== undefined ? instance.snapshotFrame : null;
   };
+  chart._authoredRevision = authoredRevision;
   DocForm._chart = chart;
 
   if (DocForm._items) DocForm._items.scan('chart', function () {

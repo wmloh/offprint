@@ -596,6 +596,7 @@
     if (!active.has('theme') && appliedTheme) earlyTheme({ enabled: active });
     if (active.has('data')) {
       for (var name of Object.keys(DF._site.assets.data)) {
+        if (exportContext?.interactive && !exportContext.hasData?.(name)) continue;
         var url = DF._site.assets.data[name].output;
         var loaded = replaying ? await exportContext.loadAsset('data', url, name) : await load(url, false);
         if (!loaded) assetFailure('data', url);

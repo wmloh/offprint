@@ -284,8 +284,8 @@ test('pen ink draws on the layer, undoes, and is discarded when the view closes'
   assert.equal(z.find('df-zoomtools-group').hidden, true);
   z.key('p');
   assert.equal(z.find('df-zoomtools-group').hidden, false);
-  const layer = z.find('df-zoomtools-layer');
   const draw = (x) => {
+    const layer = z.find('df-zoomtools-layer');
     z.pointer(layer, 'pointerdown', x, 10);
     z.pointer(z.overlay, 'pointermove', x + 40, 30);
     z.pointer(layer, 'pointerup', x + 40, 30);

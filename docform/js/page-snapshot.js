@@ -571,7 +571,10 @@
       scriptIssues(document, DF._boot.entryURL, document.querySelector('script[data-df-site]')?.src, issues);
       snapshot = freeze(root, 'live', issues, importSummary(saved));
     }
-    if (options?.interactive && ['live', 'saved'].includes(snapshot.view)) snapshot.committed = saved.record;
+    if (options?.interactive && snapshot.view !== 'stale' && saved.record) {
+      snapshot.committed = saved.record;
+      snapshot.importPayloads = saved.payloads;
+    }
     return snapshot;
   }
 

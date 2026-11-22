@@ -355,8 +355,10 @@
       remember = readerState.registerImport(hasSource || hasTarget ? JSON.stringify(signature.slice(0, 2)) : null,
         zone, JSON.stringify(signature), function (entry) {
           linked = destination();
-          applyFile(entry, linked?.reserve());
+          var note = applyFile(entry, linked?.reserve());
           zone.classList.add('is-loaded');
+          say('Showing "' + entry.name + '"' + (linked ? ' in place of the page\'s data' : '') +
+            '.' + (note ? ' ' + note : ''), false, true);
           return true;
         }, function (item) {
           return accept.includes(item.type) && item.bytes <= caps.maxBytes && typeof item.name === 'string';

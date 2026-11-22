@@ -26,6 +26,7 @@
   var configuration;
   var started = false;
   var muted = 0;
+  var restoring;
   var revision = 0;
   var session = Math.random().toString(36).slice(2);
 
@@ -138,7 +139,8 @@
     var id = identity(kind, host);
     if (!id) return function () {};
     options = options || {};
-    var entry = { id: id, snapshot: snapshot, apply: apply, order: options.order || 0, current: options.current };
+    var entry = { id: id, snapshot: snapshot, apply: apply, order: options.order || 0,
+      current: options.current, revision: options.revision };
     if (started) entry.value = snapshot();
     adapters.set(id.key, entry);
     return function (origin) {
@@ -154,9 +156,15 @@
       entry.touched = true;
       entry.value = value;
       if (mode === 'session') return;
-      pending.set(id.key, { stamp: id.stamp, value: value });
+      pending.set(id.key, savedView(entry, value));
       schedule();
     };
+  }
+
+  function savedView(entry, value) {
+    var revision = entry.revision?.();
+    return revision == null ? { stamp: entry.id.stamp, value: value } :
+      { stamp: entry.id.stamp, value: value, revision: revision };
   }
 
   function keyed(kind, host, controller, options) {
@@ -245,8 +253,10 @@
     if (!id) return;
     var key = destination || id.key;
     if (mode === 'replay' || mode === 'session') {
-      adapters.set('import:' + id.key, { id: id, destination: key, signature: signature, apply: replay, accepts: canReplay });
-    } else if (mode === 'reading') {
+      adapters.set('import:' + id.key, { id: id, host: host, standalone: !destination,
+        destination: key, signature: signature, apply: replay, accepts: canReplay });
+    }
+    if (mode === 'reading' || mode === 'session') {
       return function (file) {
         if (muted) return;
         var item = {
@@ -255,6 +265,7 @@
         };
         if (!destination) discardFileView(host);
         liveImports.set(key, { item: item, text: file.text, host: host, standalone: !destination });
+        if (mode === 'session') return;
         pendingImports.set(key, item.bytes > fileLimit ? { item: Object.assign({}, item, { missing: 'oversized' }) } :
           { item: item, text: file.text });
         schedule();
@@ -266,19 +277,21 @@
     ['data-rows', 'data-tree'].forEach(function (kind) {
       var id = identity(kind, host);
       if (!id) return;
-      pending.set(id.key, null);
+      if (mode === 'reading') pending.set(id.key, null);
       if (unmount) adapters.delete(id.key);
     });
   }
 
   function removeImport(host) {
-    if (mode !== 'reading') return;
+    if (mode !== 'reading' && mode !== 'session') return;
     liveImports.forEach(function (value, key) {
       if (value.host !== host) return;
       liveImports.delete(key);
       if (value.standalone) discardFileView(host, true);
-      pendingImports.set(key, { remove: value.item.revision });
-      schedule();
+      if (mode === 'reading') {
+        pendingImports.set(key, { remove: value.item.revision });
+        schedule();
+      }
     });
   }
 
@@ -417,7 +430,7 @@
       if (!entry.snapshot) return;
       var value = !entry.preview && entry.current && entry.current() ? entry.snapshot() : entry.value;
       if (value === undefined) return;
-      saved.views.push([key, { stamp: entry.id.stamp, value: value }]);
+      saved.views.push([key, savedView(entry, value)]);
     });
     liveImports.forEach(function ({ item, text }, key) {
       saved.imports.push([key, item]);
@@ -451,19 +464,28 @@
         return;
       }
       attempt('import', key, function () {
-        return !!entry && entry.destination === key && entry.id.stamp === item.stamp &&
+        var applied = !!entry && entry.destination === key && entry.id.stamp === item.stamp &&
           entry.signature === item.target && entry.accepts(item, text) &&
+          bytes(text) === item.bytes &&
           entry.apply({ name: item.name, type: item.type, text: text });
+        if (applied && mode === 'session') {
+          liveImports.set(key, { item: item, text: text, host: entry.host, standalone: entry.standalone });
+        }
+        return applied;
       });
     });
-    record.views.slice().sort(function ([a], [b]) {
-      return (adapters.get(a)?.order || 0) - (adapters.get(b)?.order || 0);
-    }).forEach(function ([key, item]) {
-      attempt('view', key, function () {
-        var entry = adapters.get(key);
-        return !!entry && entry.id.stamp === item.stamp && entry.apply(item.value);
+    restoring = new Set(record.views.map(function ([key]) { return key; }));
+    try {
+      record.views.slice().sort(function ([a], [b]) {
+        return (adapters.get(a)?.order || 0) - (adapters.get(b)?.order || 0);
+      }).forEach(function ([key, item]) {
+        attempt('view', key, function () {
+          var entry = adapters.get(key);
+          return !!entry && entry.id.stamp === item.stamp &&
+            (item.revision === undefined || item.revision === entry.revision?.()) && entry.apply(item.value);
+        });
       });
-    });
+    } finally { restoring = undefined; }
     if (mode === 'session') adapters.forEach(function (entry) {
       if (entry.snapshot) entry.value = entry.snapshot();
       entry.preview = false;
@@ -499,6 +521,7 @@
     identify: identify, prepare: prepare, start: start, watch: watch, keyed: keyed, transient: transient,
     preserveOrigin: function (fn) { return muted ? function () { return transient(fn); } : fn; },
     isolated: function () { return mode === 'replay' || mode === 'session'; },
+    restoring: function (kind, host) { return restoring?.has(identity(kind, host)?.key); },
     registerImport: registerImport, removeImport: removeImport, targetStamp: targetStamp, stamp: stamp,
     capture: capture, read: read, replay: replay, clear: clear,
     enabled: function () { return mode === 'reading'; }

@@ -6,7 +6,7 @@
   var csp = "default-src 'none'; style-src 'unsafe-inline' data:; img-src data:; font-src data:; " +
     "base-uri 'none'; form-action 'none'";
   var declarations = 'script:not([src]):is([type="application/json"],[type="text/csv"],[type="text/json"],' +
-    '[type="text/yaml"],[type="application/yaml"])';
+    '[type="text/yaml"],[type="application/yaml"],[type="text/x-yaml"],[type="application/x-yaml"])';
   var tipCSS = '.df-export-pop{position:fixed;z-index:50;display:flex;flex-direction:column;gap:6px;' +
     'max-width:min(320px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}' +
     '.df-export-pop[hidden]{display:none}' +
@@ -494,11 +494,52 @@
     }
   }
 
-  async function interactivePage(input, page, folder, signal) {
-    if (page.snapshot.committed?.imports.length) {
-      throw Error('This page uses a committed import. Its rendered view is available in Reader mode.');
+  function datasetConsumers(source) {
+    var consumers = new Map();
+    for (var node of source.querySelectorAll('[data-df-source]:not(script,pre),[data-df-dropzone][data-df-target-source]')) {
+      var name = (node.getAttribute('data-df-target-source') ?? node.getAttribute('data-df-source')).trim();
+      if (!name) continue;
+      if (!consumers.has(name)) consumers.set(name, new Set());
+      consumers.get(name).add(node.id ? '#' + node.id :
+        node.getAttribute('aria-label') || node.getAttribute('class') || node.localName);
     }
+    return consumers;
+  }
+
+  function pageImports(page, consumers, consent, preview) {
+    var imports = page.snapshot.committed?.imports || [];
+    var blocked = false;
+    var data = [];
+    for (var [key, item] of imports) {
+      var text = page.snapshot.importPayloads?.get(key);
+      var bytes = item.bytes;
+      var available = !item.missing && typeof text === 'string' && new Blob([text]).size === bytes &&
+        !page.snapshot.issues.some(function (issue) { return issue.code === 'saved-import' && issue.target === key; });
+      var id = JSON.stringify([page.id, page.url, key, item.revision]);
+      var included = available && consent.has(id);
+      var target;
+      try { target = JSON.parse(item.target); } catch (error) {}
+      var name = target?.[1];
+      var affected = target?.[0] === 'source' ? Array.from(consumers.get(name) || []) :
+        target?.[0] === 'target' ? ['#' + name] : [];
+      if (!affected.length) {
+        var host;
+        try { host = JSON.parse(item.host)?.[1]; } catch (error) {}
+        affected.push(name || (host?.[0] === 'id' ? '#' + host[1] : 'File dropzone'));
+      }
+      preview.push({ id: id, page: page.id, title: page.snapshot.title || page.title, name: item.name,
+        bytes: bytes, consumers: affected, available: available, selected: included, included: false });
+      if (included) data.push([key, text]);
+      else blocked = true;
+    }
+    if (blocked) throw Error('One or more imports needed for Interactive playback are unavailable or require inclusion.');
+    return data;
+  }
+
+  async function interactivePage(input, page, folder, signal, consent, preview) {
     var source = new root.DOMParser().parseFromString(input.html, 'text/html');
+    var consumers = datasetConsumers(source);
+    var imports = pageImports(page, consumers, consent, preview);
     var entry = DF._boot.entryURL;
     var settings = Array.from(source.querySelectorAll('script[src]')).find(function (script) {
       return /(?:^|\/)docform\.js(?:[?#]|$)/.test(script.getAttribute('src'));
@@ -538,6 +579,20 @@
       host.setAttribute('data-df-export-identity', identities.length);
       identities.push(identity);
     }
+    var inlineData = [];
+    source.querySelectorAll('[data-df-export-data]').forEach(function (node) { node.removeAttribute('data-df-export-data'); });
+    if (plan.features.includes('data')) {
+      for (var definition of source.querySelectorAll('script:not([src])[data-df-source],pre[data-df-source]')) {
+        var name = definition.getAttribute('data-df-source').trim();
+        if (!consumers.has(name) && !definition.hasAttribute('data-df-data-view')) {
+          if (definition.localName === 'script') definition.remove();
+          continue;
+        }
+        definition.setAttribute('data-df-export-data', inlineData.length);
+        inlineData.push(definition.textContent);
+        definition.textContent = '';
+      }
+    }
     var live = copyPage({
       title: source.title, baseURL: base.href, body: source.body,
       htmlAttributes: Array.from(source.documentElement.attributes, function (attr) { return [attr.name, attr.value]; }),
@@ -571,9 +626,13 @@
     var data = [];
     if (plan.features.includes('data')) {
       for (var [name, item] of Object.entries(input.site?.assets?.data || {})) {
+        if (!consumers.has(name)) continue;
         if (typeof item?.output !== 'string' || !item.output.trim()) continue;
         signal?.throwIfAborted();
         var value = DF._pageSnapshot.wrappedAsset('data', name, await folder.readText(address(item.output, input.siteURL)));
+        if (value && typeof value === 'object' && typeof value.text === 'string') {
+          value = { format: value.format, version: value.version, type: value.type, text: value.text };
+        }
         data.push([name, value]);
       }
     }
@@ -584,7 +643,8 @@
     });
     live.payload = { url: page.url, base: base.href, siteURL: input.siteURL || page.url, entryURL: entry,
       profile: profile, site: input.site || null, combined: combined, features: plan.features,
-      modules: modules, data: data, identities: identities, state: page.snapshot.committed || null };
+      modules: modules, data: data, inlineData: inlineData, imports: imports,
+      identities: identities, state: page.snapshot.committed || null };
     return live;
   }
 
@@ -707,7 +767,9 @@
           record.interactive = payload ? { ...payload,
             site: payload.site === null ? null : share(payload.site),
             modules: payload.modules.map(function ([path, code]) { return [path, share(code)]; }),
-            data: payload.data.map(function ([name, value]) { return [name, share(value)]; })
+            data: payload.data.map(function ([name, value]) { return [name, share(value)]; }),
+            inlineData: payload.inlineData.map(share),
+            imports: payload.imports.map(function ([key, text]) { return [key, share(text)]; })
           } : null;
         }
         return record;
@@ -736,6 +798,8 @@
     signal?.throwIfAborted();
     if (interactive && !DF._exportRuntime) throw Error('The trusted DocForm export modules could not load.');
     var issues = [];
+    var importPreview = [];
+    var consent = new Set(options?.includeImports || []);
     var pages = new Map();
     var resources = DF._exportResources.setup(resourceFiles(folder), signal);
 
@@ -774,7 +838,7 @@
         copied.report = report;
         pages.set(page.key, copied);
         if (interactive) {
-          try { copied.live = await interactivePage(input, copied, folder, signal); }
+          try { copied.live = await interactivePage(input, copied, folder, signal, consent, importPreview); }
           catch (error) {
             signal?.throwIfAborted();
             report('interactive-fallback', page.url, error.message);
@@ -840,7 +904,10 @@
     signal?.throwIfAborted();
     var filename = site.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '-').trim().replace(/[. ]+$/, '').slice(0, 120);
     options?.onProgress?.({ phase: 'done', completed: completed, total: chosen.size });
+    var livePages = new Set(included.filter(function (page) { return page.payload; }).map(function (page) { return page.id; }));
+    for (var entry of importPreview) entry.included = entry.selected && livePages.has(entry.page);
     return { blob: blob, bytes: blob.size, filename: (filename || 'DocForm export') + '.html', issues: issues,
+      importChoices: importPreview,
       pages: included.map(function (page) {
         return { id: page.id, title: page.title, view: page.view, imports: page.imports,
           ...(interactive ? { interactive: !!page.payload } : {}) };

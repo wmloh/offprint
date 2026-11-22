@@ -180,7 +180,7 @@
       choice.checked = value === mode;
       choice.addEventListener('change', function () {
         mode = value;
-        if (result) {
+        if (!preview.hidden) {
           clearPreview();
           status.textContent = 'Export mode changed. Build a new preview.';
           update();
@@ -199,7 +199,9 @@
     var heading = make('h3', 'Preview');
     heading.tabIndex = -1;
     var summary = make('div');
-    preview.append(heading, summary);
+    var importOptions = make('fieldset');
+    importOptions.hidden = true;
+    preview.append(heading, importOptions, summary);
     var saved = make('section');
     saved.className = 'df-export-saved';
     saved.hidden = !DF._readerState?.enabled?.();
@@ -226,24 +228,69 @@
     footer.append(status, actions);
     modal.append(header, content, footer);
 
-    var task, prepared, picker, result;
+    var task, prepared, picker, result, clearing;
+    var consent = new Set();
 
     function update() {
-      var busy = !!task;
+      var busy = !!task || !!clearing;
       var selected = picker?.ids().length || 0;
-      documents.button.disabled = modes.disabled = fieldset.disabled = forget.disabled = busy;
+      documents.button.disabled = modes.disabled = fieldset.disabled = forget.disabled = importOptions.disabled = busy;
       build.hidden = !prepared || busy;
       build.disabled = !selected;
-      stop.hidden = !busy;
+      stop.hidden = !task;
       download.hidden = !result || busy;
       if (picker) countLabel.textContent = count(selected, 'page') + ' selected';
     }
 
-    function clearPreview() {
+    function clearPreview(keepChoices) {
       result = null;
       summary.textContent = '';
-      preview.hidden = true;
+      if (keepChoices) {
+        importOptions.querySelectorAll('[data-df-import-included]').forEach(function (label) { label.remove(); });
+      } else {
+        consent.clear();
+        importOptions.replaceChildren();
+        importOptions.hidden = true;
+      }
+      preview.hidden = importOptions.hidden;
       build.textContent = 'Build preview';
+    }
+
+    function showImports(choices) {
+      var list = make('ul');
+      var current = new Set();
+      for (let entry of choices) {
+        let check = make('input');
+        check.type = 'checkbox';
+        check.checked = entry.selected;
+        check.disabled = !entry.available;
+        if (entry.selected) current.add(entry.id);
+        var label = make('label');
+        var size = Number.isSafeInteger(entry.bytes) ? exact.format(entry.bytes) +
+          (entry.bytes === 1 ? ' byte' : ' bytes') : 'Size unavailable';
+        label.append(check, make('span', (entry.name || 'Unnamed import') + ' · ' + size));
+        var item = make('li');
+        var detail = make('small', entry.title + ' · ' + entry.consumers.join(', ') +
+          (entry.available ? '' : ' · Unavailable'));
+        if (entry.included) {
+          var included = make('span', ' · Included');
+          included.setAttribute('data-df-import-included', '');
+          detail.append(included);
+        }
+        item.append(label, detail);
+        list.append(item);
+        check.addEventListener('change', function () {
+          if (check.checked) consent.add(entry.id);
+          else consent.delete(entry.id);
+          clearPreview(true);
+          status.textContent = 'Import choices changed. Build a new preview.';
+          update();
+        });
+      }
+      consent = current;
+      importOptions.replaceChildren(make('legend', 'Include full imported datasets'),
+        make('p', 'Select the files to embed. Pages that need an omitted file use their captured Reader view.'), list);
+      importOptions.hidden = !choices.length;
     }
 
     async function run(message, action, onFinish, onError, focusAfter) {
@@ -332,10 +379,14 @@
       forget.focus();
     });
     confirmClear.addEventListener('click', async function () {
+      if (task || clearing) return;
+      clearing = true;
       confirmClear.disabled = keep.disabled = true;
+      update();
       var cleared = await DF._readerState.clear();
+      clearing = false;
       if (!modal.open) return;
-      var hadPreview = !!result;
+      var hadPreview = !preview.hidden;
       if (cleared && hadPreview) clearPreview();
       status.textContent = cleared ? 'Saved views and imports cleared.' + (hadPreview ? ' Build a new preview.' : '')
         : 'Saved views and imports could not be cleared.';
@@ -347,10 +398,10 @@
     });
 
     build.addEventListener('click', function () {
-      if (task || !prepared) return;
-      clearPreview();
+      if (task || clearing || !prepared) return;
+      clearPreview(true);
       run('Preparing the export…', function (signal) {
-        return prepared.build(picker.ids(), { mode: mode, signal: signal, onProgress: function (event) {
+        return prepared.build(picker.ids(), { mode: mode, includeImports: consent, signal: signal, onProgress: function (event) {
           if (signal.aborted || event.phase === 'done') return;
           if (event.phase === 'capture') {
             status.textContent = 'Capturing page ' + (event.completed + 1) + ' of ' + event.total + ' · ' + event.title;
@@ -361,6 +412,7 @@
           return new Promise(function (resolve) { root.setTimeout(resolve, 0); });
         } });
       }, function (output) {
+        showImports(output.importChoices);
         showPreview(summary, output);
         result = output;
         preview.hidden = false;
@@ -375,7 +427,7 @@
     });
 
     download.addEventListener('click', function () {
-      if (!result) return;
+      if (!result || task || clearing) return;
       var link = make('a');
       var url = root.URL.createObjectURL(result.blob);
       link.href = url;

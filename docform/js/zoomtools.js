@@ -345,10 +345,12 @@
     session = null;
     if (s.frame) root.cancelAnimationFrame(s.frame);
     watch(s, false);
+    s.endDrag?.();
     s.overlay.removeEventListener('pointermove', s.onMove);
     s.overlay.removeEventListener('pointerleave', s.onLeave);
     s.overlay.removeEventListener('scroll', s.onScroll, true);
-    s.overlay.removeEventListener('wheel', s.onWheel, { passive: false });
+    s.overlay.removeEventListener('wheel', s.onWheel);
+    s.layer.removeEventListener('pointerdown', s.onDown);
     s.target.removeEventListener('input', s.onInput);
     s.target.removeEventListener('change', s.onInput);
     s.shortcuts.forEach(function (remove) { remove(); });
@@ -611,7 +613,7 @@
 
   function down(event) {
     var s = session;
-    if (!s || event.button !== 0) return;
+    if (!s || s.endDrag || event.button !== 0) return;
     var tool = s.state.tool;
     if (isInk(tool)) {
       var stroke = begin(s.state, event.clientX, event.clientY);
@@ -624,19 +626,28 @@
       return;
     }
     event.preventDefault();
-    if (typeof s.layer.setPointerCapture === 'function') s.layer.setPointerCapture(event.pointerId);
-    var up = function () {
+    var pointer = event.pointerId;
+    if (typeof s.layer.setPointerCapture === 'function') s.layer.setPointerCapture(pointer);
+    s.endDrag = function () {
+      s.endDrag = null;
       s.layer.removeEventListener('pointerup', up);
       s.layer.removeEventListener('pointercancel', up);
+      s.layer.removeEventListener('lostpointercapture', up);
+      if (s.layer.hasPointerCapture?.(pointer)) s.layer.releasePointerCapture(pointer);
+    };
+    function up(event) {
+      if (event.pointerId !== pointer) return;
+      s.endDrag();
       if (session !== s) return;
       if (s.state.stroke) {
         end(s.state);
         refresh();
       }
       if (s.ruler) s.ruler.active = false;
-    };
+    }
     s.layer.addEventListener('pointerup', up);
     s.layer.addEventListener('pointercancel', up);
+    s.layer.addEventListener('lostpointercapture', up);
   }
 
   function inkPath(stroke) {

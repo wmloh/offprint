@@ -351,17 +351,19 @@
       state = { range: null, cells: [], steps: [], contours: true, lines: null, contourChoice: null };
       states.set(chart, state);
       hosts.set(chart.box, chart);
+      function revision() { return DocForm._chart._authoredRevision(chart.box); }
       state.trackRange = DocForm._readerState?.watch('heatmap-range', chart.box,
         function () { return state.range && state.range.slice(); }, function (range) {
-          if (chart.model.addon !== 'heatmap' || !state.scale) return false;
+          var scale = chart.model.heatmap?.scale;
+          if (chart.model.addon !== 'heatmap' || !scale) return false;
           if (range !== null && (!Array.isArray(range) || range.length !== 2 || !range.every(Number.isFinite) ||
-              !same(range, clampRange(range, state.scale)))) return false;
+              !same(range, clampRange(range, scale)))) return false;
           return setRange(chart, range, 'api');
-        }, { order: 11, current: function () { return state.announced === undefined; } });
+        }, { order: 11, current: function () { return state.announced === undefined; }, revision: revision });
       state.trackContours = DocForm._readerState?.watch('heatmap-contours', chart.box,
         function () { return chart.model.heatmap?.contours?.levels.length ? state.contours : undefined; }, function (on) {
           return typeof on === 'boolean' && DocForm._chart._heatmap.contours(chart.box, on);
-        }, { order: 11 });
+        }, { order: 11, revision: revision });
     }
     return state;
   }
@@ -500,7 +502,6 @@
     }
     var band = svg('rect', { x: x0 - 3, width: BAR + 6, class: 'df-heatmap-scale-range', rx: 3 }, bar);
     var hit = svg('rect', { x: x0 - 8, y: top - 4, width: BAR + 16, height: plotB - top + 8, class: 'df-heatmap-scale-hit' }, bar);
-    state.scale = scale;
     state.band = band;
     state.scaleY = scaleY;
     state.steps = [scale.lo].concat(ticks.filter(function (v) { return v > scale.lo && v < scale.hi; }), [scale.hi]);
@@ -601,7 +602,8 @@
   // live updates the dimming while a drag continues; the change is announced when it ends.
   function setRange(chart, range, origin, live) {
     var state = stateOf(chart);
-    var next = range && state.scale ? clampRange(range, state.scale) : null;
+    var scale = chart.model.heatmap?.scale;
+    var next = range && scale ? clampRange(range, scale) : null;
     var previous = state.announced === undefined ? state.range : state.announced;
     state.range = next;
     paintRange(chart);

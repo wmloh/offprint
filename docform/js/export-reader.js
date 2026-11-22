@@ -522,6 +522,14 @@
     var styles = new Set(payload.styles);
     var data = new Map(payload.data);
     var library = new URL('.', payload.entryURL).href;
+    if (payload.inlineData?.length) {
+      for (var definition of doc.querySelectorAll('[data-df-export-data]')) {
+        var text = shared[payload.inlineData[Number(definition.getAttribute('data-df-export-data'))]];
+        if (typeof text !== 'string') throw Error('An authored dataset could not be restored.');
+        definition.textContent = text;
+        definition.removeAttribute('data-df-export-data');
+      }
+    }
 
     function execute(path, entry) {
       signal.throwIfAborted();
@@ -547,6 +555,7 @@
       interactive: true, entryURL: payload.entryURL, pageURL: payload.url, siteURL: payload.siteURL,
       freshView: !saved,
       combinedStyles: payload.combined, features: payload.features, identities: payload.identities,
+      hasData: function (name) { return data.has(name); },
       loadModule: function (url, css) {
         var path = url.startsWith(library) && url.slice(library.length);
         return css ? styles.has(path) : execute(path);
@@ -580,10 +589,17 @@
         })) {
       throw Error('A required DocForm feature could not initialize.');
     }
-    if (saved) {
-      var result = runtime._readerState.replay({ record: saved, status: 'saved' });
+    var chartDataIssue = runtime.diagnostics.list().find(function (issue) {
+      return issue.code === 'data-input' && issue.feature === 'chart';
+    });
+    if (chartDataIssue) throw Error('A chart could not load its data. ' + chartDataIssue.message);
+    var state = saved?.record ? saved : { record: saved, status: 'saved',
+      payloads: new Map((payload.imports || []).map(function ([key, index]) { return [key, shared[index]]; })) };
+    if (state.record) {
+      var result = runtime._readerState.replay(state);
       if (result.status === 'stale' || result.issues.length) throw Error('The committed view could not be restored.');
     }
+    if (runtime._zoom) signal.addEventListener('abort', runtime._zoom.dispose, { once: true });
     return runtime._readerState;
   }
 
@@ -770,7 +786,7 @@
         scroll(fragment);
         return;
       }
-      if (pageState) committed.set(active, pageState.capture().record);
+      if (pageState) committed.set(active, pageState.capture());
       pageState = null;
       running?.abort();
       running = null;

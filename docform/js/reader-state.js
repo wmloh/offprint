@@ -46,11 +46,7 @@
   function size(value) { return bytes(JSON.stringify(value)); }
   function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 
-  function prepare(doc, pageURL, siteURL, config) {
-    pageKey = canonical(pageURL);
-    documentKey = canonical(siteURL || pageURL);
-    mode = doc.documentElement.hasAttribute('data-df-export-replay') ? 'replay' : 'reading';
-    configuration = stamp(JSON.stringify(config));
+  function identify(doc) {
     var selector = [
       '.df-tabs', '[data-df-tabs]', '.df-figure-steps', '.df-card-panel', '.df-detail-pane',
       '.df-pipeline', '[data-df-chart]', '[data-df-chart-playback]', '.df-anim',
@@ -61,6 +57,7 @@
     ].join(',');
     var counts = new Map();
     var ordinals = new Map();
+    var identities = new Map();
     var elements = Array.from(doc.querySelectorAll('[id],' + selector));
     var targets = new Set(Array.from(doc.querySelectorAll('[data-df-dropzone][data-df-target]'), function (host) {
       return host.getAttribute('data-df-target').trim();
@@ -70,7 +67,7 @@
     });
     elements.forEach(function (host) {
       if (host.id && counts.get(host.id) === 1) {
-        hosts.set(host, { key: ['id', host.id], stamp: null });
+        identities.set(host, { key: ['id', host.id], stamp: null });
         return;
       }
       // Anchor anonymous siblings to their authored parent path, independently of generated markup.
@@ -86,18 +83,35 @@
         }
         path.unshift([at.localName, ordinals.get(at)]);
       }
-      hosts.set(host, { key: ['path', path], stamp: null });
+      identities.set(host, { key: ['path', path], stamp: null });
     });
 
     // Take signatures before feature setup moves, replaces, or enhances authored markup.
     elements.forEach(function (host) {
       if (!host.matches(selector) && !targets.has(host.id)) {
         // Programmatic components can mount on any authored ID. Their controller validates the semantic domain.
-        hosts.get(host).stamp = stamp(host.localName + '#' + host.id);
+        identities.get(host).stamp = stamp(host.localName + '#' + host.id);
       } else {
-        hosts.get(host).stamp = stamp(host.outerHTML);
+        identities.get(host).stamp = stamp(host.outerHTML);
       }
     });
+    return identities;
+  }
+
+  function prepare(doc, pageURL, siteURL, config) {
+    pageKey = canonical(pageURL);
+    documentKey = canonical(siteURL || pageURL);
+    var interactive = root.DocFormExportContext?.interactive;
+    mode = interactive ? 'session' : doc.documentElement.hasAttribute('data-df-export-replay') ? 'replay' : 'reading';
+    configuration = stamp(JSON.stringify(config));
+    if (interactive) {
+      doc.querySelectorAll('[data-df-export-identity]').forEach(function (host) {
+        var index = Number(host.getAttribute('data-df-export-identity'));
+        host.removeAttribute('data-df-export-identity');
+        var authored = root.DocFormExportContext.identities[index];
+        if (authored) hosts.set(host, authored);
+      });
+    } else identify(doc).forEach(function (authored, host) { hosts.set(host, authored); });
     doc.querySelectorAll('details').forEach(function (host) {
       var track = watch('details', host, function () { return host.isConnected ? host.open : undefined; }, function (open) {
         if (!host.isConnected || typeof open !== 'boolean') return false;
@@ -139,6 +153,7 @@
       if (value === undefined || (same(value, entry.value) && (!options.reassert || entry.touched || origin === 'group'))) return;
       entry.touched = true;
       entry.value = value;
+      if (mode === 'session') return;
       pending.set(id.key, { stamp: id.stamp, value: value });
       schedule();
     };
@@ -229,7 +244,7 @@
     var id = identity('import', host);
     if (!id) return;
     var key = destination || id.key;
-    if (mode === 'replay') {
+    if (mode === 'replay' || mode === 'session') {
       adapters.set('import:' + id.key, { id: id, destination: key, signature: signature, apply: replay, accepts: canReplay });
     } else if (mode === 'reading') {
       return function (file) {
@@ -257,7 +272,7 @@
   }
 
   function removeImport(host) {
-    if (mode === 'replay') return;
+    if (mode !== 'reading') return;
     liveImports.forEach(function (value, key) {
       if (value.host !== host) return;
       liveImports.delete(key);
@@ -415,7 +430,7 @@
   }
 
   function replay(saved) {
-    if (mode !== 'replay' || !started) throw new Error('Reader state replay needs an initialized export context.');
+    if (!['replay', 'session'].includes(mode) || !started) throw new Error('Reader state replay needs an initialized export context.');
     if (!saved.record) return { status: saved.status, issues: [] };
     var record = saved.record;
     if (!currentFormat(record) || record.page !== pageKey || record.configuration !== configuration) {
@@ -449,6 +464,10 @@
         return !!entry && entry.id.stamp === item.stamp && entry.apply(item.value);
       });
     });
+    if (mode === 'session') adapters.forEach(function (entry) {
+      if (entry.snapshot) entry.value = entry.snapshot();
+      entry.preview = false;
+    });
     return { status: saved.status, issues: issues };
   }
 
@@ -477,9 +496,9 @@
   }
 
   DF._readerState = {
-    prepare: prepare, start: start, watch: watch, keyed: keyed, transient: transient,
+    identify: identify, prepare: prepare, start: start, watch: watch, keyed: keyed, transient: transient,
     preserveOrigin: function (fn) { return muted ? function () { return transient(fn); } : fn; },
-    isolated: function () { return mode === 'replay'; },
+    isolated: function () { return mode === 'replay' || mode === 'session'; },
     registerImport: registerImport, removeImport: removeImport, targetStamp: targetStamp, stamp: stamp,
     capture: capture, read: read, replay: replay, clear: clear,
     enabled: function () { return mode === 'reading'; }

@@ -8,7 +8,7 @@ test('the shipped export bundle matches the library styles and fonts', () => {
   assert.ok(isCurrent(), 'Run node scripts/build-export-library.js to refresh the export bundle.');
 });
 
-function load(sourceDocs = new Map(), createExportDocument) {
+function load(sourceDocs = new Map(), createExportDocument, DOMParser) {
   const document = {
     implementation: {
       createHTMLDocument(title) {
@@ -25,7 +25,7 @@ function load(sourceDocs = new Map(), createExportDocument) {
       }
     }
   };
-  const context = vm.createContext({ URL, TextEncoder, atob, btoa, Blob, document });
+  const context = vm.createContext({ URL, TextEncoder, atob, btoa, Blob, document, DOMParser });
   context.window = context;
   function loadScript(path) {
     vm.runInContext(fs.readFileSync(new URL('../docform/' + path, 'file://' + __filename), 'utf8'),
@@ -225,6 +225,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       set hidden(value) { if (value) this.setAttribute('hidden', ''); else attributes.delete('hidden'); },
       set className(value) { this.setAttribute('class', value); },
       set type(value) { this.setAttribute('type', value); },
+      set content(value) { this.setAttribute('content', value); },
       set rel(value) { this.setAttribute('rel', value); },
       set media(value) { this.setAttribute('media', value); },
       append(...children) { this.children.push(...children); },
@@ -250,7 +251,9 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       [node, ...node.querySelectorAll('*')].forEach(child => { child.ownerDocument = doc; });
       return node;
     }, getElementById: id => doc.body.querySelectorAll('[id],a[name]').find(node => node.id === id),
-    querySelector: () => null, querySelectorAll: selector => doc.body.querySelectorAll(selector) };
+    querySelector: selector => selector === 'meta[http-equiv]' ?
+      head.children.find(node => node.getAttribute('http-equiv')) : null,
+    querySelectorAll: selector => doc.body.querySelectorAll(selector) };
     return doc;
   }
   function asset(path, bytes) {
@@ -259,14 +262,39 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   function decodeSheet(url) {
     return Buffer.from(url.split(',')[1], 'base64').toString();
   }
-  const runtime = load(new Map([['home', { title: 'An example', manifest: 'site.js' }]]), exportDocument);
+  const runtime = load(new Map([
+    ['home', { title: 'An example', manifest: 'site.js' }],
+    ['nested', { title: 'Nested', manifest: '../site.js' }]
+  ]), exportDocument, class {
+    parseFromString(html) {
+      const links = html === 'home' ? 'nested/index.html#caf%C3%A9%2Fmore' : '../index.html';
+      const doc = exportDocument('Interactive input');
+      const entry = element('script');
+      entry.setAttribute('src', '/local/docform.js');
+      const link = element('a', 'Switch pages');
+      link.href = links;
+      const heading = element('h2', 'Café');
+      heading.id = 'café/more';
+      const custom = element('script', 'doNotPackageThisAuthorScript()');
+      custom.remove = () => doc.body.children.splice(doc.body.children.indexOf(custom), 1);
+      doc.body.append(heading, link, custom);
+      doc.querySelectorAll = selector => selector === 'script[src]' ? [entry] : [];
+      return doc;
+    }
+  });
+  runtime._boot.exportPlan = () => ({
+    features: ['base', 'tabs'], styles: ['css/tabs.css'],
+    scripts: ['docform.js', 'js/core.js', 'js/reader-state.js', 'js/tabs.js']
+  });
+  runtime._readerState = { identify: () => new Map() };
   runtime._page = 'file:///work/project/index.html';
   runtime._site = { provided: true, base: 'file:///work/project/site.js' };
   const sharedCSS = '@font-face{font-family:Shared;src:url(font.woff2)} p{color:blue}';
   const overrideCSS = 'p{color:red;background:url(image.png)}';
   let css = 'p::before{content:"cancelled"}';
   let stepCount = 0;
-  runtime._pageSnapshot.capture = async page => {
+  let committedImport = false;
+  runtime._pageSnapshot.capture = async (page, options) => {
     const nested = page.url.endsWith('/nested/index.html');
     const body = element('body');
     const title = element('h1', 'Repeat');
@@ -310,6 +338,10 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     }
     return {
       title: 'An example', issues: [], htmlAttributes: [], body, imports: [],
+      committed: options.interactive ? {
+        views: [['tabs', { value: nested ? 'results' : 'overview' }]],
+        imports: committedImport && nested ? [['shared', { name: 'private.csv' }]] : []
+      } : undefined,
       styles: [{ href: 'base.css' }, { text: overrideCSS }, { text: css, media: 'print' }]
     };
   };
@@ -411,6 +443,43 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const bytesPerStep = Math.round((sizes[2] - sizes[0]) / 60);
   assert.ok(bytesPerStep > 0 && bytesPerStep < 500, `${bytesPerStep} bytes per step`);
   t.diagnostic(`Two-page fixture at 2, 8 and 32 steps per page: ${sizes.join(', ')} bytes (${bytesPerStep} bytes per added step).`);
+
+  stepCount = 0;
+  const cancelInteractive = new AbortController();
+  await assert.rejects(prepared.build(selected, { mode: 'interactive', signal: cancelInteractive.signal,
+    onProgress(event) { if (event.phase === 'links') cancelInteractive.abort(); }
+  }), { name: 'AbortError' });
+  const interactive = await prepared.build(selected, { mode: 'interactive' });
+  const interactiveHTML = await interactive.blob.text();
+  const readBundle = html => JSON.parse(/<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(html)[1]);
+  const packed = readBundle(interactiveHTML);
+  assert.equal(packed.version, 1);
+  assert.equal(packed.mode, 'interactive');
+  assert.equal(packed.shared.length, 5); // The manifest plus four trusted classic scripts.
+  assert.deepEqual(packed.pages[0].interactive.modules, packed.pages[1].interactive.modules);
+  assert.equal(packed.pages[0].interactive.site, packed.pages[1].interactive.site);
+  assert.equal(packed.pages[1].interactive.state.views[0][1].value, 'results');
+  assert.equal(packed.pages[1].interactive.url, 'file:///work/project/nested/index.html');
+  assert.deepEqual(packed.pages[0].interactive.styles, ['css/tabs.css']);
+  assert.doesNotMatch(interactiveHTML, /doNotPackageThisAuthorScript|sourceScript|sourceHandler/);
+  assert.doesNotThrow(() => new vm.Script('(' + /<script>\((function reader.*?)<\/script>/s.exec(interactiveHTML)[1]));
+  const liveHTML = runtime._exportReader.assemble(packed.pages[0].interactive.markup, packed.assets);
+  assert.match(liveHTML, /script-src 'nonce-df-export-nonce'/);
+  assert.match(liveHTML, /href="#page-2\/caf%C3%A9%2Fmore"/);
+  const interactiveOne = await prepared.build([selected[0]], { mode: 'interactive' });
+  assert.equal(interactive.bytes, Buffer.byteLength(interactiveHTML));
+  assert.deepEqual(readBundle(await interactiveOne.blob.text()).shared, packed.shared);
+  const fallbackBytes = packed.pages.reduce((sum, page) =>
+    sum + Buffer.byteLength(JSON.stringify(page.markup).replace(/</g, '\\u003c')), 0);
+  t.diagnostic(`Interactive fixture: ${interactiveOne.bytes} bytes for one page, ${interactive.bytes} for two, ` +
+    `including ${fallbackBytes} bytes of fallback markup for both pages. Shared payloads are identical.`);
+
+  committedImport = true;
+  const fallback = await prepared.build(selected, { mode: 'interactive' });
+  const fallbackHTML = await fallback.blob.text();
+  assert.equal(readBundle(fallbackHTML).pages[1].interactive, null);
+  assert.doesNotMatch(fallbackHTML, /private\.csv/);
+  assert.ok(fallback.issues.some(issue => issue.page === selected[1] && issue.code === 'interactive-fallback'));
 });
 
 test('Reader routes selected pages and encoded fragments through history and focuses followed links', () => {
@@ -486,4 +555,94 @@ test('Reader routes selected pages and encoded fragments through history and foc
   window.dispatchEvent(new Event('hashchange'));
   opened[3].dispatchEvent(new Event('load'));
   assert.equal(actions.at(-1), 'top');
+});
+
+test('Interactive routing cancels stale startup, disposes frames, and restores session state on return', async () => {
+  const { run } = load()._exportReader;
+  const location = new URL('file:///moved/Interactive.html#page-1');
+  const window = new EventTarget();
+  const document = new EventTarget();
+  const status = {};
+  let current;
+  const host = { dataset: { initial: 'page-1' }, replaceChildren(message, frame) {
+    assert.equal(message, status);
+    if (current) current.detached = true;
+    current = frame;
+  } };
+  const pages = ['page-1', 'page-2'].map(id => ({
+    id, title: id, url: 'file:///source/' + id + '.html', markup: ['fallback for ' + id],
+    interactive: { url: 'file:///source/' + id + '.html', base: 'file:///source/', markup: ["'nonce-df-export-nonce'"],
+      state: { choice: 'exported ' + id } }
+  }));
+  const bundle = { textContent: JSON.stringify({ version: 1, mode: 'interactive', assets: [], pages, shared: ['code'] }),
+    remove() {} };
+  document.querySelector = selector => ({ '#export-bundle': bundle, '#export-page': host, '#export-status': status })[selector];
+  document.createElement = () => {
+    const frame = new EventTarget();
+    frame.contentDocument = Object.assign(new EventTarget(), {
+      URL: 'about:srcdoc', querySelector: () => null, getElementById: () => null, getElementsByName: () => [],
+      body: { focus() {} }
+    });
+    frame.contentWindow = { scrollTo() {} };
+    frame.setAttribute = (name, value) => { frame[name] = value; };
+    return frame;
+  };
+  const startups = [];
+  const mounts = [];
+  function startInteractive(doc, payload, shared, nonce, saved, signal) {
+    assert.equal(doc, current.contentDocument);
+    assert.equal(shared[0], 'code');
+    assert.ok(current.srcdoc.includes(nonce));
+    return new Promise((resolve, reject) => startups.push({ saved, signal, resolve, reject }));
+  }
+  function controls() {
+    return { mount(doc, page) { mounts.push(page); }, follow() {}, scrolled() {}, page() {} };
+  }
+  vm.runInNewContext(`(${run})(assemble, figureSteps, null, controls, startInteractive, fileKey)`, {
+    document, window, location, AbortController, URL, crypto: require('node:crypto').webcrypto,
+    assemble: markup => markup[0], figureSteps: () => {}, controls, startInteractive, fileKey: url => url.pathname
+  });
+  const first = current;
+  assert.match(first.sandbox, /allow-scripts/);
+  first.dispatchEvent(new Event('load'));
+  assert.equal(startups[0].saved.choice, 'exported page-1');
+
+  function go(hash) {
+    location.hash = hash;
+    window.dispatchEvent(new Event('hashchange'));
+    current.dispatchEvent(new Event('load'));
+  }
+
+  go('#page-2');
+  assert.equal(first.detached, true);
+  assert.equal(startups[0].signal.aborted, true);
+  startups[0].resolve({ capture() { assert.fail('Cancelled page became active'); } });
+  const page2State = { choice: 'reader selection' };
+  startups[1].resolve({ capture: () => ({ record: page2State }) });
+  await new Promise(setImmediate);
+  assert.deepEqual(mounts, ['page-2']);
+  assert.equal(current.inert, false);
+
+  const click = new Event('click', { cancelable: true });
+  const link = { ownerDocument: current.contentDocument, getAttribute(name) {
+    return name === 'href' ? 'page-1.html#caf%C3%A9%2Fmore' : null;
+  } };
+  Object.defineProperty(click, 'target', { value: { closest: () => link } });
+  current.contentDocument.dispatchEvent(click);
+  assert.equal(location.hash, '#page-1/caf%C3%A9%2Fmore');
+  go(location.hash);
+  const failed = current;
+  startups[2].reject(Error('Module could not load.'));
+  await new Promise(setImmediate);
+  assert.equal(failed.detached, true);
+  assert.doesNotMatch(current.sandbox, /allow-scripts/);
+  assert.equal(current.srcdoc, 'fallback for page-1');
+  assert.match(status.textContent, /Showing the Reader view for page-1/);
+  current.dispatchEvent(new Event('load'));
+  go('#page-2');
+  assert.equal(startups[3].saved, page2State);
+  startups[3].resolve({});
+  await new Promise(setImmediate);
+  assert.deepEqual(mounts, ['page-2', 'page-1', 'page-2']);
+  assert.equal(status.hidden, true);
 });

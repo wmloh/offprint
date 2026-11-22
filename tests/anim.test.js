@@ -101,7 +101,8 @@ test('only chart filtering and chart playback alter timing for reduced motion', 
   const root = path.join(__dirname, '../docform');
   for (const dir of ['js', 'css']) {
     for (const file of fs.readdirSync(path.join(root, dir))) {
-      if (dir === 'js' && ['chart.js', 'chart-playback.js'].includes(file)) continue;
+      // The generated runtime contains copies of the source modules checked here.
+      if (dir === 'js' && ['chart.js', 'chart-playback.js', 'export-runtime.js'].includes(file)) continue;
       const source = fs.readFileSync(path.join(root, dir, file), 'utf8');
       assert.doesNotMatch(source, /prefers-reduced-motion|reducedMotion/, `${dir}/${file}`);
     }

@@ -5,6 +5,8 @@
   var svg = 'http://www.w3.org/2000/svg';
   var csp = "default-src 'none'; style-src 'unsafe-inline' data:; img-src data:; font-src data:; " +
     "base-uri 'none'; form-action 'none'";
+  var declarations = 'script:not([src]):is([type="application/json"],[type="text/csv"],[type="text/json"],' +
+    '[type="text/yaml"],[type="application/yaml"])';
   var tipCSS = '.df-export-pop{position:fixed;z-index:50;display:flex;flex-direction:column;gap:6px;' +
     'max-width:min(320px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}' +
     '.df-export-pop[hidden]{display:none}' +
@@ -28,6 +30,8 @@
     body{margin:0;font:1rem system-ui;background:Canvas;color:CanvasText}
     #export-page{box-sizing:border-box;margin-left:var(--nav-slot);height:100dvh;padding-top:var(--bar)}
     iframe{display:block;width:100%;height:100%;border:0}
+    #export-page:has(#export-status:not([hidden])){display:grid;grid-template-rows:auto minmax(0,1fr)}
+    #export-status{margin:0;padding:.45rem 1rem;background:var(--wash);font-size:.88rem}
     #export-sidebar{position:fixed;z-index:3;inset:0 auto 0 0;width:var(--nav-width);box-sizing:border-box;
       background:Canvas;border-right:1px solid var(--line);padding:.75rem;overflow:auto;overscroll-behavior:contain;
       scrollbar-width:thin;overflow-wrap:anywhere}
@@ -262,8 +266,9 @@
       node.setAttribute('target', '_blank');
       node.setAttribute('rel', 'noopener noreferrer');
     } else if (target.route) {
-      node.setAttribute(attr, target.route);
-      node.setAttribute('data-export-destination', '');
+      var fragment = page.interactive && value.trim().startsWith('#');
+      if (!fragment) node.setAttribute(attr, target.route);
+      node.setAttribute('data-export-destination', fragment ? target.route : '');
     } else {
       node.removeAttribute(attr);
       node.setAttribute('role', 'link');
@@ -346,7 +351,8 @@
     for (var { node, base, ids } of sources) {
       signal?.throwIfAborted();
       if (!doc.documentElement.contains(node)) continue;
-      if (node.matches(active)) {
+      if (node.matches(active) && !(page.interactive && node.namespaceURI === 'http://www.w3.org/1999/xhtml' &&
+          node.matches(declarations))) {
         node.remove();
         continue;
       }
@@ -382,7 +388,7 @@
         var value = attr.value;
         var replacement = value;
         var css = false;
-        if (/^on/.test(name) || ['autofocus', 'autoplay', 'ping', 'target', 'srcdoc', 'action', 'formaction', 'xml:base',
+        if (/^on/.test(name) || ['nonce', 'autofocus', 'autoplay', 'ping', 'target', 'srcdoc', 'action', 'formaction', 'xml:base',
           'data-export-destination', 'data-export-disabled'].includes(name) ||
           ids && /^data-df-reader-step(?:s|-svg|-detail)$/.test(name)) {
           replacement = null;
@@ -445,11 +451,13 @@
 
   async function styles(page, resources, report, signal) {
     var doc = page.document;
+    var packaged = new Set();
     for (var record of [...page.snapshot.styles, { text: tipCSS }]) {
       signal?.throwIfAborted();
       var reference = record.href ? await resources.stylesheet(record.href, page.base, report) :
         await resources.inlineStylesheet(record.text, page.base, report);
       if (reference === null) continue;
+      if (record.module) packaged.add(record.module);
       var sheet = create(doc, 'link');
       sheet.rel = 'stylesheet';
       sheet.setAttribute('href', '');
@@ -457,6 +465,108 @@
       if (record.media) sheet.media = record.media;
       doc.head.append(sheet);
     }
+    return Array.from(packaged);
+  }
+
+  function collectHeadings(page) {
+    page.targets = targets(page.document);
+    var headings = DF._exportReader.headings(page.document);
+    // Match live navigation's anchor allocation order for pages rendered without navigation.
+    for (var heading of headings.filter(function (node) { return node.localName !== 'h1'; })
+      .concat(headings.filter(function (node) { return node.localName === 'h1'; }))) {
+      if (!heading.id) heading.id = DF.util.uniqueSlug(DF.util.slug(heading.textContent), page.targets);
+    }
+  }
+
+  async function interactivePage(input, page, folder, signal) {
+    if (page.snapshot.committed?.imports.length) {
+      throw Error('This page uses a committed import. Its rendered view is available in Reader mode.');
+    }
+    var source = new root.DOMParser().parseFromString(input.html, 'text/html');
+    var entry = DF._boot.entryURL;
+    var settings = Array.from(source.querySelectorAll('script[src]')).find(function (script) {
+      return /(?:^|\/)docform\.js(?:[?#]|$)/.test(script.getAttribute('src'));
+    });
+    if (!settings) throw Error('This page has no DocForm entry script.');
+    var base = address(source.querySelector('base[href]')?.getAttribute('href') || page.url, page.url);
+    if (!base) throw Error('The page base URL is invalid.');
+    var profile = settings.getAttribute('data-df-profile');
+    var configNode = source.querySelector('script[data-df-page]');
+    var config = {};
+    if (configNode?.type === 'application/json') {
+      config = JSON.parse(configNode.textContent);
+      if (!config || typeof config !== 'object' || Array.isArray(config)) throw Error('Invalid DocForm page configuration.');
+    }
+    var records = Array.from(source.querySelectorAll('style,link[rel~="stylesheet"][href]:not([disabled])'), function (node) {
+      return { href: node.getAttribute('href'), text: node.textContent, media: node.media || '' };
+    });
+    var combined = records.some(function (record) {
+      return record.href && fileKey(address(record.href, base)) === fileKey(address('docform.css', entry));
+    });
+    var plan = DF._boot.exportPlan(input.site || {}, config, profile, combined);
+    var modulesByStyle = new Map(plan.styles.map(function (path) { return [fileKey(address(path, entry)), path]; }));
+    var present = new Set();
+    records.forEach(function (record) {
+      var path = record.href && modulesByStyle.get(fileKey(address(record.href, base)));
+      if (path) {
+        record.module = path;
+        present.add(path);
+      }
+    });
+    for (var path of plan.styles) {
+      if (!present.has(path)) records.push({ href: address(path, entry).href, module: path });
+    }
+    var identities = [];
+    source.querySelectorAll('[data-df-export-identity]').forEach(function (node) { node.removeAttribute('data-df-export-identity'); });
+    for (var [host, identity] of DF._readerState.identify(source)) {
+      host.setAttribute('data-df-export-identity', identities.length);
+      identities.push(identity);
+    }
+    var live = copyPage({
+      title: source.title, baseURL: base.href, body: source.body,
+      htmlAttributes: Array.from(source.documentElement.attributes, function (attr) { return [attr.name, attr.value]; }),
+      styles: records
+    }, page);
+    live.interactive = true;
+    live.document.querySelectorAll('.df-sidebar,.df-nav-toggle,.df-controls,.df-pager,[data-df-export-control]')
+      .forEach(function (node) { node.remove(); });
+    live.document.documentElement.setAttribute('data-df-export-replay', '');
+    live.document.querySelector('meta[http-equiv]').content = csp + "; script-src 'nonce-df-export-nonce'";
+    for (var declaration of source.head.querySelectorAll(declarations + ':not([data-df-site])')) {
+      // Import only the inert text and the data attributes used by DocForm.
+      var script = create(live.document, 'script', declaration.textContent);
+      script.type = declaration.type;
+      for (var attr of declaration.attributes) {
+        if (attr.name.startsWith('data-df-') && attr.name !== 'data-df-export-identity') {
+          script.setAttribute(attr.name, attr.value);
+        }
+      }
+      live.document.head.append(script);
+    }
+    if (input.site) {
+      var manifest = create(live.document, 'script');
+      manifest.type = 'application/json';
+      manifest.setAttribute('data-df-site', '');
+      live.document.head.append(manifest);
+    }
+    var data = [];
+    if (plan.features.includes('data')) {
+      for (var [name, item] of Object.entries(input.site?.assets?.data || {})) {
+        if (typeof item?.output !== 'string' || !item.output.trim()) continue;
+        signal?.throwIfAborted();
+        var value = DF._pageSnapshot.wrappedAsset('data', name, await folder.readText(address(item.output, input.siteURL)));
+        data.push([name, value]);
+      }
+    }
+    signal?.throwIfAborted();
+    var modules = plan.scripts.map(function (path) {
+      if (!Object.hasOwn(DF._exportRuntime, path)) throw Error('A trusted DocForm module is missing: ' + path);
+      return [path, DF._exportRuntime[path]];
+    });
+    live.payload = { url: page.url, base: base.href, siteURL: input.siteURL || page.url, entryURL: entry,
+      profile: profile, site: input.site || null, combined: combined, features: plan.features,
+      modules: modules, data: data, identities: identities, state: page.snapshot.committed || null };
+    return live;
   }
 
   function pageMarkup(page) {
@@ -497,7 +607,7 @@
     return list;
   }
 
-  function serialize(title, tree, active, pages, assets) {
+  function serialize(title, tree, active, pages, assets, interactive) {
     var doc = document.implementation.createHTMLDocument(title);
     doc.documentElement.lang = 'en';
     meta(doc, 'charset', 'utf-8');
@@ -548,29 +658,64 @@
     var host = create(doc, 'main');
     host.id = 'export-page';
     host.dataset.initial = pages.find(function (page) { return page.id === active; })?.id || pages[0].id;
+    if (interactive) {
+      var status = create(doc, 'p');
+      status.id = 'export-status';
+      status.hidden = true;
+      status.setAttribute('role', 'status');
+      host.append(status);
+    }
     doc.body.append(pill, nav, edge, shade, sidebar, separator, host,
       create(doc, 'noscript', 'Enable JavaScript to use the standalone reader.'));
+    var shared = [];
+    var keys = new Map();
+    function share(value) {
+      var key = JSON.stringify(value);
+      if (!keys.has(key)) {
+        keys.set(key, shared.length);
+        shared.push(value);
+      }
+      return keys.get(key);
+    }
     var bundle = create(doc, 'script', JSON.stringify({
+      ...(interactive ? { version: 1, mode: 'interactive', shared: shared } : {}),
       assets: assets,
-      pages: pages.map(function (page) { return { id: page.id, title: page.title, markup: page.markup }; })
+      pages: pages.map(function (page) {
+        var record = { id: page.id, title: page.title, markup: page.markup };
+        if (interactive) {
+          var payload = page.payload;
+          record.url = page.url;
+          record.interactive = payload ? { ...payload,
+            site: payload.site === null ? null : share(payload.site),
+            modules: payload.modules.map(function ([path, code]) { return [path, share(code)]; }),
+            data: payload.data.map(function ([name, value]) { return [name, share(value)]; })
+          } : null;
+        }
+        return record;
+      })
     }).replace(/</g, '\\u003c'));
     bundle.id = 'export-bundle';
     bundle.type = 'application/json';
     doc.body.append(bundle);
     var reader = DF._exportReader;
-    doc.body.append(create(doc, 'script', '(' + reader.run.toString() + ')(' +
-      [reader.assemble, reader.figureSteps, reader.headings, reader.controls].map(String).join(',') + ');'));
+    var runtime = [reader.assemble, reader.figureSteps, reader.headings, reader.controls];
+    if (interactive) runtime.push(reader.startInteractive, fileKey);
+    doc.body.append(create(doc, 'script', '(' + reader.run.toString() + ')(' + runtime.map(String).join(',') + ');'));
     return '<!doctype html>\n' + doc.documentElement.outerHTML;
   }
 
   async function build(folder, site, manifestCache, selected, options) {
     var signal = options?.signal;
+    var interactive = options?.mode === 'interactive';
     signal?.throwIfAborted();
     var chosen = selection(site.tree, selected);
     if (!chosen.size) throw Error('Select at least one page.');
     if (!DF._exportLibrary) await DF._boot.loadExport('js/export-library.js');
     signal?.throwIfAborted();
     if (!DF._exportLibrary) throw Error('The DocForm library assets could not load. Check that the full DocForm library is installed.');
+    if (interactive && !DF._exportRuntime) await DF._boot.loadExport('js/export-runtime.js');
+    signal?.throwIfAborted();
+    if (interactive && !DF._exportRuntime) throw Error('The trusted DocForm export modules could not load.');
     var issues = [];
     var pages = new Map();
     var resources = DF._exportResources.setup(resourceFiles(folder), signal);
@@ -603,12 +748,19 @@
           return {};
         });
         signal?.throwIfAborted();
-        var snapshot = await DF._pageSnapshot.capture({ ...configForPage,
-          html: html, url: page.url, readText: folder.readText }, { signal: signal });
+        var input = { ...configForPage, html: html, url: page.url, readText: folder.readText };
+        var snapshot = await DF._pageSnapshot.capture(input, { signal: signal, interactive: interactive });
         for (var item of snapshot.issues) report(item.code, item.target, item.message);
         var copied = copyPage(snapshot, page);
         copied.report = report;
         pages.set(page.key, copied);
+        if (interactive) {
+          try { copied.live = await interactivePage(input, copied, folder, signal); }
+          catch (error) {
+            signal?.throwIfAborted();
+            report('interactive-fallback', page.url, error.message);
+          }
+        }
       } catch (error) {
         signal?.throwIfAborted();
         report('unavailable-page', page.url, error.message);
@@ -625,41 +777,47 @@
         page: page.id, title: page.title });
       signal?.throwIfAborted();
       await assets(page, folder, resources, page.report, signal);
-      page.targets = targets(page.document);
-      var headings = DF._exportReader.headings(page.document);
-      // Match live navigation's anchor allocation order for pages rendered without navigation.
-      for (var heading of headings.filter(function (node) { return node.localName !== 'h1'; })
-        .concat(headings.filter(function (node) { return node.localName === 'h1'; }))) {
-        if (!heading.id) heading.id = DF.util.uniqueSlug(DF.util.slug(heading.textContent), page.targets);
+      collectHeadings(page);
+      if (page.live) {
+        await assets(page.live, folder, resources, page.report, signal);
+        collectHeadings(page.live);
+        page.live.targets.forEach(function (id) { page.targets.add(id); });
       }
     }
     for (var page of pages.values()) {
       await options?.onProgress?.({ phase: 'links', completed: completed, total: chosen.size,
         page: page.id, title: page.title });
       signal?.throwIfAborted();
-      for (var link of page.document.body.querySelectorAll('a[href],area[href],a[*|href]')) {
-        rewriteLink(link, link.hasAttribute('href') ? 'href' : 'xlink:href', page, pages, page.report);
+      for (var output of [page, page.live].filter(Boolean)) {
+        for (var link of output.document.body.querySelectorAll('a[href],area[href],a[*|href]')) {
+          rewriteLink(link, link.hasAttribute('href') ? 'href' : 'xlink:href', output, pages, page.report);
+        }
+        var packaged = await styles(output, resources, page.report, signal);
+        signal?.throwIfAborted();
+        output.markup = pageMarkup(output);
+        output.attributes.clear();
+        output.document = null;
+        if (output.payload) {
+          output.payload.styles = packaged;
+          output.payload.markup = output.markup;
+        }
       }
-      await styles(page, resources, page.report, signal);
-      signal?.throwIfAborted();
-      page.markup = pageMarkup(page);
-      page.attributes.clear();
-      page.document = null;
     }
     await options?.onProgress?.({ phase: 'serialize', completed: completed, total: chosen.size });
     signal?.throwIfAborted();
     var included = Array.from(pages.values(), function (page) {
       return { id: page.id, title: page.snapshot.title || page.title, markup: page.markup,
-        view: page.snapshot.view, imports: page.snapshot.imports };
+        url: page.url, payload: page.live?.payload, view: page.snapshot.view, imports: page.snapshot.imports };
     });
-    var blob = new Blob([serialize(site.title, site.tree, site.active, included, resources.assets)],
+    var blob = new Blob([serialize(site.title, site.tree, site.active, included, resources.assets, interactive)],
       { type: 'text/html;charset=utf-8' });
     signal?.throwIfAborted();
     var filename = site.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '-').trim().replace(/[. ]+$/, '').slice(0, 120);
     options?.onProgress?.({ phase: 'done', completed: completed, total: chosen.size });
     return { blob: blob, bytes: blob.size, filename: (filename || 'DocForm export') + '.html', issues: issues,
       pages: included.map(function (page) {
-        return { id: page.id, title: page.title, view: page.view, imports: page.imports };
+        return { id: page.id, title: page.title, view: page.view, imports: page.imports,
+          ...(interactive ? { interactive: !!page.payload } : {}) };
       }) };
   }
 

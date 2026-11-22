@@ -516,7 +516,77 @@
     };
   }
 
-  function reader(assemble, figureSteps, headings, controls) {
+  async function startInteractive(doc, payload, shared, nonce, saved, signal) {
+    var view = doc.defaultView;
+    var paths = new Map(payload.modules);
+    var styles = new Set(payload.styles);
+    var data = new Map(payload.data);
+    var library = new URL('.', payload.entryURL).href;
+
+    function execute(path, entry) {
+      signal.throwIfAborted();
+      var code = shared[paths.get(path)];
+      if (typeof code !== 'string') return false;
+      var script = doc.createElement('script');
+      script.nonce = nonce;
+      if (entry && payload.profile !== null) script.setAttribute('data-df-profile', payload.profile);
+      script.textContent = code;
+      var failed = false;
+      function scriptError() { failed = true; }
+      view.addEventListener('error', scriptError);
+      try { doc.head.append(script); }
+      finally {
+        view.removeEventListener('error', scriptError);
+        script.remove();
+      }
+      return !failed;
+    }
+
+    if (payload.site !== null) view.DocFormSite = structuredClone(shared[payload.site]);
+    view.DocFormExportContext = {
+      interactive: true, entryURL: payload.entryURL, pageURL: payload.url, siteURL: payload.siteURL,
+      combinedStyles: payload.combined, features: payload.features, identities: payload.identities,
+      loadModule: function (url, css) {
+        var path = url.startsWith(library) && url.slice(library.length);
+        return css ? styles.has(path) : execute(path);
+      },
+      loadAsset: function (kind, url, name) {
+        signal.throwIfAborted();
+        if (kind !== 'data' || !data.has(name)) return false;
+        (view.DocFormData ||= Object.create(null))[name] = structuredClone(shared[data.get(name)]);
+        return true;
+      }
+    };
+    if (!execute('docform.js', true) || !view.DocForm?.ready) throw Error('DocForm could not start.');
+    var runtime = await new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () { finish(Error('DocForm startup timed out.')); }, 8000);
+      function abort() { finish(signal.reason); }
+      function finish(error, runtime) {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', abort);
+        if (error) reject(error);
+        else resolve(runtime);
+      }
+      signal.addEventListener('abort', abort, { once: true });
+      view.DocForm.ready(function (runtime) { finish(null, runtime); });
+      if (signal.aborted) abort();
+    });
+    signal.throwIfAborted();
+    if (!runtime._site || !runtime._readerState ||
+        payload.features.some(function (feature) { return !runtime._boot.enabled(feature); }) ||
+        runtime.diagnostics.list().some(function (issue) {
+          return ['asset', 'data-wrapper', 'feature-init'].includes(issue.code);
+        })) {
+      throw Error('A required DocForm feature could not initialize.');
+    }
+    if (saved) {
+      var result = runtime._readerState.replay({ record: saved, status: 'saved' });
+      if (result.status === 'stale' || result.issues.length) throw Error('The committed view could not be restored.');
+    }
+    return runtime._readerState;
+  }
+
+  function reader(assemble, figureSteps, headings, controls, startInteractive, fileKey) {
     var bundle = JSON.parse(document.querySelector('#export-bundle').textContent);
     document.querySelector('#export-bundle').remove();
     var pages = new Map(bundle.pages.map(function (page) { return [page.id, page]; }));
@@ -528,6 +598,13 @@
     var hideTip = null;
     var revealStep = null;
     var pageSteps = new Map();
+    var interactive = bundle.mode === 'interactive';
+    var status = interactive && document.querySelector('#export-status');
+    var committed = new Map();
+    var sourcePages = new Map(interactive && fileKey ? bundle.pages.map(function (page) {
+      return [fileKey(new URL(page.url), true), page.id];
+    }) : []);
+    var running, pageState;
     var chrome = controls(host, headings, tips, navigate);
 
     function destination() {
@@ -654,10 +731,36 @@
     }
 
     function follow(event) {
-      var link = event.target.closest?.('[data-export-destination]');
+      var link = event.target.closest?.('[data-export-destination],a[href],area[href]');
       if (!link || event.defaultPrevented) return;
-      event.preventDefault();
-      navigate(link.getAttribute('href'));
+      var route = link.getAttribute('data-export-destination');
+      if (route !== null) {
+        route ||= link.getAttribute('href');
+        event.preventDefault();
+        if (route?.startsWith('#') && pages.has(route.slice(1).split('/')[0])) navigate(route);
+      } else if (pageState && link.ownerDocument === frame.contentDocument) {
+        var value = link.getAttribute('href') || link.getAttribute('xlink:href');
+        if (!value) return;
+        var payload = pages.get(active).interactive;
+        try {
+          var local = value.trim().startsWith('#');
+          var url = new URL(value, local ? payload.url : payload.base);
+          var page = local ? active : sourcePages.get(fileKey(url, true));
+          if (page) {
+            event.preventDefault();
+            var fragment = decodeURIComponent(url.hash.slice(1));
+            navigate('#' + page + (fragment ? '/' + encodeURIComponent(fragment) : ''));
+            return;
+          }
+          if (['https:', 'http:', 'mailto:', 'tel:', 'sms:'].includes(url.protocol)) {
+            link.setAttribute('href', url.href);
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+            return;
+          }
+        } catch (error) {}
+        event.preventDefault();
+      }
     }
 
     function render() {
@@ -666,6 +769,10 @@
         scroll(fragment);
         return;
       }
+      if (pageState) committed.set(active, pageState.capture().record);
+      pageState = null;
+      running?.abort();
+      running = null;
       active = page;
       ready = false;
       hideTip?.();
@@ -673,23 +780,74 @@
       var record = pages.get(page);
       var index = bundle.pages.indexOf(record);
       chrome.page(page, [bundle.pages[index - 1], bundle.pages[index + 1]]);
-      frame = document.createElement('iframe');
-      frame.title = record.title;
-      frame.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
-      var current = frame;
-      frame.addEventListener('load', function () {
-        if (current !== frame || current.contentDocument?.URL !== 'about:srcdoc') return;
-        var doc = current.contentDocument;
-        doc.addEventListener('click', follow);
-        hideTip = tips(doc);
-        if (!pageSteps.has(page)) pageSteps.set(page, new Map());
-        revealStep = figureSteps(doc, pageSteps.get(page), function () { hideTip?.(); chrome.update(); });
-        chrome.mount(doc, page);
-        ready = true;
-        scroll(destination()[1]);
-      });
-      frame.srcdoc = assemble(record.markup, bundle.assets);
-      host.replaceChildren(frame);
+      if (status) {
+        status.hidden = true;
+        status.textContent = '';
+      }
+
+      function mount(payload, reason) {
+        if (reason && status) {
+          status.textContent = 'Showing the Reader view for ' + record.title + '. ' + reason;
+          status.hidden = false;
+        }
+        var current = frame = document.createElement('iframe');
+        current.title = record.title;
+        current.inert = !!payload;
+        current.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox' +
+          (payload ? ' allow-scripts' : ''));
+        var controller = payload ? running = new AbortController() : null;
+        var nonce = payload ? Array.from(crypto.getRandomValues(new Uint8Array(24)), function (byte) {
+          return byte.toString(16).padStart(2, '0');
+        }).join('') : null;
+
+        function fallback(reason) {
+          controller.abort();
+          running = null;
+          mount(null, reason);
+        }
+
+        current.addEventListener('load', async function () {
+          if (current !== frame) return;
+          var doc = current.contentDocument;
+          if (doc?.URL !== 'about:srcdoc') {
+            if (payload) fallback('The page frame could not load.');
+            return;
+          }
+          if (payload) {
+            try {
+              var state = await startInteractive(doc, payload, bundle.shared, nonce,
+                committed.get(page) || payload.state, controller.signal);
+              if (current !== frame || controller.signal.aborted) return;
+              pageState = state;
+            } catch (error) {
+              if (current !== frame || controller.signal.aborted) return;
+              fallback(error.message);
+              return;
+            }
+          } else {
+            hideTip = tips(doc);
+            if (!pageSteps.has(page)) pageSteps.set(page, new Map());
+            revealStep = figureSteps(doc, pageSteps.get(page), function () { hideTip?.(); chrome.update(); });
+          }
+          doc.addEventListener('click', follow);
+          current.inert = false;
+          chrome.mount(doc, page);
+          ready = true;
+          scroll(destination()[1]);
+        }, { once: true });
+        try {
+          var markup = assemble(payload?.markup || record.markup, bundle.assets);
+          current.srcdoc = payload ? markup.replace("'nonce-df-export-nonce'", "'nonce-" + nonce + "'") : markup;
+        } catch (error) {
+          if (!payload) throw error;
+          fallback('The page resources could not be assembled.');
+          return;
+        }
+        host.replaceChildren(...(status ? [status] : []), current);
+      }
+
+      var payload = interactive && bundle.version === 1 && record.interactive;
+      mount(payload, interactive && !payload ? 'Interactive content is unavailable for this page.' : null);
     }
 
     document.addEventListener('click', follow);
@@ -700,5 +858,6 @@
     render();
   }
 
-  root.DocForm._exportReader = { run: reader, assemble: assemble, figureSteps: figureSteps, headings: headings, controls: controls };
+  root.DocForm._exportReader = { run: reader, assemble: assemble, figureSteps: figureSteps, headings: headings,
+    controls: controls, startInteractive: startInteractive };
 })(window);

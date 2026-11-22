@@ -51,13 +51,14 @@ docform/: Copyable offline library folder
     dropzone.css: Dashed file drop area, status line with Reset, and the dropped file's view
     glossary.css: Glossary page tag filter chips, letter jumps, letter groups, definitions with tags, variant definitions, and used-on links
   js/: Per-module classic scripts on a shared DocForm namespace
-    reader-state.js: Versioned browser-local export views, import persistence, and isolated controller replay
+    reader-state.js: Versioned browser-local export views, import persistence, and in-memory Interactive session replay
     page-snapshot.js: Page capture, isolated replay, reachable figure steps and details, tooltip materialization, and fallback reporting for export
-    export-package.js: Documentation folder and manifest resolution, standalone page, sidebar shell, and asset packaging, link rewriting, and build diagnostics
+    export-package.js: Folder and manifest resolution, versioned Interactive page payloads, Reader fallbacks, link rewriting, and build diagnostics
     export-library.js: Generated library styles and KaTeX fonts loaded on demand for standalone exports
+    export-runtime.js: Generated trusted classic scripts loaded on demand for Interactive exports
     export-resources.js: Offline resolution and content-based sharing of stylesheets, fonts, and images
-    export-reader.js: Sandboxed page assembly, sidebar and active outline, fragment history, reading pill, discrete figure steps, and tooltips
-    export-dialog.js: Lazy reader export dialog with one documentation folder selection, grouped page selection, preview, cancellation, download, and saved-data clearing
+    export-reader.js: Active-frame assembly and Interactive startup, Reader fallback, sidebar, outline, fragment history, reading controls, and tooltips
+    export-dialog.js: Reader and Interactive mode selection, folder and page pickers, preview, cancellation, download, and saved-data clearing
     core.js: DocForm namespace, module and shortcut registries, data-df-* and clipboard helpers, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
@@ -117,5 +118,5 @@ docs/: Human-facing beginner DocForm HTML site with a Start here orientation and
   pages/: Start here and standalone export instructions, hierarchy, feature guides, recipes, references, and glossary
   assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index
 scripts/: Node development tools for generating shipped assets
-  build-export-library.js: Regenerates bundled export styles and fonts with Node, or verifies freshness with --check
+  build-export-library.js: Regenerates bundled export styles, fonts, and trusted scripts with Node, or verifies freshness with --check
 tests/: Built-in node:test checks of module logic

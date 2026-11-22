@@ -111,6 +111,7 @@
     for (var page of result.pages) {
       var item = make('li');
       item.append(make('strong', page.title), make('span', ' — ' + viewLabel(page.view)));
+      if (page.interactive === false) item.append(make('span', ' · Reader fallback'));
       if (page.imports.length) {
         var imports = make('ul');
         for (var entry of page.imports) {
@@ -164,6 +165,30 @@
     content.className = 'df-export-content';
     var intro = make('p', 'Chrome may ask to upload the folder’s files. DocForm reads them on this computer.');
     var documents = folderRow('Choose documentation folder', 'The folder with the site’s pages, manifest and assets');
+    var modes = make('fieldset');
+    modes.append(make('legend', 'Export mode'));
+    var mode = 'reader';
+    for (let [value, description] of [
+      ['reader', 'Reader · Readable pages with discrete figure steps'],
+      ['interactive', 'Interactive · Supported DocForm controls and figures']
+    ]) {
+      var label = make('label');
+      var choice = make('input');
+      choice.type = 'radio';
+      choice.name = 'df-export-mode';
+      choice.value = value;
+      choice.checked = value === mode;
+      choice.addEventListener('change', function () {
+        mode = value;
+        if (result) {
+          clearPreview();
+          status.textContent = 'Export mode changed. Build a new preview.';
+          update();
+        }
+      });
+      label.append(choice, make('span', description));
+      modes.append(label);
+    }
     var fieldset = make('fieldset');
     fieldset.hidden = true;
     fieldset.append(make('legend', 'Pages to export'));
@@ -188,7 +213,7 @@
     saved.append(make('h3', 'Saved reading data'), make('p', 'This browser keeps reading choices and accepted ' +
       'imports from this document so pages that are not open export with them. Without them, those pages ' +
       'export their starting view.'), forget, confirmation);
-    content.append(intro, documents.row, fieldset, preview, saved);
+    content.append(intro, modes, documents.row, fieldset, preview, saved);
 
     var footer = make('footer');
     var status = make('p');
@@ -206,7 +231,7 @@
     function update() {
       var busy = !!task;
       var selected = picker?.ids().length || 0;
-      documents.button.disabled = fieldset.disabled = forget.disabled = busy;
+      documents.button.disabled = modes.disabled = fieldset.disabled = forget.disabled = busy;
       build.hidden = !prepared || busy;
       build.disabled = !selected;
       stop.hidden = !busy;
@@ -325,7 +350,7 @@
       if (task || !prepared) return;
       clearPreview();
       run('Preparing the export…', function (signal) {
-        return prepared.build(picker.ids(), { signal: signal, onProgress: function (event) {
+        return prepared.build(picker.ids(), { mode: mode, signal: signal, onProgress: function (event) {
           if (signal.aborted || event.phase === 'done') return;
           if (event.phase === 'capture') {
             status.textContent = 'Capturing page ' + (event.completed + 1) + ' of ' + event.total + ' · ' + event.title;

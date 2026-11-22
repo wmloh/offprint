@@ -79,7 +79,8 @@ function element(tag) {
   };
 }
 
-function page({ nested, site, config, lateConfig, entryProfile, fail = [], storage, dark, staticCSS, cite, download } = {}) {
+function page({ nested, site, config, lateConfig, entryProfile, fail = [], storage, dark, staticCSS, cite, download,
+  interactive = false } = {}) {
   const location = new URL(nested ? 'pages/chapter.html' : 'index.html', repo);
   const source = new URL(nested ? '../docform/docform.js' : 'docform/docform.js', location);
   const siteScript = site ? { src: new URL(nested ? '../site.js' : 'site.js', location).href } : null;
@@ -140,7 +141,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     createTextNode: textContent => ({ textContent })
   };
   const context = vm.createContext({
-    document, location, URL, AbortController, setTimeout, clearTimeout, queueMicrotask,
+    document, location, URL, AbortController, setTimeout, clearTimeout, queueMicrotask, structuredClone,
     CustomEvent: class extends Event {
       constructor(type, { detail, bubbles }) { super(type, { bubbles }); this.detail = detail; }
     },
@@ -148,6 +149,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     localStorage: { getItem(key) { if (storage instanceof Error) throw storage; return storage?.[key] ?? null; } },
     matchMedia: () => ({ matches: !!dark, addEventListener() {} }),
     addEventListener() {},
+    removeEventListener() {},
     requestAnimationFrame() {},
     cancelAnimationFrame() {},
     getComputedStyle: () => ({}),
@@ -155,6 +157,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     DocFormSite: site
   });
   context.window = context;
+  document.defaultView = context;
   head.appendChild = el => {
     const url = new URL(el.href || el.src);
     const path = url.pathname.slice(repo.pathname.length);
@@ -167,7 +170,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
       el.onload();
     });
   };
-  vm.runInContext(entry, context);
+  if (!interactive) vm.runInContext(entry, context);
   return {
     DF: context.DocForm, html, body, citation, events, loads, ids, document, keyboards,
     key(key, target = body, props = {}) {
@@ -181,6 +184,22 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
       clicks.forEach(callback => callback({ target, button: 0 }));
     },
     runScript(url) { vm.runInContext(fs.readFileSync(url, 'utf8'), context, { filename: url.pathname }); },
+    async hydrate(payload, shared, signal) {
+      document.readyState = 'complete';
+      html.setAttribute('data-df-export-replay', '');
+      context.DocForm = {};
+      this.runScript(new URL('js/export-reader.js', library));
+      const initialize = context.DocForm._exportReader.startInteractive;
+      delete context.DocForm;
+      head.append = script => {
+        assert.equal(script.nonce, 'test-nonce');
+        document.currentScript = script;
+        vm.runInContext(script.textContent, context);
+        document.currentScript = null;
+      };
+      await initialize(document, payload, shared, 'test-nonce', null, signal);
+      return context.DocForm;
+    },
     async start() {
       document.readyState = 'interactive';
       const done = new Promise(resolve => context.DocForm.ready(resolve));
@@ -189,6 +208,34 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     }
   };
 }
+
+test('the trusted Interactive loader initializes the feature closure from embedded assets at the original page URL', async () => {
+  const config = { profile: 'none', features: { tabs: true, data: true } };
+  const site = { assets: { data: { runs: { output: 'data/runs.js' } } } };
+  const normal = page({ config, site });
+  const plan = normal.DF._boot.exportPlan(site, config, null, false);
+  assert.deepEqual(Array.from(plan.features), ['tokens', 'base', 'data', 'tabs']);
+  assert.deepEqual(Array.from(plan.scripts), ['docform.js', 'js/core.js', 'js/reader-state.js',
+    'vendor/js-yaml/js-yaml.min.js', 'js/data.js', 'js/tabs.js']);
+  const original = 'file:///original/chapter.html';
+  const shared = Array.from(plan.scripts, path => fs.readFileSync(new URL(path, library), 'utf8'));
+  const manifest = shared.push(site) - 1;
+  const data = shared.push({ type: 'json', text: '[{"id":"authored"}]' }) - 1;
+  const payload = { url: original, siteURL: 'file:///original/site.js', entryURL: entryURL.href,
+    site: manifest, profile: null, features: plan.features, styles: plan.styles, identities: [],
+    modules: Array.from(plan.scripts, (path, index) => [path, index]), data: [['runs', data]] };
+  const exported = page({ config, site, interactive: true });
+  const runtime = await exported.hydrate(payload, shared, new AbortController().signal);
+  assert.equal(runtime._page, original);
+  assert.equal(runtime.data.source('runs').snapshot().value[0].id, 'authored');
+  assert.equal(runtime._boot.enabled('tabs'), true);
+  assert.equal(runtime._readerState.isolated(), true);
+  assert.deepEqual(exported.loads, []);
+
+  const broken = page({ config, site, interactive: true });
+  await assert.rejects(broken.hydrate({ ...payload, modules: payload.modules.slice(0, -1) }, shared,
+    new AbortController().signal), /required DocForm feature/);
+});
 
 test('the offline entry exposes the extension surface and initializes a custom feature before ready', async () => {
   const p = page({ config: { features: { chart: true, data: true, selection: true } } });
@@ -386,9 +433,10 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
 
   const find = (tag, title) => descendants(modal).find(el => el.tagName === tag &&
     (title === undefined || el.textContent === title));
-  const inputs = descendants(modal).filter(el => el.tagName === 'INPUT');
-  assert.equal(inputs.length, 1);
-  const [docsInput] = inputs;
+  const [docsInput] = descendants(modal).filter(el => el.type === 'file');
+  const [reader, interactive] = descendants(modal).filter(el => el.type === 'radio');
+  assert.equal(reader.checked, true);
+  assert.equal(interactive.checked, false);
   const choose = find('BUTTON', 'Choose documentation folder');
   const build = find('BUTTON', 'Build preview');
   const stop = find('BUTTON', 'Cancel');
@@ -399,6 +447,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   assert.match(status.textContent, /Folder selection cancelled/);
   const leaf = (id, title, available = true) => ({ id, title, available, children: [] });
   const selected = [];
+  const modes = [];
   const blob = new Blob(['<!doctype html>']);
   p.DF._exportPackage = {
     async prepare(files) {
@@ -410,8 +459,9 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
         tree: [{ title: 'Book', children: [leaf('home', 'Home'), {
           title: 'Part', children: [leaf('chapter', 'Chapter'), leaf('missing', 'Hidden page', false)]
         }] }],
-        async build(ids, { signal }) {
+        async build(ids, { signal, mode }) {
           selected.push(Array.from(ids));
+          modes.push(mode);
           if (selected.length === 1) throw new Error('Build failed');
           if (selected.length === 2) {
             await new Promise(resolve => signal.addEventListener('abort', resolve, { once: true }));
@@ -436,7 +486,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   assert.equal(p.document.activeElement, choose);
   await selectFolder(docsInput, 'source');
   assert.match(modal.textContent, /source/);
-  const picker = find('FIELDSET');
+  const picker = descendants(modal).find(el => el.tagName === 'FIELDSET' && el.firstChild.textContent === 'Pages to export');
   const [group, home, part, chapter] = descendants(picker).filter(el => el.type === 'checkbox');
   assert.equal(home.checked, true);
   assert.equal(chapter.checked, false);
@@ -471,6 +521,15 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   download.click();
   assert.equal(downloads[0][0], 'Book.html');
   assert.match(downloads[0][1], /^blob:/);
+  assert.deepEqual(modes, ['reader', 'reader', 'reader']);
+  interactive.checked = true;
+  interactive.dispatchEvent(new Event('change'));
+  assert.equal(download.hidden, true);
+  assert.match(status.textContent, /Export mode changed/);
+  build.click();
+  await settle();
+  assert.equal(modes.at(-1), 'interactive');
+  assert.equal(download.hidden, false);
   assert.match(modal.textContent, /Saved reading data/);
   const cleared = [];
   p.DF._readerState.clear = async () => cleared.push(true) && true;

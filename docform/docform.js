@@ -8,7 +8,7 @@
   var exportContext = doc.documentElement.hasAttribute('data-df-export-replay') && root.DocFormExportContext;
   var replaying = !!exportContext;
   var pageURL = exportContext && exportContext.pageURL || root.location.href;
-  var library = new URL('.', entry.src);
+  var library = new URL('.', exportContext?.entryURL || entry.src);
   var siteScript = doc.querySelector('script[data-df-site]');
   var siteURL = exportContext && exportContext.siteURL || siteScript && siteScript.src || pageURL;
   var authoredTheme = doc.documentElement.getAttribute('data-df-theme');
@@ -198,18 +198,23 @@
     return parsed.get(node);
   }
 
-  function profile(value, target) {
+  function profile(value, target, notify) {
     if (value === 'none' || value === 'reading') return value;
-    if (value !== undefined) report('profile', null, target, 'Unknown DocForm profile.',
+    if (value !== undefined) notify('profile', null, target, 'Unknown DocForm profile.',
       'Choose "reading" or "none".', value);
   }
 
   function configuration() {
     var site = siteScript && object(root.DocFormSite) ? root.DocFormSite : {};
-    var page = pageConfig();
-    var siteProfile = profile(site.profile, siteScript);
-    var entryProfile = profile(entry.getAttribute('data-df-profile') ?? undefined, entry);
-    var pageProfile = profile(page.profile, 'page');
+    var config = resolveConfiguration(site, pageConfig(), entry.getAttribute('data-df-profile') ?? undefined, report);
+    if (exportContext?.interactive) config.enabled = new Set(exportContext.features);
+    return config;
+  }
+
+  function resolveConfiguration(site, page, requestedProfile, notify) {
+    var siteProfile = profile(site.profile, siteScript, notify);
+    var entryProfile = profile(requestedProfile, entry, notify);
+    var pageProfile = profile(page.profile, 'page', notify);
     var selected = new Map();
     var wanted = new Map();
     if ((pageProfile || entryProfile || siteProfile || 'reading') === 'reading') {
@@ -218,12 +223,12 @@
     function applyFeatures(features, target) {
       if (features === undefined) return;
       if (!object(features)) {
-        report('features', null, target, 'Feature choices must be an object.', 'Map feature names to true or false.');
+        notify('features', null, target, 'Feature choices must be an object.', 'Map feature names to true or false.');
         return;
       }
       Object.keys(features).forEach(function (id) {
         if (!own(catalog, id) || typeof features[id] !== 'boolean') {
-          report('feature-choice', id, target, 'Invalid choice for feature "' + id + '".',
+          notify('feature-choice', id, target, 'Invalid choice for feature "' + id + '".',
             'Use a supported feature name and a boolean value.', features[id]);
         } else {
           wanted.set(id, features[id]);
@@ -237,7 +242,7 @@
       if (selected.has(id)) return selected.get(id);
       if (wanted.get(id) === false) return false;
       var missing = (catalog[id].needs || []).find(function (dep) { return !include(dep); });
-      if (missing) dependency(id, missing);
+      if (missing && notify === report) dependency(id, missing);
       selected.set(id, !missing);
       return !missing;
     }
@@ -294,6 +299,10 @@
   }
 
   function seedAssets() {
+    if (exportContext?.interactive) {
+      combinedStyles = exportContext.combinedStyles;
+      return;
+    }
     doc.querySelectorAll('link[rel~="stylesheet"][href]:not([disabled]), script[src]:not([type="module"])')
       .forEach(function (node) {
         var key = keyOf(node.href || node.src);
@@ -305,6 +314,10 @@
   function load(url, css, exportUI) {
     var key = keyOf(url);
     if (!assets.has(key)) {
+      if (exportContext?.interactive) {
+        assets.set(key, Promise.resolve().then(function () { return exportContext.loadModule(key, css); }));
+        return assets.get(key);
+      }
       assets.set(key, new Promise(function (resolve) {
         var el = doc.createElement(css ? 'link' : 'script');
         el.onload = function () { resolve(true); };
@@ -375,7 +388,7 @@
     var item = catalog[id];
     for (var style of item.css || []) {
       if (combinedStyles && readingStyles.has(style)) continue;
-      var href = new URL(style.endsWith('.css') ? style : 'css/' + style + '.css', library).href;
+      var href = new URL(stylePath(style), library).href;
       if (!await load(href, true)) {
         assetFailure(id, href);
         return false;
@@ -399,6 +412,27 @@
       }
     }
     return true;
+  }
+
+  function stylePath(style) {
+    return style.endsWith('.css') ? style : 'css/' + style + '.css';
+  }
+
+  function exportPlan(site, page, requestedProfile, combined) {
+    var enabled = resolveConfiguration(site, page, requestedProfile ?? undefined, function () {}).enabled;
+    var shell = new Set(['navigation', 'controls', 'theme', 'search', 'sections']);
+    var features = Object.keys(catalog).filter(function (id) { return enabled.has(id) && !shell.has(id); });
+    var scripts = new Set(['docform.js', 'js/core.js', 'js/reader-state.js']);
+    var styles = new Set();
+    features.forEach(function (id) {
+      var item = catalog[id];
+      (item.css || []).forEach(function (style) {
+        if (!combined || !readingStyles.has(style)) styles.add(stylePath(style));
+      });
+      if (item.vendor) scripts.add(item.vendor[0]);
+      if (item.script) scripts.add('js/' + item.script + '.js');
+    });
+    return { features: features, scripts: Array.from(scripts), styles: Array.from(styles) };
   }
 
   function localPath(path, base, feature, target) {
@@ -492,7 +526,7 @@
   }
 
   var boot = DF._boot = {
-    entryURL: entry.src,
+    entryURL: exportContext?.entryURL || entry.src,
     replaying: replaying,
     enabled: function (id) { return active.has(id) && !failed.has(id); },
     canInitialize: function (name) {
@@ -513,6 +547,7 @@
       return replaying ? exportContext.loadAsset('search', url) : load(url, false);
     },
     loadExport: loadExport,
+    exportPlan: exportPlan,
     mountExport: mountExport,
     report: report,
     merge: merge,

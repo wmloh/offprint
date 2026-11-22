@@ -57,12 +57,14 @@ function element(id, markup, parent = null) {
     id, localName: 'div', outerHTML: markup, parentElement: parent, children: [],
     matches: () => true,
     setAttribute(name, value) { attrs.set(name, value); },
+    getAttribute(name) { return attrs.get(name) ?? null; },
+    removeAttribute(name) { attrs.delete(name); },
     addEventListener() {},
     appendChild(child) { this.children.push(child); return child; }
   };
 }
 
-function page(db, pageURL, { isolated = false, edited = false, config = {} } = {}) {
+function page(db, pageURL, { isolated = false, edited = false, config = {}, identities } = {}) {
   const body = element('main', '');
   const tabs = body.appendChild(element('', edited ? '<div>new tabs</div>' : '<div>tabs</div>', body));
   const zone = body.appendChild(element('zone', '<div data-df-dropzone></div>', body));
@@ -70,17 +72,20 @@ function page(db, pageURL, { isolated = false, edited = false, config = {} } = {
     body,
     documentElement: { hasAttribute() { return isolated; } },
     querySelector: () => null,
-    querySelectorAll: selector => selector.startsWith('[id],') ? [body, tabs, zone] : [],
+    querySelectorAll: selector => selector.startsWith('[id],') ? [body, tabs, zone] :
+      selector === '[data-df-export-identity]' && identities ? [tabs] : [],
     createElement: () => element('', ''),
     addEventListener() {}
   };
   const context = vm.createContext({
-    DocForm: {}, URL, TextEncoder, indexedDB: db, document: doc, addEventListener() {}, setTimeout, clearTimeout
+    DocForm: {}, URL, TextEncoder, indexedDB: db, document: doc, addEventListener() {}, setTimeout, clearTimeout,
+    DocFormExportContext: identities && { interactive: true, identities }
   });
+  if (identities) tabs.setAttribute('data-df-export-identity', '0');
   vm.runInContext(source, context);
   const state = context.DocForm._readerState;
   state.prepare(doc, pageURL, site, config);
-  return { state, tabs, zone };
+  return { state, doc, tabs, zone };
 }
 
 function controller(state, kind, host, initial, options = {}) {
@@ -173,6 +178,34 @@ test('committed views restore only in the matching export context, after shared 
   await live.state.clear();
   assert.equal((await sibling.state.read(chapter)).status, 'missing');
   assert.equal(db.stores.get('imports').size, 0);
+});
+
+test('Interactive exports restore original identities and keep only committed changes in session state', () => {
+  const db = { open() { assert.fail('Interactive export opened browser storage'); } };
+  const original = page(db, chapter, { isolated: true });
+  const originalTab = controller(original.state, 'tabs', original.tabs, 'results');
+  original.state.start();
+  assert.equal(originalTab.get(), 'results');
+  const seed = original.state.capture();
+  const identities = [original.state.identify(original.doc).get(original.tabs)];
+
+  const live = page(db, chapter, { identities, edited: true });
+  const tab = controller(live.state, 'tabs', live.tabs, 'overview');
+  live.state.start();
+  assert.equal(live.state.replay(seed).issues.length, 0);
+  assert.equal(tab.get(), 'results');
+  assert.equal(live.tabs.getAttribute('data-df-export-identity'), null);
+  tab.select('new choice');
+  tab.select('temporary preview', 'hover');
+  const last = live.state.capture();
+  assert.equal(last.record.views[0][1].value, 'new choice');
+  assert.equal(last.preview, true);
+
+  const returned = page(db, chapter, { identities, edited: true });
+  const returnedTab = controller(returned.state, 'tabs', returned.tabs, 'overview');
+  returned.state.start();
+  assert.equal(returned.state.replay(last).issues.length, 0);
+  assert.equal(returnedTab.get(), 'new choice');
 });
 
 test('stale anonymous controls and oversized imports fall back independently, and reset removes the record', async () => {

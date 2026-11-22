@@ -562,14 +562,18 @@
     var saved = live ? state.capture() : await state.read(page.url);
     signal?.throwIfAborted();
     if (!live && typeof page.html !== 'string') throw new Error('Page replay needs the selected page HTML.');
+    var snapshot;
     if (!live || saved.preview) {
       if (typeof page?.html !== 'string') throw new Error('Restoring the committed view needs the selected page HTML.');
-      return replayPage(page, saved, signal);
+      snapshot = await replayPage(page, saved, signal);
+    } else {
+      var issues = [];
+      scriptIssues(document, DF._boot.entryURL, document.querySelector('script[data-df-site]')?.src, issues);
+      snapshot = freeze(root, 'live', issues, importSummary(saved));
     }
-    var issues = [];
-    scriptIssues(document, DF._boot.entryURL, document.querySelector('script[data-df-site]')?.src, issues);
-    return freeze(root, 'live', issues, importSummary(saved));
+    if (options?.interactive && ['live', 'saved'].includes(snapshot.view)) snapshot.committed = saved.record;
+    return snapshot;
   }
 
-  DF._pageSnapshot = { capture: capture };
+  DF._pageSnapshot = { capture: capture, wrappedAsset: wrappedAsset };
 })(typeof window !== 'undefined' ? window : globalThis);

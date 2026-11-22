@@ -16,6 +16,7 @@
   }
   var sequence = DocForm._sequence;
   var cards = new WeakMap();
+  var figures = new WeakMap();
 
   function detailsIn(box) {
     var pane = box.querySelector(':scope > .df-step-details');
@@ -236,7 +237,9 @@
     var filter = setupFilter(box, prepared.panel, list, buttons, buttons.map(function (button) {
       return rowOf(button, list);
     }), 'step', function () { highlight.refresh(); });
-    var labels = buttons.map(function (button) { return sequence.label(button, button); });
+    var labels = buttons.map(function (button, index) {
+      return sequence.label(button, button) || domain.keys[index];
+    });
     var highlight = trackSelection(list, buttons, numbersFor(box, buttons), filter && filter.shown);
     var panes = setupPanes(list, prepared.details);
 
@@ -274,6 +277,9 @@
     });
     box.classList.add('df-figure-steps-ready');
     figure.classList.add('df-step-figure');
+    figures.set(box, { figure: figure, panel: prepared.panel, list: list, buttons: buttons,
+      labels: labels, keys: domain.keys, notes: prepared.targets,
+      read: function () { return state.controller.index; } });
     state.start();
     detail.source(box, state.controller);
     if (document.readyState !== 'complete' && !DocForm.sequence.get(figure)) {
@@ -405,6 +411,7 @@
       items.collect('cards', box, prepared && prepared.domain);
     });
   });
+  DocForm._figureSteps = { reader: function (box) { return figures.get(box); } };
   DocForm.register('figure-steps', function () { DocForm._all('.df-figure-steps').forEach(setupFigure); });
   DocForm.register('cards', function () { DocForm._all('.df-card-panel').forEach(setupCards); });
 })(typeof window !== 'undefined' ? window : globalThis);

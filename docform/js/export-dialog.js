@@ -162,10 +162,8 @@
 
     var content = make('div');
     content.className = 'df-export-content';
-    var intro = make('p', 'Choose the documentation folder and the DocForm library folder. ' +
-      'Chrome may ask to upload their files; they are only read on this computer.');
+    var intro = make('p', 'Chrome may ask to upload the folder’s files. DocForm reads them on this computer.');
     var documents = folderRow('Choose documentation folder', 'The folder with the site’s pages, manifest and assets');
-    var library = folderRow('Choose DocForm library folder', 'The folder that contains docform.js');
     var fieldset = make('fieldset');
     fieldset.hidden = true;
     fieldset.append(make('legend', 'Pages to export'));
@@ -190,7 +188,7 @@
     saved.append(make('h3', 'Saved reading data'), make('p', 'This browser keeps reading choices and accepted ' +
       'imports from this document so pages that are not open export with them. Without them, those pages ' +
       'export their starting view.'), forget, confirmation);
-    content.append(intro, documents.row, library.row, fieldset, preview, saved);
+    content.append(intro, documents.row, fieldset, preview, saved);
 
     var footer = make('footer');
     var status = make('p');
@@ -208,7 +206,7 @@
     function update() {
       var busy = !!task;
       var selected = picker?.ids().length || 0;
-      documents.button.disabled = library.button.disabled = fieldset.disabled = forget.disabled = busy;
+      documents.button.disabled = fieldset.disabled = forget.disabled = busy;
       build.hidden = !prepared || busy;
       build.disabled = !selected;
       stop.hidden = !busy;
@@ -256,18 +254,13 @@
       task.abort();
     }
 
-    function checkFolders() {
-      if (!documents.files || !library.files) {
-        status.textContent = 'Choose the ' + (documents.files ? 'DocForm library' : 'documentation') + ' folder.';
-        update();
-        return;
-      }
-      run('Checking the selected folders…', async function (signal) {
+    function checkFolder() {
+      run('Checking the documentation folder…', async function (signal) {
         if (!DF._exportPackage) await DF._boot.loadExport('js/export-package.js');
         if (!DF._exportPackage) {
-          throw Error('The export tools could not load. Check the local DocForm files and choose the folders again.');
+          throw Error('The export tools could not load. Check the local DocForm files and choose the documentation folder again.');
         }
-        return DF._exportPackage.prepare(documents.files, { library: library.files, signal: signal });
+        return DF._exportPackage.prepare(documents.files, { signal: signal });
       }, function (source) {
         prepared = source;
         picker = pagePicker(source.tree, source.active, function () {
@@ -279,32 +272,29 @@
         picker.sync();
         fieldset.append(picker.list);
         fieldset.hidden = false;
-        status.textContent = 'Folders ready. ' + count(picker.ids().length, 'page') + ' selected.';
+        status.textContent = 'Folder ready. ' + count(picker.ids().length, 'page') + ' selected.';
       }, function (error) {
         if (error.folder === 'documents') documents.set(null);
-        else if (error.folder === 'library') library.set(null);
       }, function () {
-        return prepared ? build : !documents.files ? documents.button : library.button;
+        return prepared ? build : documents.button;
       });
     }
 
-    for (let source of [documents, library]) {
-      source.input.addEventListener('cancel', function () { status.textContent = 'Folder selection cancelled.'; });
-      source.input.addEventListener('change', function () {
-        var files = Array.from(source.input.files);
-        source.input.value = '';
-        picker?.list.remove();
-        prepared = picker = null;
-        fieldset.hidden = true;
-        clearPreview();
-        source.set(files);
-        if (files.length) checkFolders();
-        else {
-          status.textContent = 'The selected folder is empty.';
-          update();
-        }
-      });
-    }
+    documents.input.addEventListener('cancel', function () { status.textContent = 'Folder selection cancelled.'; });
+    documents.input.addEventListener('change', function () {
+      var files = Array.from(documents.input.files);
+      documents.input.value = '';
+      picker?.list.remove();
+      prepared = picker = null;
+      fieldset.hidden = true;
+      clearPreview();
+      documents.set(files);
+      if (files.length) checkFolder();
+      else {
+        status.textContent = 'The selected folder is empty.';
+        update();
+      }
+    });
 
     forget.addEventListener('click', function () {
       forget.hidden = true;
@@ -386,7 +376,6 @@
       task?.abort();
       prepared = picker = result = null;
       documents.set(null);
-      library.set(null);
       if (dialog === modal) dialog = null;
       modal.remove();
       if (opener.isConnected) opener.focus({ preventScroll: true });

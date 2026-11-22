@@ -20,9 +20,12 @@ Enable the `controls` feature. The module inserts the top-left pill without auth
 
 ## Standalone export
 
-- Use desktop Chrome with JavaScript enabled from a local page. Choose both folders: documentation root (page, manifest, assets) and DocForm library (contains `docform.js`). Both are required, even when the library sits inside the root. Layout rules: [site structure](../setup/site-structure.md). Pick pages in manifest order, build a preview, then download one HTML file.
+- Use desktop Chrome with JavaScript enabled from a local page. Choose the documentation root that contains the pages, manifest, and assets. DocForm includes its bundled library styles and fonts. Pick pages in manifest order, build a preview, then download one HTML file. [Site structure](../setup/site-structure.md)
 - Dialog's **Saved reading data** section clears this browser's saved views and imports for the document after an in-dialog confirm; an existing preview is discarded. Hidden when browser-local state is off.
 - The active page uses its committed live view. Sibling pages use browser-local saved views and accepted imports when available, with authored defaults for missing or stale state. The preview reports fallbacks, import-derived content, missing assets, unavailable links and output size.
-- Open the download from disk with JavaScript enabled. The standalone reader provides contents, sequential navigation, internal heading links and definitions. Interactive source features are frozen and supported assets are embedded. External hyperlinks remain available when online.
+- Open the download from disk with JavaScript enabled. The sidebar lists the selected page groups and outlines the active page’s visible `h1`–`h3` headings, respecting `data-df-no-outline`. Page and section links use `#page-N` and `#page-N/heading-id` routes with browser Back and Forward.
+- The exported reading pill uses fixed shortcuts `N` for navigation, `F` for focus mode, `T` for theme, and `J` / `K` for heading jumps. The progress ring tracks the current page. Sidebar mode, width, focus mode, and theme carry across pages within the open export.
+- `N` cycles shown, hidden, and auto-hide on desktop. In auto-hide, approach the left edge or press Down Arrow on the navigation button. Drag the separator or use Left Arrow, Right Arrow, Home, or End. On narrow and touch-only screens, `N` opens the drawer and Escape closes it. The dimmed area also closes the drawer.
+- Separate arrow buttons move to adjacent pages. Inline definitions and discrete declarative figure steps remain available. Other source controls display their captured state. Supported assets are embedded. External hyperlinks remain available when online.
 
 [Navigation](navigation.md) · [Theme](theme.md) · [Search](../reading/search.md) · [Controls source](../../js/controls.js)

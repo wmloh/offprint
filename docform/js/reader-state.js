@@ -53,7 +53,8 @@
     configuration = stamp(JSON.stringify(config));
     var selector = [
       '.df-tabs', '[data-df-tabs]', '.df-figure-steps', '.df-card-panel', '.df-detail-pane',
-      '.df-pipeline', '[data-df-chart]', '[data-df-chart-playback]', '.df-anim', 'figure:has(> [data-df-animation-steps])',
+      '.df-pipeline', '[data-df-chart]', '[data-df-chart-playback]', '.df-anim',
+      'figure:has(> [data-df-animation-steps], > script[data-df-animation])',
       '[data-df-scenarios]', '[data-df-matrix]', '[data-df-stepper]', '[data-df-results]', '[data-df-dropzone]',
       '.df-tree-diagram',
       '.df-timeline', '.df-sequence', '[data-df-data-view]', '[data-df-source]', 'details', '[data-df-selection-group]'

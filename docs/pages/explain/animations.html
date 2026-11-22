@@ -15,7 +15,6 @@
   </script>
   <link rel="stylesheet" href="../../../docform/css/anim.css">
   <script src="../../../docform/docform.js"></script>
-  <script src="../../assets/animations.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
@@ -46,6 +45,17 @@
         <text x="104" y="93" text-anchor="middle">Search</text>
         <text id="matching-heading" x="366" y="93" text-anchor="middle">Matching heading</text>
       </svg>
+      <script type="application/json" data-df-animation>
+        {
+          "label": "Start at Search.",
+          "steps": [
+            {"key": "draw", "label": "The line shows the route from Search to the result.", "actions": [{"draw": "#search-route"}]},
+            {"key": "fade", "label": "The matching heading appears.", "actions": [{"fade": "#matching-heading", "to": 1}]},
+            {"key": "move", "label": "The dot follows the route to the heading.", "actions": [{"move": "#search-marker", "to": [262, 0]}]},
+            {"key": "grow", "label": "The growing ring calls attention to the destination.", "actions": [{"attr": "#heading-ring", "name": "r", "from": 6, "to": 15}]}
+          ]
+        }
+      </script>
       <figcaption>Follow a search from the place you type a word to the heading you can open.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
@@ -70,6 +80,9 @@
         <text x="360" y="60" text-anchor="middle">Section</text>
         <path id="outline-route" class="df-stroke" data-df-role="on-request" d="M 173 55 H 306 M 297 47 L 306 55 L 297 63" pathLength="1" stroke-width="3"/>
       </svg>
+      <script type="application/json" data-df-animation>
+        {"steps": [{"key": "link", "actions": [{"draw": "#outline-route"}]}]}
+      </script>
       <ol data-df-animation-steps>
         <li data-df-key="start"><span data-df-step-label>An outline lists the sections of this page.</span></li>
         <li data-df-key="link"><span data-df-step-label>A heading in the outline takes you to its section.</span></li>

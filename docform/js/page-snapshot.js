@@ -12,6 +12,7 @@
     '.df-pill-button,.df-anim-scrub,.df-chart-reset,.df-chart-toggle,.df-filter-toggle,.df-filter-clear,' +
     '.df-tree-diagram-toggle,.df-glossary-clear,.df-dropzone input,.df-dropzone button,.df-data-more button';
   var embeds = 'iframe,frame,object,embed,portal,fencedframe';
+  var stepAttributes = ['data-df-reader-steps', 'data-df-reader-step-svg', 'data-df-reader-step-detail'];
   var declarative = 'script:not([src])[type="application/json"],script:not([src])[data-df-source],' +
     'script:not([src])[type="text/csv"],script:not([src])[type="text/json"],' +
     'script:not([src])[type="text/yaml"],script:not([src])[type="application/yaml"]';
@@ -138,6 +139,143 @@
     '[data-df-snapshot] [data-df-snapshot-bubble]>.df-bubble-sheet{max-height:none!important}' +
     '[data-df-snapshot] [data-df-snapshot-bubble] .df-bubble-body{filter:none!important;opacity:1!important}';
 
+  function captureFigureSteps(source, runtime, mapped, issues) {
+    var retained = new Map();
+    var markers = new Map();
+    var figures = new Set();
+    var candidates = [];
+    var followers = new Map();
+    var group = 0;
+    var unavailable = chrome + ',' + transient + ',template,.df-bubble-store,[hidden],[inert],' +
+      '[data-df-pipe-hidden],.df-tree-diagram-folded,.df-show-leave';
+    function reachable(copy, detail) {
+      for (var node = detail ? copy.parentElement : copy; node; node = node.parentElement) {
+        if (node.matches(unavailable) && !retained.has(node)) return false;
+      }
+      return true;
+    }
+    function mark(node, attr, value) {
+      node.setAttribute(attr, value);
+      if (!markers.has(node)) markers.set(node, new Set());
+      markers.get(node).add(attr);
+    }
+    source.querySelectorAll('.df-detail-pane[data-df-detail-for]').forEach(function (pane) {
+      var host = source.getElementById(pane.getAttribute('data-df-detail-for'));
+      if (host && runtime?._detailPane?.get(pane)) {
+        if (!followers.has(host)) followers.set(host, []);
+        followers.get(host).push(pane);
+      }
+    });
+
+    function capture(host, model, animation) {
+      var figure = model.figure || host;
+      var indices = animation && model.keys.map(function (key) { return animation.keys.indexOf(key); });
+      var initial = model.read();
+      var fail = function () {
+        issue(issues, 'figure-steps-fallback', figure, 'Figure steps use a static fallback.');
+      };
+      if (!model.keys.length || initial < 0 || initial == null || initial >= model.keys.length ||
+          indices?.includes(-1) || (!animation && figure.matches('.df-anim, :has(> script[data-df-animation])'))) {
+        return fail();
+      }
+      var tracks = new Map();
+      for (var [target, changes] of animation?.tracks(indices) || []) {
+        var copy = mapped.get(target);
+        if (!copy || !reachable(copy)) return fail();
+        if (!tracks.has(copy)) tracks.set(copy, []);
+        tracks.get(copy).push(...changes);
+      }
+      var panes = [...(followers.get(host) || []), ...(host === figure ? [] : followers.get(figure) || [])]
+        .map(function (pane) {
+          return new Map(Array.from(pane.children, function (child) {
+            return [runtime._items.key(child.getAttribute('data-df-key')), child];
+          }));
+        });
+      var detailSlots = new Map();
+      var steps = model.keys.map(function (key, index) {
+        var at = indices?.[index];
+        var caption = animation?.labels[at] || '';
+        var label = model.labels[index] || (key === 'start' ? 'Start' : key);
+        var notes = [model.notes[index], animation?.notes[at]]
+          .concat(panes.map(function (pane) { return pane.get(key); }));
+        var slots = Array.from(new Set(notes.filter(Boolean)), function (note) {
+          if (!detailSlots.has(note)) detailSlots.set(note, detailSlots.size);
+          return detailSlots.get(note);
+        });
+        return [key, label, slots, caption === label ? '' : caption];
+      });
+      for (var note of detailSlots.keys()) {
+        var detail = mapped.get(note);
+        if (!detail || !reachable(detail, true) || retained.has(detail) || note.contains(figure) ||
+            model.panel && note.contains(model.panel) || figure.contains(note) &&
+            note.closest('.df-anim-caption,.df-anim-controls')) return fail();
+      }
+
+      var selected = new Set(steps[initial][2]);
+      for (var [note, slot] of detailSlots) {
+        var detail = mapped.get(note);
+        mark(detail, stepAttributes[2], group + ':' + slot);
+        retained.set(detail, selected.has(slot));
+      }
+      for (var [target, changes] of tracks) {
+        mark(target, stepAttributes[1], JSON.stringify([group, changes]));
+        changes.forEach(function ([step, prop, value]) {
+          if (step > initial) return;
+          if (prop.startsWith('.')) target.style.setProperty(prop.slice(1), value);
+          else target.setAttribute(prop, value);
+        });
+      }
+      var picture = mapped.get(figure);
+      var controls = picture.ownerDocument.createElement('div');
+      mark(controls, stepAttributes[0], JSON.stringify([group++, initial, steps]));
+      controls.textContent = steps[initial][1];
+      if (model.panel) {
+        var panel = mapped.get(model.panel);
+        if (model.panel !== model.list) mapped.get(model.list).remove();
+        else model.buttons.forEach(function (button) { mapped.get(button).remove(); });
+        panel.querySelector(':scope > .df-step-empty')?.remove();
+        panel.append(controls);
+      } else {
+        var old = picture.querySelector(':scope > .df-anim-controls');
+        if (old) old.replaceWith(controls);
+        else picture.insertBefore(controls, picture.querySelector(':scope > figcaption'));
+      }
+      picture.querySelector(':scope > .df-anim-caption')?.remove();
+      if (steps[initial][3]) {
+        var caption = picture.ownerDocument.createElement('p');
+        caption.className = 'df-anim-caption';
+        caption.textContent = steps[initial][3];
+        controls.append(caption);
+      }
+    }
+
+    source.querySelectorAll('.df-figure-steps').forEach(function (box) {
+      var model = runtime?._figureSteps?.reader(box);
+      var figure = model?.figure || box.querySelector(':scope > figure');
+      if (figure) figures.add(figure);
+      if (model) candidates.push([box, model, runtime?._animation?.reader(figure)]);
+    });
+    source.querySelectorAll('figure.df-anim,figure:has(> script[data-df-animation])').forEach(function (figure) {
+      if (figures.has(figure)) return;
+      var model = runtime?._animation?.reader(figure);
+      if (model) candidates.push([figure, model, model]);
+      else if (reachable(mapped.get(figure))) {
+        issue(issues, 'figure-steps-fallback', figure, 'Figure steps use a static fallback.');
+      }
+    });
+    // Retaining a detail can make a nested figure reachable.
+    while (candidates.length) {
+      var leftover = candidates.filter(function ([host, model, animation]) {
+        if (!reachable(mapped.get(host))) return true;
+        capture(host, model, animation);
+        return false;
+      });
+      if (leftover.length === candidates.length) break;
+      candidates = leftover;
+    }
+    return { retained: retained, markers: markers };
+  }
+
   function freeze(view, status, issues, imports) {
     var source = view.document;
     var runtime = view.DocForm;
@@ -174,8 +312,13 @@
         copy.removeAttribute('aria-controls');
       }
     });
+    var { retained, markers } = captureFigureSteps(source, runtime, mapped, issues);
     body.querySelectorAll(chrome + ',' + transient + ',.df-bubble-store,[hidden],[inert],[data-df-pipe-hidden],.df-tree-diagram-folded')
-      .forEach(function (node) { node.remove(); });
+      .forEach(function (node) { if (!retained.has(node)) node.remove(); });
+    retained.forEach(function (selected, node) {
+      node.removeAttribute('inert');
+      node.hidden = !selected;
+    });
     body.querySelectorAll('.df-show-leave').forEach(function (node) { node.remove(); });
     body.querySelectorAll('.df-show-enter,.df-callout-away,.df-chart-await,.df-pipe-tracing,.df-focus-dim,.df-ref-flash')
       .forEach(function (node) {
@@ -218,6 +361,11 @@
 
     body.appendChild(tips);
     showStaticFallbacks(body);
+    body.querySelectorAll(stepAttributes.map(function (attr) { return '[' + attr + ']'; }).join(',')).forEach(function (node) {
+      stepAttributes.forEach(function (attr) {
+        if (!markers.get(node)?.has(attr)) node.removeAttribute(attr);
+      });
+    });
     body.querySelectorAll('script,style,link,base,meta,template,.df-tooltip-ring,.df-filter-menu,[role="listbox"]')
       .forEach(function (node) { node.remove(); });
     body.querySelectorAll('canvas,' + embeds).forEach(function (node) { fallback(node, issues, 'unsupported-embed'); });

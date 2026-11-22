@@ -117,7 +117,7 @@
             return null;
           }
         }
-        report('missing-resource', value, 'The resource was not found in the selected folders.');
+        report('missing-resource', value, 'The resource was not found in the documentation folder or DocForm bundle.');
       }
       return null;
     }
@@ -131,7 +131,7 @@
       }
       var file = folder.file(url);
       if (!file) {
-        report('missing-stylesheet', value, 'The stylesheet was not found in the selected folders.');
+        report('missing-stylesheet', value, 'The stylesheet was not found in the documentation folder or DocForm bundle.');
         return null;
       }
       if (parents.has(file)) {

@@ -1,11 +1,11 @@
 # Site structure
 
-Two folders per project: a documentation root and an unmodified `docform/` library. Export asks for both. Each pick reads every file inside, so keep both lean.
+A project uses a documentation root and a complete `docform/` library. Export asks for the documentation root and uses the library’s bundled styles and fonts.
 
 ## Rules
 
 - Documentation root holds every page, the manifest, data sources and wrappers, search index, media, fonts, author scripts and stylesheets. Nothing a page loads may sit outside it except the library.
-- Library: copy `docform/` whole, keeping `docform.js`, `css/`, `js/`, `tools/`, `vendor/` as shipped. Place it beside the root (preferred) or inside it. Do not split, rename or copy individual library files into the root.
+- Library: copy `docform/` whole, keeping `docform.js`, `css/`, `js/`, `tools/`, `vendor/` as shipped. Point the pages’ script URLs to its location.
 - Local URLs are relative: pages → library, manifest, assets, other pages. No `file://`, drive letters or root-absolute `/` paths. `../` may leave the root only to reach the library.
 - Manifest lives inside the root. Every manifest page path resolves inside the root.
 - Match path case exactly; export lookups are case-sensitive even on Windows.
@@ -31,6 +31,6 @@ project/
 ```
 
 - Layout is a convention; the rules are what export relies on.
-- Export picks: **documentation** = `docs/`, **library** = `docform/`. Opening `docs/index.html` from disk needs only these two folders.
+- For export, select `docs/`.
 
 [Offline setup](setup.md) · [Site manifest](manifest.md) · [Reading controls → export](../layout/controls.md)

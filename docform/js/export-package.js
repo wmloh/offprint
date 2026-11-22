@@ -7,17 +7,71 @@
     "base-uri 'none'; form-action 'none'";
   var tipCSS = '.df-export-pop{position:fixed;z-index:50;display:flex;flex-direction:column;gap:6px;' +
     'max-width:min(320px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}' +
+    '.df-export-pop[hidden]{display:none}' +
     '.df-export-pop.is-wide{max-width:min(480px,calc(100vw - 16px))}' +
     '.df-export-pop .df-tooltip{position:static;max-width:none;max-height:none;opacity:1;transform:none;overflow:visible}' +
-    '[data-export-disabled]{text-decoration:line-through!important;cursor:default}';
-  var readerCSS = 'html{color-scheme:light dark}body{margin:0;height:100dvh;display:flex;flex-direction:column;' +
-    'font:1rem system-ui;background:Canvas;color:CanvasText}header{padding:.65rem 1rem;border-bottom:1px solid GrayText;' +
-    'display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem 1rem}header nav{display:flex;flex-wrap:wrap;gap:.5rem 1rem}' +
-    'details{position:relative}summary{cursor:pointer}details nav{position:absolute;z-index:1;inset-inline-start:0;' +
-    'min-width:16rem;max-width:85vw;max-height:70vh;overflow:auto;background:Canvas;border:1px solid GrayText;' +
-    'padding:.5rem 1rem;box-shadow:0 4px 14px #0003}ul{padding-inline-start:1.25rem;margin:.25rem 0}' +
-    'li{margin:.35rem 0}a[aria-current]{font-weight:bold}main{flex:1;min-height:0}iframe{display:block;' +
-    'width:100%;height:100%;border:0}[hidden]{display:none!important}';
+    '[data-export-disabled]{text-decoration:line-through!important;cursor:default}' +
+    '.df-reader-step-controls{display:flex;flex-wrap:wrap;gap:.35rem;margin-block:.6rem;align-items:center}' +
+    '.df-reader-step-controls :is(button,select){box-sizing:border-box;min-height:2.75rem;max-width:100%;' +
+    'font:inherit;color:inherit;background:var(--df-bg,Canvas);border:1px solid var(--df-border,GrayText);' +
+    'border-radius:var(--df-radius-lg,.5rem);padding:.35rem .6rem}' +
+    '.df-reader-step-controls button{cursor:pointer}.df-reader-step-controls button[aria-disabled=true]{opacity:.55;cursor:default}' +
+    '.df-reader-step-controls select{min-width:0;flex:1 1 10rem}' +
+    ':root[data-df-theme=light]{color-scheme:light}:root[data-df-theme=dark]{color-scheme:dark}' +
+    '.df-reader-dim:not(:focus-within){filter:blur(2px);opacity:.54}' +
+    '@media(hover:hover){.df-reader-dim:hover{filter:none;opacity:1}}';
+  var readerCSS = `
+    :root{color-scheme:light dark;--nav-width:260px;--nav-slot:0px;--bar:3.75rem;
+      --line:light-dark(#d9dde2,#41464e);--accent:light-dark(#245f9f,#9bc8ff);
+      --wash:color-mix(in srgb,var(--accent) 12%,transparent)}
+    :root[data-df-theme=light]{color-scheme:light}:root[data-df-theme=dark]{color-scheme:dark}
+    body{margin:0;font:1rem system-ui;background:Canvas;color:CanvasText}
+    #export-page{box-sizing:border-box;margin-left:var(--nav-slot);height:100dvh;padding-top:var(--bar)}
+    iframe{display:block;width:100%;height:100%;border:0}
+    #export-sidebar{position:fixed;z-index:3;inset:0 auto 0 0;width:var(--nav-width);box-sizing:border-box;
+      background:Canvas;border-right:1px solid var(--line);padding:.75rem;overflow:auto;overscroll-behavior:contain;
+      scrollbar-width:thin;overflow-wrap:anywhere}
+    #export-contents ul{list-style:none;padding:0;margin:.25rem 0}
+    #export-contents ul ul{padding-left:.65rem}
+    .export-group{display:block;margin:.7rem .4rem .2rem;padding-top:.65rem;border-top:1px solid var(--line);
+      font-size:.8rem;font-weight:650;color:GrayText}
+    #export-contents a{display:block;color:inherit;text-decoration:none;padding:.36rem .5rem;border-radius:.4rem}
+    #export-contents a:hover,#export-contents [aria-current]{background:var(--wash);color:var(--accent)}
+    #export-contents [aria-current]{font-weight:650}
+    #export-contents .export-outline{margin:.2rem 0 .6rem .45rem;border-left:1px solid var(--line);font-size:.86rem}
+    .export-outline [data-level="2"]{padding-left:.65rem}.export-outline [data-level="3"]{padding-left:1.25rem}
+    #export-resize{position:fixed;z-index:4;inset:0 auto 0 calc(var(--nav-width) - 4px);width:8px;
+      cursor:col-resize;touch-action:none}
+    #export-resize:hover,#export-resize:focus-visible{background:var(--accent)}
+    #export-edge{position:fixed;z-index:2;inset:var(--bar) auto 0 0;width:8px}
+    #export-pill,#export-pager{position:fixed;z-index:5;top:.45rem;display:flex;gap:.08rem;align-items:center;
+      background:color-mix(in srgb,Canvas 92%,transparent);backdrop-filter:blur(12px);
+      box-shadow:0 0 0 1px var(--line),0 3px 12px #0002;border-radius:2rem;padding:.12rem}
+    #export-pill{left:calc(var(--nav-slot) + .55rem)}#export-pager{right:.55rem}
+    #export-pill :is(button,[role=progressbar]),#export-pager a{box-sizing:border-box;display:grid;place-items:center;
+      width:2.65rem;height:2.65rem;border:0;border-radius:50%;padding:0;background:transparent;color:inherit;
+      font:inherit;text-decoration:none}
+    #export-pill button,#export-pager a{cursor:pointer}
+    #export-pill button:hover,#export-pill [aria-pressed=true],#export-pager a:hover{background:var(--wash);color:var(--accent)}
+    #export-pill svg,#export-pager svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;stroke-width:1.5;
+      stroke-linecap:round;stroke-linejoin:round}
+    #export-pill .export-progress svg{width:1.55rem;height:1.55rem;color:var(--accent);transform:rotate(-90deg)}
+    .export-progress circle:first-child{opacity:.24}
+    #export-shade{position:fixed;z-index:2;inset:0;background:#0007}
+    [data-drawer] #export-sidebar{inset-block-start:var(--bar);width:min(22rem,calc(100% - 2.75rem))}
+    [data-drawer] :is(#export-pill,#export-pager){visibility:hidden}
+    #export-close{font:inherit;color:inherit;background:var(--wash);border:0;border-radius:.4rem;
+      min-height:2.75rem;padding:.3rem .65rem;cursor:pointer}
+    @media(max-width:360px){#export-pill{gap:0;left:.3rem}#export-pager{gap:0;right:.3rem}
+      #export-pill :is(button,[role=progressbar]),#export-pager a{width:2.3rem}}
+    @media(max-width:310px){#export-pager{top:auto;bottom:.45rem}
+      body:has(#export-pager:not([hidden])) #export-page{padding-bottom:var(--bar)}}
+    .df-export-pop{position:fixed;z-index:6;max-width:calc(100% - 16px);pointer-events:none}
+    .df-tooltip{box-sizing:border-box;max-width:min(320px,calc(100vw - 16px));padding:.4rem .7rem;
+      border-radius:.45rem;background:light-dark(#fff,#252525);box-shadow:0 0 0 1px var(--line),0 6px 20px #0002;
+      color:CanvasText;font-size:14px;line-height:1.5}
+    [hidden]{display:none!important}
+  `;
 
   function address(value, base) {
     try { return new URL(value, base); } catch (error) { return null; }
@@ -33,58 +87,66 @@
     } catch (error) { return null; }
   }
 
-  function folderError(message, folder) {
+  function folderError(message) {
     var error = Error(message);
-    error.folder = folder;
+    error.folder = 'documents';
     return error;
   }
 
   // Locates the selected folder on disk from a known file that it must contain.
-  function folderFromFiles(files, anchorURL, page, kind, label) {
+  function documentationFolder(files, anchorURL) {
     var list = Array.from(files || []);
     var name = list[0]?.webkitRelativePath?.split('/')[0];
     var prefix = name + '/';
     var paths = new Map(list.map(function (file) {
       var path = file.webkitRelativePath;
       if (!name || !path?.startsWith(prefix) || path.length === prefix.length) {
-        throw folderError('Choose the ' + label + ' folder.', kind);
+        throw folderError('Choose the documentation folder.');
       }
       return [path.slice(prefix.length), file];
     }));
-    if (!paths.size) throw folderError('Choose the ' + label + ' folder.', kind);
-    var segments = fileKey(anchorURL, page)?.split('/') || [];
+    if (!paths.size) throw folderError('Choose the documentation folder.');
+    var segments = fileKey(anchorURL, true)?.split('/') || [];
     var firstFolder = anchorURL?.host ? 3 : 1;
     var match = segments.findLastIndex(function (part, index) {
       return index >= firstFolder && part === name && paths.has(segments.slice(index + 1).join('/'));
     });
     if (match < 0) {
-      throw folderError('The selected ' + label + ' folder does not contain ' +
-        (kind === 'library' ? 'the DocForm library used by this page.' : 'the open DocForm page.'), kind);
+      throw folderError('The selected documentation folder does not contain the open DocForm page.');
     }
     var base = segments.slice(0, match + 1).join('/') + '/';
-    return function (url, page) {
+    function file(url, page) {
       var key = fileKey(url, page);
       return key?.startsWith(base) ? paths.get(key.slice(base.length)) : undefined;
-    };
-  }
-
-  function sourceFolders(documents, library, pageURL) {
-    var lookups = [
-      folderFromFiles(documents, pageURL, true, 'documents', 'documentation'),
-      folderFromFiles(library, address(DF._boot.entryURL), false, 'library', 'DocForm library')
-    ];
-
-    function file(url, page) {
-      for (var lookup of lookups) {
-        var item = lookup(url, page);
-        if (item) return item;
-      }
     }
 
     return { file: file, readText: async function (url) {
       var item = file(address(url));
-      if (!item) throw Error('The file was not found in the selected folders.');
+      if (!item) throw Error('The file was not found in the documentation folder.');
       return item.text();
+    } };
+  }
+
+  function resourceFiles(folder) {
+    var base = fileKey(address('.', DF._boot.entryURL));
+    var bundle = DF._exportLibrary;
+    var files = new Map();
+    return { file: function (url) {
+      var key = fileKey(url);
+      if (base && key?.startsWith(base)) {
+        var path = key.slice(base.length);
+        if (files.has(path)) return files.get(path);
+        if (Object.hasOwn(bundle.styles, path)) {
+          files.set(path, new Blob([bundle.styles[path]]));
+        } else if (Object.hasOwn(bundle.fonts, path)) {
+          var bytes = Uint8Array.from(root.atob(bundle.fonts[path]), function (character) {
+            return character.charCodeAt(0);
+          });
+          files.set(path, new Blob([bytes]));
+        }
+        if (files.has(path)) return files.get(path);
+      }
+      return folder.file(url);
     } };
   }
 
@@ -236,7 +298,7 @@
           throw Error('The file is not an SVG drawing.');
         }
       } catch (error) {
-        report('missing-reference', value, 'The SVG drawing could not be read from the selected folders.');
+        report('missing-reference', value, 'The SVG drawing could not be read from the documentation folder.');
         return null;
       }
       var doc = page.document;
@@ -321,7 +383,8 @@
         var replacement = value;
         var css = false;
         if (/^on/.test(name) || ['autofocus', 'autoplay', 'ping', 'target', 'srcdoc', 'action', 'formaction', 'xml:base',
-          'data-export-destination', 'data-export-disabled'].includes(name)) {
+          'data-export-destination', 'data-export-disabled'].includes(name) ||
+          ids && /^data-df-reader-step(?:s|-svg|-detail)$/.test(name)) {
           replacement = null;
         } else if (name === 'href' || name === 'xlink:href') {
           if (isLink) {
@@ -419,7 +482,9 @@
       if (node.children.length) {
         var children = contentsList(doc, node.children, pages);
         if (!children.children.length) continue;
-        item.append(node.title, children);
+        var label = create(doc, 'span', node.title);
+        label.className = 'export-group';
+        item.append(label, children);
       } else {
         if (!pages.has(node.id)) continue;
         var link = create(doc, 'a', node.title);
@@ -440,17 +505,24 @@
     meta(doc, 'http-equiv', 'Content-Security-Policy').content =
       "object-src 'none'; base-uri 'none'; form-action 'none'; script-src 'unsafe-inline'";
     doc.head.append(create(doc, 'style', readerCSS));
-    var header = create(doc, 'header');
-    var contents = create(doc, 'details');
-    contents.id = 'export-contents';
+    var sidebar = create(doc, 'div');
+    sidebar.id = 'export-sidebar';
+    sidebar.hidden = true;
+    var close = create(doc, 'button', 'Close navigation');
+    close.id = 'export-close';
+    close.type = 'button';
+    close.hidden = true;
     var toc = create(doc, 'nav');
-    toc.setAttribute('aria-label', 'Table of contents');
+    toc.id = 'export-contents';
+    toc.setAttribute('aria-label', 'Contents');
     toc.append(contentsList(doc, tree, new Set(pages.map(function (page) { return page.id; }))));
-    contents.append(create(doc, 'summary', 'Contents'), toc);
-    var status = create(doc, 'strong');
-    status.id = 'export-status';
-    status.setAttribute('aria-live', 'polite');
+    sidebar.append(close, toc);
+    var pill = create(doc, 'div');
+    pill.id = 'export-pill';
+    pill.setAttribute('role', 'group');
+    pill.setAttribute('aria-label', 'Reading controls');
     var nav = create(doc, 'nav');
+    nav.id = 'export-pager';
     nav.setAttribute('aria-label', 'Sequential pages');
     for (var id of ['export-previous', 'export-next']) {
       var link = create(doc, 'a');
@@ -459,11 +531,25 @@
       link.setAttribute('data-export-destination', '');
       nav.append(link);
     }
-    header.append(contents, status, nav);
+    var separator = create(doc, 'div');
+    separator.id = 'export-resize';
+    separator.hidden = true;
+    separator.tabIndex = 0;
+    separator.setAttribute('role', 'separator');
+    separator.setAttribute('aria-label', 'Navigation width');
+    separator.setAttribute('aria-orientation', 'vertical');
+    separator.setAttribute('aria-controls', sidebar.id);
+    var edge = create(doc, 'div');
+    edge.id = 'export-edge';
+    edge.hidden = true;
+    var shade = create(doc, 'div');
+    shade.id = 'export-shade';
+    shade.hidden = true;
     var host = create(doc, 'main');
     host.id = 'export-page';
     host.dataset.initial = pages.find(function (page) { return page.id === active; })?.id || pages[0].id;
-    doc.body.append(header, host, create(doc, 'noscript', 'Enable JavaScript to use the standalone reader.'));
+    doc.body.append(pill, nav, edge, shade, sidebar, separator, host,
+      create(doc, 'noscript', 'Enable JavaScript to use the standalone reader.'));
     var bundle = create(doc, 'script', JSON.stringify({
       assets: assets,
       pages: pages.map(function (page) { return { id: page.id, title: page.title, markup: page.markup }; })
@@ -472,7 +558,8 @@
     bundle.type = 'application/json';
     doc.body.append(bundle);
     var reader = DF._exportReader;
-    doc.body.append(create(doc, 'script', '(' + reader.run.toString() + ')(' + reader.assemble.toString() + ');'));
+    doc.body.append(create(doc, 'script', '(' + reader.run.toString() + ')(' +
+      [reader.assemble, reader.figureSteps, reader.headings, reader.controls].map(String).join(',') + ');'));
     return '<!doctype html>\n' + doc.documentElement.outerHTML;
   }
 
@@ -481,9 +568,12 @@
     signal?.throwIfAborted();
     var chosen = selection(site.tree, selected);
     if (!chosen.size) throw Error('Select at least one page.');
+    if (!DF._exportLibrary) await DF._boot.loadExport('js/export-library.js');
+    signal?.throwIfAborted();
+    if (!DF._exportLibrary) throw Error('The DocForm library assets could not load. Check that the full DocForm library is installed.');
     var issues = [];
     var pages = new Map();
-    var resources = DF._exportResources.setup(folder, signal);
+    var resources = DF._exportResources.setup(resourceFiles(folder), signal);
 
     function reportFor(page) {
       var seen = new Set();
@@ -536,6 +626,12 @@
       signal?.throwIfAborted();
       await assets(page, folder, resources, page.report, signal);
       page.targets = targets(page.document);
+      var headings = DF._exportReader.headings(page.document);
+      // Match live navigation's anchor allocation order for pages rendered without navigation.
+      for (var heading of headings.filter(function (node) { return node.localName !== 'h1'; })
+        .concat(headings.filter(function (node) { return node.localName === 'h1'; }))) {
+        if (!heading.id) heading.id = DF.util.uniqueSlug(DF.util.slug(heading.textContent), page.targets);
+      }
     }
     for (var page of pages.values()) {
       await options?.onProgress?.({ phase: 'links', completed: completed, total: chosen.size,
@@ -571,7 +667,7 @@
     var signal = options?.signal;
     signal?.throwIfAborted();
     var url = address(DF._page);
-    var folder = sourceFolders(files, options?.library, url);
+    var folder = documentationFolder(files, url);
     var loaded = await Promise.all([
       ['_assetBuild', 'tools/asset-build.js'], ['_pageSnapshot', 'js/page-snapshot.js'],
       ['_exportResources', 'js/export-resources.js'], ['_exportReader', 'js/export-reader.js']

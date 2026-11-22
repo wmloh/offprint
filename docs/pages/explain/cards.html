@@ -18,7 +18,6 @@
   <link rel="stylesheet" href="../../../docform/css/steps.css">
   <link rel="stylesheet" href="../../../docform/css/anim.css">
   <script src="../../../docform/docform.js"></script>
-  <script src="../../assets/cards.js"></script>
 </head>
 <body>
   <nav class="df-sidebar" aria-label="Site navigation">
@@ -182,6 +181,17 @@
           <text x="97" y="76" text-anchor="middle">Outline</text>
           <text x="244" y="76" text-anchor="middle">Reading area</text>
         </svg>
+        <script type="application/json" data-df-animation>
+          {
+            "steps": [
+              {"key": "outline", "actions": [{"fade": "#page-reading-border", "from": 1, "to": 0}]},
+              {"key": "reading", "actions": [
+                {"fade": "#page-outline-border", "from": 1, "to": 0},
+                {"fade": "#page-reading-border", "to": 1}
+              ]}
+            ]
+          }
+        </script>
         <figcaption>Each figure step outlines a different part of the page and shows its explanation below.</figcaption>
       </figure>
       <div class="df-step-panel" role="group" aria-labelledby="page-parts-title" data-df-role="on-request">
@@ -211,6 +221,9 @@
           <text x="42" y="65" text-anchor="middle">Start</text>
           <text x="186" y="65" text-anchor="middle">Heading</text>
         </svg>
+        <script type="application/json" data-df-animation>
+          {"steps": [{"key": "jump", "actions": [{"draw": "#reading-route-line"}]}]}
+        </script>
         <figcaption>Choose Jump to heading to draw the route. This compact layout places the titles beside the figure on a wide screen.</figcaption>
       </figure>
       <div class="df-step-panel" role="group" aria-labelledby="reading-route-title" data-df-role="on-request">

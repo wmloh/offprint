@@ -54,6 +54,14 @@
             <text x="90" y="120">Find a section</text>
           </g>
         </svg>
+        <script type="application/json" data-df-animation>
+          {
+            "steps": [
+              {"key": "sections", "label": "Two section headings make two entries.", "actions": [{"fade": "#outline-subheading", "from": 0, "to": 0}]},
+              {"key": "all", "label": "The smaller heading adds a third entry under its parent.", "actions": [{"fade": "#outline-subheading", "from": 0, "to": 1}]}
+            ]
+          }
+        </script>
         <figcaption>This illustrative outline has two section headings and one smaller heading tucked under its parent.</figcaption>
       </figure>
       <div class="df-step-panel" role="group" aria-labelledby="outline-steps-title">
@@ -108,6 +116,5 @@
       <dt>Quiet</dt><dd>The inline definition, sidenote marker, and folded peek bubble offer detail at the point of need and leave the main explanation easy to scan.</dd>
     </dl>
   </main>
-  <script src="../../assets/teach-a-concept.js"></script>
 </body>
 </html>

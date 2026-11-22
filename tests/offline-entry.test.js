@@ -386,9 +386,10 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
 
   const find = (tag, title) => descendants(modal).find(el => el.tagName === tag &&
     (title === undefined || el.textContent === title));
-  const [docsInput, libraryInput] = descendants(modal).filter(el => el.tagName === 'INPUT');
+  const inputs = descendants(modal).filter(el => el.tagName === 'INPUT');
+  assert.equal(inputs.length, 1);
+  const [docsInput] = inputs;
   const choose = find('BUTTON', 'Choose documentation folder');
-  const chooseLibrary = find('BUTTON', 'Choose DocForm library folder');
   const build = find('BUTTON', 'Build preview');
   const stop = find('BUTTON', 'Cancel');
   const download = find('BUTTON', 'Download HTML');
@@ -400,12 +401,9 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   const selected = [];
   const blob = new Blob(['<!doctype html>']);
   p.DF._exportPackage = {
-    async prepare(files, { library }) {
+    async prepare(files) {
       if (!files[0].webkitRelativePath.startsWith('source/')) {
         throw Object.assign(new Error('Wrong folder'), { folder: 'documents' });
-      }
-      if (!library[0].webkitRelativePath.startsWith('docform/')) {
-        throw Object.assign(new Error('Wrong library'), { folder: 'library' });
       }
       return {
         active: 'home',
@@ -433,17 +431,11 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
     await settle();
   };
   await selectFolder(docsInput, 'wrong');
-  assert.match(status.textContent, /Choose the DocForm library folder/);
-  await selectFolder(libraryInput, 'docform');
   assert.match(status.textContent, /Wrong folder/);
   assert.equal(build.hidden, true);
   assert.equal(p.document.activeElement, choose);
   await selectFolder(docsInput, 'source');
   assert.match(modal.textContent, /source/);
-  await selectFolder(libraryInput, 'other');
-  assert.match(status.textContent, /Wrong library/);
-  assert.equal(p.document.activeElement, chooseLibrary);
-  await selectFolder(libraryInput, 'docform');
   const picker = find('FIELDSET');
   const [group, home, part, chapter] = descendants(picker).filter(el => el.type === 'checkbox');
   assert.equal(home.checked, true);
@@ -1085,6 +1077,246 @@ test('search remaps its opening key and honors a disabled Escape while the typin
   assert.equal(closeButton.getAttribute('aria-keyshortcuts'), null);
   closeButton.dispatchEvent(new Event('click'));
   assert.equal(dialog.open, false);
+});
+
+test('declarative animations use the same SVG endpoints in the source and Reader', async () => {
+  const p = page({ config: { profile: 'none', features: { animation: true } } });
+  function declaration(id, options) {
+    const figure = p.body.appendChild(element('figure'));
+    figure.id = id;
+    p.ids.set(id, figure);
+    const svg = figure.appendChild(element('svg'));
+    const circle = svg.appendChild(element('circle'));
+    circle.namespaceURI = 'http://www.w3.org/2000/svg';
+    circle.setAttribute('r', '4');
+    const script = figure.appendChild(element('script'));
+    script.type = 'application/json';
+    script.textContent = JSON.stringify(options);
+    figure.querySelector = selector => selector === 'svg' ? svg : null;
+    figure.querySelectorAll = selector => selector === ':scope > script[data-df-animation]' ? [script] : [];
+    svg.querySelectorAll = selector => selector === 'circle' ? [circle] : [];
+    return { figure, circle, script };
+  }
+  const good = declaration('declarative', { duration: 0, steps: [
+    { key: 'wider', actions: [{ attr: 'circle', name: 'r', to: 8 }] },
+    { key: 'pause', actions: [] },
+    { key: 'widest', actions: [{ attr: 'circle', name: 'r', from: 9, to: 12 }], initial: true }
+  ] });
+  const bad = declaration('invalid', { steps: [
+    { key: 'valid', actions: [{ draw: 'circle' }] },
+    { key: 'invalid', actions: [{ attr: 'circle', name: 'href', to: 'elsewhere' }] }
+  ] });
+  p.body.querySelectorAll = selector => selector === 'figure > script[data-df-animation]' ?
+    [good.script, bad.script] : [];
+  await p.start();
+  const live = p.DF.sequence.get(good.figure);
+  assert.equal(live.key, 'widest');
+  assert.equal(good.circle.getAttribute('r'), '12');
+  assert.equal(p.DF.sequence.get(bad.figure), null);
+  assert.equal(bad.circle.getAttribute('r'), '4');
+  assert.equal(bad.circle.getAttribute('pathLength'), null);
+  assert.ok(p.DF.diagnostics.list().some(item => item.feature === 'animation'));
+
+  const model = p.DF._animation.reader(good.figure);
+  const [[target, changes]] = model.tracks([0, 1, 2, 3]);
+  assert.equal(target, good.circle);
+  assert.equal(JSON.stringify(changes), JSON.stringify([[0, 'r', '4'], [1, 'r', '8'], [3, 'r', '12']]));
+  assert.equal(model.read(), 3);
+  live.select('wider');
+  assert.equal(good.circle.getAttribute('r'), '8');
+  live.select('start');
+  assert.equal(good.circle.getAttribute('r'), '4');
+});
+
+test('Reader step controls restore jumps, shared notes and page-local choice', () => {
+  const p = page();
+  p.runScript(new URL('docform/js/export-reader.js', repo));
+  const saved = new Map();
+  function mount() {
+    const host = element('div');
+    const target = element('circle');
+    const shared = element('div');
+    const alternate = element('div');
+    const anchor = alternate.appendChild(element('a'));
+    const nodes = [host, target, shared, alternate];
+    host.replaceChildren = (...children) => {
+      host.childNodes.slice().forEach(node => host.removeChild(node));
+      host.append(...children);
+    };
+    host.setAttribute('data-df-reader-steps', JSON.stringify([0, 1, [
+      ['start', 'Start', [0], ''], ['look', 'Look', [1], 'Caption'], ['end', 'End', [0], '']
+    ]]));
+    target.setAttribute('data-df-reader-step-svg', JSON.stringify([0, [
+      [0, 'r', '4'], [1, 'r', '8'], [2, 'r', '12'], [0, '.opacity', '0'], [2, '.opacity', '1']
+    ]]));
+    shared.setAttribute('data-df-reader-step-detail', '0:0');
+    alternate.setAttribute('data-df-reader-step-detail', '0:1');
+    p.body.querySelectorAll = selector => nodes.filter(node => node.hasAttribute(selector.slice(1, -1)));
+    const reveal = p.DF._exportReader.figureSteps(p.document, saved);
+    const [previous, select, next] = host.firstChild.children;
+    return { host, target, shared, alternate, anchor, reveal, previous, select, next };
+  }
+  const first = mount();
+  assert.equal(first.select.value, 'look');
+  assert.equal(first.host.lastChild.textContent, 'Caption');
+  assert.equal(first.target.getAttribute('r'), '8');
+  assert.equal(first.shared.hidden, true);
+  assert.equal(first.alternate.hidden, false);
+  first.next.click();
+  assert.equal(first.next.getAttribute('aria-disabled'), 'true');
+  assert.equal(first.target.style.getPropertyValue('opacity'), '1');
+  assert.equal(first.shared.hidden, false);
+  first.select.selectedIndex = 0;
+  first.select.dispatchEvent(new Event('change'));
+  assert.equal(first.previous.getAttribute('aria-disabled'), 'true');
+  assert.equal(first.target.getAttribute('r'), '4');
+  assert.equal(first.target.style.getPropertyValue('opacity'), '0');
+  assert.equal(first.shared.hidden, false);
+
+  const second = mount();
+  assert.equal(second.select.value, 'start');
+  second.reveal(second.anchor);
+  assert.equal(second.select.value, 'look');
+  assert.equal(second.alternate.hidden, false);
+  assert.equal(second.shared.hidden, true);
+});
+
+test('Reader controls keep preferences, track reading, and operate the compact drawer', () => {
+  const p = page();
+  p.runScript(new URL('docform/js/export-reader.js', repo));
+  const create = p.document.createElement.bind(p.document);
+  p.html.toggleAttribute = (name, on) => on ? p.html.setAttribute(name, '') : p.html.removeAttribute(name);
+  p.document.createElement = tag => {
+    const node = create(tag);
+    node.after = child => node.parentNode.insertBefore(child, node.nextSibling);
+    node.dataset = {};
+    Object.defineProperty(node, 'hash', { get: () => node.href });
+    if (tag === 'span') {
+      const ring = element('circle');
+      node.querySelector = () => ring;
+    }
+    return node;
+  };
+  const parts = new Map();
+  function part(id, tag = 'div', parent = p.body) {
+    const node = p.document.createElement(tag);
+    node.id = id;
+    parts.set('#' + id, node);
+    parent.append(node);
+    return node;
+  }
+  const host = part('export-page');
+  const pill = part('export-pill');
+  const pager = part('export-pager', 'nav');
+  const sidebar = part('export-sidebar');
+  const toc = part('export-contents', 'nav', sidebar);
+  const closer = part('export-close', 'button', sidebar);
+  const separator = part('export-resize');
+  const edge = part('export-edge');
+  const shade = part('export-shade');
+  const first = part('first', 'a', toc);
+  first.href = '#page-1';
+  const second = part('second', 'a', toc);
+  second.href = '#page-2';
+  pager.querySelectorAll = () => [part('previous', 'a', pager), part('next', 'a', pager)];
+  toc.querySelectorAll = () => [first, second, ...toc.children.filter(node => node.tagName === 'UL')
+    .flatMap(list => list.children.map(item => item.firstChild))];
+  const compact = new EventTarget();
+  compact.matches = false;
+  const frames = [];
+  const route = [];
+  const controls = p.DF._exportReader.controls;
+  // Give the shell control module only the browser APIs it uses.
+  const chrome = vm.runInNewContext(`(${controls})(host, headings, tips, navigate)`, {
+    host,
+    document: Object.assign(p.document, {
+      querySelector: selector => parts.get(selector),
+      getElementById: id => p.body.lastChild.children.find(node => node.id === id)
+    }),
+    window: new EventTarget(),
+    matchMedia: query => query.includes('hover') ? compact : { matches: false },
+    innerWidth: 1920,
+    requestAnimationFrame(fn) { frames.push(fn); return frames.length; },
+    ResizeObserver: class { observe() {} disconnect() {} },
+    headings: doc => doc.body.children.filter(node => node.localName),
+    tips: () => () => {},
+    navigate: hash => route.push(hash)
+  });
+  const [nav, focus, theme, , nextHeading, progress] = pill.children;
+
+  function mount(id) {
+    const doc = new EventTarget();
+    const view = new EventTarget();
+    const main = element('main');
+    const intro = main.appendChild(element('h1'));
+    const section = main.appendChild(element('h2'));
+    const paragraph = main.appendChild(element('p'));
+    main.insertBefore(paragraph, intro);
+    intro.id = 'intro';
+    intro.localName = 'h1';
+    intro.getBoundingClientRect = () => ({ top: 10, bottom: 25 });
+    section.id = 'more';
+    section.localName = 'h2';
+    section.getBoundingClientRect = () => ({ top: 20, bottom: 35 });
+    paragraph.getBoundingClientRect = () => ({ top: -20, bottom: -5 });
+    doc.body = main;
+    doc.documentElement = element('html');
+    doc.scrollingElement = { clientHeight: 100, scrollHeight: 300, scrollTop: 50 };
+    doc.defaultView = view;
+    doc.querySelector = () => null;
+    view.document = doc;
+    view.scrollY = 50;
+    view.getComputedStyle = () => ({ scrollMarginTop: '0' });
+    chrome.page(id, id === 'page-1' ? [null, { id: 'page-2', title: 'Second' }] : [null, null]);
+    chrome.mount(doc, id);
+    frames.splice(0).forEach(fn => fn());
+    return doc;
+  }
+
+  const doc = mount('page-1');
+  assert.equal(first.getAttribute('aria-current'), 'page');
+  assert.equal(toc.querySelectorAll().at(-1).getAttribute('aria-current'), 'location');
+  assert.equal(progress.getAttribute('aria-valuenow'), '25');
+  assert.equal(p.document.getElementById('export-hint-progress').textContent, 'Reading progress · 25%');
+  assert.equal(nav.hasAttribute('title'), false);
+  assert.equal(nav.getAttribute('data-df-snapshot-tip'), 'export-hint-nav');
+  chrome.scrolled('#page-1/intro');
+  nextHeading.click();
+  assert.deepEqual(route, ['#page-1/more']);
+  p.key('t');
+  p.key('f');
+  assert.equal(doc.body.firstChild.classList.contains('df-reader-dim'), true);
+  p.key('n');
+  assert.equal(sidebar.hidden, true);
+  p.key('n');
+  assert.match(nav.getAttribute('aria-label'), /auto-hide/);
+  edge.dispatchEvent(new Event('pointerenter'));
+  assert.equal(sidebar.hidden, false);
+  p.key('Escape');
+  assert.equal(sidebar.hidden, true);
+  p.key('n');
+  assert.equal(sidebar.hidden, false);
+  separator.dispatchEvent(Object.assign(new Event('keydown'), { key: 'ArrowRight' }));
+  assert.equal(separator.getAttribute('aria-valuenow'), '276');
+
+  compact.matches = true;
+  compact.dispatchEvent(new Event('change'));
+  nav.click();
+  assert.equal(host.inert, true);
+  assert.equal(p.document.activeElement, closer);
+  p.key('Escape', closer);
+  assert.equal(host.inert, false);
+  assert.equal(p.document.activeElement, nav);
+  nav.click();
+  shade.click();
+  assert.equal(sidebar.hidden, true);
+  assert.equal(doc.documentElement.getAttribute('data-df-theme'), 'dark');
+  const secondDoc = mount('page-2');
+  assert.equal(second.getAttribute('aria-current'), 'page');
+  assert.equal(first.getAttribute('aria-current'), null);
+  assert.equal(focus.getAttribute('aria-pressed'), 'true');
+  assert.equal(theme.getAttribute('aria-label'), 'Switch to light theme');
+  assert.equal(secondDoc.documentElement.getAttribute('data-df-theme'), 'dark');
 });
 
 test('custom figures expose keyed animation state and committed zoom lifecycle events', async () => {

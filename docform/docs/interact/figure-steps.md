@@ -22,5 +22,6 @@ Enable `figure-steps`. Direct children of `.df-figure-steps` are a `figure`, a `
 - Figure steps can drive an existing [SVG animation](animations.md). Match each button’s `data-df-key` to the corresponding animation step, including `start` for the opening state.
 - A separate [detail pane](detail-panes.md) can follow the steps with `data-df-detail-for="<wrapper id>"` and keys matching the step keys.
 - Use `DocForm.sequence.get(idOrWrapper)` for the [shared controller and event](step-contract.md). The step pill under the figure lets readers navigate in order.
+- Standalone Reader exports keep Previous, Next, and a named step selector, including linked detail panes. Use a declarative definition for any SVG animation driven by the panel.
 
 [Animations](animations.md) · [Card panels](card-panels.md) · [Worked-example steppers](worked-examples.md) · [Source](../../js/steps.js)

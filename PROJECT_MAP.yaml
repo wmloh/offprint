@@ -52,11 +52,12 @@ docform/: Copyable offline library folder
     glossary.css: Glossary page tag filter chips, letter jumps, letter groups, definitions with tags, variant definitions, and used-on links
   js/: Per-module classic scripts on a shared DocForm namespace
     reader-state.js: Versioned browser-local export views, import persistence, and isolated controller replay
-    page-snapshot.js: Frozen page capture, isolated replay, tooltip materialization, and fallback reporting for export
-    export-package.js: Folder and manifest resolution, standalone page and asset bundle packaging, link rewriting, and build diagnostics
+    page-snapshot.js: Page capture, isolated replay, reachable figure steps and details, tooltip materialization, and fallback reporting for export
+    export-package.js: Documentation folder and manifest resolution, standalone page, sidebar shell, and asset packaging, link rewriting, and build diagnostics
+    export-library.js: Generated library styles and KaTeX fonts loaded on demand for standalone exports
     export-resources.js: Offline resolution and content-based sharing of stylesheets, fonts, and images
-    export-reader.js: Sandboxed page assembly from shared assets, navigation, fragment history, and tooltip controls
-    export-dialog.js: Lazy reader export dialog with documentation and library folder selection, grouped page selection, preview, cancellation, download, and saved-data clearing
+    export-reader.js: Sandboxed page assembly, sidebar and active outline, fragment history, reading pill, discrete figure steps, and tooltips
+    export-dialog.js: Lazy reader export dialog with one documentation folder selection, grouped page selection, preview, cancellation, download, and saved-data clearing
     core.js: DocForm namespace, module and shortcut registries, data-df-* and clipboard helpers, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
@@ -68,7 +69,7 @@ docform/: Copyable offline library folder
     editable-text.js: Native text fields with optional live syntax highlighting
     dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches, with a shared positioning helper
     tabs.js: Accessible keyed tab panels with keyboard navigation and selection groups
-    anim.js: Keyed SVG timeline controllers with shared steps, playback, scrubbing, and figure-step integration
+    anim.js: Declarative and programmatic SVG timelines with keyed steps, playback, scrubbing, and Reader endpoints
     choices.js: Shared builder for every single or multiple choice: authored or generated fieldset chips or a searchable combobox, keyboard support, and a press ripple
     params.js: Named parameter scopes with fieldset choice groups, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
     reveal.js: Two-way callout slides, data-df-reveal entrances that replay around the viewport centre (or once), and split panes
@@ -115,4 +116,6 @@ docs/: Human-facing beginner DocForm HTML site with a Start here orientation and
   index.html: Welcome page
   pages/: Start here and standalone export instructions, hierarchy, feature guides, recipes, references, and glossary
   assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index
+scripts/: Node development tools for generating shipped assets
+  build-export-library.js: Regenerates bundled export styles and fonts with Node, or verifies freshness with --check
 tests/: Built-in node:test checks of module logic

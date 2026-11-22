@@ -14,6 +14,14 @@
   var sequence = DocForm._sequence;
   var items = DocForm._items;
   var pending = [];
+  var declarations = new WeakSet();
+  var readerFigures = new WeakMap();
+  var svgNS = 'http://www.w3.org/2000/svg';
+  var attributes = new Set(('x y x1 y1 x2 y2 cx cy r rx ry width height d points viewBox transform ' +
+    'opacity fill-opacity stroke-opacity stroke-width stroke-dasharray stroke-dashoffset visibility').split(' '));
+  var styleProperties = { '.stroke-dasharray': 'strokeDasharray', '.stroke-dashoffset': 'strokeDashoffset',
+    '.opacity': 'opacity', '.translate': 'translate' };
+  var marker = 'script[data-df-animation]';
 
   function cubicIn(p) { return p * p * p; }
   function cubicOut(p) { return 1 - Math.pow(1 - p, 3); }
@@ -122,10 +130,11 @@
     return track;
   }
 
-  function value(track, t) {
+  function value(track, t, step) {
     var v = track[0].from;
     for (var i = 0; i < track.length && track[i].start <= t + EPS; i++) {
       var a = track[i];
+      if (step != null && a.step >= step) break;
       var span = a.end - a.start;
       var p = span > 0 ? Math.min(1, Math.max(0, (t - a.start) / span)) : 1;
       v = lerp(a.from, a.to, a.easing(p));
@@ -133,37 +142,36 @@
     return v;
   }
 
-  function apply(el, kind, prop, v) {
+  function properties(kind, prop, v, write) {
     if (kind === 'draw') {
-      if (v >= 1 - EPS) {
-        el.style.strokeDasharray = '';
-        el.style.strokeDashoffset = '';
-      } else {
-        el.style.strokeDasharray = '1 2';
-        el.style.strokeDashoffset = String(round(1 - v));
-      }
-    } else if (kind === 'fade') {
-      el.style.opacity = String(round(v));
-    } else if (kind === 'move') {
-      el.style.translate = round(v[0]) + 'px ' + round(v[1]) + 'px';
-    } else {
-      el.setAttribute(prop, typeof v === 'number' ? String(round(v)) : String(v));
-    }
+      var drawn = v >= 1 - EPS;
+      write('.stroke-dasharray', drawn ? '' : '1 2');
+      write('.stroke-dashoffset', drawn ? '' : String(round(1 - v)));
+    } else if (kind === 'fade') write('.opacity', String(round(v)));
+    else if (kind === 'move') write('.translate', round(v[0]) + 'px ' + round(v[1]) + 'px');
+    else write(prop, typeof v === 'number' ? String(round(v)) : String(v));
   }
 
-  function tracks(figure, tl, strict) {
+  function tracks(figure, tl, declarative) {
     var map = new Map();
+    var svg = figure.querySelector('svg');
     tl.actions.forEach(function (a) {
       if (!a.kind) {
         DocForm._warnOnce('anim-kind:' + JSON.stringify(a.action), 'An animation action needs one of ' + KINDS.join(', ') + '.');
         return;
       }
       var selector = a.action[a.kind];
-      var targets = DocForm._all(selector, figure);
+      var targets = declarative ? [svg].filter(function (el) { return el.matches(selector); })
+        .concat(DocForm._all(selector, svg)) : DocForm._all(selector, figure);
       if (!targets.length) {
-        var message = 'No animation element matches "' + selector + '".';
-        if (strict) throw new Error(message);
-        DocForm._warnOnce('anim-target:' + figure.id + selector, message);
+        throw new Error('No animation element matches "' + selector + '".');
+      }
+      if (declarative && targets.some(function (el) {
+        return el.namespaceURI !== svgNS || el.closest('foreignObject') ||
+          el.matches('a,script,style,animate,animateMotion,animateTransform,set') ||
+          (a.kind === 'draw' && !el.matches('path,circle,ellipse,line,polygon,polyline,rect'));
+      })) {
+        throw new Error('Invalid SVG animation target for "' + selector + '".');
       }
       var prop = a.kind === 'attr' ? a.action.name : a.kind;
       if (a.kind === 'attr' && !prop) {
@@ -184,8 +192,11 @@
         var kind = track[0].kind;
         var prop = key.slice(kind.length + 1);
         var initial = kind === 'move' ? [0, 0] : kind === 'attr' ? authored(el, prop) : 1;
-        if (kind === 'draw') el.setAttribute('pathLength', '1');
-        list.push({ el: el, kind: kind, prop: prop, track: chain(track, initial) });
+        list.push({ el: el, kind: kind, prop: prop, track: chain(track, initial),
+          write: function (name, value) {
+            if (Object.hasOwn(styleProperties, name)) el.style[styleProperties[name]] = value;
+            else el.setAttribute(name, value);
+          } });
       });
     });
     return list;
@@ -197,9 +208,28 @@
     return /^\s*-?(?:\d+\.?\d*|\.\d+)\s*$/.test(raw) ? parseFloat(raw) : raw;
   }
 
-  function setup(figure, steps, options, keys, notes) {
+  function readerTracks(list, ends, indices) {
+    return list.map(function (item) {
+      var previous = new Map();
+      var changes = [];
+      indices.forEach(function (index, at) {
+        var t = stepTime(ends, index);
+        properties(item.kind, item.prop, value(item.track, t, index), function (prop, val) {
+          if (previous.get(prop) !== val) changes.push([at, prop, val]);
+          previous.set(prop, val);
+        });
+      });
+      return [item.el, changes];
+    });
+  }
+
+  function setup(figure, steps, options, keys, notes, declarative) {
     var tl = timeline(steps, options);
-    var list = tracks(figure, tl, true);
+    if (!Number.isFinite(tl.total)) throw new Error('The total duration must be finite.');
+    var list = tracks(figure, tl, declarative);
+    list.forEach(function (item) {
+      if (item.kind === 'draw') item.el.setAttribute('pathLength', '1');
+    });
     var hold = options.hold == null ? 700 : options.hold;
     var stepDriven = figure.matches('.df-figure-steps > figure');
     var t = 0;
@@ -249,7 +279,9 @@
     var shown = -1;
 
     function render() {
-      list.forEach(function (item) { apply(item.el, item.kind, item.prop, value(item.track, t)); });
+      list.forEach(function (item) {
+        properties(item.kind, item.prop, value(item.track, t, declarative ? selected : null), item.write);
+      });
       scrub.value = String(t);
       var at = index();
       var changed = at !== shown;
@@ -428,6 +460,13 @@
       timeline: { get: function () { return copy(tl); } },
       time: { get: function () { return t; } }
     });
+    if (declarative) {
+      readerFigures.set(figure, {
+        labels: [options.label || ''].concat(tl.captions), keys: keys, notes: notes,
+        read: function () { return index(); },
+        tracks: function (indices) { return readerTracks(list, tl.ends, indices); }
+      });
+    }
     binding.follow(applyStep);
     var held = false;
     var pill = sequence.pill(entry, {
@@ -468,7 +507,7 @@
     } else sequence.start(entry.stage('init'));
 
     var auto = component.flag(figure, 'animation-autoplay', 'animation', options.autoplay);
-    if (auto && !stepDriven && typeof root.IntersectionObserver === 'function') {
+    if (auto && !stepDriven && !DocForm._boot?.replaying && typeof root.IntersectionObserver === 'function') {
       var seen = new IntersectionObserver(function (entries) {
         if (!entries.some(function (e) { return e.isIntersecting; })) return;
         seen.disconnect();
@@ -510,83 +549,148 @@
     return Object.fromEntries(Object.entries(value).map(function (entry) { return [entry[0], copy(entry[1])]; }));
   }
 
+  function mountDeclarations() {
+    DocForm._all('figure > ' + marker).forEach(function (script) {
+      var figure = script.parentElement;
+      if (declarations.has(figure)) return;
+      declarations.add(figure);
+      try {
+        var options = JSON.parse(script.textContent);
+        if (figure.querySelectorAll(':scope > ' + marker).length !== 1 ||
+            script.type !== 'application/json' || script.hasAttribute('src') ||
+            !options || typeof options !== 'object' || Array.isArray(options) || !Array.isArray(options.steps)) {
+          throw new Error('Use one inline application/json object with a steps array.');
+        }
+        mount(figure, options, true);
+      } catch (error) {
+        component.issue('animation', figure, 'Invalid declarative animation. ' + error.message,
+          'Check the JSON in data-df-animation.');
+      }
+    });
+  }
+
   DocForm._animation = {
-    mount: function (target, options) {
-      var figure = component.target(target, 'animation', true);
-      if (!figure) return null;
-      var mounted = DocForm.sequence.get(figure);
-      if (mounted) return mounted.figure === figure ? mounted : null;
-      if (!figure.matches('figure') || !figure.querySelector('svg')) {
-        component.issue('animation', figure, 'Animation needs a figure containing an SVG.', 'Pass the animation figure.');
-        return null;
-      }
-      options = options || {};
-      var animation = {};
-      var number = function (value) { return Number.isFinite(value) && value >= 0; };
-      var text = function (value) { return typeof value === 'string'; };
-      var ease = function (value) { return typeof value === 'function' || Object.hasOwn(EASINGS, value); };
-      var valid = { hold: number, duration: number, easing: ease, label: text, autoplay: function (value) {
-        return typeof value === 'boolean';
-      } };
-      Object.keys(valid).forEach(function (key) {
-        animation[key] = component.option('animation', figure, key, undefined, valid[key], options);
-      });
-      var steps = component.option('animation', figure, 'steps', null, Array.isArray, options);
-      var keys = ['start'].concat(steps ? steps.map(function (step) {
-        return items.key(step && step.key);
-      }) : [null]);
-      if (keys.includes(null) || new Set(keys).size !== keys.length) {
-        items.issue('animation', figure, 'Animation steps need distinct keys.',
-          'Set a nonempty key for each step and reserve start for the starting state.');
-        return null;
-      }
-      function validAction(action) {
-        if (!action || (action.delay !== undefined && !number(action.delay)) ||
-          (action.duration !== undefined && !number(action.duration)) ||
-          (action.easing !== undefined && !ease(action.easing))) return false;
-        var kind = kindOf(action);
-        if (!kind || !text(action[kind]) || !action[kind].trim()) return false;
-        if (kind === 'attr') return text(action.name) && /^[A-Za-z_][\w:.-]*$/.test(action.name) && action.to !== undefined;
-        if (kind !== 'move') return true;
-        return [action.from, action.to].every(function (point, i) {
-          return (i === 0 && point === undefined) ||
-            (Array.isArray(point) && point.length === 2 && point.every(Number.isFinite));
+    mount: function (target, options) { return mount(target, options, false); },
+    reader: function (figure) { return readerFigures.get(figure); }
+  };
+
+  function mount(target, options, declarative) {
+    var figure = component.target(target, 'animation', true);
+    if (!figure) return null;
+    var mounted = DocForm.sequence.get(figure);
+    if (mounted) return mounted.figure === figure ? mounted : null;
+    if (!figure.matches('figure') || !figure.querySelector('svg')) {
+      component.issue('animation', figure, 'Animation needs a figure containing an SVG.', 'Pass the animation figure.');
+      return null;
+    }
+    options = options || {};
+    var animation = {};
+    var number = function (value) { return Number.isFinite(value) && value >= 0; };
+    var text = function (value) { return typeof value === 'string'; };
+    var ease = function (value) {
+      return typeof value === 'string' && Object.hasOwn(EASINGS, value) ||
+        !declarative && typeof value === 'function';
+    };
+    var valid = { hold: number, duration: number, easing: ease, label: text, autoplay: function (value) {
+      return typeof value === 'boolean';
+    } };
+    Object.keys(valid).forEach(function (key) {
+      animation[key] = component.option('animation', figure, key, undefined, valid[key], options);
+    });
+    if (declarative && Object.keys(valid).some(function (key) {
+      return Object.hasOwn(options, key) && !valid[key](options[key]);
+    })) return null;
+    animation.detail = options.detail;
+    animation.initial = options.initial;
+    var steps = component.option('animation', figure, 'steps', null, Array.isArray, options);
+    var keys = ['start'].concat(steps ? steps.map(function (step) {
+      return items.key(step && step.key);
+    }) : [null]);
+    if (keys.includes(null) || new Set(keys).size !== keys.length) {
+      items.issue('animation', figure, 'Animation steps need distinct keys.',
+        'Set a nonempty key for each step and reserve start for the starting state.');
+      return null;
+    }
+    function validAction(action) {
+      if (!action || (action.delay !== undefined && !number(action.delay)) ||
+        (action.duration !== undefined && !number(action.duration)) ||
+        (action.easing !== undefined && !ease(action.easing))) return false;
+      var kind = kindOf(action);
+      if (!kind || !text(action[kind]) || !action[kind].trim()) return false;
+      if (declarative && KINDS.filter(function (name) { return Object.hasOwn(action, name); }).length !== 1) return false;
+      if (kind === 'attr') {
+        if (!text(action.name) || !/^[A-Za-z_][\w:.-]*$/.test(action.name) || action.to === undefined) return false;
+        if (!declarative) return true;
+        return attributes.has(action.name) && [action.from, action.to].every(function (value) {
+          return value === undefined || Number.isFinite(value) || typeof value === 'string' &&
+            /^[+\-.,%\w\s()]+$/.test(value) && !/url\s*\(/i.test(value);
         });
       }
-      if (!steps.every(function (step) {
-        return Array.isArray(step.actions) && (step.duration === undefined || number(step.duration)) &&
-          (step.easing === undefined || ease(step.easing)) && step.actions.every(validAction);
-      })) {
-        component.issue('animation', figure, 'Invalid animation actions or timings.',
-          'Give each step an actions array and use nonnegative finite durations and delays.');
-        return null;
+      if (declarative && (kind === 'draw' || kind === 'fade')) {
+        return [action.from, action.to].every(function (value) {
+          return value === undefined || number(value) && value <= 1;
+        });
       }
-      steps = copy(steps);
-      var markup = figure.querySelector(':scope > [data-df-animation-steps]');
-      var entries = markup ? DocForm._all(':scope > [data-df-key]', markup) : [];
-      var notes = keys.map(function (key, index) {
-        var item = entries.find(function (entry) { return items.key(DocForm._data(entry, 'key')) === key; });
-        var step = index ? steps[index - 1] : animation;
-        if (item) {
-          step.label = sequence.label(item) || step.label;
-          step.detail = DocForm._data(item, 'detail', step.detail);
-          step.initial = items.flag(item, 'initial', 'animation', step.initial);
-        }
-        return component.target(step.detail);
+      if (kind !== 'move') return true;
+      return [action.from, action.to].every(function (point, i) {
+        return (i === 0 && point === undefined) ||
+          (Array.isArray(point) && point.length === 2 && point.every(Number.isFinite));
       });
-      animation.initial = animation.initial === true ? 0 :
-        1 + steps.findIndex(function (step) { return step.initial === true; });
-      try {
-        var controller = setup(figure, steps, animation, keys, notes);
-        if (markup) markup.hidden = true;
-        return controller;
-      } catch (error) {
-        component.issue('animation', figure, 'Cannot mount animation: ' + error.message, 'Check the animation actions and SVG selectors.');
-        return null;
-      }
     }
-  };
+    if (!steps.every(function (step) {
+      return Array.isArray(step.actions) && (step.duration === undefined || number(step.duration)) &&
+        (step.easing === undefined || ease(step.easing)) && step.actions.every(validAction) &&
+        (!declarative || (step.label === undefined || text(step.label)) &&
+          (step.initial === undefined || typeof step.initial === 'boolean'));
+    })) {
+      component.issue('animation', figure, 'Invalid animation actions or timings.',
+        'Give each step an actions array and use nonnegative finite durations and delays.');
+      return null;
+    }
+    steps = copy(steps);
+    var markup = figure.querySelector(':scope > [data-df-animation-steps]');
+    var entries = markup ? DocForm._all(':scope > [data-df-key]', markup) : [];
+    var entryKeys = entries.map(function (entry) { return items.key(DocForm._data(entry, 'key')); });
+    if (declarative && (entryKeys.some(function (key) { return !keys.includes(key); }) ||
+        new Set(entryKeys).size !== entryKeys.length)) {
+      component.issue('animation', figure, 'Animation metadata must use distinct known step keys.',
+        'Match each metadata item to start or a declared step.');
+      return null;
+    }
+    var notes = keys.map(function (key, index) {
+      var item = entries.find(function (entry) { return items.key(DocForm._data(entry, 'key')) === key; });
+      var step = index ? steps[index - 1] : animation;
+      if (item) {
+        step.label = sequence.label(item) || step.label;
+        step.detail = DocForm._data(item, 'detail', step.detail);
+        step.initial = items.flag(item, 'initial', 'animation', step.initial);
+      }
+      return component.target(step.detail);
+    });
+    var definitions = [animation].concat(steps);
+    if (declarative && (definitions.some(function (step, index) {
+      var note = notes[index];
+      return step.initial !== undefined && typeof step.initial !== 'boolean' ||
+        step.detail !== undefined && (!text(step.detail) || !note || note.contains(figure) ||
+          note.closest('svg') || note.matches('script,style,template,link,meta'));
+    }) || definitions.filter(function (step) { return step.initial === true; }).length > 1)) {
+      component.issue('animation', figure, 'Invalid animation detail or initial step.',
+        'Use unique HTML detail IDs and mark at most one step as initial.');
+      return null;
+    }
+    animation.initial = animation.initial === true ? 0 :
+      1 + steps.findIndex(function (step) { return step.initial === true; });
+    try {
+      var controller = setup(figure, steps, animation, keys, notes, declarative);
+      if (markup) markup.hidden = true;
+      return controller;
+    } catch (error) {
+      component.issue('animation', figure, 'Cannot mount animation: ' + error.message, 'Check the animation actions and SVG selectors.');
+      return null;
+    }
+  }
   items.scan('animation', function () {
+    mountDeclarations();
     pending.forEach(function (entry) {
       items.collect('animation', entry.figure, {
         keys: entry.keys, initial: entry.initial, items: entry.keys.map(function () { return entry.figure; })
@@ -594,6 +698,7 @@
     });
   });
   DocForm.register('animation', function () {
+    mountDeclarations();
     pending.splice(0).forEach(function (entry) { entry.start(); });
   });
 })(typeof window !== 'undefined' ? window : globalThis);

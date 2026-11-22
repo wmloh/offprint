@@ -189,6 +189,39 @@
   margin-top: 0;
 }
 
+/* The filter panel is attached to the body so scrolling tables cannot clip it. */
+.df-filter-menu {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 48;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: min(200px, calc(100vw - 16px));
+  max-width: min(320px, calc(100vw - 16px));
+  padding: var(--df-space-3);
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--df-border-strong);
+  border-radius: var(--df-radius-lg);
+  background: var(--df-bg);
+  box-shadow: 0 6px 20px light-dark(rgba(15, 15, 15, 0.12), rgba(0, 0, 0, 0.4));
+  color: var(--df-text);
+  font: 0.875rem/1.4 var(--df-font);
+}
+
+.df-filter-title {
+  margin: 0 0 var(--df-space-2);
+  font-weight: 600;
+}
+
+.df-filter-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--df-space-1);
+  margin-bottom: var(--df-space-2);
+}
+
 /* Quick filters and value lists are choices.js chip groups, tinted blue unless a role or colour is set. */
 .df-filter-chips,
 .df-filter-values {

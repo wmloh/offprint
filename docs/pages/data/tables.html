@@ -52,7 +52,7 @@
     <h2 id="results">Sort and shade results</h2>
 
     <table id="group-results" data-df-results data-df-source="Reference counts" data-df-filters
-      data-df-chips="At least nine: references >= 9">
+      data-df-row-key="group" data-df-chips="At least nine: references >= 9">
       <caption>Repository reference counts with an example cutoff of nine</caption>
       <thead>
         <tr>
@@ -71,14 +71,14 @@
     </table>
 
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>Choose the <strong>References</strong> heading to sort largest first, then choose it again to reverse the order. Choose it a third time to restore the starting order. Look for both groups tied for the best count.</p>
+    <p>Choose the <strong>References</strong> heading and watch the rows slide into order. Choose it again to reverse the order, then a third time to restore the starting order. Look for both groups tied for the best count.</p>
 
     <p>A heatmap uses tint strength to show magnitude. Here, the fixed scale runs from zero to 15, so a count keeps its shade even when you filter the rows. A relative scale adjusts to the visible values. The tint colour is also configurable. The threshold gives every qualifying number a Pass label and every lower number a Fail label.</p>
     <h2 id="filters">Narrow the rows</h2>
     <p>The filter button beside each heading opens choices for that column. Group offers a checklist and References offers minimum and maximum values. A date column can offer a from and to range. A filter chip applies a named rule in one press. The table shows rows that meet every active rule and reports how many are visible.</p>
 
     <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>Turn on <strong>At least nine</strong>, then set the References maximum to 12. The data group is the only match. Choose <strong>Clear</strong> to restore all the rows.</p>
+    <p>Turn on <strong>At least nine</strong> to fade out the rows below the cutoff, then set the References maximum to 12. The data group is the only match. Choose <strong>Clear</strong> to restore all the rows.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
     <p>Choose a concept table when readers compare descriptions and a results table when they need to order, narrow, or judge measurements. Reserve shading for a column readers should scan first, and keep its numbers visible.</p>

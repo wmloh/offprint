@@ -75,6 +75,23 @@ function el(tag, text = '', children = []) {
     setAttribute: (name, value) => attrs.set(name, String(value)),
     getAttribute: (name) => attrs.get(name) ?? null,
     hasAttribute: (name) => attrs.has(name),
+    removeAttribute: (name) => attrs.delete(name),
+    remove() {
+      if (!node.parentNode) return;
+      const siblings = node.parentNode.children;
+      siblings.splice(siblings.indexOf(node), 1);
+      node.parentNode = null;
+    },
+    before: (sibling) => node.parentNode.insertBefore(sibling, node),
+    cloneNode(deep) {
+      const copy = el(tag, text, deep ? children.map((child) => child.cloneNode(true)) : []);
+      attrs.forEach((value, name) => copy.setAttribute(name, value));
+      copy.className = node.className;
+      copy.hidden = node.hidden;
+      return copy;
+    },
+    createTBody: () => node.appendChild(el('tbody')),
+    querySelectorAll: () => [],
     appendChild: (child) => node.insertBefore(child, null),
     insertBefore(child, before) {
       if (child.parentNode) child.parentNode.children.splice(child.parentNode.children.indexOf(child), 1);
@@ -92,7 +109,9 @@ function el(tag, text = '', children = []) {
     firstChild: { get: () => children[0] ?? null },
     rows: { get: () => children },
     cells: { get: () => children },
-    className: { set(value) { value.split(' ').forEach((name) => classes.add(name)); } },
+    tHead: { get: () => children.find((child) => child.tagName === 'THEAD') },
+    tBodies: { get: () => children.filter((child) => child.tagName === 'TBODY') },
+    className: { get: () => [...classes].join(' '), set(value) { value.split(' ').forEach((name) => classes.add(name)); } },
     innerHTML: { set() {} },
     textContent: {
       get: () => (text ?? '') + children.map((child) => child.textContent).join(''),
@@ -111,21 +130,20 @@ function makeTable(headers, cells, tableAttrs = {}, holder = null) {
   const rows = cells.map((row) => el('tr', '', row.map((text) => el('td', text))));
   const table = el('table');
   Object.entries(tableAttrs).forEach(([name, value]) => table.setAttribute(name, value));
-  table.tHead = el('thead', '', [el('tr', '', ths)]);
-  table.tBodies = [el('tbody', '', rows)];
-  table.appendChild(table.tBodies[0]);
+  table.appendChild(el('thead', '', [el('tr', '', ths)]));
+  table.appendChild(el('tbody', '', rows));
   table.closest = (selector) => (selector === '.df-data' ? holder : null);
   el('div', '', [table]);
   return { table, ths, rows: rows.slice(), body: table.tBodies[0] };
 }
 
-function build(headers, cells, tableAttrs = {}, holder = null) {
+function build(headers, cells, tableAttrs = {}, holder = null, environment = {}) {
   const { table, ths, rows } = makeTable(headers, cells, tableAttrs, holder);
   const warnings = [];
   let init;
   const context = vm.createContext({
-    Intl, WeakMap,
-    document: { createElement: (tag) => el(tag), createTextNode: (text) => el('#text', text) },
+    Intl, WeakMap, ...environment,
+    document: environment.document ?? { createElement: (tag) => el(tag), createTextNode: (text) => el('#text', text) },
     DocForm: {
       _data: (node, key, fallback) => node.getAttribute('data-df-' + key) ?? fallback,
       _warnOnce: (key, message) => warnings.push(message),
@@ -216,6 +234,53 @@ const find = (node, cls) => node.classes.has(cls) ? node : node.children.map((ch
 const shownNames = (body) => body.children.filter((tr) => !tr.hidden).map((tr) => tr.cells[0].textContent);
 const marks = (rows, c) => rows.map((tr) => [tr.cells[c].classes.has('df-best'), tr.cells[c].props.get('--df-heat') ?? null]);
 
+test('column filter menus stay near their button and focus without scrolling', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../docform/css/results.css'), 'utf8');
+  assert.match(css, /\.df-filter-menu\s*\{[^}]*\bposition:\s*fixed\b/);
+  const windowEvents = new EventTarget();
+  const focus = [];
+  const document = Object.assign(new EventTarget(), {
+    body: el('body'),
+    documentElement: { clientWidth: 320, clientHeight: 240 },
+    createElement(tag) {
+      const node = el(tag);
+      node.focus = (options) => focus.push([node, options?.preventScroll]);
+      if (tag === 'div') {
+        Object.assign(node, { offsetWidth: 200, offsetHeight: 200, clientHeight: 198, scrollHeight: 248 });
+        node.querySelector = () => find(node, 'df-filter-bounds').children[0].children[1];
+      }
+      return node;
+    }
+  });
+  const { ths } = build([['Score']], [['12'], ['24']], { 'data-df-filters': '' }, null, {
+    document,
+    addEventListener: windowEvents.addEventListener.bind(windowEvents),
+    removeEventListener: windowEvents.removeEventListener.bind(windowEvents)
+  });
+  const trigger = find(ths[0], 'df-filter-toggle');
+  const rect = { left: 285, right: 305, top: 180, bottom: 205 };
+  trigger.getBoundingClientRect = () => rect;
+  trigger.dispatchEvent(new Event('click'));
+  const [menu] = document.body.children;
+  assert.equal(menu.style.left, '105px');
+  assert.equal(menu.style.top, 'auto');
+  assert.equal(menu.style.bottom, '64px');
+  assert.equal(menu.style.maxHeight, '168px');
+  assert.deepEqual(focus, [[menu.querySelector(), true]]);
+
+  Object.assign(rect, { top: 20, bottom: 45 });
+  windowEvents.dispatchEvent(new Event('scroll'));
+  assert.equal(menu.style.top, '49px');
+  assert.equal(menu.style.bottom, 'auto');
+  assert.equal(menu.style.maxHeight, '183px');
+
+  document.dispatchEvent(Object.assign(new Event('keydown'), { key: 'Escape' }));
+  assert.equal(document.body.children.length, 0);
+  assert.equal(trigger.getAttribute('aria-expanded'), 'false');
+  assert.equal(trigger.getAttribute('aria-controls'), null);
+  assert.deepEqual(focus.at(-1), [trigger, true]);
+});
+
 test('chips match columns by data-df-field or header text, not the removed data-df-column', () => {
   const { warnings } = build([['Run'], ['Latency (ms)', { 'data-df-field': 'latency' }],
     ['Validation loss', { 'data-df-column': 'loss' }]], [['a', '10', '1'], ['b', '30', '2']],
@@ -285,4 +350,76 @@ test('a data table redrawn in the same block keeps the reader\'s filters and chi
   assert.deepEqual(shownNames(more.body), ['B', 'C', 'E']);
   assert.equal(find(more.table.parentNode.children[0], 'df-filter-count').textContent, '3 of 6 rows match');
   assert.equal(first.results.filters(more.table).shown(), 3);
+});
+
+test('keyed row motion follows data replacement, sorting, and filtering', () => {
+  const { table } = makeTable([['Name'], ['Score']], [], {
+    'data-df-row-key': 'id', 'data-df-filters': '', 'data-df-source': 'scores'
+  });
+  const animations = [];
+  function animate(frames) {
+    const animation = { cancel() { this.oncancel?.(); } };
+    animations.push({ node: this, from: plain(frames[0]), animation });
+    return animation;
+  }
+  table.isConnected = true;
+  table.animate = animate;
+  const context = vm.createContext({
+    URL, Intl, TextEncoder,
+    getComputedStyle: () => ({ opacity: '1' }),
+    document: {
+      createElement(tag) {
+        const node = el(tag);
+        const clone = node.cloneNode;
+        function addGeometry(el) {
+          el.animate = animate;
+          el.cells.forEach((cell) => { cell.getBoundingClientRect = () => ({ width: 50 }); });
+          el.getBoundingClientRect = () => ({
+            top: el.parentNode.rows.filter((row) => !row.hidden).indexOf(el) * 20,
+            left: 0, width: 100, height: 20
+          });
+        }
+        if (tag === 'tbody') node.cloneNode = (deep) => {
+          const body = clone(deep);
+          body.rows.forEach(addGeometry);
+          return body;
+        };
+        if (tag === 'table') node.animate = animate;
+        return node;
+      }
+    }
+  });
+  context.window = context;
+  for (const file of ['core.js', 'data.js', 'results.js']) vm.runInContext(read(file), context);
+  function payload(rows) {
+    return { type: 'value', value: rows.map(([id, Name, Score]) => ({ id, Name, Score })) };
+  }
+  const source = context.DocForm.data.define('scores', payload([['a', 'Alpha', 10], ['b', 'Beta', 20], ['c', 'Gamma', 30]]));
+  context.DocForm._results.mount(table);
+  assert.deepEqual(animations, []);
+
+  assert.equal(source.update(payload([['b', 'Renamed', 25], ['a', 'Alpha', 10], ['d', 'Delta', 15]])), true);
+  assert.deepEqual(shownNames(table.tBodies[0]), ['Renamed', 'Alpha', 'Delta']);
+  const [exit, movedUp, movedDown, enter] = animations.splice(0);
+  assert.equal(exit.node.hasAttribute('inert'), true);
+  assert.equal(exit.node.tBodies[0].rows[0].cells[0].textContent, 'Gamma');
+  assert.deepEqual([movedUp.from, movedDown.from, enter.from], [
+    { translate: '0 20px', opacity: 1 }, { translate: '0 -20px', opacity: 1 }, { translate: '0 0px', opacity: 0 }
+  ]);
+  exit.animation.onfinish();
+  assert.equal(exit.node.parentNode, null);
+
+  table.tHead.rows[0].cells[1].children[0].children[0].dispatchEvent(new Event('click'));
+  assert.deepEqual(shownNames(table.tBodies[0]), ['Renamed', 'Delta', 'Alpha']);
+  assert.equal(animations.splice(0).length, 2);
+  const filters = context.DocForm._results.filters(table);
+  filters.set('Score', { min: null, max: 20 });
+  assert.deepEqual(shownNames(table.tBodies[0]), ['Delta', 'Alpha']);
+  assert.deepEqual(animations.splice(0).map(({ from }) => from), [
+    { opacity: 1 }, { translate: '0 20px', opacity: 1 }, { translate: '0 20px', opacity: 1 }
+  ]);
+  table.animate = undefined;
+  filters.clear();
+  assert.deepEqual(shownNames(table.tBodies[0]), ['Renamed', 'Delta', 'Alpha']);
+  assert.deepEqual(animations, []);
 });

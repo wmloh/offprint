@@ -226,6 +226,101 @@
     return n + ' ' + word + (n === 1 ? '' : 's');
   }
 
+  var rowAnimations = new WeakMap();
+  var leavingRows = new WeakMap();
+  var rowTiming = { duration: 220, easing: 'ease-out' };
+
+  function rowKey(value) {
+    return (typeof value === 'string' || Number.isFinite(value)) ? String(value).trim() : '';
+  }
+
+  function rowPositions(table) {
+    var positions = new Map();
+    var rows = table.tBodies[0]?.rows || [];
+    Array.from(rows).forEach(function (row) {
+      var key = rowKey(row.getAttribute('data-df-results-key'));
+      if (!key) return;
+      if (positions.has(key)) {
+        positions.set(key, null);
+        return;
+      }
+      var box = row.hidden ? null : row.getBoundingClientRect();
+      positions.set(key, { row: row, box: box && box.width && box.height ? box : null });
+    });
+    return positions;
+  }
+
+  function fadeRemovedRow(table, row, box, widths, opacity, key, leaving) {
+    // A detached copy can finish fading without occupying a row or duplicating accessible content.
+    var ghost = document.createElement('table');
+    ghost.className = table.className;
+    ghost.setAttribute('inert', '');
+    ghost.setAttribute('aria-hidden', 'true');
+    Object.assign(ghost.style, {
+      position: 'fixed', top: box.top + 'px', left: box.left + 'px', width: box.width + 'px',
+      maxWidth: 'none', margin: '0', tableLayout: 'fixed', pointerEvents: 'none'
+    });
+    var copy = row.cloneNode(true);
+    copy.hidden = false;
+    copy.removeAttribute('id');
+    copy.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
+    Array.from(copy.cells).forEach(function (cell, i) {
+      cell.style.boxSizing = 'border-box';
+      cell.style.width = widths[i] + 'px';
+    });
+    ghost.createTBody().appendChild(copy);
+    table.before(ghost);
+    var animation = ghost.animate([{ opacity: opacity }, { opacity: 0 }], rowTiming);
+    function remove() {
+      ghost.remove();
+      if (leaving.get(key) === animation) leaving.delete(key);
+    }
+    animation.onfinish = animation.oncancel = remove;
+    leaving.set(key, animation);
+  }
+
+  function captureRowMotion(table) {
+    if (!table.hasAttribute('data-df-row-key') || !table.isConnected || !table.animate ||
+        DocForm._boot?.replaying || root.matchMedia?.('print').matches) return;
+    var before = rowPositions(table);
+    before.forEach(function (item) {
+      if (!item?.box) return;
+      item.widths = Array.from(item.row.cells, function (cell) { return cell.getBoundingClientRect().width; });
+      item.opacity = rowAnimations.has(item.row) ? Number(root.getComputedStyle(item.row).opacity) : 1;
+    });
+    return function () {
+      before.forEach(function (item) {
+        if (!item) return;
+        rowAnimations.get(item.row)?.cancel();
+        rowAnimations.delete(item.row);
+      });
+      var after = rowPositions(table);
+      var leaving = leavingRows.get(table);
+      if (!leaving) leavingRows.set(table, leaving = new Map());
+      before.forEach(function (item, key) {
+        if (item?.box && after.get(key) !== null && !after.get(key)?.box) {
+          fadeRemovedRow(table, item.row, item.box, item.widths, item.opacity, key, leaving);
+        }
+      });
+      after.forEach(function (item, key) {
+        var old = before.get(key);
+        if (!item?.box || old === null) return;
+        leaving.get(key)?.cancel();
+        var distance = old?.box ? old.box.top - item.box.top : 0;
+        var opacity = old?.box ? old.opacity : 0;
+        if (Math.abs(distance) < 0.5 && opacity === 1) return;
+        var animation = item.row.animate([
+          { translate: '0 ' + distance + 'px', opacity: opacity },
+          { translate: 'none', opacity: 1 }
+        ], rowTiming);
+        rowAnimations.set(item.row, animation);
+        animation.onfinish = function () {
+          if (rowAnimations.get(item.row) === animation) rowAnimations.delete(item.row);
+        };
+      });
+    };
+  }
+
   function enhance(table, settings) {
     settings = settings || {};
     if (table.classList.contains('df-results')) return;
@@ -366,10 +461,12 @@
       // First click puts the best (or largest numbers, or A to Z, or earliest) first; the third restores the written order.
       var first = col.best === 'min' ? 'asc' : col.numeric ? 'desc' : 'asc';
       button.addEventListener('click', function () {
+        var moveRows = captureRowMotion(table);
         if (state.col !== c) state = { col: c, dir: first };
         else if (state.dir === first) state.dir = first === 'asc' ? 'desc' : 'asc';
         else state = { col: -1, dir: null };
         apply();
+        moveRows?.();
         settings.onFilter?.('user');
       });
     });
@@ -493,13 +590,14 @@
     var origin = 'user';
 
     var state;
-    var refresh = function () {
+    var refresh = function (animate) {
       var mask = rows.map(function (tr, r) {
         return columns.every(function (col) { return passes(filters[col.name], col.values[r], col.keys[r]); }) &&
           chips.every(function (chip) {
             return !chip.on || chip.tests.every(function (t) { return t.test(t.col.values[r], t.col.keys[r]); });
           });
       });
+      var moveRows = animate === false ? null : captureRowMotion(table);
       var shown = 0;
       rows.forEach(function (tr, r) {
         tr.hidden = !mask[r];
@@ -507,10 +605,11 @@
       });
       var active = chips.some(function (chip) { return chip.on; }) ||
         filtered.some(function (col) { return filterActive(filters[col.name]); });
-      shade(active ? mask : null);
       count.textContent = active ? shown + ' of ' + plural(rows.length, 'row') + ' match' : plural(rows.length, 'row');
       clear.disabled = !active;
       emptyBody.hidden = shown > 0;
+      moveRows?.();
+      shade(active ? mask : null);
       if (chipGroup) chipGroup.show(chips.map(function (chip, i) { return chip.on ? String(i) : null; }).filter(Boolean));
       filtered.forEach(function (col) {
         var on = filterActive(filters[col.name]);
@@ -573,8 +672,9 @@
       window.removeEventListener('scroll', menu.place, true);
       window.removeEventListener('resize', menu.place);
       col.toggle.setAttribute('aria-expanded', 'false');
+      col.toggle.removeAttribute('aria-controls');
       menu = null;
-      if (refocus) col.toggle.focus();
+      if (refocus) col.toggle.focus({ preventScroll: true });
     }
 
     function openMenu(col) {
@@ -601,12 +701,22 @@
         col: col,
         place: function () {
           var at = col.toggle.getBoundingClientRect();
-          var w = el.offsetWidth;
-          var h = el.offsetHeight;
           var vw = document.documentElement.clientWidth;
           var vh = document.documentElement.clientHeight;
+          if (at.bottom <= 0 || at.top >= vh || at.right <= 0 || at.left >= vw) {
+            closeMenu(false);
+            return false;
+          }
+          var above = at.top - 12;
+          var below = vh - at.bottom - 12;
+          var h = el.scrollHeight + el.offsetHeight - el.clientHeight;
+          var upwards = h > below && above > below;
+          el.style.maxHeight = Math.max(0, upwards ? above : below) + 'px';
+          var w = el.offsetWidth;
           el.style.left = Math.max(8, Math.min(at.right - w, vw - w - 8)) + 'px';
-          el.style.top = (at.bottom + 4 + h > vh - 8 && at.top - h - 4 > 8 ? at.top - h - 4 : at.bottom + 4) + 'px';
+          el.style.top = upwards ? 'auto' : at.bottom + 4 + 'px';
+          el.style.bottom = upwards ? vh - at.top + 4 + 'px' : 'auto';
+          return true;
         },
         outside: function (e) {
           if (!el.contains(e.target) && !col.toggle.contains(e.target)) closeMenu(false);
@@ -625,9 +735,9 @@
       document.addEventListener('keydown', menu.key, true);
       window.addEventListener('scroll', menu.place, true);
       window.addEventListener('resize', menu.place);
-      menu.place();
+      if (!menu.place()) return;
       var first = el.querySelector('input, button');
-      if (first) first.focus();
+      if (first) first.focus({ preventScroll: true });
     }
 
     // Distinct values in sorted order with their counts; unticking one hides its rows.
@@ -746,7 +856,7 @@
       shown: function () { return rows.filter(function (tr) { return !tr.hidden; }).length; }
     };
     if (CONTROLLERS) CONTROLLERS.set(table, api);
-    refresh();
+    refresh(false);
     function restore(next) {
       if (Object.keys(next.filters).some(function (name) {
         var col = filtered.find(function (col) { return col.name === name; });
@@ -758,7 +868,7 @@
       }) || next.chips.some(function (label) { return !chips.some(function (chip) { return chip.label === label; }); })) return false;
       filters = Object.assign(Object.create(null), next.filters);
       chips.forEach(function (chip) { chip.on = next.chips.includes(chip.label); });
-      refresh();
+      refresh(false);
       return true;
     }
     return { api: api, bar: bar, close: closeMenu, restore: restore, snapshot: function () { return state; } };
@@ -792,6 +902,7 @@
     var template = authoredHead ? table.tHead.cloneNode(true) : document.createElement('thead');
     if (!template.rows.length) template.insertRow();
     var caps = data ? DocForm._dataSource.limits(table, options) : { maxBytes: 1024 * 1024, maxRows: 5000 };
+    var keyField = DocForm._data(table, 'row-key', null)?.trim();
 
     function prepare(records, mapping, parsed, values) {
       if (!Array.isArray(records) || records.some(function (record) {
@@ -849,6 +960,8 @@
       var body = document.createElement('tbody');
       rows.forEach(function (record) {
         var row = body.insertRow();
+        var identity = keyField && Object.hasOwn(record, keyField) ? rowKey(record[keyField]) : '';
+        if (identity) row.setAttribute('data-df-results-key', identity);
         cells.get(record).forEach(function (entry) {
           var cell = row.insertCell();
           cell.textContent = entry.text;
@@ -917,10 +1030,11 @@
         }
         return localRecords(records, options.mapping);
       },
-      render: function (prepared) {
+      render: function (prepared, origin) {
         if (!prepared && !original) return;
         if (!prepared) prepared = original;
         if (current === original && prepared === original) return;
+        var moveRows = origin === 'init' ? null : captureRowMotion(table);
         rendering = true;
         var previous = current && current.interaction;
         var active = previous && previous.filter;
@@ -957,6 +1071,7 @@
           current = { interaction: interaction, sections: [head].concat(Array.from(table.tBodies)) };
         }
         rendering = false;
+        moveRows?.();
       },
       snapshot: function () { return current && current.interaction ? current.interaction.snapshot() : null; }
     }, 'filter');

@@ -25,4 +25,9 @@ Enable `results`. Use `table[data-df-results]` with a header and body. Enhanceme
 - Use instance `filter: {scope, fields, where?}` or `filter: {where}` to apply [shared record filters](data-blocks.md#record-filters) before table-local filters. Empty matches produce an empty result. Sort, filters, and chips retain compatible state through scope changes.
 - A local file override uses the configured mapping. Reset restores the latest shared rows or the original authored table with its reader state. With `transformOutput: "spec"`, a source transform returns `{records, mapping}`.
 
+## Row animation
+
+- Add `data-df-row-key="seriesId"` to opt in and read each record's identity from the exact `seriesId` field. The field can be omitted from the displayed columns. Use a unique, stable string or finite number for each row. For authored rows, use `data-df-results-key="actual-id"` on each `tr` and add `data-df-row-key` to the table. Use matching identities in any authored fallback and replacement records.
+- After data replacement, header sorting, or filtering, matched visible rows slide to their new positions and entering or leaving rows fade. Blank or duplicate identities skip animation. Cell values update immediately. Omit `data-df-row-key` for instant row updates. Tables also update instantly when Web Animations is unavailable.
+
 [Concept tables](concept-tables.md) · [Dropzone targets](dropzones.md) · [Source](../../js/results.js)

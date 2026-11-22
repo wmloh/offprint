@@ -92,7 +92,7 @@ docform/: Copyable offline library folder
     chart-histogram.js: Raw and pre-binned distributions with live binning, continuous log axes, and overlaid or stacked bars
     chart-heatmap.js: Matrix or record heatmaps with sequential, diverging, and log colour scales, a brushable value-range scale, and marching-squares contours with a show/hide legend chip
     chart-playback.js: Guided playback for individual numeric line charts and x-position groups, plus opt-in keyed-state checkpoints for non-line charts, with the shared timed sequence controls, authored checkpoint notes, and linked selection
-    results.js: Source-mapped or authored tables with supplied intervals, sorting, heatmaps, thresholds, column filters, and saved state across replacements
+    results.js: Source-mapped or authored tables with supplied intervals, sorting, heatmaps, thresholds, column filters, saved state, and opt-in keyed row animation
     matrix.js: Named evaluation records pivoted into semantic tables with keyed axes, interchangeable measures, and static fallbacks
     highlight.js: Shared keyed selection controller with startup seeds, persistence, and passive HTML and SVG participants
     stepper.js: Ordered worked examples with a Reset, Previous, and Next step pill, keyed selection groups, and linked step views
@@ -102,10 +102,11 @@ docform/: Copyable offline library folder
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
     glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with merged glossary tags, an any-tag filter, variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
     sections.js: h2 colour cycle from a token with attribute overrides, and continuous left-margin section lines in a separate layer that focus blur never reaches, kept clear of the section rail
-  tools/: Offline asset checker and exporter for manifest-configured search indexes and wrapped CSV, JSON, and YAML sources
+  tools/: Offline asset checker, search index exporter, and data wrapper tools
     assets.html: Folder selection, asset status and diagnostics, and selective save, download, or copy
     asset-build.js: Manifest discovery, output planning, deterministic search and data serialization, and stale checks
     asset-page.js: Asset tool page controller for folder access, previews, and exports
+    refresh_data.py: Shared Python function for refreshing manifest-configured CSV and JSON wrappers in place
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Agent-facing setup and site structure, layout, reading, interaction, diagram, data, and offline tool references
@@ -114,6 +115,7 @@ docform/: Copyable offline library folder
     interact/shortcuts.md: Shortcut scopes, defaults, conflict diagnostics, and manifest remapping
     extend/: Public extension API, lifecycle hooks, shared controllers, events, and chart add-on registration
 docs/: Human-facing beginner DocForm HTML site with a Start here orientation and live examples
+  refresh-data.py: No-argument launcher for refreshing this site's CSV and JSON wrappers
   index.html: Welcome page
   pages/: Start here guides for local sites and Reader and Interactive export, feature guides, recipes, references, and glossary
   assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index

@@ -15,22 +15,6 @@ A project uses a documentation root and a complete `docform/` library. Export as
 
 ## Suggested layout
 
-```text
-project/
-  docform/                 library, unchanged
-  docs/                    documentation root
-    index.html             first manifest page
-    glossary.html          optional glossaryPage
-    pages/<group>/*.html   one folder per manifest group, one level deep
-    assets/
-      site.js              manifest
-      data/                raw CSV/JSON sources
-      generated/           asset-tool wrappers and search index
-      media/               images, SVG, fonts
-      *.js, *.css          author scripts and styles
-```
-
-- Layout is a convention; the rules are what export relies on.
-- For export, select `docs/`.
+See [authoring conventions](../AUTHORING.md#project-layout) for the recommended layout. Layout is a convention; the rules above are what export relies on. For export, select the documentation root.
 
 [Offline setup](setup.md) · [Site manifest](manifest.md) · [Reading controls → export](../layout/controls.md)

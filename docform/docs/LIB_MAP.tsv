@@ -1,3 +1,4 @@
+Authoring conventions	Recommended project layout, configuration, custom-code ladder, styling, data, export, anti-patterns, and pre-ship checklist	AUTHORING.md
 Offline setup	Load DocForm offline and register author hooks	setup/setup.md
 Include order	Choose feature profiles and resolve dependencies	setup/include-order.md
 Site manifest	Configure pages, features, registries, and generated assets	setup/manifest.md

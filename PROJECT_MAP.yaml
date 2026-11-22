@@ -113,6 +113,7 @@ docform/: Copyable offline library folder
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Agent-facing setup and site structure, layout, reading, interaction, diagram, data, and offline tool references
     LIB_MAP.tsv: Index of agent references by component, description, and relative path
+    AUTHORING.md: Agent author conventions, recommended project layout, custom-code ladder, export rules, and pre-ship checklist
     interact/step-contract.md: Shared step markup, selection binding, controller, and event
     interact/shortcuts.md: Shortcut scopes, defaults, conflict diagnostics, and manifest remapping
     extend/: Public extension API, lifecycle hooks, shared controllers, events, and chart add-on registration

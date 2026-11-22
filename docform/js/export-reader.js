@@ -146,7 +146,7 @@
     var separator = document.querySelector('#export-resize');
     var edge = document.querySelector('#export-edge');
     var shade = document.querySelector('#export-shade');
-    var compact = matchMedia('(max-width: 859px), (hover: none)');
+    var compact = matchMedia('(max-width: 860px), (any-hover: none)');
     var mode = 'shown';
     var drawer = false;
     var peek = false;
@@ -155,6 +155,7 @@
     var theme;
     var view;
     var remote;
+    var drawLines;
     var sections = [];
     var blocks = [];
     var outline;
@@ -188,8 +189,10 @@
       return name;
     }
 
-    function icon(node, drawing) {
-      node.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + drawing + '</svg>';
+    function icon(node, drawing, size) {
+      var bounds = size || 24;
+      node.innerHTML = '<svg viewBox="0 0 ' + bounds + ' ' + bounds + '" aria-hidden="true" focusable="false">' +
+        drawing + '</svg>';
     }
 
     function button(id, label, key, drawing, action) {
@@ -202,25 +205,34 @@
       return [el, name];
     }
 
-    var [navButton, navName] = button('nav', 'Navigation', 'N', '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14"/>', toggleNav);
-    navButton.setAttribute('aria-controls', sidebar.id);
-    var [focusButton] = button('focus', 'Focus mode', 'F', '<path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/><circle cx="12" cy="12" r="2"/>', toggleFocus);
-    focusButton.setAttribute('aria-pressed', 'false');
-    var [themeButton, themeName] = button('theme', 'Switch theme', 'T', '<path d="M20 15a8 8 0 0 1-11-11 8.5 8.5 0 1 0 11 11Z"/>', toggleTheme);
-    var [backHeading] = button('back-heading', 'Previous heading', 'K', '<path d="m6 14 6-6 6 6"/>', function () { jump(-1); });
-    var [nextHeading] = button('next-heading', 'Next heading', 'J', '<path d="m6 10 6 6 6-6"/>', function () { jump(1); });
+    var navFrame = '<rect x="3" y="5" width="18" height="14" rx="2"/>';
+    var navIcons = {
+      shown: '<path d="M9 5v14M5.5 9h1m-1 3h1"/>',
+      hidden: '<path d="m12 9-3 3 3 3"/>',
+      auto: '<path d="M9 5v14" stroke-dasharray="2 2"/><path d="m13 9 3 3-3 3"/>'
+    };
+    var navLabels = { shown: 'Navigation shown. Select to hide', hidden: 'Navigation hidden. Select for auto-hide',
+      auto: 'Navigation auto-hide. Select to keep it open' };
     var progress = make('span');
     progress.className = 'export-progress';
     progress.tabIndex = 0;
     progress.setAttribute('role', 'progressbar');
+    progress.setAttribute('aria-valuemin', '0');
+    progress.setAttribute('aria-valuemax', '100');
     progress.setAttribute('aria-valuenow', '0');
-    icon(progress, '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9" pathLength="100" stroke-dasharray="0 100"/>');
+    icon(progress, '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>');
     var ring = progress.querySelector('circle:last-child');
     hint(progress, 'progress', 'Reading progress');
     pill.append(progress);
 
+    var [navButton, navName] = button('nav', 'Navigation', 'N', navFrame + navIcons.shown, toggleNav);
+    navButton.setAttribute('aria-controls', sidebar.id);
+    var [focusButton, focusName] = button('focus', 'Turn on focus mode', 'F', '<path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/><circle cx="12" cy="12" r="2"/>', toggleFocus);
+    focusButton.setAttribute('aria-pressed', 'false');
+    var [themeButton, themeName] = button('theme', 'Switch theme', 'T', '<path d="M20 15a8 8 0 0 1-11-11 8.5 8.5 0 1 0 11 11Z"/>', toggleTheme);
+
     var pageLinks = Array.from(pager.querySelectorAll('a'), function (link, index) {
-      icon(link, index ? '<path d="m10 6 6 6-6 6"/>' : '<path d="m14 6-6 6 6 6"/>');
+      icon(link, index ? '<path d="M5 12h14m-6-6 6 6-6 6"/>' : '<path d="M19 12H5m6-6-6 6 6 6"/>');
       return [link, hint(link, link.id, index ? 'Next page' : 'Previous page')];
     });
     var progressHint = document.getElementById('export-hint-progress');
@@ -245,7 +257,12 @@
       edge.hidden = mobile || mode !== 'auto' || shown;
       html.style.setProperty('--nav-slot', !mobile && shown ? 'var(--nav-width)' : '0px');
       navButton.setAttribute('aria-expanded', String(shown));
-      navName(mobile ? 'Open navigation' : 'Navigation · ' + (mode === 'auto' ? 'auto-hide' : mode));
+      var navMode = mobile ? 'shown' : mode;
+      if (navButton.dataset.navMode !== navMode) {
+        navButton.dataset.navMode = navMode;
+        icon(navButton, navFrame + navIcons[navMode]);
+      }
+      navName(mobile ? 'Open navigation' : navLabels[mode]);
       schedule();
     }
 
@@ -328,8 +345,8 @@
       view?.document.documentElement.setAttribute('data-df-theme', theme);
       remote?.send({ type: 'theme', value: theme });
       themeName(theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-      icon(themeButton, theme === 'dark' ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2m0-14-2 2M7 17l-2 2"/>' :
-        '<path d="M20 15a8 8 0 0 1-11-11 8.5 8.5 0 1 0 11 11Z"/>');
+      icon(themeButton, theme === 'dark' ? '<path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z"/>' :
+        '<circle cx="8" cy="8" r="3"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1.1 1.1M11.9 11.9L13 13M3 13l1.1-1.1M11.9 4.1L13 3"/>', 16);
     }
 
     function toggleTheme() {
@@ -341,12 +358,76 @@
       if (focusButton.hidden) return;
       focused = !focused;
       focusButton.setAttribute('aria-pressed', String(focused));
+      focusName(focused ? 'Turn off focus mode' : 'Turn on focus mode');
+      view?.document.documentElement.classList.toggle('df-focus-mode', focused);
       remote?.send({ type: 'focus', value: focused });
       update();
     }
 
     function visible(section) {
       return section.node.getClientRects().length > 0;
+    }
+
+    function sectionLines(page) {
+      if (!page.matches('.df-page:not(.df-bubble-body)')) return null;
+      var doc = page.ownerDocument;
+      var frame = doc.defaultView;
+      var layer = doc.createElement('div');
+      layer.className = 'df-section-lines';
+      layer.setAttribute('aria-hidden', 'true');
+      page.classList.remove('df-sections-covered');
+      page.classList.add('df-sections-drawn');
+      page.append(layer);
+
+      return function () {
+        var pageRect = page.getBoundingClientRect();
+        var marks = [];
+        var mark;
+        for (var node of page.children) {
+          if (node.matches('script,style,template,.df-pager,.df-section-lines,.df-export-pop,[data-df-snapshot-tips]')) continue;
+          if (node.localName === 'h2') mark = null;
+          if (!node.getClientRects().length) continue;
+          var style = frame.getComputedStyle(node);
+          if (style.position === 'absolute' || style.position === 'fixed') continue;
+          var rect = node.getBoundingClientRect();
+          if (node.localName === 'h2') {
+            var line = doc.createElement('span');
+            var offset = parseFloat(style.getPropertyValue('--df-section-offset')) || 14;
+            var width = parseFloat(style.getPropertyValue('--df-section-line-width')) || 2;
+            line.className = 'df-section-line';
+            line.style.setProperty('--df-section-color', style.getPropertyValue('--df-section-color'));
+            line.style.left = (rect.left - pageRect.left - offset - width / 2) + 'px';
+            line.style.top = (rect.top - pageRect.top + .15 * parseFloat(style.fontSize)) + 'px';
+            mark = { line: line, top: rect.top, end: rect.bottom };
+            marks.push(mark);
+          } else if (mark) {
+            mark.end = Math.max(mark.end, rect.bottom);
+          }
+        }
+        layer.replaceChildren(...marks.map(function (entry) {
+          entry.line.style.height = Math.max(0, entry.end - entry.top) + 'px';
+          return entry.line;
+        }));
+      };
+    }
+
+    function updateProgress(percent) {
+      progress.setAttribute('aria-valuenow', String(percent));
+      ring.setAttribute('stroke-dashoffset', String(100 - percent));
+      progressHint.textContent = 'Read ' + percent + '%';
+    }
+
+    function activateSection(section) {
+      if (currentSection === section) return;
+      if (currentSection) {
+        currentSection.link.removeAttribute('aria-current');
+        currentSection.link.classList.remove('is-active');
+      }
+      currentSection = section;
+      if (currentSection) {
+        currentSection.link.setAttribute('aria-current', 'location');
+        currentSection.link.classList.add('is-active');
+      }
     }
 
     function update() {
@@ -356,27 +437,21 @@
       var max = scroller.scrollHeight - height;
       var bottom = max > 0 && scroller.scrollTop >= max - 2;
       var percent = max > 0 ? Math.round(100 * Math.max(0, Math.min(1, scroller.scrollTop / max))) : 100;
-      progress.setAttribute('aria-valuenow', String(percent));
-      ring.setAttribute('stroke-dasharray', percent + ' 100');
-      progressHint.textContent = 'Reading progress · ' + percent + '%';
+      updateProgress(percent);
       var sectionAtTop;
       var sectionAtCentre;
       var lastVisible;
       sections.forEach(function (section) {
         var shown = visible(section);
-        section.item.hidden = !shown;
+        if (section.item) section.item.hidden = !shown;
         if (!shown) return;
         var top = section.node.getBoundingClientRect().top;
-        if (top <= height * .25) sectionAtTop = section;
+        if (section.link && (bottom || top <= height * .25)) sectionAtTop = section;
         if (top <= height * .5) sectionAtCentre = section;
         lastVisible = section;
       });
-      if (bottom) sectionAtTop = sectionAtCentre = lastVisible;
-      if (currentSection !== sectionAtTop) {
-        currentSection?.link.removeAttribute('aria-current');
-        currentSection = sectionAtTop;
-        currentSection?.link.setAttribute('aria-current', 'location');
-      }
+      if (bottom) sectionAtCentre = lastVisible;
+      activateSection(sectionAtTop);
       var index = sections.indexOf(sectionAtCentre);
       blocks.forEach(function (block) {
         var dim = false;
@@ -384,7 +459,7 @@
           var rect = block.node.getBoundingClientRect();
           dim = rect.bottom <= height * .2 || rect.top >= height * .8;
         }
-        block.node.classList.toggle('df-reader-dim', dim);
+        block.node.classList.toggle('df-focus-dim', dim);
       });
     }
 
@@ -398,48 +473,48 @@
         return top !== null && message.readings[index] !== null && top !== message.readings[index];
       })) remote.anchor = null;
       remote.readings = message.readings;
-      var at = -1;
+      var activeSection;
       sections.forEach(function (section, index) {
+        if (!section.item) return;
         var top = message.readings[index];
         section.item.hidden = top === null;
-        if (top !== null && (message.bottom || top <= message.height * .25)) at = index;
+        if (top !== null && (message.bottom || top <= message.height * .25)) activeSection = section;
       });
-      currentSection?.link.removeAttribute('aria-current');
-      currentSection = sections[at];
-      currentSection?.link.setAttribute('aria-current', 'location');
+      activateSection(activeSection);
       var percent = Math.max(0, Math.min(100, message.percent));
-      progress.setAttribute('aria-valuenow', String(percent));
-      ring.setAttribute('stroke-dasharray', percent + ' 100');
-      progressHint.textContent = 'Reading progress · ' + percent + '%';
+      updateProgress(percent);
     }
 
     function addSection(id, label, level, page) {
+      var hash = '#' + page + '/' + encodeURIComponent(id);
+      if (level !== 1) return { hash: hash };
       var item = make('li');
+      item.className = 'df-outline-item';
       var link = make('a', label || id);
-      link.href = '#' + page + '/' + encodeURIComponent(id);
-      link.dataset.level = level;
+      link.className = 'df-outline-link';
+      link.href = hash;
       link.setAttribute('data-export-destination', '');
       item.append(link);
       outline?.append(item);
-      return { item: item, link: link };
+      return { hash: hash, item: item, link: link };
     }
 
     function jump(direction) {
       if (remote) {
         var readings = remote.readings || [];
-        var anchored = sections.findIndex(function (section) { return section.link.hash === remote.anchor; });
+        var anchored = sections.findIndex(function (section) { return section.hash === remote.anchor; });
         var at = direction > 0 ? readings.findIndex(function (top, index) {
           return top !== null && (anchored >= 0 ? index > anchored : top > 4);
         }) : readings.findLastIndex(function (top, index) {
           return top !== null && (anchored >= 0 ? index < anchored : top < -4);
         });
-        if (at >= 0) navigate(sections[at].link.hash);
+        if (at >= 0) navigate(sections[at].hash);
         return;
       }
       if (!view) return;
       var candidates = sections.filter(visible);
       var anchored = jumpOrigin?.top === view.scrollY ? candidates.findIndex(function (section) {
-        return section.link.hash === jumpOrigin.hash;
+        return section.hash === jumpOrigin.hash;
       }) : -1;
       var target;
       if (anchored >= 0) target = candidates[anchored + direction];
@@ -450,7 +525,7 @@
           return direction * (section.node.getBoundingClientRect().top - margin) > 4;
         });
       }
-      if (target) navigate(target.link.hash);
+      if (target) navigate(target.hash);
     }
 
     function keys(event) {
@@ -480,34 +555,42 @@
     document.addEventListener('keydown', keys);
     sidebar.addEventListener('keydown', function (event) {
       if (!drawer || event.key !== 'Tab') return;
-      var last = Array.from(toc.querySelectorAll('a')).findLast(function (link) { return link.getClientRects().length; });
+      var last = Array.from(toc.querySelectorAll('a,summary')).findLast(function (link) { return link.getClientRects().length; });
       if (event.shiftKey ? event.target === close : event.target === last) {
         event.preventDefault();
         (event.shiftKey ? last : close)?.focus();
       }
     });
-    var observer = new ResizeObserver(schedule);
+    function refreshLayout() {
+      drawLines?.();
+      schedule();
+    }
+    var observer = new ResizeObserver(refreshLayout);
     setWidth(width);
     layout();
 
     return {
       follow: function (restoreFocus) { hideTip?.(); closeDrawer(restoreFocus); },
       page: function (page, adjacent) {
-        view = remote = null;
+        view = remote = drawLines = null;
+        sections = [];
+        blocks = [];
         observer.disconnect();
         jumpOrigin = null;
         currentSection = null;
         outline?.remove();
-        for (var control of [focusButton, backHeading, nextHeading]) control.hidden = true;
-        progress.setAttribute('aria-valuenow', '0');
-        ring.setAttribute('stroke-dasharray', '0 100');
-        progressHint.textContent = 'Reading progress · 0%';
-        toc.querySelectorAll('a').forEach(function (link) {
+        outline = null;
+        focusButton.hidden = true;
+        updateProgress(0);
+        toc.querySelectorAll('.df-nav-link').forEach(function (link) {
           if (link.hash === '#' + page) {
             link.setAttribute('aria-current', 'page');
+            for (var group = link.closest('details'); group; group = group.parentElement.closest('details')) {
+              group.open = true;
+            }
             outline = make('ul');
-            outline.className = 'export-outline';
-            link.after(outline);
+            outline.className = 'df-outline';
+            link.parentElement.after(outline);
           } else link.removeAttribute('aria-current');
         });
         pageLinks.forEach(function ([link, name], index) {
@@ -522,18 +605,22 @@
       },
       mount: function (doc, page) {
         view = doc.defaultView;
+        doc.documentElement.classList.toggle('df-focus-mode', focused);
         theme ??= doc.documentElement.getAttribute('data-df-theme') === 'dark' ||
           (doc.documentElement.getAttribute('data-df-theme') !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
         applyTheme();
         sections = headings(doc).filter(function (node) { return node.id; }).map(function (node) {
-          return { ...addSection(node.id, node.textContent.trim().replace(/\s+/g, ' '), node.localName[1], page), node: node };
+          return { ...addSection(node.id, node.textContent.trim().replace(/\s+/g, ' '), Number(node.localName[1]), page), node: node };
         });
-        if (!sections.length) outline?.remove();
-        for (var control of [focusButton, backHeading, nextHeading]) control.hidden = !sections.length;
+        if (!outline?.children.length) outline?.remove();
+        focusButton.hidden = !sections.length;
         var main = doc.querySelector('.df-page') || doc.querySelector('main') || doc.body;
         var last = -1;
-        blocks = Array.from(main.children).filter(function (node) { return !node.matches('[data-df-snapshot-tips],.df-export-pop'); })
+        blocks = Array.from(main.children).filter(function (node) {
+          return !node.matches('script,style,template,[data-df-snapshot-tips],.df-export-pop,.df-section-lines');
+        })
           .map(function (node) {
+            node.classList.add('df-focus-block');
             var first;
             sections.forEach(function (section, index) {
               if (node.contains(section.node)) { first ??= index; last = index; }
@@ -542,9 +629,11 @@
           });
         doc.addEventListener('keydown', keys);
         view.addEventListener('scroll', schedule, { passive: true });
-        view.addEventListener('resize', schedule);
+        view.addEventListener('resize', refreshLayout);
+        drawLines = view.DocForm?._sections ? null : sectionLines(main);
         observer.observe(main);
-        schedule();
+        doc.fonts?.ready.then(function () { if (view === doc.defaultView) refreshLayout(); });
+        refreshLayout();
       },
       mountRemote: function (data, page, send) {
         remote = { send: send };
@@ -553,8 +642,8 @@
         applyTheme();
         send({ type: 'focus', value: focused });
         sections = data.headings.map(function ([id, label, level]) { return addSection(id, label, level, page); });
-        if (!sections.length) outline?.remove();
-        for (var control of [focusButton, backHeading, nextHeading]) control.hidden = !sections.length;
+        if (!outline?.children.length) outline?.remove();
+        focusButton.hidden = !sections.length;
       },
       remoteProgress: function (message) { updateRemote(message); },
       remoteKey: function (key) {
@@ -570,7 +659,7 @@
         jumpOrigin = { hash: hash, top: view.scrollY };
         schedule();
       },
-      update: schedule
+      update: refreshLayout
     };
   }
 
@@ -761,7 +850,7 @@
       if (max > 0 && scroller.scrollTop >= max - 2) at = readings.findLastIndex(function (top) { return top !== null; });
       for (var [node, first, last] of mount) {
         var rect = node.getBoundingClientRect();
-        node.classList.toggle('df-reader-dim', focus && (at < first || at > last) &&
+        node.classList.toggle('df-focus-dim', focus && (at < first || at > last) &&
           (rect.bottom <= height * .2 || rect.top >= height * .8));
       }
       send({ type: 'progress', readings: readings, height: height,
@@ -787,14 +876,18 @@
       var main = document.querySelector('.df-page') || document.querySelector('main') || document.body;
       sections = headings(document).filter(function (node) { return node.id; });
       var last = -1;
-      mount = Array.from(main.children).filter(function (node) { return !node.matches('h1,header') && !node.querySelector('h1'); })
+      mount = Array.from(main.children).filter(function (node) {
+        return !node.matches('script,style,template,.df-section-lines');
+      })
         .map(function (node) {
           var first;
           sections.forEach(function (section, index) {
             if (node.contains(section)) { first ??= index; last = index; }
           });
+          node.classList.add('df-focus-block');
+          if (node.matches('h1,header') || node.querySelector('h1')) return null;
           return [node, first ?? last, last];
-        });
+        }).filter(Boolean);
       send({ type: 'ready', headings: sections.map(function (node) {
         return [node.id, node.textContent.trim().replace(/\s+/g, ' '), Number(node.localName[1])];
       }), theme: document.documentElement.getAttribute('data-df-theme') });
@@ -836,7 +929,11 @@
         switch (data.type) {
           case 'init': await init(data); break;
           case 'theme': document.documentElement.setAttribute('data-df-theme', data.value); break;
-          case 'focus': focus = data.value; inspect(); break;
+          case 'focus':
+            focus = data.value;
+            document.documentElement.classList.toggle('df-focus-mode', focus);
+            inspect();
+            break;
           case 'scroll': scroll(data.fragment, data.focus); break;
           case 'capture': send({ type: 'state', value: state.capture() }); break;
         }
@@ -1182,7 +1279,8 @@
       hideTip = revealStep = null;
       var record = pages.get(page);
       var index = bundle.pages.indexOf(record);
-      chrome.page(page, [bundle.pages[index - 1], bundle.pages[index + 1]]);
+      var adjacent = record.noPager ? [] : [bundle.pages[index - 1], bundle.pages[index + 1]];
+      chrome.page(page, adjacent);
       if (status) {
         status.hidden = true;
         status.textContent = '';
@@ -1209,7 +1307,7 @@
           isolated?.close();
           isolated = null;
           ready = false;
-          chrome.page(page, [bundle.pages[index - 1], bundle.pages[index + 1]]);
+          chrome.page(page, adjacent);
           running = null;
           mount(null, reason);
         }

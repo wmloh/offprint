@@ -420,7 +420,7 @@
 
   function exportPlan(site, page, requestedProfile, combined) {
     var enabled = resolveConfiguration(site, page, requestedProfile ?? undefined, function () {}).enabled;
-    var shell = new Set(['navigation', 'controls', 'theme', 'search', 'sections']);
+    var shell = new Set(['navigation', 'controls', 'theme', 'search']);
     var features = Object.keys(catalog).filter(function (id) { return enabled.has(id) && !shell.has(id); });
     var scripts = new Set(['docform.js', 'js/core.js', 'js/reader-state.js']);
     var styles = new Set();

@@ -125,7 +125,9 @@
 
   // The packager can scope these rules with the page and run its own tooltip reader.
   var style = '[data-df-snapshot] *,[data-df-snapshot] *::before,[data-df-snapshot] *::after{' +
-    'animation:none!important;transition:none!important}' +
+    'animation:none!important}' +
+    '[data-df-snapshot] :not(.df-focus-block),[data-df-snapshot] *::before,[data-df-snapshot] *::after{' +
+    'transition:none!important}' +
     '[data-df-snapshot] [hidden]{display:none!important}' +
     '[data-df-snapshot] [data-df-snapshot-selected]{font-weight:700}' +
     '[data-df-snapshot] .df-chip.is-selected{background:var(--df-accent-bg,var(--df-bg-hover))!important}' +
@@ -396,7 +398,7 @@
         var value = attr.value;
         if (attr.name === 'class') {
           value = value.split(/\s+/).filter(function (name) {
-            return !/^df-(?:focus-mode|sidenotes|zoom-open|nav-|has-controls|reveal-on)/.test(name);
+            return !/^df-(?:focus-mode|sidenotes|zoom-open|nav-|has-controls|controls-init|scrollbar-|reveal-on)/.test(name);
           }).join(' ');
         }
         return [attr.name, value];

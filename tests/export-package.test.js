@@ -219,7 +219,10 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
         if (selector.startsWith('a[href],area[href]')) return descendants.filter(child => child.localName === 'a' && child.href);
         return [];
       },
-      closest() { return this.getAttribute('data-df-no-outline') === 'true' ? this : null; },
+      closest(selector) {
+        if (selector === '[data-df-no-pager]') return this.hasAttribute('data-df-no-pager') ? this : null;
+        return this.getAttribute('data-df-no-outline') === 'true' ? this : null;
+      },
       contains: () => true,
       hasAttribute(name) { return attributes.has(name); },
       setAttribute(name, value) { attributes.set(name, { name, value: String(value) }); },
@@ -385,6 +388,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   let stepCount = 0;
   let committedImport = false;
   let staleImport = false;
+  let noPager = false;
   let savedSibling = true;
   let revision = 1;
   const importText = 'id,name\n1,private full record café <script>';
@@ -396,6 +400,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   runtime._pageSnapshot.capture = async (page, options) => {
     const nested = page.url.endsWith('/nested/index.html');
     const body = element('body');
+    if (noPager && nested) body.setAttribute('data-df-no-pager', '');
     const title = element('h1', 'Repeat');
     const section = element('h2', 'Repeat');
     const excluded = element('h3', 'Outline exclusion');
@@ -454,7 +459,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     file('project/index.html', 'home'),
     file('project/nested/index.html', 'nested'),
     file('project/omitted.html', 'omitted'),
-    file('project/site.js', 'window.DocFormSite = {"pages":[{"title":"Included group","pages":["index.html","nested/index.html"]},{"title":"Omitted group","pages":["omitted.html"]}],"assets":{"data":{"runs":{"output":"runs.js"},"alias":{"output":"alias.js"},"omitted":{"output":"unused.js"}}}};'),
+    file('project/site.js', 'window.DocFormSite = {"title":"Example site","pages":[{"title":"Included group","pages":["index.html","nested/index.html"]},{"title":"Omitted group","pages":["omitted.html"]}],"assets":{"data":{"runs":{"output":"runs.js"},"alias":{"output":"alias.js"},"omitted":{"output":"unused.js"}}}};'),
     asset('runs.js', wrapper('runs', 'runs.js')),
     asset('alias.js', wrapper('alias', 'alias.js')),
     asset('base.css', sharedCSS),
@@ -486,13 +491,18 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const shell = html.split('<script id="export-bundle"')[0];
   assert.match(shell, /id="export-pill"[^>]*aria-label="Reading controls"/);
   assert.match(shell, /id="export-resize"[^>]*role="separator"/);
-  assert.match(shell, /Included group/);
-  assert.doesNotMatch(shell, /Omitted group|Outline exclusion|Café|<details/);
+  assert.match(shell, /<details class="df-nav-page-group" open=""><summary class="df-nav-row">/);
+  assert.match(shell, /class="df-nav-label">Included group<\/span>/);
+  assert.match(shell, /class="df-nav-title" href="#page-1"[^>]*>Example site<\/a>/);
+  assert.match(shell, /class="df-nav-link" href="#page-1"/);
+  assert.match(shell, /\.df-outline-link\.is-active\s*\{/);
+  assert.match(shell, /--df-bg-sidebar:\s*light-dark\(/);
+  assert.doesNotMatch(shell, /Omitted group|Outline exclusion|Café/);
   const runtimeScript = /<script>\((function reader.*?)<\/script>/s.exec(html)[1];
   assert.doesNotThrow(() => new vm.Script('(' + runtimeScript));
   const bundle = JSON.parse(serializedBundle);
   assert.equal(bundle.pages.length, 2);
-  assert.equal(bundle.assets.length, 8);
+  assert.equal(bundle.assets.length, 10);
   const binaryAssets = bundle.assets.filter(value => typeof value === 'string');
   assert.deepEqual(binaryAssets, [
     'data:image/png;base64,' + Buffer.from('shared image').toString('base64'),
@@ -509,12 +519,20 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     const [sharedImage, localImage, font] = binaryAssets;
     const image = index === 0 ? sharedImage : localImage;
     const sheets = [...frame.matchAll(/href="(data:text\/css[^"]+)"( media="print")?/g)];
-    assert.equal(sheets.length, 4);
+    assert.equal(sheets.length, 6);
     assert.equal(decodeSheet(sheets[0][1]), sharedCSS.replace('font.woff2', `"${font}"`));
     assert.equal(decodeSheet(sheets[1][1]), overrideCSS.replace('image.png', `"${image}"`));
     assert.equal(decodeSheet(sheets[2][1]), css);
     assert.equal(sheets[2][2], ' media="print"');
-    assert.match(decodeSheet(sheets[3][1]), /^\.df-export-pop/);
+    assert.match(decodeSheet(sheets[3][1]), /\.df-page \.df-pager-link/);
+    const focusStyles = decodeSheet(sheets[4][1]);
+    assert.match(focusStyles, /transition: filter 0\.35s ease, opacity 0\.35s ease/);
+    assert.match(focusStyles, /filter: blur\(3px\);\s*opacity: 0\.45/);
+    assert.match(decodeSheet(sheets[5][1]), /^\.df-export-pop/);
+    const rel = index === 0 ? 'next' : 'prev';
+    assert.ok(frame.includes('class="df-pager-link df-pager-' + rel + '" rel="' + rel +
+      '" href="#page-' + (index === 0 ? '2' : '1') + '" data-export-destination=""'));
+    assert.equal([...frame.matchAll(/class="df-pager-link /g)].length, 1);
     assert.ok(frame.includes(`src="${sharedImage}#view&amp;detail"`));
     assert.ok(frame.includes(`srcset="${image} 2x"`));
     assert.ok(frame.includes(`<image href="${image}#svg-view"`));
@@ -528,9 +546,17 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.equal(await (await prepared.build(selected)).blob.text(), html);
   const one = await prepared.build([selected[0]]);
   const oneHTML = await one.blob.text();
+  const oneBundle = JSON.parse(/<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(oneHTML)[1]);
+  assert.doesNotMatch(runtime._exportReader.assemble(oneBundle.pages[0].markup, oneBundle.assets), /class="df-pager"/);
   assert.equal(one.bytes, Buffer.byteLength(oneHTML));
   assert.ok(one.bytes < result.bytes);
   assert.equal(/<script>\((function reader.*?)<\/script>/s.exec(oneHTML)[1], runtimeScript);
+  noPager = true;
+  const optedOut = JSON.parse(/<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(
+    await (await prepared.build(selected)).blob.text())[1]);
+  assert.equal(optedOut.pages[1].noPager, true);
+  assert.doesNotMatch(runtime._exportReader.assemble(optedOut.pages[1].markup, optedOut.assets), /class="df-pager"/);
+  noPager = false;
   t.diagnostic(`Reader fixture: ${one.bytes} bytes for one page, ${result.bytes} bytes for two ` +
     `(${result.bytes - one.bytes} additional bytes). Fixed shell JavaScript: ${Buffer.byteLength(runtimeScript)} bytes.`);
   const sizes = [];
@@ -583,6 +609,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.doesNotMatch(interactiveHTML, /doNotPackageThisAuthorScript|sourceScript|sourceHandler/);
   assert.doesNotThrow(() => new vm.Script('(' + /<script>\((function reader.*?)<\/script>/s.exec(interactiveHTML)[1]));
   const liveHTML = runtime._exportReader.assemble(packed.pages[0].interactive.markup, packed.assets);
+  assert.match(liveHTML, /class="df-pager-link df-pager-next" rel="next" href="#page-2" data-export-destination=""/);
   assert.match(liveHTML, /data-df-chart="scatter" data-df-source="runs"><script type="application\/json">\{"x":"Run"/);
   assert.match(liveHTML, /class="df-pipe-link" href="#flow-2">Next block/);
   assert.ok(!interactive.issues.some(issue => issue.target === '#flow-2'));

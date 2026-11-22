@@ -239,13 +239,13 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
 }
 
 test('the trusted Interactive loader initializes the feature closure from embedded assets at the original page URL', async () => {
-  const config = { profile: 'none', features: { tabs: true, data: true } };
+  const config = { profile: 'none', features: { tabs: true, data: true, sections: true } };
   const site = { assets: { data: { runs: { output: 'data/runs.js' } } } };
   const normal = page({ config, site });
   const plan = normal.DF._boot.exportPlan(site, config, null, false);
-  assert.deepEqual(Array.from(plan.features), ['tokens', 'base', 'data', 'tabs']);
+  assert.deepEqual(Array.from(plan.features), ['tokens', 'base', 'data', 'tabs', 'sections']);
   assert.deepEqual(Array.from(plan.scripts), ['docform.js', 'js/core.js', 'js/reader-state.js',
-    'vendor/js-yaml/js-yaml.min.js', 'js/data.js', 'js/tabs.js']);
+    'vendor/js-yaml/js-yaml.min.js', 'js/data.js', 'js/tabs.js', 'js/sections.js']);
   const original = 'file:///original/chapter.html';
   const shared = Array.from(plan.scripts, path => fs.readFileSync(new URL(path, library), 'utf8'));
   const manifest = shared.push(site) - 1;
@@ -258,6 +258,7 @@ test('the trusted Interactive loader initializes the feature closure from embedd
   assert.equal(runtime._page, original);
   assert.equal(runtime.data.source('runs').snapshot().value[0].id, 'authored');
   assert.equal(runtime._boot.enabled('tabs'), true);
+  assert.equal(runtime._boot.enabled('sections'), true);
   assert.equal(runtime._readerState.isolated(), true);
   assert.deepEqual(exported.loads, []);
 
@@ -1948,7 +1949,7 @@ test('Reader step controls restore jumps, shared notes and page-local choice', (
   assert.equal(second.shared.hidden, true);
 });
 
-test('Reader controls keep preferences, track reading, and operate the compact drawer', () => {
+test('Reader controls draw full section lines, keep a first-level outline, and operate the compact drawer', () => {
   const p = page();
   p.runScript(new URL('docform/js/export-reader.js', repo));
   const create = p.document.createElement.bind(p.document);
@@ -1981,12 +1982,13 @@ test('Reader controls keep preferences, track reading, and operate the compact d
   const separator = part('export-resize');
   const edge = part('export-edge');
   const shade = part('export-shade');
-  const first = part('first', 'a', toc);
+  const first = part('first', 'a', part('first-row', 'div', toc));
   first.href = '#page-1';
-  const second = part('second', 'a', toc);
+  const second = part('second', 'a', part('second-row', 'div', toc));
   second.href = '#page-2';
   pager.querySelectorAll = () => [part('previous', 'a', pager), part('next', 'a', pager)];
-  toc.querySelectorAll = () => [first, second, ...toc.children.filter(node => node.tagName === 'UL')
+  toc.querySelectorAll = selector => selector === '.df-nav-link' ? [first, second] :
+    [first, second, ...toc.children.filter(node => node.tagName === 'UL')
     .flatMap(list => list.children.map(item => item.firstChild))];
   const compact = new EventTarget();
   compact.matches = false;
@@ -2009,14 +2011,18 @@ test('Reader controls keep preferences, track reading, and operate the compact d
     tips: () => () => {},
     navigate: hash => route.push(hash)
   });
-  const [nav, focus, theme, , nextHeading, progress] = pill.children;
+  const [progress, nav, focus, theme] = pill.children;
+  assert.equal(pill.children.length, 4);
 
   function mount(id) {
     const doc = new EventTarget();
     const view = new EventTarget();
     const main = element('main');
+    main.matches = selector => selector === '.df-page:not(.df-bubble-body)';
     const intro = main.appendChild(element('h1'));
     const section = main.appendChild(element('h2'));
+    const discussion = main.appendChild(element('p'));
+    const nextSection = main.appendChild(element('h2'));
     const paragraph = main.appendChild(element('p'));
     main.insertBefore(paragraph, intro);
     intro.id = 'intro';
@@ -2024,16 +2030,23 @@ test('Reader controls keep preferences, track reading, and operate the compact d
     intro.getBoundingClientRect = () => ({ top: 10, bottom: 25 });
     section.id = 'more';
     section.localName = 'h2';
-    section.getBoundingClientRect = () => ({ top: 20, bottom: 35 });
+    section.getBoundingClientRect = () => ({ top: 20, bottom: 35, left: 15 });
+    section.style.setProperty('--df-section-color', 'purple');
+    discussion.getBoundingClientRect = () => ({ top: 35, bottom: 90 });
+    nextSection.id = 'next';
+    nextSection.getBoundingClientRect = () => ({ top: 100, bottom: 110, left: 15 });
     paragraph.getBoundingClientRect = () => ({ top: -20, bottom: -5 });
     doc.body = main;
+    main.ownerDocument = doc;
+    doc.createElement = element;
     doc.documentElement = element('html');
     doc.scrollingElement = { clientHeight: 100, scrollHeight: 300, scrollTop: 50 };
     doc.defaultView = view;
     doc.querySelector = () => null;
     view.document = doc;
     view.scrollY = 50;
-    view.getComputedStyle = () => ({ scrollMarginTop: '0' });
+    view.getComputedStyle = node => ({ scrollMarginTop: '0', fontSize: '20',
+      getPropertyValue: name => node.style.getPropertyValue(name) });
     chrome.page(id, id === 'page-1' ? [null, { id: 'page-2', title: 'Second' }] : [null, null]);
     chrome.mount(doc, id);
     frames.splice(0).forEach(fn => fn());
@@ -2041,18 +2054,32 @@ test('Reader controls keep preferences, track reading, and operate the compact d
   }
 
   const doc = mount('page-1');
+  assert.match(theme.innerHTML, /<circle cx="8" cy="8"/);
   assert.equal(first.getAttribute('aria-current'), 'page');
+  assert.deepEqual(toc.querySelectorAll().slice(2).map(link => link.href), ['#page-1/intro']);
   assert.equal(toc.querySelectorAll().at(-1).getAttribute('aria-current'), 'location');
+  assert.equal(toc.querySelectorAll().at(-1).className, 'df-outline-link');
+  assert.equal(toc.querySelectorAll().at(-1).classList.contains('is-active'), true);
+  const layer = doc.body.lastChild;
+  assert.equal(layer.className, 'df-section-lines');
+  assert.deepEqual(layer.children.map(line => line.style.height), ['70px', '10px']);
+  assert.equal(layer.firstChild.style.getPropertyValue('--df-section-color'), 'purple');
+  doc.body.children[3].getBoundingClientRect = () => ({ top: 35, bottom: 75 });
+  doc.defaultView.dispatchEvent(new Event('resize'));
+  assert.equal(layer.firstChild.style.height, '55px');
   assert.equal(progress.getAttribute('aria-valuenow'), '25');
-  assert.equal(p.document.getElementById('export-hint-progress').textContent, 'Reading progress · 25%');
+  assert.equal(p.document.getElementById('export-hint-progress').textContent, 'Read 25%');
   assert.equal(nav.hasAttribute('title'), false);
   assert.equal(nav.getAttribute('data-df-snapshot-tip'), 'export-hint-nav');
   chrome.scrolled('#page-1/intro');
-  nextHeading.click();
+  p.key('j');
   assert.deepEqual(route, ['#page-1/more']);
   p.key('t');
+  assert.match(theme.innerHTML, /M13\.5 9\.5A5\.5 5\.5/);
   p.key('f');
-  assert.equal(doc.body.firstChild.classList.contains('df-reader-dim'), true);
+  assert.equal(doc.documentElement.classList.contains('df-focus-mode'), true);
+  assert.equal(doc.body.firstChild.classList.contains('df-focus-block'), true);
+  assert.equal(doc.body.firstChild.classList.contains('df-focus-dim'), true);
   p.key('n');
   assert.equal(sidebar.hidden, true);
   p.key('n');
@@ -2084,6 +2111,17 @@ test('Reader controls keep preferences, track reading, and operate the compact d
   assert.equal(focus.getAttribute('aria-pressed'), 'true');
   assert.equal(theme.getAttribute('aria-label'), 'Switch to light theme');
   assert.equal(secondDoc.documentElement.getAttribute('data-df-theme'), 'dark');
+
+  chrome.page('page-1', [null, null]);
+  chrome.mountRemote({ theme: 'dark', headings: [['top', 'Top', 1], ['child', 'Child', 2], ['leaf', 'Leaf', 3]] },
+    'page-1', () => {});
+  chrome.remoteProgress({ readings: [-30, -20, 10], height: 100, percent: 50, bottom: false });
+  const remoteOutline = toc.querySelectorAll().slice(2);
+  assert.deepEqual(remoteOutline.map(link => link.href), ['#page-1/top']);
+  assert.equal(remoteOutline[0].getAttribute('aria-current'), 'location');
+  chrome.scrolled('#page-1/child');
+  chrome.remoteKey('j');
+  assert.deepEqual(route, ['#page-1/more', '#page-1/leaf']);
 });
 
 test('custom figures expose keyed animation state and committed zoom lifecycle events', async () => {

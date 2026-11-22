@@ -19,9 +19,7 @@
     'border-radius:var(--df-radius-lg,.5rem);padding:.35rem .6rem}' +
     '.df-reader-step-controls button{cursor:pointer}.df-reader-step-controls button[aria-disabled=true]{opacity:.55;cursor:default}' +
     '.df-reader-step-controls select{min-width:0;flex:1 1 10rem}' +
-    ':root[data-df-theme=light]{color-scheme:light}:root[data-df-theme=dark]{color-scheme:dark}' +
-    '.df-reader-dim:not(:focus-within){filter:blur(2px);opacity:.54}' +
-    '@media(hover:hover){.df-reader-dim:hover{filter:none;opacity:1}}';
+    ':root[data-df-theme=light]{color-scheme:light}:root[data-df-theme=dark]{color-scheme:dark}';
   var readerCSS = `
     :root{color-scheme:light dark;--nav-width:260px;--nav-slot:0px;--bar:3.75rem;
       --line:light-dark(#d9dde2,#41464e);--accent:light-dark(#245f9f,#9bc8ff);
@@ -33,43 +31,47 @@
     #export-page:has(#export-status:not([hidden])){display:grid;grid-template-rows:auto minmax(0,1fr)}
     #export-status{margin:0;padding:.45rem 1rem;background:var(--wash);font-size:.88rem}
     #export-sidebar{position:fixed;z-index:3;inset:0 auto 0 0;width:var(--nav-width);box-sizing:border-box;
-      background:Canvas;border-right:1px solid var(--line);padding:.75rem;overflow:auto;overscroll-behavior:contain;
-      scrollbar-width:thin;overflow-wrap:anywhere}
-    #export-contents ul{list-style:none;padding:0;margin:.25rem 0}
-    #export-contents ul ul{padding-left:.65rem}
-    .export-group{display:block;margin:.7rem .4rem .2rem;padding-top:.65rem;border-top:1px solid var(--line);
-      font-size:.8rem;font-weight:650;color:GrayText}
-    #export-contents a{display:block;color:inherit;text-decoration:none;padding:.36rem .5rem;border-radius:.4rem}
-    #export-contents a:hover,#export-contents [aria-current]{background:var(--wash);color:var(--accent)}
-    #export-contents [aria-current]{font-weight:650}
-    #export-contents .export-outline{margin:.2rem 0 .6rem .45rem;border-left:1px solid var(--line);font-size:.86rem}
-    .export-outline [data-level="2"]{padding-left:.65rem}.export-outline [data-level="3"]{padding-left:1.25rem}
+      background:var(--df-bg-sidebar);border-right:1px solid var(--df-border);
+      padding:var(--df-space-4) var(--df-space-3);overflow:auto;overscroll-behavior:contain;
+      color:var(--df-text-muted);font:15px/var(--df-line-height) var(--df-font);
+      -webkit-font-smoothing:antialiased;scrollbar-width:thin;scrollbar-color:transparent transparent;
+      transition:scrollbar-color .2s ease}
+    #export-sidebar:is(:hover,:focus-within){scrollbar-color:var(--df-border-strong) transparent}
+    #export-sidebar :focus-visible{outline:2px solid var(--df-focus);outline-offset:-2px}
+    #export-contents summary{list-style:none;cursor:pointer}
+    #export-contents summary::-webkit-details-marker{display:none}
+    #export-contents details[open] > summary .df-nav-caret svg{transform:rotate(90deg)}
+    #export-contents details:not([open]) > ul{display:none}
     #export-resize{position:fixed;z-index:4;inset:0 auto 0 calc(var(--nav-width) - 4px);width:8px;
       cursor:col-resize;touch-action:none}
-    #export-resize:hover,#export-resize:focus-visible{background:var(--accent)}
+    #export-resize::after{content:"";position:absolute;inset:0 3px;background:var(--df-blue);
+      opacity:0;transition:opacity .15s}
+    #export-resize:hover::after{opacity:.6;transition-delay:.15s}
+    #export-resize:focus-visible{outline:none}
+    #export-resize:focus-visible::after{opacity:1}
     #export-edge{position:fixed;z-index:2;inset:var(--bar) auto 0 0;width:8px}
-    #export-pill,#export-pager{position:fixed;z-index:5;top:.45rem;display:flex;gap:.08rem;align-items:center;
-      background:color-mix(in srgb,Canvas 92%,transparent);backdrop-filter:blur(12px);
-      box-shadow:0 0 0 1px var(--line),0 3px 12px #0002;border-radius:2rem;padding:.12rem}
-    #export-pill{left:calc(var(--nav-slot) + .55rem)}#export-pager{right:.55rem}
+    #export-controls{position:fixed;z-index:5;top:12px;left:calc(var(--nav-slot) + 12px);
+      display:flex;align-items:center;gap:8px;transition:left .25s ease}
+    #export-pill,#export-pager{display:flex;gap:2px;align-items:center;
+      background:color-mix(in srgb,Canvas 70%,transparent);backdrop-filter:blur(14px) saturate(1.6);
+      box-shadow:0 4px 16px #00000014,0 1px 2px #0000000d;border:1px solid var(--line);border-radius:999px;padding:3px}
     #export-pill :is(button,[role=progressbar]),#export-pager a{box-sizing:border-box;display:grid;place-items:center;
-      width:2.65rem;height:2.65rem;border:0;border-radius:50%;padding:0;background:transparent;color:inherit;
+      width:30px;height:30px;border:0;border-radius:50%;padding:0;background:transparent;color:GrayText;
       font:inherit;text-decoration:none}
     #export-pill button,#export-pager a{cursor:pointer}
-    #export-pill button:hover,#export-pill [aria-pressed=true],#export-pager a:hover{background:var(--wash);color:var(--accent)}
-    #export-pill svg,#export-pager svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;stroke-width:1.5;
+    #export-pill button:hover,#export-pill [aria-pressed=true],#export-pill [data-nav-mode=auto],
+      #export-pager a:hover{background:var(--wash);color:var(--accent)}
+    #export-pill svg,#export-pager svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4;
       stroke-linecap:round;stroke-linejoin:round}
-    #export-pill .export-progress svg{width:1.55rem;height:1.55rem;color:var(--accent);transform:rotate(-90deg)}
+    #export-pill .export-progress svg{width:20px;height:20px;color:var(--accent);transform:rotate(-90deg)}
     .export-progress circle:first-child{opacity:.24}
-    #export-shade{position:fixed;z-index:2;inset:0;background:#0007}
-    [data-drawer] #export-sidebar{inset-block-start:var(--bar);width:min(22rem,calc(100% - 2.75rem))}
+    .export-progress circle:last-child{transition:stroke-dashoffset .1s linear}
+    #export-shade{position:fixed;z-index:2;inset:0;background:rgba(0,0,0,.3)}
+    [data-drawer] #export-sidebar{width:min(calc(var(--nav-width) + 40px),85vw);box-shadow:0 0 24px rgba(0,0,0,.18)}
     [data-drawer] :is(#export-pill,#export-pager){visibility:hidden}
-    #export-close{font:inherit;color:inherit;background:var(--wash);border:0;border-radius:.4rem;
-      min-height:2.75rem;padding:.3rem .65rem;cursor:pointer}
-    @media(max-width:360px){#export-pill{gap:0;left:.3rem}#export-pager{gap:0;right:.3rem}
-      #export-pill :is(button,[role=progressbar]),#export-pager a{width:2.3rem}}
-    @media(max-width:310px){#export-pager{top:auto;bottom:.45rem}
-      body:has(#export-pager:not([hidden])) #export-page{padding-bottom:var(--bar)}}
+    #export-close{font:inherit;color:inherit;background:var(--df-bg);
+      border:1px solid var(--df-border-strong);border-radius:var(--df-radius-lg);
+      min-height:31px;padding:var(--df-space-1) var(--df-space-2);margin-bottom:var(--df-space-2);cursor:pointer}
     .df-export-pop{position:fixed;z-index:6;max-width:calc(100% - 16px);pointer-events:none}
     .df-tooltip{box-sizing:border-box;max-width:min(320px,calc(100vw - 16px));padding:.4rem .7rem;
       border-radius:.45rem;background:light-dark(#fff,#252525);box-shadow:0 0 0 1px var(--line),0 6px 20px #0002;
@@ -189,7 +191,8 @@
         }
         var descendants = branch(node.pages);
         if (descendants.length) {
-          items.push({ id: 'group-' + (++serial), title: node.title, children: children.concat(descendants) });
+          items.push({ id: 'group-' + (++serial), title: node.title, collapsed: node.collapsed,
+            children: children.concat(descendants) });
         } else items.push(...children);
       }
       return items;
@@ -455,8 +458,35 @@
     doc.body.replaceWith(doc.importNode(snapshot.body, true));
     var description = 'df-export-unavailable';
     while (doc.getElementById(description)) description += '-';
+    var main = doc.querySelector('.df-page') || doc.querySelector('main') || doc.body;
     return { ...page, document: doc, description: description, snapshot: snapshot, attributes: new Map(),
+      noPager: !!DF._component.closestFlag(main, 'no-pager', 'navigation'),
       base: address(snapshot.baseURL, page.url) || address(page.url) };
+  }
+
+  function appendPager(page, adjacent) {
+    if (page.noPager || adjacent.every(function (entry) { return !entry; })) return;
+    var doc = page.document;
+    var main = doc.querySelector('.df-page') || doc.querySelector('main') || doc.body;
+    var pager = create(doc, 'nav');
+    pager.className = 'df-pager';
+    pager.setAttribute('aria-label', 'Previous and next pages');
+    adjacent.forEach(function (entry, index) {
+      if (!entry) return;
+      var rel = index ? 'next' : 'prev';
+      var link = create(doc, 'a');
+      link.className = 'df-pager-link df-pager-' + rel;
+      link.rel = rel;
+      link.href = route(entry.id);
+      link.setAttribute('data-export-destination', '');
+      var direction = create(doc, 'span', index ? 'Next' : 'Previous');
+      direction.className = 'df-pager-dir';
+      var title = create(doc, 'span', entry.title);
+      title.className = 'df-pager-title';
+      link.append(direction, title);
+      pager.append(link);
+    });
+    main.append(pager);
   }
 
   function targets(doc) {
@@ -468,7 +498,16 @@
   async function styles(page, resources, report, signal) {
     var doc = page.document;
     var packaged = new Set();
-    for (var record of [...page.snapshot.styles, { text: tipCSS }]) {
+    var records = page.snapshot.styles.slice();
+    var linked = new Set(records.filter(function (record) { return record.href && !record.media; })
+      .map(function (record) { return address(record.href, page.base)?.href; }));
+    if (!linked.has(address('docform.css', DF._boot.entryURL).href)) {
+      for (var path of ['css/nav.css', 'css/controls.css']) {
+        var href = address(path, DF._boot.entryURL).href;
+        if (!linked.has(href)) records.push({ href: href });
+      }
+    }
+    for (var record of [...records, { text: tipCSS }]) {
       signal?.throwIfAborted();
       var reference = record.href ? await resources.stylesheet(record.href, page.base, report) :
         await resources.inlineStylesheet(record.text, page.base, report);
@@ -774,28 +813,49 @@
 
   function contentsList(doc, tree, pages) {
     var list = create(doc, 'ul');
+    list.className = 'df-nav-list';
     for (var node of tree) {
       var item = create(doc, 'li');
+      item.className = 'df-nav-item';
       if (node.children.length) {
         var children = contentsList(doc, node.children, pages);
         if (!children.children.length) continue;
+        var group = create(doc, 'details');
+        group.className = 'df-nav-page-group';
+        if (!node.collapsed) group.setAttribute('open', '');
+        var summary = create(doc, 'summary');
+        summary.className = 'df-nav-row';
+        var caret = create(doc, 'span');
+        caret.className = 'df-nav-caret';
+        caret.setAttribute('aria-hidden', 'true');
+        caret.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" focusable="false" fill="none" ' +
+          'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
         var label = create(doc, 'span', node.title);
-        label.className = 'export-group';
-        item.append(label, children);
+        label.className = 'df-nav-label';
+        summary.append(caret, label);
+        group.append(summary, children);
+        item.append(group);
       } else {
         if (!pages.has(node.id)) continue;
+        var row = create(doc, 'div');
+        row.className = 'df-nav-row';
+        var spacer = create(doc, 'span');
+        spacer.className = 'df-nav-caret-space';
         var link = create(doc, 'a', node.title);
+        link.className = 'df-nav-link';
         link.href = route(node.id);
         link.setAttribute('data-export-destination', '');
-        item.append(link);
+        row.append(spacer, link);
+        item.append(row);
       }
       list.append(item);
     }
     return list;
   }
 
-  function serialize(title, tree, active, pages, assets, interactive) {
-    var doc = document.implementation.createHTMLDocument(title);
+  function serialize(site, pages, assets, interactive) {
+    var doc = document.implementation.createHTMLDocument(site.title);
     var withAuthor = pages.some(function (page) { return page.payload?.author; });
     doc.documentElement.lang = 'en';
     meta(doc, 'charset', 'utf-8');
@@ -803,7 +863,8 @@
     meta(doc, 'http-equiv', 'Content-Security-Policy').content =
       "object-src 'none'; base-uri 'none'; form-action 'none'; script-src 'unsafe-inline'" +
       (withAuthor ? " blob:; frame-src 'none'" : '');
-    doc.head.append(create(doc, 'style', readerCSS));
+    var styles = DF._exportLibrary.styles;
+    doc.head.append(create(doc, 'style', [styles['css/tokens.css'], styles['css/nav.css'], readerCSS].join('\n')));
     var sidebar = create(doc, 'div');
     sidebar.id = 'export-sidebar';
     sidebar.hidden = true;
@@ -814,7 +875,14 @@
     var toc = create(doc, 'nav');
     toc.id = 'export-contents';
     toc.setAttribute('aria-label', 'Contents');
-    toc.append(contentsList(doc, tree, new Set(pages.map(function (page) { return page.id; }))));
+    if (site.navTitle) {
+      var heading = create(doc, 'a', site.navTitle);
+      heading.className = 'df-nav-title';
+      heading.href = route(pages[0].id);
+      heading.setAttribute('data-export-destination', '');
+      toc.append(heading);
+    }
+    toc.append(contentsList(doc, site.tree, new Set(pages.map(function (page) { return page.id; }))));
     sidebar.append(close, toc);
     var pill = create(doc, 'div');
     pill.id = 'export-pill';
@@ -846,7 +914,7 @@
     shade.hidden = true;
     var host = create(doc, 'main');
     host.id = 'export-page';
-    host.dataset.initial = pages.find(function (page) { return page.id === active; })?.id || pages[0].id;
+    host.dataset.initial = pages.find(function (page) { return page.id === site.active; })?.id || pages[0].id;
     if (interactive) {
       var status = create(doc, 'p');
       status.id = 'export-status';
@@ -854,7 +922,10 @@
       status.setAttribute('role', 'status');
       host.append(status);
     }
-    doc.body.append(pill, nav, edge, shade, sidebar, separator, host,
+    var bar = create(doc, 'div');
+    bar.id = 'export-controls';
+    bar.append(pill, nav);
+    doc.body.append(bar, edge, shade, sidebar, separator, host,
       create(doc, 'noscript', 'Enable JavaScript to use the standalone reader.'));
     var shared = [];
     var keys = new Map();
@@ -870,7 +941,7 @@
       ...(interactive ? { version: 1, mode: 'interactive', shared: shared } : {}),
       assets: assets,
       pages: pages.map(function (page) {
-        var record = { id: page.id, title: page.title, markup: page.markup };
+        var record = { id: page.id, title: page.title, markup: page.markup, ...(page.noPager ? { noPager: true } : {}) };
         if (interactive) {
           var payload = page.payload;
           record.url = page.url;
@@ -999,7 +1070,8 @@
         page.live.targets.forEach(function (id) { page.targets.add(id); });
       }
     }
-    for (var page of pages.values()) {
+    var includedPages = Array.from(pages.values());
+    for (var [index, page] of includedPages.entries()) {
       await options?.onProgress?.({ phase: 'links', completed: completed, total: chosen.size,
         page: page.id, title: page.title });
       signal?.throwIfAborted();
@@ -1013,6 +1085,7 @@
             rewriteLink(link, link.hasAttribute('href') ? 'href' : 'xlink:href', output, pages, page.report);
           }
         }
+        appendPager(output, [includedPages[index - 1], includedPages[index + 1]]);
         var packaged = await styles(output, resources, page.report, signal);
         signal?.throwIfAborted();
         output.markup = pageMarkup(output);
@@ -1027,11 +1100,12 @@
     }
     await options?.onProgress?.({ phase: 'serialize', completed: completed, total: chosen.size });
     signal?.throwIfAborted();
-    var included = Array.from(pages.values(), function (page) {
+    var included = includedPages.map(function (page) {
       return { id: page.id, title: page.snapshot.title || page.title, markup: page.markup,
-        url: page.url, targets: Array.from(page.targets), payload: page.live?.payload, view: page.snapshot.view, imports: page.snapshot.imports };
+        url: page.url, noPager: page.noPager, targets: Array.from(page.targets), payload: page.live?.payload,
+        view: page.snapshot.view, imports: page.snapshot.imports };
     });
-    var blob = new Blob([serialize(site.title, site.tree, site.active, included, resources.assets, interactive)],
+    var blob = new Blob([serialize(site, included, resources.assets, interactive)],
       { type: 'text/html;charset=utf-8' });
     signal?.throwIfAborted();
     var filename = site.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '-').trim().replace(/[. ]+$/, '').slice(0, 120);
@@ -1071,6 +1145,7 @@
     var normalized = DF._normalizeSite(configuration.site, configuration.siteURL || url.href);
     var site = catalog(normalized, url, source.title || document.title || 'DocForm export', folder);
     site.title = normalized.title || source.title || document.title || 'DocForm export';
+    site.navTitle = normalized.title;
     return { title: site.title, tree: site.tree, active: site.active,
       build: function (selected, options) { return build(folder, site, manifestCache, selected, options); } };
   }

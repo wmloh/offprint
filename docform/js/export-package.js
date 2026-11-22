@@ -536,6 +536,114 @@
     return data;
   }
 
+  async function authorScripts(source, page, folder, resources, consent, preview, signal) {
+    var base = address(source.querySelector('base[href]')?.getAttribute('href') || page.url, page.url);
+    var scripts = { before: [], after: [], files: [] };
+    var candidates = [];
+    var reads = new Map();
+    var inline = 0;
+
+    function manifest(node, attribute) {
+      var value = JSON.parse(node.getAttribute(attribute) ?? '[]');
+      if (!Array.isArray(value) || value.some(function (item) { return typeof item !== 'string' || !item.trim(); })) {
+        throw Error(attribute + ' must contain a JSON array of local paths.');
+      }
+      return value;
+    }
+
+    async function local(value, resource) {
+      var url = address(value, base);
+      var path = fileKey(url);
+      var file = path && folder.file(url);
+      if (!file) throw Error('Local file unavailable: ' + value);
+      if (resource && /\.(?:apng|avif|bmp|gif|ico|jpe?g|png|svg|webp|otf|ttf|woff2?)$/i.test(path)) {
+        var binary = new Uint8Array(await file.arrayBuffer());
+        var checksum = new Uint8Array(await root.crypto.subtle.digest('SHA-256', binary));
+        return [url.href, 'url', root.btoa(String.fromCharCode(...checksum))];
+      }
+      if (!reads.has(path)) reads.set(path, file.text());
+      var code = await reads.get(path);
+      signal?.throwIfAborted();
+      return resource ? [url.href, 'text', code] : [path, value, code];
+    }
+
+    var scriptNodes = Array.from(source.querySelectorAll('script'));
+    var docformEntry = scriptNodes.find(function (script) {
+      return /(?:^|\/)docform\.js(?:[?#]|$)/.test(script.getAttribute('src') || '');
+    });
+    for (var node of scriptNodes) {
+      signal?.throwIfAborted();
+      if (node.hasAttribute('data-df-site')) continue;
+      var src = node.getAttribute('src');
+      var type = (node.getAttribute('type') || '').trim().toLowerCase();
+      if (type && !/^(?:(?:text|application)\/(?:x-)?(?:java|ecma)script|text\/(?:jscript|livescript|javascript1\.[0-5]))$/.test(type) &&
+          type !== 'module') continue;
+      if (node === docformEntry) {
+        candidates.push(null);
+        continue;
+      }
+      var name = src || 'Inline script ' + (++inline);
+      var entry = { page: page.id, title: page.snapshot.title || page.title, name: name,
+        dependencies: [], resources: [], available: false, selected: false, included: false };
+      preview.push(entry);
+      try {
+        entry.dependencies = manifest(node, 'data-df-export-dependencies');
+        entry.resources = manifest(node, 'data-df-export-resources');
+        if (type === 'module' || node.hasAttribute('nomodule') || src !== null && node.hasAttribute('async')) {
+          throw Error('Only ordered classic scripts can be included.');
+        }
+        var dependencies = await Promise.all(entry.dependencies.map(function (value) { return local(value, false); }));
+        var files = await Promise.all(entry.resources.map(function (value) { return local(value, true); }));
+        var main = src === null ? [null, name, node.textContent] : await local(src, false);
+        // Consent covers the exact code and files shown in the preview, including changes between builds.
+        var signature = JSON.stringify([dependencies, main, files]);
+        var bytes = new TextEncoder().encode(signature);
+        var digest = new Uint8Array(await root.crypto.subtle.digest('SHA-256', bytes));
+        entry.id = JSON.stringify([page.id, preview.length, root.btoa(String.fromCharCode(...digest))]);
+        entry.available = !!consent;
+        entry.selected = !!consent?.has(entry.id);
+        if (!entry.available) entry.issue = 'Interactive playback is unavailable for this page.';
+        if (entry.selected) candidates.push({ dependencies: dependencies, main: main, files: files,
+          defer: src !== null && node.hasAttribute('defer') });
+      } catch (error) {
+        signal?.throwIfAborted();
+        entry.issue = error.message;
+        page.report('author-script', name, error.message);
+      }
+    }
+
+    var afterEntry = false;
+    var seen = new Set();
+    var files = new Map();
+    function include(candidate, list) {
+      for (var [path, name, code] of candidate.dependencies) {
+        if (seen.has(path)) continue;
+        seen.add(path);
+        list.push([name, code]);
+      }
+      var [path, name, code] = candidate.main;
+      if (path) seen.add(path);
+      list.push([name, code]);
+      candidate.files.forEach(function (file) { files.set(file[0], file); });
+    }
+    for (var candidate of candidates) {
+      if (!candidate) afterEntry = true;
+      else if (!candidate.defer) include(candidate, afterEntry ? scripts.after : scripts.before);
+    }
+    for (var candidate of candidates) {
+      if (candidate?.defer) include(candidate, scripts.after);
+    }
+    for (var [url, kind, value] of files.values()) {
+      if (kind === 'url') {
+        var parts = await resources.resource(url, base, page.report);
+        if (!parts) throw Error('An author resource could not be embedded.');
+        value = parts[0];
+      }
+      scripts.files.push([url, kind, value]);
+    }
+    return scripts.before.length || scripts.after.length ? scripts : null;
+  }
+
   async function interactivePage(input, page, folder, signal, consent, preview) {
     var source = new root.DOMParser().parseFromString(input.html, 'text/html');
     var consumers = datasetConsumers(source);
@@ -688,11 +796,13 @@
 
   function serialize(title, tree, active, pages, assets, interactive) {
     var doc = document.implementation.createHTMLDocument(title);
+    var withAuthor = pages.some(function (page) { return page.payload?.author; });
     doc.documentElement.lang = 'en';
     meta(doc, 'charset', 'utf-8');
     meta(doc, 'name', 'viewport').content = 'width=device-width,initial-scale=1';
     meta(doc, 'http-equiv', 'Content-Security-Policy').content =
-      "object-src 'none'; base-uri 'none'; form-action 'none'; script-src 'unsafe-inline'";
+      "object-src 'none'; base-uri 'none'; form-action 'none'; script-src 'unsafe-inline'" +
+      (withAuthor ? " blob:; frame-src 'none'" : '');
     doc.head.append(create(doc, 'style', readerCSS));
     var sidebar = create(doc, 'div');
     sidebar.id = 'export-sidebar';
@@ -764,12 +874,20 @@
         if (interactive) {
           var payload = page.payload;
           record.url = page.url;
+          if (withAuthor) record.targets = page.targets;
           record.interactive = payload ? { ...payload,
             site: payload.site === null ? null : share(payload.site),
             modules: payload.modules.map(function ([path, code]) { return [path, share(code)]; }),
             data: payload.data.map(function ([name, value]) { return [name, share(value)]; }),
             inlineData: payload.inlineData.map(share),
-            imports: payload.imports.map(function ([key, text]) { return [key, share(text)]; })
+            imports: payload.imports.map(function ([key, text]) { return [key, share(text)]; }),
+            ...(payload.author ? { author: {
+              before: payload.author.before.map(function ([name, code]) { return [name, share(code)]; }),
+              after: payload.author.after.map(function ([name, code]) { return [name, share(code)]; }),
+              files: payload.author.files.map(function ([url, kind, value]) {
+                return [url, kind, kind === 'text' ? share(value) : value];
+              })
+            } } : {})
           } : null;
         }
         return record;
@@ -781,6 +899,7 @@
     var reader = DF._exportReader;
     var runtime = [reader.assemble, reader.figureSteps, reader.headings, reader.controls];
     if (interactive) runtime.push(reader.startInteractive, fileKey);
+    if (withAuthor) runtime.push(reader.authorFrame);
     doc.body.append(create(doc, 'script', '(' + reader.run.toString() + ')(' + runtime.map(String).join(',') + ');'));
     return '<!doctype html>\n' + doc.documentElement.outerHTML;
   }
@@ -799,6 +918,8 @@
     if (interactive && !DF._exportRuntime) throw Error('The trusted DocForm export modules could not load.');
     var issues = [];
     var importPreview = [];
+    var scriptPreview = [];
+    var includeScripts = new Set(options?.includeScripts || []);
     var consent = new Set(options?.includeImports || []);
     var pages = new Map();
     var resources = DF._exportResources.setup(resourceFiles(folder), signal);
@@ -833,7 +954,9 @@
         signal?.throwIfAborted();
         var input = { ...configForPage, html: html, url: page.url, readText: folder.readText };
         var snapshot = await DF._pageSnapshot.capture(input, { signal: signal, interactive: interactive });
-        for (var item of snapshot.issues) report(item.code, item.target, item.message);
+        for (var item of snapshot.issues) {
+          if (!interactive || item.code !== 'custom-script') report(item.code, item.target, item.message);
+        }
         var copied = copyPage(snapshot, page);
         copied.report = report;
         pages.set(page.key, copied);
@@ -841,6 +964,15 @@
           try { copied.live = await interactivePage(input, copied, folder, signal, consent, importPreview); }
           catch (error) {
             signal?.throwIfAborted();
+            report('interactive-fallback', page.url, error.message);
+          }
+          try {
+            var localScripts = await authorScripts(source, copied, folder, resources, copied.live ? includeScripts : null,
+              scriptPreview, signal);
+            if (localScripts) copied.live.payload.author = localScripts;
+          } catch (error) {
+            signal?.throwIfAborted();
+            copied.live = null;
             report('interactive-fallback', page.url, error.message);
           }
         }
@@ -897,7 +1029,7 @@
     signal?.throwIfAborted();
     var included = Array.from(pages.values(), function (page) {
       return { id: page.id, title: page.snapshot.title || page.title, markup: page.markup,
-        url: page.url, payload: page.live?.payload, view: page.snapshot.view, imports: page.snapshot.imports };
+        url: page.url, targets: Array.from(page.targets), payload: page.live?.payload, view: page.snapshot.view, imports: page.snapshot.imports };
     });
     var blob = new Blob([serialize(site.title, site.tree, site.active, included, resources.assets, interactive)],
       { type: 'text/html;charset=utf-8' });
@@ -906,8 +1038,9 @@
     options?.onProgress?.({ phase: 'done', completed: completed, total: chosen.size });
     var livePages = new Set(included.filter(function (page) { return page.payload; }).map(function (page) { return page.id; }));
     for (var entry of importPreview) entry.included = entry.selected && livePages.has(entry.page);
+    for (var entry of scriptPreview) entry.included = entry.selected && livePages.has(entry.page);
     return { blob: blob, bytes: blob.size, filename: (filename || 'DocForm export') + '.html', issues: issues,
-      importChoices: importPreview,
+      importChoices: importPreview, scriptChoices: scriptPreview,
       pages: included.map(function (page) {
         return { id: page.id, title: page.title, view: page.view, imports: page.imports,
           ...(interactive ? { interactive: !!page.payload } : {}) };

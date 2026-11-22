@@ -154,6 +154,7 @@
     var focused = false;
     var theme;
     var view;
+    var remote;
     var sections = [];
     var blocks = [];
     var outline;
@@ -325,6 +326,7 @@
     function applyTheme() {
       html.setAttribute('data-df-theme', theme);
       view?.document.documentElement.setAttribute('data-df-theme', theme);
+      remote?.send({ type: 'theme', value: theme });
       themeName(theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
       icon(themeButton, theme === 'dark' ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2m0-14-2 2M7 17l-2 2"/>' :
         '<path d="M20 15a8 8 0 0 1-11-11 8.5 8.5 0 1 0 11 11Z"/>');
@@ -339,6 +341,7 @@
       if (focusButton.hidden) return;
       focused = !focused;
       focusButton.setAttribute('aria-pressed', String(focused));
+      remote?.send({ type: 'focus', value: focused });
       update();
     }
 
@@ -390,7 +393,49 @@
       updateID = requestAnimationFrame(function () { updateID = 0; update(); });
     }
 
+    function updateRemote(message) {
+      if (remote.anchor && remote.readings?.some(function (top, index) {
+        return top !== null && message.readings[index] !== null && top !== message.readings[index];
+      })) remote.anchor = null;
+      remote.readings = message.readings;
+      var at = -1;
+      sections.forEach(function (section, index) {
+        var top = message.readings[index];
+        section.item.hidden = top === null;
+        if (top !== null && (message.bottom || top <= message.height * .25)) at = index;
+      });
+      currentSection?.link.removeAttribute('aria-current');
+      currentSection = sections[at];
+      currentSection?.link.setAttribute('aria-current', 'location');
+      var percent = Math.max(0, Math.min(100, message.percent));
+      progress.setAttribute('aria-valuenow', String(percent));
+      ring.setAttribute('stroke-dasharray', percent + ' 100');
+      progressHint.textContent = 'Reading progress · ' + percent + '%';
+    }
+
+    function addSection(id, label, level, page) {
+      var item = make('li');
+      var link = make('a', label || id);
+      link.href = '#' + page + '/' + encodeURIComponent(id);
+      link.dataset.level = level;
+      link.setAttribute('data-export-destination', '');
+      item.append(link);
+      outline?.append(item);
+      return { item: item, link: link };
+    }
+
     function jump(direction) {
+      if (remote) {
+        var readings = remote.readings || [];
+        var anchored = sections.findIndex(function (section) { return section.link.hash === remote.anchor; });
+        var at = direction > 0 ? readings.findIndex(function (top, index) {
+          return top !== null && (anchored >= 0 ? index > anchored : top > 4);
+        }) : readings.findLastIndex(function (top, index) {
+          return top !== null && (anchored >= 0 ? index < anchored : top < -4);
+        });
+        if (at >= 0) navigate(sections[at].link.hash);
+        return;
+      }
       if (!view) return;
       var candidates = sections.filter(visible);
       var anchored = jumpOrigin?.top === view.scrollY ? candidates.findIndex(function (section) {
@@ -448,7 +493,7 @@
     return {
       follow: function (restoreFocus) { hideTip?.(); closeDrawer(restoreFocus); },
       page: function (page, adjacent) {
-        view = null;
+        view = remote = null;
         observer.disconnect();
         jumpOrigin = null;
         currentSection = null;
@@ -481,14 +526,7 @@
           (doc.documentElement.getAttribute('data-df-theme') !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
         applyTheme();
         sections = headings(doc).filter(function (node) { return node.id; }).map(function (node) {
-          var item = make('li');
-          var link = make('a', node.textContent.trim().replace(/\s+/g, ' ') || node.id);
-          link.href = '#' + page + '/' + encodeURIComponent(node.id);
-          link.dataset.level = node.localName[1];
-          link.setAttribute('data-export-destination', '');
-          item.append(link);
-          outline?.append(item);
-          return { node: node, item: item, link: link };
+          return { ...addSection(node.id, node.textContent.trim().replace(/\s+/g, ' '), node.localName[1], page), node: node };
         });
         if (!sections.length) outline?.remove();
         for (var control of [focusButton, backHeading, nextHeading]) control.hidden = !sections.length;
@@ -508,7 +546,27 @@
         observer.observe(main);
         schedule();
       },
+      mountRemote: function (data, page, send) {
+        remote = { send: send };
+        theme ??= data.theme === 'dark' ||
+          (data.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        applyTheme();
+        send({ type: 'focus', value: focused });
+        sections = data.headings.map(function ([id, label, level]) { return addSection(id, label, level, page); });
+        if (!sections.length) outline?.remove();
+        for (var control of [focusButton, backHeading, nextHeading]) control.hidden = !sections.length;
+      },
+      remoteProgress: function (message) { updateRemote(message); },
+      remoteKey: function (key) {
+        if (drawer) {
+          if (key === 'n') closeDrawer(true);
+          return;
+        }
+        ({ n: toggleNav, f: toggleFocus, t: toggleTheme,
+          j: function () { jump(1); }, k: function () { jump(-1); } })[key]();
+      },
       scrolled: function (hash) {
+        if (remote) { remote.anchor = hash; return; }
         jumpOrigin = { hash: hash, top: view.scrollY };
         schedule();
       },
@@ -519,6 +577,32 @@
   async function startInteractive(doc, payload, shared, nonce, saved, signal) {
     var view = doc.defaultView;
     var paths = new Map(payload.modules);
+    var author = payload.author;
+    var authorPhase = !!author;
+    function failedAuthor(event) {
+      if (authorPhase) authorFailure ||= event.type === 'error' ? 'An author script failed.' : 'An author script rejected a promise.';
+    }
+    var authorFailure;
+    if (author) {
+      view.addEventListener('error', failedAuthor);
+      view.addEventListener('unhandledrejection', failedAuthor);
+      signal.addEventListener('abort', function () {
+        view.removeEventListener('error', failedAuthor);
+        view.removeEventListener('unhandledrejection', failedAuthor);
+      }, { once: true });
+      var files = new Map(author.files.map(function ([url, kind, value]) {
+        return [url, [kind, kind === 'text' ? shared[value] : value]];
+      }));
+      function readFile(path, kind) {
+        var file = files.get(new URL(path, payload.base).href);
+        if (file?.[0] !== kind) throw Error('The author file is unavailable: ' + path);
+        return file[1];
+      }
+      view.DocFormExportFiles = Object.freeze({
+        text: function (path) { return readFile(path, 'text'); },
+        url: function (path) { return readFile(path, 'url'); }
+      });
+    }
     var styles = new Set(payload.styles);
     var data = new Map(payload.data);
     var library = new URL('.', payload.entryURL).href;
@@ -533,14 +617,37 @@
 
     function execute(path, entry) {
       signal.throwIfAborted();
-      var code = shared[paths.get(path)];
+      return executeCode(paths.get(path), entry);
+    }
+
+    function executeCode(index, entry) {
+      var code = shared[index];
       if (typeof code !== 'string') return false;
       var script = doc.createElement('script');
-      script.nonce = nonce;
       if (entry && payload.profile !== null) script.setAttribute('data-df-profile', payload.profile);
-      script.textContent = code;
       var failed = false;
-      function scriptError() { failed = true; }
+      function scriptError(event) { if (event instanceof view.ErrorEvent || !author) failed = true; }
+      if (author) {
+        return new Promise(function (resolve) {
+          var url = view.URL.createObjectURL(new view.Blob([code], { type: 'text/javascript' }));
+          function finish(ok) {
+            view.removeEventListener('error', scriptError);
+            signal.removeEventListener('abort', abort);
+            script.remove();
+            view.URL.revokeObjectURL(url);
+            resolve(ok && !failed);
+          }
+          function abort() { finish(false); }
+          signal.addEventListener('abort', abort, { once: true });
+          view.addEventListener('error', scriptError);
+          script.addEventListener('load', function () { finish(true); }, { once: true });
+          script.addEventListener('error', abort, { once: true });
+          script.src = url;
+          doc.head.append(script);
+        });
+      }
+      script.nonce = nonce;
+      script.textContent = code;
       view.addEventListener('error', scriptError);
       try { doc.head.append(script); }
       finally {
@@ -550,6 +657,8 @@
       return !failed;
     }
 
+    var release;
+    var authored = author && new Promise(function (resolve) { release = resolve; });
     if (payload.site !== null) view.DocFormSite = structuredClone(shared[payload.site]);
     view.DocFormExportContext = {
       interactive: true, entryURL: payload.entryURL, pageURL: payload.url, siteURL: payload.siteURL,
@@ -558,6 +667,7 @@
       hasData: function (name) { return data.has(name); },
       loadModule: function (url, css) {
         var path = url.startsWith(library) && url.slice(library.length);
+        if (author) return authored.then(function (ok) { return ok && (css ? styles.has(path) : execute(path)); });
         return css ? styles.has(path) : execute(path);
       },
       loadAsset: function (kind, url, name) {
@@ -567,7 +677,26 @@
         return true;
       }
     };
-    if (!execute('docform.js', true) || !view.DocForm?.ready) throw Error('DocForm could not start.');
+    async function runAuthors(scripts) {
+      for (var [name, index] of scripts) {
+        signal.throwIfAborted();
+        if (!await executeCode(index)) throw Error('Author script failed: ' + name);
+      }
+    }
+    if (author) {
+      try {
+        await runAuthors(author.before);
+        if (!await execute('docform.js', true) || !view.DocForm?.ready) throw Error('DocForm could not start.');
+        await runAuthors(author.after);
+        doc.dispatchEvent(new view.Event('DOMContentLoaded', { bubbles: true }));
+        release(true);
+      } catch (error) {
+        release(false);
+        throw error;
+      }
+    } else if (!execute('docform.js', true) || !view.DocForm?.ready) {
+      throw Error('DocForm could not start.');
+    }
     var runtime = await new Promise(function (resolve, reject) {
       var timer = setTimeout(function () { finish(Error('DocForm startup timed out.')); }, 8000);
       function abort() { finish(signal.reason); }
@@ -582,6 +711,11 @@
       if (signal.aborted) abort();
     });
     signal.throwIfAborted();
+    if (author) {
+      authorPhase = false;
+      var issue = runtime.diagnostics.list().find(function (issue) { return ['setup-failed', 'ready-failed'].includes(issue.code); });
+      if (authorFailure || issue) throw Error(authorFailure || issue.message);
+    }
     if (!runtime._site || !runtime._readerState ||
         payload.features.some(function (feature) { return !runtime._boot.enabled(feature); }) ||
         runtime.diagnostics.list().some(function (issue) {
@@ -603,7 +737,118 @@
     return runtime._readerState;
   }
 
-  function reader(assemble, figureSteps, headings, controls, startInteractive, fileKey) {
+  function authorFrame(session, startInteractive, headings) {
+    // Keep the bootstrap nonce out of the DOM seen by any later script.
+    document.currentScript.remove();
+    document.querySelector('meta[http-equiv="Content-Security-Policy"]').remove();
+    var channel = new MessageChannel();
+    var port = channel.port1;
+    var send = port.postMessage.bind(port);
+    var controller = new AbortController();
+    var state;
+    var sections;
+    var focus = false;
+    var mount;
+
+    function inspect() {
+      var scroller = document.scrollingElement;
+      var height = scroller.clientHeight;
+      var max = scroller.scrollHeight - height;
+      var readings = sections.map(function (node) {
+        return node.getClientRects().length ? node.getBoundingClientRect().top : null;
+      });
+      var at = readings.findLastIndex(function (top) { return top !== null && top <= height * .5; });
+      if (max > 0 && scroller.scrollTop >= max - 2) at = readings.findLastIndex(function (top) { return top !== null; });
+      for (var [node, first, last] of mount) {
+        var rect = node.getBoundingClientRect();
+        node.classList.toggle('df-reader-dim', focus && (at < first || at > last) &&
+          (rect.bottom <= height * .2 || rect.top >= height * .8));
+      }
+      send({ type: 'progress', readings: readings, height: height,
+        percent: max > 0 ? Math.round(100 * scroller.scrollTop / max) : 100,
+        bottom: max > 0 && scroller.scrollTop >= max - 2 });
+    }
+
+    function scroll(fragment, takeFocus) {
+      var target = fragment && (document.getElementById(fragment) ||
+        Array.from(document.getElementsByName(fragment)).find(function (node) { return node.localName === 'a'; }));
+      if (target) target.scrollIntoView({ behavior: 'instant' });
+      else scrollTo({ left: 0, top: 0, behavior: 'instant' });
+      if (takeFocus) {
+        target ||= document.body;
+        if (!target.hasAttribute('tabindex') && target.tabIndex < 0) target.tabIndex = -1;
+        target.focus({ preventScroll: true });
+      }
+      inspect();
+    }
+
+    async function init(data) {
+      state = await startInteractive(document, data.payload, data.shared, null, data.saved, controller.signal);
+      var main = document.querySelector('.df-page') || document.querySelector('main') || document.body;
+      sections = headings(document).filter(function (node) { return node.id; });
+      var last = -1;
+      mount = Array.from(main.children).filter(function (node) { return !node.matches('h1,header') && !node.querySelector('h1'); })
+        .map(function (node) {
+          var first;
+          sections.forEach(function (section, index) {
+            if (node.contains(section)) { first ??= index; last = index; }
+          });
+          return [node, first ?? last, last];
+        });
+      send({ type: 'ready', headings: sections.map(function (node) {
+        return [node.id, node.textContent.trim().replace(/\s+/g, ' '), Number(node.localName[1])];
+      }), theme: document.documentElement.getAttribute('data-df-theme') });
+      var raf;
+      function schedule() {
+        if (!raf) raf = requestAnimationFrame(function () { raf = 0; inspect(); });
+      }
+      var observer = new ResizeObserver(schedule);
+      observer.observe(main);
+      addEventListener('scroll', schedule, { passive: true });
+      addEventListener('resize', schedule);
+      document.addEventListener('click', function (event) {
+        var link = event.target.closest?.('a[href],area[href]');
+        if (!link || event.defaultPrevented) return;
+        event.preventDefault();
+        var href = link.getAttribute('data-export-destination') || link.getAttribute('href');
+        if (href) send({ type: 'link', href: href });
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ||
+            event.target.closest?.('input,select,textarea,[contenteditable]')) return;
+        var key = event.key.toLowerCase();
+        if (!['n', 'f', 't', 'j', 'k'].includes(key)) return;
+        event.preventDefault();
+        if (!event.repeat) send({ type: 'key', key: key });
+      });
+      addEventListener('error', function (event) {
+        if (event instanceof ErrorEvent) send({ type: 'failure', reason: 'A page script failed.' });
+      });
+      addEventListener('unhandledrejection', function () {
+        send({ type: 'failure', reason: 'A page script rejected a promise.' });
+      });
+      inspect();
+    }
+
+    port.onmessage = async function (event) {
+      var data = event.data;
+      try {
+        switch (data.type) {
+          case 'init': await init(data); break;
+          case 'theme': document.documentElement.setAttribute('data-df-theme', data.value); break;
+          case 'focus': focus = data.value; inspect(); break;
+          case 'scroll': scroll(data.fragment, data.focus); break;
+          case 'capture': send({ type: 'state', value: state.capture() }); break;
+        }
+      } catch (error) {
+        send({ type: 'failure', reason: String(error?.message || error).slice(0, 300) });
+      }
+    };
+    addEventListener('pagehide', function () { controller.abort(); port.close(); }, { once: true });
+    parent.postMessage({ type: 'docform-author-connect', session: session }, '*', [channel.port2]);
+  }
+
+  function reader(assemble, figureSteps, headings, controls, startInteractive, fileKey, authorFrame) {
     var bundle = JSON.parse(document.querySelector('#export-bundle').textContent);
     document.querySelector('#export-bundle').remove();
     var pages = new Map(bundle.pages.map(function (page) { return [page.id, page]; }));
@@ -621,7 +866,7 @@
     var sourcePages = new Map(interactive && fileKey ? bundle.pages.map(function (page) {
       return [fileKey(new URL(page.url), true), page.id];
     }) : []);
-    var running, pageState;
+    var running, pageState, isolated;
     var chrome = controls(host, headings, tips, navigate);
 
     function destination() {
@@ -633,8 +878,14 @@
 
     function scroll(fragment) {
       if (!ready) return;
-      var doc = frame.contentDocument;
       var focus = focusHash === location.hash;
+      if (isolated) {
+        isolated.send({ type: 'scroll', fragment: fragment, focus: focus });
+        focusHash = null;
+        chrome.scrolled(location.hash);
+        return;
+      }
+      var doc = frame.contentDocument;
       var heading = fragment && (doc.getElementById(fragment) ||
         Array.from(doc.getElementsByName(fragment)).find(function (node) { return node.localName === 'a'; }));
       if (heading) {
@@ -780,12 +1031,147 @@
       }
     }
 
-    function render() {
+    function openAuthorFrame(current, record, payload, saved, markup, nonce, fallback) {
+      var session = crypto.randomUUID();
+      var port, loaded, started, headingCount, captureTimer;
+      var deadline = setTimeout(function () { fallback('The author page did not finish starting.'); }, 10000);
+      var targets = new Set(record.targets);
+      var state = isolated = {
+        send: function (data) { port?.postMessage(data); },
+        capture: function () {
+          if (!started) return false;
+          if (!captureTimer) {
+            captureTimer = setTimeout(finishCapture, 150);
+            state.send({ type: 'capture' });
+          }
+          return true;
+        },
+        close: function () {
+          clearTimeout(deadline);
+          clearTimeout(captureTimer);
+          window.removeEventListener('message', connect);
+          port?.close();
+        }
+      };
+
+      function finishCapture() {
+        clearTimeout(captureTimer);
+        captureTimer = null;
+        render(true);
+      }
+
+      function init() {
+        if (!loaded || !port) return;
+        // Remap references so the opaque frame receives only inputs for this page.
+        var shared = [];
+        var indices = new Map();
+        function take(index) {
+          if (!indices.has(index)) {
+            indices.set(index, shared.length);
+            shared.push(bundle.shared[index]);
+          }
+          return indices.get(index);
+        }
+        function entries(list) {
+          return list.map(function ([key, index]) { return [key, take(index)]; });
+        }
+        var author = payload.author;
+        state.send({ type: 'init', saved: saved, shared: shared, payload: {
+          ...payload, markup: undefined,
+          site: payload.site === null ? null : take(payload.site),
+          modules: entries(payload.modules), data: entries(payload.data), imports: entries(payload.imports),
+          inlineData: payload.inlineData.map(take),
+          author: { before: entries(author.before), after: entries(author.after),
+            files: author.files.map(function ([url, kind, value]) {
+              return [url, kind, kind === 'text' ? take(value) : bundle.assets[value[0]] + value[1]];
+            }) }
+        } });
+      }
+
+      function receive(event) {
+        if (isolated !== state || current !== frame) return;
+        var data = event.data;
+        if (!data || Object.prototype.toString.call(data) !== '[object Object]' || typeof data.type !== 'string') return;
+        var size = Object.keys(data).length;
+        if (data.type === 'failure' && size === 2 && typeof data.reason === 'string' && data.reason.length <= 300) {
+          fallback(data.reason);
+        } else if (!started) {
+          if (data.type !== 'ready' || size !== 3 || !Array.isArray(data.headings) || data.headings.length > 10000 ||
+              ![null, 'light', 'dark'].includes(data.theme) || !data.headings.every(function (item) {
+                return Array.isArray(item) && item.length === 3 && typeof item[0] === 'string' &&
+                  typeof item[1] === 'string' && item[1].length <= 2000 && [1, 2, 3].includes(item[2]);
+              })) return;
+          headingCount = data.headings.length;
+          // Only rendered headings with known destinations are offered by the outer outline.
+          var retained = data.headings.map(function (item, index) { return targets.has(item[0]) ? index : -1; })
+            .filter(function (index) { return index >= 0; });
+          state.readings = retained;
+          started = ready = true;
+          clearTimeout(deadline);
+          current.inert = false;
+          chrome.mountRemote({ ...data, headings: retained.map(function (index) { return data.headings[index]; }) },
+            record.id, state.send);
+          scroll(destination()[1]);
+        } else if (data.type === 'progress' && size === 5 && Array.isArray(data.readings) &&
+            data.readings.length === headingCount && data.readings.every(function (value) { return value === null || Number.isFinite(value); }) &&
+            Number.isFinite(data.height) && Number.isFinite(data.percent) && typeof data.bottom === 'boolean') {
+          chrome.remoteProgress({ ...data, readings: state.readings.map(function (index) { return data.readings[index]; }) });
+        } else if (data.type === 'key' && size === 2 && ['n', 'f', 't', 'j', 'k'].includes(data.key)) {
+          chrome.remoteKey(data.key);
+        } else if (data.type === 'link' && size === 2 && typeof data.href === 'string' && data.href.length <= 8192) {
+          try {
+            var href = data.href;
+            var [page, fragment, extra] = href.slice(1).split('/');
+            if (!href.startsWith('#') || !pages.has(page)) {
+              var local = href.trim().startsWith('#');
+              var url = new URL(href, local ? payload.url : payload.base);
+              page = local ? record.id : sourcePages.get(fileKey(url, true));
+              fragment = url.hash.slice(1);
+              extra = undefined;
+            }
+            if (extra !== undefined || !pages.has(page)) return;
+            var id = decodeURIComponent(fragment || '');
+            if (!id || pages.get(page).targets?.includes(id)) navigate('#' + page + (id ? '/' + encodeURIComponent(id) : ''));
+          } catch (error) {}
+        } else if (data.type === 'state' && size === 2 && captureTimer) {
+          // Session replay uses the library's existing record and import validation.
+          if (data.value && typeof data.value === 'object') committed.set(record.id, data.value);
+          finishCapture();
+        }
+      }
+
+      function connect(event) {
+        var data = event.data;
+        if (current !== frame || event.source !== current.contentWindow || event.origin !== 'null' ||
+            !data || data.type !== 'docform-author-connect' || data.session !== session ||
+            Object.keys(data).length !== 2 || event.ports.length !== 1 || port) return;
+        window.removeEventListener('message', connect);
+        port = event.ports[0];
+        port.onmessage = receive;
+        init();
+      }
+
+      current.addEventListener('load', function () {
+        if (current !== frame) return;
+        if (loaded) fallback('The author page frame navigated.');
+        else { loaded = true; init(); }
+      });
+      window.addEventListener('message', connect);
+      var code = '(' + authorFrame + ')(' + JSON.stringify(session) + ',' +
+        startInteractive + ',' + headings + ');';
+      var end = markup.lastIndexOf('</body>');
+      current.srcdoc = markup.slice(0, end) + '<script nonce="' + nonce + '">' + code + '<' + '/script>' + markup.slice(end);
+    }
+
+    function render(skipCapture) {
       var [page, fragment] = destination();
       if (active === page) {
         scroll(fragment);
         return;
       }
+      if (!skipCapture && isolated?.capture()) return;
+      isolated?.close();
+      isolated = null;
       if (pageState) committed.set(active, pageState.capture());
       pageState = null;
       running?.abort();
@@ -810,8 +1196,9 @@
         var current = frame = document.createElement('iframe');
         current.title = record.title;
         current.inert = !!payload;
-        current.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox' +
-          (payload ? ' allow-scripts' : ''));
+        current.setAttribute('sandbox', payload?.author ? 'allow-scripts' :
+          'allow-same-origin allow-popups allow-popups-to-escape-sandbox' + (payload ? ' allow-scripts' : ''));
+        if (payload?.author) current.referrerPolicy = 'no-referrer';
         var controller = payload ? running = new AbortController() : null;
         var nonce = payload ? Array.from(crypto.getRandomValues(new Uint8Array(24)), function (byte) {
           return byte.toString(16).padStart(2, '0');
@@ -819,11 +1206,15 @@
 
         function fallback(reason) {
           controller.abort();
+          isolated?.close();
+          isolated = null;
+          ready = false;
+          chrome.page(page, [bundle.pages[index - 1], bundle.pages[index + 1]]);
           running = null;
           mount(null, reason);
         }
 
-        current.addEventListener('load', async function () {
+        if (!payload?.author) current.addEventListener('load', async function () {
           if (current !== frame) return;
           var doc = current.contentDocument;
           if (doc?.URL !== 'about:srcdoc') {
@@ -854,7 +1245,10 @@
         }, { once: true });
         try {
           var markup = assemble(payload?.markup || record.markup, bundle.assets);
-          current.srcdoc = payload ? markup.replace("'nonce-df-export-nonce'", "'nonce-" + nonce + "'") : markup;
+          if (payload) markup = markup.replace("'nonce-df-export-nonce'", "'nonce-" + nonce + "'" +
+            (payload.author ? ' blob:' : ''));
+          if (payload?.author) openAuthorFrame(current, record, payload, committed.get(page) || payload.state, markup, nonce, fallback);
+          else current.srcdoc = markup;
         } catch (error) {
           if (!payload) throw error;
           fallback('The page resources could not be assembled.');
@@ -876,5 +1270,5 @@
   }
 
   root.DocForm._exportReader = { run: reader, assemble: assemble, figureSteps: figureSteps, headings: headings,
-    controls: controls, startInteractive: startInteractive };
+    controls: controls, startInteractive: startInteractive, authorFrame: authorFrame };
 })(window);

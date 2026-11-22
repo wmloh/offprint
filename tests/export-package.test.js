@@ -16,6 +16,9 @@ function load(sourceDocs = new Map(), createExportDocument, DOMParser) {
         return {
           documentElement: {},
           get title() { return sourceDocs.get(this.documentElement.innerHTML)?.title || ''; },
+          querySelectorAll(selector) {
+            return DOMParser ? new DOMParser().parseFromString(this.documentElement.innerHTML).querySelectorAll(selector) : [];
+          },
           querySelector(selector) {
             const source = sourceDocs.get(this.documentElement.innerHTML);
             return selector === 'script[data-df-site]' && source?.manifest ?
@@ -25,7 +28,7 @@ function load(sourceDocs = new Map(), createExportDocument, DOMParser) {
       }
     }
   };
-  const context = vm.createContext({ URL, TextEncoder, atob, btoa, Blob, document, DOMParser });
+  const context = vm.createContext({ URL, TextEncoder, atob, btoa, Blob, document, DOMParser, crypto });
   context.window = context;
   function loadScript(path) {
     vm.runInContext(fs.readFileSync(new URL('../docform/' + path, 'file://' + __filename), 'utf8'),
@@ -204,6 +207,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       querySelectorAll(selector) {
         const descendants = this.children.flatMap(child => [child, ...child.querySelectorAll('*')]);
         if (selector === '*') return descendants;
+        if (selector === 'script') return descendants.filter(child => child.localName === 'script');
         if (selector.startsWith('[data-df-source]:not(')) return descendants.filter(child =>
           child.localName !== 'script' && child.localName !== 'pre' && child.hasAttribute('data-df-source') ||
           child.hasAttribute('data-df-dropzone') && child.hasAttribute('data-df-target-source'));
@@ -269,6 +273,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   function decodeSheet(url) {
     return Buffer.from(url.split(',')[1], 'base64').toString();
   }
+  let authorCode = 'doNotPackageThisAuthorScript()';
   const runtime = load(new Map([
     ['home', { title: 'An example', manifest: 'site.js' }],
     ['nested', { title: 'Nested', manifest: '../site.js' }]
@@ -282,7 +287,10 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       link.href = links;
       const heading = element('h2', 'Café');
       heading.id = 'café/more';
-      const custom = element('script', 'doNotPackageThisAuthorScript()');
+      const custom = element('script', authorCode);
+      custom.setAttribute('data-df-export-resources', JSON.stringify([html === 'home' ? 'author.txt' : '../author.txt']));
+      const unavailable = element('script', 'unavailable()');
+      unavailable.setAttribute('data-df-export-dependencies', '["missing.js"]');
       custom.remove = () => doc.body.children.splice(doc.body.children.indexOf(custom), 1);
       doc.body.append(heading, link, custom);
       const consumer = element('figure');
@@ -359,7 +367,8 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
         pipeline.append(blocks, details);
         doc.body.append(pipeline);
       }
-      doc.querySelectorAll = selector => selector === 'script[src]' ? [entry] : doc.body.querySelectorAll(selector);
+      doc.querySelectorAll = selector => selector === 'script[src]' ? [entry] :
+        selector === 'script' ? [entry, custom, unavailable] : doc.body.querySelectorAll(selector);
       return doc;
     }
   });
@@ -376,6 +385,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   let stepCount = 0;
   let committedImport = false;
   let staleImport = false;
+  let savedSibling = true;
   let revision = 1;
   const importText = 'id,name\n1,private full record café <script>';
   runtime._boot.loadExport('js/page-snapshot.js');
@@ -427,9 +437,10 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       body.append(controls, alternate);
     }
     return {
+      view: nested ? (savedSibling ? 'saved' : 'default') : 'live',
       title: 'An example', issues: staleImport && nested ? [{ code: 'saved-import', target: 'shared', message: 'stale' }] : [],
       htmlAttributes: [], body, imports: [],
-      committed: options.interactive ? {
+      committed: options.interactive && (!nested || savedSibling) ? {
         views: [['tabs', { value: nested ? 'results' : 'overview' }]],
         imports: committedImport && nested ? [['shared', { name: 'private.csv', revision: [revision],
           bytes: Buffer.byteLength(importText), target: '["source","alias"]' }]] : []
@@ -439,7 +450,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     };
   };
   const signal = new AbortController();
-  const prepared = await runtime._exportPackage.prepare([
+  const files = [
     file('project/index.html', 'home'),
     file('project/nested/index.html', 'nested'),
     file('project/omitted.html', 'omitted'),
@@ -453,8 +464,10 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     asset('image.png', 'shared image'),
     asset('copy.png', 'shared image'),
     asset('nested/image.png', 'local image'),
-    asset('detail.png', 'detail image')
-  ]);
+    asset('detail.png', 'detail image'),
+    file('project/author.txt', 'author-only resource')
+  ];
+  const prepared = await runtime._exportPackage.prepare(files);
   const selected = prepared.tree[0].children.map(page => page.id);
   const phases = [];
   await assert.rejects(prepared.build(selected, { signal: signal.signal, onProgress(event) {
@@ -518,7 +531,8 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.equal(one.bytes, Buffer.byteLength(oneHTML));
   assert.ok(one.bytes < result.bytes);
   assert.equal(/<script>\((function reader.*?)<\/script>/s.exec(oneHTML)[1], runtimeScript);
-  t.diagnostic(`Reader fixture: ${one.bytes} bytes for one page, ${result.bytes} bytes for two, with identical shell JavaScript.`);
+  t.diagnostic(`Reader fixture: ${one.bytes} bytes for one page, ${result.bytes} bytes for two ` +
+    `(${result.bytes - one.bytes} additional bytes). Fixed shell JavaScript: ${Buffer.byteLength(runtimeScript)} bytes.`);
   const sizes = [];
   for (const count of [2, 8, 32]) {
     stepCount = count;
@@ -551,6 +565,10 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const packed = readBundle(interactiveHTML);
   assert.equal(packed.version, 1);
   assert.equal(packed.mode, 'interactive');
+  assert.deepEqual(Array.from(result.pages, page => page.view), ['live', 'saved']);
+  assert.deepEqual(Array.from(interactive.pages, page => page.view), ['live', 'saved']);
+  assert.deepEqual(packed.pages.map(page => runtime._exportReader.assemble(page.markup, packed.assets)),
+    bundle.pages.map(page => runtime._exportReader.assemble(page.markup, bundle.assets)));
   assert.ok(packed.pages.every(page => page.interactive), JSON.stringify(interactive.issues));
   assert.equal(packed.shared.length, 7); // Manifest, four scripts, and two dataset revisions.
   assert.deepEqual(packed.pages[0].interactive.inlineData, packed.pages[1].interactive.inlineData);
@@ -579,8 +597,58 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.deepEqual(readBundle(await interactiveOne.blob.text()).shared, packed.shared);
   const fallbackBytes = packed.pages.reduce((sum, page) =>
     sum + Buffer.byteLength(JSON.stringify(page.markup).replace(/</g, '\\u003c')), 0);
-  t.diagnostic(`Interactive fixture: ${interactiveOne.bytes} bytes for one page, ${interactive.bytes} for two, ` +
-    `including ${fallbackBytes} bytes of fallback markup for both pages. Shared payloads are identical.`);
+  const sharedBytes = Buffer.byteLength(JSON.stringify(packed.shared).replace(/</g, '\\u003c'));
+  const interactiveScript = /<script>\((function reader.*?)<\/script>/s.exec(interactiveHTML)[1];
+  t.diagnostic(`Interactive fixture: ${interactiveOne.bytes} bytes for one page, ${interactive.bytes} for two ` +
+    `(${interactive.bytes - interactiveOne.bytes} additional bytes), including ${fallbackBytes} bytes of fallback markup. ` +
+    `Fixed shell JavaScript: ${Buffer.byteLength(interactiveScript)} bytes. Identical shared payloads: ${sharedBytes} bytes.`);
+
+  savedSibling = false;
+  const authoredDefault = await prepared.build(selected, { mode: 'interactive' });
+  assert.equal(authoredDefault.pages[1].view, 'default');
+  assert.equal(readBundle(await authoredDefault.blob.text()).pages[1].interactive.state, null);
+  savedSibling = true;
+
+  const distinctText = authoredText.replace('authored record', 'distinct record');
+  const distinctInput = files.map(input => input.webkitRelativePath === 'project/alias.js' ?
+    asset('alias.js', wrapper('alias', 'alias.js').replace('authored record', 'distinct record')) : input);
+  const distinctSite = await runtime._exportPackage.prepare(distinctInput);
+  const distinct = await distinctSite.build(selected, { mode: 'interactive' });
+  const distinctHTML = await distinct.blob.text();
+  const distinctBundle = readBundle(distinctHTML);
+  assert.equal(distinct.bytes, Buffer.byteLength(distinctHTML));
+  assert.equal(distinctBundle.shared.length, packed.shared.length + 1);
+  assert.equal(distinctBundle.shared[distinctBundle.pages[1].interactive.data[0][1]].text, distinctText);
+  assert.equal(distinctBundle.shared[distinctBundle.pages[0].interactive.data[0][1]].text, authoredText);
+  t.diagnostic(`Distinct authored dataset: ${distinct.bytes - interactive.bytes} additional HTML bytes.`);
+
+  const scriptChoices = interactive.scriptChoices.filter(choice => choice.available);
+  assert.equal(scriptChoices.length, 2);
+  assert.ok(interactive.issues.some(issue => issue.code === 'author-script' && issue.message.includes('missing.js')));
+  assert.ok(scriptChoices.every(choice => !choice.selected));
+  assert.doesNotMatch(interactiveHTML, /author-only resource/);
+  const scriptIDs = scriptChoices.map(choice => choice.id);
+  const scriptExport = await prepared.build(selected, { mode: 'interactive', includeScripts: scriptIDs });
+  const scriptHTML = await scriptExport.blob.text();
+  const savedScripts = readBundle(scriptHTML);
+  assert.match(scriptHTML, /script-src 'unsafe-inline' blob:; frame-src 'none'/);
+  assert.doesNotThrow(() => new vm.Script('(' + /<script>\((function reader.*?)<\/script>/s.exec(scriptHTML)[1]));
+  assert.equal(savedScripts.shared.filter(value => value === authorCode).length, 1);
+  assert.equal(savedScripts.shared.filter(value => value === 'author-only resource').length, 1);
+  assert.ok(savedScripts.pages.every(page => page.interactive.author.after.length === 1));
+  assert.equal(scriptExport.scriptChoices.filter(choice => choice.included).length, 2);
+  const oneScript = await prepared.build(selected, { mode: 'interactive', includeScripts: scriptIDs.slice(0, 1) });
+  const oneScriptHTML = await oneScript.blob.text();
+  assert.equal(oneScript.bytes, Buffer.byteLength(oneScriptHTML));
+  assert.equal(scriptExport.bytes, Buffer.byteLength(scriptHTML));
+  assert.deepEqual(readBundle(oneScriptHTML).shared, savedScripts.shared);
+  assert.equal(await (await prepared.build(selected, { mode: 'interactive', includeScripts: [] })).blob.text(), interactiveHTML);
+  t.diagnostic(`Author scripts: ${oneScript.bytes - interactive.bytes} additional HTML bytes for first opt-in, ` +
+    `${scriptExport.bytes - oneScript.bytes} for a second page sharing its files.`);
+  authorCode += ';';
+  const changedScriptExport = await prepared.build(selected, { mode: 'interactive', includeScripts: scriptIDs });
+  assert.ok(changedScriptExport.scriptChoices.every(choice => !choice.selected));
+  assert.equal(await changedScriptExport.blob.text(), interactiveHTML);
 
   committedImport = true;
   const fallback = await prepared.build(selected, { mode: 'interactive' });
@@ -741,7 +809,9 @@ test('Interactive routing cancels stale startup, disposes frames, and restores s
   });
   const first = current;
   assert.match(first.sandbox, /allow-scripts/);
+  assert.equal(startups.length, 0);
   first.dispatchEvent(new Event('load'));
+  assert.equal(startups.length, 1);
   assert.equal(startups[0].saved.choice, 'exported page-1');
 
   function go(hash) {
@@ -751,6 +821,7 @@ test('Interactive routing cancels stale startup, disposes frames, and restores s
   }
 
   go('#page-2');
+  assert.equal(startups.length, 2);
   assert.equal(first.detached, true);
   assert.equal(startups[0].signal.aborted, true);
   startups[0].resolve({ capture() { assert.fail('Cancelled page became active'); } });

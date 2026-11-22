@@ -201,7 +201,9 @@
     var summary = make('div');
     var importOptions = make('fieldset');
     importOptions.hidden = true;
-    preview.append(heading, importOptions, summary);
+    var scriptOptions = make('fieldset');
+    scriptOptions.hidden = true;
+    preview.append(heading, importOptions, scriptOptions, summary);
     var saved = make('section');
     saved.className = 'df-export-saved';
     saved.hidden = !DF._readerState?.enabled?.();
@@ -230,11 +232,12 @@
 
     var task, prepared, picker, result, clearing;
     var consent = new Set();
+    var scriptConsent = new Set();
 
     function update() {
       var busy = !!task || !!clearing;
       var selected = picker?.ids().length || 0;
-      documents.button.disabled = modes.disabled = fieldset.disabled = forget.disabled = importOptions.disabled = busy;
+      documents.button.disabled = modes.disabled = fieldset.disabled = forget.disabled = importOptions.disabled = scriptOptions.disabled = busy;
       build.hidden = !prepared || busy;
       build.disabled = !selected;
       stop.hidden = !task;
@@ -246,13 +249,16 @@
       result = null;
       summary.textContent = '';
       if (keepChoices) {
-        importOptions.querySelectorAll('[data-df-import-included]').forEach(function (label) { label.remove(); });
+        preview.querySelectorAll('[data-df-export-included]').forEach(function (label) { label.remove(); });
       } else {
         consent.clear();
         importOptions.replaceChildren();
         importOptions.hidden = true;
+        scriptConsent.clear();
+        scriptOptions.replaceChildren();
+        scriptOptions.hidden = true;
       }
-      preview.hidden = importOptions.hidden;
+      preview.hidden = importOptions.hidden && scriptOptions.hidden;
       build.textContent = 'Build preview';
     }
 
@@ -274,7 +280,7 @@
           (entry.available ? '' : ' · Unavailable'));
         if (entry.included) {
           var included = make('span', ' · Included');
-          included.setAttribute('data-df-import-included', '');
+          included.setAttribute('data-df-export-included', '');
           detail.append(included);
         }
         item.append(label, detail);
@@ -291,6 +297,41 @@
       importOptions.replaceChildren(make('legend', 'Include full imported datasets'),
         make('p', 'Select the files to embed. Pages that need an omitted file use their captured Reader view.'), list);
       importOptions.hidden = !choices.length;
+    }
+
+    function showScripts(choices) {
+      scriptConsent.clear();
+      var list = make('ul');
+      for (let entry of choices) {
+        var check = make('input');
+        check.type = 'checkbox';
+        check.checked = entry.selected;
+        check.disabled = !entry.available;
+        if (entry.selected) scriptConsent.add(entry.id);
+        var label = make('label');
+        label.append(check, make('span', entry.name));
+        var detail = make('small', entry.title + (entry.issue ? ' · ' + entry.issue : ''));
+        if (entry.included) {
+          var included = make('span', ' · Included');
+          included.setAttribute('data-df-export-included', '');
+          detail.append(included);
+        }
+        var item = make('li');
+        item.append(label, detail);
+        if (entry.dependencies.length) item.append(make('div', 'Dependencies · ' + entry.dependencies.join(', ')));
+        if (entry.resources.length) item.append(make('div', 'Resources · ' + entry.resources.join(', ')));
+        list.append(item);
+        check.addEventListener('change', function (event) {
+          if (event.target.checked) scriptConsent.add(entry.id);
+          else scriptConsent.delete(entry.id);
+          clearPreview(true);
+          status.textContent = 'Script choices changed. Build a new preview.';
+          update();
+        });
+      }
+      scriptOptions.replaceChildren(make('legend', 'Include local author scripts'),
+        make('p', 'Select scripts you trust. They run automatically when their pages open in the download.'), list);
+      scriptOptions.hidden = !choices.length;
     }
 
     async function run(message, action, onFinish, onError, focusAfter) {
@@ -401,7 +442,7 @@
       if (task || clearing || !prepared) return;
       clearPreview(true);
       run('Preparing the export…', function (signal) {
-        return prepared.build(picker.ids(), { mode: mode, includeImports: consent, signal: signal, onProgress: function (event) {
+        return prepared.build(picker.ids(), { mode: mode, includeImports: consent, includeScripts: scriptConsent, signal: signal, onProgress: function (event) {
           if (signal.aborted || event.phase === 'done') return;
           if (event.phase === 'capture') {
             status.textContent = 'Capturing page ' + (event.completed + 1) + ' of ' + event.total + ' · ' + event.title;
@@ -413,6 +454,7 @@
         } });
       }, function (output) {
         showImports(output.importChoices);
+        showScripts(output.scriptChoices || []);
         showPreview(summary, output);
         result = output;
         preview.hidden = false;

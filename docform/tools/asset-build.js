@@ -143,7 +143,7 @@
           var ext = /\.([^.\/]+)$/.exec(file);
           var type = DF._dataSource.type(item.type === undefined ? ext && ext[1] : item.type);
           if (!name || name.trim() !== name) throw Error('Use a nonempty, trimmed source name.');
-          if (!type) throw Error('Set type to csv, json, or yaml, or use a matching source extension.');
+          if (!type) throw Error('Set type to ' + DF._dataSource.types.join(', ') + ', or use a matching source extension.');
           job.config = { name: name, type: type };
         }
       } catch (error) {

@@ -51,8 +51,8 @@
     var measures = descriptors(mapping.measures, 'measures', measure);
     var fields = [mapping.row, mapping.column].concat(measures.map(function (item) { return item.field; }));
     data.fields(records, fields, true);
-    if (parsed && parsed.type === 'csv' && fields.some(function (field) { return !parsed.columns.includes(field); })) {
-      throw new Error('Matrix CSV needs the mapped fields ' + fields.map(function (field) { return JSON.stringify(field); }).join(', ') + '.');
+    if (data.isGrid(parsed) && fields.some(function (field) { return !parsed.columns.includes(field); })) {
+      throw new Error('Matrix ' + parsed.type.toUpperCase() + ' needs the mapped fields ' + fields.map(function (field) { return JSON.stringify(field); }).join(', ') + '.');
     }
 
     var rowIndices = new Map(rows.map(function (item, i) { return [item.key, i]; }));

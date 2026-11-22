@@ -54,6 +54,9 @@ test('types come from names, MIME types, or the text itself', () => {
   assert.equal(helpers.sniff('  [1, 2]'), 'json');
   assert.equal(helpers.sniff('a,b\n1,2'), 'csv');
   assert.equal(helpers.sniff('name: a, b\n'), 'yaml');
+  assert.deepEqual(['md', 'text/tab-separated-values', 'text/xml'].map(helpers.type), ['markdown', 'tsv', 'xml']);
+  assert.deepEqual([helpers.sniff('a\tb\n1\t2'), helpers.sniff('<?xml version="1.0"?><a/>'), helpers.sniff('x', 'notes.md')],
+    ['tsv', 'xml', 'markdown']);
 });
 
 test('size caps parse units and default to 1 MB and 5,000 rows', () => {
@@ -81,6 +84,39 @@ test('CSV errors name the line, counting line breaks inside quotes', () => {
   assert.equal(message(() => data.parse('a,b\n1,"open\n', 'csv')), 'Line 2: a quoted field is not closed.');
   assert.equal(message(() => data.parse('a,b\n"x"y,1', 'csv')), 'Line 2: unexpected text after a closing quote.');
   assert.equal(message(() => data.parse('\n\n', 'csv')), 'the CSV is empty.');
+});
+
+test('TSV shares CSV quoting and typing, and its records feed tables', () => {
+  const tsv = data.parse('name\tscore\n"a\tb"\t1.5\nc\t\n', 'tsv');
+  assert.deepEqual(plain(tsv.rows), [['a\tb', 1.5], ['c', null]]);
+  assert.equal(helpers.isGrid(tsv), true);
+  assert.deepEqual(plain(data.table(tsv).columns), ['name', 'score']);
+  assert.equal(message(() => data.parse('a\tb\n1\n', 'tsv')), 'Line 2: this row has 1 fields; the header has 2.');
+  assert.equal(message(() => data.parse('\n', 'tsv')), 'the TSV is empty.');
+});
+
+test('XML becomes a typed JSON tree with attributes, repeated children as lists, and mixed text', () => {
+  const xml = '<?xml version="1.0"?>\n<!-- runs --><runs split="test">\n  <run id="007"><acc>0.91</acc><ok>true</ok></run>\n' +
+    '  <run id="r2"><acc>.5</acc><note>a &amp; b &#x41;<![CDATA[<raw>]]></note><empty/></run>\n  <p>x<b>y</b></p>\n</runs>';
+  assert.deepEqual(plain(data.parse(xml, 'xml').value), { runs: {
+    '@split': 'test',
+    run: [{ '@id': '007', acc: 0.91, ok: true }, { '@id': 'r2', acc: 0.5, note: 'a & b A<raw>', empty: null }],
+    p: { b: 'y', '#text': 'x' }
+  } });
+  assert.equal(message(() => data.parse('<a>\n<b></a>', 'xml')), 'Line 2: </a> does not match <b>.');
+  assert.match(message(() => data.parse('<a/><b/>', 'xml')), /more than one root/);
+  assert.match(message(() => data.parse('<!DOCTYPE a [<!ENTITY x "y">]><a>&x;</a>', 'xml')), /DOCTYPE/);
+  assert.match(message(() => data.parse('<a>&x;</a>', 'xml')), /not a supported entity/);
+  assert.match(message(() => data.parse('<a x="1" x="2"/>', 'xml')), /appears twice/);
+  assert.match(message(() => data.parse('<a>', 'xml')), /<a> is not closed/);
+  assert.equal(data.define('xml-source', { type: 'xml', text: '<a><b>1</b></a>' }).snapshot().value.a.b, 1);
+});
+
+test('Markdown keeps its text as the value and views it rendered by default', () => {
+  const md = data.parse('\uFEFF# Notes\n', 'markdown');
+  assert.deepEqual(plain(md), { type: 'markdown', value: '# Notes\n' });
+  assert.deepEqual([helpers.view(md), helpers.view(md, 'code'), helpers.view(md, 'table')], ['markdown', 'code', 'code']);
+  assert.equal(helpers.view(data.parse('a,b\n1,2', 'csv'), 'markdown'), 'table');
 });
 
 test('JSON errors give the line and column without echoing the source', () => {

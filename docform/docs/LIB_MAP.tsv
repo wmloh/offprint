@@ -52,10 +52,10 @@ Guided chart playback	Play chart checkpoints or step through keyed chart states	
 Concept tables	Compare text and concepts in semantic tables	data/concept-tables.md
 Results tables	Sort, shade, classify, and filter results	data/results-tables.md
 Evaluation matrices	Pivot named records into a matrix of interchangeable measures	data/matrix.md
-Named sources and data views	Share CSV, JSON, YAML, or typed values across mapped views and transforms	data/data-blocks.md
+Named sources and data views	Share CSV, TSV, JSON, YAML, XML, Markdown, or typed values across mapped views and transforms	data/data-blocks.md
 Data trees	Explore nested records and lists in collapsible branches	data/data-trees.md
 File dropzones	Open local files in a new view or replace data in one view or a shared source	data/dropzones.md
 Search index	Check and export the offline page and glossary index	tools/search-index.md
-Data file wrapper	Check and export local CSV, JSON, or YAML as named offline sources	tools/file-wrapper.md
+Data file wrapper	Check and export local data files as named offline sources, or refresh them from Python	tools/file-wrapper.md
 Extension API	Register custom features and use lifecycle hooks, shared controllers, and events	extend/api.md
 Chart add-ons	Register chart types, scales, and legends	extend/chart-addons.md

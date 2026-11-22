@@ -41,8 +41,8 @@
     <h2 id="data-files">Offline data files</h2>
     <p>The <a href="../../../docform/docs/tools/file-wrapper.md">Data file wrapper</a> packages a CSV, JSON, or YAML source so a local page can read it. The tool checks that the source can be read and prepares it under the site's chosen name. The site can then use it in <span data-df-term="chart">charts</span>, tables, and other views.</p>
     <p>A reader can still open a file temporarily with <a href="../data/dropzones.html">File dropzones</a>. That choice affects the current page. The prepared file stays as it was.</p>
-    <h3 id="refresh-data-from-terminal">Refresh CSV and JSON from the terminal</h3>
-    <p>From the DocForm checkout, run the project script with Python 3.9 or later. It refreshes every CSV and JSON wrapper configured in the site manifest. Reload the open page afterward.</p>
+    <h3 id="refresh-data-from-terminal">Refresh data from the terminal</h3>
+    <p>From the DocForm checkout, run the project script with Python 3.9 or later. It checks every data file configured in the site manifest (CSV, TSV, JSON, YAML, XML, or Markdown) and rewrites only the wrappers whose files changed. Run it again whenever you edit a data file, then reload the open page. YAML files also need the PyYAML package.</p>
     <pre><code class="language-shell">python3 docs/refresh-data.py</code></pre>
     <p>For your own site, copy <a href="../../refresh-data.py">the project launcher</a> next to your pages. Adjust the paths to DocForm's <code>tools/refresh_data.py</code> and your <code>site.js</code>. List your data sources and output paths once under <code>assets.data</code> in the manifest. After changing the data, run the launcher without arguments.</p>
 

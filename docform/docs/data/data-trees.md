@@ -1,6 +1,6 @@
 # Data trees
 
-Enable `tree` and `data-view` to render a [named source](data-blocks.md). JSON/YAML objects and lists keep their structure. CSV displays as a list of records keyed by header.
+Enable `tree` and `data-view` to render a [named source](data-blocks.md). JSON/YAML/XML objects and lists keep their structure. CSV and TSV display as a list of records keyed by header.
 
 ```html
 <div data-df-source="config" data-df-data-view="tree" data-df-tree-depth="2" data-df-max-rows="100"></div>

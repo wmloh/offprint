@@ -17,7 +17,8 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 const csv = { name: 'mine.csv', type: 'csv', text: 'epoch,train,val\n1,0.6,0.55\n2,0.7,0.61\n3,0.8,0.64\n' };
 
 test('dropzones accept only their declared types and sizes', () => {
-  assert.deepEqual(plain(dropzone.accepted('')), ['csv', 'json', 'yaml']);
+  assert.deepEqual(plain(dropzone.accepted('')), ['csv', 'tsv', 'json', 'yaml', 'xml', 'markdown']);
+  assert.deepEqual(['n.md', 'r.xml', 't.tsv'].map((n) => dropzone.fileType(n, '', ['markdown', 'xml', 'tsv'])), ['markdown', 'xml', 'tsv']);
   assert.deepEqual(plain(dropzone.accepted('.yml, json toml json')), ['yaml', 'json']);
   assert.equal(dropzone.listNames(['csv', 'json', 'yaml']), 'CSV, JSON, or YAML');
   const accept = ['csv', 'yaml'];

@@ -3440,9 +3440,9 @@
     var custom = typeof base.type === 'string' && Object.hasOwn(addons, base.type) ? addons[base.type] : null;
     if (custom && custom.mapFields) {
       var wanted = data.fields(value, custom.mapFields(mapping));
-      if (parsed && parsed.type === 'csv') {
+      if (DocForm._dataSource.isGrid(parsed)) {
         var absent = wanted.find(function (key) { return !parsed.columns.includes(key); });
-        if (absent !== undefined) throw new Error('Required CSV chart field ' + JSON.stringify(absent) + ' is missing.');
+        if (absent !== undefined) throw new Error('Required ' + parsed.type.toUpperCase() + ' chart field ' + JSON.stringify(absent) + ' is missing.');
       }
       if (value.length > maxRows) throw new Error('The chart exceeds its ' + maxRows + '-row limit.');
       var picked = filter ? filter.rows(value, parsed, values) : value;
@@ -3469,9 +3469,9 @@
       [x].concat(mapping.series.map(function (s) { return s && s.field; }));
     if (mapping.pointKey !== undefined) fields.push(mapping.pointKey);
     var keys = data.fields(value, fields, grouped);
-    if (parsed && parsed.type === 'csv') {
+    if (DocForm._dataSource.isGrid(parsed)) {
       var missing = keys.find(function (key) { return !parsed.columns.includes(key); });
-      if (missing !== undefined) throw new Error('Required CSV chart field ' + JSON.stringify(missing) + ' is missing.');
+      if (missing !== undefined) throw new Error('Required ' + parsed.type.toUpperCase() + ' chart field ' + JSON.stringify(missing) + ' is missing.');
     }
     if (value.length > maxRows && (grouped || !truncate || filter)) throw new Error('The chart exceeds its ' + maxRows + '-row limit.');
     var rows = filter ? filter.rows(value, parsed, values) : value.slice(0, maxRows);

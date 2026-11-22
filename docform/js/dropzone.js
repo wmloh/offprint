@@ -13,17 +13,18 @@
 
   var data = DocForm.data;
   var source = DocForm._dataSource;
-  var TYPES = ['csv', 'json', 'yaml'];
-  var NAMES = { csv: 'CSV', json: 'JSON', yaml: 'YAML' };
-  var EXTENSIONS = { csv: ['.csv'], json: ['.json'], yaml: ['.yaml', '.yml'] };
+  var TYPES = source.types;
+  var NAMES = source.names;
+  var EXTENSIONS = { csv: ['.csv'], tsv: ['.tsv'], json: ['.json'], yaml: ['.yaml', '.yml'], xml: ['.xml'],
+    markdown: ['.md', '.markdown'] };
   var runtime = DocForm._dataViews;
   var legacyDestinations = new WeakMap();
 
-  // "csv json" or "csv, yaml" -> types in that order; empty or missing means all three.
+  // "csv json" or "csv, yaml" -> types in that order; empty or missing means every data type.
   function accepted(value) {
     var list = String(value == null ? '' : value).split(/[\s,]+/).filter(Boolean).map(function (v) {
       var t = source.type(v.replace(/^\./, ''));
-      if (!t) DocForm._warnOnce('dropzone-accept:' + v, 'Ignoring "' + v + '" in data-df-accept; use csv, json, or yaml.');
+      if (!t) DocForm._warnOnce('dropzone-accept:' + v, 'Ignoring "' + v + '" in data-df-accept; use ' + TYPES.join(', ') + '.');
       return t;
     }).filter(function (t, i, all) { return t && all.indexOf(t) === i; });
     return list.length ? list : TYPES.slice();
@@ -71,7 +72,7 @@
     var next = {};
     Object.keys(base).forEach(function (k) { next[k] = base[k]; });
     var grid = data.table(parsed);
-    var value = parsed.type === 'csv' ? null : parsed.value;
+    var value = source.isGrid(parsed) ? null : parsed.value;
     if (grid) {
       if (grid.columns.length < 2) throw new Error('a chart needs an x column and at least one series column.');
       var cells = maxRows > 0 ? grid.cells.slice(0, maxRows) : grid.cells;

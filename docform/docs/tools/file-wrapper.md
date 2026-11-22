@@ -1,6 +1,6 @@
 # Offline data file wrappers
 
-Open [tools/assets.html](../../tools/assets.html) from disk and choose the site folder. Use a site manifest with named data descriptors. Paths resolve from the manifest. The tool detects CSV, JSON, YAML, and YML by extension. Set `type` explicitly to override detection.
+Open [tools/assets.html](../../tools/assets.html) from disk and choose the site folder. Use a site manifest with named data descriptors. Paths resolve from the manifest. The tool detects CSV, TSV, JSON, YAML/YML, XML, and Markdown (MD) by extension. Set `type` explicitly to override detection.
 
 ```json
 {
@@ -18,6 +18,6 @@ Open [tools/assets.html](../../tools/assets.html) from disk and choose the site 
 
 ## Python refresh
 
-Python 3.9+. From a project launcher, load [refresh_data.py](../../tools/refresh_data.py) and call `refresh(manifest, site_root=...)`. The site root defaults to the manifest directory. Pass it when the manifest is in a site subfolder. The function refreshes CSV and JSON entries under `assets.data`, prints each output's status, and returns a process exit code. See the [documentation site's launcher](../../../docs/refresh-data.py).
+Python 3.9+. From a project launcher, load [refresh_data.py](../../tools/refresh_data.py) and call `refresh(manifest, site_root=...)`. The site root defaults to the manifest directory. Pass it when the manifest is in a site subfolder. The function validates and refreshes every entry under `assets.data`, rewrites only outputs whose content changed, prints each output's status, and returns a process exit code. Any invalid entry stops the whole run before writing. YAML entries need PyYAML; other types use the standard library. Rerun it after editing a data file, then reload the page. See the [documentation site's launcher](../../../docs/refresh-data.py).
 
 [Data blocks and assets](../data/data-blocks.md) · [Search index](search-index.md) · [Reader dropzones](../data/dropzones.md)

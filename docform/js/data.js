@@ -1,4 +1,4 @@
-// Named CSV, JSON, YAML, and typed data sources, with table, code, and tree views.
+// Named CSV, TSV, JSON, YAML, XML, Markdown, and typed data sources, with table, code, tree, and Markdown views.
 (function (root) {
   'use strict';
 
@@ -8,12 +8,14 @@
     return;
   }
 
-  var TYPES = ['csv', 'json', 'yaml'];
-  var VIEWS = ['auto', 'table', 'code', 'tree'];
-  var NAMES = { csv: 'CSV', json: 'JSON', yaml: 'YAML' };
+  var TYPES = ['csv', 'tsv', 'json', 'yaml', 'xml', 'markdown'];
+  var VIEWS = ['auto', 'table', 'code', 'tree', 'markdown'];
+  var NAMES = { csv: 'CSV', tsv: 'TSV', json: 'JSON', yaml: 'YAML', xml: 'XML', markdown: 'Markdown' };
+  var ALIASES = { yml: 'yaml', md: 'markdown', markdown: 'markdown' };
   var MIME = {
-    'text/csv': 'csv', 'application/json': 'json', 'text/json': 'json',
-    'text/yaml': 'yaml', 'application/yaml': 'yaml', 'text/x-yaml': 'yaml', 'application/x-yaml': 'yaml'
+    'text/csv': 'csv', 'text/tab-separated-values': 'tsv', 'application/json': 'json', 'text/json': 'json',
+    'text/yaml': 'yaml', 'application/yaml': 'yaml', 'text/x-yaml': 'yaml', 'application/x-yaml': 'yaml',
+    'application/xml': 'xml', 'text/xml': 'xml', 'text/markdown': 'markdown', 'text/x-markdown': 'markdown'
   };
   var hasOwn = Object.prototype.hasOwnProperty;
   var defaults = { maxBytes: 1024 * 1024, maxRows: 5000 };
@@ -31,7 +33,7 @@
 
   function type(value) {
     var key = String(value == null ? '' : value).trim().toLowerCase();
-    if (key === 'yml') key = 'yaml';
+    if (hasOwn.call(ALIASES, key)) key = ALIASES[key];
     if (hasOwn.call(MIME, key)) key = MIME[key];
     return TYPES.indexOf(key) >= 0 ? key : null;
   }
@@ -43,8 +45,15 @@
     if (given) return given;
     var t = String(text).replace(/^﻿/, '').trimStart();
     if (/^[[{"]/.test(t)) return 'json';
+    if (t.charAt(0) === '<') return 'xml';
     var first = t.split('\n')[0];
+    if (first.indexOf('\t') >= 0 && first.indexOf(',') < 0) return 'tsv';
     return first.indexOf(',') >= 0 && !/^[^,]*:\s/.test(first) ? 'csv' : 'yaml';
+  }
+
+  // CSV and TSV parse to columns and rows; other types parse to a value.
+  function isGrid(parsed) {
+    return !!parsed && (parsed.type === 'csv' || parsed.type === 'tsv');
   }
 
   // UTF-8 bytes, which is what the converter and the size cap measure.
@@ -96,9 +105,10 @@
     return text;
   }
 
-  // RFC 4180 CSV: quoted fields may hold commas, doubled quotes, and line breaks; blank lines are skipped.
-  // Returns column names, typed rows, and the raw text of each cell.
-  function parseCsv(text) {
+  // RFC 4180 CSV, or the same rules with tabs for TSV: quoted fields may hold separators, doubled quotes, and line
+  // breaks; blank lines are skipped. Returns column names, typed rows, and the raw text of each cell.
+  function parseDelimited(text, separator) {
+    var label = separator === '\t' ? 'TSV' : 'CSV';
     var src = String(text).replace(/^﻿/, '');
     var records = [];
     var record = null;
@@ -139,12 +149,12 @@
         line += (field.match(/\n/g) || []).length;
         i = close + 1;
         var after = src[i];
-        if (after !== undefined && after !== ',' && after !== '\n' && after !== '\r') {
+        if (after !== undefined && after !== separator && after !== '\n' && after !== '\r') {
           throw DataError('unexpected text after a closing quote.', line);
         }
         continue;
       }
-      if (c === ',') {
+      if (c === separator) {
         finishField();
         i++;
         continue;
@@ -165,7 +175,7 @@
       finishField();
       records.push(record);
     }
-    if (!records.length) throw DataError('the CSV is empty.');
+    if (!records.length) throw DataError('the ' + label + ' is empty.');
     var header = records[0];
     var columns = header.cells.map(function (name, k) { return name.trim() || 'Column ' + (k + 1); });
     var rows = [];
@@ -222,15 +232,122 @@
     return docs.length ? docs[0] : null;
   }
 
-  // { type, value } for JSON and YAML, or { type, columns, rows, cells } for CSV. Throws a DataError.
+  var XML_NAME = '[A-Za-z_:\\u00C0-\\uFFFF][\\w.:\\u00B7\\u00C0-\\uFFFF-]*';
+  var XML_START = new RegExp('<(' + XML_NAME + ')((?:\\s+' + XML_NAME + '\\s*=\\s*(?:"[^"<]*"|\'[^\'<]*\'))*)\\s*(/?)>', 'y');
+  var XML_END = new RegExp('</(' + XML_NAME + ')\\s*>', 'y');
+  var XML_ATTR = new RegExp('(' + XML_NAME + ')\\s*=\\s*(?:"([^"<]*)"|\'([^\'<]*)\')', 'g');
+  var XML_ENTITIES = { lt: '<', gt: '>', amp: '&', quot: '"', apos: "'" };
+
+  // Text with the predefined entities and character references replaced; other entities are errors.
+  function xmlText(text, line) {
+    return text.replace(/&([^;&<\s]*);?/g, function (all, ref) {
+      var code = /^#x([\da-f]+)$/i.exec(ref) ? parseInt(ref.slice(2), 16) : /^#\d+$/.test(ref) ? +ref.slice(1) : null;
+      if (all.slice(-1) === ';' && code !== null && code > 0 && code <= 0x10ffff) return String.fromCodePoint(code);
+      if (all.slice(-1) === ';' && hasOwn.call(XML_ENTITIES, ref)) return XML_ENTITIES[ref];
+      throw DataError('"' + all + '" is not a supported entity. Use &amp;, &lt;, &gt;, &quot;, &apos;, or &#…;.', line);
+    });
+  }
+
+  function setKey(out, key, value) {
+    Object.defineProperty(out, key, { value: value, enumerable: true, writable: true, configurable: true });
+  }
+
+  // An element without attributes or child elements becomes its typed text, or null when empty. Otherwise an
+  // object holds "@name" attributes, child elements by tag (repeated tags become arrays), and any "#text".
+  function xmlValue(node) {
+    var text = node.text.trim();
+    if (!node.attrs.length && !node.children.length) return text ? typed(text) : null;
+    var out = {};
+    node.attrs.forEach(function (attr) { setKey(out, '@' + attr[0], attr[1] === '' ? '' : typed(attr[1])); });
+    node.children.forEach(function (child) {
+      var value = xmlValue(child);
+      if (!hasOwn.call(out, child.name)) setKey(out, child.name, value);
+      else if (node.repeated.has(child.name)) out[child.name].push(value);
+      else { node.repeated.add(child.name); setKey(out, child.name, [out[child.name], value]); }
+    });
+    if (text) setKey(out, '#text', typed(text));
+    return out;
+  }
+
+  // One well-formed XML document without a DOCTYPE, read as { rootTag: value }.
+  function parseXml(text) {
+    var src = String(text).replace(/^\uFEFF/, '');
+    var stack = [];
+    var top = null;
+    var i = 0;
+    var line = function (at) { return src.slice(0, at).split('\n').length; };
+    var fail = function (message, at) { throw DataError(message, line(at === undefined ? i : at)); };
+    var close = function (end, at) {
+      if (end < 0) fail('a ' + at + ' is not closed.');
+      return end;
+    };
+    while (i < src.length) {
+      var lt = src.indexOf('<', i);
+      var chunk = src.slice(i, lt < 0 ? src.length : lt);
+      if (chunk) {
+        if (stack.length) stack[stack.length - 1].text += xmlText(chunk, line(i));
+        else if (chunk.trim()) fail('text appears outside the root element.');
+      }
+      if (lt < 0) break;
+      i = lt;
+      if (src.startsWith('<!--', i)) { i = close(src.indexOf('-->', i + 4), 'comment') + 3; continue; }
+      if (src.startsWith('<?', i)) { i = close(src.indexOf('?>', i + 2), 'processing instruction') + 2; continue; }
+      if (src.startsWith('<![CDATA[', i)) {
+        if (!stack.length) fail('CDATA appears outside the root element.');
+        var end = close(src.indexOf(']]>', i), 'CDATA section');
+        stack[stack.length - 1].text += src.slice(i + 9, end);
+        i = end + 3;
+        continue;
+      }
+      if (src.startsWith('<!', i)) fail('DOCTYPE and other declarations are not supported; remove them.');
+      if (src[i + 1] === '/') {
+        XML_END.lastIndex = i;
+        var closing = XML_END.exec(src);
+        if (!closing) fail('a closing tag is malformed.');
+        var open = stack.pop();
+        if (!open || open.name !== closing[1]) {
+          fail('</' + closing[1] + '> does not match ' + (open ? '<' + open.name + '>.' : 'an open element.'));
+        }
+        if (stack.length) stack[stack.length - 1].children.push(open);
+        i += closing[0].length;
+        continue;
+      }
+      XML_START.lastIndex = i;
+      var tag = XML_START.exec(src);
+      if (!tag) fail('a tag is malformed.');
+      if (!stack.length && top) fail('the XML has more than one root element.');
+      var node = { name: tag[1], attrs: [], children: [], text: '', repeated: new Set() };
+      var seen = new Set();
+      var attr;
+      XML_ATTR.lastIndex = 0;
+      while ((attr = XML_ATTR.exec(tag[2]))) {
+        if (seen.has(attr[1])) fail('the attribute "' + attr[1] + '" appears twice.');
+        seen.add(attr[1]);
+        node.attrs.push([attr[1], xmlText(attr[2] ?? attr[3], line(i))]);
+      }
+      if (!stack.length) top = node;
+      if (tag[3]) { if (stack.length) stack[stack.length - 1].children.push(node); }
+      else stack.push(node);
+      i += tag[0].length;
+    }
+    if (stack.length) fail('<' + stack[stack.length - 1].name + '> is not closed.');
+    if (!top) throw DataError('the XML has no root element.');
+    var out = {};
+    setKey(out, top.name, xmlValue(top));
+    return out;
+  }
+
+  // { type, columns, rows, cells } for CSV and TSV, else { type, value }. Markdown keeps its text as the value.
+  // Throws a DataError.
   function parse(text, kind) {
     var key = type(kind) || sniff(text);
-    if (key === 'csv') {
-      var csv = parseCsv(text);
-      csv.type = 'csv';
-      return csv;
+    if (key === 'csv' || key === 'tsv') {
+      var grid = parseDelimited(text, key === 'tsv' ? '\t' : ',');
+      grid.type = key;
+      return grid;
     }
-    return { type: key, value: key === 'json' ? parseJson(text) : parseYaml(text) };
+    if (key === 'markdown') return { type: key, value: String(text).replace(/^\uFEFF/, '') };
+    return { type: key, value: key === 'json' ? parseJson(text) : key === 'xml' ? parseXml(text) : parseYaml(text) };
   }
 
   function scalar(v) {
@@ -245,11 +362,11 @@
     return v === null || v === undefined ? '' : String(v);
   }
 
-  // Columns and cell text when the data is tabular: CSV, or a non-empty array of objects with only scalar values.
+  // Columns and cell text when the data is tabular: CSV, TSV, or a non-empty array of objects with only scalar values.
   // Object keys become columns in first-seen order; missing keys give empty cells.
   function table(parsed) {
     if (!parsed) return null;
-    if (parsed.type === 'csv') return { columns: parsed.columns.slice(), cells: parsed.cells };
+    if (isGrid(parsed)) return { columns: parsed.columns.slice(), cells: parsed.cells };
     var list = parsed.value;
     if (!Array.isArray(list) || !list.length) return null;
     var columns = [];
@@ -271,9 +388,9 @@
     };
   }
 
-  // The parsed value, with CSV rows as objects keyed by column name.
+  // The parsed value, with CSV and TSV rows as objects keyed by column name.
   function valueOf(parsed) {
-    if (!parsed || parsed.type !== 'csv') return parsed ? parsed.value : null;
+    if (!isGrid(parsed)) return parsed ? parsed.value : null;
     return parsed.rows.map(function (row) {
       var item = {};
       parsed.columns.forEach(function (c, k) {
@@ -319,9 +436,11 @@
     var parsed;
     if (kind === 'value') parsed = { type: kind, value: copyValue(input.value) };
     else if (TYPES.includes(kind) && typeof text === 'string') parsed = parse(text, kind);
-    else throw DataError('Supply {type, text} for CSV, JSON, or YAML, or {type: "value", value}.');
-    if (kind === 'csv' && new Set(parsed.columns).size !== parsed.columns.length) throw DataError('CSV source fields must be unique.');
-    if (kind === 'json' || kind === 'yaml') parsed.value = copyValue(parsed.value);
+    else throw DataError('Supply {type, text} for CSV, TSV, JSON, YAML, XML, or Markdown, or {type: "value", value}.');
+    if (isGrid(parsed) && new Set(parsed.columns).size !== parsed.columns.length) {
+      throw DataError(NAMES[kind] + ' source fields must be unique.');
+    }
+    if (kind === 'json' || kind === 'yaml' || kind === 'xml') parsed.value = copyValue(parsed.value);
     var value = valueOf(parsed);
     var display = text === null ? JSON.stringify(value, null, 2) : text;
     return {
@@ -408,7 +527,7 @@
     if (entry && typeof entry.text === 'string') {
       var kind = type(entry.type);
       if (entry.type != null && !kind) {
-        DocForm._warnOnce('data-type:' + entry.type, 'Unknown data type "' + entry.type + '"; use csv, json, or yaml.');
+        DocForm._warnOnce('data-type:' + entry.type, 'Unknown data type "' + entry.type + '"; use csv, tsv, json, yaml, xml, or markdown.');
       }
       return define(name, { type: kind || sniff(entry.text, name), text: entry.text });
     }
@@ -456,8 +575,8 @@
       throw DataError(at + ' needs nonempty field names for the interval bounds and optional count.');
     }
     var names = fields.map(function (field) { return JSON.stringify(field); }).join(', ');
-    if (parsed && parsed.type === 'csv' && fields.some(function (field) { return !parsed.columns.includes(field); })) {
-      throw DataError(at + ' needs CSV fields ' + names + '.');
+    if (isGrid(parsed) && fields.some(function (field) { return !parsed.columns.includes(field); })) {
+      throw DataError(at + ' needs ' + NAMES[parsed.type] + ' fields ' + names + '.');
     }
     var intervals = new Map();
     records.forEach(function (record, i) {
@@ -517,8 +636,8 @@
       scope: scope,
       rows: function (records, parsed, values) {
         mappedFields(records, required, true);
-        if (parsed && parsed.type === 'csv' && required.some(function (key) { return !parsed.columns.includes(key); })) {
-          throw DataError('A required CSV filter field is missing.');
+        if (isGrid(parsed) && required.some(function (key) { return !parsed.columns.includes(key); })) {
+          throw DataError('A required ' + NAMES[parsed.type] + ' filter field is missing.');
         }
         if (scope && values === undefined) values = scope.snapshot();
         return records.filter(function (record) {
@@ -572,11 +691,15 @@
     };
   }
 
-  // The view to draw: "table", "code", or "tree". A requested table falls back to code when the data is not tabular.
+  // The view to draw: "table", "code", "tree", or "markdown". Auto shows Markdown rendered. A requested table falls
+  // back to code when the data is not tabular, and a requested Markdown view falls back for other types.
   function view(parsed, requested) {
     var want = String(requested || 'auto').trim().toLowerCase();
-    var tabular = !!table(parsed);
+    var markdown = !!parsed && parsed.type === 'markdown';
     if (want === 'code' || want === 'tree') return want;
+    if (markdown && (want === 'auto' || want === 'markdown')) return 'markdown';
+    if (want === 'markdown') DocForm._warnOnce('data-view-markdown', 'Only Markdown data has a rendered view; showing the default view instead.');
+    var tabular = !!table(parsed);
     if (want === 'table' && !tabular) {
       DocForm._warnOnce('data-view-table', 'This data is not a flat list of records, so it is shown as code instead of a table.');
     }
@@ -616,7 +739,7 @@
     var mode = el.getAttribute('data-df-data-view');
     if (mode === null) return fallback;
     if (valid(mode)) return mode;
-    component.issue(feature, el, 'Unknown data view "' + mode + '".', 'Use auto, table, code, or tree.');
+    component.issue(feature, el, 'Unknown data view "' + mode + '".', 'Use auto, table, code, tree, or markdown.');
     return fallback;
   }
 
@@ -809,7 +932,14 @@
       runtime.issue('data-view', el, 'Enable the tree feature for tree views. Showing code.');
       shown = 'code';
     }
-    if (shown === 'tree') {
+    if (shown === 'markdown' && !DocForm._markdown) {
+      runtime.issue('data-view', el, 'Enable the markdown feature for rendered Markdown. Showing code.');
+      shown = 'code';
+    }
+    if (shown === 'markdown') {
+      el.appendChild(DocForm._markdown.render(valueOf(parsed)));
+      recordView(state, { view: 'markdown' });
+    } else if (shown === 'tree') {
       el.appendChild(DocForm._tree.build(valueOf(parsed), {
         label: 'Data ' + label, open: state.open, maxItems: state.limits.maxRows, anchor: state.anchor
       }));
@@ -843,8 +973,8 @@
     if (!required.length) return null;
     var keys = mappedFields(value, required);
     if (new Set(keys).size !== keys.length) throw DataError('Table fields must be unique.');
-    if (parsed && parsed.type === 'csv' && keys.some(function (key) { return !parsed.columns.includes(key); })) {
-      throw DataError('A required CSV field is missing.');
+    if (isGrid(parsed) && keys.some(function (key) { return !parsed.columns.includes(key); })) {
+      throw DataError('A required ' + NAMES[parsed.type] + ' field is missing.');
     }
     return columns ? columns.map(function (column, i) { return { field: keys[i], label: column.label }; }) : null;
   }
@@ -869,7 +999,7 @@
 
     function prepare(input, value) {
       var mapping = tableMapping(value, options.mapping, template, input.parsed);
-      var grid = mapping && input.parsed.type !== 'csv' ? {
+      var grid = mapping && !isGrid(input.parsed) ? {
         columns: mapping.map(function (column) { return column.field; }),
         cells: value.map(function (record) {
           return mapping.map(function (column) { return cellText(record[column.field]); });
@@ -963,7 +1093,8 @@
     authoredRevision: function (name) { return sources.get(keyOf(name))?.authoredRevision() ?? null; },
     binding: binding, options: optionsFor, fields: mappedFields, key: keyOf, input: readInput,
     columns: tableMapping, interval: mappedInterval, transform: transformValue, filter: recordFilter,
-    defaults: defaults, limits: limits, type: type, size: size, formatSize: formatSize,
+    defaults: defaults, limits: limits, type: type, types: TYPES.slice(), names: NAMES, isGrid: isGrid,
+    size: size, formatSize: formatSize,
     sniff: sniff, parseSize: parseSize, dedent: dedent, view: view,
     fileDisplay: function (el, caps) {
       return { view: viewMode('dropzone', el), open: treeDepth('dropzone', el), limits: caps };
@@ -986,7 +1117,7 @@
       var kind = el.tagName === 'PRE' ? (declared === null ? sniff(text, name) : type(declared)) :
         MIME[(el.getAttribute('type') || '').trim().toLowerCase()];
       if (kind) define(name, { type: kind, text: text });
-      else runtime.issue('data', el, 'Use a CSV, JSON, or YAML data MIME type.');
+      else runtime.issue('data', el, 'Use a CSV, TSV, JSON, YAML, XML, or Markdown data MIME type.');
     });
   }
 

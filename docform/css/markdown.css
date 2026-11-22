@@ -1,0 +1,50 @@
+/* Rendered Markdown data views from markdown.js: heading-role lines, quotes, rules, tables, and task items. */
+.df-markdown > :first-child {
+  margin-top: 0;
+}
+
+.df-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.df-md-heading {
+  margin-block: 1.2em 0.4em;
+  color: var(--df-h4);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.df-md-h1 { font-size: 1.35em; color: var(--df-h2); }
+.df-md-h2 { font-size: 1.2em; color: var(--df-h3); }
+.df-md-h3 { font-size: 1.08em; }
+.df-md-h4,
+.df-md-h5,
+.df-md-h6 { font-size: 1em; }
+.df-md-h6 { color: var(--df-text-muted); }
+
+.df-markdown blockquote {
+  margin: 0.75em 0;
+  padding-inline-start: var(--df-space-4);
+  border-inline-start: 3px solid var(--df-border-strong);
+  color: var(--df-text-muted);
+}
+
+.df-markdown hr {
+  margin-block: 1.25em;
+  border: 0;
+  border-top: 1px solid var(--df-border-strong);
+}
+
+.df-markdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+.df-md-task {
+  list-style: none;
+}
+
+.df-md-task > input {
+  margin: 0 0.45em 0 -1.35em;
+  vertical-align: -0.1em;
+}

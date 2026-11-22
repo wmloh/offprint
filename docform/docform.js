@@ -35,6 +35,7 @@
     code: { needs: ['base'], css: ['code'], script: 'code', api: '_code' },
     'editable-text': { needs: ['base'], css: ['editable-text'], script: 'editable-text', api: '_editableText' },
     tree: { needs: ['base'], css: ['tree'], script: 'tree', api: '_tree' },
+    markdown: { needs: ['base'], css: ['markdown'], script: 'markdown', api: '_markdown' },
     data: { vendor: ['vendor/js-yaml/js-yaml.min.js', 'jsyaml'], script: 'data', api: 'data' },
     'data-view': { needs: ['base', 'data'], css: ['data'] },
     chart: { needs: ['base', 'choices'], css: ['chart'], script: 'chart', api: '_chart' },

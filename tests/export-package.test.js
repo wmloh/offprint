@@ -616,7 +616,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.match(liveHTML, /class="df-pipe-link" href="#flow-2">Next block/);
   assert.ok(!interactive.issues.some(issue => issue.target === '#flow-2'));
   assert.match(liveHTML, /data-df-key="flow-2"><img src="data:image\/png;base64,ZGV0YWlsIGltYWdl"[^>]*>.*?#page-2\/caf%C3%A9%2Fmore[^>]*>Read the pipeline detail/);
-  assert.match(liveHTML, /script-src 'nonce-df-export-nonce'/);
+  assert.match(liveHTML, /script-src 'nonce-df-export-nonce' 'unsafe-eval'/);
   assert.match(liveHTML, /href="#page-2\/caf%C3%A9%2Fmore"/);
   assert.match(liveHTML, /<section id="alternate-card"><figure><script data-df-animation="" type="application\/json">\{"steps":/);
   assert.match(liveHTML, /<template id="term-detail"><img src="data:image\/png;base64,ZGV0YWlsIGltYWdl"/);
@@ -660,7 +660,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const scriptExport = await prepared.build(selected, { mode: 'interactive', includeScripts: scriptIDs });
   const scriptHTML = await scriptExport.blob.text();
   const savedScripts = readBundle(scriptHTML);
-  assert.match(scriptHTML, /script-src 'unsafe-inline' blob:; frame-src 'none'/);
+  assert.match(scriptHTML, /script-src 'unsafe-inline' 'unsafe-eval' blob:; frame-src 'none'/);
   assert.doesNotThrow(() => new vm.Script('(' + /<script>\((function reader.*?)<\/script>/s.exec(scriptHTML)[1]));
   assert.equal(savedScripts.shared.filter(value => value === authorCode).length, 1);
   assert.equal(savedScripts.shared.filter(value => value === 'author-only resource').length, 1);

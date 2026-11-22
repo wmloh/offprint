@@ -44,6 +44,11 @@
   list-style: none;
 }
 
+/* The checkbox replaces the styled list dot from base.css. */
+.df-page .df-markdown li.df-md-task::before {
+  content: none;
+}
+
 .df-md-task > input {
   margin: 0 0.45em 0 -1.35em;
   vertical-align: -0.1em;

@@ -454,7 +454,7 @@
     frame.style.cssText = 'position:fixed;inset:0;width:' + root.innerWidth +
       'px;height:' + root.innerHeight + 'px;border:0;opacity:0;pointer-events:none;z-index:-1';
     frame.srcdoc = '<!doctype html><meta http-equiv="Content-Security-Policy" content="' +
-      "default-src 'none'; script-src 'nonce-" + nonce + "'; style-src 'unsafe-inline' file: blob: data:; " +
+      "default-src 'none'; script-src 'nonce-" + nonce + "' 'unsafe-eval'; style-src 'unsafe-inline' file: blob: data:; " +
       'img-src file: blob: data:; font-src file: blob: data:; media-src file: blob: data:; form-action \'none\'">';
     var issues = [];
     try {

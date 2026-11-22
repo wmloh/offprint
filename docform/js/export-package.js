@@ -19,14 +19,19 @@
     'border-radius:var(--df-radius-lg,.5rem);padding:.35rem .6rem}' +
     '.df-reader-step-controls button{cursor:pointer}.df-reader-step-controls button[aria-disabled=true]{opacity:.55;cursor:default}' +
     '.df-reader-step-controls select{min-width:0;flex:1 1 10rem}' +
-    ':root[data-df-theme=light]{color-scheme:light}:root[data-df-theme=dark]{color-scheme:dark}';
+    ':root[data-df-theme=light]{color-scheme:light}:root[data-df-theme=dark]{color-scheme:dark}' +
+    // An invisible stand-in for the shell's section rail, so sections.js keeps its lines clear of it.
+    '.df-section-rail[data-export-rail-space]{display:none!important}' +
+    '[data-export-rail] .df-section-rail[data-export-rail-space]{display:block!important;position:fixed;top:0;left:0;' +
+    'width:var(--export-rail-right);height:0;margin:0;padding:0;border:0;visibility:hidden;pointer-events:none}';
   var readerCSS = `
     :root{color-scheme:light dark;--nav-width:260px;--nav-slot:0px;--bar:3.75rem;
       --line:light-dark(#d9dde2,#41464e);--accent:light-dark(#245f9f,#9bc8ff);
       --wash:color-mix(in srgb,var(--accent) 12%,transparent)}
     :root[data-df-theme=light]{color-scheme:light}:root[data-df-theme=dark]{color-scheme:dark}
     body{margin:0;font:1rem system-ui;background:Canvas;color:CanvasText}
-    #export-page{box-sizing:border-box;margin-left:var(--nav-slot);height:100dvh;padding-top:var(--bar)}
+    #export-page{box-sizing:border-box;margin-left:var(--nav-slot);height:100dvh;padding-top:var(--bar);
+      transition:margin-left .25s ease}
     iframe{display:block;width:100%;height:100%;border:0}
     #export-page:has(#export-status:not([hidden])){display:grid;grid-template-rows:auto minmax(0,1fr)}
     #export-status{margin:0;padding:.45rem 1rem;background:var(--wash);font-size:.88rem}
@@ -35,7 +40,13 @@
       padding:var(--df-space-4) var(--df-space-3);overflow:auto;overscroll-behavior:contain;
       color:var(--df-text-muted);font:15px/var(--df-line-height) var(--df-font);
       -webkit-font-smoothing:antialiased;scrollbar-width:thin;scrollbar-color:transparent transparent;
-      transition:scrollbar-color .2s ease}
+      transition:transform .25s ease,visibility 0s,scrollbar-color .2s ease}
+    .df-nav-hidden #export-sidebar{transform:translateX(-100%);visibility:hidden;
+      transition:transform .25s ease,visibility 0s linear .25s,scrollbar-color .2s ease}
+    @media (max-width:860px),(any-hover:none){
+      #export-sidebar{width:min(calc(var(--nav-width) + 40px),85vw);transition:transform .2s ease,visibility 0s}
+      .df-nav-hidden #export-sidebar{transition:transform .2s ease,visibility 0s linear .2s}}
+    :is([data-nav-init],[data-nav-resizing]) :is(#export-sidebar,#export-page,#export-controls){transition:none!important}
     #export-sidebar:is(:hover,:focus-within){scrollbar-color:var(--df-border-strong) transparent}
     #export-sidebar :focus-visible{outline:2px solid var(--df-focus);outline-offset:-2px}
     #export-contents summary{list-style:none;cursor:pointer}
@@ -52,9 +63,13 @@
     #export-edge{position:fixed;z-index:2;inset:var(--bar) auto 0 0;width:8px}
     #export-controls{z-index:5;left:calc(var(--nav-slot) + var(--df-space-3))}
     #export-controls :focus-visible{outline:2px solid var(--df-focus);outline-offset:2px}
-    [data-zoom] #export-controls{visibility:hidden}
+    [data-zoom] :is(#export-controls,.df-section-rail){visibility:hidden}
+    /* base.css is not loaded in the shell: give the rail its border-box sizing and page typography. */
+    .df-section-rail,.df-section-rail *,.df-section-rail *::before,.df-section-rail *::after{box-sizing:border-box}
+    .df-section-rail{color:var(--df-text);font:var(--df-font-size)/var(--df-line-height) var(--df-font);
+      -webkit-font-smoothing:antialiased}
     #export-shade{position:fixed;z-index:2;inset:0;background:rgba(0,0,0,.3)}
-    [data-drawer] #export-sidebar{width:min(calc(var(--nav-width) + 40px),85vw);box-shadow:0 0 24px rgba(0,0,0,.18)}
+    [data-drawer] #export-sidebar{box-shadow:0 0 24px rgba(0,0,0,.18)}
     [data-drawer] :is(#export-pill,#export-pager){visibility:hidden}
     #export-close{font:inherit;color:inherit;background:var(--df-bg);
       border:1px solid var(--df-border-strong);border-radius:var(--df-radius-lg);
@@ -736,7 +751,7 @@
     live.document.querySelectorAll('.df-sidebar,.df-nav-toggle,.df-controls,.df-pager,[data-df-export-control]')
       .forEach(function (node) { node.remove(); });
     live.document.documentElement.setAttribute('data-df-export-replay', '');
-    live.document.querySelector('meta[http-equiv]').content = csp + "; script-src 'nonce-df-export-nonce'";
+    live.document.querySelector('meta[http-equiv]').content = csp + "; script-src 'nonce-df-export-nonce' 'unsafe-eval'";
     for (var declaration of source.head.querySelectorAll(declarations + ':not([data-df-site])')) {
       // Import only the inert text and the data attributes used by DocForm.
       var script = create(live.document, 'script', declaration.textContent);
@@ -848,7 +863,7 @@
     meta(doc, 'charset', 'utf-8');
     meta(doc, 'name', 'viewport').content = 'width=device-width,initial-scale=1';
     meta(doc, 'http-equiv', 'Content-Security-Policy').content =
-      "object-src 'none'; base-uri 'none'; form-action 'none'; script-src 'unsafe-inline'" +
+      "object-src 'none'; base-uri 'none'; form-action 'none'; script-src 'unsafe-inline' 'unsafe-eval'" +
       (withAuthor ? " blob:; frame-src 'none'" : '');
     var styles = DF._exportLibrary.styles;
     doc.head.append(create(doc, 'style', [styles['css/tokens.css'], styles['css/nav.css'], styles['css/controls.css'],

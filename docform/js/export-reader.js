@@ -148,6 +148,7 @@
     var shade = document.querySelector('#export-shade');
     var compact = matchMedia('(max-width: 860px), (any-hover: none)');
     var mode = 'shown';
+    var navOpen = false;
     var drawer = false;
     var peek = false;
     var width = 260;
@@ -164,11 +165,122 @@
     var jumpOrigin;
     var zoomed = false;
     var zoomWatch;
+    var railActive = null;
+    var railSeen = false;
+    var railRight;
+    var railSpace;
+    var lastRemote;
+    var content;
 
     function make(tag, text) {
       var node = document.createElement(tag);
       if (text) node.textContent = text;
       return node;
+    }
+
+    // The numbered subsection rail shown in the left margin while the navigation panel is closed, as in nav.js.
+    html.classList.add('df-has-controls');
+    html.setAttribute('data-nav-init', '');
+    var rail = make('nav');
+    rail.className = 'df-section-rail';
+    rail.hidden = true;
+    rail.setAttribute('aria-label', 'Subsections on this page');
+    var railList = make('ol');
+    railList.className = 'df-section-list';
+    rail.append(railList);
+    document.body.append(rail);
+
+    function railItem(hash, label) {
+      var item = make('li');
+      var link = make('a');
+      var number = railList.children.length + 1;
+      link.className = 'df-section-link';
+      link.href = hash;
+      link.setAttribute('data-export-destination', '');
+      link.setAttribute('aria-label', number + '. ' + label);
+      var ring = make('span');
+      ring.className = 'df-section-ring';
+      ring.setAttribute('aria-hidden', 'true');
+      ring.innerHTML = '<svg viewBox="0 0 32 32" width="32" height="32" focusable="false">' +
+        '<circle class="df-section-track" cx="16" cy="16" r="13.5"/>' +
+        '<circle class="df-section-progress" cx="16" cy="16" r="13.5" pathLength="100" ' +
+        'stroke-dasharray="100" stroke-dashoffset="100" transform="rotate(-90 16 16)"/></svg>';
+      var digits = make('span', String(number));
+      digits.className = 'df-section-number';
+      ring.append(digits);
+      var name = make('span', label);
+      name.className = 'df-section-name';
+      link.append(ring, name);
+      item.append(link);
+      railList.append(item);
+      return { item: item, link: link, arc: ring.querySelector('.df-section-progress'), pct: 0 };
+    }
+
+    // tops holds each rail heading's viewport top, or null while it is not rendered.
+    function updateRail(tops, height, remaining, end, bottom) {
+      var entries = sections.filter(function (section) { return section.rail; });
+      var shown = [];
+      var shownTops = [];
+      entries.forEach(function (section, index) {
+        section.rail.item.hidden = tops[index] === null;
+        if (tops[index] !== null) { shown.push(section.rail); shownTops.push(tops[index]); }
+      });
+      // Near the end, follow the visible text below the usual reading line.
+      var line = remaining === null ? height * .3 : Math.max(height * .3, height - remaining);
+      var index = bottom ? shownTops.length - 1 : -1;
+      if (!bottom) for (var at = 0; at < shownTops.length && shownTops[at] <= line; at++) index = at;
+      var fraction = 0;
+      if (index >= 0) {
+        var start = shownTops[index];
+        var limit = index + 1 < shownTops.length ? shownTops[index + 1] : end;
+        fraction = bottom ? 1 : limit > start ? Math.min(1, Math.max(0, (line - start) / (limit - start))) : 0;
+      }
+      var active = shown[index] || null;
+      if (active !== railActive) {
+        railActive?.link.removeAttribute('aria-current');
+        active?.link.setAttribute('aria-current', 'location');
+      }
+      var displayed = railList.clientHeight > 0;
+      if (active && displayed && (active !== railActive || !railSeen) && !rail.matches(':hover, :focus-within') &&
+          railList.scrollHeight > railList.clientHeight) {
+        var r = active.link.getBoundingClientRect();
+        var b = railList.getBoundingClientRect();
+        if (r.top < b.top + 48) railList.scrollTop -= b.top + 48 - r.top;
+        else if (r.bottom > b.bottom - 48) railList.scrollTop += r.bottom - b.bottom + 48;
+      }
+      railActive = active;
+      railSeen = displayed;
+      shown.forEach(function (entry, at) {
+        var pct = at < index ? 100 : at === index ? Math.round(100 * fraction) : 0;
+        if (entry.pct === pct) return;
+        entry.pct = pct;
+        entry.arc.setAttribute('stroke-dashoffset', String(100 - pct));
+      });
+    }
+
+    // The page scrollbar stays transparent until the pointer comes within 40px of it, as with controls.js.
+    function nearScrollbar(doc) {
+      var root = doc.documentElement;
+      root.classList.add('df-scrollbar-auto');
+      doc.addEventListener('pointermove', function (event) {
+        root.classList.toggle('df-scrollbar-near', event.clientX >= (root.clientWidth || doc.defaultView.innerWidth) - 40);
+      }, { passive: true });
+      root.addEventListener('pointerleave', function () { root.classList.remove('df-scrollbar-near'); });
+    }
+
+    // Tells the page where the rail's edge falls, so its section lines stay clear of it.
+    function syncRail() {
+      var right = rail.hidden || !rail.getClientRects().length ? null : Math.ceil(rail.getBoundingClientRect().right);
+      if (!(right > 0)) right = null;
+      if (right === railRight) return;
+      railRight = right;
+      if (remote) remote.send({ type: 'rail', value: right });
+      else if (view) {
+        var root = view.document.documentElement;
+        root.toggleAttribute('data-export-rail', right !== null);
+        if (right !== null) root.style.setProperty('--export-rail-right', right + 'px');
+        view.dispatchEvent(new view.Event('resize'));
+      }
     }
 
     var bank = make('div');
@@ -234,7 +346,9 @@
       var mobile = compact.matches;
       var shown = mobile ? drawer : mode === 'shown' || (mode === 'auto' && peek);
       var modal = mobile && drawer;
-      sidebar.hidden = !shown;
+      navOpen = shown;
+      sidebar.hidden = false;
+      html.classList.toggle('df-nav-hidden', !shown);
       close.hidden = shade.hidden = !modal;
       host.inert = modal;
       pill.inert = pager.inert = modal || zoomed;
@@ -257,6 +371,8 @@
         navButton.innerHTML = navIcons[navMode];
       }
       navName(mobile ? 'Open navigation' : navLabels[mode]);
+      syncRail();
+      if (lastRemote) updateRemote(lastRemote);
       schedule();
     }
 
@@ -278,7 +394,7 @@
         mode = { shown: 'hidden', hidden: 'auto', auto: 'shown' }[mode];
         peek = false;
         layout();
-        if (returnFocus && sidebar.hidden) navButton.focus();
+        if (returnFocus && !navOpen) navButton.focus();
       }
     }
 
@@ -311,11 +427,15 @@
     }
     separator.addEventListener('pointerdown', function (event) {
       separator.setPointerCapture(event.pointerId);
+      html.setAttribute('data-nav-resizing', '');
     });
     separator.addEventListener('pointermove', function (event) {
       if (separator.hasPointerCapture(event.pointerId)) setWidth(event.clientX);
     });
-    separator.addEventListener('lostpointercapture', stopPeeking);
+    separator.addEventListener('lostpointercapture', function () {
+      html.removeAttribute('data-nav-resizing');
+      stopPeeking();
+    });
     separator.addEventListener('dblclick', function () { setWidth(260); });
     separator.addEventListener('keydown', function (event) {
       var values = { ArrowLeft: width - 16, ArrowRight: width + 16, Home: 200, End: 480 };
@@ -328,7 +448,7 @@
       var closeFocused = document.activeElement === close;
       drawer = peek = false;
       layout();
-      if (closeFocused || restore && (sidebar.hidden || document.activeElement === separator)) navButton.focus();
+      if (closeFocused || restore && (!navOpen || document.activeElement === separator)) navButton.focus();
     });
     window.addEventListener('resize', function () { if (!compact.matches) setWidth(width); });
     close.addEventListener('click', function () { closeDrawer(true); });
@@ -401,6 +521,9 @@
           entry.line.style.height = Math.max(0, entry.end - entry.top) + 'px';
           return entry.line;
         }));
+        var space = doc.querySelector('[data-export-rail-space]');
+        page.classList.toggle('df-sections-covered', !!marks.length && !!space?.getClientRects().length &&
+          space.getBoundingClientRect().right > pageRect.left + parseFloat(marks[0].line.style.left) - 8);
       };
     }
 
@@ -445,6 +568,10 @@
       });
       if (bottom) sectionAtCentre = lastVisible;
       activateSection(sectionAtTop);
+      var end = content.getBoundingClientRect().bottom - (parseFloat(view.getComputedStyle(content).paddingBottom) || 0);
+      updateRail(sections.filter(function (section) { return section.rail; }).map(function (section) {
+        return visible(section) ? section.node.getBoundingClientRect().top : null;
+      }), height, max > 0 ? max - scroller.scrollTop : null, end, bottom);
       var index = sections.indexOf(sectionAtCentre);
       blocks.forEach(function (block) {
         var dim = false;
@@ -466,6 +593,7 @@
         return top !== null && message.readings[index] !== null && top !== message.readings[index];
       })) remote.anchor = null;
       remote.readings = message.readings;
+      lastRemote = message;
       var activeSection;
       sections.forEach(function (section, index) {
         if (!section.item) return;
@@ -474,13 +602,17 @@
         if (top !== null && (message.bottom || top <= message.height * .25)) activeSection = section;
       });
       activateSection(activeSection);
+      updateRail(sections.flatMap(function (section, index) {
+        return section.rail ? [message.readings[index]] : [];
+      }), message.height, message.remaining, message.end, message.bottom);
       var percent = Math.max(0, Math.min(100, message.percent));
       updateProgress(percent);
     }
 
     function addSection(id, label, level, page) {
       var hash = '#' + page + '/' + encodeURIComponent(id);
-      if (level !== 1) return { hash: hash };
+      var rail = level < 3 ? railItem(hash, label || id) : null;
+      if (level !== 1) return { hash: hash, rail: rail };
       var item = make('li');
       item.className = 'df-outline-item';
       var link = make('a', label || id);
@@ -489,7 +621,7 @@
       link.setAttribute('data-export-destination', '');
       item.append(link);
       outline?.append(item);
-      return { hash: hash, item: item, link: link };
+      return { hash: hash, item: item, link: link, rail: rail };
     }
 
     function jump(direction) {
@@ -568,11 +700,19 @@
     var observer = new ResizeObserver(refreshLayout);
     setWidth(width);
     layout();
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { html.removeAttribute('data-nav-init'); });
+    });
 
     return {
       follow: function (restoreFocus) { hideTip?.(); closeDrawer(restoreFocus); },
       page: function (page, adjacent) {
-        view = remote = drawLines = null;
+        view = remote = drawLines = lastRemote = content = railSpace = null;
+        railList.replaceChildren();
+        railRight = undefined;
+        railActive = null;
+        railSeen = false;
+        rail.hidden = true;
         zoomWatch?.disconnect();
         zoomWatch = null;
         setZoom(false);
@@ -630,6 +770,14 @@
             });
             return { node: node, first: first ?? last, last: last, title: node.matches('h1,header') || !!node.querySelector('h1') };
           });
+        content = main;
+        rail.hidden = !railList.children.length;
+        railSpace = doc.createElement('div');
+        railSpace.className = 'df-section-rail';
+        railSpace.setAttribute('data-export-rail-space', '');
+        railSpace.setAttribute('aria-hidden', 'true');
+        doc.documentElement.append(railSpace);
+        nearScrollbar(doc);
         doc.addEventListener('keydown', keys);
         view.addEventListener('scroll', schedule, { passive: true });
         view.addEventListener('resize', refreshLayout);
@@ -640,6 +788,7 @@
         zoomWatch.observe(doc.documentElement, { attributes: true, attributeFilter: ['class'] });
         observer.observe(main);
         doc.fonts?.ready.then(function () { if (view === doc.defaultView) refreshLayout(); });
+        syncRail();
         refreshLayout();
       },
       mountRemote: function (data, page, send) {
@@ -651,6 +800,8 @@
         sections = data.headings.map(function ([id, label, level]) { return addSection(id, label, level, page); });
         if (!outline?.children.length) outline?.remove();
         focusButton.hidden = !sections.length;
+        rail.hidden = !railList.children.length;
+        syncRail();
       },
       remoteProgress: function (message) { updateRemote(message); },
       remoteKey: function (key) {
@@ -861,9 +1012,11 @@
         node.classList.toggle('df-focus-dim', focus && (at < first || at > last) &&
           (rect.bottom <= height * .2 || rect.top >= height * .8));
       }
+      var main = document.querySelector('.df-page') || document.querySelector('main') || document.body;
       send({ type: 'progress', readings: readings, height: height,
         percent: max > 0 ? Math.round(100 * scroller.scrollTop / max) : 100,
-        bottom: max > 0 && scroller.scrollTop >= max - 2 });
+        bottom: max > 0 && scroller.scrollTop >= max - 2, remaining: max > 0 ? max - scroller.scrollTop : null,
+        end: main.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(main).paddingBottom) || 0) });
     }
 
     function scroll(fragment, takeFocus) {
@@ -928,6 +1081,17 @@
       addEventListener('unhandledrejection', function () {
         send({ type: 'failure', reason: 'A page script rejected a promise.' });
       });
+      var root = document.documentElement;
+      root.classList.add('df-scrollbar-auto');
+      document.addEventListener('pointermove', function (event) {
+        root.classList.toggle('df-scrollbar-near', event.clientX >= (root.clientWidth || innerWidth) - 40);
+      }, { passive: true });
+      root.addEventListener('pointerleave', function () { root.classList.remove('df-scrollbar-near'); });
+      var space = document.createElement('div');
+      space.className = 'df-section-rail';
+      space.setAttribute('data-export-rail-space', '');
+      space.setAttribute('aria-hidden', 'true');
+      document.documentElement.append(space);
       var zoomed = false;
       new MutationObserver(function () {
         var open = document.documentElement.classList.contains('df-zoom-open');
@@ -948,6 +1112,11 @@
             inspect();
             break;
           case 'scroll': scroll(data.fragment, data.focus); break;
+          case 'rail':
+            document.documentElement.toggleAttribute('data-export-rail', data.value !== null);
+            if (data.value !== null) document.documentElement.style.setProperty('--export-rail-right', data.value + 'px');
+            dispatchEvent(new Event('resize'));
+            break;
           case 'capture': send({ type: 'state', value: state.capture() }); break;
         }
       } catch (error) {
@@ -1222,9 +1391,10 @@
           chrome.mountRemote({ ...data, headings: retained.map(function (index) { return data.headings[index]; }) },
             record.id, state.send);
           scroll(destination()[1]);
-        } else if (data.type === 'progress' && size === 5 && Array.isArray(data.readings) &&
+        } else if (data.type === 'progress' && size === 7 && Array.isArray(data.readings) &&
             data.readings.length === headingCount && data.readings.every(function (value) { return value === null || Number.isFinite(value); }) &&
-            Number.isFinite(data.height) && Number.isFinite(data.percent) && typeof data.bottom === 'boolean') {
+            Number.isFinite(data.height) && Number.isFinite(data.percent) && typeof data.bottom === 'boolean' &&
+            Number.isFinite(data.end) && (data.remaining === null || Number.isFinite(data.remaining))) {
           chrome.remoteProgress({ ...data, readings: state.readings.map(function (index) { return data.readings[index]; }) });
         } else if (data.type === 'zoom' && size === 2 && typeof data.open === 'boolean') {
           chrome.remoteZoom(data.open);

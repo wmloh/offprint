@@ -2056,6 +2056,7 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
       disconnect() {}
     };
     view.scrollY = 50;
+    view.Event = Event;
     view.getComputedStyle = node => ({ scrollMarginTop: '0', fontSize: '20',
       getPropertyValue: name => node.style.getPropertyValue(name) });
     chrome.page(id, id === 'page-1' ? [null, { id: 'page-2', title: 'Second' }] : [null, null]);
@@ -2086,6 +2087,20 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   assert.equal(layer.className, 'df-section-lines');
   assert.deepEqual(layer.children.map(line => line.style.height), ['70px', '10px']);
   assert.equal(layer.firstChild.style.getPropertyValue('--df-section-color'), 'purple');
+  // The subsection rail numbers h1 and h2 headings and fills rings up to the reading line.
+  const rail = p.body.children.find(node => node.className === 'df-section-rail');
+  const ringLinks = () => rail.firstChild.children.map(item => item.firstChild);
+  assert.equal(rail.hidden, false);
+  assert.deepEqual(ringLinks().map(link => [link.href, link.getAttribute('aria-label')]),
+    [['#page-1/intro', '1. intro'], ['#page-1/more', '2. more'], ['#page-1/next', '3. next']]);
+  assert.equal(ringLinks()[1].getAttribute('aria-current'), 'location');
+  const arc = link => link.firstChild.querySelector().getAttribute('stroke-dashoffset');
+  assert.deepEqual(ringLinks().slice(0, 2).map(arc), ['0', '87']);
+  assert.equal(doc.documentElement.classList.contains('df-scrollbar-auto'), true);
+  doc.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 380 }));
+  assert.equal(doc.documentElement.classList.contains('df-scrollbar-near'), true);
+  doc.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 100 }));
+  assert.equal(doc.documentElement.classList.contains('df-scrollbar-near'), false);
   doc.body.children[3].getBoundingClientRect = () => ({ top: 35, bottom: 75 });
   doc.defaultView.dispatchEvent(new Event('resize'));
   assert.equal(layer.firstChild.style.height, '55px');
@@ -2102,16 +2117,19 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   assert.equal(doc.documentElement.classList.contains('df-focus-mode'), true);
   assert.equal(doc.body.firstChild.classList.contains('df-focus-block'), true);
   assert.equal(doc.body.firstChild.classList.contains('df-focus-dim'), true);
+  // The panel stays rendered and slides by class, so it can animate.
+  const closed = () => p.html.classList.contains('df-nav-hidden');
   p.key('n');
-  assert.equal(sidebar.hidden, true);
+  assert.equal(closed(), true);
+  assert.equal(sidebar.hidden, false);
   p.key('n');
   assert.match(nav.getAttribute('aria-label'), /auto-hide/);
   edge.dispatchEvent(new Event('pointerenter'));
-  assert.equal(sidebar.hidden, false);
+  assert.equal(closed(), false);
   p.key('Escape');
-  assert.equal(sidebar.hidden, true);
+  assert.equal(closed(), true);
   p.key('n');
-  assert.equal(sidebar.hidden, false);
+  assert.equal(closed(), false);
   separator.dispatchEvent(Object.assign(new Event('keydown'), { key: 'ArrowRight' }));
   assert.equal(separator.getAttribute('aria-valuenow'), '276');
 
@@ -2125,7 +2143,7 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   assert.equal(p.document.activeElement, nav);
   nav.click();
   shade.click();
-  assert.equal(sidebar.hidden, true);
+  assert.equal(closed(), true);
   assert.equal(doc.documentElement.getAttribute('data-df-theme'), 'dark');
   const secondDoc = mount('page-2');
   assert.equal(second.getAttribute('aria-current'), 'page');
@@ -2137,10 +2155,13 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   chrome.page('page-1', [null, null]);
   chrome.mountRemote({ theme: 'dark', headings: [['top', 'Top', 1], ['child', 'Child', 2], ['leaf', 'Leaf', 3]] },
     'page-1', () => {});
-  chrome.remoteProgress({ readings: [-30, -20, 10], height: 100, percent: 50, bottom: false });
+  chrome.remoteProgress({ readings: [-30, -20, 10], height: 100, percent: 50, bottom: false, remaining: 50, end: 200 });
   const remoteOutline = toc.querySelectorAll().slice(2);
   assert.deepEqual(remoteOutline.map(link => link.href), ['#page-1/top']);
   assert.equal(remoteOutline[0].getAttribute('aria-current'), 'location');
+  assert.deepEqual(ringLinks().map(link => link.href), ['#page-1/top', '#page-1/child']);
+  assert.equal(ringLinks()[1].getAttribute('aria-current'), 'location');
+  assert.deepEqual(ringLinks().map(arc), ['0', '68']);
   chrome.scrolled('#page-1/child');
   chrome.remoteKey('j');
   assert.deepEqual(route, ['#page-1/more', '#page-1/leaf']);

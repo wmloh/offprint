@@ -175,11 +175,11 @@
       nodes.forEach(function (node, i) { node.tabIndex = i === (focused < 0 ? index : focused) ? 0 : -1; });
     }
 
-    var binding = items.controller(feature, host, domain, snapshotAt, function (current) {
+    var binding = items.controller(feature, host, domain, snapshotAt, function (current, previous, origin) {
       if (active) active.removeAttribute('aria-current');
       active = nodes[current.index];
       active.setAttribute('aria-current', 'true');
-      if (onSelect) onSelect(current);
+      if (onSelect) onSelect(current, origin);
       roving(current.index);
     }, groupAttribute);
     var replace = binding.replace;
@@ -316,8 +316,8 @@
           host.classList.add('df-' + feature + '-ready');
           binding = selection(feature, host, next, function (index, key) {
             return view.snapshot(records[index], index, key);
-          }, null, function (current) {
-            if (view.reveal) view.reveal(current.index);
+          }, null, function (current, origin) {
+            if (view.reveal) view.reveal(current.index, origin);
           });
           controllers.set(host, binding.controller);
           connectDetails(host, host.querySelector(':scope > .df-detail-pane'), binding.controller);

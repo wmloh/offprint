@@ -507,7 +507,8 @@
     } else sequence.start(entry.stage('init'));
 
     var auto = component.flag(figure, 'animation-autoplay', 'animation', options.autoplay);
-    if (auto && !stepDriven && !DocForm._boot?.replaying && typeof root.IntersectionObserver === 'function') {
+    var fresh = !DocForm._boot?.replaying || root.DocFormExportContext?.freshView;
+    if (auto && !stepDriven && fresh && typeof root.IntersectionObserver === 'function') {
       var seen = new IntersectionObserver(function (entries) {
         if (!entries.some(function (e) { return e.isIntersecting; })) return;
         seen.disconnect();

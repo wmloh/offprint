@@ -204,6 +204,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       querySelectorAll(selector) {
         const descendants = this.children.flatMap(child => [child, ...child.querySelectorAll('*')]);
         if (selector === '*') return descendants;
+        if (selector === '[data-df-more-id]') return descendants.filter(child => child.hasAttribute('data-df-more-id'));
         if (selector === '[id],a[name]') return descendants.filter(child => child.id);
         if (selector === 'h1,h2,h3') return descendants.filter(child => /^h[123]$/.test(child.localName));
         if (selector.startsWith('a[href],area[href]')) return descendants.filter(child => child.localName === 'a' && child.href);
@@ -233,7 +234,8 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       get outerHTML() {
         const attrs = Array.from(attributes.values(), attr =>
           ` ${attr.name}="${attr.value.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}"`).join('');
-        return `<${tag}${attrs}>${this.textContent}${this.children.map(child => child.outerHTML).join('')}</${tag}>`;
+        const children = this.content?.children || this.children;
+        return `<${tag}${attrs}>${this.textContent}${children.map(child => child.outerHTML).join('')}</${tag}>`;
       }
     };
   }
@@ -278,6 +280,65 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       const custom = element('script', 'doNotPackageThisAuthorScript()');
       custom.remove = () => doc.body.children.splice(doc.body.children.indexOf(custom), 1);
       doc.body.append(heading, link, custom);
+      if (html === 'home') {
+        const panel = element('div');
+        panel.className = 'df-card-panel';
+        const detail = element('section');
+        detail.id = 'alternate-card';
+        const figure = element('figure');
+        const declaration = element('script', '{"steps":[{"key":"draw","actions":[]}]}');
+        declaration.setAttribute('data-df-animation', '');
+        declaration.type = 'application/json';
+        declaration.namespaceURI = 'http://www.w3.org/1999/xhtml';
+        const matches = declaration.matches;
+        declaration.matches = selector => selector.startsWith('script:not([src])') || matches(selector);
+        figure.append(declaration);
+        const term = element('span', 'An annotated term');
+        term.setAttribute('data-df-more-id', 'term-detail');
+        const template = element('template');
+        template.id = 'term-detail';
+        Object.defineProperty(template, 'content', { value: element('fragment') });
+        const image = element('img');
+        image.setAttribute('src', 'detail.png');
+        image.setAttribute('onload', 'sourceHandler()');
+        const detailLink = element('a', 'Read the section');
+        detailLink.href = links;
+        template.content.append(image, detailLink);
+        detail.append(figure, term, template);
+        panel.append(detail);
+        doc.body.append(panel);
+        const pipeline = element('figure');
+        pipeline.id = 'flow';
+        pipeline.className = 'df-pipeline';
+        const edge = element('a', 'Next block');
+        edge.className = 'df-pipe-link';
+        edge.href = '#flow-2';
+        const matchesEdge = edge.matches;
+        edge.matches = selector => selector === '.df-pipe-link' || matchesEdge(selector);
+        edge.closest = selector => selector === '.df-pipeline' ? pipeline : null;
+        const blocks = element('ol');
+        blocks.className = 'df-pipe-blocks';
+        const first = element('li');
+        first.className = 'df-pipe-block';
+        first.append(edge);
+        const second = element('li', 'An unnamed block');
+        second.className = 'df-pipe-block';
+        blocks.append(first, second);
+        const details = element('div');
+        details.className = 'df-detail-pane';
+        const overview = element('section', 'Pipeline overview');
+        overview.setAttribute('data-df-key', 'flow-1');
+        const alternate = element('section');
+        alternate.setAttribute('data-df-key', 'flow-2');
+        const alternateImage = element('img');
+        alternateImage.setAttribute('src', 'detail.png');
+        const alternateLink = element('a', 'Read the pipeline detail');
+        alternateLink.href = links;
+        alternate.append(alternateImage, alternateLink);
+        details.append(overview, alternate);
+        pipeline.append(blocks, details);
+        doc.body.append(pipeline);
+      }
       doc.querySelectorAll = selector => selector === 'script[src]' ? [entry] : [];
       return doc;
     }
@@ -357,7 +418,8 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     asset('nested/font.woff2', 'font bytes'),
     asset('image.png', 'shared image'),
     asset('copy.png', 'shared image'),
-    asset('nested/image.png', 'local image')
+    asset('nested/image.png', 'local image'),
+    asset('detail.png', 'detail image')
   ]);
   const selected = prepared.tree[0].children.map(page => page.id);
   const phases = [];
@@ -455,6 +517,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const packed = readBundle(interactiveHTML);
   assert.equal(packed.version, 1);
   assert.equal(packed.mode, 'interactive');
+  assert.ok(packed.pages.every(page => page.interactive), JSON.stringify(interactive.issues));
   assert.equal(packed.shared.length, 5); // The manifest plus four trusted classic scripts.
   assert.deepEqual(packed.pages[0].interactive.modules, packed.pages[1].interactive.modules);
   assert.equal(packed.pages[0].interactive.site, packed.pages[1].interactive.site);
@@ -464,8 +527,14 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.doesNotMatch(interactiveHTML, /doNotPackageThisAuthorScript|sourceScript|sourceHandler/);
   assert.doesNotThrow(() => new vm.Script('(' + /<script>\((function reader.*?)<\/script>/s.exec(interactiveHTML)[1]));
   const liveHTML = runtime._exportReader.assemble(packed.pages[0].interactive.markup, packed.assets);
+  assert.match(liveHTML, /class="df-pipe-link" href="#flow-2">Next block/);
+  assert.ok(!interactive.issues.some(issue => issue.target === '#flow-2'));
+  assert.match(liveHTML, /data-df-key="flow-2"><img src="data:image\/png;base64,ZGV0YWlsIGltYWdl"[^>]*>.*?#page-2\/caf%C3%A9%2Fmore[^>]*>Read the pipeline detail/);
   assert.match(liveHTML, /script-src 'nonce-df-export-nonce'/);
   assert.match(liveHTML, /href="#page-2\/caf%C3%A9%2Fmore"/);
+  assert.match(liveHTML, /<section id="alternate-card"><figure><script data-df-animation="" type="application\/json">\{"steps":/);
+  assert.match(liveHTML, /<template id="term-detail"><img src="data:image\/png;base64,ZGV0YWlsIGltYWdl"/);
+  assert.match(liveHTML, /<a href="#page-2\/caf%C3%A9%2Fmore" data-export-destination="">Read the section<\/a><\/template>/);
   const interactiveOne = await prepared.build([selected[0]], { mode: 'interactive' });
   assert.equal(interactive.bytes, Buffer.byteLength(interactiveHTML));
   assert.deepEqual(readBundle(await interactiveOne.blob.text()).shared, packed.shared);

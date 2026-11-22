@@ -8,6 +8,10 @@ const library = new URL('docform/', repo);
 const entryURL = new URL('docform.js', library);
 const entry = fs.readFileSync(entryURL, 'utf8');
 
+function descendants(node) {
+  return node.children.flatMap(child => [child, ...descendants(child)]);
+}
+
 function element(tag) {
   const attrs = new Map();
   const classes = new Set();
@@ -16,8 +20,11 @@ function element(tag) {
   let text = '';
   return {
     tagName: tag.toUpperCase(),
+    localName: tag,
     nodeType: 1,
     clientWidth: 400,
+    offsetWidth: 120,
+    offsetHeight: 48,
     childNodes: [],
     get children() { return this.childNodes.filter(node => node.nodeType === 1); },
     get textContent() { return text + this.childNodes.map(node => node.textContent).join(''); },
@@ -37,6 +44,10 @@ function element(tag) {
     getAttribute(name) { return attrs.get(name) ?? null; },
     hasAttribute(name) { return attrs.has(name); },
     removeAttribute(name) { attrs.delete(name); },
+    toggleAttribute(name, force) {
+      if (force ?? !attrs.has(name)) attrs.set(name, '');
+      else attrs.delete(name);
+    },
     querySelector(selector) {
       return selector === '.df-progress-bar' && this.innerHTML?.includes('df-progress-bar') ? element('circle') : null;
     },
@@ -62,7 +73,18 @@ function element(tag) {
     },
     removeChild(child) { this.childNodes.splice(this.childNodes.indexOf(child), 1); child.parentNode = null; },
     remove() { this.parentNode?.removeChild(this); },
+    replaceChildren(...children) {
+      while (this.firstChild) this.removeChild(this.firstChild);
+      this.append(...children);
+    },
     replaceChild(child, old) { this.insertBefore(child, old); this.removeChild(old); },
+    cloneNode(deep) {
+      const copy = element(tag);
+      for (const [name, value] of attrs) copy.setAttribute(name, value);
+      copy.textContent = text;
+      if (deep) this.childNodes.forEach(child => copy.appendChild(child.cloneNode?.(true) || { ...child }));
+      return copy;
+    },
     addEventListener: listeners.addEventListener.bind(listeners),
     removeEventListener: listeners.removeEventListener.bind(listeners),
     dispatchEvent(event) {
@@ -80,8 +102,8 @@ function element(tag) {
 }
 
 function page({ nested, site, config, lateConfig, entryProfile, fail = [], storage, dark, staticCSS, cite, download,
-  interactive = false } = {}) {
-  const location = new URL(nested ? 'pages/chapter.html' : 'index.html', repo);
+  interactive = false, movedURL, globals } = {}) {
+  const location = new URL(movedURL || (nested ? 'pages/chapter.html' : 'index.html'), repo);
   const source = new URL(nested ? '../docform/docform.js' : 'docform/docform.js', location);
   const siteScript = site ? { src: new URL(nested ? '../site.js' : 'site.js', location).href } : null;
   const siteConfig = config => ({ type: 'application/json', textContent: JSON.stringify(config) });
@@ -111,7 +133,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     documentElement: html,
     currentScript: { src: source.href, getAttribute: () => entryProfile ?? null },
     activeElement: body,
-    getElementById: id => ids.get(id) || null,
+    getElementById: id => ids.get(id) || (movedURL && descendants(body).find(node => node.id === id)) || null,
     querySelector: selector => selector === 'script[data-df-site]' ? siteScript : null,
     querySelectorAll(selector) {
       if (selector === 'script[data-df-page]') return this.readyState === 'loading'
@@ -154,7 +176,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     cancelAnimationFrame() {},
     getComputedStyle: () => ({}),
     console: { warn() {} },
-    DocFormSite: site
+    DocFormSite: site, ...globals
   });
   context.window = context;
   document.defaultView = context;
@@ -184,7 +206,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
       clicks.forEach(callback => callback({ target, button: 0 }));
     },
     runScript(url) { vm.runInContext(fs.readFileSync(url, 'utf8'), context, { filename: url.pathname }); },
-    async hydrate(payload, shared, signal) {
+    async hydrate(payload, shared, signal, saved = null) {
       document.readyState = 'complete';
       html.setAttribute('data-df-export-replay', '');
       context.DocForm = {};
@@ -197,7 +219,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
         vm.runInContext(script.textContent, context);
         document.currentScript = null;
       };
-      await initialize(document, payload, shared, 'test-nonce', null, signal);
+      await initialize(document, payload, shared, 'test-nonce', saved, signal);
       return context.DocForm;
     },
     async start() {
@@ -235,6 +257,262 @@ test('the trusted Interactive loader initializes the feature closure from embedd
   const broken = page({ config, site, interactive: true });
   await assert.rejects(broken.hydrate({ ...payload, modules: payload.modules.slice(0, -1) }, shared,
     new AbortController().signal), /required DocForm feature/);
+});
+
+test('Interactive cards restore nested tabs, filters, and a paused SVG position across page visits', async () => {
+  const config = { profile: 'none', features: { cards: true, tabs: true, animation: true } };
+  const plan = page({ config }).DF._boot.exportPlan({}, config, null, false);
+  const shared = Array.from(plan.scripts, path => fs.readFileSync(new URL(path, library), 'utf8'));
+  const url = 'file:///original/cards.html';
+  const payload = { url, siteURL: url, entryURL: entryURL.href, site: null, profile: null,
+    features: plan.features, styles: plan.styles, modules: Array.from(plan.scripts, (path, index) => [path, index]),
+    data: [], identities: ['cards', 'tabs', 'figure'].map(id => ({ key: ['id', id], stamp: id })) };
+
+  async function visit(saved) {
+    const observers = new Map();
+    const frames = new Map();
+    let nextFrame = 0;
+    const p = page({ config, interactive: true, globals: {
+      IntersectionObserver: class {
+        constructor(callback) { this.callback = callback; }
+        observe(node) { this.node = node; observers.set(node, this.callback); }
+        disconnect() { observers.delete(this.node); }
+      },
+      requestAnimationFrame(callback) { frames.set(++nextFrame, callback); return nextFrame; },
+      cancelAnimationFrame(id) { frames.delete(id); }
+    } });
+    function add(parent, tag, attrs = {}) {
+      const node = parent.appendChild(p.document.createElement(tag));
+      for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
+      if (node.id) p.ids.set(node.id, node);
+      return node;
+    }
+    const cards = add(p.body, 'div', { id: 'cards', 'data-df-numbered': '', 'data-df-search': '' });
+    const panel = add(cards, 'div');
+    const list = add(panel, 'div', { 'aria-labelledby': 'card-heading' });
+    add(list, 'span', { id: 'card-heading' });
+    const details = add(cards, 'div');
+    const sections = ['overview', 'motion'].map(id => add(details, 'section', { id }));
+    const buttons = sections.map(section => add(list, 'button', {
+      'data-df-key': section.id, 'data-df-detail': section.id
+    }));
+    buttons[0].textContent = 'Overview';
+    buttons[1].textContent = 'Motion';
+    const tag = add(buttons[1], 'span');
+    tag.textContent = 'SVG';
+    buttons[1].querySelectorAll = selector => selector === ':scope > .df-tag' ? [tag] : [];
+    cards.querySelector = selector => ({ ':scope > .df-step-panel': panel, ':scope > .df-step-details': details })[selector];
+    panel.querySelector = selector => selector === ':scope > .df-step-list' ? list : null;
+    list.querySelectorAll = selector => selector === ':scope > button, :scope > .df-step-group > button' ? buttons : [];
+    const tabs = add(sections[1], 'div', { id: 'tabs' });
+    const tabPanels = ['explain', 'draw'].map(key => add(tabs, 'section', { 'data-df-tab': key, 'data-df-key': key }));
+    tabs.querySelectorAll = selector => selector === ':scope > [data-df-tab]' ? tabPanels : [];
+    const figure = add(tabPanels[1], 'figure', { id: 'figure', 'data-df-animation-autoplay': '' });
+    const svg = add(figure, 'svg');
+    const circle = add(svg, 'circle', { r: '4' });
+    circle.namespaceURI = 'http://www.w3.org/2000/svg';
+    const declaration = add(figure, 'script');
+    declaration.type = 'application/json';
+    declaration.textContent = JSON.stringify({ duration: 100, easing: 'linear', steps: [
+      { key: 'larger', actions: [{ attr: 'circle', name: 'r', to: 8 }] }
+    ] });
+    figure.querySelector = selector => selector === 'svg' ? svg : null;
+    figure.querySelectorAll = selector => selector === ':scope > script[data-df-animation]' ? [declaration] : [];
+    svg.querySelectorAll = selector => selector === 'circle' ? [circle] : [];
+    [cards, tabs, figure].forEach((host, i) => host.setAttribute('data-df-export-identity', i));
+    p.body.querySelectorAll = selector => ({
+      '.df-card-panel': [cards], '.df-tabs, [data-df-tabs]': [tabs],
+      'figure > script[data-df-animation]': [declaration], '[data-df-export-identity]': [cards, tabs, figure]
+    })[selector] || [];
+    const runtime = await p.hydrate(payload, shared, new AbortController().signal, saved);
+    const controls = figure.children.find(child => child.className === 'df-anim-controls');
+    return { runtime, buttons, sections, tabs, tabPanels, figure, circle, observers, frames, document: p.document,
+      filter: panel.firstChild.firstChild, animation: runtime.sequence.get(figure),
+      scrub: controls.lastChild, play: controls.firstChild.children.find(button => button.className === 'df-pill-button df-pill-play') };
+  }
+
+  const first = await visit();
+  assert.deepEqual(first.sections.map(section => section.inert), [false, true]);
+  first.buttons[1].dispatchEvent(Object.assign(new Event('pointermove'), { pointerType: 'touch' }));
+  assert.equal(first.buttons[1].getAttribute('aria-selected'), 'false');
+  first.buttons[1].click();
+  assert.equal(first.buttons[1].getAttribute('aria-controls'), 'motion');
+  assert.equal(first.sections[1].getAttribute('aria-labelledby'), first.buttons[1].id);
+  assert.equal(first.buttons[1].firstChild.textContent, '2');
+  first.filter.value = 'SVG';
+  first.filter.dispatchEvent(new Event('input'));
+  assert.ok(first.buttons[0].classList.contains('df-step-filtered'));
+  first.tabs.firstChild.lastChild.click();
+  first.observers.get(first.figure)([{ isIntersecting: true }]);
+  assert.equal(first.animation.snapshot().playing, true);
+  for (const time of [1000, 1025]) {
+    const [id, advance] = first.frames.entries().next().value;
+    first.frames.delete(id);
+    advance(time);
+  }
+  assert.equal(first.circle.getAttribute('r'), '5');
+  const record = first.runtime._readerState.capture().record;
+
+  const restored = await visit(record);
+  assert.equal(restored.observers.size, 0);
+  assert.deepEqual(restored.sections.map(section => section.inert), [true, false]);
+  assert.deepEqual(restored.tabPanels.map(tab => tab.hidden), [true, false]);
+  assert.equal(restored.filter.value, 'svg');
+  assert.equal(restored.animation.snapshot().playing, false);
+  assert.equal(restored.scrub.getAttribute('aria-label'), 'Animation position');
+  assert.equal(restored.scrub.value, '25');
+  assert.equal(restored.circle.getAttribute('r'), '5');
+  assert.equal(restored.play.getAttribute('aria-label'), 'Play');
+  restored.play.click();
+  assert.equal(restored.play.getAttribute('aria-label'), 'Pause');
+  restored.play.click();
+  assert.equal(restored.animation.snapshot().playing, false);
+  restored.scrub.value = '75';
+  restored.scrub.dispatchEvent(new Event('input'));
+  assert.equal(restored.circle.getAttribute('r'), '7');
+  const key = name => Object.assign(new Event('keydown', { cancelable: true }), { key: name });
+  restored.filter.dispatchEvent(key('Escape'));
+  restored.buttons[1].dispatchEvent(key('Home'));
+  assert.equal(restored.document.activeElement, restored.buttons[0]);
+  assert.equal(restored.buttons[1].getAttribute('aria-selected'), 'true');
+  restored.buttons[0].dispatchEvent(Object.assign(new Event('pointermove'), { pointerType: 'pen' }));
+  assert.equal(restored.buttons[0].getAttribute('aria-selected'), 'true');
+  const afterHover = restored.runtime._readerState.capture().record;
+  assert.equal(afterHover.views.find(([id]) => JSON.parse(id)[0] === 'cards')[1].value, 'motion');
+});
+
+test('Interactive diagrams rebuild and restore their authored controls at a moved file URL', async () => {
+  const config = { profile: 'none',
+    features: { pipeline: true, sequence: true, timeline: true, 'tree-diagram': true, selection: true, data: true } };
+  const plan = page({ config }).DF._boot.exportPlan({}, config, null, false);
+  const trusted = { window: { DocForm: {} } };
+  vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
+  const shared = Array.from(plan.scripts, path => trusted.window.DocForm._exportRuntime[path]);
+  const url = 'file:///original/guide/diagrams.html';
+  const identities = ['flow', 'sequence', 'timeline', 'tree', 'details', 'bad'].map(id => ({ key: ['id', id], stamp: id }));
+  const payload = { url, siteURL: url, entryURL: entryURL.href, site: null, profile: null,
+    features: plan.features, styles: plan.styles, modules: Array.from(plan.scripts, (path, i) => [path, i]), data: [],
+    identities };
+
+  async function visit(saved) {
+    const timers = new Map();
+    let nextTimer = 0;
+    const p = page({ config, interactive: true, movedURL: 'file:///elsewhere/standalone.html', globals: {
+      setInterval(callback) { timers.set(++nextTimer, callback); return nextTimer; },
+      clearInterval(id) { timers.delete(id); },
+      getComputedStyle: () => ({ position: 'fixed', columnGap: '30px', rowGap: '20px' })
+    } });
+    function find(node, selector) {
+      return selector.split(',').flatMap(part => {
+        part = part.trim();
+        const direct = part.startsWith(':scope > ');
+        const query = direct ? part.slice(9) : part;
+        const match = /^([\w-]+)?(?:\.([\w-]+))?(?:\[([\w-]+)\])?$/.exec(query);
+        if (!match) return [];
+        const [, tag, cls, attr] = match;
+        return (direct ? node.children : descendants(node)).filter(el =>
+          (!tag || el.localName === tag) && (!cls || el.className === cls) && (!attr || el.hasAttribute(attr)));
+      });
+    }
+    p.body.querySelectorAll = selector => find(p.body, selector);
+    function add(parent, tag, cls, attrs = {}, label = '') {
+      const node = parent.appendChild(p.document.createElement(tag));
+      node.className = cls;
+      if (cls) node.classList.add(cls);
+      node.textContent = label;
+      for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
+      node.querySelectorAll = selector => find(node, selector);
+      node.querySelector = selector => find(node, selector)[0] || null;
+      return node;
+    }
+    function host(i, cls, attrs) {
+      return add(p.body, 'figure', cls, { ...attrs, id: identities[i].key[1], 'data-df-export-identity': i });
+    }
+    const flow = host(0, 'df-pipeline');
+    const blocks = add(flow, 'ol', 'df-pipe-blocks');
+    const begin = add(blocks, 'li', 'df-pipe-block', {}, 'Begin');
+    add(begin, 'a', 'df-pipe-link', { href: '#flow-2', 'data-df-label': 'Continue' });
+    const finish = add(blocks, 'li', 'df-pipe-block', { 'data-df-reveal-step': 'finish' }, 'Finish');
+    const steps = add(flow, 'ol', '', { 'data-df-pipeline-steps': '' });
+    add(steps, 'li', '', { 'data-df-key': 'begin', 'data-df-detail': 'begin-note' }, 'Start');
+    add(steps, 'li', '', { 'data-df-key': 'finish', 'data-df-detail': 'finish-note' }, 'Finish');
+    add(flow, 'p', '', { id: 'begin-note' }, 'First note');
+    const note = add(flow, 'p', '', { id: 'finish-note' }, 'Alternate pipeline note');
+
+    const group = { 'data-df-selection-group': 'writing' };
+    const sequence = host(1, 'df-sequence', group);
+    const messages = add(sequence, 'ol', 'df-sequence-messages');
+    add(messages, 'li', '', { 'data-df-key': 'read', 'data-df-from': 'reader', 'data-df-to': 'writer' }, 'Read');
+    add(messages, 'li', '', { 'data-df-key': 'write', 'data-df-from': 'writer', 'data-df-to': 'writer' }, 'Write');
+    const timeline = host(2, 'df-timeline', group);
+    const events = add(timeline, 'ol', 'df-timeline-events');
+    add(events, 'li', '', { 'data-df-key': 'read', 'data-df-start': '1' }, 'Read');
+    add(events, 'li', '', { 'data-df-key': 'write', 'data-df-start': '2', 'data-df-end': '4' }, 'Write');
+    const tree = host(3, 'df-tree-diagram', { ...group, 'data-df-source': 'outline' });
+    const source = add(p.body, 'script', '', { 'data-df-source': 'outline', type: 'application/json' }, JSON.stringify([
+      { key: 'read', label: 'Read', collapsed: true }, { key: 'write', label: 'Write', parent: 'read' }
+    ]));
+    source.type = 'application/json';
+    const pane = add(timeline, 'div', 'df-detail-pane', { id: 'details', 'data-df-export-identity': 4 });
+    add(pane, 'p', '', { 'data-df-key': 'read' }, 'Read detail');
+    const alternate = add(pane, 'p', '', { 'data-df-key': 'write' }, 'Alternate timeline detail');
+    const bad = host(5, 'df-sequence');
+    const fallback = add(bad, 'ol', 'df-sequence-messages');
+    add(fallback, 'li', '', { 'data-df-key': 'broken' }, 'Readable fallback');
+    const runtime = await p.hydrate(payload, shared, new AbortController().signal, saved);
+    const flowController = runtime._pipeline.get(flow);
+    assert.ok(flowController, JSON.stringify(runtime.diagnostics.list().map(issue => issue.message)));
+    const treeRoot = descendants(tree).find(node => node.className === 'df-tree-diagram-pick');
+    const toggle = descendants(tree).find(node => node.className === 'df-tree-diagram-toggle');
+    const keys = () => [runtime._sequenceDiagram.get(sequence), runtime._timeline.get(timeline),
+      runtime._treeDiagram.get(tree)].map(controller => controller.snapshot().key);
+    assert.equal(runtime._page, url);
+    assert.deepEqual(p.loads, []);
+    assert.equal(runtime._sequenceDiagram.get(bad), null);
+    assert.equal(bad.firstChild.textContent, 'Readable fallback');
+    assert.ok(runtime.diagnostics.list().some(issue => issue.feature === 'sequence' && issue.code === 'component-input'));
+    return { runtime, flowController, keys, treeRoot, toggle, alternate, note, begin, finish, timers,
+      sequenceButton: descendants(sequence).find(node => node.className === 'df-sequence-message') };
+  }
+
+  const first = await visit();
+  assert.equal(first.finish.hasAttribute('data-df-pipe-hidden'), true);
+  assert.equal(first.note.hidden, true);
+  assert.equal(first.treeRoot.getAttribute('aria-expanded'), 'false');
+  first.flowController.steps.play();
+  first.timers.values().next().value();
+  first.begin.dispatchEvent(Object.assign(new Event('pointermove'), { pointerType: 'mouse' }));
+  assert.equal(first.finish.hasAttribute('data-df-pipe-trace'), true);
+  first.finish.click();
+  first.sequenceButton.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: 'End' }));
+  assert.deepEqual(first.keys(), ['write', 'write', 'write']);
+  assert.equal(first.alternate.inert, false);
+  assert.equal(first.treeRoot.getAttribute('aria-expanded'), 'true');
+
+  const record = first.runtime._readerState.capture().record;
+  const restored = await visit(record);
+  assert.deepEqual(restored.keys(), ['write', 'write', 'write']);
+  assert.equal(restored.alternate.inert, false);
+  assert.equal(restored.treeRoot.getAttribute('aria-expanded'), 'true');
+  assert.equal(restored.flowController.steps.snapshot().key, 'finish');
+  assert.equal(restored.flowController.steps.snapshot().playing, false);
+  assert.equal(restored.flowController.snapshot().key, 'flow-2');
+  assert.equal(restored.finish.hasAttribute('data-df-pipe-hidden'), false);
+  assert.equal(restored.note.hidden, false);
+  restored.toggle.click();
+  assert.deepEqual(restored.keys(), ['read', 'read', 'read']);
+  assert.equal(restored.alternate.inert, true);
+  const folded = await visit(restored.runtime._readerState.capture().record);
+  assert.equal(folded.treeRoot.getAttribute('aria-expanded'), 'false');
+  assert.deepEqual(folded.keys(), ['read', 'read', 'read']);
+  folded.sequenceButton.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: 'End' }));
+  folded.sequenceButton.click();
+  assert.deepEqual(folded.keys(), ['read', 'read', 'read']);
+  const reopened = await visit(folded.runtime._readerState.capture().record);
+  assert.equal(reopened.treeRoot.getAttribute('aria-expanded'), 'true');
+  const stale = structuredClone(record);
+  stale.views.find(([id]) => JSON.parse(id)[0] === 'timeline')[1].value = 'unknown';
+  await assert.rejects(visit(stale), /committed view could not be restored/);
 });
 
 test('the offline entry exposes the extension surface and initializes a custom feature before ready', async () => {
@@ -417,9 +695,6 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   const downloads = [];
   const p = page({ entryProfile: 'none', download: link => downloads.push([link.download, link.href]) });
   const settle = () => new Promise(resolve => setImmediate(resolve));
-  function descendants(node) {
-    return node.children.flatMap(child => [child, ...descendants(child)]);
-  }
   await p.start();
   const opener = descendants(p.body).find(el => el.textContent === 'Export' && el.tagName === 'BUTTON');
   assert.ok(opener);

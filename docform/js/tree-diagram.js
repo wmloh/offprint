@@ -209,12 +209,13 @@
       track?.('user');
     }
 
-    function reveal(index) {
+    function reveal(index, origin) {
       if (scene.positions[index].shown) return;
       for (var parent = nodes[index].parentIndex; parent >= 0; parent = nodes[parent].parentIndex) {
         collapsed.delete(nodes[parent].key);
       }
       place();
+      track?.(origin);
     }
 
     place();

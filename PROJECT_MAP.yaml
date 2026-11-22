@@ -53,11 +53,11 @@ docform/: Copyable offline library folder
   js/: Per-module classic scripts on a shared DocForm namespace
     reader-state.js: Versioned browser-local export views, import persistence, and in-memory Interactive session replay
     page-snapshot.js: Page capture, isolated replay, reachable figure steps and details, tooltip materialization, and fallback reporting for export
-    export-package.js: Folder and manifest resolution, versioned Interactive page payloads, Reader fallbacks, link rewriting, and build diagnostics
+    export-package.js: Folder and manifest resolution, authored Interactive inputs for cards and diagrams, reachable detail assets, Reader fallbacks, link rewriting, and build diagnostics
     export-library.js: Generated library styles and KaTeX fonts loaded on demand for standalone exports
     export-runtime.js: Generated trusted classic scripts loaded on demand for Interactive exports
     export-resources.js: Offline resolution and content-based sharing of stylesheets, fonts, and images
-    export-reader.js: Active-frame assembly and Interactive startup, Reader fallback, sidebar, outline, fragment history, reading controls, and tooltips
+    export-reader.js: Active-frame assembly, Interactive startup and view restoration, Reader fallback, sidebar, outline, fragment history, reading controls, and tooltips
     export-dialog.js: Reader and Interactive mode selection, folder and page pickers, preview, cancellation, download, and saved-data clearing
     core.js: DocForm namespace, module and shortcut registries, data-df-* and clipboard helpers, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips

@@ -124,7 +124,9 @@
         follow(host, function (controller) {
           var current = controller.snapshot();
           if (current) show(current.key, 'source');
-          controller.subscribe(function (next) { show(next.key, 'source'); });
+          controller.subscribe(function (next, meta) {
+            if (show(next.key, 'source') && meta) track?.(meta.origin);
+          });
         });
       }
     } else if (group) {

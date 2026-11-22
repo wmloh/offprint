@@ -257,10 +257,13 @@
 
   function rewriteLink(node, attr, page, pages, report) {
     var value = node.getAttribute(attr);
-    var target = linkTarget(value, page, pages);
     node.removeAttribute('target');
     node.removeAttribute('download');
     node.removeAttribute('ping');
+    // Pipeline setup reads these fragments before it assigns IDs to unnamed blocks.
+    if (page.interactive && attr === 'href' && value.startsWith('#') &&
+        node.matches('.df-pipe-link') && node.closest('.df-pipeline')) return;
+    var target = linkTarget(value, page, pages);
     if (target.external) {
       node.setAttribute(attr, target.external);
       node.setAttribute('target', '_blank');
@@ -277,7 +280,7 @@
       var explanation = target.missingFragment ? 'This section is unavailable in the export.' :
         'This destination is unavailable in the export.';
       node.setAttribute('title', explanation);
-      var description = create(node.ownerDocument, 'span', explanation);
+      var description = create(page.document, 'span', explanation);
       description.id = page.description;
       description.hidden = true;
       if (!page.document.getElementById(page.description)) page.document.body.append(description);
@@ -345,14 +348,27 @@
     var sources = [doc.documentElement, doc.body, ...doc.body.querySelectorAll('*')].map(function (node) {
       return { node: node, base: page.base };
     });
+    var templates = new Set();
+    if (page.interactive) {
+      for (var anchor of doc.body.querySelectorAll('[data-df-more-id]')) {
+        var template = doc.getElementById(anchor.getAttribute('data-df-more-id').trim());
+        if (template?.localName === 'template' && template.content) templates.add(template);
+      }
+    }
+    page.templates = templates;
     var imported = new Map();
     var active = 'script,iframe,frame,frameset,object,embed,applet,portal,fencedframe,webview,link,meta,base,style,template,' +
       'animate,animateMotion,animateTransform,set,param';
-    for (var { node, base, ids } of sources) {
+    for (var { node, base, ids, owner } of sources) {
       signal?.throwIfAborted();
-      if (!doc.documentElement.contains(node)) continue;
-      if (node.matches(active) && !(page.interactive && node.namespaceURI === 'http://www.w3.org/1999/xhtml' &&
-          node.matches(declarations))) {
+      var attached = owner ? doc.body.contains(owner) && owner.content.contains(node) : doc.documentElement.contains(node);
+      if (!attached) continue;
+      if (templates.has(node)) {
+        for (var child of node.content.querySelectorAll('*')) {
+          sources.push({ node: child, base: base, owner: node });
+        }
+      } else if (node.matches(active) && !(page.interactive && !owner &&
+          node.namespaceURI === 'http://www.w3.org/1999/xhtml' && node.matches(declarations))) {
         node.remove();
         continue;
       }
@@ -365,7 +381,7 @@
           image.setAttribute('src', poster);
           image.alt = node.getAttribute('aria-label') || 'Video poster';
           fallback.append(image);
-          sources.push({ node: image, base: base });
+          sources.push({ node: image, base: base, owner: owner });
         }
         for (var child of Array.from(node.childNodes)) {
           if (!child.matches?.('source,track')) fallback.append(child);
@@ -542,6 +558,9 @@
         }
       }
       live.document.head.append(script);
+    }
+    for (var template of source.head.querySelectorAll('template[id]')) {
+      if (!live.document.getElementById(template.id)) live.document.body.append(live.document.importNode(template, true));
     }
     if (input.site) {
       var manifest = create(live.document, 'script');
@@ -789,13 +808,20 @@
         page: page.id, title: page.title });
       signal?.throwIfAborted();
       for (var output of [page, page.live].filter(Boolean)) {
-        for (var link of output.document.body.querySelectorAll('a[href],area[href],a[*|href]')) {
-          rewriteLink(link, link.hasAttribute('href') ? 'href' : 'xlink:href', output, pages, page.report);
+        var scopes = [output.document.body];
+        for (var template of output.templates) {
+          if (output.document.body.contains(template)) scopes.push(template.content);
+        }
+        for (var scope of scopes) {
+          for (var link of scope.querySelectorAll('a[href],area[href],a[*|href]')) {
+            rewriteLink(link, link.hasAttribute('href') ? 'href' : 'xlink:href', output, pages, page.report);
+          }
         }
         var packaged = await styles(output, resources, page.report, signal);
         signal?.throwIfAborted();
         output.markup = pageMarkup(output);
         output.attributes.clear();
+        output.templates.clear();
         output.document = null;
         if (output.payload) {
           output.payload.styles = packaged;

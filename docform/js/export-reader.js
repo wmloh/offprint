@@ -545,6 +545,7 @@
     if (payload.site !== null) view.DocFormSite = structuredClone(shared[payload.site]);
     view.DocFormExportContext = {
       interactive: true, entryURL: payload.entryURL, pageURL: payload.url, siteURL: payload.siteURL,
+      freshView: !saved,
       combinedStyles: payload.combined, features: payload.features, identities: payload.identities,
       loadModule: function (url, css) {
         var path = url.startsWith(library) && url.slice(library.length);

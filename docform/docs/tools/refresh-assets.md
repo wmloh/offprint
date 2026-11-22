@@ -4,7 +4,7 @@ Same outputs as [tools/assets.html](../../tools/assets.html), byte for byte, wit
 
 ## Python launcher
 
-[refresh_assets.py](../../tools/refresh_assets.py), Python 3.9+. Projects call it from a root launcher ([AUTHORING](../AUTHORING.md#data); [docs site launcher](../../../docs/refresh-assets.py)).
+[refresh_assets.py](../../tools/refresh_assets.py), Python 3.9+. Each site calls it from a launcher at its root ([AUTHORING](../AUTHORING.md#data)).
 
 - `main(manifest, site_root=None, argv=None)`: launcher entry; accepts no arguments or `--check`, else exit 2. `refresh(manifest, *, site_root=None, check=False, node=None)` for direct calls. `site_root` defaults to the manifest folder; pass it when the manifest sits in a subfolder.
 - Data wrappers (`assets.data`) are built in Python; YAML needs PyYAML. The search index (`assets.search`) runs the Node CLI with `--search`.

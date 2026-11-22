@@ -1,16 +1,18 @@
 # Authoring conventions
 
-Recommended structure and conventions for agents building sites with DocForm. Not enforced, but following them keeps pages exportable, consistent, and easy to maintain. Find feature references through [LIB_MAP.tsv](LIB_MAP.tsv), and read the relevant reference before writing markup.
+Recommended structure and conventions for agents building DocForm sites: documentation, reports, experiment-results viewers, or any mix in one project. Not enforced, but following them keeps pages exportable, consistent, and easy to maintain. Find feature references through [LIB_MAP.tsv](LIB_MAP.tsv), and read the relevant reference before writing markup.
 
 ## Project layout
 
+A project holds one shared `docform/` copy and one or more **sites**. A site is a self-contained root with exactly one manifest, its own navigation, search, glossary, and export. Names in `<…>` are placeholders.
+
 ```text
-project/
-  docform/                      library copied whole; never edit it
-  docs/                         documentation root (select this folder for export)
+<project>/                      any repository; code, pipelines, and raw run outputs may sit beside the sites
+  docform/                      one shared library copy; never edit it
+  <site>/                       site root, e.g. guide/ or sweep-results/; select it for export and refresh
     index.html                  first manifest page
     glossary.html               optional glossaryPage
-    refresh-assets.py           project launcher for data wrappers and search index (see Data)
+    refresh-assets.py           site launcher for data wrappers and search index (see Data)
     pages/<group>/<page>.html   one folder per manifest group, one level deep
     assets/
       site.js                   manifest: the only shared configuration
@@ -19,11 +21,19 @@ project/
       data/                     raw named sources: dynamic, or large static
       generated/                wrappers and search index; tool output only
       media/                    local images, SVG, fonts, video posters
+  <other-site>/                 same structure, loading the same ../docform/
+  <folder>/<site>/              sites may be grouped in plain folders; add one ../ per level
 ```
 
-- The root holds everything a page loads except `docform/`. Use only relative URLs. `../` may leave the root only to reach the library. Match path case exactly. [Site structure](setup/site-structure.md)
-- Mirror manifest groups in `pages/<group>/`. Use lowercase hyphenated file names that are stable, because export routes, search paths, and cross-page anchors depend on them.
-- Keep heavy unrelated trees such as `.git`, `node_modules`, raw archives, and pipeline outputs not consumed by pages outside the root.
+- Site root holds everything its pages load except `docform/`. Use only relative URLs. `../` may leave the root only to reach the library. Match path case exactly. [Site structure](setup/site-structure.md)
+- One site per reader-facing unit that needs its own navigation, search, and export: a guide, a report, one experiment's viewer. Put experiments in one site, one group each, when readers compare them or they share sources, terms, roles, selection groups, or parameter scopes. Those are per manifest and never cross sites.
+- Sites are siblings, never nested: a site root contains no other manifest. Grouping folders above sites are plain folders, not sites.
+- Only the library is shared. Stylesheets, scripts, media, data, terms, and citations are per site. Copy a small common file into each site rather than linking outside the root.
+- Pipelines write dynamic sources into `<site>/assets/data/`, either directly or as a copy step of the run, because refresh rejects source paths that leave the site root. Keep raw run directories outside sites.
+- Relative links to another site's pages work from disk, but export disables them. Do not rely on them for content.
+- The page skeleton paths below assume `<project>/<site>/`. Adjust the `../` count to the library for deeper sites.
+- Mirror manifest groups in `pages/<group>/`. Use lowercase hyphenated file and site folder names that are stable, because export routes, search paths, and cross-page anchors depend on them.
+- Keep heavy unrelated trees such as `.git`, `node_modules`, raw archives, and pipeline outputs not consumed by pages outside every site root.
 
 ## Page skeleton
 
@@ -98,20 +108,21 @@ Take the first rung that works. Moving down a rung requires that every rung abov
 
 - Static data is fixed once written. Dynamic data is produced by an external process. Pages never load raw files directly, because `file://` blocks fetches. Pages load only the wrappers in `generated/`. [Data wrappers](tools/file-wrapper.md) · [Named sources](data/data-blocks.md)
 - The pipeline overwrites the same file names in `assets/data/` each run. Field names, types, and keys are a contract with the pages, so treat renames as breaking changes. Changing values is fine.
-- Every project ships its own `refresh-assets.py` at the root (no arguments, or `--check`). [Terminal refresh](tools/refresh-assets.md)
+- Every site ships its own `refresh-assets.py` at its root (no arguments, or `--check`). Set `LIBRARY` to the site's relative path to `docform/`. [Terminal refresh](tools/refresh-assets.md)
 
 ```python
 #!/usr/bin/env python3
 from pathlib import Path
 from runpy import run_path
+LIBRARY = '../docform'
 if __name__ == '__main__':
     site = Path(__file__).resolve().parent
-    main = run_path(str(site.parent / 'docform/tools/refresh_assets.py'))['main']
+    main = run_path(str(site / LIBRARY / 'tools/refresh_assets.py'))['main']
     raise SystemExit(main(site / 'assets/site.js', site_root=site))
 ```
 
 - Refresh is all-or-nothing: one invalid data entry or blocked index blocks every output. Search needs Node.js; without it data still refreshes and the run exits 1. Prefer CSV, TSV, JSON, XML, or Markdown for dynamic sources; YAML needs PyYAML. Never hand-edit `generated/`.
-- One source, many views: bind charts, results tables, matrices, and data views to the source name. Do not duplicate data across pages. Filter with `filter`/`where` or a named transform instead of creating derived copies.
+- One source, many views: bind charts, results tables, matrices, and data views to the source name. Do not duplicate data across pages of a site. Filter with `filter`/`where` or a named transform instead of creating derived copies.
 
 ## Content conventions
 
@@ -130,7 +141,7 @@ if __name__ == '__main__':
 
 Every page must work in both **Reader** and **Interactive** standalone export. [Export](setup/export.md)
 
-- Resources must be local, relative, and inside the root. Remote media is dropped, and video keeps only its poster.
+- Resources must be local, relative, and inside the site root. Remote media is dropped, and video keeps only its poster.
 - Load data through wrappers or inline sources, never from runtime file reads.
 - Author scripts use only the lifecycle API. Declare their extra files with `data-df-export-dependencies` and `data-df-export-resources`, and read them through `DocFormExportFiles` in export. Startup errors fall back to the Reader capture, so treat a fallback as a bug.
 
@@ -147,8 +158,10 @@ Every page must work in both **Reader** and **Interactive** standalone export. [
 
 ## Pre-ship checklist
 
+Run per site.
+
 - [ ] No `[docform]` console warnings. `DocForm.diagnostics.list()` is empty on every page.
-- [ ] `python3 refresh-assets.py --check` exits with status 0: the search index and all wrappers are current (or `tools/assets.html` reports them current when Node.js is unavailable). Regenerate after any page, heading, term, data, or manifest change.
+- [ ] `python3 <site>/refresh-assets.py --check` exits with status 0: the search index and all wrappers are current (or `tools/assets.html` reports them current when Node.js is unavailable). Regenerate after any page, heading, term, data, or manifest change.
 - [ ] Every page is in the manifest, prev/next order reads correctly, and cross-page anchors resolve.
 - [ ] Light and dark themes, 1920×1080 and narrow widths, focus mode, and print all look correct.
 - [ ] The export preview builds in Reader and Interactive modes with no missing resources or fallback pages.

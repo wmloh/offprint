@@ -4,7 +4,7 @@ Reading-pill **Export** (footer link when `controls` is off) builds one offline 
 
 ## Dialog
 
-- Pick the documentation root (pages, manifest, assets), then pages in manifest order, then build a preview and download. Bundled library styles and KaTeX fonts are included. Changing mode, pages, or consent needs a fresh preview.
+- Pick the open page's site root (dialog: documentation folder; pages, manifest, assets), then pages in manifest order, then build a preview and download. Bundled library styles and KaTeX fonts are included. Changing mode, pages, or consent needs a fresh preview.
 - Start state: active page's committed live view; other pages' browser-local saved views; else authored defaults. Preview lists view sources, fallbacks, import-derived content, missing assets, unavailable links, and exact HTML bytes.
 - **Saved reading data**: clears this browser's saved views and imports for the document after confirmation and discards the preview. Hidden when browser-local state is off.
 

@@ -2,7 +2,7 @@ Authoring conventions	Recommended project layout, configuration, custom-code lad
 Offline setup	Load DocForm offline and register author hooks	setup/setup.md
 Include order	Choose feature profiles and resolve dependencies	setup/include-order.md
 Site manifest	Configure pages, features, registries, and generated assets	setup/manifest.md
-Site structure	Lay out documentation and library folders for offline use and export	setup/site-structure.md
+Site structure	Lay out one or more site roots around a shared library for offline use and export	setup/site-structure.md
 Standalone export	Export selected pages to one offline Reader or Interactive HTML file, with opt-in imports and author scripts	setup/export.md
 Base layout	Style the reading column, typography, lists, tables, and figure widths	layout/base.md
 Section lines	Accent sections with spacing, colour, and margin lines	layout/sections.md

@@ -3,6 +3,7 @@ Offline setup	Load DocForm offline and register author hooks	setup/setup.md
 Include order	Choose feature profiles and resolve dependencies	setup/include-order.md
 Site manifest	Configure pages, features, registries, and generated assets	setup/manifest.md
 Site structure	Lay out documentation and library folders for offline use and export	setup/site-structure.md
+Standalone export	Export selected pages to one offline Reader or Interactive HTML file, with opt-in imports and author scripts	setup/export.md
 Base layout	Style the reading column, typography, lists, tables, and figure widths	layout/base.md
 Section lines	Accent sections with spacing, colour, and margin lines	layout/sections.md
 Design tokens	Customize colours, fonts, spacing, and widths	layout/tokens.md
@@ -34,7 +35,7 @@ Figure steps	Select figure states and show their details	interact/figure-steps.m
 Scroll reveals	Animate blocks as they approach the viewport centre	interact/reveals.md
 Split views	Arrange responsive panes with staggered reveals	interact/split-views.md
 Figure zoom	Enlarge a live figure in a full-screen dialog	interact/figure-zoom.md
-Zoom tools	Magnify, point, draw, and measure in the zoom dialog	interact/zoom-tools.md
+Zoom tools	Magnify, point, draw, erase, and measure in the zoom dialog	interact/zoom-tools.md
 Choice groups	Choose one or more options with chips or a combobox	interact/choices.md
 Parameters	Define scoped values and link controls, presets, visibility, charts, and selections	interact/parameters.md
 Linked selection	Synchronize keyed controls, charts, and passive views	interact/linked-highlighting.md

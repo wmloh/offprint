@@ -27,7 +27,7 @@
       "css/buttons.css"
     ],
     "scripts": [],
-    "styleBytes": 24972,
+    "styleBytes": 25498,
     "scriptBytes": 0
   },
   {
@@ -42,7 +42,7 @@
       "css/blocks.css"
     ],
     "scripts": [],
-    "styleBytes": 2317,
+    "styleBytes": 5574,
     "scriptBytes": 0
   },
   {
@@ -57,7 +57,7 @@
       "css/blocks.css"
     ],
     "scripts": [],
-    "styleBytes": 2317,
+    "styleBytes": 5574,
     "scriptBytes": 0
   },
   {
@@ -102,7 +102,7 @@
       "js/theme.js"
     ],
     "styleBytes": 548,
-    "scriptBytes": 5538
+    "scriptBytes": 4689
   },
   {
     "id": "roles",
@@ -119,7 +119,7 @@
       "js/roles.js"
     ],
     "styleBytes": 621,
-    "scriptBytes": 3201
+    "scriptBytes": 3789
   },
   {
     "id": "math",
@@ -138,7 +138,7 @@
       "js/math.js"
     ],
     "styleBytes": 25460,
-    "scriptBytes": 278032
+    "scriptBytes": 278048
   },
   {
     "id": "tooltips",
@@ -154,8 +154,8 @@
     "scripts": [
       "js/tooltip.js"
     ],
-    "styleBytes": 3216,
-    "scriptBytes": 20490
+    "styleBytes": 3871,
+    "scriptBytes": 29457
   },
   {
     "id": "selection",
@@ -172,7 +172,7 @@
       "js/highlight.js"
     ],
     "styleBytes": 2022,
-    "scriptBytes": 9362
+    "scriptBytes": 10306
   },
   {
     "id": "animation",
@@ -188,11 +188,11 @@
     "scripts": [
       "js/anim.js"
     ],
-    "styleBytes": 2276,
-    "scriptBytes": 22858
+    "styleBytes": 1560,
+    "scriptBytes": 28281
   },
   {
-    "id": "parameters",
+    "id": "dropdowns",
     "onByDefault": false,
     "readingRoot": false,
     "needs": [
@@ -200,13 +200,49 @@
     ],
     "loads": 2,
     "styles": [
+      "css/dropdowns.css"
+    ],
+    "scripts": [
+      "js/dropdowns.js"
+    ],
+    "styleBytes": 3523,
+    "scriptBytes": 4461
+  },
+  {
+    "id": "choices",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/choices.css"
+    ],
+    "scripts": [
+      "js/choices.js"
+    ],
+    "styleBytes": 8771,
+    "scriptBytes": 22096
+  },
+  {
+    "id": "parameters",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base",
+      "dropdowns",
+      "choices"
+    ],
+    "loads": 4,
+    "styles": [
       "css/params.css"
     ],
     "scripts": [
       "js/params.js"
     ],
-    "styleBytes": 3335,
-    "scriptBytes": 34135
+    "styleBytes": 2999,
+    "scriptBytes": 29051
   },
   {
     "id": "code",
@@ -223,7 +259,24 @@
       "js/code.js"
     ],
     "styleBytes": 5199,
-    "scriptBytes": 30677
+    "scriptBytes": 30667
+  },
+  {
+    "id": "editable-text",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/editable-text.css"
+    ],
+    "scripts": [
+      "js/editable-text.js"
+    ],
+    "styleBytes": 2137,
+    "scriptBytes": 3295
   },
   {
     "id": "tree",
@@ -240,7 +293,24 @@
       "js/tree.js"
     ],
     "styleBytes": 2260,
-    "scriptBytes": 11945
+    "scriptBytes": 14294
+  },
+  {
+    "id": "markdown",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/markdown.css"
+    ],
+    "scripts": [
+      "js/markdown.js"
+    ],
+    "styleBytes": 1024,
+    "scriptBytes": 12066
   },
   {
     "id": "data",
@@ -254,7 +324,7 @@
       "js/data.js"
     ],
     "styleBytes": 0,
-    "scriptBytes": 86114
+    "scriptBytes": 88919
   },
   {
     "id": "data-view",
@@ -277,17 +347,18 @@
     "onByDefault": false,
     "readingRoot": false,
     "needs": [
-      "base"
+      "base",
+      "choices"
     ],
-    "loads": 2,
+    "loads": 3,
     "styles": [
       "css/chart.css"
     ],
     "scripts": [
       "js/chart.js"
     ],
-    "styleBytes": 7422,
-    "scriptBytes": 109152
+    "styleBytes": 7849,
+    "scriptBytes": 177037
   },
   {
     "id": "dropzone",
@@ -306,7 +377,7 @@
       "js/dropzone.js"
     ],
     "styleBytes": 2059,
-    "scriptBytes": 18689
+    "scriptBytes": 20135
   },
   {
     "id": "chart-playback",
@@ -315,7 +386,7 @@
     "needs": [
       "chart"
     ],
-    "loads": 3,
+    "loads": 4,
     "styles": [
       "css/chart-playback.css"
     ],
@@ -323,24 +394,76 @@
       "js/chart-playback.js"
     ],
     "styleBytes": 639,
-    "scriptBytes": 18425
+    "scriptBytes": 26925
+  },
+  {
+    "id": "chart-intervals",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "chart"
+    ],
+    "loads": 4,
+    "styles": [
+      "css/chart-intervals.css"
+    ],
+    "scripts": [
+      "js/chart-intervals.js"
+    ],
+    "styleBytes": 319,
+    "scriptBytes": 3970
+  },
+  {
+    "id": "chart-histogram",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "chart"
+    ],
+    "loads": 4,
+    "styles": [
+      "css/chart-histogram.css"
+    ],
+    "scripts": [
+      "js/chart-histogram.js"
+    ],
+    "styleBytes": 223,
+    "scriptBytes": 13793
+  },
+  {
+    "id": "chart-heatmap",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "chart"
+    ],
+    "loads": 4,
+    "styles": [
+      "css/chart-heatmap.css"
+    ],
+    "scripts": [
+      "js/chart-heatmap.js"
+    ],
+    "styleBytes": 2054,
+    "scriptBytes": 42666
   },
   {
     "id": "results",
     "onByDefault": false,
     "readingRoot": false,
     "needs": [
-      "base"
+      "base",
+      "choices"
     ],
-    "loads": 2,
+    "loads": 3,
     "styles": [
       "css/results.css"
     ],
     "scripts": [
       "js/results.js"
     ],
-    "styleBytes": 6757,
-    "scriptBytes": 44948
+    "styleBytes": 5599,
+    "scriptBytes": 51759
   },
   {
     "id": "matrix",
@@ -348,17 +471,18 @@
     "readingRoot": false,
     "needs": [
       "base",
-      "data"
+      "data",
+      "choices"
     ],
-    "loads": 3,
+    "loads": 4,
     "styles": [
       "css/matrix.css"
     ],
     "scripts": [
       "js/matrix.js"
     ],
-    "styleBytes": 1165,
-    "scriptBytes": 11450
+    "styleBytes": 866,
+    "scriptBytes": 11693
   },
   {
     "id": "scenarios",
@@ -367,15 +491,15 @@
     "needs": [
       "chart"
     ],
-    "loads": 3,
+    "loads": 4,
     "styles": [
       "css/scenarios.css"
     ],
     "scripts": [
       "js/scenarios.js"
     ],
-    "styleBytes": 977,
-    "scriptBytes": 19349
+    "styleBytes": 745,
+    "scriptBytes": 20310
   },
   {
     "id": "tabs",
@@ -392,41 +516,58 @@
       "js/tabs.js"
     ],
     "styleBytes": 1269,
-    "scriptBytes": 3127
+    "scriptBytes": 3131
+  },
+  {
+    "id": "detail-pane",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "base"
+    ],
+    "loads": 2,
+    "styles": [
+      "css/detail.css"
+    ],
+    "scripts": [
+      "js/detail.js"
+    ],
+    "styleBytes": 1886,
+    "scriptBytes": 6636
   },
   {
     "id": "cards",
     "onByDefault": false,
     "readingRoot": false,
     "needs": [
-      "base"
+      "detail-pane"
     ],
-    "loads": 2,
+    "loads": 3,
     "styles": [
       "css/steps.css"
     ],
     "scripts": [
       "js/steps.js"
     ],
-    "styleBytes": 6844,
-    "scriptBytes": 12432
+    "styleBytes": 8093,
+    "scriptBytes": 17340
   },
   {
     "id": "figure-steps",
     "onByDefault": false,
     "readingRoot": false,
     "needs": [
-      "base"
+      "detail-pane"
     ],
-    "loads": 2,
+    "loads": 3,
     "styles": [
       "css/steps.css"
     ],
     "scripts": [
       "js/steps.js"
     ],
-    "styleBytes": 6844,
-    "scriptBytes": 12432
+    "styleBytes": 8093,
+    "scriptBytes": 17340
   },
   {
     "id": "stepper",
@@ -443,7 +584,90 @@
       "js/stepper.js"
     ],
     "styleBytes": 331,
-    "scriptBytes": 3549
+    "scriptBytes": 2546
+  },
+  {
+    "id": "diagram-core",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "detail-pane"
+    ],
+    "loads": 3,
+    "styles": [],
+    "scripts": [
+      "js/diagram.js"
+    ],
+    "styleBytes": 0,
+    "scriptBytes": 14320
+  },
+  {
+    "id": "pipeline",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "diagram-core"
+    ],
+    "loads": 4,
+    "styles": [
+      "css/pipeline.css"
+    ],
+    "scripts": [
+      "js/pipeline.js"
+    ],
+    "styleBytes": 7497,
+    "scriptBytes": 37676
+  },
+  {
+    "id": "timeline",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "diagram-core"
+    ],
+    "loads": 4,
+    "styles": [
+      "css/timeline.css"
+    ],
+    "scripts": [
+      "js/timeline.js"
+    ],
+    "styleBytes": 2021,
+    "scriptBytes": 15574
+  },
+  {
+    "id": "sequence",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "diagram-core"
+    ],
+    "loads": 4,
+    "styles": [
+      "css/sequence.css"
+    ],
+    "scripts": [
+      "js/sequence-diagram.js"
+    ],
+    "styleBytes": 1453,
+    "scriptBytes": 5010
+  },
+  {
+    "id": "tree-diagram",
+    "onByDefault": false,
+    "readingRoot": false,
+    "needs": [
+      "diagram-core"
+    ],
+    "loads": 4,
+    "styles": [
+      "css/tree-diagram.css"
+    ],
+    "scripts": [
+      "js/tree-diagram.js"
+    ],
+    "styleBytes": 2237,
+    "scriptBytes": 10118
   },
   {
     "id": "split-views",
@@ -459,8 +683,8 @@
     "scripts": [
       "js/reveal.js"
     ],
-    "styleBytes": 3155,
-    "scriptBytes": 5692
+    "styleBytes": 3557,
+    "scriptBytes": 6854
   },
   {
     "id": "reveals",
@@ -476,8 +700,8 @@
     "scripts": [
       "js/reveal.js"
     ],
-    "styleBytes": 3155,
-    "scriptBytes": 5692
+    "styleBytes": 3557,
+    "scriptBytes": 6854
   },
   {
     "id": "peek-bubbles",
@@ -494,8 +718,8 @@
     "scripts": [
       "js/bubble.js"
     ],
-    "styleBytes": 5589,
-    "scriptBytes": 11119
+    "styleBytes": 8814,
+    "scriptBytes": 11132
   },
   {
     "id": "search",
@@ -511,8 +735,8 @@
     "scripts": [
       "js/search.js"
     ],
-    "styleBytes": 3016,
-    "scriptBytes": 20456
+    "styleBytes": 3359,
+    "scriptBytes": 21963
   },
   {
     "id": "glossary",
@@ -528,8 +752,8 @@
     "scripts": [
       "js/glossary.js"
     ],
-    "styleBytes": 2034,
-    "scriptBytes": 11763
+    "styleBytes": 3414,
+    "scriptBytes": 18429
   },
   {
     "id": "references",
@@ -546,7 +770,7 @@
       "js/refs.js"
     ],
     "styleBytes": 3747,
-    "scriptBytes": 19567
+    "scriptBytes": 19523
   },
   {
     "id": "citations",
@@ -563,7 +787,7 @@
       "js/refs.js"
     ],
     "styleBytes": 3747,
-    "scriptBytes": 19567
+    "scriptBytes": 19523
   },
   {
     "id": "navigation",
@@ -579,8 +803,8 @@
     "scripts": [
       "js/nav.js"
     ],
-    "styleBytes": 11070,
-    "scriptBytes": 29211
+    "styleBytes": 10319,
+    "scriptBytes": 25529
   },
   {
     "id": "sidenotes",
@@ -597,7 +821,7 @@
       "js/notes.js"
     ],
     "styleBytes": 2331,
-    "scriptBytes": 6344
+    "scriptBytes": 6331
   },
   {
     "id": "sections",
@@ -612,7 +836,7 @@
       "js/sections.js"
     ],
     "styleBytes": 0,
-    "scriptBytes": 6515
+    "scriptBytes": 6517
   },
   {
     "id": "controls",
@@ -628,8 +852,8 @@
     "scripts": [
       "js/controls.js"
     ],
-    "styleBytes": 4265,
-    "scriptBytes": 18966
+    "styleBytes": 4616,
+    "scriptBytes": 21338
   },
   {
     "id": "zoom",
@@ -645,8 +869,8 @@
     "scripts": [
       "js/zoom.js"
     ],
-    "styleBytes": 2556,
-    "scriptBytes": 9645
+    "styleBytes": 2746,
+    "scriptBytes": 10884
   },
   {
     "id": "zoom-tools",
@@ -662,7 +886,7 @@
     "scripts": [
       "js/zoomtools.js"
     ],
-    "styleBytes": 5072,
-    "scriptBytes": 27539
+    "styleBytes": 6351,
+    "scriptBytes": 36603
   }
 ]

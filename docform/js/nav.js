@@ -117,19 +117,19 @@
     button.type = 'button';
     button.innerHTML = LINK_ICON;
     button.setAttribute('aria-label', 'Copy link to this section');
-    button.title = 'Copy link';
+    DocForm.util.hint(button, 'Copy link');
     var timer = 0;
     button.addEventListener('click', function () {
       var url = headingUrl(root.location.href, h.id);
       DocForm.util.copyText(url).then(function () {
         button.classList.add('is-done');
         button.innerHTML = DONE_ICON;
-        button.title = 'Link copied';
+        DocForm.util.hint(button, 'Link copied');
         clearTimeout(timer);
         timer = setTimeout(function () {
           button.classList.remove('is-done');
           button.innerHTML = LINK_ICON;
-          button.title = 'Copy link';
+          DocForm.util.hint(button, 'Copy link');
         }, 1600);
       }, function () {
         if (root.history && root.history.replaceState) root.history.replaceState(null, '', url);
@@ -456,9 +456,6 @@
         else opener.focus();
       }
       if (changed && changes) changes.emit(snapshot(), previous, origin);
-      else if (changed && typeof root.CustomEvent === 'function') {
-        document.dispatchEvent(new root.CustomEvent('df:drawer', { detail: { open: open } }));
-      }
       return true;
     }
 
@@ -541,7 +538,7 @@
     var html = document.documentElement;
     var handle = make('div', 'df-nav-resize');
     handle.tabIndex = 0;
-    handle.title = 'Drag to resize, double-click to reset';
+    DocForm.util.hint(handle, 'Drag to resize, double-click to reset');
     handle.setAttribute('role', 'separator');
     handle.setAttribute('aria-orientation', 'vertical');
     handle.setAttribute('aria-label', 'Resize navigation');

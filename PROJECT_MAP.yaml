@@ -60,7 +60,7 @@ docform/: Copyable offline library folder
     export-resources.js: Offline resolution and content-based sharing of stylesheets, fonts, and images
     export-reader.js: Active-page Interactive startup and session replay for cards, diagrams, charts, and linked views, isolated author pages, Reader capture with declarative steps, and shared navigation, history, reading controls, and tooltips
     export-dialog.js: Reader and Interactive mode selection, folder and page pickers, preview and consent for imports and author scripts, cancellation, download, and saved-data clearing
-    core.js: DocForm namespace, module and shortcut registries, data-df-* and clipboard helpers, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
+    core.js: DocForm namespace, module and shortcut registries, data-df-* and clipboard helpers, shared control hints in the tooltip card, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
@@ -116,6 +116,7 @@ docform/: Copyable offline library folder
     AUTHORING.md: Agent author conventions, recommended project layout, custom-code ladder, export rules, and pre-ship checklist
     interact/step-contract.md: Shared step markup, selection binding, controller, and event
     interact/shortcuts.md: Shortcut scopes, defaults, conflict diagnostics, and manifest remapping
+    setup/export.md: Standalone Reader and Interactive export dialog, modes, exported file, and local author scripts
     extend/: Public extension API, lifecycle hooks, shared controllers, events, and chart add-on registration
 docs/: Human-facing beginner DocForm HTML site with a Start here orientation and live examples
   refresh-data.py: No-argument launcher for refreshing this site's data wrappers

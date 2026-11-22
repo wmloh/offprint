@@ -92,7 +92,7 @@ Take the first rung that works. Moving down a rung requires that every rung abov
 
 | Kind | Where | Form |
 | --- | --- | --- |
-| Static, ≤ ~100 rows or 10 KB | Inline, next to its view | `<script type="text/csv" data-df-source="name">`, authored tables, or inline specs |
+| Static, ≤ ~100 rows or 10 KB | Inline, next to its view | `<script type="text/csv" data-df-source="name">` (or a TSV, JSON, YAML, XML, or Markdown MIME type), authored tables, or inline specs |
 | Static, larger | `assets/data/` | Named source via `assets.data` wrapper |
 | Dynamic (changes between runs, e.g. ML results) | `assets/data/` | Named source via `assets.data` wrapper, always |
 
@@ -110,12 +110,12 @@ if __name__ == '__main__':
     raise SystemExit(refresh(site / 'assets/site.js', site_root=site))
 ```
 
-- Refresh is all-or-nothing: one invalid entry blocks every output. Prefer CSV, TSV, or JSON for dynamic sources, because YAML needs PyYAML. Never hand-edit `generated/`.
+- Refresh is all-or-nothing: one invalid entry blocks every output. Prefer CSV, TSV, JSON, XML, or Markdown for dynamic sources; YAML needs PyYAML. Never hand-edit `generated/`.
 - One source, many views: bind charts, results tables, matrices, and data views to the source name. Do not duplicate data across pages. Filter with `filter`/`where` or a named transform instead of creating derived copies.
 
 ## Content conventions
 
-- Tooltips: use `data-df-tip` with `data-df-tip-tags`, or `data-df-term` backed by `options.tooltips.terms` with `tags`. Never use a native `title` attribute. Define a recurring term once in the manifest. [Tooltips](reading/tooltips.md)
+- Tooltips: use `data-df-tip` with `data-df-tip-tags`, or `data-df-term` backed by `options.tooltips.terms` with `tags`. Define a recurring term once in the manifest. Never use a native `title` attribute; hint custom icon buttons with `DocForm.util.hint(el, text)`. [Tooltips](reading/tooltips.md)
 - Tags: every `.df-tag` has a class (registry label or `data-df-tag-class`) and a tooltip. Circle shapes are reserved for glossary tags. [Tags](reading/tags.md)
 - References and citations: give figures, tables, and equations IDs and captions, and link with reference markup instead of typing "Figure 3". Cite manifest keys. [Cross-references](reading/references.md) · [Citations](reading/citations.md)
 - Give an explicit `id` to any heading that another page links to. Formulas use `.df-math` with shared macros. Side remarks use sidenotes, and optional depth uses peek bubbles or callouts, not long parentheticals.
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
 ## Export (hard requirement)
 
-Every page must work in both **Reader** and **Interactive** standalone export. [Export](layout/controls.md#standalone-export)
+Every page must work in both **Reader** and **Interactive** standalone export. [Export](setup/export.md)
 
 - Resources must be local, relative, and inside the root. Remote media is dropped, and video keeps only its poster.
 - Load data through wrappers or inline sources, never from runtime file reads.

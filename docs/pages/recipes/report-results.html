@@ -57,7 +57,7 @@
                   {"key": "full", "label": "All groups"}
                 ],
                 "measures": [
-                  {"key": "count", "field": "count", "label": "Reference count", "range": [0, 45]},
+                  {"key": "count", "field": "count", "label": "Reference count", "range": [0, 54]},
                   {"key": "share", "field": "share", "label": "Share of all references", "unit": "%", "range": [0, 100]}
                 ]
               }
@@ -101,7 +101,7 @@
     </header>
 
     <h2 id="the-goal">The goal</h2>
-    <p>Show how the 45 references in a snapshot of DocForm’s library are distributed across five groups. A reader should be able to check a count, compare groups, and see how much a shorter reading plan would cover.</p>
+    <p>Show how the 54 references in a snapshot of DocForm’s library are distributed across five groups. A reader should be able to check a count, compare groups, and see how much a shorter reading plan would cover.</p>
 
     <h2 id="build-it-up">Start with counts readers can check</h2>
     <figure id="build-it-up-demo" data-df-no-zoom>
@@ -117,11 +117,11 @@
         <table>
           <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>
           <tbody>
-            <tr><td>Setup</td><td>3</td></tr>
-            <tr><td>Layout</td><td>7</td></tr>
-            <tr><td>Reading</td><td>13</td></tr>
-            <tr><td>Interaction</td><td>13</td></tr>
-            <tr><td>Data</td><td>9</td></tr>
+            <tr><td>Setup</td><td>5</td></tr>
+            <tr><td>Layout</td><td>9</td></tr>
+            <tr><td>Reading</td><td>11</td></tr>
+            <tr><td>Interaction</td><td>18</td></tr>
+            <tr><td>Data</td><td>11</td></tr>
           </tbody>
         </table>
       </div>
@@ -129,14 +129,14 @@
         <caption>Exact counts for the visible groups</caption>
         <thead><tr><th scope="col" data-df-field="group">Group</th><th scope="col" data-df-field="references" data-df-best="max">References</th></tr></thead>
         <tbody>
-          <tr><td>Setup</td><td>3</td></tr>
-          <tr><td>Layout</td><td>7</td></tr>
-          <tr><td>Reading</td><td>13</td></tr>
-          <tr><td>Interaction</td><td>13</td></tr>
-          <tr><td>Data</td><td>9</td></tr>
+          <tr><td>Setup</td><td>5</td></tr>
+          <tr><td>Layout</td><td>9</td></tr>
+          <tr><td>Reading</td><td>11</td></tr>
+          <tr><td>Interaction</td><td>18</td></tr>
+          <tr><td>Data</td><td>11</td></tr>
         </tbody>
       </table>
-      <figcaption>Reading and Interaction were tied at 13 references each in this snapshot. The chart shows relative size, and the table gives exact values.</figcaption>
+      <figcaption>Interaction had the most references in this snapshot, 18, while Reading and Data were tied at 11. The chart shows relative size, and the table gives exact values.</figcaption>
     </figure>
     <p class="df-eyebrow" data-df-role="try">Try it</p>
     <p>Clear Reading and Interaction in Groups to show. Their bars and rows disappear together. Sort the table by References to compare the remaining groups, then select all five again.</p>
@@ -145,19 +145,19 @@
     <h2 id="tell-the-story">Show how the total builds</h2>
     <figure data-df-no-zoom>
       <ol id="coverage-playback" data-df-chart-playback data-df-target="coverage-chart" data-df-duration="1600">
-        <li data-df-key="setup" data-df-x="1"><strong data-df-step-label>Start with Setup.</strong> The first group covers 3 references.</li>
-        <li data-df-key="reading" data-df-x="3"><strong data-df-step-label>Continue through Reading.</strong> Layout and Reading take the running total to 23.</li>
-        <li data-df-key="full" data-df-x="5"><strong data-df-step-label>Cover all five groups.</strong> Interaction and Data bring the total to 45.</li>
+        <li data-df-key="setup" data-df-x="1"><strong data-df-step-label>Start with Setup.</strong> The first group covers 5 references.</li>
+        <li data-df-key="reading" data-df-x="3"><strong data-df-step-label>Continue through Reading.</strong> Layout and Reading take the running total to 25.</li>
+        <li data-df-key="full" data-df-x="5"><strong data-df-step-label>Cover all five groups.</strong> Interaction and Data bring the total to 54.</li>
       </ol>
       <div id="coverage-chart" data-df-chart="line" data-df-x-label="Groups included" data-df-y-label="References so far">
         <table>
           <thead><tr><th scope="col">Groups included</th><th scope="col">References so far</th></tr></thead>
           <tbody>
-            <tr><td>1</td><td>3</td></tr>
-            <tr><td>2</td><td>10</td></tr>
-            <tr><td>3</td><td>23</td></tr>
-            <tr><td>4</td><td>36</td></tr>
-            <tr><td>5</td><td>45</td></tr>
+            <tr><td>1</td><td>5</td></tr>
+            <tr><td>2</td><td>14</td></tr>
+            <tr><td>3</td><td>25</td></tr>
+            <tr><td>4</td><td>43</td></tr>
+            <tr><td>5</td><td>54</td></tr>
           </tbody>
         </table>
       </div>
@@ -169,11 +169,11 @@
     <h2 id="compare-coverage">Compare three reading plans</h2>
     <script type="application/json" data-df-source="Coverage measures">
       [
-        {"part": "included", "scope": "opening", "count": 10, "share": 22.2},
-        {"part": "remaining", "scope": "opening", "count": 35, "share": 77.8},
-        {"part": "included", "scope": "reading", "count": 23, "share": 51.1},
-        {"part": "remaining", "scope": "reading", "count": 22, "share": 48.9},
-        {"part": "included", "scope": "full", "count": 45, "share": 100},
+        {"part": "included", "scope": "opening", "count": 14, "share": 25.9},
+        {"part": "remaining", "scope": "opening", "count": 40, "share": 74.1},
+        {"part": "included", "scope": "reading", "count": 25, "share": 46.3},
+        {"part": "remaining", "scope": "reading", "count": 29, "share": 53.7},
+        {"part": "included", "scope": "full", "count": 54, "share": 100},
         {"part": "remaining", "scope": "full", "count": 0, "share": 0}
       ]
     </script>
@@ -181,15 +181,15 @@
       <caption>References included and remaining for each reading plan</caption>
       <thead><tr><th scope="col">Coverage</th><th scope="col">Setup and Layout</th><th scope="col">Through Reading</th><th scope="col">All groups</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Included</th><td>10</td><td>23</td><td>45</td></tr>
-        <tr><th scope="row">Still to cover</th><td>35</td><td>22</td><td>0</td></tr>
+        <tr><th scope="row">Included</th><td>14</td><td>25</td><td>54</td></tr>
+        <tr><th scope="row">Still to cover</th><td>40</td><td>29</td><td>0</td></tr>
       </tbody>
     </table>
     <script type="application/json" data-df-source="Coverage plans">
       [
-        {"scope": "opening", "groups": "Setup and Layout", "total": 10},
-        {"scope": "reading", "groups": "Setup, Layout, and Reading", "total": 23},
-        {"scope": "full", "groups": "Setup, Layout, Reading, Interaction, and Data", "total": 45}
+        {"scope": "opening", "groups": "Setup and Layout", "total": 14},
+        {"scope": "reading", "groups": "Setup, Layout, and Reading", "total": 25},
+        {"scope": "full", "groups": "Setup, Layout, Reading, Interaction, and Data", "total": 54}
       ]
     </script>
     <table id="report-scenarios" data-df-scenarios="configurations" data-df-source="Coverage plans">
@@ -197,7 +197,7 @@
       <thead><tr><th scope="col">Measure</th><th scope="col">Unit</th><th scope="col" data-df-key="opening">Setup and Layout</th><th scope="col" data-df-key="reading"><span data-df-step-label>Through Reading</span></th><th scope="col" data-df-key="full"><span data-df-step-label>All groups</span></th></tr></thead>
       <tbody>
         <tr data-df-condition><th scope="row">Groups included</th><td></td><td>Setup and Layout</td><td>Setup, Layout, and Reading</td><td>Setup, Layout, Reading, Interaction, and Data</td></tr>
-        <tr><th scope="row">References covered</th><td></td><td>10</td><td>23</td><td>45</td></tr>
+        <tr><th scope="row">References covered</th><td></td><td>14</td><td>25</td><td>54</td></tr>
       </tbody>
     </table>
     <p class="df-eyebrow" data-df-role="try">Try it</p>

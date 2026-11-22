@@ -343,7 +343,8 @@
       if (more) {
         var ring = document.createElement('span');
         ring.className = 'df-tooltip-ring';
-        ring.title = 'Press and hold the term for more';
+        ring.setAttribute('role', 'img');
+        ring.setAttribute('aria-label', 'Press and hold the term for more');
         ring.innerHTML = RING;
         head.appendChild(ring);
       }
@@ -577,6 +578,7 @@
   DocForm._tooltips = {
     snapshot: function (anchor, output) {
       return Array.from(attached.get(anchor) || [], function (record) {
+        if (record.box.classList.contains('df-tooltip-hint')) return null;
         var copy = output.importNode(record.box, true);
         if (record.content) fill({ body: copy.querySelector('.df-tooltip-body'), content: record.content });
         var more = copy.querySelector('.df-tooltip-more');
@@ -590,7 +592,7 @@
         copy.classList.remove('is-clipped', 'is-expanded');
         copy.hidden = false;
         return copy;
-      });
+      }).filter(Boolean);
     },
     termKey: termKey,
     glossary: glossary,

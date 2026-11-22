@@ -7,7 +7,7 @@ Load an ordered classic author script after [the offline entry](../setup/setup.m
 | `DocForm.setup(fn)` | Register a synchronous callback. Runs with `DocForm` after the selected feature scripts and configured data wrappers load, before automatic enhancement. Returns `false` if registration fails or setup has closed. |
 | `DocForm.register(id, init)` | Register one initializer under a unique author-chosen ID during setup. It runs once during enhancement. Manifest `features` controls the bundled features. |
 | `DocForm.ready(fn)` | Run with `DocForm` after startup or after a recoverable failure. Late registrations run in a microtask. Setup and ready callbacks run in registration order. |
-| `DocForm.util` | `slug(text)` makes a heading-style ID. `uniqueSlug(base, usedSet)` reserves a unique ID in the set. `copyText(text)` returns a promise. |
+| `DocForm.util` | `slug(text)` makes a heading-style ID. `uniqueSlug(base, usedSet)` reserves a unique ID in the set. `copyText(text)` returns a promise. `hint(el, text)` sets a hover/focus hint in the shared tooltip card (empty clears); use it instead of `title`. [Tooltips](../reading/tooltips.md) |
 | `DocForm.diagnostics.list()` | Read accumulated `{code, feature, target, message, correction}` entries. Startup callback failures are reported here and via `df:diagnostic`. |
 | `DocForm.sequence.get(idOrElement)` | Control an existing sequence by key or read its committed state. [Step contract](../interact/step-contract.md) |
 | `DocForm.shortcuts.register(spec)`, `keys(id)` | Register a scoped, remappable binding and read its effective keys. Registration returns an unregister function. [Shortcuts](../interact/shortcuts.md) |

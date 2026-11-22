@@ -850,7 +850,7 @@
 
   function enhanceAll(el) {
     if (DocForm._results && DocForm._results.enhance) DocForm._all('table[data-df-results]', el).forEach(function (table) {
-      DocForm._results.enhance(table, { silent: true });
+      DocForm._results.enhance(table);
     });
     if (DocForm._code) DocForm._all('pre', el).forEach(DocForm._code.mount);
   }

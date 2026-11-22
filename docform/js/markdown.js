@@ -95,7 +95,7 @@
             var img = make('img');
             img.src = image.url;
             img.alt = image.label;
-            if (image.title) img.title = image.title;
+            if (image.title) DocForm.util.hint(img, image.title);
             img.loading = 'lazy';
             add(img);
           } else text += image.label;
@@ -108,7 +108,7 @@
         if (link) {
           var target = safeUrl(link.url) ? make('a') : make('span');
           if (target.tagName === 'A') target.href = link.url;
-          if (link.title) target.title = link.title;
+          if (link.title) DocForm.util.hint(target, link.title);
           inline(link.label, target);
           add(target);
           i = link.end;

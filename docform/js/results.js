@@ -626,9 +626,6 @@
         return [entry[0], filter.excluded ? { excluded: filter.excluded.slice() } : { min: filter.min, max: filter.max }];
       })), chips: chips.filter(function (chip) { return chip.on; }).map(function (chip) { return chip.label; }) };
       if (settings.onFilter) settings.onFilter(origin);
-      else if (!settings.silent && typeof CustomEvent === 'function') {
-        table.dispatchEvent(new CustomEvent('df:filter', { bubbles: true, detail: { shown: shown, total: rows.length } }));
-      }
     };
 
     // Header buttons sit beside the sort button (or the header text) in one row.

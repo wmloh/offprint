@@ -12,10 +12,10 @@ Object.defineProperty(window.DocFormData || (window.DocFormData = Object.create(
     "inputs": [
       {
         "file": "assets/data/feature-groups.csv",
-        "sha256": "a76ad543de37ed73d62a584d09b856086d407fb98d05ffaf9b464987141f0412"
+        "sha256": "53f2cb924bd32dea0197612883199c7c68a7a2b2ccecffe075f2823e57dcce5b"
       }
     ]
   },
   "type": "csv",
-  "text": "group,references\nsetup,3\nlayout,7\nreading,13\ninteract,13\ndata,9\n"
+  "text": "group,references\nsetup,5\nlayout,9\nreading,11\ninteract,18\ndata,11\n"
 } });

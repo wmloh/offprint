@@ -57,12 +57,12 @@
     try {
       el.innerHTML = html(tex, DocForm._boot ? component.flag(el, 'display', 'math') : DocForm._flag(el, 'display'));
       el.classList.remove(ERROR);
-      el.removeAttribute('title');
+      DocForm.util.hint(el, '');
     } catch (e) {
       var message = e && e.message ? e.message : String(e);
       el.textContent = tex;
       el.classList.add(ERROR);
-      el.title = message;
+      DocForm.util.hint(el, message);
       if (DocForm._boot) component.issue('math', el, 'Cannot render TeX: ' + message, 'Check the TeX source and configured macros.');
       else DocForm._warnOnce('math-error:' + tex, 'Cannot render TeX "' + tex + '": ' + message);
     }

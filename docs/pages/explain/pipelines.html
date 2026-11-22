@@ -146,6 +146,22 @@
       <figcaption>Pinned rows force the two lines to cross. The Text block uses its own one-line look.</figcaption>
     </figure>
 
+    <p>Lines can be routed by hand as well. A line can leave and enter a block on a chosen side, bend through a point between the blocks, carry arrowheads at both ends, or use a dotted or dashed style.</p>
+    <figure class="df-pipeline" id="hand-routed" data-df-block-width="9rem">
+      <ol class="df-pipe-blocks">
+        <li class="df-pipe-block" id="ask" data-df-row="1">
+          <p class="df-pipe-headline">Ask</p>
+          <p class="df-pipe-links">Leads to
+            <a class="df-pipe-link" href="#answer" data-df-arrow="both" data-df-label="talk">Answer</a> and
+            <a class="df-pipe-link" href="#archive" data-df-line="dotted" data-df-exit="bottom" data-df-enter="left" data-df-via="1 2">Archive</a>
+          </p>
+        </li>
+        <li class="df-pipe-block" id="answer" data-df-row="1"><p class="df-pipe-headline">Answer</p></li>
+        <li class="df-pipe-block" id="archive" data-df-col="2" data-df-row="2"><p class="df-pipe-headline">Archive</p></li>
+      </ol>
+      <figcaption>A two-way line between Ask and Answer, and a dotted line that leaves Ask from below and bends into Archive from the left.</figcaption>
+    </figure>
+
     <h2 id="detail-panes">Detail panes elsewhere on the page</h2>
     <p>The detail pane is not tied to a diagram. Place one anywhere and point it at a pipeline, a card panel, or a figure with steps. It shows the detail whose name matches the selected item.</p>
     <div class="df-card-panel" id="tool-cards">

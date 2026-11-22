@@ -195,7 +195,7 @@
       var label = make('span', 'df-timeline-lane', stage);
       label.style.top = (lane.top + 8) + 'px';
       label.textContent = lane.label;
-      label.title = lane.label;
+      DocForm.util.hint(label, lane.label);
       label.setAttribute('aria-hidden', 'true');
       return diagram.svg('line', { x1: 0, x2: WIDTH, y1: lane.top, y2: lane.top }, grid);
     });
@@ -216,7 +216,7 @@
       button.type = 'button';
       button.setAttribute('data-df-key', event.key);
       button.setAttribute('aria-label', legend);
-      button.title = legend;
+      DocForm.util.hint(button, legend);
       button.style.top = (entry.y + 3) + 'px';
       make('span', 'df-timeline-label', button).textContent = event.label;
       var mark = make('span', 'df-timeline-mark', button);

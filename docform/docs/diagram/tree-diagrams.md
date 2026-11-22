@@ -28,7 +28,7 @@ Enable `tree-diagram` (loads `detail-pane`). Use `figure.df-tree-diagram` with a
 - Initial selection uses the first node, a node marked `data-df-initial`, or a matching followed group key. Selecting a hidden key opens its ancestors. Collapsing a branch containing the selection selects the branch instead.
 - Inline details link automatically. External panes use `data-df-detail-for="<figure id>"`. Detail children match node keys.
 - Enable `selection` and set `data-df-selection-group` to link views. Supports `data-df-selection-mode="both|publish|follow"` and `data-df-selection-seed`.
-- Horizontal overflow stays inside the figure. Enable `zoom-tools` and add `data-df-zoom` to the figure for background-click fullscreen with cursor, magnifier, laser, pen, and highlighter. The authored hierarchy remains visible without script or on invalid initial input.
+- Horizontal overflow stays inside the figure. Enable `zoom-tools` and add `data-df-zoom` to the figure for background-click fullscreen with every [zoom tool](../interact/zoom-tools.md) except measure. The authored hierarchy remains visible without script or on invalid initial input.
 
 ## Named sources
 

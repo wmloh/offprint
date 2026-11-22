@@ -56,7 +56,7 @@
           <tr><th scope="row">Reading a page</th><td><kbd>T</kbd> changes theme, <kbd>F</kbd> toggles focus mode, <kbd>N</kbd> toggles navigation, <kbd>J</kbd> and <kbd>K</kbd> jump between headings, and <kbd>S</kbd> opens search.</td></tr>
           <tr><th scope="row">Open panel</th><td><kbd>Esc</kbd> dismisses search, the navigation drawer, the visible auto-hide sidebar, or a tooltip.</td></tr>
           <tr><th scope="row">Focused figure or linked choice</th><td><kbd>Enter</kbd> or <kbd>Space</kbd> enlarges a figure or activates a custom linked choice.</td></tr>
-          <tr><th scope="row">Enlarged figure</th><td><kbd>Esc</kbd> closes it. When presentation tools are enabled, <kbd>V</kbd>, <kbd>M</kbd>, <kbd>L</kbd>, <kbd>P</kbd>, <kbd>H</kbd>, and <kbd>C</kbd> choose tools. <kbd>[</kbd> and <kbd>]</kbd> adjust the magnifier. <kbd>Ctrl</kbd>+<kbd>Z</kbd> or <kbd>Cmd</kbd>+<kbd>Z</kbd> undoes an ink stroke.</td></tr>
+          <tr><th scope="row">Enlarged figure</th><td><kbd>Esc</kbd> closes it. When presentation tools are enabled, <kbd>1</kbd> to <kbd>7</kbd> choose the cursor, magnifier, laser, pen, highlighter, measure tool, and eraser. <kbd>[</kbd> and <kbd>]</kbd> adjust the magnifier. <kbd>Ctrl</kbd>+<kbd>Z</kbd> or <kbd>Cmd</kbd>+<kbd>Z</kbd> undoes an ink stroke.</td></tr>
         </tbody>
       </table>
       <figcaption>Keys are available when their features are enabled.</figcaption>
@@ -71,6 +71,9 @@
   }
 }</code></pre>
     <p>If two actions use the same key in the same part of the page, DocForm keeps the first binding and records a problem report. The full list of setting names is in the <a href="../../../docform/docs/interact/shortcuts.md">shortcut reference</a>.</p>
+
+    <h2 id="extend">Extend DocForm</h2>
+    <p>When no built-in feature fits, an agent can add its own behaviour with the <strong>Extension API</strong>. A small script loaded after DocForm registers the custom feature during setup, and DocForm starts it alongside the built-in ones, so it can use the same linked selections, data sources, and problem reports. <strong>Chart add-ons</strong> use the same route to add a new chart type, scale, or legend that works with chart controls, readouts, and table views. Histograms and heatmaps are built this way.</p>
 
     <h2 id="startup">Startup and ready stages</h2>
     <ol>

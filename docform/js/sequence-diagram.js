@@ -66,7 +66,7 @@
       var heading = diagram.element('span', 'df-sequence-participant', stage);
       diagram.position(heading, x - (COLUMN - 16) / 2, 8);
       heading.textContent = label;
-      heading.title = label;
+      DocForm.util.hint(heading, label);
       heading.setAttribute('aria-hidden', 'true');
     });
     var nodes = messages.map(function (message, index) {
@@ -86,7 +86,7 @@
       var size = self ? COLUMN - 24 : Math.abs(from - to) - 8;
       button.type = 'button';
       button.textContent = message.label;
-      button.title = label;
+      DocForm.util.hint(button, label);
       button.setAttribute('aria-label', (index + 1) + '. ' + label);
       button.setAttribute('data-df-key', message.key);
       button.style.width = size + 'px';

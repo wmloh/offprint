@@ -214,23 +214,11 @@
     return button;
   }
 
+  // Returns a setter for the control's shared hint, with its effective shortcut keys when it has one.
   function controlHint(el, shortcut) {
-    var content = DocForm._tooltips ? make('span') : null;
-    if (content) {
-      DocForm._tooltips.attach(el, '', '', {
-        content: function () { return content; },
-        describe: false,
-        focusable: false
-      });
-    }
     return function (text) {
-      if (shortcut) text = DocForm._shortcutHint(el, shortcut, text, !content);
-      if (content) {
-        el.removeAttribute('title');
-        content.textContent = text;
-      } else if (!shortcut) {
-        el.title = text;
-      }
+      if (shortcut) DocForm._shortcutHint(el, shortcut, text);
+      else DocForm.util.hint(el, text);
     };
   }
 

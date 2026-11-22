@@ -149,14 +149,44 @@
     return entry ? entry.keys.slice() : [];
   }
 
-  function shortcutHint(el, id, label, nativeTitle) {
+  function shortcutHint(el, id, label, visible) {
     var keys = shortcutKeys(id);
     if (keys.length) el.setAttribute('aria-keyshortcuts', keys.join(' '));
     else el.removeAttribute('aria-keyshortcuts');
     if (!label) return;
-    var hint = label + (keys.length ? ' (' + keys.join(' / ') + ')' : '');
-    if (nativeTitle !== false) el.title = hint;
-    return hint;
+    var text = label + (keys.length ? ' (' + keys.join(' / ') + ')' : '');
+    if (visible !== false) hint(el, text);
+    return text;
+  }
+
+  var hints = new WeakMap();
+  var hintCard = null;
+  var hintOwner = null;
+
+  // Hover and focus hint in the tooltip panel, a native title only without tooltips. All hints share one card,
+  // filled as it shows, so controls rebuilt on every open leave nothing behind. Empty text clears the hint.
+  function hint(el, text) {
+    var tips = root.DocForm._tooltips;
+    if (!tips) {
+      if (text) el.title = text;
+      else el.removeAttribute('title');
+      return;
+    }
+    el.removeAttribute('title');
+    if (!hints.has(el)) {
+      if (!hintCard) hintCard = tips.card('', '', '', { className: 'df-tooltip-hint' });
+      tips.attach(el, '', '', {
+        card: hintCard, describe: false, focusable: false,
+        enabled: function () {
+          if (!hints.get(el)) return false;
+          hintOwner = el;
+          hintCard.body.textContent = hints.get(el);
+          return true;
+        }
+      });
+    }
+    hints.set(el, text);
+    if (hintOwner === el) hintCard.body.textContent = text;
   }
 
   function transaction(fn) {
@@ -1115,7 +1145,7 @@
     if (button.getAttribute('aria-label') === label) return;
     button.innerHTML = PILL_SVG + PILL_ICONS[icon] + '</svg>';
     button.setAttribute('aria-label', label);
-    button.title = label;
+    hint(button, label);
   }
 
   // Frosted step-control pill: parts are {name, label, run, icon?} buttons or 'count', a muted status line.
@@ -1229,5 +1259,5 @@
     boot.prepareSelection = prepareSelection;
     boot.registered = function (name) { return modules.some(function (mod) { return mod.name === name; }); };
   }
-  DocForm.util = { slug: slug, uniqueSlug: uniqueSlug, copyText: copyText };
+  DocForm.util = { slug: slug, uniqueSlug: uniqueSlug, copyText: copyText, hint: hint };
 })(typeof window !== 'undefined' ? window : globalThis);

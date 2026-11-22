@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../../../docform/docform.css">
   <script src="../../assets/site.js" data-df-site></script>
   <script type="application/json" data-df-page>
-    {"features": {"data-view": true, "tree": true, "code": true, "dropzone": true}}
+    {"features": {"data-view": true, "tree": true, "code": true, "markdown": true, "dropzone": true}}
   </script>
   <script src="../../../docform/docform.js"></script>
 </head>
@@ -37,11 +37,11 @@
         <table>
           <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>
           <tbody>
-            <tr><td>setup</td><td>3</td></tr>
-            <tr><td>layout</td><td>7</td></tr>
-            <tr><td>reading</td><td>13</td></tr>
-            <tr><td>interact</td><td>13</td></tr>
-            <tr><td>data</td><td>9</td></tr>
+            <tr><td>setup</td><td>5</td></tr>
+            <tr><td>layout</td><td>9</td></tr>
+            <tr><td>reading</td><td>11</td></tr>
+            <tr><td>interact</td><td>18</td></tr>
+            <tr><td>data</td><td>11</td></tr>
           </tbody>
         </table>
       </div>
@@ -64,6 +64,43 @@
     <p>Open the first branch in the tree and find the group name and count in both views.</p>
 
     <p>Sources can come from CSV or TSV (a table stored as text, split by commas or tabs), JSON, YAML, or XML (text that can hold lists and nested fields), Markdown (formatted notes), or values supplied directly to the page. In automatic mode, Markdown appears formatted and rows with matching fields appear as a table. Nested values appear as text unless the author asks for a tree.</p>
+
+    <h3 id="formats">Other formats</h3>
+    <p>The same views read every format. Here a <span data-df-tip="Tab-separated values: a table stored as text, with tabs between the columns." data-df-tip-tags="Data and charts">TSV</span> list appears as a table, an <span data-df-tip="Extensible Markup Language: text that nests named elements inside each other, each with optional attributes." data-df-tip-tags="Data and charts">XML</span> file opens as a tree, and Markdown notes appear formatted.</p>
+    <script type="text/tab-separated-values" data-df-source="Offline tools">
+tool	folder	opens from disk
+Asset checker	tools	true
+Data refresher	tools	true
+Search palette	js	true
+    </script>
+    <script type="application/xml" data-df-source="Export choices">
+<export mode="reader">
+  <page path="index.html">Welcome</page>
+  <page path="pages/start/tour.html">Tour</page>
+  <assets fonts="true" images="true"/>
+</export>
+    </script>
+    <script type="text/markdown" data-df-source="Release notes">
+### Before you share the site
+
+- [x] Update the **guide** and its examples
+- [ ] Open every page *from disk*
+
+| Check | Who |
+| --- | --- |
+| Links | Docs team |
+
+> Readers see these notes formatted. A code view keeps the original text.
+    </script>
+    <figure>
+      <div data-df-source="Offline tools" data-df-data-view="auto"><p>The TSV table opens with scripts on.</p></div>
+      <div data-df-source="Export choices" data-df-data-view="tree" data-df-tree-depth="2"><p>The XML tree opens with scripts on.</p></div>
+      <div data-df-source="Release notes" data-df-data-view="auto"><p>The formatted notes open with scripts on.</p></div>
+      <figcaption>A TSV table, an XML tree with attributes marked by @, and Markdown with a task list, a table, and a quote.</figcaption>
+    </figure>
+
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>In the XML tree, open a <strong>page</strong> entry and find its path attribute and its text.</p>
     <h3 id="limits-and-errors">Limits and unreadable data</h3>
     <p>A size cap can hold back a large preview until you choose <strong>Show anyway</strong>. A row cap loads a table in batches. A parse error means DocForm could not read the structure of the data. In a raw view, the error appears next to the original text.</p>
 

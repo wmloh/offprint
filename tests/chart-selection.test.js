@@ -1474,8 +1474,6 @@ test('legend chips hide series from the plot, readout, and table; rescale is opt
     series: [{ name: 'Low', data: [[1, 1], [2, 2]] }, { name: 'High', data: [[1, 50], [2, 90]] }, { name: 'Mid', data: [[1, 5]] }]
   };
   const c = draw(spec);
-  const views = [];
-  c.host.addEventListener('df:chartview', (event) => views.push(event.detail));
   const low = () => dotsOf(c)[0].getAttribute('cy');
   const before = low();
   toggleLegend(legendButton(c, 'High'));
@@ -1485,7 +1483,6 @@ test('legend chips hide series from the plot, readout, and table; rescale is opt
   assert.equal(low(), before, 'the y axis stays put without rescale');
   c.fire('keydown', { key: 'Home' });
   assert.doesNotMatch(c.tip().textContent, /High/);
-  assert.deepEqual(JSON.parse(JSON.stringify(views)), [{ hidden: ['High'], range: null }]);
   assert.equal(c.api.visible('High'), false);
 
   click(byClass(c, 'df-chart-toggle')[0]);

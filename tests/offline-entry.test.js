@@ -1017,7 +1017,7 @@ test('floating controls show shared tooltip cards with current labels and effect
   const showHint = el => {
     assert.equal(el.hasAttribute('title'), false);
     el.dispatchEvent(new Event('focus'));
-    const card = p.body.children.find(child => child.className === 'df-tooltip' && !child.hidden);
+    const card = p.body.children.find(child => String(child.className).split(' ').includes('df-tooltip') && !child.hidden);
     assert.equal(card?.getAttribute('role'), 'tooltip');
     return card;
   };
@@ -1041,7 +1041,7 @@ test('floating controls show shared tooltip cards with current labels and effect
   assert.equal(progress.hasAttribute('title'), false);
   progress.dispatchEvent(new Event('mouseenter'));
   await new Promise(resolve => setTimeout(resolve, 150));
-  const progressCard = p.body.children.find(child => child.className === 'df-tooltip' && !child.hidden);
+  const progressCard = p.body.children.find(child => String(child.className).split(' ').includes('df-tooltip') && !child.hidden);
   assert.equal(progressCard?.textContent, 'Read 100%');
 
   const fallback = page({ config: { profile: 'none', features: { controls: true, theme: true } } });

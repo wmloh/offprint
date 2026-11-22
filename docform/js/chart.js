@@ -2670,12 +2670,6 @@
     syncHead(chart);
     fillTable(chart);
     if (!chart.plot.hidden) draw(chart, animate);
-    if (typeof CustomEvent === 'function') {
-      chart.box.dispatchEvent(new CustomEvent('df:chartview', {
-        bubbles: true,
-        detail: { hidden: Object.keys(chart.hidden), range: chart.range ? chart.range.slice() : null }
-      }));
-    }
     if (chart.controller) chart.controller.change(chart.origin || 'user');
     chart.trackView?.(chart.origin || 'user');
   }

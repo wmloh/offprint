@@ -1546,7 +1546,7 @@ window.DocFormSearch = {
         "file": "pages/start/open-a-site.html",
         "path": "../pages/start/open-a-site.html",
         "title": "Open a DocForm site",
-        "sha256": "c1c6e4ae5230a9d37452d390391c77f5e6e05d0ae921f32726815b02f3e66a19"
+        "sha256": "cc66486e65f30bb32423eb825af52201d8dcbfa2907da28c5d61903eef30bd3b"
       },
       {
         "file": "pages/start/tour.html",
@@ -1564,7 +1564,7 @@ window.DocFormSearch = {
         "file": "pages/start/working-with-an-agent.html",
         "path": "../pages/start/working-with-an-agent.html",
         "title": "Making pages with an agent",
-        "sha256": "c2917a75a50306a8c45b4bd4dd9abae6b7ab3b1383690b4e3eb9752e79925764"
+        "sha256": "5ba13c08a0e9539a1f218553459e94f44686e3052da77e70f580e644c6b0ae3b"
       },
       {
         "file": "pages/hierarchy/guiding-the-eye.html",
@@ -1576,7 +1576,7 @@ window.DocFormSearch = {
         "file": "pages/hierarchy/signal-ladder.html",
         "path": "../pages/hierarchy/signal-ladder.html",
         "title": "The signal ladder",
-        "sha256": "89ed402c6da1b5abb1846c929f5b5cb01d541964f439b7a25517a831273c2ba9"
+        "sha256": "a0a7099e536a962e9ff7077870c3a3af0580d1c0d6cd24ec06ab8c7dd3d65bac"
       },
       {
         "file": "pages/write/text.html",
@@ -1642,7 +1642,7 @@ window.DocFormSearch = {
         "file": "pages/shape/search.html",
         "path": "../pages/shape/search.html",
         "title": "Search",
-        "sha256": "b145a8a44841c6e37fe6c51f76be1fb8280a9fddaa4588d7a02185da25ddd6c6"
+        "sha256": "32e360da36b0a3d8a2317d5233056e9b6a47df4d9ddb977902c10838b712fde2"
       },
       {
         "file": "pages/shape/customize.html",
@@ -1660,25 +1660,43 @@ window.DocFormSearch = {
         "file": "pages/explain/cards.html",
         "path": "../pages/explain/cards.html",
         "title": "Card panels and figure steps",
-        "sha256": "7787c3af8ba0dc60ee891840d6ac2408e38197ff6184a48da0ef77b25359342d"
+        "sha256": "e82309dcc382cd3a4b174eb23368edac185377e3f0ecfcafe6400e8da6b42033"
       },
       {
         "file": "pages/explain/pipelines.html",
         "path": "../pages/explain/pipelines.html",
         "title": "Pipeline diagrams",
-        "sha256": "6647ffb329a51f10255b7cddcc450d3c2900acd83f44205b13f6a14ee562dcc2"
+        "sha256": "c7f9e7fdea78b397e37c70c127782e96f01cbb1cad496efec086d893b991e313"
+      },
+      {
+        "file": "pages/explain/timelines.html",
+        "path": "../pages/explain/timelines.html",
+        "title": "Timeline diagrams",
+        "sha256": "77ba83a8be1f64ac869c791549fab5353e8d8ef7b21953bf85ce1d582e48939f"
+      },
+      {
+        "file": "pages/explain/sequences.html",
+        "path": "../pages/explain/sequences.html",
+        "title": "Sequence diagrams",
+        "sha256": "f7b5fc69d56a54aa6370076ab0ff4b765847a8d45fc7f07c02dc2b3d9530bdac"
+      },
+      {
+        "file": "pages/explain/tree-diagrams.html",
+        "path": "../pages/explain/tree-diagrams.html",
+        "title": "Tree diagrams",
+        "sha256": "2194028857253f923101c5fecf934963cc1ba3efc0411c3e3d39d761c298aa26"
       },
       {
         "file": "pages/explain/animations.html",
         "path": "../pages/explain/animations.html",
         "title": "SVG animations",
-        "sha256": "bfd76901e3eddf3e43866d192cfc79b208636579e24edf3bf69d4e7d20277315"
+        "sha256": "ec42df8bf6e123cb12e7df3b366eb638ca1261301570c9e2066871842c1b4310"
       },
       {
         "file": "pages/explain/steppers.html",
         "path": "../pages/explain/steppers.html",
         "title": "Worked-example steppers",
-        "sha256": "5a981e8266ab58d0c0ce509f9931022f67e5df42763a8222df35232346cf665a"
+        "sha256": "19b439033d70b662d2bebe4b3fcabe7d33c6b63a85c7a3e2ed8cd64c89297f52"
       },
       {
         "file": "pages/explain/reveals.html",
@@ -1696,19 +1714,19 @@ window.DocFormSearch = {
         "file": "pages/explain/parameters.html",
         "path": "../pages/explain/parameters.html",
         "title": "Parameters and presets",
-        "sha256": "07230de52e3eca4ea0e1407b4f59b53499588678f5e8a5e792ea7ae804db121a"
+        "sha256": "19c021f8ed880a76695a07bf5d2646d44939015571da13392c4d74faeef1ffe0"
       },
       {
         "file": "pages/explain/zoom.html",
         "path": "../pages/explain/zoom.html",
         "title": "Figure zoom and zoom tools",
-        "sha256": "252e761b771b1e4babf68deff3adf74530faafffd1f20a03d26a145cec29e10a"
+        "sha256": "800cd110029ccfb814540f95ff63fbe9850878ffaf0105e8df8f56a569aab7ef"
       },
       {
         "file": "pages/data/sources.html",
         "path": "../pages/data/sources.html",
         "title": "Named data sources and data views",
-        "sha256": "36ccddb38b7eec6f83d5ac0b02b2dbf756211da7bf90674778aed5eae8ca3f53"
+        "sha256": "b66115a9203662b62d7b1000806acb668632e579fdf6ed09607d127f41596280"
       },
       {
         "file": "pages/data/trees.html",
@@ -1720,7 +1738,7 @@ window.DocFormSearch = {
         "file": "pages/data/charts.html",
         "path": "../pages/data/charts.html",
         "title": "SVG charts",
-        "sha256": "c5e60f09ccdbf90f6df6029a9167256de198e6d75119861e48fcf7facf203749"
+        "sha256": "ab38d0d2b229acfd4d0b5533fb311ff189f3ba8d60144301557b0edbe7ab39e1"
       },
       {
         "file": "pages/data/heatmaps.html",
@@ -1732,31 +1750,31 @@ window.DocFormSearch = {
         "file": "pages/data/playback.html",
         "path": "../pages/data/playback.html",
         "title": "Guided chart playback",
-        "sha256": "b42309c00a4accbaf35f695b5bef384502619eafea80581b5bc4a476b719134f"
+        "sha256": "295a500fef56aa424cedd3da1c490a9e953dfef554b97fac3c3494c85b40b9f6"
       },
       {
         "file": "pages/data/tables.html",
         "path": "../pages/data/tables.html",
         "title": "Concept tables and results tables",
-        "sha256": "1c84f8823d75090b7cdd453e457cf98df0aa28ded4eac50561d53374fc9ac0db"
+        "sha256": "b8e36d43cd6a5cd72b660df662326ee15edd988848f82822a374b4ea5a8f31cf"
       },
       {
         "file": "pages/data/comparisons.html",
         "path": "../pages/data/comparisons.html",
         "title": "Evaluation matrices and scenario comparisons",
-        "sha256": "8ebcc2bfbe04b3efa7edbe87f83d3bc89570c2e1e774003b1f79584128b7fefc"
+        "sha256": "64f2dfd7199638524ff82ae69f0bf5e6677dd5fa9ba882297555c3ec4b550d15"
       },
       {
         "file": "pages/data/dropzones.html",
         "path": "../pages/data/dropzones.html",
         "title": "Local file dropzones",
-        "sha256": "463639b7358df38f4938dbbbbacf8abab615e9d7dd2a4141cb0eaf9ef7e292ed"
+        "sha256": "149f6f067df83f33e5e6f4d0291bf1e0e0c404eb8ea426814b61246b87f8b0fe"
       },
       {
         "file": "pages/recipes/teach-a-concept.html",
         "path": "../pages/recipes/teach-a-concept.html",
         "title": "Teach a concept",
-        "sha256": "04f98d5e1e440f26ca838a0bb73042950288190b432b906dfe9816c7af163758"
+        "sha256": "0dce576018f8f65145e5be013f2a8c410c6bef132c77709fe466fddb3e902e9e"
       },
       {
         "file": "pages/recipes/walk-through-a-process.html",
@@ -1768,7 +1786,7 @@ window.DocFormSearch = {
         "file": "pages/recipes/report-results.html",
         "path": "../pages/recipes/report-results.html",
         "title": "Report results",
-        "sha256": "db41dc7d0fce877c96dfced3ec40995cb7889c1b8d002a12b800143208c429cb"
+        "sha256": "e1e974fcfad73ae3d8285b80852bc7c53dff67b5ba9c38309c014b378f6d2f86"
       },
       {
         "file": "pages/recipes/present-and-publish.html",
@@ -1780,19 +1798,19 @@ window.DocFormSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "a13cfa80296021f13a1554a683e871f1cda9b4ab3dd76deab88429340272fb53"
+        "sha256": "34b8924d85af22aecfce431842c4bbf84d925efb6f330d7fcde43d9fcbb89d8f"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
         "path": "../pages/reference/behind-the-scenes.html",
         "title": "Behind the scenes",
-        "sha256": "47a07d26e94ec78083e2d5b3d3ca7ed2f242e4e8188138d5b793a83ffb029bcf"
+        "sha256": "ff4f55e6fb112afd496a761e6046d0466ffcce8ccb927f4f48b484ad2acb9786"
       },
       {
         "file": "pages/reference/offline-tools.html",
         "path": "../pages/reference/offline-tools.html",
         "title": "Offline tools",
-        "sha256": "b2e321144b983706ef32952f1ffc0765e385442a69fc711dda75512d22b0bec1"
+        "sha256": "25fb30a21cafd6e1ab02a91cf3064c89db9689009896e7b1f72672c03406152a"
       },
       {
         "file": "pages/reference/troubleshooting.html",
@@ -1939,7 +1957,7 @@ window.DocFormSearch = {
           "id": "files-and-folders",
           "title": "Files and folders",
           "level": 2,
-          "text": "A file is one saved item, such as a page or picture. A folder holds files and can hold other folders, too. A DocForm site comes with page files and supporting files that provide things like pictures, colours, and controls. Keep the entire set together, with each file in its original folder. If you received it as a ZIP file, a single file packed with other files, use your computer’s Extract or Unzip command first, then open the unpacked copy."
+          "text": "A file is one saved item, such as a page or picture. A folder holds files and can hold other folders, too. A DocForm site comes with page files and supporting files that provide things like pictures, colours, and controls. Keep the entire set together, with each file in its original folder. If you received it as a ZIP file, a single file packed with other files, use your computer’s Extract or Unzip command first, then open the unpacked copy. The way an agent arranges those folders is called the site structure: pages in one folder, the DocForm library folder beside them, and shared settings and data in predictable places. Keeping that layout lets every page open offline and lets the export button find everything a page uses."
         },
         {
           "id": "open-a-page",
@@ -1952,6 +1970,12 @@ window.DocFormSearch = {
           "title": "Working offline",
           "level": 2,
           "text": "Offline means without an internet connection. The browser reads each page and its supporting files directly from your computer, so you can still follow links between the saved pages and use their DocForm controls. A link to an outside website still needs a connection."
+        },
+        {
+          "id": "export-a-copy",
+          "title": "Export a standalone copy",
+          "level": 2,
+          "text": "Use desktop Chrome with JavaScript enabled to export from a local DocForm page. Choose Export in the top-left reading controls, or at the bottom of the page when those controls are hidden. Then choose the documentation folder, which holds the pages and their pictures and data. Chrome may ask to upload the files. DocForm reads them on your computer and includes the library styles and fonts automatically. Choose an export mode. Reader is the default. It keeps the captured view and lets you try supported figure steps. Interactive also runs supported cards, animations, diagrams, charts, and their linked controls. A page that cannot start interactively opens in its Reader view. Select the pages or groups you want. For a single-page document, select its one page. Choose Build preview. The open page uses its current selections. Other pages use saved reading choices when available and still valid, or their starting view. The preview lists the views used, imported content, missing assets, unavailable links, and the exact file size. Interactive includes site-provided data needed by supported controls. To embed a full file you imported, select it under Include full imported datasets. Each choice shows the file size and where it is used. If you leave it unchecked, pages that need it use their Reader view, which can still show already rendered content from the file. To include a local page script, use Include local author scripts. The preview shows the page, any required files, and missing dependencies. Select only scripts you trust. They run automatically in the download when their page opens. Review the choices and build a new preview after changing either set of checkboxes. Choose Download HTML. You can move the file by itself and open it from disk in Chrome with JavaScript enabled. Use the sidebar or the arrows beside the reading controls to move between pages. Hover over, focus, or tap an annotated term to see its definition. The top-left reading controls show your progress and let you open navigation (N), toggle focus mode (F), switch theme (T), and jump between headings (J and K). On desktop, drag the sidebar edge to resize it, or press N to cycle shown, hidden, and auto-hide. In auto-hide, move the pointer to the left edge. On narrow or touch-only screens, navigation opens as a drawer. Press Escape or tap outside it to close it. In Reader, use a supported figure’s step picker or the buttons beside it to change the drawing and read each step’s details. Charts and other interactive examples show their captured view. In Interactive, changes you make to supported controls carry over when you return to the page in the same open copy. In either mode, Chrome’s Back and Forward buttons revisit pages and sections. Links to omitted pages are disabled, and outside links still need an internet connection. To keep imported values out of a new export, reset imports on the open page and use Clear saved views and imports under Saved reading data. Clearing deletes this site’s saved choices and imports from this browser, so sibling pages use their starting views."
         },
         {
           "id": "unstyled-page",
@@ -1974,6 +1998,16 @@ window.DocFormSearch = {
         {
           "text": "ZIP file",
           "term": "zip file",
+          "section": "files-and-folders"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "files-and-folders"
+        },
+        {
+          "text": "offline",
+          "term": "offline",
           "section": "files-and-folders"
         },
         {
@@ -2027,6 +2061,76 @@ window.DocFormSearch = {
           "section": "working-offline"
         },
         {
+          "text": "JavaScript",
+          "term": "javascript",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "script",
+          "term": "script",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "download",
+          "term": "download",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "Download",
+          "term": "download",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "HTML",
+          "term": "html",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "from disk",
+          "term": "from disk",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "sidebar",
+          "term": "sidebar",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "Hover",
+          "term": "hover",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "focus mode",
+          "term": "focus mode",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "theme",
+          "term": "theme",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "drawer",
+          "term": "drawer",
+          "section": "export-a-copy"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "export-a-copy"
+        },
+        {
           "text": "folder",
           "term": "folder",
           "section": "unstyled-page"
@@ -2061,6 +2165,11 @@ window.DocFormSearch = {
         {
           "id": "working-offline",
           "title": "Working offline",
+          "level": 2
+        },
+        {
+          "id": "export-a-copy",
+          "title": "Export a standalone copy",
           "level": 2
         },
         {
@@ -2459,6 +2568,12 @@ window.DocFormSearch = {
           "title": "Describe the result",
           "level": 2,
           "text": "Start with who will read the page and what they should be able to do. Gather the words, pictures, or data they need. Decide what readers should see first, what they should be able to explore, and what they can skip. Choose a DocForm tool when it helps a reader do one of those things. Give the agent its official name and describe the result you want to see. The agent writes the page and sets up the tools. Open the finished page in your browser and try it the way a reader would."
+        },
+        {
+          "id": "authoring-conventions",
+          "title": "The agent follows shared conventions",
+          "level": 2,
+          "text": "DocForm ships with authoring conventions for agents: a recommended folder layout, when to reach for a built-in feature before writing custom code, how to keep pages working offline and ready to export, and a checklist to run before handing a site back. You do not need to read them, but you can ask the agent to follow them so every page in your site behaves the same way."
         }
       ],
       "terms": [
@@ -2516,6 +2631,26 @@ window.DocFormSearch = {
           "text": "browser",
           "term": "browser",
           "section": "describe-the-result"
+        },
+        {
+          "text": "folder",
+          "term": "folder",
+          "section": "authoring-conventions"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "authoring-conventions"
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "authoring-conventions"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "authoring-conventions"
         }
       ],
       "outline": [
@@ -2537,6 +2672,11 @@ window.DocFormSearch = {
         {
           "id": "describe-the-result",
           "title": "Describe the result",
+          "level": 2
+        },
+        {
+          "id": "authoring-conventions",
+          "title": "The agent follows shared conventions",
           "level": 2
         }
       ]
@@ -2723,7 +2863,7 @@ window.DocFormSearch = {
           "id": "strong",
           "title": "Strong",
           "level": 2,
-          "text": "Strong features are the landmarks of a page: its title, its section headings, and the big blocks a reader stops to look at. They shape the page more than they decorate it. Library reference group Features described Setup 3 Layout 7 Reading 13 Interaction 13 Data 9 A small table with real counts from DocForm’s own reference. Its grid and header row stand out as one block, even before you read a number. Try it Look at the left margin beside this section. The coloured section line and the heading above it are strong signals too: together they tell you where this section starts and ends. Feature What is strong Base layout The page title, its opening summary, and section headings Section lines The coloured line beside each section Split views Blocks placed side by side Concept tables and results tables Rows and columns of facts SVG charts Lines, bars, and points Dot and interval plots Ranked dots with whiskers Histograms Bars that show how values spread Guided chart playback A chart drawn step by step with notes SVG animations A moving diagram with play controls Code A shaded block of program text TeX math A formula shown on its own line Tabs Panels that share one place Card panels and figure steps Choices that change a detail or a figure Worked-example steppers An example shown one step at a time Evaluation matrices and scenario comparisons Grids and charts that compare outcomes Named data sources and data views Data shown as a table or list Data trees Nested data with branches that open and close"
+          "text": "Strong features are the landmarks of a page: its title, its section headings, and the big blocks a reader stops to look at. They shape the page more than they decorate it. Library reference group Features described Setup 5 Layout 9 Reading 11 Interaction 18 Data 11 A small table with real counts from DocForm’s own reference. Its grid and header row stand out as one block, even before you read a number. Try it Look at the left margin beside this section. The coloured section line and the heading above it are strong signals too: together they tell you where this section starts and ends. Feature What is strong Base layout The page title, its opening summary, and section headings Section lines The coloured line beside each section Split views Blocks placed side by side Concept tables and results tables Rows and columns of facts SVG charts Lines, bars, and points Dot and interval plots Ranked dots with whiskers Histograms Bars that show how values spread Guided chart playback A chart drawn step by step with notes SVG animations A moving diagram with play controls Code A shaded block of program text TeX math A formula shown on its own line Tabs Panels that share one place Card panels and figure steps Choices that change a detail or a figure Worked-example steppers An example shown one step at a time Evaluation matrices and scenario comparisons Grids and charts that compare outcomes Named data sources and data views Data shown as a table or list Data trees Nested data with branches that open and close"
         },
         {
           "id": "medium",
@@ -4980,7 +5120,7 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Reading landmarks are the headings, figures, and labels that help you find your place on a page. This sentence is part of the live page. Its words can turn up in a search as soon as the page opens. Try it Press S or select the magnifying glass to see the search box fade in. Press Esc to fade it out."
+          "text": "Reading landmarks are the headings, figures, and labels that help you find your place on a page. This sentence is part of the live page. Its words can turn up in a search as soon as the page opens. Try it Press S or select the magnifying glass to open the search box. Press Esc or choose Close to dismiss it. Site authors can change these shortcuts."
         },
         {
           "id": "what-it-does",
@@ -5438,7 +5578,7 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Reader tools Find your place Outline Search Read comfortably Focus mode Theme Outline On by default The outline lists the headings of the current page. Pick one to skip straight to that section. The marked heading follows your place as you scroll. Search On by default Press S, type a word, and pick a match to jump to it. Matches on this page come first. Other pages follow when the site has a search index. Use ↑ and ↓ to move through results and Esc to close. Focus mode Shortcut F Focus mode softens nearby sections so the one you are reading stands out. Rest the pointer on a blurred block to read it clearly without leaving focus mode. Theme Shortcut T Theme switches the page between light and dark colours. Your choice is remembered on every page of the site. The group titles organise the choices, and the selected card controls the detail pane. Try it Move your pointer over Search, then Theme. With a card focused, move with Up or Down and press Enter to open its detail. A detail can hold anything a page can: tags, emphasis, lists, keys, callouts, and small figures. Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane."
+          "text": "Reader tools Find your place Outline Search Read comfortably Focus mode Theme Outline On by default The outline lists the headings of the current page. Pick one to skip straight to that section. The marked heading follows your place as you scroll. Search On by default Press S, type a word, and pick a match to jump to it. Matches on this page come first. Other pages follow when the site has a search index. Use ↑ and ↓ to move through results and Esc to close. Focus mode Shortcut F Focus mode softens nearby sections so the one you are reading stands out. Rest the pointer on a blurred block to read it clearly without leaving focus mode. Theme Shortcut T Theme switches the page between light and dark colours. Your choice is remembered on every page of the site. The same words in each theme. The group titles organise the choices, and the selected card controls the detail pane. Try it Move your pointer over Search, then Theme. With a card focused, move with Up or Down and press Enter to open its detail. A detail can hold anything a page can: tags, emphasis, lists, keys, callouts, and small figures. Card panels can start on a chosen card or use the first one. On a wide screen, long card lists and long details scroll separately so the reader can keep their place in either pane."
         },
         {
           "id": "numbers-tags-search",
@@ -5702,13 +5842,13 @@ window.DocFormSearch = {
           "id": "steps",
           "title": "Reveal a pipeline in steps",
           "level": 2,
-          "text": "Step 1 A reader opens a page Step 2 Is it saved already? Yes: show the saved copy No: load the files Use the saved copy Load the files From the same folder. Step 4 Show the page Press Next to add one stage at a time, or Play to watch the whole flow. A pipeline can also follow a worked-example stepper, so the diagram grows as the reader moves through the written steps."
+          "text": "Open the page Check the cache Choose the source Show the page Step 1 A reader opens a page Step 2 Is it saved already? Yes: show the saved copy No: load the files Use the saved copy Load the files From the same folder. Step 4 Show the page Press Next to add one stage at a time, or Play to watch the whole flow. A pipeline and a worked-example stepper move together when they share a selection group and use matching step keys."
         },
         {
           "id": "adjust",
           "title": "Adjust a block by hand",
           "level": 2,
-          "text": "Blocks are placed automatically, but you can pin one to a column or row, change its size, or give it a different look. A block with its own look still takes its words from the eyebrow, headline, and description, so editing those updates the picture too. When two lines have to cross, the line underneath gets a small gap. Draft Data Output Text · Output Figure Pinned rows force the two lines to cross. The Text block uses its own one-line look."
+          "text": "Blocks are placed automatically, but you can pin one to a column or row, change its size, or give it a different look. A block with its own look still takes its words from the eyebrow, headline, and description, so editing those updates the picture too. When two lines have to cross, the line underneath gets a small gap. Draft Data Output Text · Output Figure Pinned rows force the two lines to cross. The Text block uses its own one-line look. Lines can be routed by hand as well. A line can leave and enter a block on a chosen side, bend through a point between the blocks, carry arrowheads at both ends, or use a dotted or dashed style. Ask Leads to Answer and Archive Answer Archive A two-way line between Ask and Answer, and a dotted line that leaves Ask from below and bends into Archive from the left."
         },
         {
           "id": "detail-panes",
@@ -5830,6 +5970,11 @@ window.DocFormSearch = {
           "text": "folder",
           "term": "folder",
           "section": "detail-panes"
+        },
+        {
+          "text": "pipeline diagram",
+          "term": "pipeline diagram",
+          "section": "when-to-use"
         }
       ],
       "outline": [
@@ -5876,6 +6021,443 @@ window.DocFormSearch = {
       ]
     },
     {
+      "path": "../pages/explain/timelines.html",
+      "title": "Timeline diagrams",
+      "sections": [
+        {
+          "id": "",
+          "title": "Timeline diagrams",
+          "level": 1,
+          "text": "Explain step by step A timeline puts milestones and durations on one time axis, with a lane for each team or workstream so readers can see where work overlaps. Official name Timeline diagrams · Detail panes Turned on On request Signal strength Strong Works with Linked selection, named data sources, and zoom tools Good for Schedules, project plans, histories, and experiment runs"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "1–5 June · Writing · Draft chapter 3–8 June · Writing · Prepare figures 6–10 June · Review · Review chapter 13 June · Release · Publish Draft chapter. Write the walkthrough and leave placeholders for the figures. Prepare figures. Start the illustrations as soon as the examples are drafted. Review chapter. Check the instructions, figure labels, and captions. Publish. Share the chapter after review is complete. Chapter release schedule by date. It starts on the review so the overlap with writing is easy to spot. Try it Move your pointer across the bars and read each detail below. Notice that the two Writing tasks overlap, so they sit on separate rows of the same lane."
+        },
+        {
+          "id": "what-it-does",
+          "title": "Points, spans, and lanes",
+          "level": 2,
+          "text": "An event with only a start is a dot. An event with a later end is a bar that runs from start to end. Lanes appear in the order they are first used, and events in a lane are sorted by start. When two events in a lane overlap, the later one moves to a new row so neither label is hidden. The diagram can begin on any event; this one opens on the review. The axis can use calendar dates, as above, or plain numbers such as days, seconds, or steps. Put the unit in the caption so readers know what the numbers mean."
+        },
+        {
+          "id": "named-source",
+          "title": "Read events from a data source",
+          "level": 3,
+          "text": "This diagram reads a CSV data source that counts days from kickoff. It shares event keys with the calendar above through linked selection, so selecting an event in either view updates both. Days 0–4 · Writing · Draft chapter Days 2–7 · Writing · Prepare figures Days 5–9 · Review · Review chapter Day 12 · Release · Publish Chapter release schedule in days from kickoff. Try it Select Publish in the lower diagram and watch the calendar move to the same event. Then click the background of either diagram to enlarge it, choose the measure tool with 6, and point at the axis to read a date or day and its lane."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use a timeline when when and how long matter, especially when work runs in parallel. For a strict order of steps without durations, a worked-example stepper or pipeline diagram is lighter. Keep labels short; the full label is always in the event’s hint and detail."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "Tab reaches the selected event. ← and → move to the previous or next event in lane order, and Home and End jump to the ends. On a phone, the axis scrolls sideways inside the figure. Print shows a list of the events with their dates or numbers, and with scripts off the authored list and every detail stay readable."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "Sequence diagrams and tree diagrams, which share the same selection and detail behaviour Measure on a chart with the same crosshair Timeline reference for markup and data fields Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "timeline",
+          "term": "timeline",
+          "section": ""
+        },
+        {
+          "text": "time axis",
+          "term": "time axis",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "what-it-does"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "what-it-does"
+        },
+        {
+          "text": "CSV",
+          "term": "csv",
+          "section": "named-source"
+        },
+        {
+          "text": "data source",
+          "term": "data source",
+          "section": "named-source"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "named-source"
+        },
+        {
+          "text": "timeline",
+          "term": "timeline",
+          "section": "when-to-use"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "crosshair",
+          "term": "crosshair",
+          "section": "related"
+        },
+        {
+          "text": "markup",
+          "term": "markup",
+          "section": "related"
+        }
+      ],
+      "outline": [
+        {
+          "id": "timeline-diagrams",
+          "title": "Timeline diagrams",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Points, spans, and lanes",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "path": "../pages/explain/sequences.html",
+      "title": "Sequence diagrams",
+      "sections": [
+        {
+          "id": "",
+          "title": "Sequence diagrams",
+          "level": 1,
+          "text": "Explain step by step A sequence diagram shows who sends what to whom, and in what order. Official name Sequence diagrams · Detail panes Turned on On request Signal strength Strong Works with Linked selection, named data sources, and zoom tools Good for Requests and replies between people, services, or parts of a program"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "Buyer Shop Payment service Buyer → Shop · Place order Shop → Payment service · Request payment Payment service · Check payment Payment service → Shop · Approve Shop → Buyer · Confirm order The buyer submits an order and chooses how to pay. The shop sends the order reference and amount to the payment service. The payment service checks whether the payment can be authorized. The payment service approves the payment and tells the shop. The shop confirms the order after receiving approval. One successful checkout, from order to confirmation. Try it Move your pointer down the arrows and read each step in the pane below. Then click the empty background of the diagram to open it full screen."
+        },
+        {
+          "id": "what-it-does",
+          "title": "Columns, arrows, and loops",
+          "level": 2,
+          "text": "Each participant gets a column with a line running down from its name. Each message is an arrow from the sender’s line to the receiver’s line, so reading down the page follows time. An arrow that leaves and returns to the same line is a loop: the participant doing work on its own, such as checking a payment. The selected message is marked and its detail appears below the diagram. A wide diagram scrolls sideways inside its own frame rather than widening the page."
+        },
+        {
+          "id": "named-source",
+          "title": "Read messages from a data source",
+          "level": 3,
+          "text": "A diagram can also read its messages from a named data source. This one lists a declined payment. It shares message keys with the checkout above through linked selection, so choosing a step in either diagram marks the same step in the other. Buyer Shop Payment service Buyer → Shop · Place order Shop → Payment service · Request payment Payment service · Check payment Payment service → Shop · Decline Shop → Buyer · Ask for another card The same checkout when the payment is declined, read from a data source. Same start. The order is placed exactly as before. Same request. The shop asks for the same amount. Same check. The payment service runs its usual checks. Different answer. This time the payment service declines. New step. Only the declined path asks the buyer for another card. Try it Select Decline in the second diagram and watch the first diagram move to Approve, the matching step. The detail pane for the second diagram sits outside its figure and still follows it."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use a sequence diagram when the order of messages matters more than the structure of the system. Keep to a handful of participants; if the arrows start to cross the whole page, split the story into two diagrams. For a process without senders and receivers, a pipeline diagram is usually clearer."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "Tab reaches the selected message. ↑ and ↓ move through messages, and Home and End jump to the first and last. Each message button names its sender, receiver, and step number for screen readers. In the enlarged view, the cursor, magnifier, laser, pen, highlighter, and eraser are available; there is no ruler. With scripts off, or in print, the authored list of messages and every detail stay readable."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "Timeline diagrams and tree diagrams, which share the same selection and detail behaviour Detail panes elsewhere on the page Sequence diagram reference for markup and data fields Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "sequence diagram",
+          "tip": "A diagram that gives each participant a column and draws their messages in order, from top to bottom.",
+          "tags": [
+            "interaction"
+          ],
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "named data source",
+          "term": "data source",
+          "section": "named-source"
+        },
+        {
+          "text": "path",
+          "term": "path",
+          "section": "named-source"
+        },
+        {
+          "text": "detail pane",
+          "term": "detail pane",
+          "section": "named-source"
+        },
+        {
+          "text": "screen readers",
+          "term": "screen reader",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "magnifier",
+          "term": "magnifier",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "markup",
+          "term": "markup",
+          "section": "related"
+        }
+      ],
+      "outline": [
+        {
+          "id": "sequence-diagrams",
+          "title": "Sequence diagrams",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Columns, arrows, and loops",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "path": "../pages/explain/tree-diagrams.html",
+      "title": "Tree diagrams",
+      "sections": [
+        {
+          "id": "",
+          "title": "Tree diagrams",
+          "level": 1,
+          "text": "Explain step by step A tree diagram shows how a topic, plan, or set of categories breaks into smaller parts, and readers can close branches to focus on one part at a time. Official name Tree diagrams · Detail panes Turned on On request Signal strength Strong Works with Linked selection, named data sources, and zoom tools Good for Work breakdowns, outlines, category systems, and decision options"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "Docs release Write Update guide Add examples Verify Check links Try offline Publish Bring the guide and its examples up to date together. Revise the explanations and prepare examples to match. Update the setup steps and the feature descriptions. Give readers a small example they can adapt. Check links and open the site from disk before publishing. Follow the guide links to the examples and references. Open the entry page from disk and try the interactive examples. Make the guide and examples available together. Work needed for a documentation release. The Verify branch starts closed. Try it Open the Verify branch with its plus button and watch the other boxes slide to make room. Then close Write."
+        },
+        {
+          "id": "what-it-does",
+          "title": "Branches that open and close",
+          "level": 2,
+          "text": "Each box is a node, and a node with children has a small plus or minus button. Closing a branch hides everything below it and the remaining boxes glide to their new places. An author can start any branch closed, as with Verify above. If the selected node is inside a branch you close, the selection moves up to the branch itself, and selecting a hidden node from elsewhere opens the branches above it."
+        },
+        {
+          "id": "named-source",
+          "title": "Read nodes from a data source",
+          "level": 3,
+          "text": "A tree can also come from a flat list where each record names its parent. This one is written in YAML. Its detail pane sits outside the figure and still follows the selection. Reading interface Find your place: Outline, Search Read comfortably: Focus mode, Theme Reading features grouped by purpose, read from a data source. Tools every DocForm reading page offers. Tools that help you move around a page or a site. The list of headings beside the page; the current section is marked. Press S to find words on this page or across the site. Tools that change how the page looks while you read. Softens nearby sections so the one you are reading stands out. Switches between light and dark colours."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use a tree diagram when the parent–child relationships are the point, and readers benefit from seeing the whole shape before the details. For nested data that readers inspect field by field, a data tree is more compact. Keep labels to a few words and put explanations in the detail pane."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "Tab reaches the selected node. ↑ and ↓ move through visible nodes, → opens a branch or moves to its first child, and ← closes a branch or moves to its parent. In the enlarged view, the cursor, magnifier, laser, pen, highlighter, and eraser are available. With scripts off, the authored nested list and every detail stay readable."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "Sequence diagrams and timeline diagrams, which share the same selection and detail behaviour Data trees for nested records Tree diagram reference for markup and data fields Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "tree diagram",
+          "tip": "A diagram that draws a hierarchy as connected boxes, with branches readers can open and close.",
+          "tags": [
+            "interaction"
+          ],
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "see-it"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "see-it"
+        },
+        {
+          "text": "from disk",
+          "term": "from disk",
+          "section": "see-it"
+        },
+        {
+          "text": "tree",
+          "term": "tree",
+          "section": "named-source"
+        },
+        {
+          "text": "record",
+          "term": "record",
+          "section": "named-source"
+        },
+        {
+          "text": "YAML",
+          "term": "yaml",
+          "section": "named-source"
+        },
+        {
+          "text": "detail pane",
+          "term": "detail pane",
+          "section": "named-source"
+        },
+        {
+          "text": "Outline",
+          "term": "outline",
+          "section": "named-source"
+        },
+        {
+          "text": "Focus mode",
+          "term": "focus mode",
+          "section": "named-source"
+        },
+        {
+          "text": "Theme",
+          "term": "theme",
+          "section": "named-source"
+        },
+        {
+          "text": "tree",
+          "term": "tree",
+          "section": "when-to-use"
+        },
+        {
+          "text": "field",
+          "term": "field",
+          "section": "when-to-use"
+        },
+        {
+          "text": "detail pane",
+          "term": "detail pane",
+          "section": "when-to-use"
+        },
+        {
+          "text": "magnifier",
+          "term": "magnifier",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "markup",
+          "term": "markup",
+          "section": "related"
+        }
+      ],
+      "outline": [
+        {
+          "id": "tree-diagrams",
+          "title": "Tree diagrams",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Branches that open and close",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
       "path": "../pages/explain/animations.html",
       "title": "SVG animations",
       "sections": [
@@ -5901,7 +6483,7 @@ window.DocFormSearch = {
           "id": "autoplay",
           "title": "Start when the figure comes into view",
           "level": 3,
-          "text": "Scroll until about half of the next figure is visible. Keep the pointer outside it to see playback start on its own. The arrow appears when this figure enters view. Its playback controls stay available afterwards."
+          "text": "Scroll until about half of the next figure is visible. Keep the pointer outside it to see playback start on its own. An outline lists the sections of this page. A heading in the outline takes you to its section. The arrow appears when this figure enters view. Its playback controls stay available afterwards."
         },
         {
           "id": "when-to-use",
@@ -5966,6 +6548,11 @@ window.DocFormSearch = {
         {
           "text": "playback",
           "term": "playback",
+          "section": "autoplay"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
           "section": "autoplay"
         },
         {
@@ -6036,13 +6623,19 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Start with setup. Count the 3 setup references. Add layout. Add 7 layout references to get 10. Add reading. Add 13 reading references to get 23. Running total: 3. Running total: 3 + 7 = 10. Running total: 10 + 13 = 23. Group added References so far Setup 3 Layout 10 Reading 23 Group References added Setup 3 Layout 7 Reading 13 The worked example adds counts from three groups of DocForm’s reference library. The chart shows the running total, while the table shows each group’s contribution. Try it Press Next. The calculation changes, and the Layout point and row are highlighted. Click the Reading point to jump straight to that step. Use Reset to return to the opening step."
+          "text": "Start with setup. Count the 5 setup references. Add layout. Add 9 layout references to get 14. Add reading. Add 11 reading references to get 25. Running total: 5. Running total: 5 + 9 = 14. Running total: 14 + 11 = 25. Group added References so far Setup 5 Layout 14 Reading 25 Group References added Setup 5 Layout 9 Reading 11 The worked example adds counts from three groups of DocForm’s reference library. The chart shows the running total, while the table shows each group’s contribution. Try it Press Next. The calculation changes, and the Layout point and row are highlighted. Click the Reading point to jump straight to that step. Use Reset to return to the opening step."
         },
         {
           "id": "what-it-does",
           "title": "One step, several views",
           "level": 2,
           "text": "The stepper shows one item of an ordered example and reports where you are, such as Step 2 of 3. Previous and Next move in order. Reset restores the author’s chosen starting step, which is the first step here. The companion calculation switches with the current step. The chart and table use linked selection to mark the same item. All the rows and points stay visible, so readers can compare the selected value with the others."
+        },
+        {
+          "id": "shared-steps",
+          "title": "Use the same step controls elsewhere",
+          "level": 2,
+          "text": "Figure steps, chart tours, SVG animations, stepped pipelines, and scenario comparisons share the stepper’s navigation. Give items matching data-df-key values and put the same data-df-selection-group on the components to move them together. Use data-df-initial to choose where Reset goes. In a page script, DocForm.sequence.get('reference-count') gives you the controller. Call select('reading') to jump to a step, or listen for df:step on the list to run code when the current step changes."
         },
         {
           "id": "when-to-use",
@@ -6095,6 +6688,31 @@ window.DocFormSearch = {
           "section": "what-it-does"
         },
         {
+          "text": "chart",
+          "term": "chart",
+          "section": "shared-steps"
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": "shared-steps"
+        },
+        {
+          "text": "scenario",
+          "term": "scenario",
+          "section": "shared-steps"
+        },
+        {
+          "text": "stepper",
+          "term": "stepper",
+          "section": "shared-steps"
+        },
+        {
+          "text": "script",
+          "term": "script",
+          "section": "shared-steps"
+        },
+        {
           "text": "worked-example",
           "term": "worked example",
           "section": "when-to-use"
@@ -6139,6 +6757,11 @@ window.DocFormSearch = {
         {
           "id": "what-it-does",
           "title": "One step, several views",
+          "level": 2
+        },
+        {
+          "id": "shared-steps",
+          "title": "Use the same step controls elsewhere",
           "level": 2
         },
         {
@@ -6488,7 +7111,7 @@ window.DocFormSearch = {
           "id": "select-to-highlight",
           "title": "Highlight a choice everywhere",
           "level": 3,
-          "text": "Reference group Setup Layout Reading Interact Data Group References setup 3 layout 7 reading 13 interact 13 data 9 The chips and the bars share one linked selection. Choosing either one highlights the other. Try it Choose Data and watch its bar light up. Then click the setup bar and see the chips follow."
+          "text": "Reference group Setup Layout Reading Interact Data Group References setup 5 layout 9 reading 11 interact 18 data 11 The chips and the bars share one linked selection. Choosing either one highlights the other. Try it Choose Data and watch its bar light up. Then click the setup bar and see the chips follow."
         },
         {
           "id": "chart-bindings",
@@ -6720,7 +7343,7 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Open the page sketch to inspect or mark its three reading areas. Figures like this are zoomable automatically. Try it Click the sketch, or focus it with Tab and press Enter or Space. Press M and move the lens over a label. Press Escape to close the enlarged view and return to your place on the page."
+          "text": "Open the page sketch to inspect or mark its three reading areas. Figures like this are zoomable automatically. Try it Click the sketch, or focus it with Tab and press Enter or Space. Press 2 and move the lens over a label. Press Escape to close the enlarged view and return to your place on the page."
         },
         {
           "id": "what-it-does",
@@ -6732,13 +7355,13 @@ window.DocFormSearch = {
           "id": "zoom-tools",
           "title": "Tools and shortcut keys",
           "level": 3,
-          "text": "Tool Key What it does Cursor V Use the figure’s own controls as usual. Magnifier M Move a circular lens over the figure. It starts at 2.5×. Scroll or use [ and ] to adjust between 1.5× and 6×. Laser pointer L Move a glowing dot with a trail that fades. Pen P Drag to draw a thin line. Highlighter H Drag to draw a wide, translucent mark. Crosshair or ruler C Read chart coordinates under the pointer, or drag a ruler on a picture. Hold Shift to constrain the ruler’s direction. Pen and Highlighter have red, blue, green, yellow and purple swatches. Each remembers its own colour while the view is open. Use Undo (Ctrl+Z or Cmd+Z) for the last mark or Clear ink for all marks. Closing the view clears the marks and measurements."
+          "text": "These are the default keys. Site authors can change them for a site or page. Tool Key What it does Cursor 1 Use the figure’s own controls as usual. Magnifier 2 Move a circular lens over the figure; the pointer hides so the lens shows everything. It starts at 2.5×. Scroll or use [ and ] to adjust between 1.5× and 6×. Laser pointer 3 Hold the mouse button and move to draw a red laser line. It slowly fades after you let go. Pen 4 Drag to draw a thin line. Highlighter 5 Drag to draw a wide, translucent mark. Eraser 7 With Pen or Highlighter chosen, pick the eraser left of the swatches and drag over marks. Any mark it touches disappears whole. Press 7 again to go back to drawing. Crosshair or ruler 6 Read chart coordinates under the pointer, or drag a ruler on a picture. Hold Shift to constrain the ruler’s direction. Pen and Highlighter have red, blue, green, yellow and purple swatches. Each remembers its own colour while the view is open. Use Undo (Ctrl+Z or Cmd+Z) to remove the last mark or bring back what the eraser removed, or Clear ink for all marks. Closing the view clears the marks and measurements."
         },
         {
           "id": "chart-crosshair",
           "title": "Measure on a chart",
           "level": 3,
-          "text": "Groups counted References 1 3 2 10 3 23 The cumulative reference counts cover Setup, Layout and Reading. The crosshair reads the horizontal and vertical values at the pointer. Try it Open the chart and press C. Move the pointer over the plotted line to read its coordinates. Try C on the sketch above to drag a ruler, which reports distance in picture units or image pixels."
+          "text": "Groups counted References 1 3 2 10 3 23 The cumulative reference counts cover Setup, Layout and Reading. The crosshair reads the horizontal and vertical values at the pointer. Try it Open the chart and press 6. Move the pointer over the plotted line to read its coordinates. Try 6 on the sketch above to drag a ruler, which reports distance in picture units or image pixels."
         },
         {
           "id": "when-to-use",
@@ -6888,13 +7511,19 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Group References setup 3 layout 7 reading 13 interact 13 data 9 Repository reference counts by group. The table starts with two rows. Try it Choose Show more to add the next rows. The same five records feed the two views below."
+          "text": "Group References setup 5 layout 9 reading 11 interact 18 data 11 Repository reference counts by group. The table starts with two rows. Try it Choose Show more to add the next rows. The same five records feed the two views below."
         },
         {
           "id": "what-it-does",
           "title": "Three ways to read the same data",
           "level": 2,
-          "text": "A named source holds the records, or individual entries. Each view reads that source and chooses how to display it. A table lines up fields for comparison. A code view keeps the original text, including commas and line breaks. A tree opens each record to show its fields. The plain-text view opens with scripts on. The record tree opens with scripts on. The same counts in their original CSV text and as a list of expandable records. Try it Open the first branch in the tree and find the group name and count in both views. Sources can come from CSV (a table stored as text), JSON or YAML (text that can hold lists and nested fields), or values supplied directly to the page. In automatic mode, rows with matching fields appear as a table. Nested values appear as text unless the author asks for a tree."
+          "text": "A named source holds the records, or individual entries. Each view reads that source and chooses how to display it. A table lines up fields for comparison. A code view keeps the original text, including commas and line breaks. A tree opens each record to show its fields. The plain-text view opens with scripts on. The record tree opens with scripts on. The same counts in their original CSV text and as a list of expandable records. Try it Open the first branch in the tree and find the group name and count in both views. Sources can come from CSV or TSV (a table stored as text, split by commas or tabs), JSON, YAML, or XML (text that can hold lists and nested fields), Markdown (formatted notes), or values supplied directly to the page. In automatic mode, Markdown appears formatted and rows with matching fields appear as a table. Nested values appear as text unless the author asks for a tree."
+        },
+        {
+          "id": "formats",
+          "title": "Other formats",
+          "level": 3,
+          "text": "The same views read every format. Here a TSV list appears as a table, an XML file opens as a tree, and Markdown notes appear formatted. The TSV table opens with scripts on. The XML tree opens with scripts on. The formatted notes open with scripts on. A TSV table, an XML tree with attributes marked by @, and Markdown with a task list, a table, and a quote. Try it In the XML tree, open a page entry and find its path attribute and its text."
         },
         {
           "id": "limits-and-errors",
@@ -6992,6 +7621,37 @@ window.DocFormSearch = {
           "text": "YAML",
           "term": "yaml",
           "section": "what-it-does"
+        },
+        {
+          "text": "TSV",
+          "tip": "Tab-separated values: a table stored as text, with tabs between the columns.",
+          "tags": [
+            "data and charts"
+          ],
+          "section": "formats"
+        },
+        {
+          "text": "XML",
+          "tip": "Extensible Markup Language: text that nests named elements inside each other, each with optional attributes.",
+          "tags": [
+            "data and charts"
+          ],
+          "section": "formats"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "formats"
+        },
+        {
+          "text": "tree",
+          "term": "tree",
+          "section": "formats"
+        },
+        {
+          "text": "path",
+          "term": "path",
+          "section": "formats"
         },
         {
           "text": "dropzone",
@@ -7217,7 +7877,7 @@ window.DocFormSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "Date (UTC) Total so far Commits per day 2026-11-17 8 8 2026-11-18 33 Omitted for demo 2026-11-19 34 1 Repository commits by date. Dates use UTC. One daily count is deliberately omitted to show a gap. Try it Hover for exact values, toggle Total so far in the legend, then drag across part of the chart to narrow the dates. Open Table to see only the visible values. Choose Reset range to restore the full span."
+          "text": "Date (UTC) Total so far Commits per day 2026-11-17 8 8 2026-11-18 33 Omitted for demo 2026-11-19 52 19 2026-11-20 57 5 2026-11-21 77 20 2026-11-22 81 4 Repository commits by date. Dates use UTC. One daily count is deliberately omitted to show a gap. Try it Hover for exact values, toggle Total so far in the legend, then drag across part of the chart to narrow the dates. Open Table to see only the visible values. Choose Reset range to restore the full span."
         },
         {
           "id": "what-it-does",
@@ -7229,7 +7889,7 @@ window.DocFormSearch = {
           "id": "categories",
           "title": "Compare categories with bars",
           "level": 2,
-          "text": "Group References setup 3 layout 7 reading 13 interact 13 data 9 Bar height shows the reference count for each group. The asterisk picks out the data group. Try it Inspect the marked bar and compare its count with the reading group."
+          "text": "Group References setup 5 layout 9 reading 11 interact 18 data 11 Bar height shows the reference count for each group. The asterisk picks out the data group. Try it Inspect the marked bar and compare its count with the reading group."
         },
         {
           "id": "bar-layout",
@@ -7247,7 +7907,7 @@ window.DocFormSearch = {
           "id": "pie",
           "title": "Show shares with a pie chart",
           "level": 2,
-          "text": "Choose a group in the legend to hide or show its slice. The pie and table recalculate each share using the total of the visible groups. Group References Setup 3 Layout 7 Reading 13 Interact 13 Data 9 Share of references by group."
+          "text": "Choose a group in the legend to hide or show its slice. The pie and table recalculate each share using the total of the visible groups. Group References Setup 5 Layout 9 Reading 11 Interact 18 Data 11 Share of references by group."
         },
         {
           "id": "shared-filter",
@@ -8162,13 +8822,13 @@ window.DocFormSearch = {
           "id": "results",
           "title": "Sort and shade results",
           "level": 2,
-          "text": "Repository reference counts with an example cutoff of nine Group References setup 3 layout 7 reading 13 interact 13 data 9 Try it Choose the References heading to sort largest first, then choose it again to reverse the order. Choose it a third time to restore the starting order. Look for both groups tied for the best count. A heatmap uses tint strength to show magnitude. Here, the fixed scale runs from zero to 15, so a count keeps its shade even when you filter the rows. A relative scale adjusts to the visible values. The tint colour is also configurable. The threshold gives every qualifying number a Pass label and every lower number a Fail label."
+          "text": "Repository reference counts with an example cutoff of nine Group References setup 5 layout 9 reading 11 interact 18 data 11 Try it Choose the References heading and watch the rows slide into order. Choose it again to reverse the order, then a third time to restore the starting order. Interact holds the best count, while reading and data share the same value. A heatmap uses tint strength to show magnitude. Here, the fixed scale runs from zero to 20, so a count keeps its shade even when you filter the rows. A relative scale adjusts to the visible values. The tint colour is also configurable. The threshold gives every qualifying number a Pass label and every lower number a Fail label."
         },
         {
           "id": "filters",
           "title": "Narrow the rows",
           "level": 2,
-          "text": "The filter button beside each heading opens choices for that column. Group offers a checklist and References offers minimum and maximum values. A date column can offer a from and to range. A filter chip applies a named rule in one press. The table shows rows that meet every active rule and reports how many are visible. Try it Turn on At least nine, then set the References maximum to 12. The data group is the only match. Choose Clear to restore all the rows."
+          "text": "The filter button beside each heading opens choices for that column. Group offers a checklist and References offers minimum and maximum values. A date column can offer a from and to range. A filter chip applies a named rule in one press. The table shows rows that meet every active rule and reports how many are visible. Try it Turn on At least nine to fade out the rows below the cutoff, then set the References maximum to 10. Layout is the only match. Choose Clear to restore all the rows."
         },
         {
           "id": "when-to-use",
@@ -8526,7 +9186,7 @@ window.DocFormSearch = {
           "id": "what-it-does",
           "title": "Change one view or the shared source",
           "level": 2,
-          "text": "Both tables below start from the same repository reference counts. The first dropzone replaces one table. The second dropzone changes the source used by both. Group References setup 3 layout 7 reading 13 interact 13 data 9 Preview A can show a file of its own or follow the shared source. Group References setup 3 layout 7 reading 13 interact 13 data 9 Preview B always follows the shared source."
+          "text": "Both tables below start from the same repository reference counts. The first dropzone replaces one table. The second dropzone changes the source used by both. Group References setup 5 layout 9 reading 11 interact 18 data 11 Preview A can show a file of its own or follow the shared source. Group References setup 5 layout 9 reading 11 interact 18 data 11 Preview B always follows the shared source."
         },
         {
           "id": "one-view",
@@ -8538,7 +9198,7 @@ window.DocFormSearch = {
           "id": "shared-source",
           "title": "Replace the shared counts",
           "level": 3,
-          "text": "Load setup and layout counts (CSV) into the shared source. Try it Load the shared sample and check Preview B. Press Reset at the first CSV dropzone so Preview A rejoins the shared counts. Press Reset at the second CSV dropzone to restore the original five rows in both tables. Each box lists its accepted file types and size limit. Dropzones can read CSV, JSON, and YAML, with narrower choices where a view needs a specific format. If a file is rejected, the status explains why and any previous accepted data stays in place."
+          "text": "Load setup and layout counts (CSV) into the shared source. Try it Load the shared sample and check Preview B. Press Reset at the first CSV dropzone so Preview A rejoins the shared counts. Press Reset at the second CSV dropzone to restore the original five rows in both tables. Each box lists its accepted file types and size limit. Dropzones can read CSV, TSV, JSON, YAML, XML, and Markdown, with narrower choices where a view needs a specific format. If a file is rejected, the status explains why and any previous accepted data stays in place."
         },
         {
           "id": "when-to-use",
@@ -9035,25 +9695,25 @@ window.DocFormSearch = {
           "id": "the-goal",
           "title": "The goal",
           "level": 2,
-          "text": "Show how the 45 references in a snapshot of DocForm’s library are distributed across five groups. A reader should be able to check a count, compare groups, and see how much a shorter reading plan would cover."
+          "text": "Show how the 54 references in a snapshot of DocForm’s library are distributed across five groups. A reader should be able to check a count, compare groups, and see how much a shorter reading plan would cover."
         },
         {
           "id": "build-it-up",
           "title": "Start with counts readers can check",
           "level": 2,
-          "text": "Groups to show Setup Layout Reading Interaction Data Group References Setup 3 Layout 7 Reading 13 Interaction 13 Data 9 Exact counts for the visible groups Group References Setup 3 Layout 7 Reading 13 Interaction 13 Data 9 Reading and Interaction were tied at 13 references each in this snapshot. The chart shows relative size, and the table gives exact values. Try it Clear Reading and Interaction in Groups to show. Their bars and rows disappear together. Sort the table by References to compare the remaining groups, then select all five again. Use Named sources and data views to give several views one named set of records. Here, the SVG chart and Results table both read Reference counts. Parameters let the reader change a setting, in this case which groups both views show."
+          "text": "Groups to show Setup Layout Reading Interaction Data Group References Setup 5 Layout 9 Reading 11 Interaction 18 Data 11 Exact counts for the visible groups Group References Setup 5 Layout 9 Reading 11 Interaction 18 Data 11 Interaction had the most references in this snapshot, 18, while Reading and Data were tied at 11. The chart shows relative size, and the table gives exact values. Try it Clear Reading and Interaction in Groups to show. Their bars and rows disappear together. Sort the table by References to compare the remaining groups, then select all five again. Use Named sources and data views to give several views one named set of records. Here, the SVG chart and Results table both read Reference counts. Parameters let the reader change a setting, in this case which groups both views show."
         },
         {
           "id": "tell-the-story",
           "title": "Show how the total builds",
           "level": 2,
-          "text": "Start with Setup. The first group covers 3 references. Continue through Reading. Layout and Reading take the running total to 23. Cover all five groups. Interaction and Data bring the total to 45. Groups included References so far 1 3 2 10 3 23 4 36 5 45 Each point adds the next group’s references. The horizontal scale counts groups in reading order. Try it Use Play to watch the count build, or use Next to move between notes one at a time. Guided chart playback gives each note a point where it can explain what changed."
+          "text": "Start with Setup. The first group covers 5 references. Continue through Reading. Layout and Reading take the running total to 25. Cover all five groups. Interaction and Data bring the total to 54. Groups included References so far 1 5 2 14 3 25 4 43 5 54 Each point adds the next group’s references. The horizontal scale counts groups in reading order. Try it Use Play to watch the count build, or use Next to move between notes one at a time. Guided chart playback gives each note a point where it can explain what changed."
         },
         {
           "id": "compare-coverage",
           "title": "Compare three reading plans",
           "level": 2,
-          "text": "References included and remaining for each reading plan Coverage Setup and Layout Through Reading All groups Included 10 23 45 Still to cover 35 22 0 What each reading plan includes and how many references it covers Measure Unit Setup and Layout Through Reading All groups Groups included Setup and Layout Setup, Layout, and Reading Setup, Layout, Reading, Interaction, and Data References covered 10 23 45 Try it In the Evaluation matrix, change Reference count to Share of all references. In the Scenario comparison, choose All groups to compare it with the starting plan, Setup and Layout. The matrix shows proportions at a glance. The comparison tells you which groups account for the difference."
+          "text": "References included and remaining for each reading plan Coverage Setup and Layout Through Reading All groups Included 14 25 54 Still to cover 40 29 0 What each reading plan includes and how many references it covers Measure Unit Setup and Layout Through Reading All groups Groups included Setup and Layout Setup, Layout, and Reading Setup, Layout, Reading, Interaction, and Data References covered 14 25 54 Try it In the Evaluation matrix, change Reference count to Share of all references. In the Scenario comparison, choose All groups to compare it with the starting plan, Setup and Layout. The matrix shows proportions at a glance. The comparison tells you which groups account for the difference."
         },
         {
           "id": "replace-the-counts",
@@ -9525,7 +10185,7 @@ window.DocFormSearch = {
           "id": "explain-step-by-step",
           "title": "Explain step by step",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Base layout Choose a card to see its details beside or below it. Figure steps On request Strong Base layout; SVG animations for moving steps Show the state of a figure that matches each step. Pipeline diagrams On request Strong Base layout; steppers for linked steps Show the stages of a process as connected blocks with details on hover. Detail panes On request Strong Base layout Show more about the selected card, step, or block anywhere on the page. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change; Linked selection for shared choices Let readers change values with sliders, chips, or searchable lists, and link them to charts or blocks that appear on cue. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Tabs On request Strong Base layout Switch among related panels in the same space. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
+          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Detail panes Choose a card to see its details beside or below it. Figure steps On request Strong Detail panes; SVG animations for moving steps Show the state of a figure that matches each step. Pipeline diagrams On request Strong Detail panes; Linked selection to follow a stepper Show the stages of a process as connected blocks with details on hover. Choice groups On request Medium Base layout Pick one or several options from chips or a searchable list. Detail panes On request Strong Base layout Show more about the selected card, step, block, or event anywhere on the page. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change; Linked selection for shared choices Let readers change values with sliders, chips, or searchable lists, and link them to charts or blocks that appear on cue. Sequence diagrams On request Strong Detail panes; Data for named sources Show messages between participants in order. Tree diagrams On request Strong Detail panes; Data for named sources Explore a hierarchy with collapsible branches. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Step sequences On request Strong A stepped feature, such as a stepper or figure steps Share one set of step controls and keep stepped views in sync. Tabs On request Strong Base layout Switch among related panels in the same space. Timeline diagrams On request Strong Detail panes; Data for named sources Show milestones and durations in lanes on one time axis. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
         },
         {
           "id": "show-data",
@@ -9537,7 +10197,7 @@ window.DocFormSearch = {
           "id": "reference",
           "title": "Reference",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Data file wrapper On request None Offline asset tool and a CSV, JSON, or YAML file Prepare a data file for a page to open offline. Include order On by default None Offline setup and the chosen features Prepare each feature after the things it needs. Offline setup On by default None The DocForm library folder beside the site Get a page and its features ready without the internet. Search index On request None Offline asset tool and the pages to include Prepare page text, headings, and term uses for offline lookup. Site manifest On request None A shared site settings file Set the page list, shared features, definitions, and sources."
+          "text": "Feature Availability Signal strength Needs Purpose Authoring conventions On request None An agent building the site Keep pages consistent, offline, and ready to export. Chart add-ons On request None SVG charts and an author script Add a new chart type, scale, or legend. Data file wrapper On request None Offline asset tool and a CSV, TSV, JSON, YAML, XML, or Markdown file Prepare a data file for a page to open offline. Extension API On request None An author script loaded after DocForm Add custom page behaviour that starts with the built-in features. Include order On by default None Offline setup and the chosen features Prepare each feature after the things it needs. Keyboard shortcuts On by default None The features that use each key Change or turn off a key in the site or page settings. Offline setup On by default None The DocForm library folder beside the site Get a page and its features ready without the internet. Search index On request None Offline asset tool and the pages to include Prepare page text, headings, and term uses for offline lookup. Site manifest On request None A shared site settings file Set the page list, shared features, definitions, and sources. Site structure On request None A site folder beside the DocForm library folder Arrange pages, data, and settings so the site works offline and exports cleanly. Standalone export On by default None Reading controls and desktop Chrome Save chosen pages as one HTML file that opens offline, as a Reader capture or Interactive copy."
         }
       ],
       "terms": [
@@ -9653,6 +10313,18 @@ window.DocFormSearch = {
           "text": "The site settings, also called the manifest, hold shared choices. They give the site its title and page order, choose a glossary page, and keep lists of terms, sources, and reusable controls. They also describe which prepared search and data files the site uses and where those files belong. Page settings apply to a single page. This page adds TeX math for the formula below. The other reference pages use the same site settings and keep their own feature choices."
         },
         {
+          "id": "keyboard-shortcuts",
+          "title": "Keyboard shortcuts",
+          "level": 2,
+          "text": "Shortcuts follow where you are. Esc closes search when the search palette is open. In an enlarged figure it closes the figure view. If a smaller component inside the view also uses that key, it gets the key first. DocForm leaves ordinary typing alone in text fields. Where Default keys Reading a page T changes theme, F toggles focus mode, N toggles navigation, J and K jump between headings, and S opens search. Open panel Esc dismisses search, the navigation drawer, the visible auto-hide sidebar, or a tooltip. Focused figure or linked choice Enter or Space enlarges a figure or activates a custom linked choice. Enlarged figure Esc closes it. When presentation tools are enabled, 1 to 7 choose the cursor, magnifier, laser, pen, highlighter, measure tool, and eraser. [ and ] adjust the magnifier. Ctrl+Z or Cmd+Z undoes an ink stroke. Keys are available when their features are enabled. Ask your agent to change a shortcut in the site settings or just on one page. This example moves Search to G and turns off the key for focus mode. The on-screen buttons still work. { \"options\": { \"shortcuts\": { \"search.open\": \"G\", \"controls.focus\": null } } } If two actions use the same key in the same part of the page, DocForm keeps the first binding and records a problem report. The full list of setting names is in the shortcut reference."
+        },
+        {
+          "id": "extend",
+          "title": "Extend DocForm",
+          "level": 2,
+          "text": "When no built-in feature fits, an agent can add its own behaviour with the Extension API. A small script loaded after DocForm registers the custom feature during setup, and DocForm starts it alongside the built-in ones, so it can use the same linked selections, data sources, and problem reports. Chart add-ons use the same route to add a new chart type, scale, or legend that works with chart controls, readouts, and table views. Histograms and heatmaps are built this way."
+        },
+        {
           "id": "startup",
           "title": "Startup and ready stages",
           "level": 2,
@@ -9742,6 +10414,66 @@ window.DocFormSearch = {
           "text": "feature",
           "term": "feature",
           "section": "settings"
+        },
+        {
+          "text": "search palette",
+          "term": "search palette",
+          "section": "keyboard-shortcuts"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "keyboard-shortcuts"
+        },
+        {
+          "text": "shortcut",
+          "term": "shortcut",
+          "section": "keyboard-shortcuts"
+        },
+        {
+          "text": "site settings",
+          "term": "site settings",
+          "section": "keyboard-shortcuts"
+        },
+        {
+          "text": "focus mode",
+          "term": "focus mode",
+          "section": "keyboard-shortcuts"
+        },
+        {
+          "text": "problem report",
+          "term": "problem report",
+          "section": "keyboard-shortcuts"
+        },
+        {
+          "text": "feature",
+          "term": "feature",
+          "section": "extend"
+        },
+        {
+          "text": "agent",
+          "term": "agent",
+          "section": "extend"
+        },
+        {
+          "text": "script",
+          "term": "script",
+          "section": "extend"
+        },
+        {
+          "text": "Chart",
+          "term": "chart",
+          "section": "extend"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "extend"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "extend"
         },
         {
           "text": "folder",
@@ -9839,6 +10571,16 @@ window.DocFormSearch = {
           "level": 2
         },
         {
+          "id": "keyboard-shortcuts",
+          "title": "Keyboard shortcuts",
+          "level": 2
+        },
+        {
+          "id": "extend",
+          "title": "Extend DocForm",
+          "level": 2
+        },
+        {
           "id": "startup",
           "title": "Startup and ready stages",
           "level": 2
@@ -9887,6 +10629,12 @@ window.DocFormSearch = {
           "title": "Offline data files",
           "level": 2,
           "text": "The Data file wrapper packages a CSV, JSON, or YAML source so a local page can read it. The tool checks that the source can be read and prepares it under the site's chosen name. The site can then use it in charts, tables, and other views. A reader can still open a file temporarily with File dropzones. That choice affects the current page. The prepared file stays as it was."
+        },
+        {
+          "id": "refresh-data-from-terminal",
+          "title": "Refresh data from the terminal",
+          "level": 3,
+          "text": "From the DocForm checkout, run the project script with Python 3.9 or later. It checks every data file configured in the site manifest (CSV, TSV, JSON, YAML, XML, or Markdown) and rewrites only the wrappers whose files changed. Run it again whenever you edit a data file, then reload the open page. YAML files also need the PyYAML package. python3 docs/refresh-data.py For your own site, copy the project launcher next to your pages. Adjust the paths to DocForm's tools/refresh_data.py and your site.js. List your data sources and output paths once under assets.data in the manifest. After changing the data, run the launcher without arguments."
         },
         {
           "id": "when-to-rerun",
@@ -9960,6 +10708,31 @@ window.DocFormSearch = {
           "text": "file",
           "term": "file",
           "section": "data-files"
+        },
+        {
+          "text": "script",
+          "term": "script",
+          "section": "refresh-data-from-terminal"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "refresh-data-from-terminal"
+        },
+        {
+          "text": "CSV",
+          "term": "csv",
+          "section": "refresh-data-from-terminal"
+        },
+        {
+          "text": "JSON",
+          "term": "json",
+          "section": "refresh-data-from-terminal"
+        },
+        {
+          "text": "YAML",
+          "term": "yaml",
+          "section": "refresh-data-from-terminal"
         },
         {
           "text": "search index",

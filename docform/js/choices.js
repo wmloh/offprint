@@ -134,7 +134,7 @@
       if (option.swatch) chip.appendChild(option.swatch);
       chip.appendChild(text);
       if (option.note !== undefined) chip.appendChild(make('span', 'df-chip-note', String(option.note)));
-      if (option.title) chip.title = option.title;
+      if (option.title) DocForm.util.hint(chip, option.title);
       if (option.mark) option.mark(chip);
       box.appendChild(chip);
       rippleOn(chip, input);

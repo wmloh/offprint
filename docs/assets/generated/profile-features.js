@@ -12,10 +12,10 @@ Object.defineProperty(window.DocFormData || (window.DocFormData = Object.create(
     "inputs": [
       {
         "file": "assets/data/profiles.json",
-        "sha256": "4f042c89883cfbe72be6e59052c42a37441ad3c097891868e6bcb7140d4fb27b"
+        "sha256": "08e353bbe2b25fb17a21fb4c72d96026f4acaf6568033550da26b3f4f1959c39"
       }
     ]
   },
   "type": "json",
-  "text": "{\n  \"reading\": {\n    \"roots\": [\n      \"base\",\n      \"blocks\",\n      \"theme\",\n      \"roles\",\n      \"navigation\",\n      \"controls\",\n      \"tooltips\",\n      \"references\",\n      \"citations\",\n      \"sidenotes\",\n      \"search\",\n      \"sections\"\n    ],\n    \"loads\": [\n      \"tokens\",\n      \"base\",\n      \"tags\",\n      \"callouts\",\n      \"blocks\",\n      \"theme\",\n      \"roles\",\n      \"tooltips\",\n      \"search\",\n      \"references\",\n      \"citations\",\n      \"navigation\",\n      \"sidenotes\",\n      \"sections\",\n      \"controls\"\n    ]\n  },\n  \"none\": {\n    \"roots\": [],\n    \"loads\": []\n  },\n  \"features\": 40\n}\n"
+  "text": "{\n  \"reading\": {\n    \"roots\": [\n      \"base\",\n      \"blocks\",\n      \"theme\",\n      \"roles\",\n      \"navigation\",\n      \"controls\",\n      \"tooltips\",\n      \"references\",\n      \"citations\",\n      \"sidenotes\",\n      \"search\",\n      \"sections\"\n    ],\n    \"loads\": [\n      \"tokens\",\n      \"base\",\n      \"tags\",\n      \"callouts\",\n      \"blocks\",\n      \"theme\",\n      \"roles\",\n      \"tooltips\",\n      \"search\",\n      \"references\",\n      \"citations\",\n      \"navigation\",\n      \"sidenotes\",\n      \"sections\",\n      \"controls\"\n    ]\n  },\n  \"none\": {\n    \"roots\": [],\n    \"loads\": []\n  },\n  \"features\": 53\n}\n"
 } });

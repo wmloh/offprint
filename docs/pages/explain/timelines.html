@@ -20,11 +20,17 @@
     <header>
       <p class="df-eyebrow">Explain step by step</p>
       <h1>Timeline diagrams</h1>
-      <p>Put milestones and durations on one time axis. Give each team or workstream its own lane so readers can see where activities overlap.</p>
+      <p>A <span data-df-term>timeline</span> puts milestones and durations on one <span data-df-term>time axis</span>, with a lane for each team or workstream so readers can see where work overlaps.</p>
+      <dl class="df-fields">
+        <dt>Official name</dt><dd>Timeline diagrams · Detail panes</dd>
+        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
+        <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
+        <dt>Works with</dt><dd><a href="selection.html">Linked selection</a>, <a href="../data/sources.html">named data sources</a>, and <a href="zoom.html#zoom-tools">zoom tools</a></dd>
+        <dt>Good for</dt><dd>Schedules, project plans, histories, and experiment runs</dd>
+      </dl>
     </header>
 
-    <h2 id="calendar">Plan on a calendar</h2>
-    <p>A dot marks a single event. A bar runs from the start date to the end date. Select an event to read its details below the diagram.</p>
+    <h2 id="see-it">See it</h2>
     <figure class="df-timeline" id="release-dates" data-df-zoom data-df-selection-group="release-schedule">
       <ol class="df-timeline-events">
         <li data-df-key="draft" data-df-lane="Writing" data-df-start="2026-06-01" data-df-end="2026-06-05" data-df-label="Draft chapter">
@@ -33,7 +39,7 @@
         <li data-df-key="art" data-df-lane="Writing" data-df-start="2026-06-03" data-df-end="2026-06-08" data-df-label="Prepare figures">
           3–8 June · Writing · Prepare figures
         </li>
-        <li data-df-key="review" data-df-lane="Review" data-df-start="2026-06-06" data-df-end="2026-06-10" data-df-label="Review chapter">
+        <li data-df-key="review" data-df-lane="Review" data-df-start="2026-06-06" data-df-end="2026-06-10" data-df-label="Review chapter" data-df-initial>
           6–10 June · Review · Review chapter
         </li>
         <li data-df-key="publish" data-df-lane="Release" data-df-start="2026-06-13" data-df-label="Publish">
@@ -46,11 +52,17 @@
         <p data-df-key="review"><strong>Review chapter.</strong> Check the instructions, figure labels, and captions.</p>
         <p data-df-key="publish"><strong>Publish.</strong> Share the chapter after review is complete.</p>
       </div>
-      <figcaption>Chapter release schedule by date.</figcaption>
+      <figcaption>Chapter release schedule by date. It starts on the review so the overlap with writing is easy to spot.</figcaption>
     </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Move your pointer across the bars and read each detail below. Notice that the two Writing tasks overlap, so they sit on separate rows of the same lane.</p>
 
-    <h2 id="elapsed-time">Show days from kickoff</h2>
-    <p>This diagram reads a named CSV source. It shares event keys with the calendar above, so selecting an event in either view updates both.</p>
+    <h2 id="what-it-does">Points, spans, and lanes</h2>
+    <p>An event with only a start is a dot. An event with a later end is a bar that runs from start to end. Lanes appear in the order they are first used, and events in a lane are sorted by start. When two events in a lane overlap, the later one moves to a new row so neither label is hidden. The diagram can begin on any event; this one opens on the review.</p>
+    <p>The axis can use calendar dates, as above, or plain numbers such as days, seconds, or steps. Put the unit in the caption so readers know what the numbers mean.</p>
+
+    <h3 id="named-source">Read events from a data source</h3>
+    <p>This diagram reads a <span data-df-term>CSV</span> <span data-df-term>data source</span> that counts days from kickoff. It shares event keys with the calendar above through <a href="selection.html">linked selection</a>, so selecting an event in either view updates both.</p>
     <script type="text/csv" data-df-source="release-offsets">
 key,lane,label,start,end
 draft,Writing,Draft chapter,0,4
@@ -67,10 +79,22 @@ publish,Release,Publish,12,
       </ol>
       <figcaption>Chapter release schedule in days from kickoff.</figcaption>
     </figure>
+    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Select <strong>Publish</strong> in the lower diagram and watch the calendar move to the same event. Then click the background of either diagram to enlarge it, choose the measure tool with <kbd>6</kbd>, and point at the axis to read a date or day and its lane.</p>
 
-    <p>Hover or select an event to see its details. Click the background for fullscreen, then use the crosshair to read a date or value and its lane. Tab to the event controls and use Left and Right to move between them. For the markup and source fields, see the <a href="../../../docform/docs/diagram/timelines.md">timeline reference</a>.</p>
+    <h2 id="when-to-use">When to reach for it</h2>
+    <p>Use a timeline when <em>when</em> and <em>how long</em> matter, especially when work runs in parallel. For a strict order of steps without durations, a <a href="steppers.html">worked-example stepper</a> or <a href="pipelines.html">pipeline diagram</a> is lighter. Keep labels short; the full label is always in the event’s hint and detail.</p>
 
-    <nav class="df-prevnext" data-df-prevnext aria-label="Adjacent pages"></nav>
+    <h2 id="for-every-reader">For every reader</h2>
+    <p><kbd>Tab</kbd> reaches the selected event. <kbd>←</kbd> and <kbd>→</kbd> move to the previous or next event in lane order, and <kbd>Home</kbd> and <kbd>End</kbd> jump to the ends. On a phone, the axis scrolls sideways inside the figure. Print shows a list of the events with their dates or numbers, and with scripts off the authored list and every detail stay readable.</p>
+
+    <h2 id="related">Related</h2>
+    <ul>
+      <li><a href="sequences.html">Sequence diagrams</a> and <a href="tree-diagrams.html">tree diagrams</a>, which share the same selection and detail behaviour</li>
+      <li><a href="zoom.html#chart-crosshair">Measure on a chart</a> with the same crosshair</li>
+      <li><a href="../../../docform/docs/diagram/timelines.md">Timeline reference</a> for markup and data fields</li>
+      <li><a href="../reference/features.html">Feature directory</a></li>
+    </ul>
   </main>
 </body>
 </html>

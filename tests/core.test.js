@@ -202,3 +202,35 @@ test('tag classes own one shape each, the circle stays with glossary tags, and a
   assert.deepEqual(plain(DocForm._tagKeys(' Basics, web ,, BASICS ')), ['basics', 'web']);
   assert.deepEqual(plain(DocForm._tagKeys(['Web', 3])), ['web']);
 });
+
+test('hints share one tooltip card, replace native titles, and fall back to title without tooltips', () => {
+  const { DocForm } = load();
+  const el = () => {
+    const attrs = {};
+    return { attrs, set title(v) { attrs.title = v; }, removeAttribute(name) { delete attrs[name]; } };
+  };
+  const fallback = el();
+  DocForm.util.hint(fallback, 'Copy link');
+  assert.equal(fallback.attrs.title, 'Copy link');
+  DocForm.util.hint(fallback, '');
+  assert.equal('title' in fallback.attrs, false);
+
+  const attached = [];
+  const card = { body: { textContent: '' } };
+  DocForm._tooltips = { card: () => card, attach: (target, title, text, options) => attached.push({ target, options }) };
+  const a = el();
+  const b = el();
+  a.attrs.title = 'old';
+  DocForm.util.hint(a, 'Undo');
+  DocForm.util.hint(a, 'Undo (Z)');
+  DocForm.util.hint(b, 'Clear');
+  assert.equal('title' in a.attrs, false);
+  assert.equal(attached.length, 2, 'each element attaches once');
+  assert.ok(attached.every(({ options }) => options.card === card && options.describe === false));
+  assert.equal(attached[0].options.enabled(), true);
+  assert.equal(card.body.textContent, 'Undo (Z)');
+  DocForm.util.hint(a, 'Undone');
+  assert.equal(card.body.textContent, 'Undone', 'the showing hint updates live');
+  DocForm.util.hint(b, '');
+  assert.equal(attached[1].options.enabled(), false, 'an empty hint does not show');
+});

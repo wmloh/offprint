@@ -65,7 +65,7 @@ html.df-term-holding * {
 .df-tooltip {
   --df-tooltip-bg: light-dark(#ffffff, #252525);
   position: fixed;
-  z-index: 50;
+  z-index: 70; /* above the zoom view (60) so tips inside an enlarged figure stay visible */
   box-sizing: border-box;
   max-width: min(320px, calc(100vw - 16px));
   max-height: calc(100vh - 16px);

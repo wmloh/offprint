@@ -489,7 +489,9 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const serializedBundle = /<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(html)[1];
   assert.doesNotMatch(serializedBundle, /</);
   const shell = html.split('<script id="export-bundle"')[0];
-  assert.match(shell, /id="export-pill"[^>]*aria-label="Reading controls"/);
+  assert.match(shell, /id="export-controls" class="df-controls-bar"/);
+  assert.match(shell, /id="export-pill" class="df-controls"[^>]*aria-label="Page controls"/);
+  assert.deepEqual(JSON.parse(serializedBundle).icons, { ...runtime._icons });
   assert.match(shell, /id="export-resize"[^>]*role="separator"/);
   assert.match(shell, /<details class="df-nav-page-group" open=""><summary class="df-nav-row">/);
   assert.match(shell, /class="df-nav-label">Included group<\/span>/);

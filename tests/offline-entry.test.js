@@ -1951,6 +1951,10 @@ test('Reader step controls restore jumps, shared notes and page-local choice', (
 
 test('Reader controls draw full section lines, keep a first-level outline, and operate the compact drawer', () => {
   const p = page();
+  const core = vm.createContext({ console });
+  core.window = core;
+  vm.runInContext(fs.readFileSync(new URL('docform/js/core.js', repo), 'utf8'), core);
+  const icons = core.DocForm._icons;
   p.runScript(new URL('docform/js/export-reader.js', repo));
   const create = p.document.createElement.bind(p.document);
   p.html.toggleAttribute = (name, on) => on ? p.html.setAttribute(name, '') : p.html.removeAttribute(name);
@@ -1996,8 +2000,9 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   const route = [];
   const controls = p.DF._exportReader.controls;
   // Give the shell control module only the browser APIs it uses.
-  const chrome = vm.runInNewContext(`(${controls})(host, headings, tips, navigate)`, {
+  const chrome = vm.runInNewContext(`(${controls})(host, headings, tips, navigate, icons)`, {
     host,
+    icons,
     document: Object.assign(p.document, {
       querySelector: selector => parts.get(selector),
       getElementById: id => p.body.lastChild.children.find(node => node.id === id)
@@ -2014,6 +2019,7 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   const [progress, nav, focus, theme] = pill.children;
   assert.equal(pill.children.length, 4);
 
+  const zoomWatchers = [];
   function mount(id) {
     const doc = new EventTarget();
     const view = new EventTarget();
@@ -2044,6 +2050,11 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
     doc.defaultView = view;
     doc.querySelector = () => null;
     view.document = doc;
+    view.MutationObserver = class {
+      constructor(fn) { zoomWatchers.push(fn); }
+      observe() {}
+      disconnect() {}
+    };
     view.scrollY = 50;
     view.getComputedStyle = node => ({ scrollMarginTop: '0', fontSize: '20',
       getPropertyValue: name => node.style.getPropertyValue(name) });
@@ -2054,7 +2065,18 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   }
 
   const doc = mount('page-1');
-  assert.match(theme.innerHTML, /<circle cx="8" cy="8"/);
+  assert.equal(theme.innerHTML, icons.light);
+  assert.equal(nav.innerHTML, icons.nav);
+  assert.equal(nav.className, 'df-controls-btn df-controls-nav');
+  doc.documentElement.classList.add('df-zoom-open');
+  zoomWatchers.at(-1)();
+  assert.equal(p.html.hasAttribute('data-zoom'), true);
+  assert.equal(pill.inert, true);
+  assert.equal(pager.inert, true);
+  doc.documentElement.classList.remove('df-zoom-open');
+  zoomWatchers.at(-1)();
+  assert.equal(p.html.hasAttribute('data-zoom'), false);
+  assert.equal(pill.inert, false);
   assert.equal(first.getAttribute('aria-current'), 'page');
   assert.deepEqual(toc.querySelectorAll().slice(2).map(link => link.href), ['#page-1/intro']);
   assert.equal(toc.querySelectorAll().at(-1).getAttribute('aria-current'), 'location');
@@ -2075,7 +2097,7 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   p.key('j');
   assert.deepEqual(route, ['#page-1/more']);
   p.key('t');
-  assert.match(theme.innerHTML, /M13\.5 9\.5A5\.5 5\.5/);
+  assert.equal(theme.innerHTML, icons.dark);
   p.key('f');
   assert.equal(doc.documentElement.classList.contains('df-focus-mode'), true);
   assert.equal(doc.body.firstChild.classList.contains('df-focus-block'), true);
@@ -2109,7 +2131,7 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   assert.equal(second.getAttribute('aria-current'), 'page');
   assert.equal(first.getAttribute('aria-current'), null);
   assert.equal(focus.getAttribute('aria-pressed'), 'true');
-  assert.equal(theme.getAttribute('aria-label'), 'Switch to light theme');
+  assert.equal(theme.getAttribute('aria-label'), 'Theme: Dark. Switch to Light.');
   assert.equal(secondDoc.documentElement.getAttribute('data-df-theme'), 'dark');
 
   chrome.page('page-1', [null, null]);

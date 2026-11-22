@@ -18,7 +18,7 @@ Reading-pill **Export** (footer link when `controls` is off) builds one offline 
 
 - Sidebar lists selected page groups and outlines the active page's visible `h1`–`h3` (honours `data-df-no-outline`). Routes `#page-N` and `#page-N/heading-id` with Back/Forward.
 - Fixed pill keys: `N` navigation, `F` focus, `T` theme, `J`/`K` headings; progress ring per page. Sidebar mode, width, focus, and theme persist across pages. `N` cycles shown/hidden/auto on desktop (auto: approach left edge or Down Arrow on the button; resize by drag or Left/Right/Home/End); on narrow or touch-only screens it opens the drawer (Escape or backdrop closes).
-- Arrow pill for adjacent pages. Definitions work on hover, focus, and touch. Supported assets embedded; links to omitted pages disabled; external links work when online.
+- Pill and arrow pill reuse the live page's `controls.css` styles and icons; both hide while a figure zoom view is open. Arrow pill for adjacent pages. Definitions work on hover, focus, and touch. Supported assets embedded; links to omitted pages disabled; external links work when online.
 
 ## Local author scripts
 

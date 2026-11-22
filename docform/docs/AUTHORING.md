@@ -10,7 +10,7 @@ project/
   docs/                         documentation root (select this folder for export)
     index.html                  first manifest page
     glossary.html               optional glossaryPage
-    refresh-data.py             project launcher for data wrappers (see Data)
+    refresh-assets.py           project launcher for data wrappers and search index (see Data)
     pages/<group>/<page>.html   one folder per manifest group, one level deep
     assets/
       site.js                   manifest: the only shared configuration
@@ -98,7 +98,7 @@ Take the first rung that works. Moving down a rung requires that every rung abov
 
 - Static data is fixed once written. Dynamic data is produced by an external process. Pages never load raw files directly, because `file://` blocks fetches. Pages load only the wrappers in `generated/`. [Data wrappers](tools/file-wrapper.md) · [Named sources](data/data-blocks.md)
 - The pipeline overwrites the same file names in `assets/data/` each run. Field names, types, and keys are a contract with the pages, so treat renames as breaking changes. Changing values is fine.
-- Every project ships its own no-argument `refresh-data.py` at the root:
+- Every project ships its own `refresh-assets.py` at the root (no arguments, or `--check`). [Terminal refresh](tools/refresh-assets.md)
 
 ```python
 #!/usr/bin/env python3
@@ -106,11 +106,11 @@ from pathlib import Path
 from runpy import run_path
 if __name__ == '__main__':
     site = Path(__file__).resolve().parent
-    refresh = run_path(str(site.parent / 'docform/tools/refresh_data.py'))['refresh']
-    raise SystemExit(refresh(site / 'assets/site.js', site_root=site))
+    main = run_path(str(site.parent / 'docform/tools/refresh_assets.py'))['main']
+    raise SystemExit(main(site / 'assets/site.js', site_root=site))
 ```
 
-- Refresh is all-or-nothing: one invalid entry blocks every output. Prefer CSV, TSV, JSON, XML, or Markdown for dynamic sources; YAML needs PyYAML. Never hand-edit `generated/`.
+- Refresh is all-or-nothing: one invalid data entry or blocked index blocks every output. Search needs Node.js; without it data still refreshes and the run exits 1. Prefer CSV, TSV, JSON, XML, or Markdown for dynamic sources; YAML needs PyYAML. Never hand-edit `generated/`.
 - One source, many views: bind charts, results tables, matrices, and data views to the source name. Do not duplicate data across pages. Filter with `filter`/`where` or a named transform instead of creating derived copies.
 
 ## Content conventions
@@ -148,8 +148,7 @@ Every page must work in both **Reader** and **Interactive** standalone export. [
 ## Pre-ship checklist
 
 - [ ] No `[docform]` console warnings. `DocForm.diagnostics.list()` is empty on every page.
-- [ ] `python3 refresh-data.py` exits with status 0, and wrappers in `generated/` are current.
-- [ ] `tools/assets.html` reports the search index and all wrappers as current. Regenerate after any page, heading, term, or manifest change.
+- [ ] `python3 refresh-assets.py --check` exits with status 0: the search index and all wrappers are current (or `tools/assets.html` reports them current when Node.js is unavailable). Regenerate after any page, heading, term, data, or manifest change.
 - [ ] Every page is in the manifest, prev/next order reads correctly, and cross-page anchors resolve.
 - [ ] Light and dark themes, 1920×1080 and narrow widths, focus mode, and print all look correct.
 - [ ] The export preview builds in Reader and Interactive modes with no missing resources or fallback pages.

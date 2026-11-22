@@ -28,16 +28,7 @@
   var FOCUS_BAND = [0.2, 0.8];
   // Pixels from the window's right edge within which the page scrollbar shows.
   var SCROLLBAR_ZONE = 40;
-  var SVG = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
-    'stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">';
-  var ICONS = {
-    prev: SVG + '<path d="M12.5 8h-9m4-4-4 4 4 4"/></svg>',
-    next: SVG + '<path d="M3.5 8h9m-4-4 4 4-4 4"/></svg>',
-    nav: SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6 2.5v11M3.5 5.5h0.5M3.5 8h0.5"/></svg>',
-    navHidden: SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="m7 5.5-2.5 2.5L7 10.5"/></svg>',
-    navAuto: SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6 3v10" stroke-dasharray="1.2 2"/><path d="m8.5 5.5 2.5 2.5-2.5 2.5"/></svg>',
-    focus: SVG + '<path d="M1.5 5V3a1.5 1.5 0 0 1 1.5-1.5h2M11 1.5h2A1.5 1.5 0 0 1 14.5 3v2M14.5 11v2a1.5 1.5 0 0 1-1.5 1.5h-2M5 14.5H3A1.5 1.5 0 0 1 1.5 13v-2M5 8h6"/></svg>'
-  };
+  var ICONS = DocForm._icons;
   var hasOwn = Object.prototype.hasOwnProperty;
   var doc = root.document;
   var html = doc && doc.documentElement;
@@ -319,10 +310,7 @@
     box.setAttribute('aria-label', 'Reading progress');
     box.setAttribute('aria-valuemin', '0');
     box.setAttribute('aria-valuemax', '100');
-    box.innerHTML = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">' +
-      '<circle class="df-progress-track" cx="10" cy="10" r="7"/>' +
-      '<circle class="df-progress-bar" cx="10" cy="10" r="7" pathLength="100" stroke-dasharray="100" ' +
-      'stroke-dashoffset="100" transform="rotate(-90 10 10)"/></svg>';
+    box.innerHTML = ICONS.progress;
     var bar = box.querySelector('.df-progress-bar');
     var hint = controlHint(box);
     var shown = -1;

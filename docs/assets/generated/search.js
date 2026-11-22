@@ -1726,7 +1726,7 @@ window.DocFormSearch = {
         "file": "pages/data/sources.html",
         "path": "../pages/data/sources.html",
         "title": "Named data sources and data views",
-        "sha256": "b66115a9203662b62d7b1000806acb668632e579fdf6ed09607d127f41596280"
+        "sha256": "0915565a4b9afca963668f359343f3a0260fec96d47d41bbe55623c2e2b642d8"
       },
       {
         "file": "pages/data/trees.html",
@@ -1798,7 +1798,7 @@ window.DocFormSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "34b8924d85af22aecfce431842c4bbf84d925efb6f330d7fcde43d9fcbb89d8f"
+        "sha256": "41f9081454cefaa8a02002fb98a5905afb4d83fc238df61057253a7912fb3806"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -1810,7 +1810,7 @@ window.DocFormSearch = {
         "file": "pages/reference/offline-tools.html",
         "path": "../pages/reference/offline-tools.html",
         "title": "Offline tools",
-        "sha256": "25fb30a21cafd6e1ab02a91cf3064c89db9689009896e7b1f72672c03406152a"
+        "sha256": "32e066cfb1bad3e89918def68277f44c5df8d6464282ea864da667acd49452ca"
       },
       {
         "file": "pages/reference/troubleshooting.html",
@@ -10197,7 +10197,7 @@ window.DocFormSearch = {
           "id": "reference",
           "title": "Reference",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Authoring conventions On request None An agent building the site Keep pages consistent, offline, and ready to export. Chart add-ons On request None SVG charts and an author script Add a new chart type, scale, or legend. Data file wrapper On request None Offline asset tool and a CSV, TSV, JSON, YAML, XML, or Markdown file Prepare a data file for a page to open offline. Extension API On request None An author script loaded after DocForm Add custom page behaviour that starts with the built-in features. Include order On by default None Offline setup and the chosen features Prepare each feature after the things it needs. Keyboard shortcuts On by default None The features that use each key Change or turn off a key in the site or page settings. Offline setup On by default None The DocForm library folder beside the site Get a page and its features ready without the internet. Search index On request None Offline asset tool and the pages to include Prepare page text, headings, and term uses for offline lookup. Site manifest On request None A shared site settings file Set the page list, shared features, definitions, and sources. Site structure On request None A site folder beside the DocForm library folder Arrange pages, data, and settings so the site works offline and exports cleanly. Standalone export On by default None Reading controls and desktop Chrome Save chosen pages as one HTML file that opens offline, as a Reader capture or Interactive copy."
+          "text": "Feature Availability Signal strength Needs Purpose Authoring conventions On request None An agent building the site Keep pages consistent, offline, and ready to export. Chart add-ons On request None SVG charts and an author script Add a new chart type, scale, or legend. Data file wrapper On request None Offline asset tool and a CSV, TSV, JSON, YAML, XML, or Markdown file Prepare a data file for a page to open offline. Extension API On request None An author script loaded after DocForm Add custom page behaviour that starts with the built-in features. Include order On by default None Offline setup and the chosen features Prepare each feature after the things it needs. Keyboard shortcuts On by default None The features that use each key Change or turn off a key in the site or page settings. Offline setup On by default None The DocForm library folder beside the site Get a page and its features ready without the internet. Search index On request None Offline asset tool and the pages to include Prepare page text, headings, and term uses for offline lookup. Terminal asset refresh On request None Python 3.9 or later, plus Node.js for the search index Rebuild the search index and data file wrappers without opening a browser. Site manifest On request None A shared site settings file Set the page list, shared features, definitions, and sources. Site structure On request None A site folder beside the DocForm library folder Arrange pages, data, and settings so the site works offline and exports cleanly. Standalone export On by default None Reading controls and desktop Chrome Save chosen pages as one HTML file that opens offline, as a Reader capture or Interactive copy."
         }
       ],
       "terms": [
@@ -10631,10 +10631,10 @@ window.DocFormSearch = {
           "text": "The Data file wrapper packages a CSV, JSON, or YAML source so a local page can read it. The tool checks that the source can be read and prepares it under the site's chosen name. The site can then use it in charts, tables, and other views. A reader can still open a file temporarily with File dropzones. That choice affects the current page. The prepared file stays as it was."
         },
         {
-          "id": "refresh-data-from-terminal",
-          "title": "Refresh data from the terminal",
-          "level": 3,
-          "text": "From the DocForm checkout, run the project script with Python 3.9 or later. It checks every data file configured in the site manifest (CSV, TSV, JSON, YAML, XML, or Markdown) and rewrites only the wrappers whose files changed. Run it again whenever you edit a data file, then reload the open page. YAML files also need the PyYAML package. python3 docs/refresh-data.py For your own site, copy the project launcher next to your pages. Adjust the paths to DocForm's tools/refresh_data.py and your site.js. List your data sources and output paths once under assets.data in the manifest. After changing the data, run the launcher without arguments."
+          "id": "refresh-from-terminal",
+          "title": "Refresh from the terminal",
+          "level": 2,
+          "text": "The Terminal asset refresh script does the asset tool's job without opening a browser. From the DocForm checkout, run it with Python 3.9 or later. It rebuilds every prepared file that is out of date, both the search index and the data file wrappers, and leaves current files untouched. Then reload the open page. python3 docs/refresh-assets.py Add --check to only report each file as Current, Missing, Stale, or Blocked, without changing anything. If anything is blocked, nothing is written until it is fixed. The search index needs Node.js. Without it, the script still refreshes data and reports the index as skipped, so use the asset tool for the index. YAML data files also need the PyYAML package. The script reads pages more strictly than a browser. If it reports a page and line, fix the markup there, such as a tag left open or a & that should be written &amp;. For your own site, copy the project launcher next to your pages. Adjust the paths to DocForm's tools/refresh_assets.py and your site.js."
         },
         {
           "id": "when-to-rerun",
@@ -10712,27 +10712,42 @@ window.DocFormSearch = {
         {
           "text": "script",
           "term": "script",
-          "section": "refresh-data-from-terminal"
+          "section": "refresh-from-terminal"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "refresh-from-terminal"
         },
         {
           "text": "file",
           "term": "file",
-          "section": "refresh-data-from-terminal"
+          "section": "refresh-from-terminal"
         },
         {
-          "text": "CSV",
-          "term": "csv",
-          "section": "refresh-data-from-terminal"
+          "text": "search index",
+          "term": "search index",
+          "section": "refresh-from-terminal"
         },
         {
-          "text": "JSON",
-          "term": "json",
-          "section": "refresh-data-from-terminal"
+          "text": "Stale",
+          "term": "stale",
+          "section": "refresh-from-terminal"
         },
         {
           "text": "YAML",
           "term": "yaml",
-          "section": "refresh-data-from-terminal"
+          "section": "refresh-from-terminal"
+        },
+        {
+          "text": "markup",
+          "term": "markup",
+          "section": "refresh-from-terminal"
+        },
+        {
+          "text": "tag",
+          "term": "tag",
+          "section": "refresh-from-terminal"
         },
         {
           "text": "search index",
@@ -10769,6 +10784,11 @@ window.DocFormSearch = {
         {
           "id": "data-files",
           "title": "Offline data files",
+          "level": 2
+        },
+        {
+          "id": "refresh-from-terminal",
+          "title": "Refresh from the terminal",
           "level": 2
         },
         {

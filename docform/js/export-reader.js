@@ -136,7 +136,7 @@
     });
   }
 
-  function controls(host, headings, tips, navigate) {
+  function controls(host, headings, tips, navigate, icons) {
     var html = document.documentElement;
     var pill = document.querySelector('#export-pill');
     var pager = document.querySelector('#export-pager');
@@ -162,6 +162,8 @@
     var updateID = 0;
     var currentSection;
     var jumpOrigin;
+    var zoomed = false;
+    var zoomWatch;
 
     function make(tag, text) {
       var node = document.createElement(tag);
@@ -189,50 +191,40 @@
       return name;
     }
 
-    function icon(node, drawing, size) {
-      var bounds = size || 24;
-      node.innerHTML = '<svg viewBox="0 0 ' + bounds + ' ' + bounds + '" aria-hidden="true" focusable="false">' +
-        drawing + '</svg>';
-    }
-
     function button(id, label, key, drawing, action) {
       var el = make('button');
       el.type = 'button';
-      icon(el, drawing);
+      el.className = 'df-controls-btn df-controls-' + id;
+      el.innerHTML = drawing;
       var name = hint(el, id, label, key);
       el.addEventListener('click', action);
       pill.append(el);
       return [el, name];
     }
 
-    var navFrame = '<rect x="3" y="5" width="18" height="14" rx="2"/>';
-    var navIcons = {
-      shown: '<path d="M9 5v14M5.5 9h1m-1 3h1"/>',
-      hidden: '<path d="m12 9-3 3 3 3"/>',
-      auto: '<path d="M9 5v14" stroke-dasharray="2 2"/><path d="m13 9 3 3-3 3"/>'
-    };
+    var navIcons = { shown: icons.nav, hidden: icons.navHidden, auto: icons.navAuto };
     var navLabels = { shown: 'Navigation shown. Select to hide', hidden: 'Navigation hidden. Select for auto-hide',
       auto: 'Navigation auto-hide. Select to keep it open' };
     var progress = make('span');
-    progress.className = 'export-progress';
+    progress.className = 'df-controls-progress';
     progress.tabIndex = 0;
     progress.setAttribute('role', 'progressbar');
     progress.setAttribute('aria-valuemin', '0');
     progress.setAttribute('aria-valuemax', '100');
     progress.setAttribute('aria-valuenow', '0');
-    icon(progress, '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>');
-    var ring = progress.querySelector('circle:last-child');
+    progress.innerHTML = icons.progress;
+    var ring = progress.querySelector('.df-progress-bar');
     hint(progress, 'progress', 'Reading progress');
     pill.append(progress);
 
-    var [navButton, navName] = button('nav', 'Navigation', 'N', navFrame + navIcons.shown, toggleNav);
+    var [navButton, navName] = button('nav', 'Navigation', 'N', navIcons.shown, toggleNav);
     navButton.setAttribute('aria-controls', sidebar.id);
-    var [focusButton, focusName] = button('focus', 'Turn on focus mode', 'F', '<path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/><circle cx="12" cy="12" r="2"/>', toggleFocus);
+    var [focusButton, focusName] = button('focus', 'Turn on focus mode', 'F', icons.focus, toggleFocus);
     focusButton.setAttribute('aria-pressed', 'false');
-    var [themeButton, themeName] = button('theme', 'Switch theme', 'T', '<path d="M20 15a8 8 0 0 1-11-11 8.5 8.5 0 1 0 11 11Z"/>', toggleTheme);
+    var [themeButton, themeName] = button('theme', 'Switch theme', 'T', icons.dark, toggleTheme);
 
     var pageLinks = Array.from(pager.querySelectorAll('a'), function (link, index) {
-      icon(link, index ? '<path d="M5 12h14m-6-6 6 6-6 6"/>' : '<path d="M19 12H5m6-6-6 6 6 6"/>');
+      link.innerHTML = index ? icons.next : icons.prev;
       return [link, hint(link, link.id, index ? 'Next page' : 'Previous page')];
     });
     var progressHint = document.getElementById('export-hint-progress');
@@ -244,8 +236,10 @@
       var modal = mobile && drawer;
       sidebar.hidden = !shown;
       close.hidden = shade.hidden = !modal;
-      host.inert = pill.inert = pager.inert = modal;
+      host.inert = modal;
+      pill.inert = pager.inert = modal || zoomed;
       html.toggleAttribute('data-drawer', modal);
+      html.toggleAttribute('data-zoom', zoomed);
       if (modal) {
         sidebar.setAttribute('role', 'dialog');
         sidebar.setAttribute('aria-label', 'Navigation');
@@ -258,9 +252,9 @@
       html.style.setProperty('--nav-slot', !mobile && shown ? 'var(--nav-width)' : '0px');
       navButton.setAttribute('aria-expanded', String(shown));
       var navMode = mobile ? 'shown' : mode;
-      if (navButton.dataset.navMode !== navMode) {
-        navButton.dataset.navMode = navMode;
-        icon(navButton, navFrame + navIcons[navMode]);
+      if (navButton.getAttribute('data-df-nav-mode') !== navMode) {
+        navButton.setAttribute('data-df-nav-mode', navMode);
+        navButton.innerHTML = navIcons[navMode];
       }
       navName(mobile ? 'Open navigation' : navLabels[mode]);
       schedule();
@@ -344,9 +338,8 @@
       html.setAttribute('data-df-theme', theme);
       view?.document.documentElement.setAttribute('data-df-theme', theme);
       remote?.send({ type: 'theme', value: theme });
-      themeName(theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-      icon(themeButton, theme === 'dark' ? '<path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z"/>' :
-        '<circle cx="8" cy="8" r="3"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1.1 1.1M11.9 11.9L13 13M3 13l1.1-1.1M11.9 4.1L13 3"/>', 16);
+      themeName(theme === 'dark' ? 'Theme: Dark. Switch to Light.' : 'Theme: Light. Switch to Dark.');
+      themeButton.innerHTML = icons[theme];
     }
 
     function toggleTheme() {
@@ -565,6 +558,13 @@
       drawLines?.();
       schedule();
     }
+
+    // The figure zoom view covers only the page frame, so the shell hides its own controls while it is open.
+    function setZoom(open) {
+      if (zoomed === open) return;
+      zoomed = open;
+      layout();
+    }
     var observer = new ResizeObserver(refreshLayout);
     setWidth(width);
     layout();
@@ -573,6 +573,9 @@
       follow: function (restoreFocus) { hideTip?.(); closeDrawer(restoreFocus); },
       page: function (page, adjacent) {
         view = remote = drawLines = null;
+        zoomWatch?.disconnect();
+        zoomWatch = null;
+        setZoom(false);
         sections = [];
         blocks = [];
         observer.disconnect();
@@ -631,6 +634,10 @@
         view.addEventListener('scroll', schedule, { passive: true });
         view.addEventListener('resize', refreshLayout);
         drawLines = view.DocForm?._sections ? null : sectionLines(main);
+        zoomWatch = new view.MutationObserver(function () {
+          setZoom(doc.documentElement.classList.contains('df-zoom-open'));
+        });
+        zoomWatch.observe(doc.documentElement, { attributes: true, attributeFilter: ['class'] });
         observer.observe(main);
         doc.fonts?.ready.then(function () { if (view === doc.defaultView) refreshLayout(); });
         refreshLayout();
@@ -654,6 +661,7 @@
         ({ n: toggleNav, f: toggleFocus, t: toggleTheme,
           j: function () { jump(1); }, k: function () { jump(-1); } })[key]();
       },
+      remoteZoom: setZoom,
       scrolled: function (hash) {
         if (remote) { remote.anchor = hash; return; }
         jumpOrigin = { hash: hash, top: view.scrollY };
@@ -920,6 +928,11 @@
       addEventListener('unhandledrejection', function () {
         send({ type: 'failure', reason: 'A page script rejected a promise.' });
       });
+      var zoomed = false;
+      new MutationObserver(function () {
+        var open = document.documentElement.classList.contains('df-zoom-open');
+        if (open !== zoomed) send({ type: 'zoom', open: zoomed = open });
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
       inspect();
     }
 
@@ -964,7 +977,7 @@
       return [fileKey(new URL(page.url), true), page.id];
     }) : []);
     var running, pageState, isolated;
-    var chrome = controls(host, headings, tips, navigate);
+    var chrome = controls(host, headings, tips, navigate, bundle.icons);
 
     function destination() {
       var [page, fragment] = location.hash.slice(1).split('/');
@@ -1213,6 +1226,8 @@
             data.readings.length === headingCount && data.readings.every(function (value) { return value === null || Number.isFinite(value); }) &&
             Number.isFinite(data.height) && Number.isFinite(data.percent) && typeof data.bottom === 'boolean') {
           chrome.remoteProgress({ ...data, readings: state.readings.map(function (index) { return data.readings[index]; }) });
+        } else if (data.type === 'zoom' && size === 2 && typeof data.open === 'boolean') {
+          chrome.remoteZoom(data.open);
         } else if (data.type === 'key' && size === 2 && ['n', 'f', 't', 'j', 'k'].includes(data.key)) {
           chrome.remoteKey(data.key);
         } else if (data.type === 'link' && size === 2 && typeof data.href === 'string' && data.href.length <= 8192) {

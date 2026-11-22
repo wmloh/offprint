@@ -50,22 +50,9 @@
     #export-resize:focus-visible{outline:none}
     #export-resize:focus-visible::after{opacity:1}
     #export-edge{position:fixed;z-index:2;inset:var(--bar) auto 0 0;width:8px}
-    #export-controls{position:fixed;z-index:5;top:12px;left:calc(var(--nav-slot) + 12px);
-      display:flex;align-items:center;gap:8px;transition:left .25s ease}
-    #export-pill,#export-pager{display:flex;gap:2px;align-items:center;
-      background:color-mix(in srgb,Canvas 70%,transparent);backdrop-filter:blur(14px) saturate(1.6);
-      box-shadow:0 4px 16px #00000014,0 1px 2px #0000000d;border:1px solid var(--line);border-radius:999px;padding:3px}
-    #export-pill :is(button,[role=progressbar]),#export-pager a{box-sizing:border-box;display:grid;place-items:center;
-      width:30px;height:30px;border:0;border-radius:50%;padding:0;background:transparent;color:GrayText;
-      font:inherit;text-decoration:none}
-    #export-pill button,#export-pager a{cursor:pointer}
-    #export-pill button:hover,#export-pill [aria-pressed=true],#export-pill [data-nav-mode=auto],
-      #export-pager a:hover{background:var(--wash);color:var(--accent)}
-    #export-pill svg,#export-pager svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4;
-      stroke-linecap:round;stroke-linejoin:round}
-    #export-pill .export-progress svg{width:20px;height:20px;color:var(--accent);transform:rotate(-90deg)}
-    .export-progress circle:first-child{opacity:.24}
-    .export-progress circle:last-child{transition:stroke-dashoffset .1s linear}
+    #export-controls{z-index:5;left:calc(var(--nav-slot) + var(--df-space-3))}
+    #export-controls :focus-visible{outline:2px solid var(--df-focus);outline-offset:2px}
+    [data-zoom] #export-controls{visibility:hidden}
     #export-shade{position:fixed;z-index:2;inset:0;background:rgba(0,0,0,.3)}
     [data-drawer] #export-sidebar{width:min(calc(var(--nav-width) + 40px),85vw);box-shadow:0 0 24px rgba(0,0,0,.18)}
     [data-drawer] :is(#export-pill,#export-pager){visibility:hidden}
@@ -864,7 +851,8 @@
       "object-src 'none'; base-uri 'none'; form-action 'none'; script-src 'unsafe-inline'" +
       (withAuthor ? " blob:; frame-src 'none'" : '');
     var styles = DF._exportLibrary.styles;
-    doc.head.append(create(doc, 'style', [styles['css/tokens.css'], styles['css/nav.css'], readerCSS].join('\n')));
+    doc.head.append(create(doc, 'style', [styles['css/tokens.css'], styles['css/nav.css'], styles['css/controls.css'],
+      readerCSS].join('\n')));
     var sidebar = create(doc, 'div');
     sidebar.id = 'export-sidebar';
     sidebar.hidden = true;
@@ -886,15 +874,18 @@
     sidebar.append(close, toc);
     var pill = create(doc, 'div');
     pill.id = 'export-pill';
+    pill.className = 'df-controls';
     pill.setAttribute('role', 'group');
-    pill.setAttribute('aria-label', 'Reading controls');
+    pill.setAttribute('aria-label', 'Page controls');
     var nav = create(doc, 'nav');
     nav.id = 'export-pager';
-    nav.setAttribute('aria-label', 'Sequential pages');
+    nav.className = 'df-controls-pager';
+    nav.setAttribute('aria-label', 'Quick page navigation');
     for (var id of ['export-previous', 'export-next']) {
       var link = create(doc, 'a');
       link.hidden = true;
       link.id = id;
+      link.className = 'df-controls-btn';
       link.setAttribute('data-export-destination', '');
       nav.append(link);
     }
@@ -924,6 +915,7 @@
     }
     var bar = create(doc, 'div');
     bar.id = 'export-controls';
+    bar.className = 'df-controls-bar';
     bar.append(pill, nav);
     doc.body.append(bar, edge, shade, sidebar, separator, host,
       create(doc, 'noscript', 'Enable JavaScript to use the standalone reader.'));
@@ -940,6 +932,7 @@
     var bundle = create(doc, 'script', JSON.stringify({
       ...(interactive ? { version: 1, mode: 'interactive', shared: shared } : {}),
       assets: assets,
+      icons: DF._icons,
       pages: pages.map(function (page) {
         var record = { id: page.id, title: page.title, markup: page.markup, ...(page.noPager ? { noPager: true } : {}) };
         if (interactive) {

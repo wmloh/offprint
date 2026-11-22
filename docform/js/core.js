@@ -1133,6 +1133,21 @@
 
   var PILL_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" fill="none" ' +
     'stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">';
+  // Reading-control and theme icons, shared with the standalone export shell so both stay identical.
+  var CONTROL_ICONS = Object.freeze({
+    prev: PILL_SVG + '<path d="M12.5 8h-9m4-4-4 4 4 4"/></svg>',
+    next: PILL_SVG + '<path d="M3.5 8h9m-4-4 4 4-4 4"/></svg>',
+    nav: PILL_SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6 2.5v11M3.5 5.5h0.5M3.5 8h0.5"/></svg>',
+    navHidden: PILL_SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="m7 5.5-2.5 2.5L7 10.5"/></svg>',
+    navAuto: PILL_SVG + '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6 3v10" stroke-dasharray="1.2 2"/><path d="m8.5 5.5 2.5 2.5-2.5 2.5"/></svg>',
+    focus: PILL_SVG + '<path d="M1.5 5V3a1.5 1.5 0 0 1 1.5-1.5h2M11 1.5h2A1.5 1.5 0 0 1 14.5 3v2M14.5 11v2a1.5 1.5 0 0 1-1.5 1.5h-2M5 14.5H3A1.5 1.5 0 0 1 1.5 13v-2M5 8h6"/></svg>',
+    light: PILL_SVG + '<circle cx="8" cy="8" r="3"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1.1 1.1M11.9 11.9L13 13M3 13l1.1-1.1M11.9 4.1L13 3"/></svg>',
+    dark: PILL_SVG + '<path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z"/></svg>',
+    progress: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">' +
+      '<circle class="df-progress-track" cx="10" cy="10" r="7"/>' +
+      '<circle class="df-progress-bar" cx="10" cy="10" r="7" pathLength="100" stroke-dasharray="100" ' +
+      'stroke-dashoffset="100" transform="rotate(-90 10 10)"/></svg>'
+  });
   var PILL_ICONS = {
     reset: '<path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9L2.5 5.6"/><path d="M2.5 2.5v3.1h3.1"/>',
     previous: '<path d="m10 3.5-4.5 4.5 4.5 4.5"/>',
@@ -1206,6 +1221,7 @@
 
   var DocForm = root.DocForm = Object.assign(root.DocForm || { _site: null, _page: null }, {
     _colors: COLORS.slice(),
+    _icons: CONTROL_ICONS,
     register: register,
     _data: data,
     _flag: flag,

@@ -60,7 +60,7 @@ docform/: Copyable offline library folder
     export-resources.js: Offline resolution and content-based sharing of stylesheets, fonts, and images
     export-reader.js: Active-page Interactive startup and session replay for cards, diagrams, charts, and linked views, isolated author pages, Reader capture with declarative steps, and shared navigation, history, reading controls, and tooltips
     export-dialog.js: Reader and Interactive mode selection, folder and page pickers, preview and consent for imports and author scripts, cancellation, download, and saved-data clearing
-    core.js: DocForm namespace, module and shortcut registries, data-df-* and clipboard helpers, shared control hints in the tooltip card, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
+    core.js: DocForm namespace, shared reading-control and theme icons, module and shortcut registries, data-df-* and clipboard helpers, shared control hints in the tooltip card, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
@@ -104,11 +104,13 @@ docform/: Copyable offline library folder
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
     glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with merged glossary tags, an any-tag filter, variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
     sections.js: h2 colour cycle from a token with attribute overrides, and continuous left-margin section lines in a separate layer that focus blur never reaches, kept clear of the section rail
-  tools/: Offline asset checker, search index exporter, and data wrapper tools
+  tools/: Offline asset checker page, plus a terminal Node CLI and Python launcher for search index and data wrapper refresh
     assets.html: Folder selection, asset status and diagnostics, and selective save, download, or copy
     asset-build.js: Manifest discovery, output planning, deterministic search and data serialization, and stale checks
     asset-page.js: Asset tool page controller for folder access, previews, and exports
-    refresh_data.py: Shared Python function for validating and refreshing manifest-configured data wrappers in place
+    refresh_assets.py: Shared Python launcher function that checks or refreshes data wrappers in place and the search index through the Node CLI
+    refresh-assets.js: Node CLI running the shipped asset builder with a strict HTML parser to check or refresh search and data outputs
+    html-entities.json: WHATWG named character reference table for the CLI parser
   vendor/katex/: Pinned KaTeX 0.19.1 minified script, stylesheet, woff2 fonts, and MIT license
   vendor/js-yaml/: Pinned js-yaml 4.1.0 minified script and MIT license
   docs/: Agent-facing setup and site structure, layout, reading, interaction, diagram, data, and offline tool references
@@ -119,7 +121,7 @@ docform/: Copyable offline library folder
     setup/export.md: Standalone Reader and Interactive export dialog, modes, exported file, and local author scripts
     extend/: Public extension API, lifecycle hooks, shared controllers, events, and chart add-on registration
 docs/: Human-facing beginner DocForm HTML site with a Start here orientation and live examples
-  refresh-data.py: No-argument launcher for refreshing this site's data wrappers
+  refresh-assets.py: Launcher for checking (--check) or refreshing this site's data wrappers and search index
   index.html: Welcome page
   pages/: Start here guides for local sites and Reader and Interactive export, feature guides, recipes, references, and glossary
   assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index

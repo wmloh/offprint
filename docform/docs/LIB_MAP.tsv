@@ -58,6 +58,7 @@ Named sources and data views	Share CSV, TSV, JSON, YAML, XML, Markdown, or typed
 Data trees	Explore nested records and lists in collapsible branches	data/data-trees.md
 File dropzones	Open local files in a new view or replace data in one view or a shared source	data/dropzones.md
 Search index	Check and export the offline page and glossary index	tools/search-index.md
-Data file wrapper	Check and export local data files as named offline sources, or refresh them from Python	tools/file-wrapper.md
+Data file wrapper	Check and export local data files as named offline sources	tools/file-wrapper.md
+Terminal asset refresh	Check or refresh the search index and data wrappers from Python or a Node CLI, with strict page parsing	tools/refresh-assets.md
 Extension API	Register custom features and use lifecycle hooks, shared controllers, and events	extend/api.md
 Chart add-ons	Register chart types, scales, and legends	extend/chart-addons.md

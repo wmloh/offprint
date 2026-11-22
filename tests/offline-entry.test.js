@@ -700,7 +700,7 @@ test('Interactive zoom uses the live figure and tears down before the reader rep
   const { overlay, stage } = zoom.snapshot();
   assert.equal(figure.parentNode, stage);
   assert.equal(p.document.activeElement, find(overlay, 'df-zoom-close'));
-  assert.equal(p.key('m', p.document.activeElement).defaultPrevented, true);
+  assert.equal(p.key('2', p.document.activeElement).defaultPrevented, true);
   pointer(overlay, 'pointermove', 50, 50);
   const lens = find(overlay, 'df-zoomtools-lens-view');
   mark.setAttribute('cx', '10');
@@ -739,7 +739,7 @@ test('Interactive zoom uses the live figure and tears down before the reader rep
   assert.equal(figure.parentNode, p.body);
   assert.equal(p.html.classList.contains('df-zoom-open'), false);
   assert.equal(frames.size, 0);
-  assert.equal(p.key('p', figure).defaultPrevented, false);
+  assert.equal(p.key('4', figure).defaultPrevented, false);
   assert.equal(p.key('Enter', figure).defaultPrevented, false);
   p.click(figure);
   assert.equal(zoom.snapshot(), null);

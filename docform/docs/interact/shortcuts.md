@@ -22,10 +22,11 @@ Bindings use `KeyboardEvent.key`, such as `K`, `Escape`, `ArrowRight`, or `Space
 | `selection.activate` | Enter or Space | Focused custom linked-selection button, toggle |
 | `zoom.open` | Enter or Space | Focused zoom trigger, enlarge |
 | `zoom.close` | Escape | Open zoom view, close |
-| `zoom-tools.cursor`, `zoom-tools.magnifier`, `zoom-tools.laser` | V, M, L | Open zoom view, choose a tool |
-| `zoom-tools.pen`, `zoom-tools.highlighter`, `zoom-tools.measure` | P, H, C | Open zoom view, choose a tool |
+| `zoom-tools.cursor`, `zoom-tools.magnifier`, `zoom-tools.laser` | 1, 2, 3 | Open zoom view, choose a tool |
+| `zoom-tools.pen`, `zoom-tools.highlighter`, `zoom-tools.measure` | 4, 5, 6 | Open zoom view, choose a tool |
+| `zoom-tools.eraser` | 7 | Pen, highlighter, or eraser active, toggle the eraser |
 | `zoom-tools.zoom-out`, `zoom-tools.zoom-in` | `[`, `]` | Active magnifier, decrease or increase magnification |
-| `zoom-tools.undo` | Control+Z or Meta+Z | Zoom view with ink, undo a stroke |
+| `zoom-tools.undo` | Control+Z or Meta+Z | Zoom view with ink, undo the last stroke or erase |
 
 ## Registration and routing
 

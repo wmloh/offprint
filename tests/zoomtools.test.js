@@ -69,6 +69,7 @@ function setup(chartHit, timelineHit) {
   document.createElementNS = (_, tag) => new El(tag);
   const frames = [];
   const observers = [];
+  const time = { now: 1000 };
   class MutationObserver {
     constructor(fn) { this.fn = fn; observers.push(this); this.on = false; }
     observe() { this.on = true; }
@@ -88,7 +89,7 @@ function setup(chartHit, timelineHit) {
   }
   const context = vm.createContext({
     document, MutationObserver, Map, Set,
-    performance: { now: () => 1000 }, innerWidth: 1920, innerHeight: 1080,
+    performance: { now: () => time.now }, innerWidth: 1920, innerHeight: 1080,
     requestAnimationFrame: (fn) => frames.push(fn), cancelAnimationFrame() {}
   });
   context.window = context;
@@ -121,12 +122,12 @@ function setup(chartHit, timelineHit) {
   const tick = () => { const run = frames.splice(0); run.forEach((fn) => fn()); };
   const pressed = () => findAll('df-zoomtools-btn').filter((b) => b.getAttribute('aria-pressed') === 'true')
     .map((b) => b.getAttribute('data-tool'));
-  return { tools, document, overlay, target, find, findAll, open, close, key, pointer, tick, pressed, observers };
+  return { tools, document, overlay, target, find, findAll, open, close, key, pointer, tick, pressed, observers, time };
 }
 
-test('magnification stays within bounds and the laser trail fades', () => {
+test('magnification stays within bounds, and laser traces are smooth and fade after release', () => {
   const { tools } = setup();
-  assert.deepEqual([...tools.tools], ['cursor', 'magnifier', 'laser', 'pen', 'highlighter', 'measure']);
+  assert.deepEqual([...tools.tools], ['cursor', 'magnifier', 'laser', 'pen', 'highlighter', 'measure', 'eraser']);
 
   let z = tools.limits.start;
   for (let i = 0; i < 20; i++) z = tools.magnify(z, -1);
@@ -135,8 +136,9 @@ test('magnification stays within bounds and the laser trail fades', () => {
   assert.equal(z, tools.limits.min);
   assert.equal(tools.magnify(2, 0), 2);
 
-  const kept = tools.trail([{ x: 0, y: 0, t: 0 }, { x: 1, y: 1, t: 200 }, { x: 2, y: 2, t: 300 }], 320, 320);
-  assert.deepEqual(kept.map((p) => [p.x, +p.alpha.toFixed(3)]), [[1, 0.625], [2, 0.938]]);
+  assert.deepEqual([0, 500, 1000, 2000].map((t) => tools.fade(0, t, 1000)), [1, 0.75, 0, 0]);
+  assert.equal(tools.smoothPath([[0, 0], [10, 0], [10, 10]]), 'M0,0Q10,0 10,5L10,10', 'curves end at the pointer');
+  assert.equal(tools.smoothPath([[0, 0], [5, 5]]), 'M0,0L5,5');
 
   assert.deepEqual(JSON.parse(JSON.stringify(tools.snap({ x: 0, y: 0 }, { x: 30, y: 4 }))), { x: 30, y: 0 });
   assert.equal(tools.rulerText(tools.measure({ x: 0, y: 0 }, { x: 30, y: -40 }), 'units'), '50 units (Δx 30, Δy 40)');
@@ -160,13 +162,43 @@ test('ink strokes add, undo, and clear, and a fresh state starts at the cursor w
   assert.deepEqual([...state.strokes].map((s) => [s.tool, s.color]), [['pen', 'red'], ['highlighter', 'yellow']]);
   assert.equal(tools.pathOf(state.strokes[0].points), 'M0,0L10,0');
   assert.equal(tools.pathOf([[3, 4]]), 'M3,4l0.01,0');
-  assert.equal(tools.undo(state).tool, 'highlighter');
+  assert.equal(tools.undo(state).stroke.tool, 'highlighter');
   assert.equal(tools.clear(state), 1);
   assert.equal(tools.undo(state), null);
   const fresh = tools.createState();
   assert.equal(fresh.tool, 'cursor');
   assert.equal(fresh.zoom, tools.limits.start);
   assert.equal(fresh.strokes.length, 0);
+});
+
+test('the eraser removes whole strokes it touches, counting their width, and undo restores them in place', () => {
+  const { tools } = setup();
+  const state = tools.createState();
+  const draw = (tool, points) => {
+    tools.select(state, tool);
+    tools.begin(state, ...points[0]);
+    points.slice(1).forEach((p) => tools.extend(state, ...p));
+    tools.end(state);
+  };
+  draw('pen', [[0, 0], [100, 0]]);
+  draw('highlighter', [[0, 50], [100, 50]]);
+  draw('pen', [[0, 100], [100, 100]]);
+  const names = () => [...state.strokes].map((s) => s.points[0][1]);
+
+  assert.equal(tools.erase(state, [50, 20], [50, 20], 8, []), 0, 'a near miss keeps the pen line');
+  assert.equal(tools.erase(state, [50, 34], [50, 34], 8, []), 1, 'the highlighter width counts');
+  assert.deepEqual(names(), [0, 100]);
+  draw('pen', [[0, 50], [100, 50]]);
+  const erased = [];
+  assert.equal(tools.erase(state, [-20, -20], [120, 120], 8, erased), 3, 'a fast sweep touches everything it crosses');
+  state.history.push({ erased });
+  assert.deepEqual(names(), []);
+  tools.undo(state);
+  assert.deepEqual(names(), [0, 100, 50], 'undo restores erased strokes in their order');
+  tools.undo(state);
+  assert.deepEqual(names(), [0, 100], 'then undoes the last drawn stroke');
+  assert.equal(tools.touches({ width: 3, points: [[10, 10]] }, [0, 0], [20, 0], 8), false);
+  assert.equal(tools.touches({ width: 3, points: [[10, 9]] }, [0, 0], [20, 0], 8), true, 'a dot counts');
 });
 
 test('clones rename ids and their references, drop linking attributes and scripts, and stay inert', () => {
@@ -208,17 +240,17 @@ test('clones rename ids and their references, drop linking attributes and script
   assert.equal(made, 3);
 });
 
-test('the zoom view shows the pill with the cursor chosen, and letters switch tools until it closes', () => {
+test('the zoom view shows the pill with the cursor chosen, and number keys switch tools until it closes', () => {
   const z = setup();
   assert.equal(z.tools.active(), null);
   z.open();
   assert.ok(z.find('df-zoomtools'));
   assert.equal(z.tools.active(), 'cursor');
   assert.deepEqual(z.pressed(), ['cursor']);
-  assert.equal(z.key('l').defaultPrevented, true);
+  assert.equal(z.key('3').defaultPrevented, true);
   assert.deepEqual(z.pressed(), ['laser']);
   assert.ok(z.overlay.classList.contains('is-tool-laser'));
-  assert.equal(z.key('l', { ctrlKey: true }).defaultPrevented, false, 'modified letters are left alone');
+  assert.equal(z.key('3', { ctrlKey: true }).defaultPrevented, false, 'modified keys are left alone');
   z.findAll('df-zoomtools-btn').find((b) => b.getAttribute('data-tool') === 'magnifier').dispatchEvent(new Event('click'));
   assert.equal(z.tools.active(), 'magnifier');
   assert.equal(z.find('df-zoomtools-zoom').hidden, false);
@@ -227,7 +259,7 @@ test('the zoom view shows the pill with the cursor chosen, and letters switch to
   assert.equal(z.tools.active(), null);
   assert.equal(z.find('df-zoomtools'), undefined);
   assert.equal(z.overlay.classList.contains('is-tool-magnifier'), false);
-  assert.equal(z.key('p').defaultPrevented, false, 'shortcuts end with the view');
+  assert.equal(z.key('4').defaultPrevented, false, 'shortcuts end with the view');
   z.open();
   assert.equal(z.tools.active(), 'cursor', 'each view opens with the cursor');
 });
@@ -238,7 +270,7 @@ test('the magnifier zooms with the wheel within bounds and re-clones the figure 
   label.setAttribute('id', 'value');
   label.text = '1';
   z.open();
-  z.key('m');
+  z.key('2');
   const wheel = (deltaY) => {
     const event = new Event('wheel', { cancelable: true });
     z.overlay.dispatchEvent(Object.assign(event, { deltaY }));
@@ -253,8 +285,10 @@ test('the magnifier zooms with the wheel within bounds and re-clones the figure 
   z.pointer(z.overlay, 'pointermove', 50, 50);
   z.tick();
   assert.equal(z.find('df-zoomtools-lens').hidden, true, 'no lens off the figure');
+  assert.equal(z.overlay.classList.contains('is-lens-on'), false, 'the cursor shows off the figure');
   z.pointer(z.overlay, 'pointermove', 300, 250);
   z.tick();
+  assert.equal(z.overlay.classList.contains('is-lens-on'), true, 'the cursor hides behind the lens');
   const view = z.find('df-zoomtools-lens-view');
   const first = view.children[0];
   assert.equal(z.find('df-zoomtools-lens').hidden, false);
@@ -269,20 +303,58 @@ test('the magnifier zooms with the wheel within bounds and re-clones the figure 
   assert.notEqual(view.children[0], first);
   assert.equal(view.children[0].textContent, '2');
 
-  z.key('v');
+  z.key('1');
   assert.equal(view.children.length, 0, 'leaving the magnifier drops the clone');
   assert.equal(z.observers.some((o) => o.on), false);
   z.close();
   z.open();
-  z.key('m');
+  z.key('2');
   assert.equal(z.find('df-zoomtools-zoom').textContent, '2.5×', 'magnification resets on reopen');
+});
+
+test('the laser shows a ring while hovering and draws a trace while held that fades after release', () => {
+  const z = setup();
+  z.open();
+  z.key('3');
+  const layer = z.find('df-zoomtools-layer');
+  const ring = z.find('df-zoomtools-ring');
+  const dot = z.find('df-zoomtools-laser');
+  const traces = () => z.find('df-zoomtools-trail').children;
+  z.pointer(z.overlay, 'pointermove', 120, 120);
+  assert.equal(ring.hidden, false);
+  assert.equal(dot.hidden, true);
+  assert.equal(traces().length, 0, 'hovering leaves no trail');
+
+  const down = z.pointer(layer, 'pointerdown', 120, 120);
+  assert.equal(down.defaultPrevented, true, 'the press does not reach the figure');
+  z.pointer(z.overlay, 'pointermove', 140, 120);
+  z.pointer(z.overlay, 'pointermove', 140, 140);
+  assert.equal(ring.hidden, true);
+  assert.equal(dot.hidden, false);
+  assert.equal(traces().length, 1);
+  assert.equal(traces()[0].children[2].getAttribute('d'), 'M120,120Q140,120 140,130L140,140');
+  z.time.now += 5000;
+  z.tick();
+  assert.equal(traces().length, 1, 'a held trace persists');
+
+  z.pointer(layer, 'pointerup', 140, 140);
+  assert.equal(ring.hidden, false);
+  z.pointer(layer, 'pointerdown', 200, 200);
+  z.pointer(layer, 'pointerup', 200, 200);
+  z.time.now += 1000;
+  z.tick();
+  assert.equal(traces().length, 2, 'an earlier trace keeps fading beside a new one');
+  assert.ok(+traces()[0].getAttribute('opacity') < 1);
+  z.time.now += 2000;
+  z.tick();
+  assert.equal(traces().length, 0, 'faded traces are removed');
 });
 
 test('pen ink draws on the layer, undoes, and is discarded when the view closes', () => {
   const z = setup();
   z.open();
   assert.equal(z.find('df-zoomtools-group').hidden, true);
-  z.key('p');
+  z.key('4');
   assert.equal(z.find('df-zoomtools-group').hidden, false);
   const draw = (x) => {
     const layer = z.find('df-zoomtools-layer');
@@ -297,7 +369,7 @@ test('pen ink draws on the layer, undoes, and is discarded when the view closes'
   assert.equal(paths().length, 2);
   assert.equal(paths()[0].getAttribute('d'), 'M10,10L50,30');
   assert.equal(paths()[1].style.stroke, 'var(--df-blue)');
-  z.key('v');
+  z.key('1');
   assert.equal(z.find('df-zoomtools-group').hidden, false, 'Undo and Clear stay while ink shows');
   assert.equal(z.key('z', { ctrlKey: true }).defaultPrevented, true);
   assert.equal(paths().length, 1);
@@ -305,9 +377,32 @@ test('pen ink draws on the layer, undoes, and is discarded when the view closes'
   z.open();
   assert.equal(z.find('df-zoomtools-ink').children.length, 0);
   assert.equal(z.find('df-zoomtools-group').hidden, true);
-  z.key('p');
+  z.key('4');
   draw(0);
   assert.equal(z.find('df-zoomtools-ink').children[0].style.stroke, 'var(--df-blue)', 'the chosen colour is remembered');
+
+  const eraser = z.findAll('df-zoomtools-btn').find((b) => b.getAttribute('data-tool') === 'eraser');
+  const group = z.find('df-zoomtools-group');
+  assert.equal(group.children[0], eraser, 'the eraser sits left of the swatches');
+  assert.equal(eraser.hidden, false);
+  z.key('5');
+  draw(0);
+  assert.equal(z.key('7').defaultPrevented, true);
+  assert.equal(z.tools.active(), 'eraser');
+  assert.equal(eraser.getAttribute('aria-pressed'), 'true');
+  assert.equal(z.find('df-zoomtools-swatches').hidden, true);
+  const layer = z.find('df-zoomtools-layer');
+  z.pointer(layer, 'pointerdown', 20, -40);
+  z.pointer(z.overlay, 'pointermove', 20, 80);
+  z.pointer(layer, 'pointerup', 20, 80);
+  assert.equal(z.find('df-zoomtools-ink').children.length, 0, 'one sweep erases both crossed strokes');
+  z.key('z', { ctrlKey: true });
+  assert.equal(z.find('df-zoomtools-ink').children.length, 2, 'undo brings the erased strokes back');
+  z.key('7');
+  assert.equal(z.tools.active(), 'highlighter', 'E returns to the last ink tool');
+  z.key('1');
+  assert.equal(eraser.hidden, true, 'the eraser shows only with ink tools');
+  assert.equal(z.key('7').defaultPrevented, false);
 });
 
 test('on charts the measure tool is a crosshair that reads data coordinates; elsewhere it is a ruler', () => {
@@ -321,7 +416,7 @@ test('on charts the measure tool is a crosshair that reads data coordinates; els
   z.open();
   const measure = z.findAll('df-zoomtools-btn').find((b) => b.getAttribute('data-tool') === 'measure');
   assert.equal(measure.getAttribute('aria-label'), 'Crosshair');
-  z.key('c');
+  z.key('6');
   assert.equal(z.overlay.classList.contains('is-tool-ruler'), false);
   z.pointer(z.overlay, 'pointermove', 300, 200);
   const readout = z.find('df-zoomtools-readout');
@@ -338,7 +433,7 @@ test('on charts the measure tool is a crosshair that reads data coordinates; els
   plain.open();
   const ruler = plain.findAll('df-zoomtools-btn').find((b) => b.getAttribute('data-tool') === 'measure');
   assert.equal(ruler.getAttribute('aria-label'), 'Ruler');
-  plain.key('c');
+  plain.key('6');
   assert.ok(plain.overlay.classList.contains('is-tool-ruler'));
   const layer = plain.find('df-zoomtools-layer');
   plain.pointer(layer, 'pointerdown', 10, 10);
@@ -366,8 +461,8 @@ test('timeline crosshairs read the axis and lane while sequence and tree use pre
     z.target.className = diagram;
     z.open();
     assert.deepEqual(z.findAll('df-zoomtools-btn').map((b) => b.getAttribute('data-tool')).filter(Boolean),
-      ['cursor', 'magnifier', 'laser', 'pen', 'highlighter']);
-    assert.equal(z.key('c').defaultPrevented, false);
+      ['cursor', 'magnifier', 'laser', 'pen', 'highlighter', 'eraser']);
+    assert.equal(z.key('6').defaultPrevented, false);
     assert.equal(z.tools.use('measure'), false);
     z.close();
   }

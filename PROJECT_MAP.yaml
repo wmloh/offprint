@@ -31,7 +31,7 @@ docform/: Copyable offline library folder
     tree-diagram.css: Tree cards, disclosure controls, and animated branch positions
     timeline.css: Responsive timeline axes, lane labels, point and span event controls, and a print list
     zoom.css: Frosted full-screen figure zoom view
-    zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot and trail, ink, crosshair and ruler readouts
+    zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot, trace and rings, ink, crosshair and ruler readouts
     bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered and scrolling that passes to the page at their ends
     refs.css: Caption and equation numbers, reference flash, preview cards, citations, and reference lists
     notes.css: Margin sidenotes, note markers, and the no-script inline aside
@@ -82,7 +82,7 @@ docform/: Copyable offline library folder
     tree-diagram.js: Collapsible visual hierarchy, animated layout, and keyed node selection
     timeline.js: Numeric and calendar timelines from markup or named records, with lane packing, keyed selection, and detail panes
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
-    zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with Undo and Clear, chart and timeline crosshairs, plus a ruler on other figures
+    zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with an eraser, Undo, and Clear, chart and timeline crosshairs, plus a ruler on other figures
     bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes

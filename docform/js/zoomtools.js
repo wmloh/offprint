@@ -21,22 +21,28 @@
     highlighter: '<path d="M9.5 2.5L13 6l-5 5H4.5V7.5z"/><path d="M3 14h10" stroke-width="2.2" opacity="0.6"/>',
     crosshair: '<circle cx="8" cy="8" r="4.5"/><path d="M8 1.5v3.5M8 11v3.5M1.5 8H5M11 8h3.5"/>',
     ruler: '<rect x="1.5" y="5" width="13" height="6" rx="1"/><path d="M4.5 5v2.5M7.5 5v2M10.5 5v2.5"/>',
+    eraser: '<path d="M6 13.5L2.5 10a1.2 1.2 0 010-1.7L8.3 2.5a1.2 1.2 0 011.7 0L13.5 6a1.2 1.2 0 010 1.7L7.7 13.5z"/>' +
+      '<path d="M5 6l5 5M6 13.5h7.5"/>',
     undo: '<path d="M5.5 3.5L2.5 6.5l3 3"/><path d="M2.5 6.5H10a3.5 3.5 0 010 7H7"/>',
     clear: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>'
   };
+  // Keys number the tools in toolbar order; measure keeps 6 even where it is hidden.
   var TOOLS = [
-    { id: 'cursor', label: 'Cursor', key: 'v' },
-    { id: 'magnifier', label: 'Magnifier', key: 'm' },
-    { id: 'laser', label: 'Laser pointer', key: 'l' },
-    { id: 'pen', label: 'Pen', key: 'p' },
-    { id: 'highlighter', label: 'Highlighter', key: 'h' },
-    { id: 'measure', label: 'Crosshair', key: 'c' }
+    { id: 'cursor', label: 'Cursor', key: '1' },
+    { id: 'magnifier', label: 'Magnifier', key: '2' },
+    { id: 'laser', label: 'Laser pointer', key: '3' },
+    { id: 'pen', label: 'Pen', key: '4' },
+    { id: 'highlighter', label: 'Highlighter', key: '5' },
+    { id: 'measure', label: 'Crosshair', key: '6' },
+    // Shown in the ink group beside the swatches while an ink tool or the eraser is chosen.
+    { id: 'eraser', label: 'Eraser', key: '7', ink: true }
   ];
   var COLORS = ['red', 'blue', 'green', 'yellow', 'purple'];
   var INK = { pen: { color: 'red', width: 3, opacity: 1 }, highlighter: { color: 'yellow', width: 18, opacity: 0.4 } };
   var ZOOM = { min: 1.5, max: 6, step: 1.25, start: 2.5 };
   var LENS = 180;
-  var TRAIL_MS = 320;
+  var ERASER = 8;
+  var FADE_MS = 2500;
   // Attributes a clone must not keep: they name other elements, join form groups, or run code.
   var DROP = { name: 1, for: 1, form: 1, autofocus: 1, 'aria-labelledby': 1, 'aria-describedby': 1, 'aria-controls': 1,
     'aria-owns': 1, 'aria-activedescendant': 1, 'aria-details': 1, 'aria-errormessage': 1, 'aria-flowto': 1 };
@@ -56,11 +62,24 @@
     return Math.round(Math.max(ZOOM.min, Math.min(ZOOM.max, next)) * 100) / 100;
   }
 
-  // The trail points younger than ms, each with an alpha that fades from 1 to 0 with age.
-  function trail(points, now, ms) {
-    return points.filter(function (p) { return now - p.t < ms; }).map(function (p) {
-      return { x: p.x, y: p.y, t: p.t, alpha: 1 - (now - p.t) / ms };
-    });
+  // Opacity of a released laser trace: it holds near full strength, then eases out to 0 after ms.
+  function fade(released, now, ms) {
+    var k = Math.min(1, Math.max(0, (now - released) / ms));
+    return 1 - k * k;
+  }
+
+  // A smooth path through the points: quadratic curves between midpoints, ending at the last point without lag.
+  function smoothPath(points) {
+    var n = points.length;
+    if (n < 3) return pathOf(points);
+    var f = function (v) { return Math.round(v * 10) / 10; };
+    var d = 'M' + f(points[0][0]) + ',' + f(points[0][1]);
+    for (var i = 1; i < n - 1; i++) {
+      var p = points[i];
+      var q = points[i + 1];
+      d += 'Q' + f(p[0]) + ',' + f(p[1]) + ' ' + f((p[0] + q[0]) / 2) + ',' + f((p[1] + q[1]) / 2);
+    }
+    return d + 'L' + f(points[n - 1][0]) + ',' + f(points[n - 1][1]);
   }
 
   function pathOf(points) {
@@ -90,12 +109,14 @@
 
   // Tool state, kept apart from the DOM. Every zoom view starts from a fresh state.
   function createState() {
-    return { tool: 'cursor', zoom: ZOOM.start, strokes: [], stroke: null, colors: { pen: colors.pen, highlighter: colors.highlighter } };
+    return { tool: 'cursor', zoom: ZOOM.start, strokes: [], stroke: null, history: [], lastInk: 'pen',
+      colors: { pen: colors.pen, highlighter: colors.highlighter } };
   }
 
   function select(state, id) {
     if (!toolOf(id) || state.tool === id) return false;
     if (state.stroke) end(state);
+    if (isInk(id)) state.lastInk = id;
     state.tool = id;
     return true;
   }
@@ -124,18 +145,74 @@
   function end(state) {
     var s = state.stroke;
     state.stroke = null;
-    if (s) state.strokes.push(s);
+    if (s) {
+      state.strokes.push(s);
+      state.history.push({ stroke: s });
+    }
     return s;
   }
 
+  function distToSegment(p, a, b) {
+    var dx = b[0] - a[0];
+    var dy = b[1] - a[1];
+    var len = dx * dx + dy * dy;
+    var t = len ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len)) : 0;
+    var x = a[0] + t * dx - p[0];
+    var y = a[1] + t * dy - p[1];
+    return Math.sqrt(x * x + y * y);
+  }
+
+  function cross(a, b, c) {
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  }
+
+  function segmentGap(a, b, c, d) {
+    var d1 = cross(c, d, a), d2 = cross(c, d, b), d3 = cross(a, b, c), d4 = cross(a, b, d);
+    if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return 0;
+    return Math.min(distToSegment(a, c, d), distToSegment(b, c, d), distToSegment(c, a, b), distToSegment(d, a, b));
+  }
+
+  // Whether an eraser of radius r swept from a to b touches any part of the stroke, counting its painted width.
+  function touches(stroke, a, b, r) {
+    var reach = r + stroke.width / 2;
+    var pts = stroke.points;
+    if (pts.length === 1) return segmentGap(a, b, pts[0], pts[0]) <= reach;
+    for (var i = 1; i < pts.length; i++) if (segmentGap(a, b, pts[i - 1], pts[i]) <= reach) return true;
+    return false;
+  }
+
+  // Removes every whole stroke the eraser sweep touches, noting each with its index in record so undo can restore it.
+  function erase(state, a, b, r, record) {
+    var removed = 0;
+    for (var i = state.strokes.length - 1; i >= 0; i--) {
+      if (!touches(state.strokes[i], a, b, r)) continue;
+      record.push({ stroke: state.strokes[i], index: i });
+      state.strokes.splice(i, 1);
+      removed++;
+    }
+    return removed;
+  }
+
+  // Reverses the last drawn stroke or erase; returns the reversed action, or null when there is none.
   function undo(state) {
-    return state.strokes.pop() || null;
+    var action = state.history.pop();
+    if (!action) return null;
+    if (action.erased) {
+      for (var i = action.erased.length - 1; i >= 0; i--) {
+        state.strokes.splice(action.erased[i].index, 0, action.erased[i].stroke);
+      }
+    } else {
+      var at = state.strokes.indexOf(action.stroke);
+      if (at >= 0) state.strokes.splice(at, 1);
+    }
+    return action;
   }
 
   function clear(state) {
     var n = state.strokes.length;
     state.strokes = [];
     state.stroke = null;
+    state.history = [];
     return n;
   }
 
@@ -229,7 +306,7 @@
     var overlay = detail.overlay;
     var target = detail.target;
     var s = {
-      overlay: overlay, target: target, state: createState(), pointer: null, frame: 0, trail: [], ruler: null,
+      overlay: overlay, target: target, state: createState(), pointer: null, frame: 0, traces: [], trace: null, ruler: null,
       charts: hostsWithAPI(target, 'df-chart', DocForm._chart),
       timelines: hostsWithAPI(target, 'df-timeline', DocForm._timeline),
       observer: null, clone: null, buttons: {}, swatches: []
@@ -240,6 +317,11 @@
 
     s.layer = svg('svg', { class: 'df-zoomtools-layer', 'aria-hidden': 'true', focusable: 'false' });
     s.inkGroup = svg('g', { class: 'df-zoomtools-ink' }, s.layer);
+    // A soft blur in viewport units, so thin or straight traces are not clipped to their bounding box.
+    var glow = svg('filter', { id: 'df-zoomtools-glow-' + (++clones), filterUnits: 'userSpaceOnUse',
+      x: '-10%', y: '-10%', width: '120%', height: '120%' }, svg('defs', {}, s.layer));
+    svg('feGaussianBlur', { stdDeviation: '3.5' }, glow);
+    s.glow = 'url(#' + glow.getAttribute('id') + ')';
     s.trailGroup = svg('g', { class: 'df-zoomtools-trail' }, s.layer);
     s.measureGroup = svg('g', { class: 'df-zoomtools-measure' }, s.layer);
     s.lens = make('div', 'df-zoomtools-lens');
@@ -249,6 +331,9 @@
     s.dot = make('div', 'df-zoomtools-laser');
     s.dot.setAttribute('aria-hidden', 'true');
     s.dot.hidden = true;
+    s.ring = make('div', 'df-zoomtools-ring');
+    s.ring.setAttribute('aria-hidden', 'true');
+    s.ring.hidden = true;
     s.readout = make('div', 'df-zoomtools-readout');
     s.readout.setAttribute('aria-hidden', 'true');
     s.readout.hidden = true;
@@ -266,7 +351,7 @@
       return name;
     }
     TOOLS.forEach(function (t) {
-      if (t.id === 'measure' && s.presentationOnly) return;
+      if (t.ink || (t.id === 'measure' && s.presentationOnly)) return;
       var icon = t.id === 'measure' ? (s.crosshair ? 'crosshair' : 'ruler') : t.id;
       var label = t.id === 'measure' && !s.crosshair ? 'Ruler' : t.label;
       var b = button('df-zoomtools-btn', label, icon, pill);
@@ -287,6 +372,15 @@
     var zoomKeys = DocForm.shortcuts.keys(zoomOut).concat(DocForm.shortcuts.keys(zoomIn));
     s.zoomText.title = 'Scroll to change magnification' + (zoomKeys.length ? ' (' + zoomKeys.join(' / ') + ')' : '');
     s.inkTools = make('div', 'df-zoomtools-group', pill);
+    var eraser = s.buttons.eraser = button('df-zoomtools-btn', 'Eraser', 'eraser', s.inkTools);
+    eraser.setAttribute('aria-label', 'Eraser');
+    eraser.setAttribute('data-tool', 'eraser');
+    // The eraser toggles: from an ink tool it erases, and from erasing it returns to the last ink tool.
+    function toggleEraser() { choose(s.state.tool === 'eraser' ? s.state.lastInk : 'eraser'); }
+    DocForm._shortcutHint(eraser, bind('eraser', toolOf('eraser').key, 'Eraser', toggleEraser, function () {
+      return isInk(s.state.tool) || s.state.tool === 'eraser';
+    }), 'Eraser');
+    eraser.addEventListener('click', toggleEraser);
     s.swatchBox = make('div', 'df-zoomtools-swatches', s.inkTools);
     s.swatchBox.setAttribute('role', 'group');
     s.swatchBox.setAttribute('aria-label', 'Ink colour');
@@ -305,13 +399,17 @@
     s.undo = button('df-zoomtools-btn', 'Undo', 'undo', s.inkTools);
     s.undo.setAttribute('aria-label', 'Undo');
     DocForm._shortcutHint(s.undo, bind('undo', ['Control+Z', 'Meta+Z'], 'Undo ink', undoInk, function () {
-      return s.state.strokes.length > 0;
+      return s.state.history.length > 0;
     }), 'Undo');
     s.undo.addEventListener('click', undoInk);
     s.clear = button('df-zoomtools-btn', 'Clear ink', 'clear', s.inkTools);
     s.clear.addEventListener('click', function () { clear(s.state); drawInk(); refresh(); });
 
     s.onMove = function (event) { move(event.clientX, event.clientY, event); };
+    s.onOver = function (event) {
+      var el = event.target;
+      s.overChrome = !!(el && typeof el.closest === 'function' && el.closest('.df-zoomtools, .df-zoom-close'));
+    };
     s.onLeave = function () { s.pointer = null; hidePointer(); };
     s.onScroll = function () {
       if (s.pointer && s.state.tool === 'measure' && s.crosshair) crosshair(s.pointer.x, s.pointer.y);
@@ -323,6 +421,7 @@
     };
     s.onDown = function (event) { down(event); };
     s.onInput = function () { if (s.sync) s.sync.mark(); };
+    overlay.addEventListener('pointerover', s.onOver);
     overlay.addEventListener('pointermove', s.onMove);
     overlay.addEventListener('pointerleave', s.onLeave);
     overlay.addEventListener('scroll', s.onScroll, true);
@@ -334,6 +433,7 @@
     overlay.appendChild(s.layer);
     overlay.appendChild(s.lens);
     overlay.appendChild(s.dot);
+    overlay.appendChild(s.ring);
     overlay.appendChild(s.readout);
     overlay.appendChild(s.pill);
     refresh();
@@ -346,6 +446,7 @@
     if (s.frame) root.cancelAnimationFrame(s.frame);
     watch(s, false);
     s.endDrag?.();
+    s.overlay.removeEventListener('pointerover', s.onOver);
     s.overlay.removeEventListener('pointermove', s.onMove);
     s.overlay.removeEventListener('pointerleave', s.onLeave);
     s.overlay.removeEventListener('scroll', s.onScroll, true);
@@ -354,15 +455,17 @@
     s.target.removeEventListener('input', s.onInput);
     s.target.removeEventListener('change', s.onInput);
     s.shortcuts.forEach(function (remove) { remove(); });
-    [s.layer, s.lens, s.dot, s.readout, s.pill].forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
+    [s.layer, s.lens, s.dot, s.ring, s.readout, s.pill].forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
     TOOLS.forEach(function (t) { s.overlay.classList.remove('is-tool-' + t.id); });
-    s.overlay.classList.remove('is-tool-ruler');
+    s.overlay.classList.remove('is-tool-ruler', 'is-lens-on');
   }
 
   function choose(id) {
     var s = session;
     if (!s || !select(s.state, id)) return;
-    s.trail = [];
+    endErase();
+    s.traces = [];
+    s.trace = null;
     s.ruler = null;
     s.trailGroup.textContent = '';
     s.measureGroup.textContent = '';
@@ -383,12 +486,14 @@
     s.zoomText.hidden = tool !== 'magnifier';
     s.zoomText.textContent = s.state.zoom.toLocaleString('en-US', { maximumFractionDigits: 2 }) + '×';
     var ink = isInk(tool);
-    s.inkTools.hidden = !ink && !s.state.strokes.length;
+    var inking = ink || tool === 'eraser';
+    s.inkTools.hidden = !inking && !s.state.strokes.length;
+    s.buttons.eraser.hidden = !inking;
     s.swatchBox.hidden = !ink;
     s.swatches.forEach(function (b) {
       b.setAttribute('aria-pressed', String(ink && s.state.colors[tool] === b.getAttribute('data-color')));
     });
-    s.undo.disabled = !s.state.strokes.length;
+    s.undo.disabled = !s.state.history.length;
     s.clear.disabled = !s.state.strokes.length;
   }
 
@@ -402,8 +507,9 @@
 
   function hidePointer() {
     var s = session;
-    s.lens.hidden = true;
+    showLens(false);
     s.dot.hidden = true;
+    s.ring.hidden = true;
     if (!(s.state.tool === 'measure' && s.ruler)) {
       s.readout.hidden = true;
       if (s.state.tool === 'measure') s.measureGroup.textContent = '';
@@ -416,10 +522,9 @@
     s.pointer = { x: x, y: y };
     var tool = s.state.tool;
     if (tool === 'laser') {
-      s.dot.hidden = false;
-      s.dot.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-      s.trail.push({ x: x, y: y, t: now() });
-      wake();
+      laser(x, y, event);
+    } else if (tool === 'eraser') {
+      eraserAt(x, y, event);
     } else if (tool === 'magnifier') {
       wake();
     } else if (tool === 'measure') {
@@ -434,6 +539,92 @@
     }
   }
 
+  // The laser shows a gray ring while hovering and a glowing dot drawing a red trace while the button is held.
+  function laser(x, y, event) {
+    var s = session;
+    var drawing = !!s.trace;
+    var at = 'translate(' + x + 'px, ' + y + 'px)';
+    s.ring.hidden = drawing || !!s.overChrome;
+    s.dot.hidden = !drawing;
+    if (drawing) s.dot.style.transform = at;
+    else s.ring.style.transform = at;
+    if (!drawing || !event) return;
+    var points = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
+    if (!points.length) points = [event];
+    var added = false;
+    points.forEach(function (p) { added = addPoint(s.trace.points, p.clientX, p.clientY) || added; });
+    if (added) drawTrace(s.trace);
+  }
+
+  // The eraser shows a gray ring the size of its reach; while held it sweeps from the last point to this one.
+  function eraserAt(x, y, event) {
+    var s = session;
+    s.ring.hidden = !!s.overChrome && !s.erasing;
+    s.ring.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+    if (!s.erasing || !event) return;
+    var points = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
+    if (!points.length) points = [event];
+    var removed = 0;
+    points.forEach(function (p) {
+      var next = [p.clientX, p.clientY];
+      removed += erase(s.state, s.erasing.last, next, ERASER, s.erasing.erased);
+      s.erasing.last = next;
+    });
+    if (removed) {
+      drawInk();
+      refresh();
+    }
+  }
+
+  function addPoint(points, x, y) {
+    var last = points[points.length - 1];
+    if (last && Math.abs(x - last[0]) < 1.5 && Math.abs(y - last[1]) < 1.5) return false;
+    points.push([x, y]);
+    return true;
+  }
+
+  function beginTrace(x, y) {
+    var s = session;
+    var g = svg('g', {}, s.trailGroup);
+    s.trace = { points: [[x, y]], released: null, group: g,
+      parts: [svg('path', { class: 'is-glow', filter: s.glow }, g), svg('path', { class: 'is-beam' }, g),
+        svg('path', { class: 'is-core' }, g)] };
+    s.traces.push(s.trace);
+    drawTrace(s.trace);
+    laser(x, y, null);
+  }
+
+  function drawTrace(trace) {
+    var d = smoothPath(trace.points);
+    trace.parts.forEach(function (part) { part.setAttribute('d', d); });
+  }
+
+  function releaseTrace() {
+    var s = session;
+    if (!s.trace) return;
+    s.trace.released = now();
+    s.trace = null;
+    if (s.pointer) laser(s.pointer.x, s.pointer.y, null);
+    wake();
+  }
+
+  // Fades released traces and removes them once invisible; returns whether any still need frames.
+  function fadeTraces() {
+    var s = session;
+    var t = now();
+    s.traces = s.traces.filter(function (trace) {
+      if (trace.released === null) return true;
+      var alpha = fade(trace.released, t, FADE_MS);
+      if (alpha > 0) {
+        trace.group.setAttribute('opacity', alpha.toFixed(3));
+        return true;
+      }
+      if (trace.group.parentNode) trace.group.parentNode.removeChild(trace.group);
+      return false;
+    });
+    return s.traces.some(function (trace) { return trace.released !== null; });
+  }
+
   function now() {
     return root.performance && typeof root.performance.now === 'function' ? root.performance.now() : Date.now();
   }
@@ -443,7 +634,7 @@
     if (s && !s.frame) s.frame = root.requestAnimationFrame(loop);
   }
 
-  // Each frame moves the lens and fades the laser trail; it stops when neither needs another frame.
+  // Each frame moves the lens and fades released laser traces; it stops when neither needs another frame.
   function loop() {
     var s = session;
     if (!s) return;
@@ -453,25 +644,8 @@
       lens();
       again = true;
     }
-    if (s.trail.length) {
-      drawTrail();
-      again = again || s.trail.length > 0;
-    }
+    if (s.traces.length && fadeTraces()) again = true;
     if (again) s.frame = root.requestAnimationFrame(loop);
-  }
-
-  function drawTrail() {
-    var s = session;
-    s.trail = trail(s.trail, now(), TRAIL_MS);
-    s.trailGroup.textContent = '';
-    for (var i = 1; i < s.trail.length; i++) {
-      var a = s.trail[i - 1];
-      var b = s.trail[i];
-      svg('line', {
-        x1: a.x, y1: a.y, x2: b.x, y2: b.y,
-        'stroke-width': (2 + 7 * b.alpha).toFixed(1), 'stroke-opacity': (0.55 * b.alpha).toFixed(2)
-      }, s.trailGroup);
-    }
   }
 
   // The magnifier observes the figure only while it is the chosen tool.
@@ -523,12 +697,19 @@
     return clone;
   }
 
+  // The lens stands in for the cursor, so the cursor hides while the lens shows.
+  function showLens(on) {
+    var s = session;
+    s.lens.hidden = !on;
+    s.overlay.classList.toggle('is-lens-on', on);
+  }
+
   function lens() {
     var s = session;
     var p = s.pointer;
     var rect = s.target.getBoundingClientRect();
-    if (!p || p.x < rect.left || p.x > rect.right || p.y < rect.top || p.y > rect.bottom) {
-      s.lens.hidden = true;
+    if (!p || s.overChrome || p.x < rect.left || p.x > rect.right || p.y < rect.top || p.y > rect.bottom) {
+      showLens(false);
       return;
     }
     s.sync.frame(Math.round(rect.width), Math.round(rect.height));
@@ -538,7 +719,7 @@
     }
     var r = LENS / 2;
     var z = s.state.zoom;
-    s.lens.hidden = false;
+    showLens(true);
     s.lens.style.transform = 'translate(' + (p.x - r) + 'px, ' + (p.y - r) + 'px)';
     s.view.style.transform = 'translate(' + (r - (p.x - rect.left) * z) + 'px, ' + (r - (p.y - rect.top) * z) + 'px) scale(' + z + ')';
   }
@@ -622,6 +803,13 @@
       s.ruler = { a: { x: event.clientX, y: event.clientY }, b: { x: event.clientX, y: event.clientY }, active: true,
         frame: frameAt(s.target, event.clientX, event.clientY) };
       drawRuler();
+    } else if (tool === 'laser') {
+      beginTrace(event.clientX, event.clientY);
+    } else if (tool === 'eraser') {
+      var at = [event.clientX, event.clientY];
+      s.erasing = { last: at, erased: [] };
+      if (erase(s.state, at, at, ERASER, s.erasing.erased)) drawInk();
+      refresh();
     } else {
       return;
     }
@@ -644,10 +832,22 @@
         refresh();
       }
       if (s.ruler) s.ruler.active = false;
+      releaseTrace();
+      endErase();
     }
     s.layer.addEventListener('pointerup', up);
     s.layer.addEventListener('pointercancel', up);
     s.layer.addEventListener('lostpointercapture', up);
+  }
+
+  function endErase() {
+    var s = session;
+    var erasing = s.erasing;
+    s.erasing = null;
+    if (erasing && erasing.erased.length) {
+      s.state.history.push({ erased: erasing.erased });
+      refresh();
+    }
   }
 
   function inkPath(stroke) {
@@ -698,7 +898,8 @@
     colors: COLORS.slice(),
     limits: { min: ZOOM.min, max: ZOOM.max, start: ZOOM.start },
     magnify: magnify,
-    trail: trail,
+    fade: fade,
+    smoothPath: smoothPath,
     pathOf: pathOf,
     snap: snap,
     measure: measure,
@@ -710,6 +911,8 @@
     end: end,
     undo: undo,
     clear: clear,
+    touches: touches,
+    erase: erase,
     prepareClone: prepareClone,
     lensSync: lensSync,
     // The tool chosen in the open zoom view, or null when no view is open.

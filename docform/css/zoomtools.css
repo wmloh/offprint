@@ -76,7 +76,7 @@
   border-left: 1px solid var(--df-border-strong);
 }
 
-:is(.df-zoomtools-zoom, .df-zoomtools-group, .df-zoomtools-swatches)[hidden] {
+:is(.df-zoomtools-zoom, .df-zoomtools-group, .df-zoomtools-swatches, .df-zoomtools-btn)[hidden] {
   display: none;
 }
 
@@ -110,7 +110,7 @@
   box-shadow: inset 0 0 0 2px var(--df-swatch);
 }
 
-/* Drawing layer: passes the pointer through except while inking or measuring with the ruler. */
+/* Drawing layer: passes the pointer through except while inking, pointing the laser, or measuring with the ruler. */
 .df-zoomtools-layer {
   position: fixed;
   inset: 0;
@@ -121,10 +121,17 @@
   pointer-events: none;
 }
 
-:is(.df-zoom.is-tool-pen, .df-zoom.is-tool-highlighter, .df-zoom.is-tool-ruler) .df-zoomtools-layer {
+:is(.df-zoom.is-tool-pen, .df-zoom.is-tool-highlighter, .df-zoom.is-tool-ruler, .df-zoom.is-tool-eraser) .df-zoomtools-layer {
   pointer-events: auto;
   touch-action: none;
   cursor: crosshair;
+}
+
+/* The laser and eraser draw their own gray ring and red dot, so the layer hides the system cursor. The pill keeps it. */
+:is(.df-zoom.is-tool-laser, .df-zoom.is-tool-eraser) .df-zoomtools-layer {
+  pointer-events: auto;
+  touch-action: none;
+  cursor: none;
 }
 
 .df-zoomtools-ink path {
@@ -133,9 +140,26 @@
   stroke-linejoin: round;
 }
 
-.df-zoomtools-trail line {
+.df-zoomtools-trail path {
+  fill: none;
   stroke: var(--df-red);
   stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* A laser line: a blurred glow with no hard edge, a red beam, and a hot pale core. */
+.df-zoomtools-trail .is-glow {
+  stroke-width: 9;
+  stroke-opacity: 0.7;
+}
+
+.df-zoomtools-trail .is-beam {
+  stroke-width: 3.5;
+}
+
+.df-zoomtools-trail .is-core {
+  stroke: color-mix(in srgb, var(--df-red) 30%, #fff);
+  stroke-width: 1.25;
 }
 
 .df-zoomtools-measure line {
@@ -163,14 +187,36 @@
   width: 12px;
   height: 12px;
   border-radius: 999px;
-  background: var(--df-red);
+  background: radial-gradient(circle, color-mix(in srgb, var(--df-red) 30%, #fff) 0 22%, var(--df-red) 60%);
   box-shadow: 0 0 6px 2px color-mix(in srgb, var(--df-red) 70%, transparent),
     0 0 18px 6px color-mix(in srgb, var(--df-red) 35%, transparent);
   pointer-events: none;
 }
 
-.df-zoom.is-tool-laser,
-.df-zoom.is-tool-laser * {
+.df-zoomtools-ring {
+  position: fixed;
+  top: -6px;
+  left: -6px;
+  z-index: 2;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--df-gray);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+/* The eraser ring shows its reach. */
+.df-zoom.is-tool-eraser .df-zoomtools-ring {
+  top: -8px;
+  left: -8px;
+  width: 16px;
+  height: 16px;
+}
+
+/* The lens is centred on the pointer, so the cursor hides while it shows rather than covering the enlarged view. */
+.df-zoom.is-lens-on,
+.df-zoom.is-lens-on * {
   cursor: none !important;
 }
 
@@ -224,7 +270,7 @@
   color: var(--df-text-muted);
 }
 
-:is(.df-zoomtools-lens, .df-zoomtools-laser, .df-zoomtools-readout)[hidden] {
+:is(.df-zoomtools-lens, .df-zoomtools-laser, .df-zoomtools-ring, .df-zoomtools-readout)[hidden] {
   display: none;
 }
 

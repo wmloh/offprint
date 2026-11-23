@@ -46,6 +46,7 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     highlight.css: Tinted highlight with a fading leading accent edge for selected items in linked views, tinted rows, and glowing SVG shapes
     stepper.css: Worked-example step pill spacing and linked view visibility
     scenarios.css: Variant chooser and changed comparison cells
+    quiz.css: Collapsed quiz cards, option rows, inline blanks and dropdowns, drag-to-pair links, hint and feedback panels, the results card, and the Reader question sheet
     data.css: Data-block parse errors, size notices, and show-more rows
     tree.css: Data-tree rows with disclosure arrows, typed values, and expand and collapse buttons
     markdown.css: Rendered Markdown heading lines, quotes, rules, images, and task items
@@ -98,6 +99,7 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     highlight.js: Shared keyed selection controller with startup seeds, persistence, and passive HTML and SVG participants
     stepper.js: Ordered worked examples with a Reset, Previous, and Next step pill, keyed selection groups, and linked step views
     scenarios.js: Keyed scenario comparisons with a variant chooser and shared step pill, fixed baselines, shared chart scales by unit, and supplied outcome intervals and baseline-paired differences
+    quiz.js: JSON quiz stacks from inline or named sources with single, multi, fill-in, and drag matching types plus registered custom types, a non-blocking stopwatch, hints with penalties, per-question or end feedback, shuffling and bank draws, a results card with chart views, and a questions-only Reader sheet
     data.js: Transactional named CSV, TSV, JSON, YAML, XML, and Markdown sources with record transforms, scoped chart and results filters, and raw views
     markdown.js: Safe Markdown renderer for data views with GFM tables, task lists, and filtered link targets
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists

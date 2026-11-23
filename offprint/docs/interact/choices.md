@@ -1,6 +1,6 @@
 # Choice groups
 
-`choices` renders single- and multiple-choice controls for parameters, charts, results, matrices, and scenarios. Author choices through [parameter fieldsets](parameters.md#choice-groups).
+`choices` renders single- and multiple-choice controls for parameters, charts, results, matrices, scenarios, and the quiz results view picker. Quiz answer options are separate rows, not choice groups; see [Quizzes](quiz.md). Author choices through [parameter fieldsets](parameters.md#choice-groups).
 
 - `display`: `auto` | `chips` | `combobox`; else `data-op-choice-display` on the host; unknown warns and uses `auto`. `auto` → chips when ≤ 7 options and ≤ 80 total label chars, else combobox. Callers force `chips` for legends and filter values.
 - DOM: `fieldset.op-choices.op-choices-{chips|combobox}[.is-multiple]` > `legend.op-choices-label` (eyebrow small caps; `.is-hidden` visually hidden) + chips or `.op-combo`. No wrapper divs, no border, no panel.

@@ -13,6 +13,7 @@ Load an ordered classic author script after [the offline entry](../setup/setup.m
 | `OffPrint.shortcuts.register(spec)`, `keys(id)` | Register a scoped, remappable binding and read its effective keys. Registration returns an unregister function. [Shortcuts](../interact/shortcuts.md) |
 | `OffPrint.selection.group(name)`, `define(name, options?)`, `seed(name, key)` | Define or seed linked selections during setup. Read, select, clear, or subscribe through the group controller. Enable `selection`. [Linked selection](../interact/linked-highlighting.md) |
 | `OffPrint.data.define(name, input)`, `source(name)`, `defineTransform(name, fn)`, `names()` | Register data and synchronous transforms in setup. Read or replace a named source through its controller. The registry also exposes `parse`, `table`, and `valueOf`. Enable `data`. [Named sources](../data/data-blocks.md) |
+| `OffPrint.quiz.defineType(name, def)`, `mount(target, input, options?)`, `get(target)`, `types()` | Register custom question types in setup, mount a quiz from data, or read a quiz controller in `ready`. Enable `quiz`. [Quizzes](../interact/quiz.md) |
 | `OffPrint.chart.addon(id, parts)` | Register chart types, scales, and legends before charts mount. Enable `chart`. [Chart add-ons](chart-addons.md) |
 
 Given `<span data-page-title>Field notes</span>`, this author script fills the span during enhancement.
@@ -39,4 +40,4 @@ Use `addEventListener` and read `event.detail`. Listen during setup to observe i
 | `op:selection:change` | Document. `{group, current, previous, origin}`. |
 | `op:data:change` | Document. `{source, current, previous, origin}` with `{revision, type}` states. |
 
-See the feature references for additional events, including [charts](../data/charts.md), [parameters](../interact/parameters.md#events), and [figure zoom](../interact/figure-zoom.md).
+See the feature references for additional events, including [quizzes](../interact/quiz.md#api-and-events) (`op:quiz:answer`, `op:quiz:finish`), [charts](../data/charts.md), [parameters](../interact/parameters.md#events), and [figure zoom](../interact/figure-zoom.md).

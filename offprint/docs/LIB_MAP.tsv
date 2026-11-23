@@ -42,6 +42,7 @@ Linked selection	Synchronize keyed controls, charts, and passive views	interact/
 Step sequences	Control steps and synchronize keyed sequences	interact/step-contract.md
 Worked-example steppers	Step through worked examples and their linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
+Quizzes	Quiz stacks with choice, fill-in, matching, and custom questions, stopwatch, hints, feedback, and a results chart	interact/quiz.md
 Pipeline diagrams	Connect structured blocks with curved routes, branches, steps, and details	diagram/pipelines.md
 Timeline diagrams	Plot point and span events in lanes on a numeric or calendar axis	diagram/timelines.md
 Sequence diagrams	Show ordered messages between participant lifelines	diagram/sequences.md

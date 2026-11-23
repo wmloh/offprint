@@ -1699,6 +1699,12 @@ window.OffPrintSearch = {
         "sha256": "20cf115cf418b34969d538ffc9f98afc83fd16f327c7fee421f08c074fa3e983"
       },
       {
+        "file": "pages/explain/quizzes.html",
+        "path": "../pages/explain/quizzes.html",
+        "title": "Quizzes",
+        "sha256": "1d0d5a894995c703b75b8ec9eaa1a9614330c27869b670cb817176dc1f81c760"
+      },
+      {
         "file": "pages/explain/reveals.html",
         "path": "../pages/explain/reveals.html",
         "title": "Scroll reveals",
@@ -1804,7 +1810,7 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "95105b953924be84837463feb1fb60c23a187d1c88d248c9adaaadebe7ed0ac0"
+        "sha256": "c2b82220cff713ffcfeec5df9d5913ab0a0abf3f034028f3ff11a6475ae4b35c"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -6803,6 +6809,143 @@ window.OffPrintSearch = {
       ]
     },
     {
+      "path": "../pages/explain/quizzes.html",
+      "title": "Quizzes",
+      "sections": [
+        {
+          "id": "",
+          "title": "Quizzes",
+          "level": 1,
+          "text": "Explain step by step A quiz starts as a small card with its number, a short description, and tags. Readers open it when they are ready and answer one question at a time. A results card then shows how they did. Official name Quizzes Turned on On request Signal strength Strong Works with Named data sources, SVG charts, code highlighting, and math Good for Checking understanding, revision sets, and self-timed practice"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "A three-question quiz about offline pages opens here with scripts on. A single quiz with a stopwatch, a hint, and feedback after each question. Try it Press Start. Pick an answer to the first question and the card marks it straight away. Open the hint first if you like, but it halves that question’s score. Press Hide to fold the card away; the stopwatch stops until you resume."
+        },
+        {
+          "id": "stack",
+          "title": "Stack several quizzes",
+          "level": 2,
+          "text": "A stack holds several quizzes that readers take in order inside the same card. When they finish, a results card appears below with a small bar chart. Switch its view to see the time per question, the score per quiz, or the average score and time for each tag. A stack of two quizzes opens here with scripts on. Two quizzes with fill-in code, matching, tags, shuffled options, and answers shown at the end."
+        },
+        {
+          "id": "question-types",
+          "title": "Question types",
+          "level": 2,
+          "text": "Single choice is the default. Mark the right option with \"correct\": true. Multiple choice (\"type\": \"multi\") gives part marks: each right pick adds and each wrong pick takes away. Fill in (\"type\": \"fill\") puts [[name]] blanks in a sentence or a code block. A blank with options becomes a dropdown; any other blank is a text field. Matching (\"type\": \"match\") asks readers to drag lines between two columns. Extra items on the right make it harder. Your own type can be added with a short script. It gets the stopwatch, hints, feedback, and results like the built-in types."
+        },
+        {
+          "id": "author",
+          "title": "Write a quiz",
+          "level": 2,
+          "text": "Put a small quiz straight in the page inside the quiz block. For larger sets, keep each stack in its own .json or .yaml file so you can edit the questions without touching the page. Save the stack, for example as assets/data/week-1.json. Add it to the site manifest under assets.data, with a name and a generated output file. Run the offline asset tools to create the wrapper script. Turn on the quiz and data features and write <div data-op-quiz=\"Week 1\"></div> where it should appear. { \"title\": \"Week 1\", \"feedback\": \"end\", \"stopwatch\": true, \"quizzes\": [ {\"title\": \"Lenses\", \"tags\": [\"domain:optics\"], \"draw\": 5, \"questions\": [ … ]} ] } Settings set on the stack apply to every quiz, and a quiz or question can override them: feedback \"end\" shows answers in the results, \"question\" shows them after each question, and \"none\" never shows them stopwatch Shows a timer that counts up but never stops anyone answering hint, hintPenalty One or more hints per question, and how much each one used lowers the score shuffle, draw Mix up questions or options, and pick a few questions from a larger bank on each try scoring \"partial\" gives part marks; \"all\" needs every part right"
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "Choice options, dropdowns, and text blanks work with the keyboard. Matching is drag only. Results stay in this page visit until the reader presses Retry or reloads. In an Interactive export, readers can take the quiz just as they can here. A Reader export shows the questions as a printed sheet, without answers."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "Named data sources, for keeping quizzes in their own files SVG charts Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "SVG",
+          "term": "svg",
+          "section": ""
+        },
+        {
+          "text": "offline",
+          "term": "offline",
+          "section": "see-it"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "stack"
+        },
+        {
+          "text": "tag",
+          "term": "tag",
+          "section": "stack"
+        },
+        {
+          "text": "code block",
+          "term": "code block",
+          "section": "question-types"
+        },
+        {
+          "text": "field",
+          "term": "field",
+          "section": "question-types"
+        },
+        {
+          "text": "script",
+          "term": "script",
+          "section": "question-types"
+        },
+        {
+          "text": "file",
+          "term": "file",
+          "section": "author"
+        },
+        {
+          "text": "script",
+          "term": "script",
+          "section": "author"
+        }
+      ],
+      "outline": [
+        {
+          "id": "quizzes",
+          "title": "Quizzes",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "stack",
+          "title": "Stack several quizzes",
+          "level": 2
+        },
+        {
+          "id": "question-types",
+          "title": "Question types",
+          "level": 2
+        },
+        {
+          "id": "author",
+          "title": "Write a quiz",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
       "path": "../pages/explain/reveals.html",
       "title": "Scroll reveals",
       "sections": [
@@ -10440,7 +10583,7 @@ window.OffPrintSearch = {
           "id": "explain-step-by-step",
           "title": "Explain step by step",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Detail panes Choose a card to see its details beside or below it. Figure steps On request Strong Detail panes; SVG animations for moving steps Show the state of a figure that matches each step. Pipeline diagrams On request Strong Detail panes; Linked selection to follow a stepper Show the stages of a process as connected blocks with details on hover. Choice groups On request Medium Base layout Pick one or several options from chips or a searchable list. Detail panes On request Strong Base layout Show more about the selected card, step, block, or event anywhere on the page. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change; Linked selection for shared choices Let readers change values with sliders, chips, or searchable lists, and link them to charts or blocks that appear on cue. Sequence diagrams On request Strong Detail panes; Data for named sources Show messages between participants in order. Tree diagrams On request Strong Detail panes; Data for named sources Explore a hierarchy with collapsible branches. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Step sequences On request Strong A stepped feature, such as a stepper or figure steps Share one set of step controls and keep stepped views in sync. Tabs On request Strong Base layout Switch among related panels in the same space. Timeline diagrams On request Strong Detail panes; Data for named sources Show milestones and durations in lanes on one time axis. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
+          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Detail panes Choose a card to see its details beside or below it. Figure steps On request Strong Detail panes; SVG animations for moving steps Show the state of a figure that matches each step. Pipeline diagrams On request Strong Detail panes; Linked selection to follow a stepper Show the stages of a process as connected blocks with details on hover. Choice groups On request Medium Base layout Pick one or several options from chips or a searchable list. Detail panes On request Strong Base layout Show more about the selected card, step, block, or event anywhere on the page. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change; Linked selection for shared choices Let readers change values with sliders, chips, or searchable lists, and link them to charts or blocks that appear on cue. Quizzes On request Strong SVG charts; Named data sources for quizzes kept in files Check understanding with timed quiz stacks and a results chart. Sequence diagrams On request Strong Detail panes; Data for named sources Show messages between participants in order. Tree diagrams On request Strong Detail panes; Data for named sources Explore a hierarchy with collapsible branches. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Step sequences On request Strong A stepped feature, such as a stepper or figure steps Share one set of step controls and keep stepped views in sync. Tabs On request Strong Base layout Switch among related panels in the same space. Timeline diagrams On request Strong Detail panes; Data for named sources Show milestones and durations in lanes on one time axis. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
         },
         {
           "id": "show-data",

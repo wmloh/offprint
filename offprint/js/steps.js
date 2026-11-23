@@ -397,7 +397,16 @@
     state.start();
   }
 
-  OffPrint._cards = { get: function (target) { return cards.get(items.target(target)) || null; } };
+  OffPrint._cards = {
+    get: function (target) { return cards.get(items.target(target)) || null; },
+    // Enhances a card panel built after startup, such as a generated results view.
+    mount: function (target) {
+      var box = items.target(target);
+      if (!box) return null;
+      if (!cards.has(box)) setupCards(box);
+      return cards.get(box) || null;
+    }
+  };
 
   items.scan('figure-steps', function () {
     OffPrint._all('.op-figure-steps').forEach(function (box) {

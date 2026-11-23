@@ -135,6 +135,10 @@ window.OffPrintSite = {
           "path": "../pages/explain/steppers.html"
         },
         {
+          "title": "Quizzes",
+          "path": "../pages/explain/quizzes.html"
+        },
+        {
           "title": "Scroll reveals",
           "path": "../pages/explain/reveals.html"
         },

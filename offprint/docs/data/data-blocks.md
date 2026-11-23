@@ -40,4 +40,4 @@ Enable `data` for the registry, `data-view` for raw views, and each consuming fe
 - Use `maxSize` or `data-op-max-size` (default 1 MiB), and `maxRows` or `data-op-max-rows` (default 5000). Initial oversized raw views offer Show anyway. Tables and code load in batches with Show more. Tree limits apply per branch.
 - `op:data-view:render` bubbles after the view and any nested enhancements are ready. Detail is `{current, previous, origin}` with `{name, view, total, shown}` states.
 
-[File wrappers](../tools/file-wrapper.md) · [Charts](charts.md) · [Results](results-tables.md) · [Scenarios](../interact/scenarios.md) · [Dropzones](dropzones.md)
+[File wrappers](../tools/file-wrapper.md) · [Charts](charts.md) · [Results](results-tables.md) · [Scenarios](../interact/scenarios.md) · [Quizzes](../interact/quiz.md) · [Dropzones](dropzones.md)

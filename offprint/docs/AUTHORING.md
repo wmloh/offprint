@@ -19,6 +19,7 @@ A project holds one shared `offprint/` copy and one or more **sites**. A site is
       site.css                  optional single author stylesheet
       scripts/<name>.js         author scripts (last resort, see Custom code)
       data/                     raw named sources: dynamic, or large static
+        quizzes/<stack>.json    quiz stacks and banks, one file per stack (see Data)
       generated/                wrappers and search index; tool output only
       media/                    local images, SVG, fonts, video posters
   <other-site>/                 same structure, loading the same ../offprint/
@@ -83,10 +84,10 @@ Take the first rung that works. Moving down a rung requires that every rung abov
 1. Markup: `data-op-*` attributes and `.op-*` classes from the feature references.
 2. Options: manifest or page JSON, including instance options, `mapping`, `filter`, selection groups, and parameter scopes.
 3. Composition: combine existing features through selection groups, parameters, step sequences, detail panes, and data transforms.
-4. Extension API: `OffPrint.setup` + `OffPrint.register`, `OffPrint.data.defineTransform`, `OffPrint.chart.addon`, and controllers and events read in `ready`. [Extension API](extend/api.md)
+4. Extension API: `OffPrint.setup` + `OffPrint.register`, `OffPrint.data.defineTransform`, `OffPrint.chart.addon`, `OffPrint.quiz.defineType`, and controllers and events read in `ready`. [Extension API](extend/api.md)
 5. A plain author script, as a last resort. Start the file with a one-line comment that names the gap and why rungs 1–4 failed.
 
-- Never re-implement a shipped feature such as tabs, tooltips, dropdowns, dialogs, charts, tables, steppers, reveals, or zoom. If a feature almost fits, use its options or an add-on.
+- Never re-implement a shipped feature such as tabs, tooltips, dropdowns, dialogs, charts, tables, steppers, quizzes, reveals, or zoom. If a feature almost fits, use its options or an add-on.
 - Author scripts are ordered classic `<script src>` files in `assets/scripts/`. Do not use modules, `async`, `fetch`/XHR, or CDNs. Use only public, non-underscore APIs. Keep authored HTML fallbacks readable without script.
 - Name each file after its feature (`assets/scripts/<feature>.js`). Use the same ID in `OffPrint.register('<feature>', …)`.
 
@@ -105,6 +106,8 @@ Take the first rung that works. Moving down a rung requires that every rung abov
 | Static, ≤ ~100 rows or 10 KB | Inline, next to its view | `<script type="text/csv" data-op-source="name">` (or a TSV, JSON, YAML, XML, or Markdown MIME type), authored tables, or inline specs |
 | Static, larger | `assets/data/` | Named source via `assets.data` wrapper |
 | Dynamic (changes between runs, e.g. ML results) | `assets/data/` | Named source via `assets.data` wrapper, always |
+| Quiz: one short quiz | Inline in its host | `<div data-op-quiz>` with a direct `script[type="application/json"]` |
+| Quiz: stacks, banks, or sets edited as content | `assets/data/quizzes/` | JSON or YAML named source via `assets.data` wrapper, `<div data-op-quiz="name">` [Quizzes](interact/quiz.md) |
 
 - Static data is fixed once written. Dynamic data is produced by an external process. Pages never load raw files directly, because `file://` blocks fetches. Pages load only the wrappers in `generated/`. [Data wrappers](tools/file-wrapper.md) · [Named sources](data/data-blocks.md)
 - The pipeline overwrites the same file names in `assets/data/` each run. Field names, types, and keys are a contract with the pages, so treat renames as breaking changes. Changing values is fine.
@@ -130,6 +133,7 @@ if __name__ == '__main__':
 - Tags: every `.op-tag` has a class (registry label or `data-op-tag-class`) and a tooltip. Circle shapes are reserved for glossary tags. [Tags](reading/tags.md)
 - References and citations: give figures, tables, and equations IDs and captions, and link with reference markup instead of typing "Figure 3". Cite manifest keys. [Cross-references](reading/references.md) · [Citations](reading/citations.md)
 - Give an explicit `id` to any heading that another page links to. Formulas use `.op-math` with shared macros. Side remarks use sidenotes, and optional depth uses peek bubbles or callouts, not long parentheticals.
+- Quizzes: one stack per file, stable quiz and question `id`s, consistent `group:value` tags (they drive the score-by-tag views), at most 8 shown questions per quiz (`draw` for banks), and a short no-script `<p>` that does not reveal answers. [Quizzes](interact/quiz.md)
 - Interactive views: give hosts stable IDs and keys. Use one selection group or parameter scope per linked concept, and name each after the concept, not the widget.
 
 ## Naming
@@ -149,7 +153,7 @@ Every page must work in both **Reader** and **Interactive** standalone export. [
 
 - Native `title` tooltips, untagged tips (red underline), unclassified tags (dashed outline).
 - Literal hex, rgb, or px values in page markup or `site.css`, `<style>` blocks, and inline colour styles.
-- Hand-built tabs, accordions, modals, tooltips, charts, sortable tables, or scroll animations.
+- Hand-built tabs, accordions, modals, tooltips, charts, sortable tables, quizzes, or scroll animations.
 - `fetch`, ES modules, CDN links, `file://`, absolute or drive paths, and wrong-case paths.
 - Edits inside `offprint/`. Use of `OffPrint._*` internals. Hand-edited `generated/` files.
 - Shared options duplicated in page JSON, and data duplicated across pages.
@@ -165,6 +169,7 @@ Run per site.
 - [ ] Every page is in the manifest, prev/next order reads correctly, and cross-page anchors resolve.
 - [ ] Light and dark themes, 1920×1080 and narrow widths, focus mode, and print all look correct.
 - [ ] The export preview builds in Reader and Interactive modes with no missing resources or fallback pages.
+- [ ] Every quiz starts, finishes, and shows its results card without diagnostics; answers appear only where `feedback` allows.
 - [ ] Author scripts start with their gap comment and register through `OffPrint.register`. `site.css` uses only tokens.
 
 [Site structure](setup/site-structure.md) · [Manifest](setup/manifest.md) · [Include order](setup/include-order.md) · [Extension API](extend/api.md)

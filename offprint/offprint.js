@@ -51,6 +51,7 @@
     tabs: { needs: ['base'], css: ['tabs'], script: 'tabs', api: '_tabs' },
     'detail-pane': { needs: ['base'], css: ['detail'], script: 'detail', api: '_detailPane' },
     cards: { needs: ['detail-pane'], css: ['steps'], script: 'steps', api: '_cards' },
+    quiz: { needs: ['base', 'choices', 'dropdowns', 'chart', 'cards'], css: ['quiz'], script: 'quiz', api: 'quiz' },
     'figure-steps': { needs: ['detail-pane'], css: ['steps'], script: 'steps', module: 'figure-steps' },
     stepper: { needs: ['base'], css: ['stepper'], script: 'stepper' },
     'diagram-core': { needs: ['detail-pane'], script: 'diagram', api: '_diagram' },

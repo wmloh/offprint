@@ -2330,3 +2330,25 @@ test('the offline loader enables heatmap assets and registers the add-on after c
   assert.equal(p.OP._chart.normalize({ type: 'heatmap', z: [[1, 2]] }).addon, 'heatmap');
   assert.equal(p.OP.diagnostics.list().length, 0);
 });
+
+test('every catalog feature starts alone because prerequisites are declared before dependents', async () => {
+  const catalog = entry.slice(entry.indexOf('var catalog = {'), entry.indexOf('var reading = ['));
+  const ids = Array.from(catalog.matchAll(/^ {4}'?([a-z][a-z-]*)'?: \{/gm), (match) => match[1]);
+  assert.ok(ids.includes('quiz') && ids.includes('cards'));
+  for (const id of ids) {
+    const p = page({ entryProfile: 'none', config: { features: { [id]: true } } });
+    await p.start();
+    const failures = Array.from(p.OP.diagnostics.list()).filter((item) => item.code === 'dependency' || item.code === 'asset');
+    assert.deepEqual(Array.from(failures, (item) => item.message), [], id);
+  }
+});
+
+test('quiz starts with its dropdown, chart, and card panel dependencies', async () => {
+  const p = page({ config: { features: { quiz: true, data: true, code: true } } });
+  await p.start();
+  assert.deepEqual(Array.from(p.OP.diagnostics.list(), (item) => item.message), []);
+  assert.equal(p.OP._boot.enabled('quiz'), true);
+  assert.equal(typeof p.OP.quiz.defineType, 'function');
+  assert.equal(typeof p.OP._cards.mount, 'function');
+  assert.ok(p.loads.indexOf('offprint/js/steps.js') < p.loads.indexOf('offprint/js/quiz.js'));
+});

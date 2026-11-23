@@ -37,11 +37,18 @@
     field.before(frame);
     frame.append(mirror, field);
 
+    // The mirror covers the field's padding box. It is derived from the borders because Chrome reports clientLeft and
+    // clientWidth of single-line inputs for the content box; textareas keep clientWidth to leave out a scrollbar.
     function align() {
-      mirror.style.width = field.clientWidth + 'px';
-      mirror.style.height = field.clientHeight + 'px';
-      mirror.style.left = field.clientLeft + 'px';
-      mirror.style.top = field.clientTop + 'px';
+      var style = root.getComputedStyle(field);
+      var left = parseFloat(style.borderLeftWidth) || 0;
+      var top = parseFloat(style.borderTopWidth) || 0;
+      var width = field.offsetWidth - left - (parseFloat(style.borderRightWidth) || 0);
+      var height = field.offsetHeight - top - (parseFloat(style.borderBottomWidth) || 0);
+      mirror.style.width = (block ? Math.min(width, field.clientWidth) : width) + 'px';
+      mirror.style.height = (block ? Math.min(height, field.clientHeight) : height) + 'px';
+      mirror.style.left = left + 'px';
+      mirror.style.top = top + 'px';
       text.style.transform = 'translate(' + -field.scrollLeft + 'px,' + -field.scrollTop + 'px)';
     }
 

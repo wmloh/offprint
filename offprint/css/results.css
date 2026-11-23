@@ -109,10 +109,26 @@
   color: var(--op-red);
 }
 
+/* Best values glow softly outside all four edges. Chrome skips outer shadows on cells of collapsed-border tables,
+   so the glow sits on an overlay at the cell's outer border edge. The cell is lifted so neighbours do not paint
+   over it, and tables with best marks get a little inner padding so the scroll box does not clip edge cells. */
+.op-page table.op-results:has(th[data-op-best]) {
+  padding: 6px;
+}
+
 .op-best {
+  position: relative;
+  z-index: 1;
   font-weight: 600;
   color: var(--op-text);
-  box-shadow: inset 0 -2px 0 var(--op-heat-color);
+}
+
+.op-best::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--op-heat-color) 65%, transparent);
 }
 
 /* Header row with the sort button (or the header text) and a filter button that lights up while it filters. */

@@ -1,0 +1,43 @@
+.op-scenarios-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--op-space-2) var(--op-space-3);
+}
+
+.op-scenarios-chooser {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.op-scenarios-key {
+  color: var(--op-text-muted);
+  font-size: 0.85em;
+}
+
+[data-op-scenarios] :is(th, td)[data-op-scenario-difference] {
+  background: var(--op-bg-hover);
+  font-weight: 700;
+}
+
+.op-scenarios-key[hidden],
+[data-op-scenarios] :is(th, td)[hidden] {
+  display: none;
+}
+
+.op-page .op-scenarios-heading {
+  margin-block: var(--op-space-4) 0;
+}
+
+.op-scenarios-conditions {
+  margin-block-start: var(--op-space-1);
+}
+
+.op-scenarios-interval,
+.op-scenarios-paired {
+  display: block;
+}
+
+.op-scenarios-interval {
+  color: var(--op-text-muted);
+}

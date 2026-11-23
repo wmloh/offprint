@@ -1,0 +1,110 @@
+/* Two-way scroll reveals and split views from reveal.js. Without the script, everything shows and splits still lay out. */
+
+/* Split view: panes side by side, stacked on narrow screens. data-op-split="2:1" sets column shares. */
+.op-split {
+  display: grid;
+  grid-template-columns: var(--op-split-cols, repeat(var(--op-split-count, 2), minmax(0, 1fr)));
+  gap: var(--op-space-5);
+  align-items: start;
+  margin: var(--op-space-5) 0;
+}
+
+.op-split[data-op-align="center"] {
+  align-items: center;
+}
+
+.op-split > * {
+  min-width: 0;
+  margin: 0;
+}
+
+.op-split > * > :first-child { margin-top: 0; }
+.op-split > * > :last-child { margin-bottom: 0; }
+
+.op-split > :is(figure, .op-figure, .op-anim) {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .op-split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--op-space-4);
+  }
+}
+
+/* Reveals. html.op-reveal-on is set by reveal.js, which toggles .op-revealed. Blocks replay each time they come back near the viewport centre. Delays apply to the entrance only, so a block
+   leaving the band hides at once. */
+[data-op-reveal]:not(.op-split, .op-callout),
+.op-split-pane {
+  transition:
+    opacity 0.45s ease,
+    translate 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.op-revealed[data-op-reveal]:not(.op-split, .op-callout) {
+  transition-duration: 0.7s, 0.8s;
+  transition-delay: var(--op-reveal-delay, 0ms);
+}
+
+.op-split.op-revealed > .op-split-pane {
+  transition-duration: 0.7s, 0.8s;
+  transition-delay: calc(var(--op-reveal-delay, 0ms) + var(--op-pane-delay, 0ms));
+}
+
+.op-reveal-on .op-reveal-watched[data-op-reveal]:not(.op-split, .op-callout, .op-revealed) {
+  opacity: 0;
+  translate: 0 24px;
+}
+
+.op-reveal-on .op-reveal-watched[data-op-reveal="left" i]:not(.op-split, .op-callout, .op-revealed) { translate: -40px 0; }
+.op-reveal-on .op-reveal-watched[data-op-reveal="right" i]:not(.op-split, .op-callout, .op-revealed) { translate: 40px 0; }
+.op-reveal-on .op-reveal-watched[data-op-reveal="fade" i]:not(.op-split, .op-callout, .op-revealed) { translate: none; }
+
+/* Split panes glide in from their own sides, one after another. */
+.op-reveal-on .op-reveal-watched.op-split:not(.op-revealed) > .op-split-pane:not(.op-callout) {
+  opacity: 0;
+  translate: 0 24px;
+}
+
+@media (min-width: 701px) {
+  .op-reveal-on .op-reveal-watched.op-split:not(.op-revealed) > .op-split-start:not(.op-callout) { translate: -48px 0; }
+  .op-reveal-on .op-reveal-watched.op-split:not(.op-revealed) > .op-split-end:not(.op-callout) { translate: 48px 0; }
+}
+
+/* Keep focus-mode blur transitions on revealed top-level blocks. */
+[data-op-reveal].op-focus-block:not(.op-split, .op-callout) {
+  transition:
+    filter 0.35s ease,
+    opacity 0.7s ease,
+    translate 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: 0ms;
+}
+
+.op-revealed[data-op-reveal].op-focus-block:not(.op-split, .op-callout) {
+  transition-delay: 0ms, var(--op-reveal-delay, 0ms), var(--op-reveal-delay, 0ms);
+}
+
+.op-page .op-callout-slide {
+  transition: filter 0.35s ease, opacity 0.32s ease, translate 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.op-page .op-callout-slide.op-callout-away:not(:focus-within) {
+  opacity: 0;
+  pointer-events: none;
+  translate: var(--op-page-gutter) 0;
+}
+
+@media (max-width: 860px), (any-hover: none) {
+  .op-page .op-callout-slide.op-callout-away:not(:focus-within) {
+    translate: var(--op-space-4) 0;
+  }
+}
+
+@media print {
+  .op-reveal-on :is([data-op-reveal], .op-split-pane),
+  .op-page .op-callout-slide {
+    opacity: 1 !important;
+    translate: none !important;
+    transition: none !important;
+  }
+}

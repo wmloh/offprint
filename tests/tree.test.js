@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const context = vm.createContext({ URL, console });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('tree.js'), context);
-const tree = context.DocForm._tree;
+const tree = context.OffPrint._tree;
 const config = { model: { name: 'cnn', layers: [64, 128] }, seed: 1, tags: [] };
 const names = (m) => [...tree.visible(m)].map((n) => (n.kind === 'more' ? 'more' : n.key));
 const keys = (list) => [...list].map((n) => n.key);

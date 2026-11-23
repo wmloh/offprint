@@ -1,0 +1,181 @@
+/* Hover tooltips for data-op-tip and glossary terms from tooltip.js, with hold-to-expand cards and auto-linked terms. */
+.op-tip,
+.op-term {
+  text-decoration: underline dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 80%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+
+.op-tip:hover,
+.op-term:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Tags and role-legend entries keep their tooltips and help cursor but never show the dotted underline. */
+:is(.op-tag, .op-legend-item):is(.op-tip, .op-term),
+:is(.op-tag, .op-legend-item) :is(.op-tip, .op-term) {
+  text-decoration: none;
+}
+
+.op-term-auto {
+  text-decoration-color: var(--op-text-muted);
+  text-decoration-thickness: 1.5px;
+  transition: text-decoration-color 0.15s, text-decoration-thickness 0.15s;
+}
+
+.op-term-auto:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Long presses on terms with extended text must not open touch callouts or select text. */
+.op-term-more {
+  -webkit-touch-callout: none;
+}
+
+html.op-term-holding,
+html.op-term-holding * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.op-term-missing {
+  text-decoration-color: var(--op-red);
+  cursor: default;
+}
+
+/* A running-text tip without a glossary tag. */
+.op-tip-untagged {
+  text-decoration-color: var(--op-red);
+}
+
+/* The term's glossary tags under its definition. */
+.op-tooltip-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--op-space-1);
+  margin-top: var(--op-space-2);
+}
+
+.op-tooltip-tags .op-tag {
+  font-size: 0.75rem;
+}
+
+.op-tooltip {
+  --op-tooltip-bg: light-dark(#ffffff, #252525);
+  position: fixed;
+  z-index: 70; /* above the zoom view (60) so tips inside an enlarged figure stay visible */
+  box-sizing: border-box;
+  max-width: min(320px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  padding: var(--op-space-2) var(--op-space-3);
+  border-radius: var(--op-radius-lg);
+  background: var(--op-tooltip-bg);
+  box-shadow: 0 0 0 1px var(--op-border-strong), 0 6px 20px light-dark(rgba(15, 15, 15, 0.12), rgba(0, 0, 0, 0.4));
+  color: var(--op-text);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.12s, transform 0.12s;
+  pointer-events: auto;
+}
+
+.op-tooltip[data-op-side="above"] {
+  transform: translateY(3px);
+}
+
+.op-tooltip.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.op-tooltip-title {
+  display: flex;
+  align-items: center;
+  gap: var(--op-space-2);
+  margin-bottom: 0.15em;
+  font-weight: 600;
+}
+
+.op-tooltip-ring {
+  display: inline-flex;
+  flex: none;
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  transition: opacity 0.15s;
+}
+
+.op-tooltip-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.op-tooltip-ring circle {
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.op-ring-track {
+  stroke: var(--op-border-strong);
+}
+
+.op-ring-fill {
+  stroke: var(--op-accent, var(--op-blue));
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.15s ease-out;
+}
+
+.op-tooltip.is-holding .op-ring-fill {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset var(--op-hold, 600ms) linear;
+}
+
+.op-tooltip.is-expanded {
+  max-width: min(480px, calc(100vw - 16px));
+}
+
+.op-tooltip.is-expanded .op-tooltip-ring {
+  opacity: 0;
+}
+
+.op-tooltip-more {
+  margin-top: var(--op-space-2);
+  padding-top: var(--op-space-2);
+  border-top: 1px solid var(--op-border);
+  animation: op-more-in 0.25s ease-out;
+}
+
+.op-tooltip-more > :first-child {
+  margin-top: 0;
+}
+
+.op-tooltip-more > :last-child {
+  margin-bottom: 0;
+}
+
+.op-tooltip-more p,
+.op-tooltip-more ul,
+.op-tooltip-more ol {
+  margin: 0.5em 0;
+}
+
+.op-tooltip-more code {
+  font-size: 0.9em;
+}
+
+@keyframes op-more-in {
+  from { opacity: 0; }
+}
+
+.op-tooltip .katex {
+  font-size: 1.05em;
+}

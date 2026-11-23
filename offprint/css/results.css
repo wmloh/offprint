@@ -1,0 +1,273 @@
+/* Results tables from results.js: sort buttons in headers, heatmap shading, best-in-column values, pass/fail rules,
+   and opt-in column filter menus with a chip and row-count bar. */
+.op-results {
+  --op-heat-color: var(--op-blue);
+}
+
+.op-results .op-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-results-interval {
+  display: block;
+  color: var(--op-text-muted);
+}
+
+.op-results th[aria-sort],
+.op-results th.op-filterable {
+  padding: 0;
+}
+
+.op-sort {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0.4em 0.6em;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.op-num .op-sort {
+  justify-content: flex-end;
+}
+
+.op-sort:hover {
+  background: var(--op-bg-hover);
+  color: var(--op-text);
+}
+
+.op-sort:focus-visible {
+  outline: 2px solid var(--op-focus);
+  outline-offset: -2px;
+}
+
+.op-sort-icon {
+  display: inline-flex;
+  flex: none;
+  fill: currentColor;
+}
+
+.op-num .op-sort > .op-sort-icon {
+  order: -1;
+}
+
+.op-sort-icon path {
+  opacity: 0.25;
+  transition: opacity 0.15s;
+}
+
+.op-sort[data-op-sorted="asc"] .op-sort-up,
+.op-sort[data-op-sorted="desc"] .op-sort-down {
+  opacity: 1;
+}
+
+.op-sort[data-op-sorted="asc"],
+.op-sort[data-op-sorted="desc"] {
+  color: var(--op-text);
+}
+
+/* One hue from faint to about a third strength, so text stays readable on the strongest cell. */
+.op-heat {
+  background: color-mix(in srgb, var(--op-heat-color) calc(var(--op-heat, 0) * 34%), transparent);
+}
+
+/* Threshold rule under a header, and the Pass or Fail word after each classified value. */
+.op-rule {
+  display: block;
+  font-size: 0.78em;
+  font-weight: 400;
+  color: var(--op-text-muted);
+  white-space: nowrap;
+}
+
+.op-results :is(th[aria-sort], th.op-filterable) > .op-rule {
+  margin-top: -0.25em;
+  padding: 0 0.6em 0.4em;
+}
+
+.op-verdict {
+  display: inline-block;
+  min-width: 2.4em;
+  margin-left: 0.2em;
+  font-size: 0.78em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.op-pass .op-verdict {
+  color: var(--op-green);
+}
+
+.op-fail .op-verdict {
+  color: var(--op-red);
+}
+
+.op-best {
+  font-weight: 600;
+  color: var(--op-text);
+  box-shadow: inset 0 -2px 0 var(--op-heat-color);
+}
+
+/* Header row with the sort button (or the header text) and a filter button that lights up while it filters. */
+.op-head {
+  display: flex;
+  align-items: stretch;
+}
+
+.op-head > .op-sort {
+  flex: 1;
+  width: auto;
+  padding-right: 0.2em;
+}
+
+.op-head-label {
+  flex: 1;
+  padding: 0.4em 0.2em 0.4em 0.6em;
+}
+
+.op-num .op-head-label {
+  text-align: right;
+}
+
+.op-filter-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.8em;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  fill: currentColor;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.op-filter-toggle:hover,
+.op-filter-toggle[aria-expanded="true"] {
+  background: var(--op-bg-hover);
+  opacity: 1;
+}
+
+.op-filter-toggle[data-op-active="true"] {
+  color: var(--op-heat-color);
+  opacity: 1;
+}
+
+.op-filter-toggle:focus-visible {
+  outline: 2px solid var(--op-focus);
+  outline-offset: -2px;
+  opacity: 1;
+}
+
+/* The bar above a filtered table: chips first, then the row count and Clear. */
+.op-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--op-space-2);
+  margin-block: var(--op-space-3) var(--op-space-2);
+  color: var(--op-text-muted);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-filter-bar[hidden] {
+  display: none;
+}
+
+.op-filter-bar + table {
+  margin-top: 0;
+}
+
+/* The filter panel is attached to the body so scrolling tables cannot clip it. */
+.op-filter-menu {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 48;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: min(200px, calc(100vw - 16px));
+  max-width: min(320px, calc(100vw - 16px));
+  padding: var(--op-space-3);
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--op-border-strong);
+  border-radius: var(--op-radius-lg);
+  background: var(--op-bg);
+  box-shadow: 0 6px 20px light-dark(rgba(15, 15, 15, 0.12), rgba(0, 0, 0, 0.4));
+  color: var(--op-text);
+  font: 0.875rem/1.4 var(--op-font);
+}
+
+.op-filter-title {
+  margin: 0 0 var(--op-space-2);
+  font-weight: 600;
+}
+
+.op-filter-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--op-space-1);
+  margin-bottom: var(--op-space-2);
+}
+
+/* Quick filters and value lists are choices.js chip groups, tinted blue unless a role or colour is set. */
+.op-filter-chips,
+.op-filter-values {
+  align-content: flex-start;
+  max-height: 240px;
+  margin: 0 0 var(--op-space-2);
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.op-filter-blank .op-chip-text {
+  font-style: italic;
+}
+
+.op-filter-bounds {
+  display: grid;
+  gap: var(--op-space-2);
+}
+
+.op-filter-bounds label {
+  display: grid;
+  gap: 2px;
+  color: var(--op-text-muted);
+  font-size: 0.92em;
+}
+
+.op-filter-bounds input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--op-space-1) var(--op-space-2);
+  border: 1px solid var(--op-border-strong);
+  border-radius: var(--op-radius);
+  background: var(--op-bg);
+  color: var(--op-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color-scheme: light dark;
+}
+
+.op-filter-bounds input:focus-visible {
+  outline: 2px solid var(--op-focus);
+  outline-offset: -1px;
+}
+
+.op-filter-extent {
+  margin: var(--op-space-2) 0;
+  color: var(--op-text-muted);
+  font-size: 0.88em;
+}

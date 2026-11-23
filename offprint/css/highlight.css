@@ -1,0 +1,53 @@
+[data-op-key][data-op-selection-group]:is(button, [role="button"][tabindex]):not(:disabled, [aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+/* Selected linked items: a soft tint with a 2px leading edge in the group's colour (data-op-color or data-op-role on
+   the item or an ancestor), else blue. Every participant transitions, so the mark fades from one item to the next. */
+[data-op-selection-group][data-op-key] {
+  --op-selection-color: var(--op-accent, var(--op-blue));
+  transition: background-color 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+[data-op-selection-active] {
+  border-radius: var(--op-radius-sm);
+  background-color: color-mix(in srgb, var(--op-selection-color) 12%, transparent);
+  box-shadow: inset 2px 0 0 var(--op-selection-color);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Table rows tint every cell without the edge; cells take the transition because rows paint no box. */
+tr[data-op-selection-group][data-op-key] > :is(td, th) {
+  transition: background-color 0.25s ease;
+}
+
+tr[data-op-selection-active] {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+tr[data-op-selection-active] > :is(td, th) {
+  background-color: color-mix(in srgb, var(--op-selection-color) 12%, transparent);
+}
+
+/* SVG shapes paint no box: they glow in the selection colour instead. */
+svg [data-op-selection-active] {
+  background-color: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 0 2px var(--op-selection-color)) drop-shadow(0 0 4px color-mix(in srgb, var(--op-selection-color) 50%, transparent));
+}
+
+/* Code annotation markers are round controls: selection fills them like a linked marker. */
+.op-code-mark[data-op-selection-active] {
+  border-radius: 999px;
+  background: var(--op-mark);
+  box-shadow: none;
+  color: var(--op-bg);
+}
+
+/* Keyboard focus keeps its own solid ring, set apart from the selection mark by an offset. */
+[data-op-selection-group][data-op-key]:focus-visible {
+  outline: 2px solid var(--op-focus);
+  outline-offset: 3px;
+}

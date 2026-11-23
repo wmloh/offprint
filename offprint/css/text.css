@@ -1,0 +1,150 @@
+/* Text roles for visual hierarchy. CSS only; tokens.css sets sizes, colour, and case.
+   Eyebrow: <p class="op-eyebrow">What happens</p> placed directly before the heading or block it introduces.
+   Labelled fields: <dl class="op-fields"><dt>Inputs</dt><dd>…</dd>…</dl>, optionally with <div> around each pair.
+   Colours come from data-op-color or data-op-role on the eyebrow, the list, or one label. */
+
+/* Eyebrows: a few words of muted small caps that set context before the reader reaches the main text. Write them in
+   sentence case; CSS capitalizes, so screen readers read words rather than letters. */
+.op-eyebrow {
+  display: block;
+  color: var(--op-text-label);
+  font-size: var(--op-eyebrow-size);
+  font-weight: var(--op-eyebrow-weight);
+  letter-spacing: var(--op-eyebrow-tracking);
+  line-height: 1.4;
+  text-transform: var(--op-eyebrow-case);
+  overflow-wrap: anywhere;
+}
+
+.op-eyebrow:is([data-op-color], [data-op-role]),
+:is([data-op-color], [data-op-role]) > .op-eyebrow {
+  color: color-mix(in srgb, var(--op-accent) 85%, var(--op-text));
+}
+
+/* Proximity groups the eyebrow with what follows: the space above it separates, the space below stays small. */
+.op-page .op-eyebrow {
+  margin: 1.25em 0 0.2em;
+}
+
+.op-page .op-eyebrow:first-child {
+  margin-top: 0;
+}
+
+.op-page .op-eyebrow + *,
+.op-page:not(.op-bubble-body) > .op-eyebrow + :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 0;
+}
+
+.op-page:not(.op-bubble-body) > .op-eyebrow:has(+ h2) { margin-top: var(--op-space-h2); }
+.op-page:not(.op-bubble-body) > .op-eyebrow:has(+ h3) { margin-top: var(--op-space-h3); }
+.op-page:not(.op-bubble-body) > .op-eyebrow:first-child { margin-top: 0; }
+
+/* In a page header, the eyebrow takes the title's own top margin (base.css h1: 2em at 1.875em), so titles keep
+   their place across pages. */
+.op-page > header > .op-eyebrow:first-child:has(+ h1) { margin-top: calc(3.75 * var(--op-font-size)); }
+
+/* Labelled fields: muted labels in an aligned column beside their values, one row per label. Rows stack when the
+   list is narrow, such as in split views, cards, and phones. Cells stretch to the row so the hairlines between rows
+   meet; the smaller label keeps the value's line box and padding, so first lines still share a baseline. */
+.op-fields {
+  --op-fields-gap: var(--op-space-4);
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: fit-content(var(--op-field-label-width)) minmax(0, 1fr);
+  column-gap: 0;
+  align-items: stretch;
+}
+
+.op-page .op-fields {
+  margin: 0.75em 0;
+}
+
+.op-fields > div {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: stretch;
+}
+
+.op-fields dt {
+  --op-field-label-scale: 0.9;
+  grid-column: 1;
+  color: var(--op-text-label);
+  font-size: calc(var(--op-field-label-scale) * 1em);
+  font-weight: 600;
+  line-height: calc(var(--op-line-height) / var(--op-field-label-scale));
+  overflow-wrap: anywhere;
+  padding-inline-end: var(--op-fields-gap);
+}
+
+.op-fields dt:is([data-op-color], [data-op-role]),
+.op-fields:is([data-op-color], [data-op-role]) dt,
+.op-fields > div:is([data-op-color], [data-op-role]) > dt {
+  color: color-mix(in srgb, var(--op-accent) 85%, var(--op-text));
+}
+
+.op-fields:is([data-op-color], [data-op-role]) dd {
+  color: var(--op-text);
+}
+
+.op-fields dd {
+  grid-column: 2;
+  margin: 0;
+  min-width: 0;
+}
+
+.op-fields :is(dt, dd) {
+  padding-block: 0.55em;
+}
+
+.op-fields dt {
+  padding-block: calc(0.55em / var(--op-field-label-scale));
+}
+
+.op-fields dd > :first-child { margin-top: 0; }
+.op-fields dd > :last-child { margin-bottom: 0; }
+
+/* A hairline between rows chunks the list; several values under one label stay in one row. */
+.op-fields > dt:not(:first-child),
+.op-fields > dt:not(:first-child) + dd,
+.op-fields > div:not(:first-child) {
+  border-top: 1px solid var(--op-border);
+}
+
+.op-fields > dd + dd,
+.op-fields > div > dd + dd {
+  padding-top: 0;
+}
+
+.op-fields > dt:first-child,
+.op-fields > dt:first-child + dd,
+.op-fields > div:first-child > dt,
+.op-fields > div:first-child > dt + dd {
+  padding-top: 0.15em;
+}
+
+.op-fields > dt:first-child,
+.op-fields > div:first-child > dt {
+  padding-top: calc(0.15em / var(--op-field-label-scale));
+}
+
+@container (width < 30em) {
+  .op-fields dt,
+  .op-fields dd {
+    grid-column: 1 / -1;
+  }
+
+  .op-fields dt + dd {
+    padding-top: 0.1em;
+  }
+
+  .op-fields > dt:not(:first-child) + dd {
+    border-top: 0;
+  }
+
+  .op-fields dt {
+    padding-bottom: 0;
+    padding-inline-end: 0;
+    line-height: 1.45;
+  }
+}

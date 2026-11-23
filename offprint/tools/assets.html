@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OffPrint assets</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    body { margin: 0; }
+    main { max-width: 52rem; margin: auto; padding: 2rem 1rem; }
+    button, select, input { font: inherit; }
+    fieldset { margin: 1rem 0; border: 1px solid var(--op-border-strong); border-radius: var(--op-radius); }
+    section { border-top: 1px solid var(--op-border-strong); padding: 1rem 0; }
+    section h2 { margin: 0; font-size: 1.15rem; }
+    section p { margin: .5rem 0; }
+    code, select { overflow-wrap: anywhere; max-width: 100%; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .75rem 0; }
+    textarea { box-sizing: border-box; width: 100%; min-height: 10rem; font-family: var(--op-font-mono); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>OffPrint assets</h1>
+    <p>Choose the site folder that contains your pages and manifest. OffPrint checks the search index and data
+      scripts configured under <code>assets</code>. Your files stay on this device.</p>
+    <fieldset>
+      <legend>Site folder</legend>
+      <label for="folder">Choose a folder to check and download outputs</label>
+      <input id="folder" type="file" webkitdirectory multiple>
+      <div class="actions">
+        <button id="open" type="button" hidden>Open folder with save access…</button>
+        <button id="recheck" type="button" hidden>Check folder again</button>
+      </div>
+    </fieldset>
+    <div id="manifest-row" hidden>
+      <label for="manifest">Site manifest</label>
+      <select id="manifest"></select>
+    </div>
+    <p id="status" role="status"></p>
+    <ul id="diagnostics" hidden></ul>
+    <div id="exports" hidden>
+      <p>Check the outputs you want to regenerate. Downloads use the file name shown. Move each downloaded file
+        to its listed destination within the chosen folder.</p>
+      <div class="actions">
+        <button id="download" type="button" disabled>Download selected</button>
+        <button id="save" type="button" disabled hidden>Save selected to site folder</button>
+      </div>
+    </div>
+    <div id="outputs"></div>
+  </main>
+  <script type="application/json" data-op-page>
+    { "profile": "none", "features": { "tooltips": true, "search": true, "data": true } }
+  </script>
+  <script src="../offprint.js"></script>
+  <script src="asset-build.js"></script>
+  <script src="asset-page.js"></script>
+</body>
+</html>

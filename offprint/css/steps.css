@@ -1,0 +1,319 @@
+/* Figure steps and standalone card panels share the selector and detail layout. */
+:is(.op-figure-steps, .op-card-panel) {
+  --op-step-pane-max: min(22rem, 38svh);
+  container-type: inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--op-space-4);
+  margin: var(--op-space-5) 0;
+}
+
+.op-figure-steps > figure {
+  flex: 1 0 100%;
+  align-self: start;
+  min-width: 0;
+  margin: 0;
+}
+
+.op-figure-steps[data-op-step-layout="side"]:not(:has(> .op-step-details)) > figure {
+  flex: 3 1 22rem;
+}
+
+:is(.op-figure-steps, .op-card-panel) > .op-step-panel {
+  flex: 1 1 100%;
+  min-width: 0;
+  margin: 0;
+  padding: var(--op-space-2);
+  background: var(--op-bg-sidebar);
+  border-radius: var(--op-radius-lg);
+  color: inherit;
+}
+
+.op-figure-steps[data-op-step-layout="side"]:not(:has(> .op-step-details)) > .op-step-panel {
+  flex-basis: 11rem;
+  align-self: start;
+}
+
+.op-step-panel:has(> .op-step-list) {
+  display: flex;
+  flex-direction: column;
+}
+
+.op-step-panel > .op-step-heading {
+  margin: 0;
+  padding: var(--op-space-1) var(--op-space-3) var(--op-space-2);
+  color: var(--op-text-label);
+  font-size: var(--op-eyebrow-size);
+  font-weight: var(--op-eyebrow-weight);
+  letter-spacing: var(--op-eyebrow-tracking);
+  line-height: 1.4;
+  text-transform: var(--op-eyebrow-case);
+  overflow-wrap: anywhere;
+}
+
+/* Titled card groups inside a standalone selector list. */
+.op-step-group {
+  display: grid;
+  gap: var(--op-space-1);
+}
+
+.op-step-list > :is(button, .op-step-group) + .op-step-group {
+  margin-top: var(--op-space-1);
+  padding-top: var(--op-space-2);
+  border-top: 1px solid var(--op-border);
+}
+
+.op-step-group-heading {
+  margin: 0;
+  padding: var(--op-space-1) var(--op-space-3) 0;
+  color: var(--op-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.op-step-details {
+  flex: 3 1 100%;
+  min-width: 0;
+  border: 1px solid var(--op-border);
+  border-radius: var(--op-radius-lg);
+}
+
+.op-step-details > * {
+  margin: 0;
+  padding: var(--op-space-2) var(--op-space-4);
+}
+
+@container (min-width: 33rem) {
+  :is(.op-figure-steps, .op-card-panel) > .op-step-panel { flex-basis: 11rem; }
+  :is(.op-figure-steps, .op-card-panel) > .op-step-details { flex-basis: 21rem; }
+}
+
+@media screen {
+  :is(.op-figure-steps-ready, .op-card-panel-ready) > .op-step-panel {
+    max-block-size: var(--op-step-pane-max);
+  }
+
+  .op-figure-steps-ready > .op-step-panel.op-scrollport,
+  :is(.op-figure-steps-ready, .op-card-panel-ready) > .op-step-panel > .op-step-list {
+    min-block-size: 0;
+    overflow: hidden auto;
+    scrollbar-gutter: stable;
+  }
+
+  :is(.op-figure-steps-ready, .op-card-panel-ready) > .op-step-details > [inert] { visibility: hidden; }
+
+  @container (width < 33rem) {
+    .op-figure-steps-ready > .op-step-details > [inert] { display: none; }
+
+    .op-card-panel-ready > .op-step-details { position: relative; }
+
+    /* Keep inactive widgets measurable without adding their height to the page. */
+    .op-card-panel-ready > .op-step-details > [inert] {
+      position: absolute;
+      inset: 0 0 auto;
+      max-block-size: 100%;
+      overflow: clip;
+    }
+  }
+
+  @container (min-width: 33rem) {
+    :is(.op-figure-steps-ready, .op-card-panel-ready) > .op-step-details {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+      max-block-size: var(--op-step-pane-max);
+    }
+
+    /* Overlay details to size the pane from the longest one. Each detail scrolls on its own. */
+    :is(.op-figure-steps-ready, .op-card-panel-ready) > .op-step-details > * {
+      grid-area: 1 / 1;
+      min-width: 0;
+      min-block-size: 0;
+      max-block-size: calc(var(--op-step-pane-max) - 2px);
+      overflow: hidden auto;
+      scrollbar-gutter: stable;
+    }
+  }
+}
+
+.op-figure-step-controls {
+  margin-block-start: var(--op-space-3);
+}
+
+.op-step-figure > .op-anim-controls {
+  display: none;
+}
+
+.op-figure-steps > figure > svg {
+  max-height: min(620px, 56svh);
+}
+
+.op-figure-steps[data-op-step-layout="side"]:not(:has(> .op-step-details)) > figure > svg {
+  max-height: min(420px, 38svh);
+}
+
+.op-step-panel:not(ol, ul, :has(> .op-step-list)),
+.op-step-list:not(ol, ul) {
+  display: grid;
+  align-content: start;
+  gap: var(--op-space-1);
+}
+
+.op-step-panel button[data-op-key] {
+  display: grid;
+  width: 100%;
+  padding: calc((var(--op-space-1) + var(--op-space-2)) / 2) var(--op-space-3);
+  border: 0;
+  border-radius: var(--op-radius-lg);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  overflow-wrap: anywhere;
+  text-align: start;
+  transition: background-color 0.15s;
+}
+
+.op-figure-steps-ready > .op-step-panel button[data-op-key],
+.op-card-panel-ready > .op-step-panel > .op-step-list button[data-op-key] {
+  position: relative;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .op-figure-steps-ready > .op-step-panel button[data-op-key]:not([aria-current="step"]):hover,
+  .op-card-panel-ready > .op-step-panel > .op-step-list button[data-op-key]:not([aria-selected="true"]):hover {
+    background: var(--op-bg-hover);
+  }
+}
+
+/* The selection highlight is one block that slides under the buttons. */
+:is(.op-figure-steps-ready, .op-card-panel-ready) :has(> .op-step-indicator) {
+  position: relative;
+}
+
+.op-step-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--op-radius-lg);
+  background: color-mix(in srgb, var(--op-accent, var(--op-gray)) 22%, transparent);
+  pointer-events: none;
+}
+
+.op-step-indicator-glide {
+  transition: transform 0.2s ease-out, width 0.2s ease-out, height 0.2s ease-out;
+}
+
+/* Optional number circle, label, and tag slot share one row; the label wraps between them. */
+.op-step-panel button[data-op-key]:has(> .op-step-label) {
+  grid-template-columns: auto minmax(min(6rem, 100%), 1fr) auto;
+  align-items: start;
+}
+
+/* Both copies share one cell, so the bold copy sets the width and rows never shift. */
+:is(.op-step-label, .op-step-label-bold) {
+  grid-area: 1 / 2;
+  min-width: 0;
+}
+
+.op-step-number {
+  grid-area: 1 / 1;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-inline-size: 1.7em;
+  block-size: 1.7em;
+  margin: 0.05em var(--op-space-2) 0 0;
+  padding: 0 0.4em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--op-accent, var(--op-gray)) 18%, transparent);
+  color: var(--op-accent, var(--op-text-muted));
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.op-step-tags {
+  grid-area: 1 / 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25em;
+  margin-inline-start: var(--op-space-2);
+}
+
+.op-step-tags > .op-tag {
+  vertical-align: baseline;
+}
+
+/* Without scripts, card tags sit right-aligned under the label. */
+.op-step-panel button[data-op-key] > .op-tag {
+  justify-self: end;
+}
+
+/* Inline filter box from data-op-search; it stays above the scrolling list. */
+.op-step-search {
+  flex: none;
+  padding: 0 0 var(--op-space-2);
+}
+
+.op-step-search-input {
+  box-sizing: border-box;
+  inline-size: 100%;
+  padding: calc(var(--op-space-1) + 1px) var(--op-space-3);
+  border: 0;
+  border-radius: var(--op-radius-lg);
+  background: var(--op-bg);
+  color: var(--op-text);
+  font: inherit;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.op-step-search-input::placeholder {
+  color: var(--op-text-faint);
+}
+
+.op-step-search-input:focus-visible {
+  outline: 2px solid var(--op-accent, var(--op-focus));
+  outline-offset: -2px;
+}
+
+.op-step-empty {
+  flex: none;
+  margin: 0;
+  padding: var(--op-space-2) var(--op-space-3);
+  color: var(--op-text-muted);
+  font-size: 0.85em;
+}
+
+.op-step-empty:empty,
+.op-step-filtered {
+  display: none !important;
+}
+
+.op-step-label {
+  font-weight: 400;
+  transition: font-weight 0.2s ease-out;
+}
+
+.op-step-label-bold {
+  font-weight: 600;
+  visibility: hidden;
+}
+
+:is(button[aria-current="step"], button[aria-selected="true"]) > .op-step-label {
+  font-weight: 600;
+}
+
+.op-step-panel button:focus-visible,
+.op-scrollport:focus-visible {
+  outline-offset: -2px;
+}
+
+@media print {
+  :is(.op-figure-steps, .op-card-panel) { display: block; }
+  .op-step-search { display: none; }
+}

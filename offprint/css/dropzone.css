@@ -1,0 +1,55 @@
+/* Reader file dropzones from dropzone.js: a dashed drop area, a status line with Reset, and the file's view. */
+.op-dropzone {
+  margin-block: 0.75em;
+}
+
+.op-dropzone-area {
+  padding: var(--op-space-4) var(--op-space-5);
+  border: 1.5px dashed var(--op-border-strong);
+  border-radius: var(--op-radius-lg);
+  background: var(--op-bg-subtle);
+  text-align: center;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.op-dropzone.is-dragging .op-dropzone-area {
+  border-color: var(--op-blue);
+  background: var(--op-blue-bg);
+}
+
+.op-dropzone-area > :first-child {
+  margin-top: 0;
+}
+
+.op-dropzone-area > :last-child,
+.op-dropzone-hint {
+  margin-bottom: 0;
+}
+
+.op-dropzone-hint {
+  color: var(--op-text-muted);
+  font-size: 0.9em;
+}
+
+.op-dropzone-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--op-space-2);
+  margin-block: var(--op-space-2) 0;
+  color: var(--op-text-muted);
+  font-size: 0.9em;
+}
+
+.op-dropzone-status[hidden],
+.op-dropzone-status button[hidden] {
+  display: none;
+}
+
+.op-dropzone-status.is-error {
+  color: var(--op-red);
+}
+
+.op-dropzone-output {
+  margin-block: var(--op-space-3) 0;
+}

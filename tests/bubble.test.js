@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const context = vm.createContext({ URL, console: { warn() {} } });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('bubble.js'), context);
-const bubble = context.DocForm._peekBubbles;
+const bubble = context.OffPrint._peekBubbles;
 const json = (value) => JSON.parse(JSON.stringify(value));
 
 // Boxes are anchor rectangles in a 1000px-tall viewport.

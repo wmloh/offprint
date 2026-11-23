@@ -1,0 +1,179 @@
+/* Numbered captions and equations, reference links, preview cards, citations, and reference lists from refs.js. */
+.op-page .op-label {
+  font-weight: 600;
+  color: var(--op-text);
+}
+
+.op-page figcaption,
+.op-page caption {
+  color: var(--op-text-muted);
+  font-size: 0.875em;
+}
+
+.op-page caption {
+  caption-side: top;
+  padding-bottom: var(--op-space-2);
+}
+
+.op-page .op-split caption {
+  text-align: left;
+}
+
+.op-math[data-op-equation-label] {
+  position: relative;
+  padding-inline: 3.5em;
+}
+
+.op-math[data-op-equation-label]::after {
+  content: attr(data-op-equation-label);
+  position: absolute;
+  top: 50%;
+  right: 0;
+  translate: 0 -50%;
+  color: var(--op-text-muted);
+  font-size: 0.95em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* In-page references with hover previews use their own colour so they read apart from links to other pages and
+   from tooltip terms. */
+.op-page a.op-ref:not(.op-ref-page) {
+  color: var(--op-xref);
+}
+
+.op-ref-missing {
+  color: var(--op-red) !important;
+}
+
+/* A brief tint on the element a reference link jumps to. */
+.op-ref-flash {
+  animation: op-ref-flash 1.4s ease-out;
+}
+
+@keyframes op-ref-flash {
+  0%, 30% {
+    background-color: var(--op-yellow-bg);
+    box-shadow: 0 0 0 6px var(--op-yellow-bg);
+  }
+}
+
+/* Preview cards reuse the tooltip box from tooltip.css. */
+.op-tooltip.op-peek {
+  width: min(440px, calc(100vw - 16px));
+  max-width: min(440px, calc(100vw - 16px));
+  max-height: min(360px, calc(100vh - 16px));
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Cut-off previews fade out at the bottom. An overlay rather than a mask keeps the card's outline and shadow,
+   so short previews stay opaque over busy backgrounds such as peek bubble panels. */
+.op-tooltip.op-peek.is-clipped::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 28px;
+  border-radius: 0 0 var(--op-radius-lg) var(--op-radius-lg);
+  background: linear-gradient(to bottom, transparent, var(--op-tooltip-bg));
+  pointer-events: none;
+}
+
+.op-peek :is(p, ul, ol, figure, table, pre, blockquote, .op-callout) {
+  margin: 0.5em 0;
+}
+
+.op-peek :is(figure, .op-math[data-op-display]) {
+  margin: 0;
+}
+
+.op-peek :is(svg, img) {
+  max-width: 100%;
+  height: auto;
+}
+
+.op-peek .op-math[data-op-display] {
+  overflow: hidden;
+}
+
+.op-peek-page {
+  color: var(--op-text-label);
+  font-size: var(--op-eyebrow-size);
+  font-weight: var(--op-eyebrow-weight);
+  letter-spacing: var(--op-eyebrow-tracking);
+  text-transform: var(--op-eyebrow-case);
+}
+
+.op-peek-title {
+  font-weight: 600;
+}
+
+/* Citations: [1, 2] with each number linking to the reference list. */
+.op-cite {
+  font-style: normal;
+  white-space: nowrap;
+  color: var(--op-text-muted);
+}
+
+.op-page .op-cite-link {
+  color: inherit;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-page .op-cite-link:hover {
+  text-decoration: underline;
+}
+
+.op-cite-missing {
+  color: var(--op-red);
+  cursor: help;
+}
+
+.op-tooltip.op-cite-card {
+  max-width: min(400px, calc(100vw - 16px));
+}
+
+.op-bib-title {
+  font-weight: 500;
+}
+
+.op-bib-where {
+  font-style: italic;
+}
+
+.op-bib-link {
+  word-break: break-all;
+}
+
+.op-page ol.op-references {
+  padding-left: 2.2em;
+  list-style: none;
+  counter-reset: op-ref;
+  font-size: 0.9375em;
+}
+
+.op-page .op-references > li {
+  position: relative;
+  counter-increment: op-ref;
+  margin: 0.4em 0;
+  scroll-margin-top: var(--op-space-7);
+}
+
+.op-page .op-references > li::before {
+  content: "[" counter(op-ref) "]";
+  position: absolute;
+  right: calc(100% + 0.6em);
+  color: var(--op-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.op-page .op-bib-back {
+  color: var(--op-text-faint);
+  text-decoration: none;
+}
+
+.op-page .op-bib-back:hover {
+  color: var(--op-text);
+}

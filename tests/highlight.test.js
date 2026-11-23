@@ -4,11 +4,11 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const vm = require('node:vm');
 
-const core = readFileSync(join(__dirname, '../docform/js/core.js'), 'utf8');
-const source = readFileSync(join(__dirname, '../docform/js/highlight.js'), 'utf8');
-const GROUP = 'data-df-selection-group';
-const KEY = 'data-df-key';
-const ACTIVE = 'data-df-selection-active';
+const core = readFileSync(join(__dirname, '../offprint/js/core.js'), 'utf8');
+const source = readFileSync(join(__dirname, '../offprint/js/highlight.js'), 'utf8');
+const GROUP = 'data-op-selection-group';
+const KEY = 'data-op-key';
+const ACTIVE = 'data-op-selection-active';
 const item = `[${GROUP}][${KEY}]`;
 const control = 'button:not([role="tab"]), [role="button"][tabindex]';
 
@@ -62,9 +62,9 @@ function selectionPage(nodes, groups = {}, store = new Map()) {
   const diagnostics = [];
   const boot = { canInitialize: () => true, report: (_, feature, host, message) => diagnostics.push(message),
     moduleFailed: (_, error) => { throw error; } };
-  const DocForm = { _boot: boot, _site: { base: 'file:///site/site.js', selectionGroups: groups } };
+  const OffPrint = { _boot: boot, _site: { base: 'file:///site/site.js', selectionGroups: groups } };
   const context = vm.createContext({
-    DocForm,
+    OffPrint,
     document,
     localStorage: {
       getItem: (key) => store.get(key),
@@ -82,7 +82,7 @@ function selectionPage(nodes, groups = {}, store = new Map()) {
   });
 
   vm.runInContext(core, context);
-  DocForm._all = (selector, scope = document.body) => descendants(scope).filter((el) => el.matches(selector));
+  OffPrint._all = (selector, scope = document.body) => descendants(scope).filter((el) => el.matches(selector));
   vm.runInContext(source, context);
   boot.prepareSelection();
 
@@ -95,10 +95,10 @@ function selectionPage(nodes, groups = {}, store = new Map()) {
   }
 
   return {
-    selection: DocForm.selection, document, diagnostics,
+    selection: OffPrint.selection, document, diagnostics,
     start() {
       boot.initialize();
-      return { selection: DocForm.selection, document, observe, options, dispatch };
+      return { selection: OffPrint.selection, document, observe, options, dispatch };
     }
   };
 }
@@ -115,7 +115,7 @@ test('a shared key links views in one group and a second activation clears that 
   const views = [prose, cell, annotation, otherGroup, anotherKey];
   const { selection, document, dispatch } = setup(...views);
   const changes = [];
-  document.addEventListener('df:selection:change', ({ detail: { group, current: { key } } }) => {
+  document.addEventListener('op:selection:change', ({ detail: { group, current: { key } } }) => {
     assert.equal(selection.group(group).get(), key);
     changes.push([group, key]);
   });
@@ -167,7 +167,7 @@ test('a redraw restores the selection on new marks and updates marks that change
   view.children = [oldMark];
   const { document, observe, options, selection } = setup(view);
   const changes = [];
-  document.addEventListener('df:selection:change', ({ detail }) => changes.push(detail.current.key));
+  document.addEventListener('op:selection:change', ({ detail }) => changes.push(detail.current.key));
   selection.group('trace').select('old');
   assert.equal(active(oldMark), true);
 
@@ -196,8 +196,8 @@ test('a redraw restores the selection on new marks and updates marks that change
 test('startup uses configured, stored, document-order and setup seeds in that order', () => {
   const store = new Map();
   const groups = { trace: { persist: true } };
-  const late = element('button', 'trace', 'late', { 'data-df-selection-seed': '' });
-  const early = element('button', 'trace', 'early', { 'data-df-selection-seed': '' });
+  const late = element('button', 'trace', 'late', { 'data-op-selection-seed': '' });
+  const early = element('button', 'trace', 'early', { 'data-op-selection-seed': '' });
   const page = selectionPage([early, late], groups, store);
   const group = page.selection.group('trace');
   assert.equal(page.selection.seed('trace', 'custom'), true);
@@ -236,7 +236,7 @@ test('custom subscribers and events observe committed views before queued writes
     }
   });
   const unsubscribe = group.subscribe((state) => log.push(['second', state.key]), { immediate: true });
-  document.addEventListener('df:selection:change', ({ detail }) => log.push(['event', detail.current.key]));
+  document.addEventListener('op:selection:change', ({ detail }) => log.push(['event', detail.current.key]));
   assert.equal(group.select('first'), true);
   unsubscribe();
   unsubscribe();

@@ -1,0 +1,184 @@
+/* Floating controls, focus mode, and the hideable navigation panel from controls.js. */
+/* Keep both pills beside the sidebar, or at the screen edge without one. */
+.op-controls-bar {
+  position: fixed;
+  top: var(--op-space-3);
+  left: var(--op-space-3);
+  z-index: 30;
+  transition: left 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--op-space-2);
+}
+
+.op-controls,
+.op-controls-pager {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--op-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--op-bg) 70%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+}
+
+.op-controls-btn,
+.op-controls .op-theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--op-text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.op-controls-btn:hover {
+  background: var(--op-bg-hover);
+  color: var(--op-text);
+}
+
+.op-controls-pager .op-controls-btn:focus-visible {
+  outline: 2px solid var(--op-blue);
+  outline-offset: -2px;
+}
+
+.op-controls-btn[aria-pressed="true"] {
+  background: var(--op-blue-bg);
+  color: var(--op-blue);
+}
+
+.op-controls-nav[data-op-nav-mode="auto"] {
+  background: var(--op-blue-bg);
+  color: var(--op-blue);
+}
+
+.op-controls .op-theme-toggle-label {
+  display: none;
+}
+
+/* Reading progress ring. */
+.op-controls-progress {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--op-blue);
+}
+
+.op-controls-progress circle {
+  fill: none;
+  stroke-width: 2;
+}
+
+.op-progress-track {
+  stroke: var(--op-border-strong);
+}
+
+.op-progress-bar {
+  stroke: currentColor;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+/* Focus mode: sections away from the viewport centre sit behind frosted glass. */
+.op-focus-block {
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
+
+/* :not(:hover) keeps the block under the pointer sharp, so readers can glance at it without scrolling. */
+.op-focus-mode .op-focus-dim:not(:hover) {
+  filter: blur(3px);
+  opacity: 0.45;
+}
+
+/* Tooltips and previews may hold copies of dimmed blocks; their contents are always shown sharp. */
+.op-focus-mode .op-tooltip .op-focus-dim {
+  filter: none;
+  opacity: 1;
+}
+
+/* Hidden navigation panel on wide screens: the sidebar slides away and the page recentres. */
+@media (width > 860px) and (any-hover: hover) {
+  body:has(> .op-sidebar) {
+    transition: grid-template-columns 0.25s ease;
+  }
+
+  body:has(> .op-sidebar) > .op-page {
+    transition: margin-inline-start 0.25s ease;
+  }
+
+  .op-sidebar {
+    width: var(--op-sidebar-width);
+    transition: transform 0.25s ease, visibility 0s, scrollbar-color 0.2s ease;
+  }
+
+  .op-nav-hidden body:has(> .op-sidebar) {
+    --op-sidebar-slot: 0px;
+    grid-template-columns: 0 minmax(0, 1fr);
+  }
+
+  html:has(body > .op-sidebar):not(.op-nav-hidden) .op-controls-bar {
+    left: calc(var(--op-sidebar-width) + var(--op-space-3));
+  }
+
+  .op-nav-hidden .op-sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0s linear 0.25s, scrollbar-color 0.2s ease;
+  }
+}
+
+/* In drawer layouts, the pill's navigation button replaces the drawer button from nav.js. */
+html.op-has-controls .op-nav-toggle {
+  display: none;
+}
+
+@media (max-width: 860px), (any-hover: none) {
+  .op-has-controls .op-page {
+    padding-top: var(--op-space-8);
+  }
+
+  /* Above the open drawer and its backdrop, beside the drawer's edge, so its button can close it. */
+  .op-nav-open .op-controls-bar {
+    z-index: 45;
+    left: max(var(--op-space-3),
+      min(calc(min(calc(var(--op-sidebar-width) + 40px), 85vw) + var(--op-space-3)), calc(100vw - 240px)));
+  }
+
+  .op-nav-open .op-controls-pager {
+    display: none;
+  }
+}
+
+@media print {
+  .op-controls-pager {
+    display: none;
+  }
+}
+
+.op-controls-init body,
+.op-controls-init body > .op-page,
+.op-controls-init .op-sidebar,
+.op-controls-init .op-controls-bar,
+.op-controls-init .op-focus-block {
+  transition: none !important;
+}
+
+/* Page scrollbar: transparent until the pointer is near the right edge (op-scrollbar-near from controls.js). */
+html.op-scrollbar-auto {
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+html.op-scrollbar-auto.op-scrollbar-near {
+  scrollbar-color: var(--op-border-strong) transparent;
+}

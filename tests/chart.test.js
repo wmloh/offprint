@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const warnings = [];
 const context = vm.createContext({ URL, console: { warn: (message) => warnings.push(message) } });
 context.window = context;
@@ -12,8 +12,8 @@ vm.runInContext(read('core.js'), context);
 vm.runInContext(read('chart.js'), context);
 vm.runInContext(read('chart-intervals.js'), context);
 vm.runInContext(read('chart-histogram.js'), context);
-const chart = context.DocForm._chart;
-const addOns = context.DocForm.chart;
+const chart = context.OffPrint._chart;
+const addOns = context.OffPrint.chart;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 test('interval plots rank by estimate or label with stable ties and missing values last', () => {
@@ -419,7 +419,7 @@ test('motion tweens move numbers inside matching attribute text and blend colour
   assert.equal(between('M0,0L1,1', 'M0,0L1,1L2,2'), null, 'paths with different commands cross-fade instead');
   assert.deepEqual(plain(parseColor('#f80')), [255, 136, 0, 1]);
   assert.deepEqual(plain(parseColor('rgb(10 20 30 / 50%)')), [10, 20, 30, 0.5]);
-  assert.equal(parseColor('var(--df-chart-1)'), null);
+  assert.equal(parseColor('var(--op-chart-1)'), null);
   const tint = between('rgb(0, 0, 0)', '#ffffff');
   assert.equal(tint(0.5), 'rgba(128, 128, 128, 1)');
   assert.equal(tint(1), '#ffffff');
@@ -450,7 +450,7 @@ test('motion opt-outs resolve from the attribute, then the spec, then configured
   assert.equal(resolve(null, {}, [{ motion: false }]), false, 'site option');
   assert.equal(resolve(null, {}, [{ motion: false }, { motion: true }]), true, 'later layers win');
   assert.equal(resolve(null, { motion: true }, [{ motion: false }]), true, 'the spec wins over options');
-  assert.equal(resolve(false, { motion: true }, []), false, 'data-df-animate wins over everything');
+  assert.equal(resolve(false, { motion: true }, []), false, 'data-op-animate wins over everything');
   assert.equal(resolve(null, { motion: 'no' }, [{ motion: 0 }]), true, 'non-boolean values are ignored');
   assert.equal(chart.normalize({ motion: false, data: [1] }).motion, false);
   assert.equal(chart.normalize({ type: 'pie', motion: false, data: [{ label: 'a', value: 1 }] }).motion, false);
@@ -497,13 +497,13 @@ test('add-ons register types on a core base, scales, and legends, and an unregis
   assert.equal(addOns.scale('ring'), null);
   assert.deepEqual(Array.from(addOns.addons()), ['chart-intervals', 'chart-histogram', 'test-lollipops'], 'rejected add-ons register nothing');
 
-  context.DocForm._boot = { chartFeature: (type) => type === 'heatmap' ? 'chart-heatmap' : null };
+  context.OffPrint._boot = { chartFeature: (type) => type === 'heatmap' ? 'chart-heatmap' : null };
   try {
     assert.match(chart.validate({ type: 'heatmap', data: [1, 2] }).join(' '), /needs the "chart-heatmap" feature/);
     assert.equal(addOns.addon('test-thief', { types: { heatmap: { base: 'bar' } } }), false, 'types belong to their loader feature');
     assert.equal(chart.normalize({ type: 'mystery', data: [1] }).type, 'line', 'unknown types still fall back to line');
   } finally {
-    delete context.DocForm._boot;
+    delete context.OffPrint._boot;
   }
 });
 

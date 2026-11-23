@@ -1,0 +1,59 @@
+/* Tabbed panels from tabs.js. Without JS, every panel shows under its own label. */
+.op-tabs {
+  margin: 0.75em 0;
+}
+
+.op-tabs:not(.op-tabs-ready) > [data-op-tab]::before {
+  content: attr(data-op-tab);
+  display: block;
+  margin-top: 0.5em;
+  color: var(--op-text-muted);
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.op-tab-list {
+  display: flex;
+  gap: 2px;
+  margin-bottom: var(--op-space-2);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--op-border-strong);
+  scrollbar-width: thin;
+}
+
+.op-tab {
+  flex: none;
+  margin: 0 0 -1px;
+  padding: 0.35em 0.75em;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--op-radius) var(--op-radius) 0 0;
+  background: transparent;
+  color: var(--op-text-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.op-tab:hover {
+  background: var(--op-bg-hover);
+  color: var(--op-text);
+}
+
+.op-tab[aria-selected="true"] {
+  border-bottom-color: var(--op-text);
+  color: var(--op-text);
+  font-weight: 500;
+}
+
+.op-tab-panel {
+  border-radius: var(--op-radius);
+}
+
+.op-tab-panel:focus-visible {
+  outline-offset: 4px;
+}
+
+.op-tab-panel > :first-child { margin-top: 0; }
+.op-tab-panel > :last-child { margin-bottom: 0; }

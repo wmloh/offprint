@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 
 // A small DOM with bubbling events, focus, and layout offsets for choice controls.
 class El {
@@ -95,15 +95,15 @@ function page(define, hosts, { popover = false } = {}) {
     dispatchEvent() {}
   };
   document.body = new El(document, 'body');
-  const ctx = vm.createContext({ URL, document, DocForm: { _boot: boot }, requestAnimationFrame: (fn) => frames.push(fn),
+  const ctx = vm.createContext({ URL, document, OffPrint: { _boot: boot }, requestAnimationFrame: (fn) => frames.push(fn),
     location: { href: 'file:///page.html' }, console: { warn: (m) => warned.push(m) } });
   ctx.window = ctx;
   vm.runInContext(read('core.js'), ctx);
   vm.runInContext(read('choices.js'), ctx);
   vm.runInContext(read('params.js'), ctx);
   const follows = [];
-  if (popover) ctx.DocForm._dropdowns = { follow: (trigger, panel) => { follows.push([trigger, panel]); return () => follows.pop(); } };
-  const scope = ctx.DocForm._parameters.define('page', define);
+  if (popover) ctx.OffPrint._dropdowns = { follow: (trigger, panel) => { follows.push([trigger, panel]); return () => follows.pop(); } };
+  const scope = ctx.OffPrint._parameters.define('page', define);
   const nodes = [];
   hosts.forEach(([tag, attrs, parent]) => {
     const el = (parent === undefined ? document.body : nodes[parent]).appendChild(new El(document, tag));
@@ -120,8 +120,8 @@ function page(define, hosts, { popover = false } = {}) {
   return { scope, nodes, frames, warned, document, follows };
 }
 
-const host = (name, extra = {}) => ['fieldset', { 'data-df-choice': name, ...extra }];
-const displayOf = (el) => ['chips', 'combobox'].find((s) => el.classList.contains('df-choices-' + s)) || null;
+const host = (name, extra = {}) => ['fieldset', { 'data-op-choice': name, ...extra }];
+const displayOf = (el) => ['chips', 'combobox'].find((s) => el.classList.contains('op-choices-' + s)) || null;
 
 test('choice displays follow set size and label length, per-group overrides, and reuse matching authored inputs', () => {
   const long = choices('A rather long label for a choice', 'Another long label for a choice', 'A third long label here');
@@ -133,23 +133,23 @@ test('choice displays follow set size and label length, per-group overrides, and
     large: { type: 'multiselect', choices: many },
     mode: { type: 'select', choices: choices('Fast', 'Exact'), default: 'exact' }
   }, [host('small'), host('seven'), host('eight'), host('wordy'), host('large'),
-    host('small', { 'data-df-choice-display': 'combobox' }), host('large', { 'data-df-choice-display': 'chips' }),
-    host('small', { 'data-df-choice-display': 'pills' }),
+    host('small', { 'data-op-choice-display': 'combobox' }), host('large', { 'data-op-choice-display': 'chips' }),
+    host('small', { 'data-op-choice-display': 'pills' }),
     host('mode'), ['legend', { text: 'Mode' }, 8],
     ['label', {}, 8], ['input', { type: 'radio', value: 'fast', name: 'mode' }, 10],
     ['label', {}, 8], ['input', { type: 'radio', value: 'exact', name: 'mode', checked: '' }, 12],
     host('mode'), ['label', {}, 14], ['input', { type: 'radio', value: 'slow' }, 15],
-    ['div', { 'data-df-choice': 'small' }], ['div', { 'data-df-parameter': 'small' }]]);
+    ['div', { 'data-op-choice': 'small' }], ['div', { 'data-op-parameter': 'small' }]]);
   const nodes = env.nodes;
   assert.deepEqual(nodes.slice(0, 8).map(displayOf),
     ['chips', 'chips', 'combobox', 'combobox', 'combobox', 'combobox', 'chips', 'chips']);
-  assert.equal(nodes[0].one('df-choices-label').textContent, 'small', 'the key names a group without a legend');
+  assert.equal(nodes[0].one('op-choices-label').textContent, 'small', 'the key names a group without a legend');
   assert.match(env.warned.join('\n'), /Unknown choice display "pills"/);
 
   const [authored, fastLabel, fast, exactLabel, exact] = [nodes[8], nodes[10], nodes[11], nodes[12], nodes[13]];
   assert.equal(displayOf(authored), 'chips');
-  assert.equal(authored.one('df-choices-label'), nodes[9], 'the authored legend labels the group');
-  assert.deepEqual(authored.byClass('df-chip'), [fastLabel, exactLabel], 'matching authored labels become the chips');
+  assert.equal(authored.one('op-choices-label'), nodes[9], 'the authored legend labels the group');
+  assert.deepEqual(authored.byClass('op-chip'), [fastLabel, exactLabel], 'matching authored labels become the chips');
   assert.deepEqual([fast, exact].map((r) => [r.name, r.checked]), [['mode', false], ['mode', true]]);
   fast.checked = true;
   fire(fast, 'change');
@@ -157,26 +157,26 @@ test('choice displays follow set size and label length, per-group overrides, and
   assert.ok(fastLabel.classList.contains('is-selected'));
 
   const mismatched = nodes[14];
-  assert.deepEqual(mismatched.byClass('df-chip-input').map((r) => r.value), ['fast', 'exact']);
+  assert.deepEqual(mismatched.byClass('op-chip-input').map((r) => r.value), ['fast', 'exact']);
   assert.equal(nodes[15].parentNode, null, 'authored inputs that do not match are replaced');
   assert.match(env.warned.join('\n'), /Authored choices for parameter "mode" do not match/);
   assert.match(env.warned.join('\n'), /Choice parameter "small" needs a fieldset host/);
-  assert.match(env.warned.join('\n'), /"small" is a select; author it as <fieldset data-df-choice="small">/);
+  assert.match(env.warned.join('\n'), /"small" is a select; author it as <fieldset data-op-choice="small">/);
 });
 
 test('every chip press ripples from the press point, or from the centre for the keyboard', () => {
   const env = page({ runs: { type: 'multiselect', choices: choices('A', 'B') } }, [host('runs')]);
-  const [chip] = env.nodes[0].byClass('df-chip');
-  const input = chip.one('df-chip-input');
+  const [chip] = env.nodes[0].byClass('op-chip');
+  const input = chip.one('op-chip-input');
   fire(chip, 'pointerdown', { clientX: 30, clientY: 26 });
-  const wave = chip.one('df-ripple');
+  const wave = chip.one('op-ripple');
   assert.equal(wave.getAttribute('aria-hidden'), 'true');
-  assert.deepEqual([wave.style.props['--df-ripple-x'], wave.style.props['--df-ripple-y']], ['20px', '6px']);
+  assert.deepEqual([wave.style.props['--op-ripple-x'], wave.style.props['--op-ripple-y']], ['20px', '6px']);
   input.checked = false;
   fire(input, 'change');
-  assert.equal(chip.byClass('df-ripple').length, 1, 'a change right after a press does not ripple again');
+  assert.equal(chip.byClass('op-ripple').length, 1, 'a change right after a press does not ripple again');
   fire(wave, 'animationend');
-  assert.equal(chip.byClass('df-ripple').length, 0);
+  assert.equal(chip.byClass('op-ripple').length, 0);
 });
 
 test('single-choice chips are radios that glide, follow the scope, and move with arrow keys', () => {
@@ -184,28 +184,28 @@ test('single-choice chips are radios that glide, follow the scope, and move with
     [host('mode'), ['legend', { text: 'Mode' }, 0], host('mode')]);
   const [a, , b] = env.nodes;
   const group = a;
-  assert.equal(a.one('df-choices-label').textContent, 'Mode');
+  assert.equal(a.one('op-choices-label').textContent, 'Mode');
   assert.ok(!group.classList.contains('is-multiple'));
-  const chips = a.byClass('df-chip');
-  const radios = a.byClass('df-chip-input');
+  const chips = a.byClass('op-chip');
+  const radios = a.byClass('op-chip-input');
   assert.deepEqual(radios.map((r) => [r.type, r.name === radios[0].name, r.checked]),
     [['radio', true, false], ['radio', true, true], ['radio', true, false]]);
-  assert.notEqual(radios[0].name, b.one('df-chip-input').name, 'each control has its own radio group');
-  assert.deepEqual(chips.map((c) => c.getAttribute('data-df-key')), ['raw', 'scaled', 'log']);
+  assert.notEqual(radios[0].name, b.one('op-chip-input').name, 'each control has its own radio group');
+  assert.deepEqual(chips.map((c) => c.getAttribute('data-op-key')), ['raw', 'scaled', 'log']);
   assert.ok(chips[1].classList.contains('is-selected'));
 
-  const glider = a.one('df-choices-glider');
+  const glider = a.one('op-choices-glider');
   assert.ok(glider.classList.contains('is-hidden'), 'no layout yet, so the highlight waits');
   Object.assign(chips[2], { offsetLeft: 120, offsetTop: 0, offsetWidth: 50, offsetHeight: 24 });
   radios[2].checked = true;
   fire(radios[2], 'change');
   assert.equal(env.scope.get('mode'), 'log');
-  assert.deepEqual(b.byClass('df-chip-input').map((r) => r.checked), [false, false, true]);
+  assert.deepEqual(b.byClass('op-chip-input').map((r) => r.checked), [false, false, true]);
   assert.ok(!glider.classList.contains('is-hidden'));
-  assert.deepEqual(glider.style.props, { '--df-chip-x': '120px', '--df-chip-y': '0px', '--df-chip-w': '50px', '--df-chip-h': '24px' });
-  assert.ok(group.classList.contains('df-choices-still'), 'the first placement does not slide');
+  assert.deepEqual(glider.style.props, { '--op-chip-x': '120px', '--op-chip-y': '0px', '--op-chip-w': '50px', '--op-chip-h': '24px' });
+  assert.ok(group.classList.contains('op-choices-still'), 'the first placement does not slide');
   env.frames.splice(0).forEach((fn) => fn());
-  assert.ok(!group.classList.contains('df-choices-still'));
+  assert.ok(!group.classList.contains('op-choices-still'));
 
   assert.equal(key(radios[2], 'ArrowRight').defaultPrevented, true);
   assert.equal(env.scope.get('mode'), 'raw', 'arrows wrap and choose');
@@ -224,13 +224,13 @@ test('multiple-choice chips are checkboxes in declaration order and arrows only 
   const env = page({ runs: { type: 'multiselect', choices: choices('A', 'B', 'C'), default: ['c'] } }, [host('runs')]);
   const [el] = env.nodes;
   assert.ok(el.classList.contains('is-multiple'));
-  assert.equal(el.one('df-choices-glider'), undefined);
-  const boxes = el.byClass('df-chip-input');
+  assert.equal(el.one('op-choices-glider'), undefined);
+  const boxes = el.byClass('op-chip-input');
   assert.deepEqual(boxes.map((b) => [b.type, b.checked]), [['checkbox', false], ['checkbox', false], ['checkbox', true]]);
   boxes[0].checked = true;
   fire(boxes[0], 'change');
   assert.deepEqual([...env.scope.get('runs')], ['a', 'c']);
-  assert.deepEqual(el.byClass('df-chip').map((c) => c.classList.contains('is-selected')), [true, false, true]);
+  assert.deepEqual(el.byClass('op-chip').map((c) => c.classList.contains('is-selected')), [true, false, true]);
   key(boxes[0], 'ArrowRight');
   assert.equal(env.document.activeElement, boxes[1]);
   assert.deepEqual([...env.scope.get('runs')], ['a', 'c']);
@@ -241,14 +241,14 @@ test('multiple-choice chips are checkboxes in declaration order and arrows only 
 test('a single-choice combobox filters, highlights matches, and picks with the keyboard', () => {
   const env = page({ pick: { type: 'select', choices: many, default: 'gamma' } }, [host('pick'), ['legend', { text: 'Letter' }, 0]]);
   const [el] = env.nodes;
-  const input = el.one('df-combo-input');
-  const panel = el.one('df-combo-panel');
-  const list = el.one('df-combo-list');
-  const options = el.byClass('df-combo-option');
+  const input = el.one('op-combo-input');
+  const panel = el.one('op-combo-panel');
+  const list = el.one('op-combo-list');
+  const options = el.byClass('op-combo-option');
   const shown = () => options.filter((o) => !o.hidden).map((o) => o.textContent);
   const active = () => input.getAttribute('aria-activedescendant');
-  assert.equal(input.getAttribute('aria-labelledby'), el.one('df-choices-label').id);
-  assert.equal(el.one('df-choices-label').textContent, 'Letter');
+  assert.equal(input.getAttribute('aria-labelledby'), el.one('op-choices-label').id);
+  assert.equal(el.one('op-choices-label').textContent, 'Letter');
   assert.deepEqual(['role', 'aria-expanded', 'aria-controls'].map((a) => input.getAttribute(a)), ['combobox', 'false', list.id]);
   assert.equal(list.getAttribute('role'), 'listbox');
   assert.equal(input.value, 'Gamma');
@@ -266,8 +266,8 @@ test('a single-choice combobox filters, highlights matches, and picks with the k
   fire(input, 'input');
   assert.deepEqual(shown(), ['Beta', 'Delta', 'Zeta', 'Eta', 'Theta', 'Iota']);
   assert.equal(active(), options[1].id);
-  assert.equal(options[1].one('df-combo-text').children[1].tag, 'mark');
-  assert.equal(options[1].one('df-combo-text').children[1].textContent, 'ta');
+  assert.equal(options[1].one('op-combo-text').children[1].tag, 'mark');
+  assert.equal(options[1].one('op-combo-text').children[1].textContent, 'ta');
   key(input, 'ArrowUp');
   assert.equal(active(), options[8].id, 'arrows wrap among matches');
   key(input, 'ArrowDown');
@@ -285,7 +285,7 @@ test('a single-choice combobox filters, highlights matches, and picks with the k
   input.value = 'zzz';
   fire(input, 'input');
   assert.deepEqual(shown(), []);
-  assert.equal(el.one('df-combo-empty').hidden, false);
+  assert.equal(el.one('op-combo-empty').hidden, false);
   assert.equal(key(input, 'Enter').defaultPrevented, false);
   key(input, 'Escape');
   assert.equal(panel.hidden, true);
@@ -309,16 +309,16 @@ test('a single-choice combobox filters, highlights matches, and picks with the k
 test('a multiple-choice combobox keeps ordered removable chips with All and None actions', () => {
   const env = page({ runs: { type: 'multiselect', choices: many, default: ['beta'], selectionGroup: 'runs' } }, [host('runs')]);
   const [el] = env.nodes;
-  const input = el.one('df-combo-input');
-  const options = el.byClass('df-combo-option');
-  const [all, none] = el.byClass('df-combo-action');
-  const chipText = () => el.byClass('df-combo-chip-text').map((c) => c.textContent);
-  assert.equal(el.one('df-combo-list').getAttribute('aria-multiselectable'), 'true');
-  assert.equal(options[4].getAttribute('data-df-key'), 'epsilon');
+  const input = el.one('op-combo-input');
+  const options = el.byClass('op-combo-option');
+  const [all, none] = el.byClass('op-combo-action');
+  const chipText = () => el.byClass('op-combo-chip-text').map((c) => c.textContent);
+  assert.equal(el.one('op-combo-list').getAttribute('aria-multiselectable'), 'true');
+  assert.equal(options[4].getAttribute('data-op-key'), 'epsilon');
   assert.deepEqual(chipText(), ['Beta']);
-  assert.ok(!el.one('df-combo-chip').classList.contains('is-new'), 'starting chips do not animate in');
-  assert.equal(el.one('df-combo-count').textContent, '1 of 11 chosen');
-  const beta = el.one('df-combo-chip');
+  assert.ok(!el.one('op-combo-chip').classList.contains('is-new'), 'starting chips do not animate in');
+  assert.equal(el.one('op-combo-count').textContent, '1 of 11 chosen');
+  const beta = el.one('op-combo-chip');
 
   fire(input, 'click');
   input.value = 'ep';
@@ -328,16 +328,16 @@ test('a multiple-choice combobox keeps ordered removable chips with All and None
   assert.equal(input.getAttribute('aria-expanded'), 'true', 'a multiselect stays open while picking');
   fire(options[0], 'click');
   assert.deepEqual(chipText(), ['Alpha', 'Beta', 'Epsilon']);
-  assert.equal(el.byClass('df-combo-chip')[1], beta, 'existing chips stay in place');
-  assert.ok(el.byClass('df-combo-chip')[0].classList.contains('is-new'));
+  assert.equal(el.byClass('op-combo-chip')[1], beta, 'existing chips stay in place');
+  assert.ok(el.byClass('op-combo-chip')[0].classList.contains('is-new'));
   assert.equal(options[0].getAttribute('aria-selected'), 'true');
   key(input, 'Enter');
   assert.deepEqual([...env.scope.get('runs')], ['alpha', 'beta'], 'Enter toggles the active option off');
 
-  fire(el.byClass('df-combo-remove')[0], 'click');
+  fire(el.byClass('op-combo-remove')[0], 'click');
   assert.deepEqual([...env.scope.get('runs')], ['beta']);
   assert.equal(env.document.activeElement, input);
-  assert.equal(el.byClass('df-combo-remove')[0].getAttribute('aria-label'), 'Remove Beta');
+  assert.equal(el.byClass('op-combo-remove')[0].getAttribute('aria-label'), 'Remove Beta');
   input.value = 'x';
   key(input, 'Backspace');
   assert.deepEqual([...env.scope.get('runs')], ['beta'], 'Backspace edits text while the field has some');
@@ -349,20 +349,20 @@ test('a multiple-choice combobox keeps ordered removable chips with All and None
   fire(all, 'click');
   assert.equal(env.scope.get('runs').length, many.length);
   assert.equal(all.disabled, true);
-  assert.equal(el.one('df-combo-count').textContent, '11 of 11 chosen');
+  assert.equal(el.one('op-combo-count').textContent, '11 of 11 chosen');
   fire(none, 'click');
   assert.deepEqual(chipText(), []);
-  assert.equal(fire(el.one('df-combo-panel'), 'mousedown').defaultPrevented, true, 'pointing keeps focus in the field');
+  assert.equal(fire(el.one('op-combo-panel'), 'mousedown').defaultPrevented, true, 'pointing keeps focus in the field');
 });
 
 test('a combobox uses a manual popover that follows its field and closes with it', () => {
   const env = page({ pick: { type: 'select', choices: many } }, [host('pick')], { popover: true });
   const [el] = env.nodes;
-  const input = el.one('df-combo-input');
-  const panel = el.one('df-combo-panel');
-  const field = el.one('df-combo-field');
+  const input = el.one('op-combo-input');
+  const panel = el.one('op-combo-panel');
+  const field = el.one('op-combo-field');
   assert.equal(panel.getAttribute('popover'), 'manual');
-  assert.ok(panel.classList.contains('df-dropdown-panel'));
+  assert.ok(panel.classList.contains('op-dropdown-panel'));
   fire(input, 'click');
   assert.equal(panel.open, true);
   assert.deepEqual(env.follows, [[field, panel]]);

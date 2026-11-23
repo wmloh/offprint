@@ -3,27 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Code · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Code · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {"features": {"code": true, "editable-text": true, "tabs": true}}
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Write clearly</p>
+      <p class="op-eyebrow">Write clearly</p>
       <h1>Code</h1>
-      <p><span data-df-term="code block">Code blocks</span> show program text with colours, a copy button, and highlighted lines. They can also number notes on single lines and show what changed between two versions.</p>
-      <dl class="df-fields">
+      <p><span data-op-term="code block">Code blocks</span> show program text with colours, a copy button, and highlighted lines. They can also number notes on single lines and show what changed between two versions.</p>
+      <dl class="op-fields">
         <dt>Official name</dt><dd>Code</dd>
-        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
         <dt>Works with</dt><dd>Tooltips for annotation cards · Tabs for the language samples</dd>
         <dt>Good for</dt><dd>Program text readers will study or copy</dd>
@@ -32,8 +32,8 @@
 
     <h2 id="see-it">Highlights and notes</h2>
     <p>Use inline code for a short value in prose, such as <code>sections</code>. It appears in a monospaced font on a softly tinted, rounded background.</p>
-    <figure id="see-it-demo" data-df-no-search>
-      <pre data-df-lines="2" data-df-annotation-list="outline-notes"><code class="language-python">sections = 3  # (1)
+    <figure id="see-it-demo" data-op-no-search>
+      <pre data-op-lines="2" data-op-annotation-list="outline-notes"><code class="language-python">sections = 3  # (1)
 subheadings = 2  # (2)
 entries = sections + subheadings</code></pre>
       <ol id="outline-notes">
@@ -42,55 +42,55 @@ entries = sections + subheadings</code></pre>
       </ol>
       <figcaption>Illustrative program text. The line tint and circled numbers draw attention to different details.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Point at a circled number or reach it with <kbd>Tab</kbd>. Its <strong>annotation</strong>, a numbered note about the line, lights up below and appears in a small card. Choose the number to jump to its note. Use <strong>Copy</strong> to copy the text without the annotation markers.</p>
     <p>The background of the second line is a <strong>line highlight</strong>. It stays in place so readers can spot the line before they interact with it.</p>
 
     <h2 id="languages">Language colours</h2>
-    <figure data-df-no-search>
-      <div class="df-tabs">
-        <div data-df-tab="JavaScript"><pre><code class="language-js">const title = "Reading guide";</code></pre></div>
-        <div data-df-tab="JSON"><pre><code class="language-json">{"title": "Reading guide", "sections": 3}</code></pre></div>
-        <div data-df-tab="YAML"><pre><code class="language-yaml">title: Reading guide
+    <figure data-op-no-search>
+      <div class="op-tabs">
+        <div data-op-tab="JavaScript"><pre><code class="language-js">const title = "Reading guide";</code></pre></div>
+        <div data-op-tab="JSON"><pre><code class="language-json">{"title": "Reading guide", "sections": 3}</code></pre></div>
+        <div data-op-tab="YAML"><pre><code class="language-yaml">title: Reading guide
 sections: 3</code></pre></div>
-        <div data-df-tab="Python"><pre><code class="language-python">title = "Reading guide"</code></pre></div>
-        <div data-df-tab="HTML"><pre><code class="language-html">Reading &amp;amp; reference</code></pre></div>
-        <div data-df-tab="XML"><pre><code class="language-xml">Title &amp;#38; headings</code></pre></div>
-        <div data-df-tab="SVG"><pre><code class="language-svg">Line &amp;#8594; label</code></pre></div>
-        <div data-df-tab="CSS"><pre><code class="language-css">color: inherit;</code></pre></div>
-        <div data-df-tab="Shell"><pre><code class="language-shell">printf '%s' 'Reading guide'</code></pre></div>
-        <div data-df-tab="SQL"><pre><code class="language-sql">SELECT title FROM pages;</code></pre></div>
-        <div data-df-tab="C#"><pre><code class="language-csharp">string title = "Reading guide";</code></pre></div>
+        <div data-op-tab="Python"><pre><code class="language-python">title = "Reading guide"</code></pre></div>
+        <div data-op-tab="HTML"><pre><code class="language-html">Reading &amp;amp; reference</code></pre></div>
+        <div data-op-tab="XML"><pre><code class="language-xml">Title &amp;#38; headings</code></pre></div>
+        <div data-op-tab="SVG"><pre><code class="language-svg">Line &amp;#8594; label</code></pre></div>
+        <div data-op-tab="CSS"><pre><code class="language-css">color: inherit;</code></pre></div>
+        <div data-op-tab="Shell"><pre><code class="language-shell">printf '%s' 'Reading guide'</code></pre></div>
+        <div data-op-tab="SQL"><pre><code class="language-sql">SELECT title FROM pages;</code></pre></div>
+        <div data-op-tab="C#"><pre><code class="language-csharp">string title = "Reading guide";</code></pre></div>
       </div>
-      <figcaption>Illustrative fragments show colour and spacing for each of DocForm’s nine built-in highlighters. The HTML highlighter also covers <span data-df-tip="A way of organizing text with named markers. SVG pictures use it to describe shapes." data-df-tip-tags="Web technology">XML</span> and <span data-df-term="SVG">SVG</span>.</figcaption>
+      <figcaption>Illustrative fragments show colour and spacing for each of OffPrint’s nine built-in highlighters. The HTML highlighter also covers <span data-op-tip="A way of organizing text with named markers. SVG pictures use it to describe shapes." data-op-tip-tags="Web technology">XML</span> and <span data-op-term="SVG">SVG</span>.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Choose Python, then JSON. Look at how quoted words and numbers pick up different colours. With a tab focused, use the left and right arrow keys to see more languages. These colours help separate parts of the program text, a feature called <strong>syntax highlighting</strong>.</p>
 
     <h2 id="diffs">Changes between versions</h2>
-    <figure data-df-no-search>
-      <p class="df-eyebrow">Paired diff</p>
-      <div class="df-diff" data-df-lang="python">
-        <pre data-df-diff="before">title = "Draft guide"
+    <figure data-op-no-search>
+      <p class="op-eyebrow">Paired diff</p>
+      <div class="op-diff" data-op-lang="python">
+        <pre data-op-diff="before">title = "Draft guide"
 sections = 3</pre>
-        <pre data-df-diff="after">title = "Reading guide"
+        <pre data-op-diff="after">title = "Reading guide"
 sections = 3</pre>
       </div>
-      <figcaption>DocForm compares two supplied versions and marks the removed and added lines.</figcaption>
+      <figcaption>OffPrint compares two supplied versions and marks the removed and added lines.</figcaption>
     </figure>
-    <figure data-df-no-search>
-      <p class="df-eyebrow">Inline diff</p>
-      <pre data-df-diff data-df-lang="python"> title = "Reading guide"
+    <figure data-op-no-search>
+      <p class="op-eyebrow">Inline diff</p>
+      <pre data-op-diff data-op-lang="python"> title = "Reading guide"
 -sections = 3
 +sections = 4</pre>
       <figcaption>This version provides the changes in one block. Both styles put a minus next to a removal and a plus next to an addition.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Find the line that stayed the same in each example. A <strong>diff</strong> is a view of what changed. Copying a diff includes kept and added lines, so you get the newer text.</p>
 
     <h2 id="plain-blocks">Plain blocks</h2>
-    <figure data-df-no-search>
-      <pre data-df-no-code>Reading guide
+    <figure data-op-no-search>
+      <pre data-op-no-code>Reading guide
     Title
     Sections</pre>
       <figcaption>A block can keep its original spacing and plain styling, with no toolbar.</figcaption>
@@ -100,13 +100,13 @@ sections = 3</pre>
     <h2 id="editable-text">Editable text</h2>
     <p>Use an editable field when readers need to change a value or try out a snippet. Turn on Code for live syntax colours.</p>
     <p>
-      <label>Page title <input data-df-editable value="Reading guide"></label>
-      <label>Section count <input data-df-editable data-df-lang="js" value="3 + 2" spellcheck="false"></label>
+      <label>Page title <input data-op-editable value="Reading guide"></label>
+      <label>Section count <input data-op-editable data-op-lang="js" value="3 + 2" spellcheck="false"></label>
     </p>
     <p><label for="edit-notes">Draft notes</label></p>
-    <textarea id="edit-notes" data-df-editable rows="2">Add a short introduction.</textarea>
+    <textarea id="edit-notes" data-op-editable rows="2">Add a short introduction.</textarea>
     <p><label for="edit-config">Page settings</label></p>
-    <textarea id="edit-config" data-df-editable data-df-lang="yaml" rows="3" spellcheck="false">title: Reading guide
+    <textarea id="edit-config" data-op-editable data-op-lang="yaml" rows="3" spellcheck="false">title: Reading guide
 sections: 3
 showOutline: true</textarea>
     <p>Change the section count or edit the page settings to see the colours update as you type. Edits in these examples last until you reload the page.</p>

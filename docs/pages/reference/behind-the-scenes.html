@@ -3,25 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Behind the scenes · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Behind the scenes · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {"features": {"math": true}}
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Reference</p>
+      <p class="op-eyebrow">Reference</p>
       <h1>Behind the scenes</h1>
-      <p>A plain-words look at what happens when a DocForm page opens. It covers the settings and checks an agent works with on your behalf.</p>
-      <dl class="df-fields">
+      <p>A plain-words look at what happens when an OffPrint page opens. It covers the settings and checks an agent works with on your behalf.</p>
+      <dl class="op-fields">
         <dt>Use it to</dt><dd>Understand what an agent sets up for you</dd>
         <dt>Reading time</dt><dd>About 10 minutes</dd>
       </dl>
@@ -40,15 +40,15 @@
       </table>
       <figcaption>Two starting choices and an example of one request bringing in several features.</figcaption>
     </figure>
-    <p>The reading profile is the usual choice. Your agent can add or turn off features to suit a page. A feature that another one needs is called a <span data-df-term>dependency</span>. DocForm automatically includes dependencies, so asking for Zoom tools also brings in Figure zoom.</p>
+    <p>The reading profile is the usual choice. Your agent can add or turn off features to suit a page. A feature that another one needs is called a <span data-op-term>dependency</span>. OffPrint automatically includes dependencies, so asking for Zoom tools also brings in Figure zoom.</p>
     <p>See the <a href="features.html">feature directory</a> for the reading defaults and what each feature needs.</p>
 
     <h2 id="settings">Site and page settings</h2>
-    <p>The site settings, also called the <span data-df-term="site settings">manifest</span>, hold shared choices. They give the site its title and page order, choose a glossary page, and keep lists of terms, sources, and reusable controls. They also describe which prepared search and data files the site uses and where those files belong.</p>
+    <p>The site settings, also called the <span data-op-term="site settings">manifest</span>, hold shared choices. They give the site its title and page order, choose a glossary page, and keep lists of terms, sources, and reusable controls. They also describe which prepared search and data files the site uses and where those files belong.</p>
     <p>Page settings apply to a single page. This page adds TeX math for the formula below. The other reference pages use the same site settings and keep their own feature choices.</p>
 
     <h2 id="keyboard-shortcuts">Keyboard shortcuts</h2>
-    <p>Shortcuts follow where you are. <kbd>Esc</kbd> closes search when the search palette is open. In an enlarged figure it closes the figure view. If a smaller component inside the view also uses that key, it gets the key first. DocForm leaves ordinary typing alone in text fields.</p>
+    <p>Shortcuts follow where you are. <kbd>Esc</kbd> closes search when the search palette is open. In an enlarged figure it closes the figure view. If a smaller component inside the view also uses that key, it gets the key first. OffPrint leaves ordinary typing alone in text fields.</p>
     <figure>
       <table>
         <thead><tr><th scope="col">Where</th><th scope="col">Default keys</th></tr></thead>
@@ -70,39 +70,39 @@
     }
   }
 }</code></pre>
-    <p>If two actions use the same key in the same part of the page, DocForm keeps the first binding and records a problem report. The full list of setting names is in the <a href="../../../docform/docs/interact/shortcuts.md">shortcut reference</a>.</p>
+    <p>If two actions use the same key in the same part of the page, OffPrint keeps the first binding and records a problem report. The full list of setting names is in the <a href="../../../offprint/docs/interact/shortcuts.md">shortcut reference</a>.</p>
 
-    <h2 id="extend">Extend DocForm</h2>
-    <p>When no built-in feature fits, an agent can add its own behaviour with the <strong>Extension API</strong>. A small script loaded after DocForm registers the custom feature during setup, and DocForm starts it alongside the built-in ones, so it can use the same linked selections, data sources, and problem reports. <strong>Chart add-ons</strong> use the same route to add a new chart type, scale, or legend that works with chart controls, readouts, and table views. Histograms and heatmaps are built this way.</p>
+    <h2 id="extend">Extend OffPrint</h2>
+    <p>When no built-in feature fits, an agent can add its own behaviour with the <strong>Extension API</strong>. A small script loaded after OffPrint registers the custom feature during setup, and OffPrint starts it alongside the built-in ones, so it can use the same linked selections, data sources, and problem reports. <strong>Chart add-ons</strong> use the same route to add a new chart type, scale, or legend that works with chart controls, readouts, and table views. Histograms and heatmaps are built this way.</p>
 
     <h2 id="startup">Startup and ready stages</h2>
     <ol>
-      <li><strong>Load.</strong> DocForm reads the settings and opens the selected features and prepared data from the site folder.</li>
+      <li><strong>Load.</strong> OffPrint reads the settings and opens the selected features and prepared data from the site folder.</li>
       <li><strong>Set up.</strong> The page can supply its own material, such as the values that will feed a chart.</li>
-      <li><strong>Build.</strong> DocForm applies the features to the page, for instance by drawing the chart and adding its controls.</li>
-      <li><strong>Ready.</strong> The page can now use the finished chart, for example to read which series it displays. DocForm reaches this stage even when it can recover from a problem along the way.</li>
+      <li><strong>Build.</strong> OffPrint applies the features to the page, for instance by drawing the chart and adding its controls.</li>
+      <li><strong>Ready.</strong> The page can now use the finished chart, for example to read which series it displays. OffPrint reaches this stage even when it can recover from a problem along the way.</li>
     </ol>
 
     <h2 id="problem-reports">Problem reports</h2>
     <figure>
-      <dl class="df-fields">
+      <dl class="op-fields">
         <dt>Feature</dt><dd>Tooltips</dd>
         <dt>Problem</dt><dd>A word marked for a definition is missing from the shared list.</dd>
         <dt>Correction</dt><dd>Add a definition to the site settings.</dd>
       </dl>
       <figcaption>An illustrative problem report. Notice how it gives the agent a place to start and a suggested correction.</figcaption>
     </figure>
-    <p>DocForm collects <span data-df-term="problem report">problem reports</span> as the page opens and as readers use it. It also lets the page know when each report arrives. Your agent can inspect the collected reports. Some features show a message right beside the problem, as in the <a href="../data/sources.html#limits-and-errors">unreadable data example</a>.</p>
+    <p>OffPrint collects <span data-op-term="problem report">problem reports</span> as the page opens and as readers use it. It also lets the page know when each report arrives. Your agent can inspect the collected reports. Some features show a message right beside the problem, as in the <a href="../data/sources.html#limits-and-errors">unreadable data example</a>.</p>
 
     <h2 id="bundled-readers">Bundled maths and data readers</h2>
     <figure>
-      <div class="df-math" data-df-display>2 + 3 = 5</div>
-      <figcaption><span data-df-term="KaTeX">KaTeX</span> draws the formula using files included with DocForm.</figcaption>
+      <div class="op-math" data-op-display>2 + 3 = 5</div>
+      <figcaption><span data-op-term="KaTeX">KaTeX</span> draws the formula using files included with OffPrint.</figcaption>
     </figure>
-    <p>TeX math comes with KaTeX to lay out formulas. DocForm also includes <span data-df-tip="The helper DocForm uses to read YAML data from local files." data-df-tip-tags="Setup">js-yaml</span> to read YAML, a way of saving named values and lists in a text file. Both helpers work offline. The <a href="../data/dropzones.html">file dropzones guide</a> has a YAML sample you can open on the page.</p>
+    <p>TeX math comes with KaTeX to lay out formulas. OffPrint also includes <span data-op-tip="The helper OffPrint uses to read YAML data from local files." data-op-tip-tags="Setup">js-yaml</span> to read YAML, a way of saving named values and lists in a text file. Both helpers work offline. The <a href="../data/dropzones.html">file dropzones guide</a> has a YAML sample you can open on the page.</p>
 
     <h2 id="starter-settings">Starter settings</h2>
-    <p>The starter settings template gives your agent a shared settings file to copy and adapt. It includes the reading profile, a sample page list, and examples of <span data-df-term="role">colour roles</span>, definitions, and sources. Your agent replaces the examples with your site's title, pages, and content.</p>
+    <p>The starter settings template gives your agent a shared settings file to copy and adapt. It includes the reading profile, a sample page list, and examples of <span data-op-term="role">colour roles</span>, definitions, and sources. Your agent replaces the examples with your site's title, pages, and content.</p>
   </main>
 </body>
 </html>

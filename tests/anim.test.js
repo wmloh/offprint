@@ -4,13 +4,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const warnings = [];
 const context = vm.createContext({ URL, console: { warn: (message) => warnings.push(message) } });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('anim.js'), context);
-const anim = context.DocForm._animationMath;
+const anim = context.OffPrint._animationMath;
 const json = (value) => JSON.parse(JSON.stringify(value));
 
 test('easings start at 0, end at 1, and keep their shape', () => {
@@ -98,7 +98,7 @@ test('a mouse or pen crossing a stopped figure plays it unless paused or control
 });
 
 test('only chart filtering and chart playback alter timing for reduced motion', () => {
-  const root = path.join(__dirname, '../docform');
+  const root = path.join(__dirname, '../offprint');
   for (const dir of ['js', 'css']) {
     for (const file of fs.readdirSync(path.join(root, dir))) {
       // The generated runtime contains copies of the source modules checked here.

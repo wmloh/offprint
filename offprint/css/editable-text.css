@@ -1,0 +1,100 @@
+:is(input, textarea)[data-op-editable] {
+  box-sizing: border-box;
+  max-inline-size: 100%;
+  padding: var(--op-space-1) var(--op-space-2);
+  border: 1px solid var(--op-border-strong);
+  border-radius: var(--op-radius);
+  background: var(--op-bg-sidebar);
+  color: var(--op-text);
+  font: inherit;
+  line-height: 1.5;
+}
+
+textarea[data-op-editable] {
+  display: block;
+  inline-size: 100%;
+  resize: vertical;
+}
+
+:is(input, textarea)[data-op-editable]:focus-visible {
+  outline: 2px solid var(--op-accent, var(--op-focus));
+  outline-offset: 1px;
+}
+
+.op-editor {
+  position: relative;
+  display: inline-block;
+  max-inline-size: 100%;
+  border-radius: var(--op-radius);
+  background: var(--op-bg-sidebar);
+  color: var(--op-text);
+}
+
+.op-editor-block {
+  display: block;
+}
+
+.op-editor > [data-op-editable],
+.op-editor-mirror {
+  padding: var(--op-space-1) var(--op-space-2);
+  font-family: var(--op-font-mono);
+  font-size: inherit;
+  font-variant-ligatures: none;
+  line-height: 1.5;
+  tab-size: 4;
+}
+
+.op-editor > [data-op-editable] {
+  position: relative;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--op-text);
+}
+
+.op-editor > [data-op-editable]::selection {
+  background: var(--op-selection);
+  color: transparent;
+}
+
+.op-editor > [data-op-editable]::placeholder {
+  color: var(--op-text-muted);
+}
+
+.op-editor-mirror {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: none;
+  white-space: pre;
+}
+
+.op-editor:not(.op-editor-block) > .op-editor-mirror {
+  clip-path: inset(0 var(--op-space-2));
+}
+
+.op-editor-block:not(:has(textarea[wrap="off"])) .op-editor-mirror {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.op-editor-mirror > span {
+  display: block;
+}
+
+.op-editor-mirror .op-tok-comment {
+  font-style: normal;
+}
+
+.op-editor-composing > [data-op-editable] {
+  color: var(--op-text);
+}
+
+.op-editor-composing > .op-editor-mirror {
+  visibility: hidden;
+}
+
+@media (forced-colors: active) {
+  .op-editor-mirror { display: none; }
+  .op-editor > [data-op-editable] { color: FieldText; }
+  .op-editor > [data-op-editable]::selection { color: HighlightText; }
+}

@@ -1,0 +1,7 @@
+.op-chart.is-histogram:not(.is-stacked) .op-chart-histogram-bar {
+  fill-opacity: 0.65;
+}
+
+.op-chart.is-histogram:not(.is-stacked) .op-chart-histogram-bar:is(.is-active, [data-op-selection-active]) {
+  fill-opacity: 0.8;
+}

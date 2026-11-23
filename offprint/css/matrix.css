@@ -1,0 +1,35 @@
+.op-matrix-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--op-space-2) var(--op-space-3);
+  margin-block: var(--op-space-3) var(--op-space-2);
+}
+
+.op-matrix-picker {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.op-matrix-ramp {
+  width: 4em;
+  height: 0.65em;
+  border: 1px solid var(--op-border-strong);
+  border-radius: var(--op-radius);
+  background: linear-gradient(to right, var(--op-bg), color-mix(in srgb, var(--op-bg), var(--op-blue) 32%));
+}
+
+.op-matrix td:is(.op-matrix-value, .op-matrix-missing) {
+  color: var(--op-text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.op-matrix td.op-matrix-value {
+  background-color: color-mix(in srgb, var(--op-bg), var(--op-blue) calc(var(--op-matrix-strength, 0) * 32%));
+}
+
+.op-matrix td.op-matrix-missing {
+  background-color: var(--op-bg-subtle);
+  font-style: italic;
+}

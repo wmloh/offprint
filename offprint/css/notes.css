@@ -1,0 +1,101 @@
+/* Sidenotes from notes.js: margin notes on wide windows, hover notes on narrow ones. */
+:root {
+  --op-note-width: 240px;
+  --op-note-gap: 32px;
+}
+
+/* Without the script, a note reads as a muted aside in parentheses. */
+.op-note:not(.op-sidenote) {
+  color: var(--op-text-muted);
+  font-size: 0.875em;
+}
+
+.op-note:not(.op-sidenote)::before { content: "("; }
+.op-note:not(.op-sidenote)::after { content: ")"; }
+
+.op-note-ref {
+  line-height: 0;
+}
+
+.op-note-mark {
+  min-width: 1.4em;
+  margin: 0 0.1em;
+  padding: 0.1em 0.3em;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--op-accent, var(--op-blue));
+  font: inherit;
+  font-size: 0.8em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.op-note-mark:hover,
+.op-note-mark.is-active {
+  background: var(--op-blue-bg);
+}
+
+.op-sidenote {
+  display: none;
+  color: var(--op-text-muted);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  text-indent: 0;
+}
+
+.op-sidenote-num {
+  margin-right: 0.4em;
+  color: var(--op-accent, var(--op-blue));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Without tooltip.js, the marker opens the note in place. */
+.op-sidenote.is-open {
+  display: block;
+  margin: var(--op-space-2) 0;
+  padding: var(--op-space-2) var(--op-space-3);
+  border-left: 2px solid var(--op-border-strong);
+  border-radius: 0 var(--op-radius) var(--op-radius) 0;
+  background: var(--op-bg-hover);
+}
+
+.op-sidenote.is-open .op-sidenote-num {
+  display: none;
+}
+
+html.op-sidenotes .op-sidenote:not(.op-note-inline) {
+  display: block;
+  position: relative;
+  float: right;
+  clear: right;
+  width: var(--op-note-width);
+  margin: 0.2em calc(-1 * (var(--op-note-width) + var(--op-note-gap)) - var(--op-note-shift, 0px)) 0.75em 0;
+  padding: 0.25em 0.5em;
+  border-radius: var(--op-radius);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+html.op-sidenotes .op-sidenote.is-active {
+  background: var(--op-bg-hover);
+  color: var(--op-text);
+}
+
+.op-sidenote.op-note-flash {
+  animation: op-note-flash 1.2s ease-out;
+}
+
+@keyframes op-note-flash {
+  0%, 30% { background: var(--op-yellow-bg); }
+}
+
+.op-tooltip.op-note-card {
+  max-width: min(360px, calc(100vw - 16px));
+}

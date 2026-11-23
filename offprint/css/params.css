@@ -1,0 +1,133 @@
+/* Parameter sliders, toggles, and presets from params.js; choice groups are styled by choices.css. Colour a control with data-op-role or data-op-color. */
+.op-param {
+  display: grid;
+  grid-template-columns: minmax(4em, max-content) minmax(80px, 1fr) minmax(3.5em, max-content);
+  align-items: center;
+  gap: var(--op-space-3);
+  margin: 0.4em 0;
+  color: var(--op-text);
+  font-size: 0.95em;
+}
+
+.op-param-label {
+  color: var(--op-accent, var(--op-text));
+}
+
+.op-param-input {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--op-accent, var(--op-text-muted));
+  cursor: pointer;
+}
+
+.op-param-value {
+  padding: 0.05em 0.45em;
+  border-radius: var(--op-radius-sm);
+  background: var(--op-accent-bg, var(--op-bg-hover));
+  color: var(--op-accent, var(--op-text));
+  font-family: var(--op-font-mono);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* A scope wrapper groups its controls without a box of its own, so a figure frame stays the only container. */
+.op-params {
+  margin: var(--op-space-3) 0;
+}
+
+.op-params > .op-choices:first-child {
+  margin-top: 0;
+}
+
+[data-op-bind] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* data-op-show-when elements fade and settle in or out; scripts off leaves them visible. */
+.op-show-when {
+  transition: opacity 0.2s ease, translate 0.2s ease;
+}
+
+.op-show-when.op-show-enter,
+.op-show-when.op-show-leave {
+  opacity: 0;
+  translate: 0 -0.35em;
+}
+
+.op-show-when[hidden] {
+  display: none !important;
+}
+
+/* The toggle is a checkbox with role="switch", drawn as a track and knob. */
+.op-param-switch {
+  appearance: none;
+  position: relative;
+  justify-self: start;
+  width: 2.25em;
+  height: 1.3em;
+  border-radius: 999px;
+  background: var(--op-border-strong);
+  transition: background 0.15s ease;
+}
+
+.op-param-switch::before {
+  content: "";
+  position: absolute;
+  top: 0.15em;
+  left: 0.15em;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  background: var(--op-bg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: transform 0.15s ease;
+}
+
+.op-param-switch:checked {
+  background: var(--op-accent, var(--op-text-muted));
+}
+
+.op-param-switch:checked::before {
+  transform: translateX(0.95em);
+}
+
+.op-param-switch:focus-visible {
+  border-radius: 999px;
+}
+
+.op-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--op-space-2);
+  margin: 0.4em 0;
+}
+
+.op-preset {
+  padding: var(--op-space-1) var(--op-space-3);
+  border: 1px solid var(--op-border-strong);
+  border-radius: var(--op-radius);
+  background: var(--op-bg);
+  color: inherit;
+  font: inherit;
+  font-size: 0.95em;
+  cursor: pointer;
+}
+
+.op-preset:hover {
+  background: var(--op-bg-hover);
+}
+
+.op-preset[aria-current="true"] {
+  border-color: var(--op-accent, var(--op-text));
+  background: var(--op-accent-bg, var(--op-bg-hover));
+  color: var(--op-accent, var(--op-text));
+}
+
+.op-preset[aria-disabled="true"] {
+  border-style: dashed;
+  background: transparent;
+  color: var(--op-text-muted);
+  cursor: default;
+}

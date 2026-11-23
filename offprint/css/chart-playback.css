@@ -1,0 +1,28 @@
+.op-chart-playback-controls {
+  margin-block: var(--op-space-4) var(--op-space-2);
+}
+
+/* The status is a live sentence such as "Playing to epoch 12", not a short label, so it keeps sentence case. */
+.op-chart-playback-controls .op-pill-count {
+  max-width: 22em;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.op-chart-playhead {
+  stroke: var(--op-text-muted);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.op-chart-checkpoint {
+  fill: var(--op-text);
+  stroke: var(--op-bg);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.op-chart-playback-ready > li[hidden],
+.op-chart-playback-note[hidden] {
+  display: none !important;
+}

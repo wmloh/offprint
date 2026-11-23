@@ -4,14 +4,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const core = fs.readFileSync(path.join(__dirname, '../docform/js/core.js'), 'utf8');
-const source = fs.readFileSync(path.join(__dirname, '../docform/js/theme.js'), 'utf8');
+const core = fs.readFileSync(path.join(__dirname, '../offprint/js/core.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../offprint/js/theme.js'), 'utf8');
 
 function load({ stored = null, dark = false, storage } = {}) {
-  const store = new Map(stored === null ? [] : [['docform-theme', stored]]);
+  const store = new Map(stored === null ? [] : [['offprint-theme', stored]]);
   const attrs = {};
   const window = {
-    DocForm: { _boot: {} },
+    OffPrint: { _boot: {} },
     localStorage: storage || {
       getItem: (key) => (store.has(key) ? store.get(key) : null),
       setItem: (key, value) => store.set(key, String(value)),
@@ -30,7 +30,7 @@ function load({ stored = null, dark = false, storage } = {}) {
   const context = vm.createContext({ window });
   vm.runInContext(core, context);
   vm.runInContext(source, context);
-  return { theme: window.DocForm._theme, store, attrs };
+  return { theme: window.OffPrint._theme, store, attrs };
 }
 
 test('only light and dark exist; unknown values fall back to the OS preference', () => {
@@ -46,11 +46,11 @@ test('only light and dark exist; unknown values fall back to the OS preference',
 test('the first visit follows the OS and always sets an explicit theme without saving it', () => {
   const dark = load({ dark: true });
   assert.equal(dark.theme.get(), 'dark');
-  assert.equal(dark.attrs['data-df-theme'], 'dark');
-  assert.equal(dark.store.has('docform-theme'), false);
+  assert.equal(dark.attrs['data-op-theme'], 'dark');
+  assert.equal(dark.store.has('offprint-theme'), false);
   const light = load();
   assert.equal(light.theme.current(), 'light');
-  assert.equal(light.attrs['data-df-theme'], 'light');
+  assert.equal(light.attrs['data-op-theme'], 'light');
 });
 
 test('a saved choice wins over the OS, and stale "system" values fall back to it', () => {
@@ -58,8 +58,8 @@ test('a saved choice wins over the OS, and stale "system" values fall back to it
   assert.equal(load({ stored: 'system', dark: true }).theme.get(), 'dark');
   const { theme, store, attrs } = load();
   theme.set('dark');
-  assert.equal(store.get('docform-theme'), 'dark');
-  assert.equal(attrs['data-df-theme'], 'dark');
+  assert.equal(store.get('offprint-theme'), 'dark');
+  assert.equal(attrs['data-op-theme'], 'dark');
 });
 
 test('blocked storage still switches themes without throwing', () => {
@@ -67,5 +67,5 @@ test('blocked storage still switches themes without throwing', () => {
   const { theme, attrs } = load({ storage: blocked, dark: true });
   assert.equal(theme.get(), 'dark');
   assert.equal(theme.set('light'), true);
-  assert.equal(attrs['data-df-theme'], 'light');
+  assert.equal(attrs['data-op-theme'], 'light');
 });

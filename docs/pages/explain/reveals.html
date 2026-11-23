@@ -3,32 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Scroll reveals · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Scroll reveals · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {
       "features": {
         "reveals": true
       }
     }
   </script>
-  <link rel="stylesheet" href="../../../docform/css/reveal.css">
-  <script src="../../../docform/docform.js"></script>
+  <link rel="stylesheet" href="../../../offprint/css/reveal.css">
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Explain step by step</p>
+      <p class="op-eyebrow">Explain step by step</p>
       <h1>Scroll reveals</h1>
-      <p><span data-df-term="scroll reveal">Scroll reveals</span> let blocks glide or fade in as they near the middle of the screen, and again each time you scroll back to them. Printed pages and pages without scripts still show every block.</p>
-      <dl class="df-fields">
+      <p><span data-op-term="scroll reveal">Scroll reveals</span> let blocks glide or fade in as they near the middle of the screen, and again each time you scroll back to them. Printed pages and pages without scripts still show every block.</p>
+      <dl class="op-fields">
         <dt>Official name</dt><dd>Scroll reveals</dd>
-        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#medium">Medium</a></dd>
         <dt>Works with</dt><dd>Callouts and split views</dd>
         <dt>Good for</dt><dd>Gentle pacing on long pages</dd>
@@ -42,26 +42,26 @@
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
       <ol>
-        <li data-df-reveal>Rise from below. This is the default entrance.</li>
-        <li data-df-reveal="left" data-df-reveal-delay="160">Slide from the left after a short wait.</li>
-        <li data-df-reveal="right" data-df-reveal-delay="320">Slide from the right after a longer wait.</li>
-        <li data-df-reveal="fade" data-df-reveal-delay="480">Fade in place after the longest wait.</li>
+        <li data-op-reveal>Rise from below. This is the default entrance.</li>
+        <li data-op-reveal="left" data-op-reveal-delay="160">Slide from the left after a short wait.</li>
+        <li data-op-reveal="right" data-op-reveal-delay="320">Slide from the right after a longer wait.</li>
+        <li data-op-reveal="fade" data-op-reveal-delay="480">Fade in place after the longest wait.</li>
       </ol>
       <figcaption>Four entrances show the available directions and how a short delay can stagger neighbouring items.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Scroll the list into the middle of the screen and watch it arrive. Scroll it off the top or bottom, then bring it back. It plays again each time.</p>
 
     <h2 id="what-it-does">Add a pause or keep a block still</h2>
     <p>A scroll reveal waits until a block nears the middle of the screen. The block can rise, enter from either side, or fade in place. A delay waits a little longer after the block reaches that point. In the first demo, the delays are 0, 160, 320 and 480 milliseconds.</p>
 
     <figure>
-      <p data-df-reveal="left" data-df-no-reveal><strong>Keep the goal visible.</strong> This line opts out of its entrance.</p>
-      <p data-df-reveal="fade" data-df-reveal-delay="350"><strong>Bring in the supporting detail.</strong> This line fades in after 350 milliseconds.</p>
-      <p data-df-reveal data-df-reveal-once><strong>Arrive just once.</strong> This line plays its entrance the first time only, then stays.</p>
+      <p data-op-reveal="left" data-op-no-reveal><strong>Keep the goal visible.</strong> This line opts out of its entrance.</p>
+      <p data-op-reveal="fade" data-op-reveal-delay="350"><strong>Bring in the supporting detail.</strong> This line fades in after 350 milliseconds.</p>
+      <p data-op-reveal data-op-reveal-once><strong>Arrive just once.</strong> This line plays its entrance the first time only, then stays.</p>
       <figcaption>The first line stays still, the second replays each time, and the third plays only once.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Scroll slowly into the second example. The first line is readable as soon as you reach it.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>

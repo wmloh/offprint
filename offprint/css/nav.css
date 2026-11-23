@@ -1,0 +1,476 @@
+/* Sidebar page tree, page outline, previous and next links, and the narrow-screen drawer from nav.js. */
+.op-page :is(h1, h2, h3) {
+  scroll-margin-top: var(--op-space-5);
+}
+
+.op-nav-title {
+  display: block;
+  margin-bottom: var(--op-space-2);
+  padding: var(--op-space-1) var(--op-space-2);
+  border-radius: var(--op-radius);
+  color: var(--op-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a.op-nav-title:hover {
+  background: var(--op-bg-hover);
+}
+
+.op-nav-heading {
+  margin: var(--op-space-2) 0 var(--op-space-1);
+  padding: 0 var(--op-space-2);
+  color: var(--op-text-faint);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.op-nav-list,
+.op-outline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-nav-list .op-nav-list {
+  padding-left: var(--op-space-3);
+}
+
+.op-nav-page-group {
+  margin-top: var(--op-space-2);
+  padding-top: var(--op-space-1);
+  border-top: 1px solid var(--op-border-strong);
+}
+
+.op-nav-page-group > .op-nav-row > .op-nav-label {
+  font-weight: 600;
+}
+
+.op-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 31px;
+  padding-left: 2px;
+  border-radius: var(--op-radius);
+  transition: background-color 0.15s;
+}
+
+.op-nav-row:hover,
+.op-nav-row:has(> [aria-current="page"]) {
+  background: var(--op-bg-hover);
+}
+
+.op-nav-caret,
+.op-nav-caret-space {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.op-nav-caret {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--op-radius-sm);
+  background: transparent;
+  color: var(--op-text-faint);
+  cursor: pointer;
+}
+
+.op-nav-caret:hover {
+  background: var(--op-bg-hover);
+  color: var(--op-text-muted);
+}
+
+.op-nav-caret[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+
+.op-nav-link,
+.op-nav-label {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px 4px 2px;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.op-nav-label {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.op-nav-link {
+  font-weight: 550;
+}
+
+.op-nav-link[aria-current="page"] {
+  color: var(--op-text);
+  font-weight: 600;
+}
+
+/* Outline: a guide line under the current page with the heading in view marked on it. */
+.op-outline {
+  margin: 2px 0 var(--op-space-2) 23px;
+  border-left: 1px solid var(--op-border-strong);
+  font-size: 14px;
+}
+
+.op-nav-heading + .op-outline {
+  margin-left: var(--op-space-2);
+}
+
+.op-outline-link {
+  display: block;
+  margin-left: -1px;
+  padding: 3.5px var(--op-space-2) 3.5px 10px;
+  border-left: 2px solid transparent;
+  color: var(--op-text-muted);
+  line-height: 1.4;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.op-outline-link:hover {
+  color: var(--op-text);
+}
+
+.op-outline-link.is-active {
+  border-left-color: var(--op-blue);
+  color: var(--op-text);
+}
+
+.op-nav-caret svg {
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Desktop navigation and the numbered links used while it is closed. */
+.op-nav-resize,
+.op-section-rail {
+  display: none;
+}
+
+@media screen and (width > 860px) and (any-hover: hover) {
+  .op-nav-resize {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: calc(var(--op-sidebar-width) - 4px);
+    z-index: 25;
+    width: 8px;
+    height: 100vh;
+    cursor: col-resize;
+    touch-action: none;
+    transition: left 0.25s ease;
+  }
+
+  .op-nav-resize::after {
+    content: "";
+    position: absolute;
+    inset: 0 3px;
+    background: var(--op-blue);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .op-nav-resize:hover::after {
+    opacity: 0.6;
+    transition-delay: 0.15s;
+  }
+
+  .op-nav-resizing .op-nav-resize::after,
+  .op-nav-resize:focus-visible::after {
+    opacity: 1;
+    transition-delay: 0s;
+  }
+
+  .op-nav-resize:focus-visible {
+    outline: none;
+  }
+
+  .op-nav-hidden .op-nav-resize {
+    display: none;
+  }
+
+  .op-has-controls.op-nav-hidden .op-section-rail {
+    --op-section-panel-width: min(320px, calc(100vw - 20px));
+    --op-section-panel-padding: 4px;
+    display: grid;
+    /* The rail clips a full-width list so labels keep their line breaks. */
+    grid-template-columns: calc(var(--op-section-panel-width) - 2 * (var(--op-section-panel-padding) + 1px));
+    position: fixed;
+    top: 50%;
+    left: 10px;
+    z-index: 26;
+    width: 52px;
+    padding: var(--op-section-panel-padding);
+    overflow: clip;
+    border: 1px solid transparent;
+    border-radius: var(--op-radius-lg);
+    translate: 0 -50%;
+    transition-property: width, background-color, border-color, box-shadow, backdrop-filter;
+    transition-duration: 0.24s;
+    transition-timing-function: ease-in-out;
+  }
+
+  .op-has-controls.op-nav-hidden .op-section-rail:is(:hover, :has(:focus-visible)) {
+    width: var(--op-section-panel-width);
+    border-color: var(--op-border-strong);
+    background-color: color-mix(in srgb, var(--op-bg) 78%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.6);
+    backdrop-filter: blur(14px) saturate(1.6);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.14);
+  }
+
+  .op-section-list {
+    display: grid;
+    gap: 2px;
+    max-height: min(68dvh, max(36px, 100dvh - 110px));
+    margin: 0;
+    padding: 5px;
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--op-border-strong) transparent;
+    list-style: none;
+  }
+
+  .op-section-link {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    align-items: center;
+    /* Start the label beyond the collapsed rail's clipping edge. */
+    gap: 10px;
+    min-height: 36px;
+    padding: 2px 0;
+    border-radius: var(--op-radius);
+    color: var(--op-text);
+    text-decoration: none;
+  }
+
+  .op-section-link:is(:hover, :focus-visible) {
+    background: var(--op-bg-hover);
+  }
+
+  .op-section-link:focus-visible {
+    outline-offset: -1px;
+  }
+
+  .op-section-ring {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--op-bg);
+    color: var(--op-text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .op-section-ring > * { grid-area: 1 / 1; }
+
+  .op-section-ring circle {
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .op-section-track { stroke: var(--op-border-strong); }
+
+  .op-section-progress {
+    stroke: var(--op-blue);
+    transition: stroke-dashoffset 0.12s linear;
+  }
+
+  .op-section-link[aria-current="location"] .op-section-ring {
+    color: var(--op-link);
+    box-shadow: 0 0 7px color-mix(in srgb, var(--op-blue) 75%, transparent);
+  }
+
+  .op-section-link[aria-current="location"] .op-section-track {
+    stroke: color-mix(in srgb, var(--op-blue) 48%, var(--op-bg));
+  }
+
+  .op-section-name {
+    padding-right: 8px;
+    overflow: clip;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+}
+
+.op-nav-resizing,
+.op-nav-resizing * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+.op-nav-resizing :is(body, body > .op-page, .op-sidebar, .op-controls-bar, .op-nav-resize) {
+  transition: none !important;
+}
+
+/* Previous and next pages. */
+.op-pager {
+  display: flex;
+  gap: var(--op-space-3);
+  margin-top: var(--op-space-8);
+  padding-top: var(--op-space-5);
+  border-top: 1px solid var(--op-border);
+}
+
+.op-page .op-pager-link {
+  display: flex;
+  flex: 0 1 50%;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--op-border-strong);
+  border-radius: var(--op-radius-lg);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.op-page .op-pager-link:hover {
+  background: var(--op-bg-hover);
+}
+
+.op-pager-next {
+  margin-left: auto;
+  text-align: right;
+}
+
+.op-pager-dir {
+  color: var(--op-text-muted);
+  font-size: 12px;
+}
+
+.op-pager-title {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Narrow screens and touch-only devices use a drawer. Without nav.js the sidebar stays above the page. */
+.op-nav-toggle,
+.op-nav-backdrop {
+  display: none;
+}
+
+.op-sidebar[tabindex="-1"]:focus {
+  outline: none;
+}
+
+@media (max-width: 860px), (any-hover: none) {
+  .op-has-drawer .op-nav-toggle {
+    display: inline-grid;
+    place-items: center;
+    position: fixed;
+    top: var(--op-space-2);
+    left: var(--op-space-2);
+    z-index: 30;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--op-border-strong);
+    border-radius: var(--op-radius-lg);
+    background: var(--op-bg);
+    color: var(--op-text-muted);
+    cursor: pointer;
+  }
+
+  .op-has-drawer .op-nav-toggle:hover {
+    color: var(--op-text);
+  }
+
+  .op-has-drawer .op-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(calc(var(--op-sidebar-width) + 40px), 85vw);
+    height: 100%;
+    border-right: 1px solid var(--op-border);
+    border-bottom: 0;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
+  }
+
+  .op-nav-open .op-sidebar {
+    transform: none;
+    visibility: visible;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
+    transition: transform 0.2s ease;
+  }
+
+  .op-nav-open .op-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  html.op-nav-open {
+    overflow: hidden;
+  }
+
+  .op-has-drawer .op-page {
+    padding-top: var(--op-space-8);
+  }
+}
+
+/* Copy-link button shown while the heading is hovered or the button has focus. */
+.op-heading-link {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4em;
+  height: 1.4em;
+  margin: 0 0 0 0.3em;
+  padding: 0;
+  border: 0;
+  border-radius: var(--op-radius);
+  background: transparent;
+  color: var(--op-text-faint);
+  font-size: 0.7em;
+  line-height: 1;
+  vertical-align: 0.1em;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.op-heading-link svg {
+  width: 1em;
+  height: 1em;
+}
+
+:is(h1, h2, h3):hover > .op-heading-link,
+.op-heading-link:focus-visible,
+.op-heading-link.is-done {
+  opacity: 1;
+}
+
+.op-heading-link:hover {
+  background: var(--op-bg-hover);
+  color: var(--op-text);
+}
+
+.op-heading-link.is-done {
+  color: var(--op-green);
+}
+
+@media (hover: none) {
+  .op-heading-link { opacity: 0.6; }
+}

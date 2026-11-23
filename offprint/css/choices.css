@@ -1,0 +1,391 @@
+/* Choice groups from choices.js: a fieldset with a small-caps legend over borderless tinted chips, or a combobox for
+   larger sets. Colour a group with data-op-role or data-op-color. Every press ripples. */
+.op-choices {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em;
+  min-inline-size: 0;
+  margin: 0.6em 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Floating the legend makes it an ordinary flex item on its own line, above the chips. */
+.op-choices-label {
+  float: left;
+  width: 100%;
+  margin: 0 0 0.15em;
+  padding: 0;
+  color: var(--op-text-label);
+  font-size: var(--op-eyebrow-size);
+  font-weight: var(--op-eyebrow-weight);
+  letter-spacing: var(--op-eyebrow-tracking);
+  line-height: 1.4;
+  text-transform: var(--op-eyebrow-case);
+}
+
+:is([data-op-color], [data-op-role]) > .op-choices-label,
+.op-choices:is([data-op-color], [data-op-role]) > .op-choices-label {
+  color: color-mix(in srgb, var(--op-accent) 85%, var(--op-text));
+}
+
+.op-choices-label.is-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.op-chip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.22em 0.85em;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--op-bg-hover) 70%, transparent);
+  color: var(--op-text-muted);
+  line-height: 1.4;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.op-chip:hover {
+  background: var(--op-bg-hover);
+  color: var(--op-text);
+}
+
+.op-chip-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.op-chip:has(.op-chip-input:focus-visible) {
+  outline: 2px solid var(--op-accent, var(--op-focus));
+  outline-offset: 2px;
+}
+
+.op-chip.is-selected {
+  color: var(--op-accent, var(--op-text));
+  font-weight: 600;
+}
+
+.op-chip-note {
+  color: var(--op-text-faint);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A single choice fills its chip through one highlight that slides between chips. */
+.op-choices-glider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--op-chip-w, 0);
+  height: var(--op-chip-h, 0);
+  border-radius: 999px;
+  background: var(--op-accent-bg, var(--op-bg-hover));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--op-accent, var(--op-text)) 22%, transparent);
+  transform: translate(var(--op-chip-x, 0), var(--op-chip-y, 0));
+  transition: transform 0.22s ease-out, width 0.22s ease-out, height 0.22s ease-out, opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.op-choices-still > .op-choices-glider {
+  transition: none;
+}
+
+.op-choices-glider.is-hidden {
+  opacity: 0;
+}
+
+.op-choices:not(.is-multiple) .op-chip.is-selected,
+.op-choices:not(.is-multiple) .op-chip.is-selected:hover {
+  background: transparent;
+}
+
+/* Multiple choices fill each chosen chip and grow a check mark. */
+.op-choices.is-multiple .op-chip.is-selected {
+  background: var(--op-accent-bg, var(--op-bg-hover));
+}
+
+.op-chip-check {
+  box-sizing: border-box;
+  flex: none;
+  width: 0;
+  height: 0.55em;
+  margin-inline-end: -0.35em;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  opacity: 0;
+  transform: translateY(-0.1em) rotate(45deg) scale(0.4);
+  transition: width 0.2s ease-out, margin 0.2s ease-out, opacity 0.2s ease, transform 0.2s ease-out;
+}
+
+:is(.op-chip.is-selected, .op-combo-option[aria-selected="true"]) > .op-chip-check {
+  width: 0.32em;
+  margin-inline-end: 0.1em;
+  opacity: 1;
+  transform: translateY(-0.1em) rotate(45deg);
+}
+
+/* The press ripple: a tinted disc that spreads from the press point and fades. */
+.op-ripple {
+  position: absolute;
+  top: var(--op-ripple-y, 50%);
+  left: var(--op-ripple-x, 50%);
+  width: var(--op-ripple-size, 100%);
+  height: var(--op-ripple-size, 100%);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--op-accent, var(--op-text)) 24%, transparent);
+  transform: translate(-50%, -50%) scale(0);
+  animation: op-ripple 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes op-ripple {
+  60% { opacity: 1; }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Combobox: a search field over a listbox in a dropdown popover, for large choice sets. */
+.op-combo {
+  position: relative;
+  flex: 1 1 100%;
+  max-width: 24rem;
+}
+
+.op-combo-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.22em 2em 0.22em 0.4em;
+  border-radius: 1.2em;
+  background: color-mix(in srgb, var(--op-bg-hover) 70%, transparent);
+  cursor: text;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.op-combo-field:hover {
+  background: var(--op-bg-hover);
+}
+
+.op-combo-field::after {
+  content: "";
+  position: absolute;
+  top: 1.05em;
+  right: 0.9em;
+  width: 0.45em;
+  height: 0.45em;
+  border: solid var(--op-text-muted);
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-50%) rotate(45deg);
+  transition: transform 0.18s ease;
+  pointer-events: none;
+}
+
+.op-combo.is-open .op-combo-field::after {
+  transform: translateY(-15%) rotate(225deg);
+}
+
+.op-combo-field:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--op-accent, var(--op-focus));
+}
+
+.op-combo-input {
+  flex: 1 1 6em;
+  min-width: 4em;
+  padding: 0.15em 0.4em;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.op-combo-chips {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-combo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+  margin: 0;
+  padding: 0 0.15em 0 0.65em;
+  border-radius: 999px;
+  background: var(--op-accent-bg, var(--op-bg-hover));
+  color: var(--op-accent, var(--op-text));
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1.6;
+  list-style: none;
+}
+
+.op-combo-chip.is-new {
+  animation: op-chip-in 0.18s ease-out;
+}
+
+@keyframes op-chip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.op-combo-remove {
+  display: inline-grid;
+  place-items: center;
+  width: 1.3em;
+  height: 1.3em;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.op-combo-remove::before {
+  content: "×";
+  line-height: 1;
+}
+
+.op-combo-remove:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+/* Without the popover API the panel drops below the field in place. */
+.op-combo-panel:not([popover]) {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  box-sizing: border-box;
+  min-width: 100%;
+  max-height: 18rem;
+  padding: 5px;
+  overflow: auto;
+  border: 1px solid var(--op-border-strong);
+  border-radius: var(--op-radius-lg);
+  background: var(--op-bg);
+  box-shadow: 0 8px 28px light-dark(rgba(15, 15, 15, 0.14), rgba(0, 0, 0, 0.45));
+}
+
+.op-combo-panel[hidden] {
+  display: none;
+}
+
+.op-combo-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--op-space-1);
+  padding: 0 0 5px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--op-border);
+}
+
+.op-combo-action {
+  position: relative;
+  overflow: hidden;
+  padding: 0.1em 0.7em;
+  border: 0;
+  border-radius: 999px;
+  background: var(--op-bg-hover);
+  color: inherit;
+  font: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.op-combo-action:hover:not(:disabled) {
+  background: var(--op-accent-bg, var(--op-bg-hover));
+  color: var(--op-accent, var(--op-text));
+}
+
+.op-combo-action:disabled {
+  color: var(--op-text-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.op-combo-count {
+  margin-inline-start: auto;
+  color: var(--op-text-muted);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-combo-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-combo-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  min-block-size: 2rem;
+  margin: 0;
+  padding: var(--op-space-1) var(--op-space-2);
+  overflow: hidden;
+  border-radius: var(--op-radius);
+  list-style: none;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.op-combo-option[hidden] {
+  display: none;
+}
+
+.op-combo-option.is-active {
+  background: var(--op-accent-bg, var(--op-bg-hover));
+  color: var(--op-accent, var(--op-text));
+}
+
+.op-combo-option[aria-selected="true"] {
+  font-weight: 600;
+}
+
+.op-combo-option > .op-chip-note {
+  margin-inline-start: auto;
+}
+
+.op-combo-option mark {
+  padding: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.15em;
+}
+
+.op-combo-empty {
+  margin: 0;
+  padding: var(--op-space-1) var(--op-space-2);
+  color: var(--op-text-muted);
+  font-size: 0.9em;
+}

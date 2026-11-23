@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SVG charts · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>SVG charts · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {
       "features": {"chart": true, "chart-intervals": true, "chart-histogram": true, "results": true, "data": true, "parameters": true, "selection": true},
       "parameterScopes": {
@@ -68,21 +68,21 @@
       }
     }
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Show data</p>
+      <p class="op-eyebrow">Show data</p>
       <h1>SVG charts</h1>
-      <p>DocForm draws line, bar, scatter, and pie <span data-df-term="chart">charts</span> that work offline, fit the reading column, and move smoothly when their data changes. Bars can stand upright, lie sideways, or stack, and readers can always see exact values in a table.</p>
-      <dl class="df-fields">
-        <dt>Official name</dt><dd><span data-df-term="SVG">SVG</span> charts</dd>
-        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
+      <p>OffPrint draws line, bar, scatter, and pie <span data-op-term="chart">charts</span> that work offline, fit the reading column, and move smoothly when their data changes. Bars can stand upright, lie sideways, or stack, and readers can always see exact values in a table.</p>
+      <dl class="op-fields">
+        <dt>Official name</dt><dd><span data-op-term="SVG">SVG</span> charts</dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
         <dt>Works with</dt><dd>Named data sources, linked selection, parameters, and playback</dd>
         <dt>Good for</dt><dd>Trends, comparisons, and relationships in numbers</dd>
@@ -92,7 +92,7 @@
     <h2 id="see-it">See it</h2>
 
     <figure id="see-it-demo">
-      <div data-df-chart="line" data-df-toggles data-df-brush data-df-rescale>
+      <div data-op-chart="line" data-op-toggles data-op-brush data-op-rescale>
         <script type="application/json">
           {
             "x": {"type": "time", "label": "Date (UTC)"},
@@ -137,10 +137,10 @@
           </tbody>
         </table>
       </div>
-      <figcaption><span data-df-term="repository">Repository</span> <span data-df-term="commit">commits</span> by date. Dates use <span data-df-tip="A shared time standard. Using it keeps the dates the same across time zones." data-df-tip-tags="Data and charts">UTC</span>. One daily count is deliberately omitted to show a gap.</figcaption>
+      <figcaption><span data-op-term="repository">Repository</span> <span data-op-term="commit">commits</span> by date. Dates use <span data-op-tip="A shared time standard. Using it keeps the dates the same across time zones." data-op-tip-tags="Data and charts">UTC</span>. One daily count is deliberately omitted to show a gap.</figcaption>
     </figure>
 
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Hover for exact values, toggle <strong>Total so far</strong> in the legend, then drag across part of the chart to narrow the dates. Open <strong>Table</strong> to see only the visible values. Choose <strong>Reset range</strong> to restore the full span.</p>
 
     <h2 id="what-it-does">Time, ranges, and gaps</h2>
@@ -148,7 +148,7 @@
     <h2 id="categories">Compare categories with bars</h2>
 
     <figure>
-      <div data-df-chart="bar">
+      <div data-op-chart="bar">
         <script type="application/json">
           {
             "x": "Reference group",
@@ -176,18 +176,18 @@
       <figcaption>Bar height shows the reference count for each group. The asterisk picks out the data group.</figcaption>
     </figure>
 
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Inspect the marked bar and compare its count with the reading group.</p>
 
     <h2 id="bar-layout">Turn bars sideways or stack them</h2>
-    <p>Bars can lie sideways, which leaves room for long category names. Several series can sit side by side, <span data-df-term="stacked bar">stack</span> into one bar per category, or stack to 100% so each bar shows shares instead of totals.</p>
-    <div class="df-params" data-df-parameter-scope="bar-layout">
-      <fieldset data-df-choice="direction">
+    <p>Bars can lie sideways, which leaves room for long category names. Several series can sit side by side, <span data-op-term="stacked bar">stack</span> into one bar per category, or stack to 100% so each bar shows shares instead of totals.</p>
+    <div class="op-params" data-op-parameter-scope="bar-layout">
+      <fieldset data-op-choice="direction">
         <legend>Direction</legend>
         <label><input type="radio" name="direction" value="vertical"> Upright</label>
         <label><input type="radio" name="direction" value="horizontal" checked> Sideways</label>
       </fieldset>
-      <fieldset data-df-choice="layout">
+      <fieldset data-op-choice="layout">
         <legend>Layout</legend>
         <label><input type="radio" name="layout" value="none"> Side by side</label>
         <label><input type="radio" name="layout" value="stacked" checked> Stacked</label>
@@ -195,7 +195,7 @@
       </fieldset>
     </div>
     <figure>
-      <div data-df-chart="bar" data-df-scope="bar-layout" data-df-chart-bind='{"orientation": "direction", "stack": "layout"}' data-df-toggles>
+      <div data-op-chart="bar" data-op-scope="bar-layout" data-op-chart-bind='{"orientation": "direction", "stack": "layout"}' data-op-toggles>
         <script type="application/json">
           {
             "x": "Feature",
@@ -220,23 +220,23 @@
           </tbody>
         </table>
       </div>
-      <figcaption>Download size of six data features in an earlier library snapshot, split into script and <span data-df-term="stylesheet">stylesheet</span>. The two choices above the chart set its direction and layout.</figcaption>
+      <figcaption>Download size of six data features in an earlier library snapshot, split into script and <span data-op-term="stylesheet">stylesheet</span>. The two choices above the chart set its direction and layout.</figcaption>
     </figure>
 
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Choose <strong>Percent</strong> and watch each bar stretch to the full width. Then choose <strong>Upright</strong> and <strong>Side by side</strong>. Hide <strong>Script</strong> in the legend to see the stylesheet bars restack on their own.</p>
-    <p>Percent bars suit a question about shares, such as how much of each feature is styling. Totals answer a question about size. A percent chart cannot include negative values, so DocForm rejects those rather than guessing.</p>
+    <p>Percent bars suit a question about shares, such as how much of each feature is styling. Totals answer a question about size. A percent chart cannot include negative values, so OffPrint rejects those rather than guessing.</p>
 
     <h2 id="motion">Charts that move with their data</h2>
     <p>Every chart animates by default. Each chart draws itself in once, the first time you scroll it into view: bars grow, lines draw, and dots pop in. After that, any change moves the existing marks to their new places instead of redrawing. That includes a filter, a hidden series, a new bin count, or a new layout. Your eye can follow each bar or dot from where it was to where it is now.</p>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Switch the bar layout above a few times and follow one bar, such as Parameters, as it moves.</p>
-    <p>Movement is skipped when your device asks for <span data-df-term="reduced motion">reduced motion</span>, when you print, and inside the full-screen zoom view. Charts then show their final state at once. Authors can also turn motion off for one chart or for a whole site.</p>
+    <p>Movement is skipped when your device asks for <span data-op-term="reduced motion">reduced motion</span>, when you print, and inside the full-screen zoom view. Charts then show their final state at once. Authors can also turn motion off for one chart or for a whole site.</p>
 
     <h2 id="pie">Show shares with a pie chart</h2>
     <p>Choose a group in the legend to hide or show its slice. The pie and table recalculate each share using the total of the visible groups.</p>
     <figure>
-      <div data-df-chart="pie" data-df-toggles>
+      <div data-op-chart="pie" data-op-toggles>
         <table>
           <thead><tr><th scope="col">Group</th><th scope="col">References</th></tr></thead>
           <tbody>
@@ -252,17 +252,17 @@
     </figure>
 
     <h2 id="shared-filter">Compare file sizes with a scatter chart</h2>
-    <p>A scatter chart puts one dot at the intersection of two numbers. Here, each dot uses the size and line count of a repository file, and the series group the <span data-df-term="record">records</span> by kind. A linear axis adds the same amount over equal distances. The horizontal log scale here multiplies by ten at each major step and takes only positive values.</p>
-    <fieldset data-df-parameter-scope="module-filter" data-df-choice="kinds">
+    <p>A scatter chart puts one dot at the intersection of two numbers. Here, each dot uses the size and line count of a repository file, and the series group the <span data-op-term="record">records</span> by kind. A linear axis adds the same amount over equal distances. The horizontal log scale here multiplies by ten at each major step and takes only positive values.</p>
+    <fieldset data-op-parameter-scope="module-filter" data-op-choice="kinds">
       <legend>File kinds to show</legend>
       <label><input type="checkbox" value="script" checked> Scripts</label>
       <label><input type="checkbox" value="style" checked> Stylesheets</label>
     </fieldset>
 
     <figure>
-      <div id="module-scatter" data-df-chart="scatter" data-df-source="Module sizes"
-        data-df-x-type="log" data-df-x-label="File size (bytes, log scale)" data-df-y-label="Lines"
-        data-df-selection-group="module-point">
+      <div id="module-scatter" data-op-chart="scatter" data-op-source="Module sizes"
+        data-op-x-type="log" data-op-x-label="File size (bytes, log scale)" data-op-y-label="Lines"
+        data-op-selection-group="module-point">
         <table>
         <thead><tr><th scope="col">Module file</th><th scope="col">Kind</th><th scope="col">Bytes</th><th scope="col">Lines</th></tr></thead>
           <tbody>
@@ -276,16 +276,16 @@
       <figcaption>Each dot is a library file. Both the plot and the results table use the same file-kind filter.</figcaption>
     </figure>
 
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>Clear <strong><span data-df-term="stylesheet">Stylesheets</span></strong> above the plot and watch the plot. Open <strong>Show the file table</strong> to see the same filtered rows. Use the button to highlight the chart file’s dot, or click the dot itself to toggle its selection.</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Clear <strong><span data-op-term="stylesheet">Stylesheets</span></strong> above the plot and watch the plot. Open <strong>Show the file table</strong> to see the same filtered rows. Use the button to highlight the chart file’s dot, or click the dot itself to toggle its selection.</p>
 
-    <p><button type="button" class="df-button" data-df-selection-group="module-point" data-df-key="js/chart.js">Highlight the chart module</button></p>
+    <p><button type="button" class="op-button" data-op-selection-group="module-point" data-op-key="js/chart.js">Highlight the chart module</button></p>
 
-    <details data-df-no-bubble data-df-color="gray">
+    <details data-op-no-bubble data-op-color="gray">
       <summary>Show the file table</summary>
-      <table id="module-table" data-df-results data-df-source="Module sizes">
+      <table id="module-table" data-op-results data-op-source="Module sizes">
         <caption>Files shown by the shared filter (four examples with scripts off)</caption>
-        <thead><tr><th scope="col" data-df-field="file">Module file</th><th scope="col" data-df-field="kind">Kind</th><th scope="col" data-df-field="bytes">Bytes</th><th scope="col" data-df-field="lines">Lines</th></tr></thead>
+        <thead><tr><th scope="col" data-op-field="file">Module file</th><th scope="col" data-op-field="kind">Kind</th><th scope="col" data-op-field="bytes">Bytes</th><th scope="col" data-op-field="lines">Lines</th></tr></thead>
         <tbody>
         <tr><td>js/anim.js</td><td>script</td><td>22858</td><td>608</td></tr>
         <tr><td>js/chart.js</td><td>script</td><td>109152</td><td>2438</td></tr>
@@ -298,7 +298,7 @@
     <h2 id="intervals">Show uncertainty with intervals</h2>
 
     <figure>
-      <div data-df-chart="line">
+      <div data-op-chart="line">
         <script type="application/json">
           {
             "x": "Run",
@@ -339,14 +339,14 @@
       <figcaption>Illustrative reading times with supplied lower and upper bounds. The shaded band joins the bounds across successive runs.</figcaption>
     </figure>
 
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Inspect the middle point and switch to Table to read the estimate, bounds, and count.</p>
 
-    <p>Bars and scatter points show supplied <span data-df-term="interval">intervals</span> as <span data-df-tip="Short lines that show the lower and upper ends of a range around a value." data-df-tip-tags="Data and charts">whiskers</span>. A line chart can also use a whisker where only one point has bounds.</p>
+    <p>Bars and scatter points show supplied <span data-op-term="interval">intervals</span> as <span data-op-tip="Short lines that show the lower and upper ends of a range around a value." data-op-tip-tags="Data and charts">whiskers</span>. A line chart can also use a whisker where only one point has bounds.</p>
     <h2 id="interval-plots">Rank categories with dot and interval plots</h2>
-    <p>A <span data-df-term="dot plot">dot plot</span> ranks categories by their estimates. When you supply bounds, whiskers show the range around each dot. You can put categories down the left or along the bottom, and add stems to make a <span data-df-term="lollipop plot">lollipop plot</span>.</p>
+    <p>A <span data-op-term="dot plot">dot plot</span> ranks categories by their estimates. When you supply bounds, whiskers show the range around each dot. You can put categories down the left or along the bottom, and add stems to make a <span data-op-term="lollipop plot">lollipop plot</span>.</p>
     <figure>
-      <div data-df-chart="interval" data-df-orientation="horizontal" data-df-toggles>
+      <div data-op-chart="interval" data-op-orientation="horizontal" data-op-toggles>
         <script type="application/json">
           {
             "x": "Reading group",
@@ -379,12 +379,12 @@
     </figure>
     <p>Hide <strong>First read</strong> in the legend to see the remaining dots move to the middle of each row. Choose <strong>Table</strong> to see the remaining estimates and bounds.</p>
     <h2 id="histograms">See how values are distributed</h2>
-    <p>A <span data-df-term="histogram">histogram</span> counts how many readings fall in each <span data-df-term="bin">bin</span>. Move the slider to see how wider or narrower bins change the shape. Use the legend to show either group on its own.</p>
-    <div class="df-params" data-df-parameter-scope="reading-times">
-      <div data-df-parameter="bins" data-df-parameter-label="Number of bins"><p>Number of bins: 4</p></div>
+    <p>A <span data-op-term="histogram">histogram</span> counts how many readings fall in each <span data-op-term="bin">bin</span>. Move the slider to see how wider or narrower bins change the shape. Use the legend to show either group on its own.</p>
+    <div class="op-params" data-op-parameter-scope="reading-times">
+      <div data-op-parameter="bins" data-op-parameter-label="Number of bins"><p>Number of bins: 4</p></div>
     </div>
     <figure>
-      <div id="reading-time-distribution" data-df-chart="histogram" data-df-toggles data-df-scope="reading-times" data-df-chart-bind='{"bins": "bins"}'>
+      <div id="reading-time-distribution" data-op-chart="histogram" data-op-toggles data-op-scope="reading-times" data-op-chart-bind='{"bins": "bins"}'>
         <script type="application/json">
           {
             "bins": 4,
@@ -409,7 +409,7 @@
     </figure>
     <p>Choose Table to see the exact bin boundaries and counts. A logarithmic horizontal axis can help when positive measurements span several orders of magnitude. The slider is linked straight to the chart, so it needs no extra page code. <a href="../explain/parameters.html#chart-bindings">Parameters</a> explains these links.</p>
     <h2 id="heatmap-pointer">Colour a grid of values</h2>
-    <p>When values sit on a grid, such as two settings crossed with each other, a <span data-df-term="heatmap">heatmap</span> colours each cell by its value and can draw <span data-df-term="contour line">contour lines</span> through equal values. <a href="heatmaps.html">Heatmaps</a> has its own page.</p>
+    <p>When values sit on a grid, such as two settings crossed with each other, a <span data-op-term="heatmap">heatmap</span> colours each cell by its value and can draw <span data-op-term="contour line">contour lines</span> through equal values. <a href="heatmaps.html">Heatmaps</a> has its own page.</p>
     <h2 id="shared-position">Share a position between charts</h2>
     <p>Charts with a common linear horizontal scale can share an inspection cursor while keeping their own vertical scales and visible ranges. Try the two charts in <a href="playback.html#shared-position">Guided chart playback</a>.</p>
     <h2 id="when-to-use">When to reach for it</h2>
@@ -424,6 +424,7 @@
       <li><a href="heatmaps.html">Heatmaps</a></li>
       <li><a href="../explain/parameters.html#linking">Parameters</a>, for controls linked to charts</li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
+      <li><a href="../recipes/share-experiment-results.html">Share experiment results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

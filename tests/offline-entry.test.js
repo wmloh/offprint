@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const repo = new URL('../', 'file://' + __filename);
-const library = new URL('docform/', repo);
-const entryURL = new URL('docform.js', library);
+const library = new URL('offprint/', repo);
+const entryURL = new URL('offprint.js', library);
 const entry = fs.readFileSync(entryURL, 'utf8');
 
 function descendants(node) {
@@ -50,7 +50,7 @@ function element(tag) {
       else attrs.delete(name);
     },
     querySelector(selector) {
-      return selector === '.df-progress-bar' && this.innerHTML?.includes('df-progress-bar') ? element('circle') : null;
+      return selector === '.op-progress-bar' && this.innerHTML?.includes('op-progress-bar') ? element('circle') : null;
     },
     querySelectorAll() { return []; },
     matches(selector) { return selector === tag || selector === '.' + this.className; },
@@ -105,7 +105,7 @@ function element(tag) {
 function page({ nested, site, config, lateConfig, entryProfile, fail = [], storage, dark, staticCSS, cite, download,
   interactive = false, movedURL, globals } = {}) {
   const location = new URL(movedURL || (nested ? 'pages/chapter.html' : 'index.html'), repo);
-  const source = new URL(nested ? '../docform/docform.js' : 'docform/docform.js', location);
+  const source = new URL(nested ? '../offprint/offprint.js' : 'offprint/offprint.js', location);
   const siteScript = site ? { src: new URL(nested ? '../site.js' : 'site.js', location).href } : null;
   const siteConfig = config => ({ type: 'application/json', textContent: JSON.stringify(config) });
   const events = [];
@@ -121,10 +121,10 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
   const bibliography = cite ? element('div') : null;
   const ids = new Map();
   if (cite) {
-    citation.setAttribute('data-df-cite', 'example');
+    citation.setAttribute('data-op-cite', 'example');
     body.querySelectorAll = selector => {
-      if (selector === '[data-df-cite]') return [citation];
-      if (selector === '[data-df-bibliography]') return [bibliography];
+      if (selector === '[data-op-cite]') return [citation];
+      if (selector === '[data-op-bibliography]') return [bibliography];
       return [];
     };
   }
@@ -137,12 +137,12 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     currentScript: { src: source.href, getAttribute: () => entryProfile ?? null },
     activeElement: body,
     getElementById: id => ids.get(id) || (movedURL && descendants(body).find(node => node.id === id)) || null,
-    querySelector: selector => selector === 'script[data-df-site]' ? siteScript : null,
+    querySelector: selector => selector === 'script[data-op-site]' ? siteScript : null,
     querySelectorAll(selector) {
-      if (selector === 'script[data-df-page]') return this.readyState === 'loading'
+      if (selector === 'script[data-op-page]') return this.readyState === 'loading'
         ? (config ? [siteConfig(config)] : [])
         : (lateConfig || config ? [siteConfig(lateConfig || config)] : []);
-      if (selector.startsWith('link[rel') && staticCSS) return [{ href: new URL('docform.css', library).href }];
+      if (selector.startsWith('link[rel') && staticCSS) return [{ href: new URL('offprint.css', library).href }];
       return body.querySelectorAll(selector);
     },
     addEventListener(type, callback, capture) {
@@ -183,7 +183,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     cancelAnimationFrame() {},
     getComputedStyle: () => ({}),
     console: { warn() {} },
-    DocFormSite: site, ...globals
+    OffPrintSite: site, ...globals
   });
   context.window = context;
   document.defaultView = context;
@@ -201,7 +201,7 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
   };
   if (!interactive) vm.runInContext(entry, context);
   return {
-    DF: context.DocForm, html, body, citation, events, loads, ids, document, keyboards,
+    OP: context.OffPrint, html, body, citation, events, loads, ids, document, keyboards,
     key(key, target = body, props = {}) {
       const event = Object.assign(new Event('keydown', { cancelable: true }), { key }, props);
       Object.defineProperty(event, 'target', { value: target });
@@ -215,11 +215,11 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
     runScript(url) { vm.runInContext(fs.readFileSync(url, 'utf8'), context, { filename: url.pathname }); },
     async hydrate(payload, shared, signal, saved = null) {
       document.readyState = 'complete';
-      html.setAttribute('data-df-export-replay', '');
-      context.DocForm = {};
+      html.setAttribute('data-op-export-replay', '');
+      context.OffPrint = {};
       this.runScript(new URL('js/export-reader.js', library));
-      const initialize = context.DocForm._exportReader.startInteractive;
-      delete context.DocForm;
+      const initialize = context.OffPrint._exportReader.startInteractive;
+      delete context.OffPrint;
       head.append = script => {
         assert.equal(script.nonce, 'test-nonce');
         document.currentScript = script;
@@ -227,11 +227,11 @@ function page({ nested, site, config, lateConfig, entryProfile, fail = [], stora
         document.currentScript = null;
       };
       await initialize(document, payload, shared, 'test-nonce', saved, signal);
-      return context.DocForm;
+      return context.OffPrint;
     },
     async start() {
       document.readyState = 'interactive';
-      const done = new Promise(resolve => context.DocForm.ready(resolve));
+      const done = new Promise(resolve => context.OffPrint.ready(resolve));
       launch();
       await done;
     }
@@ -242,9 +242,9 @@ test('the trusted Interactive loader initializes the feature closure from embedd
   const config = { profile: 'none', features: { tabs: true, data: true, sections: true } };
   const site = { assets: { data: { runs: { output: 'data/runs.js' } } } };
   const normal = page({ config, site });
-  const plan = normal.DF._boot.exportPlan(site, config, null, false);
+  const plan = normal.OP._boot.exportPlan(site, config, null, false);
   assert.deepEqual(Array.from(plan.features), ['tokens', 'base', 'data', 'tabs', 'sections']);
-  assert.deepEqual(Array.from(plan.scripts), ['docform.js', 'js/core.js', 'js/reader-state.js',
+  assert.deepEqual(Array.from(plan.scripts), ['offprint.js', 'js/core.js', 'js/reader-state.js',
     'vendor/js-yaml/js-yaml.min.js', 'js/data.js', 'js/tabs.js', 'js/sections.js']);
   const original = 'file:///original/chapter.html';
   const shared = Array.from(plan.scripts, path => fs.readFileSync(new URL(path, library), 'utf8'));
@@ -264,16 +264,16 @@ test('the trusted Interactive loader initializes the feature closure from embedd
 
   const broken = page({ config, site, interactive: true });
   await assert.rejects(broken.hydrate({ ...payload, modules: payload.modules.slice(0, -1) }, shared,
-    new AbortController().signal), /required DocForm feature/);
+    new AbortController().signal), /required OffPrint feature/);
 });
 
 test('Interactive import replay restores local overrides and shared replacements before rendering the saved view', async () => {
   const config = { profile: 'none', features: { 'data-view': true, dropzone: true } };
   const site = { assets: { data: { runs: { output: 'runs.js' }, unused: { output: 'unused.js' } } } };
-  const plan = page({ config, site }).DF._boot.exportPlan(site, config, null, false);
-  const trusted = { window: { DocForm: {} } };
+  const plan = page({ config, site }).OP._boot.exportPlan(site, config, null, false);
+  const trusted = { window: { OffPrint: {} } };
   vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
-  const shared = plan.scripts.map(path => trusted.window.DocForm._exportRuntime[path]);
+  const shared = plan.scripts.map(path => trusted.window.OffPrint._exportRuntime[path]);
   const baseline = 'name,value\nauthored,1';
   const local = 'name,value\nlocal café,2';
   const replacement = 'name,value\nshared,3';
@@ -297,27 +297,27 @@ test('Interactive import replay restores local overrides and shared replacements
     const nodes = identities.map(({ key: [, id] }, index) => {
       const node = p.body.appendChild(p.document.createElement('div'));
       node.id = id;
-      node.setAttribute('data-df-export-identity', index);
+      node.setAttribute('data-op-export-identity', index);
       return node;
     });
     const [localView, sharedView, localBox, sharedBox] = nodes;
     for (const view of [localView, sharedView]) {
-      view.setAttribute('data-df-source', 'runs');
-      view.setAttribute('data-df-data-view', 'code');
+      view.setAttribute('data-op-source', 'runs');
+      view.setAttribute('data-op-data-view', 'code');
     }
-    for (const box of [localBox, sharedBox]) box.setAttribute('data-df-dropzone', '');
-    localBox.setAttribute('data-df-target', localView.id);
-    sharedBox.setAttribute('data-df-target-source', 'runs');
+    for (const box of [localBox, sharedBox]) box.setAttribute('data-op-dropzone', '');
+    localBox.setAttribute('data-op-target', localView.id);
+    sharedBox.setAttribute('data-op-target-source', 'runs');
     const definition = p.body.appendChild(p.document.createElement('script'));
     definition.setAttribute('type', 'text/csv');
-    definition.setAttribute('data-df-source', 'inline');
-    definition.setAttribute('data-df-export-data', '0');
+    definition.setAttribute('data-op-source', 'inline');
+    definition.setAttribute('data-op-export-data', '0');
     p.body.querySelectorAll = selector => ({
-      '[data-df-export-data]': [definition],
-      '[data-df-export-identity]': nodes,
-      'script[data-df-source], pre[data-df-source]': [definition],
-      '[data-df-data-view]:not([data-df-dropzone])': [localView, sharedView],
-      '[data-df-dropzone]:not(.df-dropzone)': [localBox, sharedBox]
+      '[data-op-export-data]': [definition],
+      '[data-op-export-identity]': nodes,
+      'script[data-op-source], pre[data-op-source]': [definition],
+      '[data-op-data-view]:not([data-op-dropzone])': [localView, sharedView],
+      '[data-op-dropzone]:not(.op-dropzone)': [localBox, sharedBox]
     })[selector] || [];
     const runtime = await p.hydrate({ ...payload, data }, shared, new AbortController().signal, saved);
     assert.deepEqual(p.loads, []);
@@ -344,7 +344,7 @@ test('Interactive import replay restores local overrides and shared replacements
   const returned = await visit(captured);
   assert.equal(returned.localView.textContent, local);
   assert.equal(returned.sharedView.textContent, replacement);
-  const reset = box => descendants(box).find(el => el.className === 'df-button df-dropzone-reset').click();
+  const reset = box => descendants(box).find(el => el.className === 'op-button op-dropzone-reset').click();
   reset(returned.localBox);
   assert.equal(returned.localView.textContent, replacement);
   reset(returned.sharedBox);
@@ -355,7 +355,7 @@ test('Interactive import replay restores local overrides and shared replacements
 
 test('Interactive cards restore nested tabs, filters, and a paused SVG position across page visits', async () => {
   const config = { profile: 'none', features: { cards: true, tabs: true, animation: true } };
-  const plan = page({ config }).DF._boot.exportPlan({}, config, null, false);
+  const plan = page({ config }).OP._boot.exportPlan({}, config, null, false);
   const shared = Array.from(plan.scripts, path => fs.readFileSync(new URL(path, library), 'utf8'));
   const url = 'file:///original/cards.html';
   const payload = { url, siteURL: url, entryURL: entryURL.href, site: null, profile: null,
@@ -381,27 +381,27 @@ test('Interactive cards restore nested tabs, filters, and a paused SVG position 
       if (node.id) p.ids.set(node.id, node);
       return node;
     }
-    const cards = add(p.body, 'div', { id: 'cards', 'data-df-numbered': '', 'data-df-search': '' });
+    const cards = add(p.body, 'div', { id: 'cards', 'data-op-numbered': '', 'data-op-search': '' });
     const panel = add(cards, 'div');
     const list = add(panel, 'div', { 'aria-labelledby': 'card-heading' });
     add(list, 'span', { id: 'card-heading' });
     const details = add(cards, 'div');
     const sections = ['overview', 'motion'].map(id => add(details, 'section', { id }));
     const buttons = sections.map(section => add(list, 'button', {
-      'data-df-key': section.id, 'data-df-detail': section.id
+      'data-op-key': section.id, 'data-op-detail': section.id
     }));
     buttons[0].textContent = 'Overview';
     buttons[1].textContent = 'Motion';
     const tag = add(buttons[1], 'span');
     tag.textContent = 'SVG';
-    buttons[1].querySelectorAll = selector => selector === ':scope > .df-tag' ? [tag] : [];
-    cards.querySelector = selector => ({ ':scope > .df-step-panel': panel, ':scope > .df-step-details': details })[selector];
-    panel.querySelector = selector => selector === ':scope > .df-step-list' ? list : null;
-    list.querySelectorAll = selector => selector === ':scope > button, :scope > .df-step-group > button' ? buttons : [];
+    buttons[1].querySelectorAll = selector => selector === ':scope > .op-tag' ? [tag] : [];
+    cards.querySelector = selector => ({ ':scope > .op-step-panel': panel, ':scope > .op-step-details': details })[selector];
+    panel.querySelector = selector => selector === ':scope > .op-step-list' ? list : null;
+    list.querySelectorAll = selector => selector === ':scope > button, :scope > .op-step-group > button' ? buttons : [];
     const tabs = add(sections[1], 'div', { id: 'tabs' });
-    const tabPanels = ['explain', 'draw'].map(key => add(tabs, 'section', { 'data-df-tab': key, 'data-df-key': key }));
-    tabs.querySelectorAll = selector => selector === ':scope > [data-df-tab]' ? tabPanels : [];
-    const figure = add(tabPanels[1], 'figure', { id: 'figure', 'data-df-animation-autoplay': '' });
+    const tabPanels = ['explain', 'draw'].map(key => add(tabs, 'section', { 'data-op-tab': key, 'data-op-key': key }));
+    tabs.querySelectorAll = selector => selector === ':scope > [data-op-tab]' ? tabPanels : [];
+    const figure = add(tabPanels[1], 'figure', { id: 'figure', 'data-op-animation-autoplay': '' });
     const svg = add(figure, 'svg');
     const circle = add(svg, 'circle', { r: '4' });
     circle.namespaceURI = 'http://www.w3.org/2000/svg';
@@ -411,18 +411,18 @@ test('Interactive cards restore nested tabs, filters, and a paused SVG position 
       { key: 'larger', actions: [{ attr: 'circle', name: 'r', to: 8 }] }
     ] });
     figure.querySelector = selector => selector === 'svg' ? svg : null;
-    figure.querySelectorAll = selector => selector === ':scope > script[data-df-animation]' ? [declaration] : [];
+    figure.querySelectorAll = selector => selector === ':scope > script[data-op-animation]' ? [declaration] : [];
     svg.querySelectorAll = selector => selector === 'circle' ? [circle] : [];
-    [cards, tabs, figure].forEach((host, i) => host.setAttribute('data-df-export-identity', i));
+    [cards, tabs, figure].forEach((host, i) => host.setAttribute('data-op-export-identity', i));
     p.body.querySelectorAll = selector => ({
-      '.df-card-panel': [cards], '.df-tabs, [data-df-tabs]': [tabs],
-      'figure > script[data-df-animation]': [declaration], '[data-df-export-identity]': [cards, tabs, figure]
+      '.op-card-panel': [cards], '.op-tabs, [data-op-tabs]': [tabs],
+      'figure > script[data-op-animation]': [declaration], '[data-op-export-identity]': [cards, tabs, figure]
     })[selector] || [];
     const runtime = await p.hydrate(payload, shared, new AbortController().signal, saved);
-    const controls = figure.children.find(child => child.className === 'df-anim-controls');
+    const controls = figure.children.find(child => child.className === 'op-anim-controls');
     return { runtime, buttons, sections, tabs, tabPanels, figure, circle, observers, frames, document: p.document,
       filter: panel.firstChild.firstChild, animation: runtime.sequence.get(figure),
-      scrub: controls.lastChild, play: controls.firstChild.children.find(button => button.className === 'df-pill-button df-pill-play') };
+      scrub: controls.lastChild, play: controls.firstChild.children.find(button => button.className === 'op-pill-button op-pill-play') };
   }
 
   const first = await visit();
@@ -435,7 +435,7 @@ test('Interactive cards restore nested tabs, filters, and a paused SVG position 
   assert.equal(first.buttons[1].firstChild.textContent, '2');
   first.filter.value = 'SVG';
   first.filter.dispatchEvent(new Event('input'));
-  assert.ok(first.buttons[0].classList.contains('df-step-filtered'));
+  assert.ok(first.buttons[0].classList.contains('op-step-filtered'));
   first.tabs.firstChild.lastChild.click();
   first.observers.get(first.figure)([{ isIntersecting: true }]);
   assert.equal(first.animation.snapshot().playing, true);
@@ -485,10 +485,10 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
       { value: 'vertical', label: 'Vertical' }, { value: 'horizontal', label: 'Horizontal' }
     ] }, bins: { type: 'range', min: 2, max: 5, step: 1 } } } };
   const site = { assets: { data: { trace: { output: 'trace.js' } } } };
-  const plan = page({ config, site }).DF._boot.exportPlan(site, config, null, false);
-  const trusted = { window: { DocForm: {} } };
+  const plan = page({ config, site }).OP._boot.exportPlan(site, config, null, false);
+  const trusted = { window: { OffPrint: {} } };
   vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
-  const shared = plan.scripts.map(path => trusted.window.DocForm._exportRuntime[path]);
+  const shared = plan.scripts.map(path => trusted.window.OffPrint._exportRuntime[path]);
   const manifest = shared.push(site) - 1;
   const traceText = 'x,y,key\n0,0,start\n5,2,mid\n10,3,end';
   const original = shared.push({ type: 'csv', text: traceText }) - 1;
@@ -515,39 +515,39 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
     const detail = add(p.body, 'section');
     const data = [{ x: 0, y: 1, key: 'start' }, { x: 5, y: 2, key: 'mid' }, { x: 10, y: 4, key: 'end' }];
     const series = [{ key: 'a', data }, { key: 'b', data: [[0, 2], [5, 3], [10, 5]] }];
-    const sharedPosition = { 'data-df-x-group': 'position', 'data-df-selection-group': 'step' };
+    const sharedPosition = { 'data-op-x-group': 'position', 'data-op-selection-group': 'step' };
     const specs = [
-      ['line', { 'data-df-source': 'trace', ...sharedPosition }, {}],
+      ['line', { 'data-op-source': 'trace', ...sharedPosition }, {}],
       ['line', sharedPosition, { data }],
-      ['bar', { 'data-df-chart-bind': '{"orientation":"direction"}' }, { data: [['A', 1]] }],
+      ['bar', { 'data-op-chart-bind': '{"orientation":"direction"}' }, { data: [['A', 1]] }],
       ['pie', {}, { data: [{ label: 'A', value: 3 }, { label: 'B', value: 4 }], toggles: true }],
       ['interval', {}, { data: [['A', 3]] }],
-      ['histogram', { 'data-df-chart-bind': '{"bins":"bins"}' }, { data: [1, 3, 5] }],
+      ['histogram', { 'data-op-chart-bind': '{"bins":"bins"}' }, { data: [1, 3, 5] }],
       ['heatmap', {}, { z: [[1, 2], [3, 4]], contours: { levels: [2] } }],
       ['line', {}, { series, brush: true, toggles: true, motion: false }]
     ];
     const charts = specs.map(([type, attrs, spec], i) => {
-      const host = add(detail, 'div', { id: identities[i].key[1], 'data-df-export-identity': i,
-        'data-df-chart': type, ...attrs });
+      const host = add(detail, 'div', { id: identities[i].key[1], 'data-op-export-identity': i,
+        'data-op-chart': type, ...attrs });
       const definition = add(host, 'script', { type: 'application/json' });
       definition.textContent = JSON.stringify(spec);
       host.querySelector = selector => selector === ':scope > script[type="application/json"]' ? definition : null;
       return host;
     });
-    const bins = add(detail, 'input', { 'data-df-parameter': 'bins' });
+    const bins = add(detail, 'input', { 'data-op-parameter': 'bins' });
     bins.type = 'range';
-    const tour = add(detail, 'ol', { id: 'tour', 'data-df-chart-playback': '', ...sharedPosition,
-      'data-df-duration': '100', 'data-df-export-identity': charts.length });
+    const tour = add(detail, 'ol', { id: 'tour', 'data-op-chart-playback': '', ...sharedPosition,
+      'data-op-duration': '100', 'data-op-export-identity': charts.length });
     const stops = data.map(({ key, x }) => {
-      const stop = add(tour, 'li', { 'data-df-key': key, 'data-df-x': x });
+      const stop = add(tour, 'li', { 'data-op-key': key, 'data-op-x': x });
       stop.textContent = key;
       return stop;
     });
     tour.querySelectorAll = selector => selector === ':scope > li' ? stops : [];
-    const stateTour = add(detail, 'ol', { id: 'state-tour', 'data-df-chart-playback': 'state',
-      'data-df-target': 'bars', 'data-df-export-identity': charts.length + 1 });
-    const stateNote = add(stateTour, 'li', { 'data-df-key': 'sideways',
-      'data-df-state': '{"params":{"direction":"horizontal"}}' });
+    const stateTour = add(detail, 'ol', { id: 'state-tour', 'data-op-chart-playback': 'state',
+      'data-op-target': 'bars', 'data-op-export-identity': charts.length + 1 });
+    const stateNote = add(stateTour, 'li', { 'data-op-key': 'sideways',
+      'data-op-state': '{"params":{"direction":"horizontal"}}' });
     stateNote.textContent = 'Sideways bars';
     stateTour.querySelectorAll = selector => selector === ':scope > li' ? [stateNote] : [];
     if (hideHeatmap) {
@@ -560,9 +560,9 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
       };
     }
     p.body.querySelectorAll = selector => ({
-      '[data-df-chart]': charts, 'ol[data-df-chart-playback]': [tour, stateTour],
-      '[data-df-x-group]': [charts[0], charts[1], tour],
-      '[data-df-parameter]': [bins], '[data-df-export-identity]': [...charts, tour, stateTour]
+      '[data-op-chart]': charts, 'ol[data-op-chart-playback]': [tour, stateTour],
+      '[data-op-x-group]': [charts[0], charts[1], tour],
+      '[data-op-parameter]': [bins], '[data-op-export-identity]': [...charts, tour, stateTour]
     })[selector] || [];
     const dataEntries = source === null ? [] : [['trace', source]];
     const runtime = await p.hydrate({ ...payload, data: dataEntries }, shared, new AbortController().signal, saved);
@@ -577,17 +577,17 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
     ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line']);
   const [trace, linked, bars, pie, , , heatmap, brush] = first.charts;
   const control = (host, cls) => descendants(host).find(node => node.className?.split(' ').includes(cls) || node.getAttribute('class') === cls);
-  const key = (host, name) => control(host, 'df-chart-plot').dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: name }));
+  const key = (host, name) => control(host, 'op-chart-plot').dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: name }));
   const playback = first.runtime.sequence.get(first.tour);
   assert.ok(playback, first.runtime.diagnostics.list().map(issue => issue.message).join('\n'));
   assert.equal(playback.select('mid'), true);
   key(trace, 'Home');
-  assert.equal(control(linked, 'df-chart-x-cursor').getAttribute('display'), 'inline');
+  assert.equal(control(linked, 'op-chart-x-cursor').getAttribute('display'), 'inline');
   assert.equal(chart(pie).setSeriesVisible(chart(pie).model().series[0].key, false), true);
   key(brush, '+');
   assert.deepEqual(Array.from(chart(brush).range()), [2.5, 7.5]);
   assert.equal(chart(brush).setSeriesVisible('b', false), true);
-  control(brush, 'df-chart-toggle').click();
+  control(brush, 'op-chart-toggle').click();
   const statePlayback = first.runtime.sequence.get(first.stateTour);
   assert.ok(statePlayback, first.runtime.diagnostics.list().map(issue => issue.message).join('\n'));
   assert.equal(statePlayback.select('sideways'), true);
@@ -597,7 +597,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   assert.equal(chart(first.charts[5]).model().histogramEdges.length, 5);
   key(heatmap, 'PageDown');
   assert.equal(first.runtime._chart._heatmap.contours(heatmap, false), true);
-  control(heatmap, 'df-chart-toggle').click();
+  control(heatmap, 'op-chart-toggle').click();
   assert.equal(playback.play(), true);
   for (const [id, callback] of Array.from(first.frames)) { first.frames.delete(id); callback(50); }
   assert.equal(playback.position, 7.5);
@@ -617,12 +617,12 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   assert.equal(getChart(3).visible(getChart(3).model().series[0].key), false);
   assert.equal(getChart(7).visible('b'), false);
   assert.deepEqual(Array.from(getChart(7).range()), [2.5, 7.5]);
-  assert.equal(control(restored.charts[7], 'df-chart-toggle').getAttribute('aria-pressed'), 'true');
+  assert.equal(control(restored.charts[7], 'op-chart-toggle').getAttribute('aria-pressed'), 'true');
   assert.deepEqual(Array.from(restored.runtime._chart._heatmap.valueRange(restored.charts[6])),
     Array.from(first.runtime._chart._heatmap.valueRange(heatmap)));
   assert.equal(restored.runtime._chart._heatmap.contours(restored.charts[6]), false);
   const restoredBrush = restored.charts[7];
-  control(restoredBrush, 'df-chart-toggle').click();
+  control(restoredBrush, 'op-chart-toggle').click();
   const zoom = restored.runtime._zoom;
   assert.equal(zoom.open(restoredBrush), true);
   const { overlay } = zoom.snapshot();
@@ -631,7 +631,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
     const svg = descendants(restoredBrush).find(node => node.localName === 'svg');
     svg.getBoundingClientRect = () => ({ width: 400, left: 0, top: 0 });
     overlay.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 200, clientY: 100 }));
-    const readout = control(overlay, 'df-zoomtools-readout');
+    const readout = control(overlay, 'op-zoomtools-readout');
     assert.equal(readout.hidden, false);
     assert.equal(readout.children[0].children[1].textContent, getChart(7).coords(200, 100).xText);
     return readout.textContent;
@@ -656,11 +656,11 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
 
 test('Interactive zoom uses the live figure and tears down before the reader replaces its frame', async () => {
   const config = { profile: 'none', features: { 'zoom-tools': true } };
-  const plan = page({ config }).DF._boot.exportPlan({}, config, null, false);
+  const plan = page({ config }).OP._boot.exportPlan({}, config, null, false);
   assert.ok(plan.styles.includes('css/zoom.css') && plan.styles.includes('css/zoomtools.css'));
-  const trusted = { window: { DocForm: {} } };
+  const trusted = { window: { OffPrint: {} } };
   vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
-  const shared = plan.scripts.map(path => trusted.window.DocForm._exportRuntime[path]);
+  const shared = plan.scripts.map(path => trusted.window.OffPrint._exportRuntime[path]);
   const url = 'file:///original/figures.html';
   const payload = { url, siteURL: url, entryURL: entryURL.href, site: null, profile: null, data: [],
     features: plan.features, styles: plan.styles, modules: plan.scripts.map((path, i) => [path, i]) };
@@ -681,9 +681,9 @@ test('Interactive zoom uses the live figure and tears down before the reader rep
   const mark = svg.appendChild(p.document.createElement('circle'));
   figure.getBoundingClientRect = () => ({ left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100 });
   figure.querySelectorAll = selector => selector === 'svg, img' ? [svg] : [];
-  figure.closest = selector => selector.includes('.df-page figure') ? figure : null;
-  figure.matches = selector => selector === '.df-page img, .df-page figure';
-  p.body.querySelectorAll = selector => selector.startsWith('.df-page img') ? [figure] : [];
+  figure.closest = selector => selector.includes('.op-page figure') ? figure : null;
+  figure.matches = selector => selector === '.op-page img, .op-page figure';
+  p.body.querySelectorAll = selector => selector.startsWith('.op-page img') ? [figure] : [];
   const controller = new AbortController();
   const runtime = await p.hydrate(payload, shared, controller.signal);
   assert.deepEqual(p.loads, []);
@@ -699,10 +699,10 @@ test('Interactive zoom uses the live figure and tears down before the reader rep
   p.click(figure);
   const { overlay, stage } = zoom.snapshot();
   assert.equal(figure.parentNode, stage);
-  assert.equal(p.document.activeElement, find(overlay, 'df-zoom-close'));
+  assert.equal(p.document.activeElement, find(overlay, 'op-zoom-close'));
   assert.equal(p.key('2', p.document.activeElement).defaultPrevented, true);
   pointer(overlay, 'pointermove', 50, 50);
-  const lens = find(overlay, 'df-zoomtools-lens-view');
+  const lens = find(overlay, 'op-zoomtools-lens-view');
   mark.setAttribute('cx', '10');
   tick();
   assert.equal(descendants(lens).find(node => node.localName === 'circle').getAttribute('cx'), '10');
@@ -722,7 +722,7 @@ test('Interactive zoom uses the live figure and tears down before the reader rep
   const reopened = zoom.snapshot().overlay;
   assert.equal(tools.active(), 'cursor');
   assert.equal(tools.use('pen'), true);
-  const layer = find(reopened, 'df-zoomtools-layer');
+  const layer = find(reopened, 'op-zoomtools-layer');
   let captured;
   layer.setPointerCapture = id => { captured = id; };
   layer.hasPointerCapture = id => captured === id;
@@ -737,7 +737,7 @@ test('Interactive zoom uses the live figure and tears down before the reader rep
   assert.equal(layer.parentNode, null);
   assert.equal(reopened.parentNode, null);
   assert.equal(figure.parentNode, p.body);
-  assert.equal(p.html.classList.contains('df-zoom-open'), false);
+  assert.equal(p.html.classList.contains('op-zoom-open'), false);
   assert.equal(frames.size, 0);
   assert.equal(p.key('4', figure).defaultPrevented, false);
   assert.equal(p.key('Enter', figure).defaultPrevented, false);
@@ -748,10 +748,10 @@ test('Interactive zoom uses the live figure and tears down before the reader rep
 test('Interactive diagrams rebuild and restore their authored controls at a moved file URL', async () => {
   const config = { profile: 'none',
     features: { pipeline: true, sequence: true, timeline: true, 'tree-diagram': true, selection: true, data: true } };
-  const plan = page({ config }).DF._boot.exportPlan({}, config, null, false);
-  const trusted = { window: { DocForm: {} } };
+  const plan = page({ config }).OP._boot.exportPlan({}, config, null, false);
+  const trusted = { window: { OffPrint: {} } };
   vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
-  const shared = Array.from(plan.scripts, path => trusted.window.DocForm._exportRuntime[path]);
+  const shared = Array.from(plan.scripts, path => trusted.window.OffPrint._exportRuntime[path]);
   const url = 'file:///original/guide/diagrams.html';
   const identities = ['flow', 'sequence', 'timeline', 'tree', 'details', 'bad'].map(id => ({ key: ['id', id], stamp: id }));
   const payload = { url, siteURL: url, entryURL: entryURL.href, site: null, profile: null,
@@ -790,44 +790,44 @@ test('Interactive diagrams rebuild and restore their authored controls at a move
       return node;
     }
     function host(i, cls, attrs) {
-      return add(p.body, 'figure', cls, { ...attrs, id: identities[i].key[1], 'data-df-export-identity': i });
+      return add(p.body, 'figure', cls, { ...attrs, id: identities[i].key[1], 'data-op-export-identity': i });
     }
-    const flow = host(0, 'df-pipeline');
-    const blocks = add(flow, 'ol', 'df-pipe-blocks');
-    const begin = add(blocks, 'li', 'df-pipe-block', {}, 'Begin');
-    add(begin, 'a', 'df-pipe-link', { href: '#flow-2', 'data-df-label': 'Continue' });
-    const finish = add(blocks, 'li', 'df-pipe-block', { 'data-df-reveal-step': 'finish' }, 'Finish');
-    const steps = add(flow, 'ol', '', { 'data-df-pipeline-steps': '' });
-    add(steps, 'li', '', { 'data-df-key': 'begin', 'data-df-detail': 'begin-note' }, 'Start');
-    add(steps, 'li', '', { 'data-df-key': 'finish', 'data-df-detail': 'finish-note' }, 'Finish');
+    const flow = host(0, 'op-pipeline');
+    const blocks = add(flow, 'ol', 'op-pipe-blocks');
+    const begin = add(blocks, 'li', 'op-pipe-block', {}, 'Begin');
+    add(begin, 'a', 'op-pipe-link', { href: '#flow-2', 'data-op-label': 'Continue' });
+    const finish = add(blocks, 'li', 'op-pipe-block', { 'data-op-reveal-step': 'finish' }, 'Finish');
+    const steps = add(flow, 'ol', '', { 'data-op-pipeline-steps': '' });
+    add(steps, 'li', '', { 'data-op-key': 'begin', 'data-op-detail': 'begin-note' }, 'Start');
+    add(steps, 'li', '', { 'data-op-key': 'finish', 'data-op-detail': 'finish-note' }, 'Finish');
     add(flow, 'p', '', { id: 'begin-note' }, 'First note');
     const note = add(flow, 'p', '', { id: 'finish-note' }, 'Alternate pipeline note');
 
-    const group = { 'data-df-selection-group': 'writing' };
-    const sequence = host(1, 'df-sequence', group);
-    const messages = add(sequence, 'ol', 'df-sequence-messages');
-    add(messages, 'li', '', { 'data-df-key': 'read', 'data-df-from': 'reader', 'data-df-to': 'writer' }, 'Read');
-    add(messages, 'li', '', { 'data-df-key': 'write', 'data-df-from': 'writer', 'data-df-to': 'writer' }, 'Write');
-    const timeline = host(2, 'df-timeline', group);
-    const events = add(timeline, 'ol', 'df-timeline-events');
-    add(events, 'li', '', { 'data-df-key': 'read', 'data-df-start': '1' }, 'Read');
-    add(events, 'li', '', { 'data-df-key': 'write', 'data-df-start': '2', 'data-df-end': '4' }, 'Write');
-    const tree = host(3, 'df-tree-diagram', { ...group, 'data-df-source': 'outline' });
-    const source = add(p.body, 'script', '', { 'data-df-source': 'outline', type: 'application/json' }, JSON.stringify([
+    const group = { 'data-op-selection-group': 'writing' };
+    const sequence = host(1, 'op-sequence', group);
+    const messages = add(sequence, 'ol', 'op-sequence-messages');
+    add(messages, 'li', '', { 'data-op-key': 'read', 'data-op-from': 'reader', 'data-op-to': 'writer' }, 'Read');
+    add(messages, 'li', '', { 'data-op-key': 'write', 'data-op-from': 'writer', 'data-op-to': 'writer' }, 'Write');
+    const timeline = host(2, 'op-timeline', group);
+    const events = add(timeline, 'ol', 'op-timeline-events');
+    add(events, 'li', '', { 'data-op-key': 'read', 'data-op-start': '1' }, 'Read');
+    add(events, 'li', '', { 'data-op-key': 'write', 'data-op-start': '2', 'data-op-end': '4' }, 'Write');
+    const tree = host(3, 'op-tree-diagram', { ...group, 'data-op-source': 'outline' });
+    const source = add(p.body, 'script', '', { 'data-op-source': 'outline', type: 'application/json' }, JSON.stringify([
       { key: 'read', label: 'Read', collapsed: true }, { key: 'write', label: 'Write', parent: 'read' }
     ]));
     source.type = 'application/json';
-    const pane = add(timeline, 'div', 'df-detail-pane', { id: 'details', 'data-df-export-identity': 4 });
-    add(pane, 'p', '', { 'data-df-key': 'read' }, 'Read detail');
-    const alternate = add(pane, 'p', '', { 'data-df-key': 'write' }, 'Alternate timeline detail');
-    const bad = host(5, 'df-sequence');
-    const fallback = add(bad, 'ol', 'df-sequence-messages');
-    add(fallback, 'li', '', { 'data-df-key': 'broken' }, 'Readable fallback');
+    const pane = add(timeline, 'div', 'op-detail-pane', { id: 'details', 'data-op-export-identity': 4 });
+    add(pane, 'p', '', { 'data-op-key': 'read' }, 'Read detail');
+    const alternate = add(pane, 'p', '', { 'data-op-key': 'write' }, 'Alternate timeline detail');
+    const bad = host(5, 'op-sequence');
+    const fallback = add(bad, 'ol', 'op-sequence-messages');
+    add(fallback, 'li', '', { 'data-op-key': 'broken' }, 'Readable fallback');
     const runtime = await p.hydrate(payload, shared, new AbortController().signal, saved);
     const flowController = runtime._pipeline.get(flow);
     assert.ok(flowController, JSON.stringify(runtime.diagnostics.list().map(issue => issue.message)));
-    const treeRoot = descendants(tree).find(node => node.className === 'df-tree-diagram-pick');
-    const toggle = descendants(tree).find(node => node.className === 'df-tree-diagram-toggle');
+    const treeRoot = descendants(tree).find(node => node.className === 'op-tree-diagram-pick');
+    const toggle = descendants(tree).find(node => node.className === 'op-tree-diagram-toggle');
     const keys = () => [runtime._sequenceDiagram.get(sequence), runtime._timeline.get(timeline),
       runtime._treeDiagram.get(tree)].map(controller => controller.snapshot().key);
     assert.equal(runtime._page, url);
@@ -836,17 +836,17 @@ test('Interactive diagrams rebuild and restore their authored controls at a move
     assert.equal(bad.firstChild.textContent, 'Readable fallback');
     assert.ok(runtime.diagnostics.list().some(issue => issue.feature === 'sequence' && issue.code === 'component-input'));
     return { runtime, flowController, keys, treeRoot, toggle, alternate, note, begin, finish, timers,
-      sequenceButton: descendants(sequence).find(node => node.className === 'df-sequence-message') };
+      sequenceButton: descendants(sequence).find(node => node.className === 'op-sequence-message') };
   }
 
   const first = await visit();
-  assert.equal(first.finish.hasAttribute('data-df-pipe-hidden'), true);
+  assert.equal(first.finish.hasAttribute('data-op-pipe-hidden'), true);
   assert.equal(first.note.hidden, true);
   assert.equal(first.treeRoot.getAttribute('aria-expanded'), 'false');
   first.flowController.steps.play();
   first.timers.values().next().value();
   first.begin.dispatchEvent(Object.assign(new Event('pointermove'), { pointerType: 'mouse' }));
-  assert.equal(first.finish.hasAttribute('data-df-pipe-trace'), true);
+  assert.equal(first.finish.hasAttribute('data-op-pipe-trace'), true);
   first.finish.click();
   first.sequenceButton.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: 'End' }));
   assert.deepEqual(first.keys(), ['write', 'write', 'write']);
@@ -861,7 +861,7 @@ test('Interactive diagrams rebuild and restore their authored controls at a move
   assert.equal(restored.flowController.steps.snapshot().key, 'finish');
   assert.equal(restored.flowController.steps.snapshot().playing, false);
   assert.equal(restored.flowController.snapshot().key, 'flow-2');
-  assert.equal(restored.finish.hasAttribute('data-df-pipe-hidden'), false);
+  assert.equal(restored.finish.hasAttribute('data-op-pipe-hidden'), false);
   assert.equal(restored.note.hidden, false);
   restored.toggle.click();
   assert.deepEqual(restored.keys(), ['read', 'read', 'read']);
@@ -882,58 +882,58 @@ test('Interactive diagrams rebuild and restore their authored controls at a move
 test('the offline entry exposes the extension surface and initializes a custom feature before ready', async () => {
   const p = page({ config: { features: { chart: true, data: true, selection: true } } });
   const phases = [];
-  p.DF.setup(DF => {
+  p.OP.setup(OP => {
     phases.push('setup');
-    DF.register('test-reading-marker', () => {
+    OP.register('test-reading-marker', () => {
       phases.push('initialize');
-      p.body.setAttribute('data-reading-marker', DF.util.slug('Reading Ready'));
+      p.body.setAttribute('data-reading-marker', OP.util.slug('Reading Ready'));
     });
   });
-  p.DF.ready(() => phases.push('ready'));
+  p.OP.ready(() => phases.push('ready'));
   await p.start();
 
   assert.deepEqual(phases, ['setup', 'initialize', 'ready']);
   assert.equal(p.body.getAttribute('data-reading-marker'), 'reading-ready');
-  assert.deepEqual(Object.getOwnPropertyNames(p.DF).filter(name => !name.startsWith('_')).sort(), [
+  assert.deepEqual(Object.getOwnPropertyNames(p.OP).filter(name => !name.startsWith('_')).sort(), [
     'chart', 'data', 'diagnostics', 'ready', 'register', 'selection', 'sequence', 'setup', 'shortcuts', 'util'
   ]);
-  assert.deepEqual(Object.keys(p.DF.chart).sort(), ['addon', 'addons', 'legend', 'scale']);
-  assert.deepEqual(Object.keys(p.DF.data).sort(), ['define', 'defineTransform', 'names', 'parse', 'source', 'table', 'valueOf']);
-  assert.equal(p.DF.diagnostics.list().length, 0);
+  assert.deepEqual(Object.keys(p.OP.chart).sort(), ['addon', 'addons', 'legend', 'scale']);
+  assert.deepEqual(Object.keys(p.OP.data).sort(), ['define', 'defineTransform', 'names', 'parse', 'source', 'table', 'valueOf']);
+  assert.equal(p.OP.diagnostics.list().length, 0);
 });
 
 test('standalone reading profile applies early theme and renders citations with tooltip cards before ready', async () => {
   const p = page({ cite: true, staticCSS: true, storage: new Error('blocked'), config: {
     options: { theme: { mode: 'dark' }, citations: { entries: { example: 'An example source.' } } }
   } });
-  assert.equal(p.html.getAttribute('data-df-theme'), 'dark');
+  assert.equal(p.html.getAttribute('data-op-theme'), 'dark');
   const order = [];
   let preview;
-  p.DF.setup(DF => {
+  p.OP.setup(OP => {
     order.push('setup');
-    assert.equal(DF._site.provided, false);
-    const attach = DF._tooltips.attach;
-    DF._tooltips.attach = (link, title, text, options) => {
-      if (link.className === 'df-cite-link') preview = options.content;
+    assert.equal(OP._site.provided, false);
+    const attach = OP._tooltips.attach;
+    OP._tooltips.attach = (link, title, text, options) => {
+      if (link.className === 'op-cite-link') preview = options.content;
       else return attach(link, title, text, options);
     };
     throw new Error('Example callback failure');
   });
-  p.DF.setup(() => order.push('next setup'));
-  p.DF.ready(DF => {
+  p.OP.setup(() => order.push('next setup'));
+  p.OP.ready(OP => {
     order.push('ready');
     assert.equal(p.citation.childNodes[1].textContent, '1');
     assert.equal(preview().textContent, 'An example source.');
-    assert.equal(typeof DF._search.open, 'function');
-    assert.equal(DF._theme.get(), 'dark');
+    assert.equal(typeof OP._search.open, 'function');
+    assert.equal(OP._theme.get(), 'dark');
   });
   await p.start();
   assert.deepEqual(order, ['setup', 'next setup', 'ready']);
   assert.equal(p.loads.filter(path => path.endsWith('/refs.js')).length, 1);
   assert.equal(p.loads.some(path => path.endsWith('.css')), false);
   assert.deepEqual(p.events.map(event => event.detail.code), ['setup-failed']);
-  assert.equal(p.DF.setup(() => {}), false);
-  p.DF.ready(() => order.push('late ready'));
+  assert.equal(p.OP.setup(() => {}), false);
+  p.OP.ready(() => order.push('late ready'));
   assert.equal(order.at(-1), 'ready');
   await Promise.resolve();
   assert.equal(order.at(-1), 'late ready');
@@ -945,14 +945,14 @@ test('nested none profile clears inherited choices and loads playback after its 
     lateConfig: { profile: 'none', features: { 'chart-playback': true, cards: true, 'figure-steps': true } }
   });
   await p.start();
-  assert.equal(p.DF._site.order[0].href, p.DF._page);
-  assert.ok(Object.isFrozen(p.DF._site.order[0]));
-  assert.equal(p.html.getAttribute('data-df-theme'), null);
-  assert.deepEqual(p.loads, ['docform/js/core.js', 'docform/js/reader-state.js', 'docform/css/tokens.css', 'docform/css/base.css',
-    'docform/css/text.css', 'docform/css/sections.css', 'docform/css/buttons.css', 'docform/css/choices.css', 'docform/js/choices.js', 'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-playback.css', 'docform/js/chart-playback.js',
-    'docform/css/detail.css', 'docform/js/detail.js', 'docform/css/steps.css', 'docform/js/steps.js']);
-  assert.equal(typeof p.DF._chartPlayback.mount, 'function');
-  assert.equal(p.DF.diagnostics.list().length, 0);
+  assert.equal(p.OP._site.order[0].href, p.OP._page);
+  assert.ok(Object.isFrozen(p.OP._site.order[0]));
+  assert.equal(p.html.getAttribute('data-op-theme'), null);
+  assert.deepEqual(p.loads, ['offprint/js/core.js', 'offprint/js/reader-state.js', 'offprint/css/tokens.css', 'offprint/css/base.css',
+    'offprint/css/text.css', 'offprint/css/sections.css', 'offprint/css/buttons.css', 'offprint/css/choices.css', 'offprint/js/choices.js', 'offprint/css/chart.css', 'offprint/js/chart.js', 'offprint/css/chart-playback.css', 'offprint/js/chart-playback.js',
+    'offprint/css/detail.css', 'offprint/js/detail.js', 'offprint/css/steps.css', 'offprint/js/steps.js']);
+  assert.equal(typeof p.OP._chartPlayback.mount, 'function');
+  assert.equal(p.OP.diagnostics.list().length, 0);
 });
 
 test('floating page links match the bottom pager and respect page boundaries and opt-out', async () => {
@@ -977,24 +977,24 @@ test('floating page links match the bottom pager and respect page boundaries and
     const query = p.document.querySelector;
     p.document.querySelector = selector => {
       if (selector === 'main') return main;
-      if (selector === '.df-sidebar') return p.body.children.find(el => el.className === 'df-sidebar') || null;
+      if (selector === '.op-sidebar') return p.body.children.find(el => el.className === 'op-sidebar') || null;
       return query(selector);
     };
-    if (noPager) main.setAttribute('data-df-no-pager', '');
+    if (noPager) main.setAttribute('data-op-no-pager', '');
     await p.start();
 
-    const bar = p.body.children.find(el => el.className === 'df-controls-bar');
+    const bar = p.body.children.find(el => el.className === 'op-controls-bar');
     const quick = bar?.children[1];
-    const bottom = main.children.find(el => el.className === 'df-pager');
-    assert.equal(bar?.firstChild.className, controls ? 'df-controls' : undefined);
+    const bottom = main.children.find(el => el.className === 'op-pager');
+    assert.equal(bar?.firstChild.className, controls ? 'op-controls' : undefined);
     assert.deepEqual(links(bottom), expected);
     assert.deepEqual(links(quick), controls ? expected : undefined);
     if (quick) {
-      assert.equal(quick.className, 'df-controls-pager');
+      assert.equal(quick.className, 'op-controls-pager');
       assert.deepEqual(quick.children.map(link => link.getAttribute('aria-label')),
         expected.map(([rel]) => rel === 'prev' ? 'Previous page: Home' : 'Next page: End'));
     }
-    assert.equal(p.DF.diagnostics.list().length, 0);
+    assert.equal(p.OP.diagnostics.list().length, 0);
   }
 });
 
@@ -1006,31 +1006,31 @@ test('floating controls show shared tooltip cards with current labels and effect
   const heading = p.body.appendChild(element('h2'));
   p.body.querySelectorAll = selector => selector === 'h2, h3' ? [heading] : [];
   const query = p.document.querySelector;
-  p.document.querySelector = selector => selector === '.df-sidebar'
-    ? p.body.children.find(el => el.className === 'df-sidebar') || null
+  p.document.querySelector = selector => selector === '.op-sidebar'
+    ? p.body.children.find(el => el.className === 'op-sidebar') || null
     : query(selector);
   await p.start();
 
-  const [pill, pager] = p.body.children.find(el => el.className === 'df-controls-bar').children;
+  const [pill, pager] = p.body.children.find(el => el.className === 'op-controls-bar').children;
   const [progress, nav, focus, search, theme, exportButton] = pill.children;
   const next = pager.firstChild;
   const showHint = el => {
     assert.equal(el.hasAttribute('title'), false);
     el.dispatchEvent(new Event('focus'));
-    const card = p.body.children.find(child => String(child.className).split(' ').includes('df-tooltip') && !child.hidden);
+    const card = p.body.children.find(child => String(child.className).split(' ').includes('op-tooltip') && !child.hidden);
     assert.equal(card?.getAttribute('role'), 'tooltip');
     return card;
   };
   assert.equal(showHint(nav).textContent, 'Navigation shown. Select to hide (N)');
   const focusCard = showHint(focus);
   assert.equal(focusCard.textContent, 'Turn on focus mode (F)');
-  p.DF._controls.setFocus(true);
+  p.OP._controls.setFocus(true);
   assert.equal(focusCard.textContent, 'Turn off focus mode (F)');
   assert.equal(showHint(search).textContent, 'Search (S)');
   const themeCard = showHint(theme);
   assert.equal(themeCard.textContent, 'Theme: Light. Switch to Dark. (Y)');
   assert.equal(theme.getAttribute('aria-keyshortcuts'), 'Y');
-  p.DF._theme.set('dark');
+  p.OP._theme.set('dark');
   assert.equal(themeCard.textContent, 'Theme: Dark. Switch to Light. (Y)');
   assert.equal(theme.hasAttribute('title'), false);
   assert.equal(showHint(next).textContent, 'Next page: Next chapter');
@@ -1041,12 +1041,12 @@ test('floating controls show shared tooltip cards with current labels and effect
   assert.equal(progress.hasAttribute('title'), false);
   progress.dispatchEvent(new Event('mouseenter'));
   await new Promise(resolve => setTimeout(resolve, 150));
-  const progressCard = p.body.children.find(child => String(child.className).split(' ').includes('df-tooltip') && !child.hidden);
+  const progressCard = p.body.children.find(child => String(child.className).split(' ').includes('op-tooltip') && !child.hidden);
   assert.equal(progressCard?.textContent, 'Read 100%');
 
   const fallback = page({ config: { profile: 'none', features: { controls: true, theme: true } } });
   await fallback.start();
-  const fallbackPill = fallback.body.children.find(el => el.className === 'df-controls-bar').firstChild;
+  const fallbackPill = fallback.body.children.find(el => el.className === 'op-controls-bar').firstChild;
   assert.equal(fallbackPill.firstChild.title, 'Read 100%');
   assert.equal(fallbackPill.children[1].title, 'Theme: Light. Switch to Dark. (T)');
   const fallbackExport = fallbackPill.children.find(el => el.getAttribute('aria-label') === 'Export');
@@ -1077,7 +1077,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   const modal = p.body.children.find(el => el.tagName === 'DIALOG');
   assert.ok(modal.open);
   assert.deepEqual(p.loads.filter(path => path.includes('export-')),
-    ['docform/js/export-dialog.js', 'docform/css/export-dialog.css']);
+    ['offprint/js/export-dialog.js', 'offprint/css/export-dialog.css']);
 
   const find = (tag, title) => descendants(modal).find(el => el.tagName === tag &&
     (title === undefined || el.textContent === title));
@@ -1085,7 +1085,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   const [reader, interactive] = descendants(modal).filter(el => el.type === 'radio');
   assert.equal(reader.checked, true);
   assert.equal(interactive.checked, false);
-  const choose = find('BUTTON', 'Choose documentation folder');
+  const choose = find('BUTTON', 'Choose site folder');
   const build = find('BUTTON', 'Build preview');
   const stop = find('BUTTON', 'Cancel');
   const download = find('BUTTON', 'Download HTML');
@@ -1109,7 +1109,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
     assert.equal(blobs.get(href), blob);
     return blobs.get(href).text();
   }
-  p.DF._exportPackage = {
+  p.OP._exportPackage = {
     async prepare(files) {
       if (!files[0].webkitRelativePath.startsWith('source/')) {
         throw Object.assign(new Error('Wrong folder'), { folder: 'documents' });
@@ -1179,7 +1179,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   build.click();
   await settle();
   assert.deepEqual(selected, Array.from({ length: 3 }, () => ['home', 'chapter']));
-  assert.equal(p.DF._readerState.enabled(), true);
+  assert.equal(p.OP._readerState.enabled(), true);
   assert.equal(download.hidden, false);
   assert.match(modal.textContent, /Current view/);
   assert.match(modal.textContent, /Saved view/);
@@ -1240,7 +1240,7 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
   assert.equal(await verifyDownload(), '<!doctype html>');
   assert.match(modal.textContent, /Saved reading data/);
   const cleared = [];
-  p.DF._readerState.clear = async () => cleared.push(true) && true;
+  p.OP._readerState.clear = async () => cleared.push(true) && true;
   find('BUTTON', 'Clear saved views and imports').click();
   find('BUTTON', 'Keep').click();
   assert.equal(cleared.length, 0);
@@ -1264,14 +1264,14 @@ test('the lazy export dialog handles folder recovery, mixed groups, cancellation
 test('required failures preserve fallbacks and independent features still reach ready', async () => {
   const p = page({ entryProfile: 'none',
     config: { features: { citations: true, tooltips: false, scenarios: true, math: true, chart: true, tabs: true } },
-    fail: ['docform/css/chart.css', 'docform/js/tabs.js']
+    fail: ['offprint/css/chart.css', 'offprint/js/tabs.js']
   });
   await p.start();
-  assert.ok(p.DF._math);
-  assert.equal(p.DF._chart, undefined);
-  assert.equal(p.loads.includes('docform/js/refs.js'), false);
-  assert.equal(p.loads.includes('docform/js/scenarios.js'), false);
-  assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => [item.code, item.feature]), [
+  assert.ok(p.OP._math);
+  assert.equal(p.OP._chart, undefined);
+  assert.equal(p.loads.includes('offprint/js/refs.js'), false);
+  assert.equal(p.loads.includes('offprint/js/scenarios.js'), false);
+  assert.deepEqual(Array.from(p.OP.diagnostics.list(), item => [item.code, item.feature]), [
     ['dependency', 'citations'], ['asset', 'chart'], ['dependency', 'scenarios'], ['asset', 'tabs']
   ]);
 });
@@ -1287,17 +1287,17 @@ test('chart setup merges options and an invalid attribute preserves the configur
   });
   const host = element('div');
   host.id = 'trace';
-  host.setAttribute('data-df-height', '400px');
-  p.DF.setup(DF => {
-    const api = DF._chart.mount(host, { data: [2, 3], height: 390 });
-    assert.equal(DF._chart.mount(host, { height: 410 }), api);
+  host.setAttribute('data-op-height', '400px');
+  p.OP.setup(OP => {
+    const api = OP._chart.mount(host, { data: [2, 3], height: 390 });
+    assert.equal(OP._chart.mount(host, { height: 410 }), api);
     assert.equal(api.spec().height, 390);
     assert.equal(api.spec().x.label, 'Samples');
     assert.equal(api.spec().x.digits, 1);
     assert.equal(api.spec().referenceLines.length, 0);
   });
   await p.start();
-  assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.code), ['chart-option']);
+  assert.deepEqual(Array.from(p.OP.diagnostics.list(), item => item.code), ['chart-option']);
 });
 
 test('configured chart motion merges like other chart options and add-on chart types name their loader feature', async () => {
@@ -1306,27 +1306,27 @@ test('configured chart motion merges like other chart options and add-on chart t
     config: { options: { chart: { instances: { lively: { motion: true }, odd: { motion: 'slow' } } } } }
   });
   const hosts = ['calm', 'lively', 'odd', 'needs'].map(id => Object.assign(element('div'), { id }));
-  p.DF.setup(DF => {
-    assert.equal(DF._chart.mount(hosts[0], { data: [1, 2] }).model().motion, false);
-    assert.equal(DF._chart.mount(hosts[1], { data: [1, 2] }).model().motion, true);
-    assert.equal(DF._chart.mount(hosts[2], { data: [1, 2] }).model().motion, false, 'an invalid value keeps the site choice');
-    assert.equal(DF._chart.mount(hosts[3], { type: 'histogram', data: [1, 2] }), null);
-    assert.equal(DF._boot.chartFeature('heatmap'), 'chart-heatmap');
-    assert.equal(DF._boot.chartFeature('line'), null);
+  p.OP.setup(OP => {
+    assert.equal(OP._chart.mount(hosts[0], { data: [1, 2] }).model().motion, false);
+    assert.equal(OP._chart.mount(hosts[1], { data: [1, 2] }).model().motion, true);
+    assert.equal(OP._chart.mount(hosts[2], { data: [1, 2] }).model().motion, false, 'an invalid value keeps the site choice');
+    assert.equal(OP._chart.mount(hosts[3], { type: 'histogram', data: [1, 2] }), null);
+    assert.equal(OP._boot.chartFeature('heatmap'), 'chart-heatmap');
+    assert.equal(OP._boot.chartFeature('line'), null);
   });
   await p.start();
-  assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.code), ['chart-option']);
+  assert.deepEqual(Array.from(p.OP.diagnostics.list(), item => item.code), ['chart-option']);
 });
 
 test('the offline loader enables interval plots and loads their chart dependency first', async () => {
   const p = page({ entryProfile: 'none', config: { features: { 'chart-intervals': true } } });
   await p.start();
   assert.deepEqual(p.loads.filter(path => path.includes('/chart')), [
-    'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-intervals.css', 'docform/js/chart-intervals.js'
+    'offprint/css/chart.css', 'offprint/js/chart.js', 'offprint/css/chart-intervals.css', 'offprint/js/chart-intervals.js'
   ]);
-  assert.equal(p.DF._boot.chartFeature('interval'), 'chart-intervals');
-  assert.equal(p.DF._chart.normalize({ type: 'interval', data: [['A', 3]] }).addon, 'interval');
-  assert.equal(p.DF.diagnostics.list().length, 0);
+  assert.equal(p.OP._boot.chartFeature('interval'), 'chart-intervals');
+  assert.equal(p.OP._chart.normalize({ type: 'interval', data: [['A', 3]] }).addon, 'interval');
+  assert.equal(p.OP.diagnostics.list().length, 0);
 });
 
 test('mixed features load all shipped assets and register data before author setup', async () => {
@@ -1335,90 +1335,90 @@ test('mixed features load all shipped assets and register data before author set
     .split(' ').map(key => [key, true]));
   const p = page({ nested: true, site: { features, assets: { data: {
     'Reference counts': { source: 'docs/assets/data/feature-groups.csv', output: 'docs/assets/generated/reference-counts.js' }
-  } } }, storage: { 'docform-theme': 'light' }, dark: true });
-  assert.equal(p.html.getAttribute('data-df-theme'), 'light');
-  p.DF.setup(DF => {
-    const snapshot = DF.data.source('Reference counts').snapshot();
+  } } }, storage: { 'offprint-theme': 'light' }, dark: true });
+  assert.equal(p.html.getAttribute('data-op-theme'), 'light');
+  p.OP.setup(OP => {
+    const snapshot = OP.data.source('Reference counts').snapshot();
     assert.match(snapshot.text, /group,references/);
     assert.equal(snapshot.value[0].group, 'setup');
-    assert.equal(DF.data.define('setup-records', { type: 'value', value: [{ id: 'sample' }] }).snapshot().revision, 0);
-    assert.equal(DF.data.define('readings', { type: 'csv', text: 'x,y\n1,2' }).snapshot().name, 'readings');
-    assert.equal(typeof DF._animation.mount, 'function');
-    assert.equal(typeof DF._chart.mount, 'function');
-    assert.equal(typeof DF._dropdowns.mount, 'function');
-    assert.equal(typeof DF._editableText.mount, 'function');
-    assert.equal(typeof DF.sequence.get, 'function');
-    assert.equal(typeof DF._sequenceDiagram.get, 'function');
-    assert.equal(typeof DF._treeDiagram.get, 'function');
+    assert.equal(OP.data.define('setup-records', { type: 'value', value: [{ id: 'sample' }] }).snapshot().revision, 0);
+    assert.equal(OP.data.define('readings', { type: 'csv', text: 'x,y\n1,2' }).snapshot().name, 'readings');
+    assert.equal(typeof OP._animation.mount, 'function');
+    assert.equal(typeof OP._chart.mount, 'function');
+    assert.equal(typeof OP._dropdowns.mount, 'function');
+    assert.equal(typeof OP._editableText.mount, 'function');
+    assert.equal(typeof OP.sequence.get, 'function');
+    assert.equal(typeof OP._sequenceDiagram.get, 'function');
+    assert.equal(typeof OP._treeDiagram.get, 'function');
   });
   await p.start();
-  assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
-  assert.equal(p.DF.data.source('readings').snapshot().text, 'x,y\n1,2');
-  assert.deepEqual(Array.from(p.DF.data.names()), ['Reference counts', 'setup-records', 'readings']);
+  assert.deepEqual(Array.from(p.OP.diagnostics.list(), item => item.message), []);
+  assert.equal(p.OP.data.source('readings').snapshot().text, 'x,y\n1,2');
+  assert.deepEqual(Array.from(p.OP.data.names()), ['Reference counts', 'setup-records', 'readings']);
   assert.equal(new Set(p.loads).size, p.loads.length);
   assert.ok(!p.loads.some(path => path.includes('export-') || path.includes('page-snapshot')));
-  assert.ok(p.loads.includes('docform/js/scenarios.js'));
-  assert.deepEqual(p.loads.filter(path => /^docform\/js\/(detail|diagram|pipeline|sequence-diagram|timeline|tree-diagram)\.js$/.test(path)), [
-    'docform/js/detail.js', 'docform/js/diagram.js', 'docform/js/pipeline.js', 'docform/js/timeline.js',
-    'docform/js/sequence-diagram.js', 'docform/js/tree-diagram.js'
+  assert.ok(p.loads.includes('offprint/js/scenarios.js'));
+  assert.deepEqual(p.loads.filter(path => /^offprint\/js\/(detail|diagram|pipeline|sequence-diagram|timeline|tree-diagram)\.js$/.test(path)), [
+    'offprint/js/detail.js', 'offprint/js/diagram.js', 'offprint/js/pipeline.js', 'offprint/js/timeline.js',
+    'offprint/js/sequence-diagram.js', 'offprint/js/tree-diagram.js'
   ]);
-  for (const css of ['timeline', 'sequence', 'tree-diagram']) assert.ok(p.loads.includes('docform/css/' + css + '.css'));
-  assert.ok(p.loads.includes('docform/js/zoomtools.js'));
+  for (const css of ['timeline', 'sequence', 'tree-diagram']) assert.ok(p.loads.includes('offprint/css/' + css + '.css'));
+  assert.ok(p.loads.includes('offprint/js/zoomtools.js'));
   for (const alias of ['anim', 'bubble', 'dataset', 'nav', 'notes', 'params', 'refs', 'reveal', 'roleCss', 'tooltip', 'zoomtools']) {
-    assert.equal(Object.hasOwn(p.DF, alias), false, alias);
+    assert.equal(Object.hasOwn(p.OP, alias), false, alias);
   }
 });
 
 test('only current source and view attributes register and render data', async () => {
   const p = page({ config: { profile: 'none', features: { 'data-view': true, dropzone: true } } });
   const oldSource = element('script');
-  oldSource.setAttribute('data-df-data', 'old');
+  oldSource.setAttribute('data-op-data', 'old');
   oldSource.setAttribute('type', 'text/csv');
   oldSource.textContent = 'a,b\n1,2';
   const source = element('script');
-  source.setAttribute('data-df-source', 'current');
-  source.setAttribute('data-df-type', 'json');
+  source.setAttribute('data-op-source', 'current');
+  source.setAttribute('data-op-type', 'json');
   source.setAttribute('type', 'text/csv');
   source.textContent = 'a,b\n1,2';
   const oldView = element('div');
-  oldView.setAttribute('data-df-data', 'current');
-  oldView.setAttribute('data-df-view', 'code');
+  oldView.setAttribute('data-op-data', 'current');
+  oldView.setAttribute('data-op-view', 'code');
   oldView.textContent = 'Old fallback';
   const view = element('div');
-  view.setAttribute('data-df-source', 'current');
-  view.setAttribute('data-df-data-view', 'code');
-  view.setAttribute('data-df-view', 'tree');
-  view.setAttribute('data-df-type', 'json');
+  view.setAttribute('data-op-source', 'current');
+  view.setAttribute('data-op-data-view', 'code');
+  view.setAttribute('data-op-view', 'tree');
+  view.setAttribute('data-op-type', 'json');
   const bare = element('div');
-  bare.setAttribute('data-df-source', 'current');
-  bare.setAttribute('data-df-view', 'code');
+  bare.setAttribute('data-op-source', 'current');
+  bare.setAttribute('data-op-view', 'code');
   bare.textContent = 'Bare fallback';
   const capped = element('div');
-  capped.setAttribute('data-df-source', 'current');
-  capped.setAttribute('data-df-data-view', 'code');
-  capped.setAttribute('data-df-max-size', '1 B');
+  capped.setAttribute('data-op-source', 'current');
+  capped.setAttribute('data-op-data-view', 'code');
+  capped.setAttribute('data-op-max-size', '1 B');
   const nodes = [oldSource, source, oldView, view, bare, capped];
   p.body.querySelectorAll = selector => {
     switch (selector) {
-      case 'script[data-df-source], pre[data-df-source]':
-        return nodes.filter(node => node.tagName === 'SCRIPT' && node.hasAttribute('data-df-source'));
-      case '[data-df-data-view]:not([data-df-dropzone])':
-        return nodes.filter(node => node.hasAttribute('data-df-data-view'));
+      case 'script[data-op-source], pre[data-op-source]':
+        return nodes.filter(node => node.tagName === 'SCRIPT' && node.hasAttribute('data-op-source'));
+      case '[data-op-data-view]:not([data-op-dropzone])':
+        return nodes.filter(node => node.hasAttribute('data-op-data-view'));
       default:
-        return nodes.filter(node => selector.startsWith('[data-df-data]') && node.hasAttribute('data-df-data'));
+        return nodes.filter(node => selector.startsWith('[data-op-data]') && node.hasAttribute('data-op-data'));
     }
   };
   await p.start();
-  assert.equal(p.DF.data.source('old'), null);
+  assert.equal(p.OP.data.source('old'), null);
   assert.equal(oldView.textContent, 'Old fallback');
   assert.equal(bare.textContent, 'Bare fallback');
-  assert.equal(p.DF.data.source('current').snapshot().type, 'csv');
-  const controller = p.DF._dataView.get(view);
+  assert.equal(p.OP.data.source('current').snapshot().type, 'csv');
+  const controller = p.OP._dataView.get(view);
   assert.equal(controller.snapshot().view, 'code');
   assert.equal(view.textContent, 'a,b\n1,2');
   assert.match(capped.textContent, /over this block's 1 byte limit/);
   assert.equal(capped.firstChild.lastChild.textContent, 'Show anyway');
-  const target = p.DF._dropzone.link(view);
+  const target = p.OP._dropzone.link(view);
   const zone = element('div');
   assert.equal(target.kind, 'data');
   assert.equal(target.feed({ type: 'csv', text: 'a,b\n3,4' }, {}, zone, target.reserve()), '');
@@ -1430,15 +1430,15 @@ test('only current source and view attributes register and render data', async (
 test('the asset tool loads through the offline entry and wires its folder input', async () => {
   const url = new URL('tools/assets.html', library);
   const markup = fs.readFileSync(url, 'utf8');
-  const config = JSON.parse(markup.match(/<script type="application\/json" data-df-page>([\s\S]*?)<\/script>/)[1]);
+  const config = JSON.parse(markup.match(/<script type="application\/json" data-op-page>([\s\S]*?)<\/script>/)[1]);
   const p = page({ config });
   for (const [, tag, id] of markup.matchAll(/<(\w+)[^>]*? id="([^"]+)"/g)) p.ids.set(id, element(tag));
   const scripts = Array.from(markup.matchAll(/<script src="([^"]+)"/g), match => match[1]);
-  assert.deepEqual(scripts, ['../docform.js', 'asset-build.js', 'asset-page.js']);
+  assert.deepEqual(scripts, ['../offprint.js', 'asset-build.js', 'asset-page.js']);
   scripts.slice(1).forEach(src => p.runScript(new URL(src, url)));
 
   await p.start();
-  assert.deepEqual(Array.from(p.DF.diagnostics.list()), []);
+  assert.deepEqual(Array.from(p.OP.diagnostics.list()), []);
   const folder = p.ids.get('folder');
   folder.files = [{}];
   folder.dispatchEvent(new Event('change'));
@@ -1448,7 +1448,7 @@ test('the asset tool loads through the offline entry and wires its folder input'
 test('legacy search manifest keys do not load an index', async () => {
   const p = page({ site: { search: 'legacy.js' } });
   await p.start();
-  assert.equal(p.DF._site.search, null);
+  assert.equal(p.OP._site.search, null);
   assert.equal(p.loads.some(asset => asset.endsWith('legacy.js')), false);
 });
 
@@ -1468,18 +1468,18 @@ function matrixPage({ enabled = true, fail, options, attributes, input } = {}) {
     options: { matrix: { instances: { confusion: { mapping: matrixMapping, ...options } } } } } });
   const table = p.body.appendChild(element('table'));
   table.id = 'confusion';
-  table.setAttribute('data-df-matrix', '');
-  table.setAttribute('data-df-source', 'outcomes');
+  table.setAttribute('data-op-matrix', '');
+  table.setAttribute('data-op-source', 'outcomes');
   for (const [key, value] of Object.entries(attributes || {})) table.setAttribute(key, value);
   p.ids.set(table.id, table);
-  p.body.querySelectorAll = selector => selector === 'table[data-df-matrix]' ? [table] : [];
+  p.body.querySelectorAll = selector => selector === 'table[data-op-matrix]' ? [table] : [];
   const caption = table.appendChild(element('caption'));
   caption.textContent = 'Confusion matrix';
   const fallbackHead = table.appendChild(element('thead'));
   fallbackHead.appendChild(element('tr')).appendChild(element('th')).textContent = 'Actual class';
   const fallbackBody = table.appendChild(element('tbody'));
   fallbackBody.appendChild(element('tr')).appendChild(element('td')).textContent = 'Static evaluation totals';
-  if (enabled) p.DF.setup(DF => DF.data.define('outcomes', input || {
+  if (enabled) p.OP.setup(OP => OP.data.define('outcomes', input || {
     type: 'csv', text: 'prediction,count,actual class,percent\nA,4,B,50\nB,0,A,\nA,8,A,80'
   }));
   return { ...p, table, caption, fallbackHead, fallbackBody };
@@ -1502,12 +1502,12 @@ function chooseMeasure(p, key) {
 test('offline matrices pivot by declared keys and use one scale per measure chip', async () => {
   const p = matrixPage();
   const events = [];
-  p.table.addEventListener('df:matrix:change', event => events.push(event));
+  p.table.addEventListener('op:matrix:change', event => events.push(event));
   await p.start();
-  const matrix = p.DF._matrix.get('confusion');
-  assert.equal(matrix, p.DF._matrix.mount(p.table));
-  assert.ok(p.loads.indexOf('docform/js/data.js') < p.loads.indexOf('docform/js/matrix.js'));
-  assert.ok(p.loads.includes('docform/css/matrix.css'));
+  const matrix = p.OP._matrix.get('confusion');
+  assert.equal(matrix, p.OP._matrix.mount(p.table));
+  assert.ok(p.loads.indexOf('offprint/js/data.js') < p.loads.indexOf('offprint/js/matrix.js'));
+  assert.ok(p.loads.includes('offprint/css/matrix.css'));
   assert.equal(p.table.firstChild, p.caption);
   const [group, status, ramp] = p.body.firstChild.children;
   assert.equal(group, measureGroup(p));
@@ -1522,7 +1522,7 @@ test('offline matrices pivot by declared keys and use one scale per measure chip
     [['TH', 'col', 'Predicted A'], ['TH', 'col', 'Predicted B']]);
   const cells = () => p.table.lastChild.children.flatMap(row => row.children.slice(1));
   const values = () => cells().map(cell => cell.textContent);
-  const shades = () => cells().map(cell => cell.style.getPropertyValue('--df-matrix-strength'));
+  const shades = () => cells().map(cell => cell.style.getPropertyValue('--op-matrix-strength'));
   assert.deepEqual(p.table.lastChild.children.map(row => [row.firstChild.getAttribute('scope'), row.firstChild.textContent]),
     [['row', 'Actual A'], ['row', 'Actual B']]);
   assert.deepEqual(values(), ['8', '0', '4', 'Missing']);
@@ -1547,7 +1547,7 @@ test('offline matrices pivot by declared keys and use one scale per measure chip
   assert.deepEqual(events.map(event => [event.target, event.bubbles, event.detail.origin, event.detail.previous?.key]),
     [[p.table, true, 'init', undefined], [p.table, true, 'user', 'count']]);
 
-  const source = p.DF.data.source('outcomes');
+  const source = p.OP.data.source('outcomes');
   const replaced = matrixValues(matrixRecord('B', 'B', 12, 65));
   assert.equal(source.update(replaced), true);
   assert.equal(matrix.snapshot().key, 'share');
@@ -1567,14 +1567,14 @@ test('offline matrices pivot by declared keys and use one scale per measure chip
   assert.equal(source.update(matrixValues()), true);
   assert.ok(values().every(value => value === 'Missing'));
   assert.equal(status.textContent, 'No values supplied');
-  assert.deepEqual(Array.from(p.DF.diagnostics.list()), []);
+  assert.deepEqual(Array.from(p.OP.diagnostics.list()), []);
 });
 
 test('invalid matrix replacements roll back and authored content survives failed or disabled enhancement', async () => {
   const p = matrixPage({ options: { maxRows: 3, maxSize: '512 B', maxCells: 4 } });
   await p.start();
-  const source = p.DF.data.source('outcomes');
-  const matrix = p.DF._matrix.get(p.table);
+  const source = p.OP.data.source('outcomes');
+  const matrix = p.OP._matrix.get(p.table);
   const initial = source.snapshot();
   const body = p.table.lastChild;
   const valid = matrixRecord('A', 'A', 2, null);
@@ -1595,8 +1595,8 @@ test('invalid matrix replacements roll back and authored content survives failed
   assert.equal(p.table.lastChild, body);
   for (const inputs of [
     { enabled: false },
-    { fail: ['docform/js/data.js'] },
-    { attributes: { 'data-df-max-cells': '3' } },
+    { fail: ['offprint/js/data.js'] },
+    { attributes: { 'data-op-max-cells': '3' } },
     { options: { mapping: { ...matrixMapping, rows: [matrixMapping.rows[0], matrixMapping.rows[0]] } } },
     { options: { mapping: { ...matrixMapping, measures: [matrixMapping.measures[0], matrixMapping.measures[0]] } } },
     { input: matrixValues(matrixRecord('A', 'unknown', 3, 50)) }
@@ -1607,12 +1607,12 @@ test('invalid matrix replacements roll back and authored content survives failed
     assert.deepEqual(fallback.body.lastChild.children.map(el => el.textContent), ['Export']);
     assert.deepEqual(fallback.table.children, [fallback.caption, fallback.fallbackHead, fallback.fallbackBody]);
     if (inputs.input) {
-      const api = fallback.DF._matrix.get(fallback.table);
+      const api = fallback.OP._matrix.get(fallback.table);
       assert.equal(api.snapshot(), null);
       assert.equal(api.update([valid]), true);
       assert.equal(api.reset(), true);
       assert.deepEqual(fallback.table.children, [fallback.caption, fallback.fallbackHead, fallback.fallbackBody]);
-      assert.equal(fallback.DF.data.source('outcomes').update(matrixValues(valid)), true);
+      assert.equal(fallback.OP.data.source('outcomes').update(matrixValues(valid)), true);
       assert.equal(api.snapshot().key, 'count');
     }
   }
@@ -1621,15 +1621,15 @@ test('invalid matrix replacements roll back and authored content survives failed
 test('matrix selection follows its key through named transform replacements', async () => {
   const p = matrixPage({ options: { transform: 'matrix-spec', transformOutput: 'spec' },
     input: matrixValues(matrixRecord('A', 'A', 1, 50)) });
-  p.DF.setup(DF => DF.data.defineTransform('matrix-spec', ({ value }, { mapping }) => {
+  p.OP.setup(OP => OP.data.defineTransform('matrix-spec', ({ value }, { mapping }) => {
     const count = value[0].count;
     const measures = count === 1 ? mapping.measures :
       count === 2 ? [{ ...mapping.measures[1], label: 'Row share' }, mapping.measures[0]] : mapping.measures.slice(0, 1);
     return { records: value, mapping: { ...mapping, measures } };
   }));
   await p.start();
-  const matrix = p.DF._matrix.get(p.table);
-  const source = p.DF.data.source('outcomes');
+  const matrix = p.OP._matrix.get(p.table);
+  const source = p.OP.data.source('outcomes');
   assert.equal(matrix.select('share'), true);
   assert.equal(source.update(matrixValues(matrixRecord('A', 'A', 2, 75))), true);
   assert.deepEqual({ ...matrix.snapshot() }, { key: 'share', index: 0, label: 'Row share', total: 2 });
@@ -1645,11 +1645,11 @@ test('theme changes commit before listeners and queue writes requested by subscr
   const host = p.body.appendChild(element('button'));
   p.ids.set('theme:toggle', host);
   await p.start();
-  const theme = p.DF._theme;
+  const theme = p.OP._theme;
   assert.equal(theme.mount('theme:toggle'), host);
   assert.equal(theme.mount(host), host);
   const unsubscribe = theme.subscribe((state, meta) => {
-    seen.push([state.mode, meta.origin, p.html.getAttribute('data-df-theme'), host.getAttribute('aria-label')]);
+    seen.push([state.mode, meta.origin, p.html.getAttribute('data-op-theme'), host.getAttribute('aria-label')]);
     if (state.mode === 'dark') theme.set('light');
   }, { immediate: true });
   host.dispatchEvent(new Event('click'));
@@ -1657,7 +1657,7 @@ test('theme changes commit before listeners and queue writes requested by subscr
     [['light', 'init', 'light'], ['dark', 'user', 'dark'], ['light', 'api', 'light']]);
   assert.match(seen[1][3], /Theme: Dark/);
   assert.deepEqual(p.events.map(event => [event.type, event.detail.current.mode]),
-    [['df:theme:change', 'dark'], ['df:theme:change', 'light']]);
+    [['op:theme:change', 'dark'], ['op:theme:change', 'light']]);
   unsubscribe();
   unsubscribe();
   assert.equal(theme.set('light'), true);
@@ -1671,10 +1671,10 @@ test('drawer and controls use committed state and retain valid options from the 
   const sidebar = p.body.appendChild(element('nav'));
   const opener = p.body.appendChild(element('button'));
   const querySelector = p.document.querySelector;
-  p.document.querySelector = selector => selector === '.df-sidebar' ? sidebar : querySelector(selector);
+  p.document.querySelector = selector => selector === '.op-sidebar' ? sidebar : querySelector(selector);
   p.ids.set('open:nav', opener);
   await p.start();
-  const { drawer } = p.DF._navigation;
+  const { drawer } = p.OP._navigation;
   const seen = [];
   drawer.subscribe((state, meta) => seen.push([state.open, meta.origin]), { immediate: true });
   assert.equal(drawer.toggle('open:nav'), true);
@@ -1683,10 +1683,10 @@ test('drawer and controls use committed state and retain valid options from the 
   assert.equal(drawer.close(), true);
   assert.equal(opener.focused, true);
   assert.deepEqual(seen, [[false, 'init'], [true, 'api'], [false, 'api']]);
-  assert.deepEqual(p.events.filter(event => event.type === 'df:navigation:drawer').map(event => event.detail.current.open),
+  assert.deepEqual(p.events.filter(event => event.type === 'op:navigation:drawer').map(event => event.detail.current.open),
     [true, false]);
-  const controls = p.DF._controls;
-  assert.equal(p.DF._roles.color('definition'), 'blue');
+  const controls = p.OP._controls;
+  assert.equal(p.OP._roles.color('definition'), 'blue');
   assert.deepEqual({ ...controls.snapshot() }, { focus: true, nav: false, navMode: 'auto' });
   assert.equal(controls.setFocus(false), true);
   assert.equal(controls.setNavMode('shown'), true);
@@ -1698,29 +1698,29 @@ test('custom reading extensions mount code once, dispose tooltips, and resolve l
   const p = page({ config: { profile: 'none', features: { code: true, tooltips: true, math: true, roles: true },
     options: { roles: { colors: { example: 'green' } } } } });
   await p.start();
-  const DF = p.DF;
+  const OP = p.OP;
   const pre = p.body.appendChild(element('pre'));
   pre.textContent = 'const x = 1;';
   p.ids.set('sample:code', pre);
-  assert.equal(DF._code.mount('sample:code'), pre);
-  assert.equal(DF._code.mount(pre), pre);
-  assert.equal(pre.parentNode.className, 'df-code');
+  assert.equal(OP._code.mount('sample:code'), pre);
+  assert.equal(OP._code.mount(pre), pre);
+  assert.equal(pre.parentNode.className, 'op-code');
   assert.equal(pre.parentNode.childNodes.length, 2);
   const term = p.body.appendChild(element('span'));
   term.setAttribute('aria-describedby', 'prior');
   p.ids.set('term:example', term);
-  const dispose = DF._tooltips.attach('term:example', '', 'An example.');
-  assert.match(term.getAttribute('aria-describedby'), /^prior df-tip-/);
+  const dispose = OP._tooltips.attach('term:example', '', 'An example.');
+  assert.match(term.getAttribute('aria-describedby'), /^prior op-tip-/);
   dispose();
   dispose();
   assert.equal(term.getAttribute('aria-describedby'), 'prior');
-  assert.equal(p.body.childNodes.filter(node => !node.hasAttribute('data-df-reader-state-control')).length, 2);
+  assert.equal(p.body.childNodes.filter(node => !node.hasAttribute('data-op-reader-state-control')).length, 2);
   const math = p.body.appendChild(element('span'));
   p.ids.set('math:x', math);
-  assert.equal(DF._math.set('math:x', 'x^2'), true);
-  assert.equal(DF._math.source('math:x'), 'x^2');
-  assert.equal(DF._roles.color('example'), 'green');
-  assert.match(DF._roles.css({ warning: 'red' }), /--df-role-warning:var\(--df-red\)/);
+  assert.equal(OP._math.set('math:x', 'x^2'), true);
+  assert.equal(OP._math.source('math:x'), 'x^2');
+  assert.equal(OP._roles.color('example'), 'green');
+  assert.match(OP._roles.css({ warning: 'red' }), /--op-role-warning:var\(--op-red\)/);
 });
 
 test('shortcuts use a single capture listener and route to the innermost active scope', async () => {
@@ -1731,7 +1731,7 @@ test('shortcuts use a single capture listener and route to the innermost active 
   const calls = [];
   let opened = false;
   let remove;
-  p.DF.setup(({ shortcuts }) => {
+  p.OP.setup(({ shortcuts }) => {
     const register = (id, scope, active) => shortcuts.register({ id, key: 'A', scope, active, run: () => calls.push(id) });
     register('global');
     register('outer', outer);
@@ -1747,7 +1747,7 @@ test('shortcuts use a single capture listener and route to the innermost active 
   remove();
   p.key('A', button, { shiftKey: true });
   assert.deepEqual(calls, ['inner', 'outer', 'global', 'inner', 'outer']);
-  assert.equal(p.DF.diagnostics.list().length, 0);
+  assert.equal(p.OP.diagnostics.list().length, 0);
 });
 
 test('shortcuts preserve editable, composed, handled and unbound modifier keystrokes', async () => {
@@ -1757,7 +1757,7 @@ test('shortcuts preserve editable, composed, handled and unbound modifier keystr
   const editor = p.body.appendChild(element('div'));
   editor.isContentEditable = true;
   const calls = [];
-  p.DF.setup(({ shortcuts }) => {
+  p.OP.setup(({ shortcuts }) => {
     shortcuts.register({ id: 'plain', key: 'X', run: () => calls.push('plain') });
     shortcuts.register({ id: 'chord', key: 'Ctrl+Shift+X', run: () => calls.push('chord') });
   });
@@ -1784,26 +1784,26 @@ test('shortcut options merge per ID and report a duplicate effective key in the 
     config: { options: { shortcuts: { secondary: 'X', hidden: null, chord: 'Ctrl++', invalid: false } } }
   });
   const calls = [];
-  p.DF.setup(({ shortcuts }) => {
+  p.OP.setup(({ shortcuts }) => {
     for (const [id, key] of Object.entries({ primary: 'p', secondary: 's', hidden: 'h', chord: 'C', invalid: 'I' })) {
       shortcuts.register({ id, key, run: () => calls.push(id) });
     }
   });
   await p.start();
-  assert.deepEqual([...p.DF.shortcuts.keys('primary')], ['X']);
-  assert.deepEqual([...p.DF.shortcuts.keys('secondary')], []);
-  assert.deepEqual([...p.DF.shortcuts.keys('hidden')], []);
-  assert.deepEqual([...p.DF.shortcuts.keys('chord')], ['Control++']);
+  assert.deepEqual([...p.OP.shortcuts.keys('primary')], ['X']);
+  assert.deepEqual([...p.OP.shortcuts.keys('secondary')], []);
+  assert.deepEqual([...p.OP.shortcuts.keys('hidden')], []);
+  assert.deepEqual([...p.OP.shortcuts.keys('chord')], ['Control++']);
   for (const key of ['p', 's', 'z', 'b', 'h', '+']) assert.equal(p.key(key).defaultPrevented, false);
   assert.equal(p.key('X').defaultPrevented, true);
   assert.equal(p.key('+', p.body, { ctrlKey: true }).defaultPrevented, true);
   assert.equal(p.key('i').defaultPrevented, true);
   assert.deepEqual(calls, ['primary', 'chord', 'invalid']);
-  const reports = p.DF.diagnostics.list();
+  const reports = p.OP.diagnostics.list();
   assert.deepEqual(Array.from(reports, report => [report.code, report.feature]),
     [['shortcut-conflict', 'shortcuts'], ['shortcut-key', 'shortcuts']]);
   assert.match(reports[0].message, /primary.*secondary/);
-  assert.equal(p.events.filter(event => event.type === 'df:diagnostic').length, 2);
+  assert.equal(p.events.filter(event => event.type === 'op:diagnostic').length, 2);
 });
 
 test('search remaps its opening key and honors a disabled Escape while the typing field is focused', async () => {
@@ -1861,7 +1861,7 @@ test('declarative animations use the same SVG endpoints in the source and Reader
     script.type = 'application/json';
     script.textContent = JSON.stringify(options);
     figure.querySelector = selector => selector === 'svg' ? svg : null;
-    figure.querySelectorAll = selector => selector === ':scope > script[data-df-animation]' ? [script] : [];
+    figure.querySelectorAll = selector => selector === ':scope > script[data-op-animation]' ? [script] : [];
     svg.querySelectorAll = selector => selector === 'circle' ? [circle] : [];
     return { figure, circle, script };
   }
@@ -1874,18 +1874,18 @@ test('declarative animations use the same SVG endpoints in the source and Reader
     { key: 'valid', actions: [{ draw: 'circle' }] },
     { key: 'invalid', actions: [{ attr: 'circle', name: 'href', to: 'elsewhere' }] }
   ] });
-  p.body.querySelectorAll = selector => selector === 'figure > script[data-df-animation]' ?
+  p.body.querySelectorAll = selector => selector === 'figure > script[data-op-animation]' ?
     [good.script, bad.script] : [];
   await p.start();
-  const live = p.DF.sequence.get(good.figure);
+  const live = p.OP.sequence.get(good.figure);
   assert.equal(live.key, 'widest');
   assert.equal(good.circle.getAttribute('r'), '12');
-  assert.equal(p.DF.sequence.get(bad.figure), null);
+  assert.equal(p.OP.sequence.get(bad.figure), null);
   assert.equal(bad.circle.getAttribute('r'), '4');
   assert.equal(bad.circle.getAttribute('pathLength'), null);
-  assert.ok(p.DF.diagnostics.list().some(item => item.feature === 'animation'));
+  assert.ok(p.OP.diagnostics.list().some(item => item.feature === 'animation'));
 
-  const model = p.DF._animation.reader(good.figure);
+  const model = p.OP._animation.reader(good.figure);
   const [[target, changes]] = model.tracks([0, 1, 2, 3]);
   assert.equal(target, good.circle);
   assert.equal(JSON.stringify(changes), JSON.stringify([[0, 'r', '4'], [1, 'r', '8'], [3, 'r', '12']]));
@@ -1898,7 +1898,7 @@ test('declarative animations use the same SVG endpoints in the source and Reader
 
 test('Reader step controls restore jumps, shared notes and page-local choice', () => {
   const p = page();
-  p.runScript(new URL('docform/js/export-reader.js', repo));
+  p.runScript(new URL('offprint/js/export-reader.js', repo));
   const saved = new Map();
   function mount() {
     const host = element('div');
@@ -1911,16 +1911,16 @@ test('Reader step controls restore jumps, shared notes and page-local choice', (
       host.childNodes.slice().forEach(node => host.removeChild(node));
       host.append(...children);
     };
-    host.setAttribute('data-df-reader-steps', JSON.stringify([0, 1, [
+    host.setAttribute('data-op-reader-steps', JSON.stringify([0, 1, [
       ['start', 'Start', [0], ''], ['look', 'Look', [1], 'Caption'], ['end', 'End', [0], '']
     ]]));
-    target.setAttribute('data-df-reader-step-svg', JSON.stringify([0, [
+    target.setAttribute('data-op-reader-step-svg', JSON.stringify([0, [
       [0, 'r', '4'], [1, 'r', '8'], [2, 'r', '12'], [0, '.opacity', '0'], [2, '.opacity', '1']
     ]]));
-    shared.setAttribute('data-df-reader-step-detail', '0:0');
-    alternate.setAttribute('data-df-reader-step-detail', '0:1');
+    shared.setAttribute('data-op-reader-step-detail', '0:0');
+    alternate.setAttribute('data-op-reader-step-detail', '0:1');
     p.body.querySelectorAll = selector => nodes.filter(node => node.hasAttribute(selector.slice(1, -1)));
-    const reveal = p.DF._exportReader.figureSteps(p.document, saved);
+    const reveal = p.OP._exportReader.figureSteps(p.document, saved);
     const [previous, select, next] = host.firstChild.children;
     return { host, target, shared, alternate, anchor, reveal, previous, select, next };
   }
@@ -1953,9 +1953,9 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   const p = page();
   const core = vm.createContext({ console });
   core.window = core;
-  vm.runInContext(fs.readFileSync(new URL('docform/js/core.js', repo), 'utf8'), core);
-  const icons = core.DocForm._icons;
-  p.runScript(new URL('docform/js/export-reader.js', repo));
+  vm.runInContext(fs.readFileSync(new URL('offprint/js/core.js', repo), 'utf8'), core);
+  const icons = core.OffPrint._icons;
+  p.runScript(new URL('offprint/js/export-reader.js', repo));
   const create = p.document.createElement.bind(p.document);
   p.html.toggleAttribute = (name, on) => on ? p.html.setAttribute(name, '') : p.html.removeAttribute(name);
   p.document.createElement = tag => {
@@ -1991,14 +1991,14 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   const second = part('second', 'a', part('second-row', 'div', toc));
   second.href = '#page-2';
   pager.querySelectorAll = () => [part('previous', 'a', pager), part('next', 'a', pager)];
-  toc.querySelectorAll = selector => selector === '.df-nav-link' ? [first, second] :
+  toc.querySelectorAll = selector => selector === '.op-nav-link' ? [first, second] :
     [first, second, ...toc.children.filter(node => node.tagName === 'UL')
     .flatMap(list => list.children.map(item => item.firstChild))];
   const compact = new EventTarget();
   compact.matches = false;
   const frames = [];
   const route = [];
-  const controls = p.DF._exportReader.controls;
+  const controls = p.OP._exportReader.controls;
   // Give the shell control module only the browser APIs it uses.
   const chrome = vm.runInNewContext(`(${controls})(host, headings, tips, navigate, icons)`, {
     host,
@@ -2024,7 +2024,7 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
     const doc = new EventTarget();
     const view = new EventTarget();
     const main = element('main');
-    main.matches = selector => selector === '.df-page:not(.df-bubble-body)';
+    main.matches = selector => selector === '.op-page:not(.op-bubble-body)';
     const intro = main.appendChild(element('h1'));
     const section = main.appendChild(element('h2'));
     const discussion = main.appendChild(element('p'));
@@ -2037,7 +2037,7 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
     section.id = 'more';
     section.localName = 'h2';
     section.getBoundingClientRect = () => ({ top: 20, bottom: 35, left: 15 });
-    section.style.setProperty('--df-section-color', 'purple');
+    section.style.setProperty('--op-section-color', 'purple');
     discussion.getBoundingClientRect = () => ({ top: 35, bottom: 90 });
     nextSection.id = 'next';
     nextSection.getBoundingClientRect = () => ({ top: 100, bottom: 110, left: 15 });
@@ -2068,27 +2068,27 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   const doc = mount('page-1');
   assert.equal(theme.innerHTML, icons.light);
   assert.equal(nav.innerHTML, icons.nav);
-  assert.equal(nav.className, 'df-controls-btn df-controls-nav');
-  doc.documentElement.classList.add('df-zoom-open');
+  assert.equal(nav.className, 'op-controls-btn op-controls-nav');
+  doc.documentElement.classList.add('op-zoom-open');
   zoomWatchers.at(-1)();
   assert.equal(p.html.hasAttribute('data-zoom'), true);
   assert.equal(pill.inert, true);
   assert.equal(pager.inert, true);
-  doc.documentElement.classList.remove('df-zoom-open');
+  doc.documentElement.classList.remove('op-zoom-open');
   zoomWatchers.at(-1)();
   assert.equal(p.html.hasAttribute('data-zoom'), false);
   assert.equal(pill.inert, false);
   assert.equal(first.getAttribute('aria-current'), 'page');
   assert.deepEqual(toc.querySelectorAll().slice(2).map(link => link.href), ['#page-1/intro']);
   assert.equal(toc.querySelectorAll().at(-1).getAttribute('aria-current'), 'location');
-  assert.equal(toc.querySelectorAll().at(-1).className, 'df-outline-link');
+  assert.equal(toc.querySelectorAll().at(-1).className, 'op-outline-link');
   assert.equal(toc.querySelectorAll().at(-1).classList.contains('is-active'), true);
   const layer = doc.body.lastChild;
-  assert.equal(layer.className, 'df-section-lines');
+  assert.equal(layer.className, 'op-section-lines');
   assert.deepEqual(layer.children.map(line => line.style.height), ['70px', '10px']);
-  assert.equal(layer.firstChild.style.getPropertyValue('--df-section-color'), 'purple');
+  assert.equal(layer.firstChild.style.getPropertyValue('--op-section-color'), 'purple');
   // The subsection rail numbers h1 and h2 headings and fills rings up to the reading line.
-  const rail = p.body.children.find(node => node.className === 'df-section-rail');
+  const rail = p.body.children.find(node => node.className === 'op-section-rail');
   const ringLinks = () => rail.firstChild.children.map(item => item.firstChild);
   assert.equal(rail.hidden, false);
   assert.deepEqual(ringLinks().map(link => [link.href, link.getAttribute('aria-label')]),
@@ -2096,29 +2096,29 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   assert.equal(ringLinks()[1].getAttribute('aria-current'), 'location');
   const arc = link => link.firstChild.querySelector().getAttribute('stroke-dashoffset');
   assert.deepEqual(ringLinks().slice(0, 2).map(arc), ['0', '87']);
-  assert.equal(doc.documentElement.classList.contains('df-scrollbar-auto'), true);
+  assert.equal(doc.documentElement.classList.contains('op-scrollbar-auto'), true);
   doc.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 380 }));
-  assert.equal(doc.documentElement.classList.contains('df-scrollbar-near'), true);
+  assert.equal(doc.documentElement.classList.contains('op-scrollbar-near'), true);
   doc.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 100 }));
-  assert.equal(doc.documentElement.classList.contains('df-scrollbar-near'), false);
+  assert.equal(doc.documentElement.classList.contains('op-scrollbar-near'), false);
   doc.body.children[3].getBoundingClientRect = () => ({ top: 35, bottom: 75 });
   doc.defaultView.dispatchEvent(new Event('resize'));
   assert.equal(layer.firstChild.style.height, '55px');
   assert.equal(progress.getAttribute('aria-valuenow'), '25');
   assert.equal(p.document.getElementById('export-hint-progress').textContent, 'Read 25%');
   assert.equal(nav.hasAttribute('title'), false);
-  assert.equal(nav.getAttribute('data-df-snapshot-tip'), 'export-hint-nav');
+  assert.equal(nav.getAttribute('data-op-snapshot-tip'), 'export-hint-nav');
   chrome.scrolled('#page-1/intro');
   p.key('j');
   assert.deepEqual(route, ['#page-1/more']);
   p.key('t');
   assert.equal(theme.innerHTML, icons.dark);
   p.key('f');
-  assert.equal(doc.documentElement.classList.contains('df-focus-mode'), true);
-  assert.equal(doc.body.firstChild.classList.contains('df-focus-block'), true);
-  assert.equal(doc.body.firstChild.classList.contains('df-focus-dim'), true);
+  assert.equal(doc.documentElement.classList.contains('op-focus-mode'), true);
+  assert.equal(doc.body.firstChild.classList.contains('op-focus-block'), true);
+  assert.equal(doc.body.firstChild.classList.contains('op-focus-dim'), true);
   // The panel stays rendered and slides by class, so it can animate.
-  const closed = () => p.html.classList.contains('df-nav-hidden');
+  const closed = () => p.html.classList.contains('op-nav-hidden');
   p.key('n');
   assert.equal(closed(), true);
   assert.equal(sidebar.hidden, false);
@@ -2144,13 +2144,13 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   nav.click();
   shade.click();
   assert.equal(closed(), true);
-  assert.equal(doc.documentElement.getAttribute('data-df-theme'), 'dark');
+  assert.equal(doc.documentElement.getAttribute('data-op-theme'), 'dark');
   const secondDoc = mount('page-2');
   assert.equal(second.getAttribute('aria-current'), 'page');
   assert.equal(first.getAttribute('aria-current'), null);
   assert.equal(focus.getAttribute('aria-pressed'), 'true');
   assert.equal(theme.getAttribute('aria-label'), 'Theme: Dark. Switch to Light.');
-  assert.equal(secondDoc.documentElement.getAttribute('data-df-theme'), 'dark');
+  assert.equal(secondDoc.documentElement.getAttribute('data-op-theme'), 'dark');
 
   chrome.page('page-1', [null, null]);
   chrome.mountRemote({ theme: 'dark', headings: [['top', 'Top', 1], ['child', 'Child', 2], ['leaf', 'Leaf', 3]] },
@@ -2175,14 +2175,14 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
   figure.querySelector = selector => selector === 'svg' ? svg : null;
   p.ids.set('custom-figure', figure);
   const events = [];
-  figure.addEventListener('df:step', event => events.push([event.detail.key, event.detail.origin, event.bubbles]));
+  figure.addEventListener('op:step', event => events.push([event.detail.key, event.detail.origin, event.bubbles]));
   let animation;
-  p.DF.setup(DF => {
-    animation = DF._animation.mount('custom-figure', { steps: [{ key: 'trace', label: 'Trace', actions: [] }] });
+  p.OP.setup(OP => {
+    animation = OP._animation.mount('custom-figure', { steps: [{ key: 'trace', label: 'Trace', actions: [] }] });
   });
   await p.start();
   assert.ok(animation);
-  assert.equal(p.DF._animation.mount(figure), animation);
+  assert.equal(p.OP._animation.mount(figure), animation);
   assert.deepEqual({ ...animation.snapshot() }, { key: 'start', index: 0, count: 2, canPrev: false, canNext: true, playing: false });
   const steps = [];
   animation.subscribe((state, meta) => steps.push([state.key, meta.origin]));
@@ -2194,7 +2194,7 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
   assert.deepEqual(steps, [['trace', 'api'], ['start', 'reset']]);
   assert.deepEqual(events, [['start', 'init', true], ['trace', 'api', true], ['start', 'reset', true]]);
 
-  const zoom = p.DF._zoom;
+  const zoom = p.OP._zoom;
   const observed = [];
   zoom.subscribe(state => observed.push(state ? figure.parentNode === state.stage : figure.parentNode === p.body));
   assert.equal(zoom.open('custom-figure'), true);
@@ -2203,10 +2203,10 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
   assert.equal(open.overlay.lastChild.getAttribute('aria-keyshortcuts'), 'Q');
   assert.equal(p.key('Escape', open.overlay).defaultPrevented, false);
   assert.equal(p.key('q', open.overlay).defaultPrevented, true);
-  assert.equal(p.events.at(-1).type, 'df:zoom:closing');
+  assert.equal(p.events.at(-1).type, 'op:zoom:closing');
   assert.equal(figure.parentNode, open.stage);
   open.overlay.dispatchEvent(new Event('transitionend'));
-  assert.equal(p.events.at(-1).type, 'df:zoom:change');
+  assert.equal(p.events.at(-1).type, 'op:zoom:change');
   assert.equal(p.events.at(-1).detail.current, null);
   assert.deepEqual(observed, [true, true]);
   assert.equal(p.body.focused, true);
@@ -2214,38 +2214,38 @@ test('custom figures expose keyed animation state and committed zoom lifecycle e
 
 test('diagram fullscreen requires an opt-in and opens from the background or keyboard', async () => {
   const p = page({ config: { profile: 'none', features: { zoom: true } } });
-  const figures = ['df-timeline', 'df-sequence', 'df-tree-diagram', 'regular'].map((cls, i) => {
+  const figures = ['op-timeline', 'op-sequence', 'op-tree-diagram', 'regular'].map((cls, i) => {
     const figure = p.body.appendChild(element('figure'));
     const background = figure.appendChild(element('div'));
     const control = figure.appendChild(element('button'));
-    if (i === 0) figure.setAttribute('data-df-zoom', '');
-    if (i === 1) figure.setAttribute('data-df-zoom', 'false');
-    figure.matches = (selector) => selector === '.df-page img, .df-page figure';
+    if (i === 0) figure.setAttribute('data-op-zoom', '');
+    if (i === 1) figure.setAttribute('data-op-zoom', 'false');
+    figure.matches = (selector) => selector === '.op-page img, .op-page figure';
     for (const target of [figure, background, control]) {
       target.closest = (selector) => {
-        if (selector.includes('figure.' + cls) || selector.includes('.df-page figure')) return figure;
+        if (selector.includes('figure.' + cls) || selector.includes('.op-page figure')) return figure;
         return null;
       };
     }
     control.matches = (selector) => selector.split(', ').includes('button');
     return { figure, background, control };
   });
-  p.body.querySelectorAll = (selector) => selector.startsWith('.df-page img') ? figures.map(({ figure }) => figure) : [];
+  p.body.querySelectorAll = (selector) => selector.startsWith('.op-page img') ? figures.map(({ figure }) => figure) : [];
   await p.start();
-  assert.deepEqual(figures.map(({ figure }) => figure.classList.contains('df-zoomable')), [true, false, false, true]);
+  assert.deepEqual(figures.map(({ figure }) => figure.classList.contains('op-zoomable')), [true, false, false, true]);
   p.click(figures[1].background);
   p.click(figures[2].background);
   p.click(figures[0].control);
-  assert.equal(p.DF._zoom.snapshot(), null);
+  assert.equal(p.OP._zoom.snapshot(), null);
   p.click(figures[0].background);
-  const open = p.DF._zoom.snapshot();
+  const open = p.OP._zoom.snapshot();
   assert.equal(open.target, figures[0].figure);
   assert.equal(open.target.parentNode, open.stage);
-  p.DF._zoom.close();
+  p.OP._zoom.close();
   open.overlay.dispatchEvent(new Event('transitionend'));
-  assert.equal(p.DF._zoom.snapshot(), null);
+  assert.equal(p.OP._zoom.snapshot(), null);
   assert.equal(p.key('Enter', figures[0].figure).defaultPrevented, true);
-  assert.equal(p.DF._zoom.snapshot().target, figures[0].figure);
+  assert.equal(p.OP._zoom.snapshot().target, figures[0].figure);
 });
 
 test('offline parameter scopes merge before setup and publish their first snapshot before ready', async () => {
@@ -2256,23 +2256,23 @@ test('offline parameter scopes merge before setup and publish their first snapsh
     config: { parameterScopes: { decoder: { temperature: { default: 1.5 } } } }
   });
   const order = [];
-  p.DF.setup(DF => {
-    const decoder = DF._parameters.scope('decoder');
+  p.OP.setup(OP => {
+    const decoder = OP._parameters.scope('decoder');
     order.push('setup');
     assert.deepEqual({ ...decoder.snapshot() }, { temperature: 1.5, flag: false });
     assert.equal(decoder.set('temperature', 0.5), true);
-    DF._parameters.define('experiment', { total: { type: 'number', default: 2 } });
+    OP._parameters.define('experiment', { total: { type: 'number', default: 2 } });
     decoder.subscribe((state, meta) => order.push([state.temperature, meta.origin]), { immediate: true });
   });
-  p.DF.ready(DF => {
+  p.OP.ready(OP => {
     order.push('ready');
-    assert.equal(DF._parameters.scope('experiment').get('total'), 2);
+    assert.equal(OP._parameters.scope('experiment').get('total'), 2);
   });
   await p.start();
   assert.deepEqual(order, ['setup', [0.5, 'init'], 'ready']);
   assert.deepEqual(p.events, []);
-  assert.equal(p.DF._parameters.scope('decoder').reset(), true);
-  assert.equal(p.DF._parameters.scope('decoder').get('temperature'), 1.5);
+  assert.equal(p.OP._parameters.scope('decoder').reset(), true);
+  assert.equal(p.OP._parameters.scope('decoder').get('temperature'), 1.5);
 });
 
 test('selection groups merge across configuration and an authored group is available in setup', async () => {
@@ -2285,25 +2285,25 @@ test('selection groups merge across configuration and an authored group is avail
   });
   const list = element('ol');
   list.id = 'trace-list';
-  list.setAttribute('data-df-selection-group', 'implicit');
+  list.setAttribute('data-op-selection-group', 'implicit');
   const step = element('li');
-  step.setAttribute('data-df-key', 'first');
+  step.setAttribute('data-op-key', 'first');
   const label = element('strong');
   label.textContent = 'First';
-  step.querySelector = selector => selector === ':scope > [data-df-step-label]' ? label : null;
+  step.querySelector = selector => selector === ':scope > [data-op-step-label]' ? label : null;
   list.querySelectorAll = selector => selector === ':scope > li' ? [step] : [];
   list.before = () => {};
-  p.body.querySelectorAll = selector => selector === 'ol[data-df-stepper]' ? [list] : [];
-  p.DF.setup(DF => {
-    assert.ok(DF.selection.group('implicit'));
-    assert.equal(DF.selection.seed('implicit', 'first'), true);
+  p.body.querySelectorAll = selector => selector === 'ol[data-op-stepper]' ? [list] : [];
+  p.OP.setup(OP => {
+    assert.ok(OP.selection.group('implicit'));
+    assert.equal(OP.selection.seed('implicit', 'first'), true);
   });
   await p.start();
-  assert.deepEqual(Array.from(p.DF.diagnostics.list(), item => item.message), []);
-  assert.equal(p.DF._site.selectionGroups.trace.persist, true);
-  assert.equal(p.DF.selection.group('trace').get(), 'page');
-  assert.equal(p.DF.sequence.get(list).snapshot().key, 'first');
-  const changes = p.events.filter(event => event.type === 'df:selection:change');
+  assert.deepEqual(Array.from(p.OP.diagnostics.list(), item => item.message), []);
+  assert.equal(p.OP._site.selectionGroups.trace.persist, true);
+  assert.equal(p.OP.selection.group('trace').get(), 'page');
+  assert.equal(p.OP.sequence.get(list).snapshot().key, 'first');
+  const changes = p.events.filter(event => event.type === 'op:selection:change');
   assert.deepEqual(changes.map(event => [event.detail.group, event.detail.current.key]), [
     ['trace', 'page'], ['implicit', 'first']
   ]);
@@ -2313,20 +2313,20 @@ test('the offline loader enables histogram assets and registers the add-on after
   const p = page({ entryProfile: 'none', config: { features: { 'chart-histogram': true } } });
   await p.start();
   assert.deepEqual(p.loads.filter(path => path.includes('/chart')), [
-    'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-histogram.css', 'docform/js/chart-histogram.js'
+    'offprint/css/chart.css', 'offprint/js/chart.js', 'offprint/css/chart-histogram.css', 'offprint/js/chart-histogram.js'
   ]);
-  assert.equal(p.DF._boot.chartFeature('histogram'), 'chart-histogram');
-  assert.equal(p.DF._chart.normalize({ type: 'histogram', data: [1, 2] }).addon, 'histogram');
-  assert.equal(p.DF.diagnostics.list().length, 0);
+  assert.equal(p.OP._boot.chartFeature('histogram'), 'chart-histogram');
+  assert.equal(p.OP._chart.normalize({ type: 'histogram', data: [1, 2] }).addon, 'histogram');
+  assert.equal(p.OP.diagnostics.list().length, 0);
 });
 
 test('the offline loader enables heatmap assets and registers the add-on after chart', async () => {
   const p = page({ entryProfile: 'none', config: { features: { 'chart-heatmap': true } } });
   await p.start();
   assert.deepEqual(p.loads.filter(path => path.includes('/chart')), [
-    'docform/css/chart.css', 'docform/js/chart.js', 'docform/css/chart-heatmap.css', 'docform/js/chart-heatmap.js'
+    'offprint/css/chart.css', 'offprint/js/chart.js', 'offprint/css/chart-heatmap.css', 'offprint/js/chart-heatmap.js'
   ]);
-  assert.equal(p.DF._boot.chartFeature('heatmap'), 'chart-heatmap');
-  assert.equal(p.DF._chart.normalize({ type: 'heatmap', z: [[1, 2]] }).addon, 'heatmap');
-  assert.equal(p.DF.diagnostics.list().length, 0);
+  assert.equal(p.OP._boot.chartFeature('heatmap'), 'chart-heatmap');
+  assert.equal(p.OP._chart.normalize({ type: 'heatmap', z: [[1, 2]] }).addon, 'heatmap');
+  assert.equal(p.OP.diagnostics.list().length, 0);
 });

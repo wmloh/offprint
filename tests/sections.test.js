@@ -4,13 +4,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const warnings = [];
 const context = vm.createContext({ URL, console: { warn: (message) => warnings.push(message) } });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('sections.js'), context);
-const sections = context.DocForm._sections;
+const sections = context.OffPrint._sections;
 
 test('the colour cycle keeps known named colours in order and falls back to the default', () => {
   assert.deepEqual([...sections.cycle(' Green, red  teal blue ')], ['green', 'red', 'blue']);

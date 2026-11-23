@@ -1,0 +1,299 @@
+/* Pipeline block diagrams. Without scripts and in print, blocks read as a numbered list. */
+.op-pipeline {
+  --op-pipe-block-width: 12rem;
+  --op-pipe-gap-x: 4.5rem;
+  --op-pipe-gap-y: 1.25rem;
+  --op-pipe-line: var(--op-text-faint);
+  --op-pipe-surface: var(--op-bg);
+  container-type: inline-size;
+}
+
+.op-pipe-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  box-sizing: border-box;
+}
+
+.op-pipe-block > :is(.op-pipe-eyebrow, .op-pipe-headline, .op-pipe-description) {
+  margin: 0;
+}
+
+.op-pipe-eyebrow {
+  color: var(--op-text-label);
+  font-size: var(--op-eyebrow-size);
+  font-weight: var(--op-eyebrow-weight);
+  letter-spacing: var(--op-eyebrow-tracking);
+  line-height: 1.4;
+  text-transform: var(--op-eyebrow-case);
+}
+
+.op-pipe-headline {
+  color: var(--op-text);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.op-pipe-description {
+  color: var(--op-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+/* A field's own colour overrides the role defaults above. */
+.op-pipe-block > :is(.op-pipe-eyebrow, .op-pipe-headline, .op-pipe-description):is([data-op-color], [data-op-role]) {
+  color: var(--op-accent);
+}
+
+/* Empty fields leave no gap behind. */
+:is(.op-pipe-eyebrow, .op-pipe-headline, .op-pipe-description, [data-op-slot]):is(:empty, [data-op-pipe-empty]),
+.op-pipe-display {
+  display: none;
+}
+
+.op-pipe-links {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
+.op-pipe-blocks > .op-pipe-junction:not(:has(.op-pipe-links)) {
+  display: none;
+}
+
+.op-pipe-sr,
+.op-pipeline-ready :is(.op-pipe-links, .op-pipe-block:has(> .op-pipe-display) > :is(.op-pipe-eyebrow, .op-pipe-headline, .op-pipe-description)) {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media screen {
+  .op-pipeline-ready {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--op-space-3);
+    align-items: start;
+  }
+
+  .op-pipeline-ready > :is(figcaption, .op-pipe-steps) {
+    grid-column: 1 / -1;
+  }
+
+  .op-pipeline-ready > .op-pipe-steps {
+    justify-self: end;
+  }
+
+  .op-pipeline-ready > .op-detail-pane {
+    margin: 0;
+  }
+
+  @container (min-width: 46rem) {
+    .op-pipeline-ready[data-op-detail-layout="side"] {
+      grid-template-columns: minmax(0, 1fr) minmax(15rem, 20rem);
+    }
+
+    .op-pipeline-ready[data-op-detail-layout="side"] > .op-detail-pane {
+      --op-detail-pane-max: min(30rem, 60svh);
+      position: sticky;
+      top: var(--op-space-4);
+    }
+  }
+
+  .op-pipe-scroll {
+    min-width: 0;
+    overflow: auto hidden;
+    overscroll-behavior-x: contain;
+  }
+
+  .op-pipe-stage {
+    position: relative;
+    column-gap: var(--op-pipe-gap-x);
+    row-gap: var(--op-pipe-gap-y);
+    margin-inline: auto;
+  }
+
+  .op-pipeline-ready .op-pipe-blocks {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .op-pipeline-ready :is(.op-pipe-block, .op-pipe-junction) {
+    position: absolute;
+    z-index: 1;
+    margin: 0;
+    transition: opacity 0.25s ease-out, visibility 0.25s, box-shadow 0.15s, border-color 0.15s, background-color 0.15s;
+  }
+
+  .op-pipeline-ready .op-pipe-block {
+    width: var(--op-pipe-block-width);
+    padding: var(--op-space-2) var(--op-space-3);
+    border: 1px solid var(--op-border);
+    border-radius: var(--op-radius-lg);
+    background: var(--op-pipe-surface);
+    color: var(--op-text);
+    cursor: default;
+    overflow-wrap: anywhere;
+  }
+
+  .op-pipeline-ready .op-pipe-block:is([data-op-color], [data-op-role]) {
+    border-color: color-mix(in srgb, var(--op-accent) 45%, var(--op-border));
+    background: color-mix(in srgb, var(--op-accent-bg) 55%, var(--op-pipe-surface));
+    box-shadow: inset 3px 0 0 var(--op-accent);
+  }
+
+  .op-pipeline-ready[data-op-direction="down"] .op-pipe-block:is([data-op-color], [data-op-role]) {
+    box-shadow: inset 0 3px 0 var(--op-accent);
+  }
+
+  .op-pipeline-ready .op-pipe-block:has(> .op-pipe-display) > .op-pipe-display {
+    display: block;
+  }
+
+  .op-pipeline-ready .op-pipe-block[aria-current="true"] {
+    border-color: var(--op-accent, var(--op-blue));
+    box-shadow: 0 0 0 1px var(--op-accent, var(--op-blue));
+  }
+
+  .op-pipeline-ready .op-pipe-block:focus-visible {
+    outline: 2px solid var(--op-focus);
+    outline-offset: 3px;
+  }
+
+  @media (hover: hover) {
+    .op-pipeline-ready .op-pipe-block:not([aria-current="true"]):hover {
+      border-color: var(--op-border-strong);
+    }
+  }
+
+  .op-pipeline-ready .op-pipe-junction {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--op-pipe-line);
+  }
+
+  .op-pipeline-ready .op-pipe-junction:is([data-op-color], [data-op-role]) {
+    background: var(--op-accent);
+  }
+
+  .op-pipe-lines {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .op-pipe-edge {
+    --op-pipe-stroke: var(--op-pipe-line);
+    transition: opacity 0.25s ease-out, visibility 0.25s;
+  }
+
+  .op-pipe-edge:is([data-op-color], [data-op-role]) {
+    --op-pipe-stroke: var(--op-accent);
+  }
+
+  .op-pipe-path {
+    fill: none;
+    stroke: var(--op-pipe-stroke);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+
+  .op-pipe-arrow {
+    fill: var(--op-pipe-stroke);
+  }
+
+  .op-pipe-line-dashed .op-pipe-path { stroke-dasharray: 6 5; }
+  .op-pipe-line-dotted .op-pipe-path { stroke-dasharray: 0.1 5; stroke-width: 2; }
+
+  .op-pipe-flow .op-pipe-path {
+    stroke-dasharray: 6 5;
+    animation: op-pipe-flow 0.9s linear infinite;
+  }
+
+  .op-pipe-flow.op-pipe-line-dotted .op-pipe-path {
+    stroke-dasharray: 0.1 5;
+    animation-duration: 0.7s;
+  }
+
+  .op-pipe-labels {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .op-pipe-label {
+    position: absolute;
+    padding: 0 0.35rem;
+    border-radius: var(--op-radius-sm);
+    background: var(--op-pipe-surface);
+    color: var(--op-text-muted);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.25s ease-out, visibility 0.25s;
+  }
+
+  .op-pipe-label:is([data-op-color], [data-op-role]) {
+    color: var(--op-accent);
+  }
+
+  /* Hovering or focusing a block keeps its upstream and downstream path in full colour. */
+  .op-pipe-tracing :is(.op-pipe-block, .op-pipe-junction, .op-pipe-edge, .op-pipe-label):not([data-op-pipe-trace]) {
+    opacity: 0.3;
+  }
+
+  .op-pipe-tracing .op-pipe-edge[data-op-pipe-trace] .op-pipe-path {
+    stroke-width: 2;
+  }
+
+  .op-pipeline-ready [data-op-pipe-hidden] {
+    opacity: 0 !important;
+    visibility: hidden;
+  }
+
+  .op-pipeline-ready .op-pipe-block[data-op-pipe-current] {
+    background: color-mix(in srgb, var(--op-accent-bg, var(--op-blue-bg)) 70%, var(--op-pipe-surface));
+  }
+}
+
+@keyframes op-pipe-flow {
+  from { stroke-dashoffset: 11; }
+  to { stroke-dashoffset: 0; }
+}
+
+@media print {
+  .op-pipeline :is(.op-pipe-lines, .op-pipe-labels, .op-pipe-steps) { display: none; }
+
+  .op-pipeline .op-pipe-stage {
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .op-pipeline .op-pipe-block {
+    position: static;
+    min-height: 0 !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .op-pipeline-ready :is(.op-pipe-links, .op-pipe-block > :is(.op-pipe-eyebrow, .op-pipe-headline, .op-pipe-description)) {
+    position: static !important;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}

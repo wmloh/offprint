@@ -1,15 +1,15 @@
-window.DocFormSite = {
-  "title": "DocForm",
+window.OffPrintSite = {
+  "title": "OffPrint",
   "pages": [
     {
       "title": "Start here",
       "pages": [
         {
-          "title": "Welcome to DocForm",
+          "title": "Welcome to OffPrint",
           "path": "../index.html"
         },
         {
-          "title": "Open a DocForm site",
+          "title": "Open an OffPrint site",
           "path": "../pages/start/open-a-site.html"
         },
         {
@@ -207,6 +207,10 @@ window.DocFormSite = {
           "path": "../pages/recipes/report-results.html"
         },
         {
+          "title": "Share experiment results",
+          "path": "../pages/recipes/share-experiment-results.html"
+        },
+        {
           "title": "Present and publish a site",
           "path": "../pages/recipes/present-and-publish.html"
         }
@@ -250,7 +254,7 @@ window.DocFormSite = {
         "caution": "red"
       },
       "tips": {
-        "default": "Green marks a feature that is on by default on a standard DocForm page.",
+        "default": "Green marks a feature that is on by default on a standard OffPrint page.",
         "on-request": "Blue marks a feature you add to the pages that need it.",
         "try": "Purple marks an action to try on the page.",
         "tip": "Yellow marks a helpful tip.",
@@ -262,8 +266,8 @@ window.DocFormSite = {
         "Computer basics": "Everyday computer words, such as files, folders, and browsers.",
         "Web technology": "Words for what web pages are made of and how browsers show them.",
         "Design": "Words for how a page looks and guides the eye.",
-        "Setup": "Words for setting up a DocForm site and its features.",
-        "Reading interface": "Parts of the screen readers use to move around a DocForm site.",
+        "Setup": "Words for setting up an OffPrint site and its features.",
+        "Reading interface": "Parts of the screen readers use to move around an OffPrint site.",
         "Writing": "Building blocks for text, notes, maths, code, and sources.",
         "Interaction": "Figures and controls that respond to the reader.",
         "Data and charts": "Words for data files, charts, and comparing results."
@@ -318,7 +322,7 @@ window.DocFormSite = {
         },
         "browser": { "tags": ["Computer basics"], "text": "The program you use to view web pages, such as Chrome, Edge, Firefox, or Safari." },
         "browser tab": { "tags": ["Computer basics"], "text": "One page open inside a browser window. Several tabs can sit side by side along the top of the window." },
-        "offline": { "tags": ["Computer basics"], "text": "Working without an internet connection. DocForm pages keep working offline because everything they need is in the folder beside them." },
+        "offline": { "tags": ["Computer basics"], "text": "Working without an internet connection. OffPrint pages keep working offline because everything they need is in the folder beside them." },
         "from disk": {
           "tags": ["Computer basics"],
           "text": "Opened straight from a file on your own computer, rather than from a website.",
@@ -326,7 +330,7 @@ window.DocFormSite = {
         },
         "download": { "tags": ["Computer basics"], "text": "To copy a file from the internet, or from a web page, onto your own computer." },
         "text editor": { "tags": ["Computer basics"], "text": "A simple program for writing and changing plain text files, such as Notepad or TextEdit. Web pages are plain text files." },
-        "agent": { "tags": ["Computer basics"], "text": "An AI assistant that can read and write files for you. In these docs, the agent is who builds DocForm pages from your description." },
+        "agent": { "tags": ["Computer basics"], "text": "An AI assistant that can read and write files for you. In these docs, the agent is who builds OffPrint pages from your description." },
         "web page": { "tags": ["Web technology"], "text": "A document that a browser shows, made of text, pictures, and controls. Each page is usually one file." },
         "HTML": {
           "tags": ["Web technology"],
@@ -337,8 +341,8 @@ window.DocFormSite = {
         "element": { "tags": ["Web technology"], "text": "One labelled part of a web page, such as a heading, a paragraph, a picture, or a button." },
         "CSS": { "tags": ["Web technology"], "text": "The language that describes how a web page looks: colours, fonts, sizes, and spacing." },
         "stylesheet": { "tags": ["Web technology"], "text": "A file of CSS rules that sets the look of one or more web pages." },
-        "JavaScript": { "tags": ["Web technology"], "text": "The programming language browsers run to make web pages interactive. DocForm features are written in it." },
-        "script": { "tags": ["Web technology"], "text": "A small program attached to a web page. DocForm features run as scripts in your browser." },
+        "JavaScript": { "tags": ["Web technology"], "text": "The programming language browsers run to make web pages interactive. OffPrint features are written in it." },
+        "script": { "tags": ["Web technology"], "text": "A small program attached to a web page. OffPrint features run as scripts in your browser." },
         "link": { "tags": ["Web technology"], "text": "Clickable text or a picture that takes you to another place, on the same page or a different one." },
         "URL": {
           "tags": ["Web technology"],
@@ -352,9 +356,9 @@ window.DocFormSite = {
         },
         "viewport": { "tags": ["Web technology"], "text": "The visible part of a web page inside the browser window. Scrolling moves the page under the viewport." },
         "responsive": { "tags": ["Web technology"], "text": "Able to rearrange itself to fit any screen, from a wide monitor to a phone." },
-        "phone width": { "tags": ["Web technology"], "text": "A narrow screen, roughly the width of a phone held upright. DocForm switches some layouts when the screen gets this narrow." },
+        "phone width": { "tags": ["Web technology"], "text": "A narrow screen, roughly the width of a phone held upright. OffPrint switches some layouts when the screen gets this narrow." },
         "scroll": { "tags": ["Computer basics"], "text": "To move a page up or down, or sideways, to see parts that do not fit on the screen." },
-        "hover": { "tags": ["Computer basics"], "text": "To rest the mouse pointer over something without clicking. Many DocForm features show extra information on hover." },
+        "hover": { "tags": ["Computer basics"], "text": "To rest the mouse pointer over something without clicking. Many OffPrint features show extra information on hover." },
         "keyboard focus": {
           "tags": ["Computer basics"],
           "text": "The one control on a page that will respond to the keyboard right now, usually shown with an outline.",
@@ -364,20 +368,20 @@ window.DocFormSite = {
         "shortcut": {
           "tags": ["Computer basics"],
           "text": "A key or key combination that performs an action quickly.",
-          "more": "<p>For example, <kbd>S</kbd> opens search on any DocForm page.</p>"
+          "more": "<p>For example, <kbd>S</kbd> opens search on any OffPrint page.</p>"
         },
         "dialog": { "tags": ["Computer basics"], "text": "A box that opens over the page to ask or show something, and closes when you are done. Escape usually closes it." },
         "accessibility": { "tags": ["Web technology"], "text": "Making pages usable by everyone, including people who use a keyboard only, a screen reader, or a larger text size." },
         "screen reader": { "tags": ["Web technology"], "text": "A program that reads a page aloud, or sends it to a braille display, for people who cannot see the screen well." },
-        "print view": { "tags": ["Web technology", "Reading interface"], "text": "How a page looks when printed or saved as a PDF. DocForm hides controls and shows everything in print." },
+        "print view": { "tags": ["Web technology", "Reading interface"], "text": "How a page looks when printed or saved as a PDF. OffPrint hides controls and shows everything in print." },
         "light mode": { "tags": ["Computer basics", "Reading interface"], "text": "A colour scheme with dark text on a light background." },
         "dark mode": { "tags": ["Computer basics", "Reading interface"], "text": "A colour scheme with light text on a dark background, easier on the eyes in dim rooms." },
-        "system preference": { "tags": ["Computer basics"], "text": "The light or dark setting chosen for your whole computer or phone. DocForm follows it until you pick a theme yourself." },
-        "feature": { "tags": ["Setup"], "text": "One named DocForm ability, such as callouts, charts, or search. Each feature has an official name you can ask for." },
+        "system preference": { "tags": ["Computer basics"], "text": "The light or dark setting chosen for your whole computer or phone. OffPrint follows it until you pick a theme yourself." },
+        "feature": { "tags": ["Setup"], "text": "One named OffPrint ability, such as callouts, charts, or search. Each feature has an official name you can ask for." },
         "profile": { "tags": ["Setup"], "text": "A ready-made bundle of features. The reading profile turns on the features most pages need." },
-        "on by default": { "tags": ["Setup"], "text": "Turned on as part of a standard DocForm page. Some tools still need content to work with, such as a word and its definition." },
+        "on by default": { "tags": ["Setup"], "text": "Turned on as part of a standard OffPrint page. Some tools still need content to work with, such as a word and its definition." },
         "on request": { "tags": ["Setup"], "text": "Available to add to pages that need it." },
-        "dependency": { "tags": ["Setup"], "text": "A feature that another feature needs in order to work. DocForm turns dependencies on automatically." },
+        "dependency": { "tags": ["Setup"], "text": "A feature that another feature needs in order to work. OffPrint turns dependencies on automatically." },
         "site settings": {
           "tags": ["Setup"],
           "text": "One shared file of settings for a whole site: its title, its list of pages, its glossary, and the features every page gets. Sometimes called the manifest.",
@@ -389,7 +393,7 @@ window.DocFormSite = {
           "text": "A named setting for one design value, such as a colour, a font, or a spacing size, used everywhere that value appears.",
           "more": "<p>Because every heading reads the same heading-colour token, changing that one token recolours every heading on the site at once.</p>"
         },
-        "palette": { "tags": ["Design"], "text": "The fixed set of named colours a design uses. DocForm has nine: gray, brown, orange, yellow, green, blue, purple, pink, and red." },
+        "palette": { "tags": ["Design"], "text": "The fixed set of named colours a design uses. OffPrint has nine: gray, brown, orange, yellow, green, blue, purple, pink, and red." },
         "accent": { "tags": ["Design"], "text": "A highlight colour used to draw attention or to show meaning, such as the tint of a tag or the line beside a section." },
         "role": {
           "tags": ["Design"],
@@ -397,10 +401,10 @@ window.DocFormSite = {
           "more": "<p>In these docs, green always means a feature is on by default, blue means on request, purple marks something to try, yellow is a tip, and red is a caution.</p>"
         },
         "legend": { "tags": ["Design"], "text": "A small key that lists what each colour or symbol means." },
-        "reading column": { "tags": ["Reading interface"], "text": "The central strip of a DocForm page where text sits, kept to a comfortable line length." },
-        "gutter": { "tags": ["Reading interface"], "text": "The empty space beside the reading column. DocForm uses the right gutter for sidenotes." },
+        "reading column": { "tags": ["Reading interface"], "text": "The central strip of an OffPrint page where text sits, kept to a comfortable line length." },
+        "gutter": { "tags": ["Reading interface"], "text": "The empty space beside the reading column. OffPrint uses the right gutter for sidenotes." },
         "margin": { "tags": ["Reading interface"], "text": "The space at the edge of the page around the main text." },
-        "sidebar": { "tags": ["Reading interface"], "text": "The panel on the left of a DocForm site that lists its pages and the current page's sections." },
+        "sidebar": { "tags": ["Reading interface"], "text": "The panel on the left of an OffPrint site that lists its pages and the current page's sections." },
         "drawer": { "tags": ["Reading interface"], "text": "A panel that slides in over the page from the side, used for the sidebar on narrow screens." },
         "outline": { "tags": ["Reading interface"], "text": "The list of a page's section headings, shown in the sidebar, that marks where you are as you scroll." },
         "pager": { "tags": ["Reading interface"], "text": "The Previous and Next links at the bottom of a page that lead through the site in reading order." },
@@ -422,16 +426,16 @@ window.DocFormSite = {
         },
         "auto-link": {
           "tags": ["Writing"],
-          "text": "DocForm finding glossary words in the text by itself and giving them a faint underline and a tooltip.",
+          "text": "OffPrint finding glossary words in the text by itself and giving them a faint underline and a tooltip.",
           "more": "<p>Auto-linked words stay quiet: the underline is fainter than a chosen term, and they are skipped in headings, links, code, and controls.</p>"
         },
         "glossary": { "tags": ["Writing"], "text": "A list of terms and their meanings. This site's glossary page also links to where each term is used." },
         "TeX": {
           "tags": ["Writing"],
-          "text": "A widely used way of writing mathematical formulas as plain text, which DocForm turns into neatly typeset maths.",
+          "text": "A widely used way of writing mathematical formulas as plain text, which OffPrint turns into neatly typeset maths.",
           "more": "<p>Scientists and mathematicians use TeX in papers and textbooks, so formulas from those sources can usually be reused as they are.</p>"
         },
-        "KaTeX": { "tags": ["Writing"], "text": "The free formula-drawing program DocForm includes so maths works offline." },
+        "KaTeX": { "tags": ["Writing"], "text": "The free formula-drawing program OffPrint includes so maths works offline." },
         "formula": { "tags": ["Writing"], "text": "A mathematical expression, such as an equation, written with numbers, letters, and symbols." },
         "macro": {
           "tags": ["Writing"],
@@ -441,7 +445,7 @@ window.DocFormSite = {
         "syntax highlighting": {
           "tags": ["Writing"],
           "text": "Colouring the parts of program code, such as words, numbers, and notes, so its structure is easier to read.",
-          "more": "<p>DocForm highlights nine languages, including JavaScript, Python, HTML, CSS, and SQL, without anything extra to download.</p>"
+          "more": "<p>OffPrint highlights nine languages, including JavaScript, Python, HTML, CSS, and SQL, without anything extra to download.</p>"
         },
         "code block": { "tags": ["Writing"], "text": "A box that shows program text in a fixed-width font with its line breaks kept." },
         "line highlight": { "tags": ["Writing"], "text": "A tint behind chosen lines of a code block to draw the reader to them." },
@@ -566,17 +570,17 @@ window.DocFormSite = {
         "search index": { "tags": ["Setup"], "text": "A prepared summary of every page's text that lets search find words across the whole site, even offline." },
         "regenerate": { "tags": ["Setup"], "text": "To build a prepared file again, such as the search index, so it matches the latest pages." },
         "stale": { "tags": ["Setup"], "text": "Out of date: built from an older version of the pages than the one you have now." },
-        "problem report": { "tags": ["Setup"], "text": "A message DocForm records when something on a page is set up wrongly, saying what went wrong and how to fix it. Also called a diagnostic." },
-        "offline asset tool": { "tags": ["Setup"], "text": "A page included with DocForm that checks and rebuilds a site's prepared files, such as the search index, without the internet." },
+        "problem report": { "tags": ["Setup"], "text": "A message OffPrint records when something on a page is set up wrongly, saying what went wrong and how to fix it. Also called a diagnostic." },
+        "offline asset tool": { "tags": ["Setup"], "text": "A page included with OffPrint that checks and rebuilds a site's prepared files, such as the search index, without the internet." },
         "ZIP file": { "tags": ["Computer basics"], "text": "One file that packs several files or folders together. Extract it to get the original files and folders back." },
-        "theme": { "tags": ["Design", "Reading interface"], "text": "The set of colours a page uses. In DocForm, a reader can switch between light and dark themes." },
+        "theme": { "tags": ["Design", "Reading interface"], "text": "The set of colours a page uses. In OffPrint, a reader can switch between light and dark themes." },
         "page tree": { "tags": ["Setup"], "text": "A list of pages arranged into groups that can be opened or folded away." },
         "search palette": { "tags": ["Reading interface"], "text": "The box that opens over a page to let you type a search and choose a result." },
         "reduced motion": { "tags": ["Web technology"], "text": "A device preference that asks apps and pages to use less movement." },
         "caption": { "tags": ["Writing"], "text": "A short line of text beside or below a picture, chart, or table that tells you what it shows." },
         "swatch": { "tags": ["Design"], "text": "A small sample of a colour so you can see how it looks." },
         "spacing scale": { "tags": ["Design"], "text": "A set of sizes reused for gaps so the spaces on a page feel consistent." },
-        "section cycle": { "tags": ["Design"], "text": "The order in which DocForm repeats colours from one main section to the next." },
+        "section cycle": { "tags": ["Design"], "text": "The order in which OffPrint repeats colours from one main section to the next." },
         "inline math": { "tags": ["Writing"], "text": "A formula drawn inside a line of ordinary text." },
         "display math": { "tags": ["Writing"], "text": "A formula drawn on its own line, with room for taller symbols." },
         "autoplay": { "tags": ["Interaction"], "text": "Starting a figure or chart animation automatically when it comes into view." },
@@ -594,7 +598,7 @@ window.DocFormSite = {
         "scenario comparison": { "tags": ["Data and charts"], "text": "A view of how changing one or more conditions affects the outcomes compared with a starting case." },
         "concept table": { "tags": ["Writing"], "text": "A table of words that compares ideas, often with extra space for labels in the first column." },
         "results table": { "tags": ["Data and charts"], "text": "A table for comparing results that can sort, filter, or highlight its rows and values." },
-        "data file wrapper": { "tags": ["Setup"], "text": "A prepared copy of a data file that DocForm can open from a local folder." }
+        "data file wrapper": { "tags": ["Setup"], "text": "A prepared copy of a data file that OffPrint can open from a local folder." }
       }
     }
   },

@@ -4,8 +4,8 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const vm = require('node:vm');
 
-const core = readFileSync(join(__dirname, '../docform/js/core.js'), 'utf8');
-const source = readFileSync(join(__dirname, '../docform/js/stepper.js'), 'utf8');
+const core = readFileSync(join(__dirname, '../offprint/js/core.js'), 'utf8');
+const source = readFileSync(join(__dirname, '../offprint/js/stepper.js'), 'utf8');
 
 function element(tag, attrs = {}, children = []) {
   const attributes = new Map(Object.entries(attrs));
@@ -21,8 +21,8 @@ function element(tag, attrs = {}, children = []) {
     toggleAttribute: (name, on) => on ? attributes.set(name, '') : attributes.delete(name),
     appendChild: (child) => children.push(child),
     querySelector(selector) {
-      assert.equal(selector, ':scope > [data-df-step-label]');
-      return children.find((child) => child.getAttribute('data-df-step-label') !== null);
+      assert.equal(selector, ':scope > [data-op-step-label]');
+      return children.find((child) => child.getAttribute('data-op-step-label') !== null);
     },
     before(sibling) { this.controls = sibling; },
     click() { this.dispatchEvent(new Event('click')); }
@@ -35,31 +35,31 @@ function element(tag, attrs = {}, children = []) {
 
 function sequence(id, ...keys) {
   return element('ol', { id }, keys.map((key) => {
-    const name = element('strong', { 'data-df-step-label': '' });
+    const name = element('strong', { 'data-op-step-label': '' });
     name.textContent = key;
-    return element('li', { 'data-df-key': key }, [name]);
+    return element('li', { 'data-op-key': key }, [name]);
   }));
 }
 
 function view(tag, id, key) {
-  return element(tag, { 'data-df-stepper-view': id, 'data-df-key': key });
+  return element(tag, { 'data-op-stepper-view': id, 'data-op-key': key });
 }
 
 function setup(lists, views = []) {
   const warnings = [];
   const boot = { canInitialize: () => true, report: (_, feature, host, message) => warnings.push(message),
     moduleFailed: (_, error) => { throw error; } };
-  const DocForm = { _boot: boot };
+  const OffPrint = { _boot: boot };
   const all = (selector, list) => {
       switch (selector) {
-        case 'ol[data-df-stepper]': return lists;
-        case '[data-df-stepper-view][data-df-key]': return views;
+        case 'ol[data-op-stepper]': return lists;
+        case '[data-op-stepper-view][data-op-key]': return views;
         case ':scope > li': return list.children.filter((child) => child.tag === 'li');
         default: throw new Error(`Unexpected selector ${selector}`);
       }
   };
   const context = vm.createContext({
-    DocForm,
+    OffPrint,
     CustomEvent,
     document: {
       createElement: element,
@@ -67,9 +67,9 @@ function setup(lists, views = []) {
     }
   });
   vm.runInContext(core, context);
-  DocForm._all = all;
+  OffPrint._all = all;
   vm.runInContext(source, context);
-  return { start: boot.initialize, stepper: DocForm.sequence, warnings };
+  return { start: boot.initialize, stepper: OffPrint.sequence, warnings };
 }
 
 test('controls stop at both boundaries and Reset restores the initial step and linked results', () => {
@@ -82,7 +82,7 @@ test('controls stop at both boundaries and Reset restores the initial step and l
   const { start, stepper } = setup([list], views);
   const changes = [];
   const viewVisibility = () => views.map((node) => node.getAttribute('hidden') === null);
-  list.addEventListener('df:step', (event) => {
+  list.addEventListener('op:step', (event) => {
     const { index, key, origin } = event.detail;
     const { count } = stepper.get(list).snapshot();
     assert.equal(origin, changes.length ? 'user' : 'init');
@@ -175,7 +175,7 @@ test('select jumps to a named step through the same update as the controls', () 
   assert.equal(stepper.get('trace'), null, 'nothing to select before setup');
   start();
   const changes = [];
-  list.addEventListener('df:step', (event) => changes.push(event.detail.key));
+  list.addEventListener('op:step', (event) => changes.push(event.detail.key));
   const [reset, previous, , next] = list.controls.children;
 
   assert.equal(stepper.get('trace').select('late'), true);

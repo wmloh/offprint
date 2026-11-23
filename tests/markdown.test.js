@@ -22,14 +22,14 @@ const html = (n) => {
 };
 const context = vm.createContext({ console, document: { createElement: node, createTextNode: (text) => ({ text }) } });
 context.window = context;
-for (const file of ['core.js', 'markdown.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8'), context);
-const render = (text) => context.DocForm._markdown.render(text).children.map(html).join('');
+for (const file of ['core.js', 'markdown.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8'), context);
+const render = (text) => context.OffPrint._markdown.render(text).children.map(html).join('');
 
 test('blocks cover headings, paragraphs, quotes, rules, fenced code, and tables', () => {
   assert.equal(render('## Title *x*\n\nOne\ntwo  \nthree\n\n> quoted\n\n---\n```py\n<b>\n```'),
-    '<div className=df-md-heading df-md-h2 role=heading aria-level=2>Title <em>x</em></div>' +
+    '<div className=op-md-heading op-md-h2 role=heading aria-level=2>Title <em>x</em></div>' +
     '<p>One\ntwo<br></br>three</p><blockquote><p>quoted</p></blockquote><hr></hr>' +
-    '<pre data-df-lang=py><code>&lt;b></code></pre>');
+    '<pre data-op-lang=py><code>&lt;b></code></pre>');
   assert.equal(render('| a | b |\n|:--|--:|\n| 1 \\| 2 | **3** |'),
     '<table><thead><tr><th scope=col align=left>a</th><th scope=col align=right>b</th></tr></thead>' +
     '<tbody><tr><td align=left>1 | 2</td><td align=right><strong>3</strong></td></tr></tbody></table>');
@@ -37,7 +37,7 @@ test('blocks cover headings, paragraphs, quotes, rules, fenced code, and tables'
 
 test('lists nest, number from their start, and show task boxes', () => {
   assert.equal(render('- a\n  - b\n- [x] done\n\n3. c\n4. d'),
-    '<ul><li>a<ul><li>b</li></ul></li><li className=df-md-task><input checked=true></input>done</li></ul>' +
+    '<ul><li>a<ul><li>b</li></ul></li><li className=op-md-task><input checked=true></input>done</li></ul>' +
     '<ol><li>c</li><li>d</li></ol>');
 });
 

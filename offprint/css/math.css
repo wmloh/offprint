@@ -1,0 +1,31 @@
+/* Math rendered by math.js with the vendored KaTeX stylesheet. */
+.op-math[data-op-display]:not([data-op-display="false"]) {
+  display: block;
+  margin: var(--op-space-4) 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+
+.op-math[data-op-display] > .katex-display {
+  margin: 0;
+}
+
+.op-math .katex {
+  font-size: 1.1em;
+}
+
+.op-math-error {
+  padding: 0.1em 0.3em;
+  border-radius: var(--op-radius-sm);
+  background: var(--op-red-bg);
+  color: var(--op-red);
+  font-family: var(--op-font-mono);
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  cursor: help;
+}
+
+.op-math-error[data-op-display]:not([data-op-display="false"]) {
+  text-align: left;
+}

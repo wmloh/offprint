@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const json = (value) => JSON.parse(JSON.stringify(value));
 
 function load() {
@@ -12,7 +12,7 @@ function load() {
   const context = vm.createContext({ URL, console: { warn: (message) => warnings.push(message) } });
   context.window = context;
   ['core.js', 'tooltip.js', 'search.js', 'glossary.js'].forEach((file) => vm.runInContext(read(file), context));
-  return { DocForm: context.DocForm, context, warnings };
+  return { OffPrint: context.OffPrint, context, warnings };
 }
 
 // A minimal element tree for the extractor: simple selectors only (tag, .class, [attr], [attr="v"]); anything with a
@@ -100,22 +100,22 @@ function doc(body) {
 }
 
 test('the extractor records tips and term uses once per section, with their section anchors', () => {
-  const { DocForm } = load();
-  const page = el('main', { class: 'df-page' }, [
+  const { OffPrint } = load();
+  const page = el('main', { class: 'op-page' }, [
     el('h1', {}, ['Vectors']),
-    el('p', {}, ['A ', el('span', { 'data-df-term': '' }, ['Vector']), ' has a ',
-      el('span', { 'data-df-tip': 'Its length.', 'data-df-tip-tags': 'Geometry, geometry,Size' }, ['norm']), '.']),
-    el('p', {}, [el('span', { class: 'df-tag', 'data-df-tip': 'A tag explains itself.' }, ['Draft'])]),
+    el('p', {}, ['A ', el('span', { 'data-op-term': '' }, ['Vector']), ' has a ',
+      el('span', { 'data-op-tip': 'Its length.', 'data-op-tip-tags': 'Geometry, geometry,Size' }, ['norm']), '.']),
+    el('p', {}, [el('span', { class: 'op-tag', 'data-op-tip': 'A tag explains itself.' }, ['Draft'])]),
     el('h2', {}, ['Dot  product']),
     el('p', {}, [
-      el('span', { 'data-df-term': 'dot-product' }, ['dot products']), ' and ',
-      el('span', { 'data-df-term': 'dot product' }, ['dot products']), ' and ',
-      el('span', { 'data-df-tip': ' Its   length. ' }, ['norm'])
+      el('span', { 'data-op-term': 'dot-product' }, ['dot products']), ' and ',
+      el('span', { 'data-op-term': 'dot product' }, ['dot products']), ' and ',
+      el('span', { 'data-op-tip': ' Its   length. ' }, ['norm'])
     ]),
-    el('nav', {}, [el('span', { 'data-df-tip': 'Skipped' }, ['hidden'])]),
-    el('p', {}, [el('span', { 'data-df-tip': '' }, ['empty']), el('span', { 'data-df-term': '' }, [' '])])
+    el('nav', {}, [el('span', { 'data-op-tip': 'Skipped' }, ['hidden'])]),
+    el('p', {}, [el('span', { 'data-op-tip': '' }, ['empty']), el('span', { 'data-op-term': '' }, [' '])])
   ]);
-  const data = DocForm._search.extract(doc(page));
+  const data = OffPrint._search.extract(doc(page));
   assert.deepEqual(json(data.terms), [
     { text: 'Vector', term: 'vector', section: '' },
     { text: 'norm', tip: 'Its length.', tags: ['geometry', 'size'], section: '' },
@@ -126,15 +126,15 @@ test('the extractor records tips and term uses once per section, with their sect
 });
 
 test('the extractor exports an h1/h2 outline while preserving existing search anchors', () => {
-  const { DocForm } = load();
-  const page = el('main', { class: 'df-page' }, [
+  const { OffPrint } = load();
+  const page = el('main', { class: 'op-page' }, [
     el('h1', {}, ['Vectors']),
     el('h2', {}, ['Vectors']),
     el('h3', {}, ['Dot product']),
-    el('h2', { 'data-df-no-outline': '' }, ['Omitted']),
+    el('h2', { 'data-op-no-outline': '' }, ['Omitted']),
     el('h1', {}, ['Matrices'])
   ]);
-  const data = DocForm._search.extract(doc(page));
+  const data = OffPrint._search.extract(doc(page));
   assert.deepEqual(json(data.outline), [
     { id: 'vectors-2', title: 'Vectors', level: 1 },
     { id: 'vectors', title: 'Vectors', level: 2 },
@@ -170,12 +170,12 @@ const pages = [
 ];
 
 test('merging keeps manifest definitions first, folds inline tips by underlined text, and lists variants', () => {
-  const { DocForm } = load();
-  const terms = DocForm._tooltips.glossary({
+  const { OffPrint } = load();
+  const terms = OffPrint._tooltips.glossary({
     vector: 'A list of numbers, such as $(2, 1)$.',
     basis: { title: 'Basis', text: 'Independent spanning vectors.', more: '<p>More.</p>' }
   });
-  const entries = DocForm._glossary.merge(terms, pages);
+  const entries = OffPrint._glossary.merge(terms, pages);
   assert.deepEqual(json(entries.map((e) => [e.title, e.manifest])),
     [['Basis', true], ['Norm', false], ['vector', true], ['Ω-limit', false], ['2-norm', false]]);
   const vector = entries.find((e) => e.key === 'vector');
@@ -192,8 +192,8 @@ test('merging keeps manifest definitions first, folds inline tips by underlined 
 });
 
 test('back-links group uses by page with section links, and unknown term names add nothing', () => {
-  const { DocForm } = load();
-  const entries = DocForm._glossary.merge(DocForm._tooltips.glossary({ vector: 'A list.' }), pages);
+  const { OffPrint } = load();
+  const entries = OffPrint._glossary.merge(OffPrint._tooltips.glossary({ vector: 'A list.' }), pages);
   assert.deepEqual(json(entries.find((e) => e.key === 'vector').uses), [
     {
       title: 'Vectors', href: 'file:///n/vectors.html', intro: true,
@@ -208,7 +208,7 @@ test('back-links group uses by page with section links, and unknown term names a
 });
 
 test('Used on lists heading links directly and includes the page title for introductory uses', () => {
-  const { DocForm, context } = load();
+  const { OffPrint, context } = load();
   const holder = el('div');
   context.document = {
     body: el('body'),
@@ -216,7 +216,7 @@ test('Used on lists heading links directly and includes the page title for intro
     createElement: (tag) => el(tag),
     createTextNode: (value) => ({ nodeType: 3, nodeValue: value })
   };
-  DocForm._glossary.render(holder, DocForm._glossary.merge({}, [
+  OffPrint._glossary.render(holder, OffPrint._glossary.merge({}, [
     {
       title: 'Vectors', href: 'file:///n/vectors.html',
       sections: [{ id: 'length', title: 'Length' }, { id: 'angles', title: 'Angles' }],
@@ -224,7 +224,7 @@ test('Used on lists heading links directly and includes the page title for intro
     },
     { title: 'Matrices', href: 'file:///n/matrices.html', terms: [{ text: 'norm', tip: 'A size measure.', tags: [] }] }
   ]));
-  const usedOn = holder.querySelector('.df-glossary-uses');
+  const usedOn = holder.querySelector('.op-glossary-uses');
   assert.equal(usedOn.textContent, 'Used on Length · Angles · Matrices');
   assert.deepEqual(usedOn.querySelectorAll('a').map((a) => [a.textContent, a.href]), [
     ['Length', 'file:///n/vectors.html#length'],
@@ -234,12 +234,12 @@ test('Used on lists heading links directly and includes the page title for intro
 });
 
 test('letters group accented and non-Latin titles, put symbols last, and fill the jump bar', () => {
-  const { DocForm } = load();
-  const { letter, groups, jumps, merge } = DocForm._glossary;
+  const { OffPrint } = load();
+  const { letter, groups, jumps, merge } = OffPrint._glossary;
   assert.equal(letter('élan'), 'E');
   assert.equal(letter('$k$-means'), '#');
   assert.equal(letter('  ω'), 'Ω');
-  const list = groups(merge(DocForm._tooltips.glossary({ zeta: 'z', Alpha: 'a', 'élan': 'e', apex: 'x', '3-cycle': 'c', ω: 'o' }), null));
+  const list = groups(merge(OffPrint._tooltips.glossary({ zeta: 'z', Alpha: 'a', 'élan': 'e', apex: 'x', '3-cycle': 'c', ω: 'o' }), null));
   assert.deepEqual(json(list.map((g) => [g.letter, g.entries.map((e) => e.title)])),
     [['A', ['Alpha', 'apex']], ['E', ['élan']], ['Z', ['zeta']], ['Ω', ['ω']], ['#', ['3-cycle']]]);
   const bar = jumps(list);
@@ -248,9 +248,9 @@ test('letters group accented and non-Latin titles, put symbols last, and fill th
 });
 
 test('without an index, or with an index built before glossary data, only manifest entries show with a notice', () => {
-  const { DocForm } = load();
-  const terms = DocForm._tooltips.glossary({ vector: 'A list.' });
-  const { merge, notice } = DocForm._glossary;
+  const { OffPrint } = load();
+  const terms = OffPrint._tooltips.glossary({ vector: 'A list.' });
+  const { merge, notice } = OffPrint._glossary;
   assert.deepEqual(json(merge(terms, null).map((e) => [e.title, e.uses.length])), [['vector', 0]]);
   assert.match(notice(null), /no search index/);
   assert.match(notice([{ title: 'Old', href: 'file:///a.html', sections: [], terms: null }]), /no glossary data/);
@@ -265,38 +265,38 @@ test('without an index, or with an index built before glossary data, only manife
 });
 
 test('indexed pages pass their recorded terms on, or null for an older index', () => {
-  const { DocForm, context } = load();
-  context.DocForm._site = { provided: true, base: 'file:///n/' };
-  context.DocFormSearch = { pages: [{ path: 'a.html', title: 'A', terms: [{ text: 'x', tip: 'y', tags: [], section: '' }] }, { path: 'b.html', title: 'B' }] };
+  const { OffPrint, context } = load();
+  context.OffPrint._site = { provided: true, base: 'file:///n/' };
+  context.OffPrintSearch = { pages: [{ path: 'a.html', title: 'A', terms: [{ text: 'x', tip: 'y', tags: [], section: '' }] }, { path: 'b.html', title: 'B' }] };
   let result;
-  DocForm._search.pages((list) => { result = list; });
+  OffPrint._search.pages((list) => { result = list; });
   assert.deepEqual(json(result.map((p) => p.terms)), [[{ text: 'x', tip: 'y', tags: [], section: '' }], null]);
 });
 
 test('the glossaryPage setting adds the page last in the tree unless it is already listed', () => {
-  const { DocForm, warnings } = load();
-  const added = DocForm._normalizeSite({ pages: ['index.html'], glossaryPage: 'terms.html' }, 'file:///n/site.js');
+  const { OffPrint, warnings } = load();
+  const added = OffPrint._normalizeSite({ pages: ['index.html'], glossaryPage: 'terms.html' }, 'file:///n/site.js');
   assert.deepEqual(json(added.pages.map((p) => [p.title, p.href])),
     [['index.html', 'file:///n/index.html'], ['Glossary', 'file:///n/terms.html']]);
   assert.equal(added.order.length, 2);
   assert.equal(added.glossaryPage, 'file:///n/terms.html');
-  const named = DocForm._normalizeSite({ glossaryPage: { path: 'g.html', title: 'Terms' } }, 'file:///n/site.js');
+  const named = OffPrint._normalizeSite({ glossaryPage: { path: 'g.html', title: 'Terms' } }, 'file:///n/site.js');
   assert.equal(named.pages[0].title, 'Terms');
-  const listed = DocForm._normalizeSite({
+  const listed = OffPrint._normalizeSite({
     pages: [{ title: 'Ref', pages: [{ title: 'Words', path: 'terms.html' }] }],
     glossaryPage: 'terms.html#top'
   }, 'file:///n/site.js');
   assert.equal(listed.order.length, 1);
   assert.equal(listed.pages.length, 1);
-  assert.equal(DocForm._normalizeSite({ glossaryPage: 5 }, 'file:///n/site.js').glossaryPage, null);
+  assert.equal(OffPrint._normalizeSite({ glossaryPage: 5 }, 'file:///n/site.js').glossaryPage, null);
   assert.equal(warnings.length, 1);
 });
 
 test('entry tags are a union with manifest tags first, variants keep their own, and the filter matches any tag', () => {
-  const { DocForm } = load();
+  const { OffPrint } = load();
   const registry = { glossary: { maths: {}, geometry: {}, computing: {} } };
-  const terms = DocForm._tooltips.glossary({ norm: { text: 'A length.', tags: ['Maths'] }, rank: 'Independent columns.' });
-  const entries = DocForm._glossary.merge(terms, [{
+  const terms = OffPrint._tooltips.glossary({ norm: { text: 'A length.', tags: ['Maths'] }, rank: 'Independent columns.' });
+  const entries = OffPrint._glossary.merge(terms, [{
     href: 'file:///n/a.html', title: 'A', sections: [],
     terms: [
       { text: 'norm', tip: 'a length.', tags: ['geometry', 'maths'], section: '' },
@@ -306,7 +306,7 @@ test('entry tags are a union with manifest tags first, variants keep their own, 
   const norm = entries.find((e) => e.key === 'norm');
   assert.deepEqual(json(norm.tags), ['maths', 'geometry', 'computing']);
   assert.deepEqual(json(norm.variants.map((v) => v.tags)), [['computing']]);
-  const { matches, filterTags } = DocForm._glossary;
+  const { matches, filterTags } = OffPrint._glossary;
   const rank = entries.find((e) => e.key === 'rank');
   assert.deepEqual(json(filterTags(entries, registry)),
     [{ key: 'maths', count: 1 }, { key: 'geometry', count: 1 }, { key: 'computing', count: 1 }, { key: '', count: 1 }]);

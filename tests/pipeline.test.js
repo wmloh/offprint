@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const context = vm.createContext({ console });
 context.window = context;
 ['core.js', 'detail.js', 'diagram.js', 'pipeline.js'].forEach((file) => vm.runInContext(read(file), context));
-const P = context.DocForm._pipeline;
-const D = context.DocForm._diagram;
+const P = context.OffPrint._pipeline;
+const D = context.OffPrint._diagram;
 const edges = (pairs) => pairs.map(([from, to]) => ({ from, to }));
 const none = (n) => Array(n).fill(null);
 const plain = (value) => JSON.parse(JSON.stringify(value));

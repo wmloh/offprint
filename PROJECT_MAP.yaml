@@ -1,10 +1,10 @@
-docform/: Copyable offline library folder
-  docform.js: Offline entry with feature profiles, local asset loading, author lifecycle hooks, diagnostics, and lazy standalone export controls
-  docform.css: Optional static reading-profile styles
+offprint/: Copyable offline library folder for interactive, exportable guides, reports, and experiment results
+  offprint.js: Offline entry with feature profiles, local asset loading, author lifecycle hooks, diagnostics, and lazy standalone export controls
+  offprint.css: Optional static reading-profile styles
   site.template.js: Starter JSON site manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
     tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, reading-column and figure-cap widths, section spacing and colour cycle, and eyebrow and field-label text roles via light-dark()
-    base.css: Centered reading column, typography, section heading spacing, links, figure and table width limits, concept tables, table hover, list markers, scrollbars, and data-df-color accents
+    base.css: Centered reading column, typography, section heading spacing, links, figure and table width limits, concept tables, table hover, list markers, scrollbars, and data-op-color accents
     text.css: Muted small-caps eyebrows and aligned labelled-field lists for visual hierarchy
     sections.css: Cycled h2 section colours and uniform left-margin section lines in an unblurred overlay layer
     buttons.css: Shared soft tinted pill buttons with optional icons for author and module actions, and the frosted icon pill for step controls
@@ -51,7 +51,7 @@ docform/: Copyable offline library folder
     markdown.css: Rendered Markdown heading lines, quotes, rules, images, and task items
     dropzone.css: Dashed file drop area, status line with Reset, and the dropped file's view
     glossary.css: Glossary page tag filter chips, letter jumps, letter groups, definitions with tags, variant definitions, and used-on links
-  js/: Per-module classic scripts on a shared DocForm namespace
+  js/: Per-module classic scripts on a shared OffPrint namespace
     reader-state.js: Versioned browser-local export views, data revision checks, import persistence, and in-memory Interactive session replay
     page-snapshot.js: Page capture, isolated replay, reachable figure steps and details, tooltip materialization, and fallback reporting for export
     export-package.js: Folder and manifest resolution, authored Interactive inputs, consented datasets and local scripts, shared assets, Reader fallbacks, link rewriting, and build diagnostics
@@ -60,13 +60,13 @@ docform/: Copyable offline library folder
     export-resources.js: Offline resolution and content-based sharing of stylesheets, fonts, and images
     export-reader.js: Active-page Interactive startup and session replay for cards, diagrams, charts, and linked views, isolated author pages, Reader capture with declarative steps, and shared navigation, history, reading controls, and tooltips
     export-dialog.js: Reader and Interactive mode selection, folder and page pickers, preview and consent for imports and author scripts, cancellation, download, and saved-data clearing
-    core.js: DocForm namespace, shared reading-control and theme icons, module and shortcut registries, data-df-* and clipboard helpers, shared control hints in the tooltip card, data-df-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
-    roles.js: Manifest role colours as CSS variables, role tips, and data-df-legend rendering with tooltips
+    core.js: OffPrint namespace, shared reading-control and theme icons, module and shortcut registries, data-op-* and clipboard helpers, shared control hints in the tooltip card, data-op-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
+    roles.js: Manifest role colours as CSS variables, role tips, and data-op-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
     controls.js: Reading controls, floating previous and next page links, saved sidebar modes, and heading shortcuts
-    math.js: KaTeX rendering of .df-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
-    tooltip.js: data-df-tip tooltips, glossary terms with hold-to-expand extended text and required glossary tags, glossary-labelled tags, required tag classes and tooltips with warned fallbacks, opt-in automatic term linking, and lazy HTML cards for other modules
+    math.js: KaTeX rendering of .op-math elements with manifest macros, inline errors, a re-render API, and $…$ text helpers
+    tooltip.js: data-op-tip tooltips, glossary terms with hold-to-expand extended text and required glossary tags, glossary-labelled tags, required tag classes and tooltips with warned fallbacks, opt-in automatic term linking, and lazy HTML cards for other modules
     code.js: Code block copy buttons, a dependency-free JS, JSON, YAML, Python, HTML, CSS, shell, SQL, and C# highlighter, line highlights, annotation markers linked to list items, and diffs
     editable-text.js: Native text fields with optional live syntax highlighting
     dropdowns.js: Viewport-positioned native popovers for links, actions, and nested menu branches, with a shared positioning helper
@@ -74,7 +74,7 @@ docform/: Copyable offline library folder
     anim.js: Declarative and programmatic SVG timelines with keyed steps, playback, scrubbing, and Reader endpoints
     choices.js: Shared builder for every single or multiple choice: authored or generated fieldset chips or a searchable combobox, keyboard support, and a press ripple
     params.js: Named parameter scopes with fieldset choice groups, presets, text bindings, show-when conditions, selection-group choices, links that let other features reject updates, atomic updates, Reset, and subscriptions
-    reveal.js: Two-way callout slides, data-df-reveal entrances that replay around the viewport centre (or once), and split panes
+    reveal.js: Two-way callout slides, data-op-reveal entrances that replay around the viewport centre (or once), and split panes
     steps.js: Standalone HTML cards and figure steps with hover selection, keyboard and tap support, keyed selection, inert details, optional numbering, tag slots, and label-and-tag filtering, both usable as detail-pane sources
     detail.js: Shared detail panes keyed to card panels, figure steps, pipelines, or selection groups, plus inert-detail and scrollbar helpers
     diagram.js: Internal diagram geometry and SVG helpers, keyed node selection, detail-pane binding, and a record diagram adapter
@@ -86,7 +86,7 @@ docform/: Copyable offline library folder
     zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with an eraser, Undo, and Clear, chart and timeline crosshairs, plus a ruler on other figures
     bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
-    notes.js: Inline .df-note footnotes shown as margin sidenotes when there is room, else as hover notes
+    notes.js: Inline .op-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
     chart.js: SVG line, scatter, pie, and vertical or horizontal grouped, stacked, and percent bar charts with default-on keyed tweens and scroll entrances, add-on chart type, scale, and legend registration, named data mappings, declarative parameter bindings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
     chart-intervals.js: Ranked dot and lollipop plots with supplied intervals and dodged series in either orientation
@@ -102,7 +102,7 @@ docform/: Copyable offline library folder
     markdown.js: Safe Markdown renderer for data views with GFM tables, task lists, and filtered link targets
     tree.js: Collapsible, keyboard-navigable tree view of nested data with expand-all, collapse-all, and capped child lists
     dropzone.js: Local file pickers and dropzones for a standalone view, local override, or explicit shared source replacement and Reset
-    glossary.js: data-df-glossary site glossary merging manifest entries with indexed inline tips, with merged glossary tags, an any-tag filter, variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
+    glossary.js: data-op-glossary site glossary merging manifest entries with indexed inline tips, with merged glossary tags, an any-tag filter, variant definitions, used-on back-links, letter jumps, and a manifest-only fallback
     sections.js: h2 colour cycle from a token with attribute overrides, and continuous left-margin section lines in a separate layer that focus blur never reaches, kept clear of the section rail
   tools/: Offline asset checker page, plus a terminal Node CLI and Python launcher for search index and data wrapper refresh
     assets.html: Folder selection, asset status and diagnostics, and selective save, download, or copy
@@ -120,10 +120,10 @@ docform/: Copyable offline library folder
     interact/shortcuts.md: Shortcut scopes, defaults, conflict diagnostics, and manifest remapping
     setup/export.md: Standalone Reader and Interactive export dialog, modes, exported file, and local author scripts
     extend/: Public extension API, lifecycle hooks, shared controllers, events, and chart add-on registration
-docs/: Human-facing beginner DocForm HTML site with a Start here orientation and live examples
+docs/: Human-facing beginner OffPrint HTML site with a Start here orientation and live examples
   refresh-assets.py: Launcher for checking (--check) or refreshing this site's data wrappers and search index
   index.html: Welcome page
-  pages/: Start here guides for local sites and Reader and Interactive export, feature guides, recipes, references, and glossary
+  pages/: Start here guides for local sites and Reader and Interactive export, feature guides, recipes (including sharing experiment results), references, and glossary
   assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index
 scripts/: Node development tools for generating shipped assets
   build-export-library.js: Regenerates bundled export styles, fonts, and trusted scripts with Node, or verifies freshness with --check

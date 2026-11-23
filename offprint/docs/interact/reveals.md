@@ -1,0 +1,13 @@
+# Scroll reveals
+
+Enable the `reveals` feature. Add `data-op-reveal` to a block to reveal it each time it nears the viewport centre.
+
+```html
+<p data-op-reveal="left" data-op-reveal-delay="200">This arrives from the left.</p>
+```
+
+- Empty or default direction rises from below. `left`, `right`, and `fade` choose a side or opacity only. `data-op-reveal-delay` is in milliseconds. `data-op-no-reveal` opts a target out.
+- Two-way: a rAF-throttled scroll check toggles `.op-revealed` while the target overlaps the viewport minus 15% at each end (entry) or 4% (keep), widened at page ends; a block holding focus stays shown. Entrance uses `--op-reveal-delay`; exit is immediate and quicker. `data-op-reveal-once` stops tracking after the first entrance.
+- Content remains visible without scripts or `requestAnimationFrame`. Print styles expose marked content. Callouts in `.op-page` use the same assets for a reversible slide through a visibility band.
+
+[Callouts](../reading/callouts.md) · [Split views](split-views.md) · [Source](../../js/reveal.js)

@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint', file), 'utf8');
 const context = vm.createContext({ URL, TextEncoder, WeakMap, console: { warn() {} } });
 context.window = context;
 vm.runInContext(read('vendor/js-yaml/js-yaml.min.js'), context);
@@ -12,7 +12,7 @@ vm.runInContext(read('js/core.js'), context);
 vm.runInContext(read('js/data.js'), context);
 vm.runInContext(read('js/chart.js'), context);
 vm.runInContext(read('js/dropzone.js'), context);
-const { data, _dropzone: dropzone, _chart: chart } = context.DocForm;
+const { data, _dropzone: dropzone, _chart: chart } = context.OffPrint;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 const csv = { name: 'mine.csv', type: 'csv', text: 'epoch,train,val\n1,0.6,0.55\n2,0.7,0.61\n3,0.8,0.64\n' };
 

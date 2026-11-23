@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Open a DocForm site · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script src="../../../docform/docform.js"></script>
+  <title>Open an OffPrint site · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Start here</p>
-      <h1>Open a DocForm site</h1>
-      <p>You can open a DocForm site straight from your computer. Follow these steps to find the first page and open it in the same app you use to view websites.</p>
-      <dl class="df-fields">
+      <p class="op-eyebrow">Start here</p>
+      <h1>Open an OffPrint site</h1>
+      <p>You can open an OffPrint site straight from your computer. Follow these steps to find the first page and open it in the same app you use to view websites.</p>
+      <dl class="op-fields">
         <dt>Reading time</dt><dd>About 5 minutes</dd>
         <dt>You will</dt><dd>Open these docs from your own computer</dd>
       </dl>
@@ -26,25 +26,25 @@
 
     <h2 id="files-and-folders">Files and folders</h2>
     <p>A file is one saved item, such as a page or picture. A folder holds files and can hold other folders, too.</p>
-    <p>A DocForm site comes with page files and supporting files that provide things like pictures, colours, and controls. Keep the entire set together, with each file in its original folder. If you received it as a ZIP file, a single file packed with other files, use your computer’s <strong>Extract</strong> or <strong>Unzip</strong> command first, then open the unpacked copy.</p>
-    <p>The way an agent arranges those folders is called the <strong>site structure</strong>: pages in one folder, the DocForm library folder beside them, and shared settings and data in predictable places. Keeping that layout lets every page open offline and lets the export button find everything a page uses.</p>
+    <p>An OffPrint site comes with page files and supporting files that provide things like pictures, colours, and controls. Keep the entire set together, with each file in its original folder. If you received it as a ZIP file, a single file packed with other files, use your computer’s <strong>Extract</strong> or <strong>Unzip</strong> command first, then open the unpacked copy.</p>
+    <p>The way an agent arranges those folders is called the <strong>site structure</strong>: pages in one folder, the OffPrint library folder beside them, and shared settings and data in predictable places. Keeping that layout lets every page open offline and lets the export button find everything a page uses.</p>
 
     <h2 id="open-a-page">Open a page from disk</h2>
     <ol>
       <li>Open the app you use to browse files and folders, such as File Explorer on Windows or Finder on a Mac. Find the unpacked site where you saved it.</li>
-      <li>Find the starting page inside the site. It is often called <strong>index.html</strong>, or just <strong>index</strong> if your computer hides the end of file names. For this guide, choose the starting page inside the documentation folder.</li>
+      <li>Find the starting page inside the site. It is often called <strong>index.html</strong>, or just <strong>index</strong> if your computer hides the end of file names. For this guide, choose the starting page inside the <strong>docs</strong> folder.</li>
       <li>Double-click the starting page. If it opens in a text editor, right-click the file, choose <strong>Open with</strong>, and select your browser, such as Chrome, Edge, Firefox, or Safari.</li>
       <li>Look for the page title and the navigation panel. The address bar, the box near the top of the browser window, will usually show a local file address. The browser opened a saved file on your own computer, which is what <em>from disk</em> means.</li>
     </ol>
 
     <h2 id="working-offline">Working offline</h2>
-    <p><strong>Offline</strong> means without an internet connection. The browser reads each page and its supporting files directly from your computer, so you can still follow links between the saved pages and use their DocForm controls. A link to an outside website still needs a connection.</p>
+    <p><strong>Offline</strong> means without an internet connection. The browser reads each page and its supporting files directly from your computer, so you can still follow links between the saved pages and use their OffPrint controls. A link to an outside website still needs a connection.</p>
 
     <h2 id="export-a-copy">Export a standalone copy</h2>
-    <p>Use desktop Chrome with JavaScript enabled to export from a local DocForm page. Choose <strong>Export</strong> in the top-left reading controls, or at the bottom of the page when those controls are hidden. Then choose the <strong>documentation folder</strong>, which holds the pages and their pictures and data. Chrome may ask to upload the files. DocForm reads them on your computer and includes the library styles and fonts automatically.</p>
+    <p>Use desktop Chrome with JavaScript enabled to export from a local OffPrint page. Choose <strong>Export</strong> in the top-left reading controls, or at the bottom of the page when those controls are hidden. Then choose the <strong>site folder</strong>, which holds the pages and their pictures and data. Chrome may ask to upload the files. OffPrint reads them on your computer and includes the library styles and fonts automatically.</p>
     <ol>
       <li>Choose an export mode. <strong>Reader</strong> is the default. It keeps the captured view and lets you try supported figure steps. <strong>Interactive</strong> also runs supported cards, animations, diagrams, charts, and their linked controls. A page that cannot start interactively opens in its Reader view.</li>
-      <li>Select the pages or groups you want. For a single-page document, select its one page.</li>
+      <li>Select the pages or groups you want. For a single-page report or results summary, select its one page.</li>
       <li>Choose <strong>Build preview</strong>. The open page uses its current selections. Other pages use saved reading choices when available and still valid, or their starting view. The preview lists the views used, imported content, missing assets, unavailable links, and the exact file size.</li>
       <li>Interactive includes site-provided data needed by supported controls. To embed a full file you imported, select it under <strong>Include full imported datasets</strong>. Each choice shows the file size and where it is used. If you leave it unchecked, pages that need it use their Reader view, which can still show already rendered content from the file.</li>
       <li>To include a local page script, use <strong>Include local author scripts</strong>. The preview shows the page, any required files, and missing dependencies. Select only scripts you trust. They run automatically in the download when their page opens. Review the choices and build a new preview after changing either set of checkboxes.</li>

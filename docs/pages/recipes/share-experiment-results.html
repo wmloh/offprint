@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Share experiment results · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
+    {
+      "features": {"math": true, "chart-intervals": true, "results": true, "scenarios": true, "parameters": true, "data": true},
+      "parameterScopes": {
+        "seedling-view": {
+          "harvest": {
+            "type": "select",
+            "choices": [
+              {"value": "Day 14", "label": "Day 14"},
+              {"value": "Day 21", "label": "Day 21"}
+            ],
+            "default": "Day 21"
+          }
+        }
+      },
+      "options": {
+        "chart": {
+          "instances": {
+            "seedling-chart": {
+              "mapping": {
+                "x": {"field": "condition", "label": "Light condition"},
+                "series": [{
+                  "key": "height",
+                  "field": "height",
+                  "label": "Mean shoot height",
+                  "interval": {"lower": "lo", "upper": "hi", "label": "95% interval", "count": "n"}
+                }]
+              },
+              "filter": {"scope": "seedling-view", "fields": {"harvest": "harvest"}}
+            }
+          }
+        },
+        "results": {
+          "instances": {
+            "seedling-table": {
+              "mapping": {
+                "columns": [
+                  {"field": "condition", "label": "Light condition"},
+                  {"field": "harvest", "label": "Harvest"},
+                  {"field": "height", "label": "Shoot height (cm)", "interval": {"lower": "lo", "upper": "hi", "label": "95% interval", "count": "n"}},
+                  {"field": "n", "label": "Seedlings"}
+                ]
+              }
+            }
+          }
+        },
+        "scenarios": {
+          "instances": {
+            "seedling-scenarios": {
+              "mapping": {
+                "recordKey": "condition_key",
+                "baselineKey": "control",
+                "variantKeys": ["red", "blue", "short"],
+                "labels": {"control": "Control", "red": "Red-enriched", "blue": "Blue-enriched", "short": "Short day"},
+                "conditions": [
+                  {"field": "spectrum", "label": "Light spectrum"},
+                  {"field": "photoperiod", "label": "Light each day", "unit": "hours"}
+                ],
+                "outcomes": [{
+                  "field": "height",
+                  "label": "Shoot height on day 21",
+                  "unit": "cm",
+                  "interval": {"lower": "lo", "upper": "hi", "label": "95% interval", "count": "n"},
+                  "pairedDifference": {
+                    "field": "delta",
+                    "baselineKeyField": "against",
+                    "interval": {"lower": "delta_lo", "upper": "delta_hi", "label": "95% interval, paired by sowing batch"}
+                  }
+                }]
+              }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="../../../offprint/offprint.js"></script>
+</head>
+<body>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
+  </nav>
+
+  <main class="op-page">
+    <header>
+      <p class="op-eyebrow">Recipes</p>
+      <h1>Share experiment results</h1>
+      <p>Turn the results of an experiment into a page that colleagues can explore, check, and keep as a standalone copy. This recipe combines named data, <span data-op-term="interval">intervals</span>, <span data-op-term="results table">results tables</span>, <span data-op-term="scenario comparison">scenario comparisons</span>, TeX math, and Interactive export.</p>
+      <dl class="op-fields">
+        <dt>Goal</dt><dd>Share results with their uncertainty, a clear baseline, and a copy readers can keep</dd>
+        <dt>Combines</dt><dd>Named data sources, dot and interval plots, parameters, results tables, scenario comparisons, TeX math, standalone export</dd>
+        <dt>Reading time</dt><dd>About 10 minutes</dd>
+      </dl>
+    </header>
+
+    <h2 id="the-goal">The goal</h2>
+    <p>A lab grew basil seedlings under four light conditions and measured shoot height after 14 and 21 days. The page should let a colleague see each estimate with its uncertainty, check the exact numbers, compare each treatment with the control, and take away a copy that still works on their own computer.</p>
+    <div class="op-callout" data-op-role="caution" data-op-icon="⚠" data-op-no-reveal>
+      <strong class="op-callout-title">Illustrative numbers</strong>
+      <p>The measurements on this page are made up to show the layout. They are not real results.</p>
+    </div>
+
+    <h2 id="state-the-design">State the design first</h2>
+    <dl class="op-fields">
+      <dt>Question</dt><dd>How does the light a seedling receives change how tall it grows?</dd>
+      <dt>Conditions</dt><dd>Control (white light, 16 hours a day), Red-enriched, Blue-enriched, and Short day (white light, 12 hours a day)</dd>
+      <dt>Replicates</dt><dd>12 seedlings per condition, one from each of 12 sowing batches</dd>
+      <dt>Measure</dt><dd>Shoot height in centimetres on day 14 and day 21</dd>
+    </dl>
+    <p>Each estimate is the mean height of 12 seedlings. Its 95% interval comes from the spread of those heights:</p>
+    <div class="op-math" data-op-display>\bar{x} \pm t_{0.975,\,n-1}\,\frac{s}{\sqrt{n}}</div>
+    <p>Here <span class="op-math">\bar{x}</span> is the mean, <span class="op-math">s</span> the standard deviation, and <span class="op-math">n = 12</span> the number of seedlings. Writing the design and the formula near the top tells readers how to interpret every number that follows.</p>
+
+    <script type="text/csv" data-op-source="Seedling heights">
+      condition,harvest,height,lo,hi,n
+      Control,Day 14,6.1,5.6,6.6,12
+      Red-enriched,Day 14,6.8,6.2,7.4,12
+      Blue-enriched,Day 14,5.4,4.9,5.9,12
+      Short day,Day 14,5.0,4.5,5.5,12
+      Control,Day 21,9.8,9.1,10.5,12
+      Red-enriched,Day 21,11.2,10.4,12.0,12
+      Blue-enriched,Day 21,8.6,8.0,9.2,12
+      Short day,Day 21,7.9,7.3,8.5,12
+    </script>
+
+    <h2 id="show-uncertainty">Show each estimate with its uncertainty</h2>
+    <figure id="seedling-figure" data-op-no-zoom>
+      <fieldset data-op-parameter-scope="seedling-view" data-op-choice="harvest">
+        <legend>Harvest</legend>
+        <label><input type="radio" name="harvest" value="Day 14"> Day 14</label>
+        <label><input type="radio" name="harvest" value="Day 21" checked> Day 21</label>
+      </fieldset>
+      <div id="seedling-chart" data-op-chart="interval" data-op-orientation="horizontal" data-op-source="Seedling heights" data-op-y-label="Shoot height (cm)">
+        <table>
+          <thead><tr><th scope="col">Light condition</th><th scope="col">Day 21 shoot height (cm)</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Red-enriched</th><td>11.2 (10.4–12.0)</td></tr>
+            <tr><th scope="row">Control</th><td>9.8 (9.1–10.5)</td></tr>
+            <tr><th scope="row">Blue-enriched</th><td>8.6 (8.0–9.2)</td></tr>
+            <tr><th scope="row">Short day</th><td>7.9 (7.3–8.5)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Mean shoot height for each light condition, ranked from tallest. Whiskers show the 95% interval around each mean.</figcaption>
+    </figure>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Switch Harvest to Day 14 and watch the estimates move. Rest the pointer on a dot, or open <strong>Table</strong>, to read the exact mean, its interval, and the number of seedlings behind it.</p>
+    <p>A <strong>dot and interval plot</strong> keeps the estimate and its uncertainty together, so readers do not mistake a small gap between two dots for a real difference. The Harvest choice is a <strong>parameter</strong> that filters the shared <strong>named source</strong>.</p>
+
+    <h2 id="exact-values">Keep the exact values one step away</h2>
+    <table id="seedling-table" data-op-results data-op-source="Seedling heights" data-op-filters>
+      <caption>Every measured combination of light condition and harvest</caption>
+      <thead><tr>
+        <th scope="col" data-op-field="condition">Light condition</th>
+        <th scope="col" data-op-field="harvest">Harvest</th>
+        <th scope="col" data-op-field="height" data-op-best="max">Shoot height (cm)</th>
+        <th scope="col" data-op-field="n" data-op-no-filter>Seedlings</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Control</td><td>Day 14</td><td>6.1</td><td>12</td></tr>
+        <tr><td>Red-enriched</td><td>Day 14</td><td>6.8</td><td>12</td></tr>
+        <tr><td>Blue-enriched</td><td>Day 14</td><td>5.4</td><td>12</td></tr>
+        <tr><td>Short day</td><td>Day 14</td><td>5.0</td><td>12</td></tr>
+        <tr><td>Control</td><td>Day 21</td><td>9.8</td><td>12</td></tr>
+        <tr><td>Red-enriched</td><td>Day 21</td><td>11.2</td><td>12</td></tr>
+        <tr><td>Blue-enriched</td><td>Day 21</td><td>8.6</td><td>12</td></tr>
+        <tr><td>Short day</td><td>Day 21</td><td>7.9</td><td>12</td></tr>
+      </tbody>
+    </table>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Sort by Shoot height, then filter Harvest to Day 21. The tallest value stays marked among the rows you can see, and each height keeps its interval beside it.</p>
+    <p>The <strong>results table</strong> reads the same source as the chart, so the two can never disagree. Readers who want to recompute something can copy exact values instead of estimating them from the chart.</p>
+
+    <h2 id="compare-with-control">Compare each treatment with the control</h2>
+    <script type="application/json" data-op-source="Seedling comparison">
+      [
+        {"condition_key": "control", "spectrum": "White", "photoperiod": 16, "height": 9.8, "lo": 9.1, "hi": 10.5, "n": 12, "delta": null, "delta_lo": null, "delta_hi": null, "against": null},
+        {"condition_key": "red", "spectrum": "Red-enriched", "photoperiod": 16, "height": 11.2, "lo": 10.4, "hi": 12.0, "n": 12, "delta": 1.4, "delta_lo": 0.7, "delta_hi": 2.1, "against": "control"},
+        {"condition_key": "blue", "spectrum": "Blue-enriched", "photoperiod": 16, "height": 8.6, "lo": 8.0, "hi": 9.2, "n": 12, "delta": -1.2, "delta_lo": -1.8, "delta_hi": -0.6, "against": "control"},
+        {"condition_key": "short", "spectrum": "White", "photoperiod": 12, "height": 7.9, "lo": 7.3, "hi": 8.5, "n": 12, "delta": -1.9, "delta_lo": -2.6, "delta_hi": -1.2, "against": "control"}
+      ]
+    </script>
+    <table id="seedling-scenarios" data-op-scenarios data-op-source="Seedling comparison">
+      <caption>Day 21 shoot height for each treatment compared with the control</caption>
+      <thead><tr><th scope="col">Measure</th><th scope="col">Unit</th><th scope="col" data-op-key="control">Control</th><th scope="col" data-op-key="red"><span data-op-step-label>Red-enriched</span></th><th scope="col" data-op-key="blue"><span data-op-step-label>Blue-enriched</span></th><th scope="col" data-op-key="short"><span data-op-step-label>Short day</span></th></tr></thead>
+      <tbody>
+        <tr data-op-condition><th scope="row">Light spectrum</th><td></td><td>White</td><td>Red-enriched</td><td>Blue-enriched</td><td>White</td></tr>
+        <tr data-op-condition><th scope="row">Light each day</th><td>hours</td><td>16</td><td>16</td><td>16</td><td>12</td></tr>
+        <tr><th scope="row">Shoot height on day 21</th><td>cm</td><td>9.8</td><td>11.2</td><td>8.6</td><td>7.9</td></tr>
+      </tbody>
+    </table>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Step through the variants with <strong>Next variant</strong>. Each one changes a single condition from the control. Read the paired change and its interval: an interval that stays clear of zero suggests a difference larger than the batch-to-batch noise.</p>
+    <p>A <strong>scenario comparison</strong> names the <span data-op-term="baseline">baseline</span>, shows what each variant changed, and puts both on one scale. Because every sowing batch supplied one seedling to each condition, the page reports a <span data-op-term="paired difference">paired difference</span>, which removes variation between batches.</p>
+
+    <h2 id="hand-over-a-copy">Hand over a standalone copy</h2>
+    <p>Results often travel by email or shared drive to people who will never open the original project folder. Choose <strong>Export</strong> in the reading controls, pick the site folder, and select this page.</p>
+    <dl class="op-fields">
+      <dt>Interactive</dt><dd>Keeps the Harvest choice, chart readings, table sorting and filters, and the treatment comparison working in the saved file.</dd>
+      <dt>Reader</dt><dd>Saves the page as it looks now, which suits an archive or a printout.</dd>
+    </dl>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Set Harvest to Day 14, then open the export dialog and build an Interactive preview. The copy starts with the choices you made on this page.</p>
+    <p>The steps and options are described in <a href="../start/open-a-site.html#export-a-copy">Export a standalone copy</a>. When results come from a pipeline that reruns, ask the agent to keep the data in a named file so a refresh updates every view at once.</p>
+
+    <h2 id="features-used">Features used</h2>
+    <ul>
+      <li><a href="../data/sources.html">Named sources</a> feed the <a href="../data/charts.html#interval-plots">dot and interval plot</a> and the <a href="../data/tables.html#results">results table</a>. A <a href="../explain/parameters.html">parameter</a> chooses the harvest.</li>
+      <li><a href="../write/math.html">TeX math</a> states how each interval is computed.</li>
+      <li><a href="../data/comparisons.html#scenarios">Scenario comparisons</a> show each treatment against the control with a paired difference.</li>
+      <li><a href="../start/open-a-site.html#export-a-copy">Standalone export</a> saves an Interactive or Reader copy to share.</li>
+    </ul>
+
+    <h2 id="hierarchy-walkthrough">Hierarchy walkthrough</h2>
+    <dl class="op-fields">
+      <dt>Loud</dt><dd>The caution callout and the best-value mark draw the eye to what readers must know and what to compare first.</dd>
+      <dt>Strong</dt><dd>The interval plot and scenario bars give the results their shape, and the table holds the exact values.</dd>
+      <dt>Quiet</dt><dd>The design fields, formula, and captions explain how the numbers were produced without competing with them.</dd>
+    </dl>
+  </main>
+</body>
+</html>

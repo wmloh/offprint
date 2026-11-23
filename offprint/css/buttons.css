@@ -1,0 +1,140 @@
+/* Shared buttons for author actions and module text buttons: a soft tinted pill with an optional leading icon (an
+   inline svg or .op-button-icon). data-op-color or data-op-role on the button or an ancestor sets the tint and text;
+   otherwise the pill is neutral gray. Sizes follow the surrounding font size. */
+.op-button {
+  --op-button-accent: var(--op-accent, var(--op-text));
+  --op-button-tint: var(--op-accent-bg, var(--op-gray-bg));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+  margin: 0;
+  padding: 0.3em 0.95em;
+  border: 0;
+  border-radius: 999px;
+  background: var(--op-button-tint);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--op-button-accent) 10%, transparent);
+  color: var(--op-button-accent);
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: translate 0.2s ease, box-shadow 0.2s ease, background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.op-button[hidden] {
+  display: none;
+}
+
+.op-button > svg,
+.op-button > .op-button-icon {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+  margin-inline-start: -0.2em;
+}
+
+/* Text glyph icons: center the glyph in the icon box rather than letting the button line height push it down. */
+.op-button > .op-button-icon {
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+
+/* Link buttons keep the button colour and no underline inside prose that styles plain links. */
+.op-page a.op-button {
+  color: var(--op-button-accent);
+  text-decoration: none;
+}
+
+.op-button:hover:not(:disabled, [aria-disabled="true"]) {
+  translate: 0 -1px;
+  background: color-mix(in srgb, var(--op-button-accent) 7%, var(--op-button-tint));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--op-button-accent) 18%, transparent),
+    0 4px 12px color-mix(in srgb, var(--op-button-accent) 16%, transparent);
+}
+
+.op-button:active:not(:disabled, [aria-disabled="true"]) {
+  translate: none;
+}
+
+.op-button:focus-visible {
+  outline: 2px solid var(--op-accent, var(--op-focus));
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.op-button:is(:disabled, [aria-disabled="true"]) {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Step controls: a frosted icon pill aligned right above the stepped content, like the page control pill.
+   Round icon buttons carry tooltips and labels; the muted count between them is the live status. */
+.op-pill {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline-start: auto;
+  padding: 3px;
+  border: 1px solid var(--op-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--op-bg) 70%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.op-pill-button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--op-text-muted);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.op-pill-button:hover:not([aria-disabled="true"]) {
+  background: var(--op-bg-hover);
+  color: var(--op-text);
+}
+
+.op-pill-button:focus-visible {
+  outline: 2px solid var(--op-focus);
+  outline-offset: 1px;
+  border-radius: 999px;
+}
+
+.op-pill-button[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.op-pill-count {
+  min-width: 0;
+  padding-inline: 0.55em;
+  overflow: hidden;
+  color: var(--op-text-label);
+  font-size: var(--op-eyebrow-size);
+  font-weight: var(--op-eyebrow-weight);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--op-eyebrow-tracking);
+  text-overflow: ellipsis;
+  text-transform: var(--op-eyebrow-case);
+  white-space: nowrap;
+}

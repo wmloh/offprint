@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Linked selection · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Linked selection · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {
       "features": {
         "selection": true,
@@ -19,22 +19,22 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="../../../docform/css/tabs.css">
-  <script src="../../../docform/docform.js"></script>
+  <link rel="stylesheet" href="../../../offprint/css/tabs.css">
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Explain step by step</p>
+      <p class="op-eyebrow">Explain step by step</p>
       <h1>Linked selection</h1>
-      <p>Linked selection highlights matching items across text, <span data-df-term="chart">charts</span>, and tables when a reader picks one. It can remember the choice from page to page.</p>
-      <dl class="df-fields">
+      <p>Linked selection highlights matching items across text, <span data-op-term="chart">charts</span>, and tables when a reader picks one. It can remember the choice from page to page.</p>
+      <dl class="op-fields">
         <dt>Official name</dt><dd>Linked selection</dd>
-        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#loud">Loud</a> (the active selection)</dd>
         <dt>Works with</dt><dd>Charts, tables, tabs, steppers, and code notes</dd>
         <dt>Good for</dt><dd>Connecting several views of the same thing</dd>
@@ -43,47 +43,47 @@
 
     <h2 id="see-it">See it</h2>
     <figure id="see-it-demo">
-      <div class="df-tabs" data-df-selection-group="reading-tools-modes" data-df-selection-mode="publish" data-df-selection-seed>
-        <div data-df-tab="Outline" data-df-key="outline"><p>Publish only. This set sends the Outline choice.</p></div>
-        <div data-df-tab="Search" data-df-key="search"><p>Publish only. This set sends the Search choice.</p></div>
+      <div class="op-tabs" data-op-selection-group="reading-tools-modes" data-op-selection-mode="publish" data-op-selection-seed>
+        <div data-op-tab="Outline" data-op-key="outline"><p>Publish only. This set sends the Outline choice.</p></div>
+        <div data-op-tab="Search" data-op-key="search"><p>Publish only. This set sends the Search choice.</p></div>
       </div>
-      <div class="df-tabs" data-df-selection-group="reading-tools-modes" data-df-selection-mode="follow">
-        <div data-df-tab="Outline" data-df-key="outline"><p>Follow only. The outline lists headings on this page.</p></div>
-        <div data-df-tab="Search" data-df-key="search"><p>Follow only. The search palette finds a word or phrase.</p></div>
+      <div class="op-tabs" data-op-selection-group="reading-tools-modes" data-op-selection-mode="follow">
+        <div data-op-tab="Outline" data-op-key="outline"><p>Follow only. The outline lists headings on this page.</p></div>
+        <div data-op-tab="Search" data-op-key="search"><p>Follow only. The search palette finds a word or phrase.</p></div>
       </div>
-      <div class="df-tabs" data-df-selection-group="reading-tools-modes" data-df-selection-mode="both">
-        <div data-df-tab="Outline" data-df-key="outline"><p>Both. This set sends and receives the Outline choice.</p></div>
-        <div data-df-tab="Search" data-df-key="search"><p>Both. This set sends and receives the Search choice.</p></div>
+      <div class="op-tabs" data-op-selection-group="reading-tools-modes" data-op-selection-mode="both">
+        <div data-op-tab="Outline" data-op-key="outline"><p>Both. This set sends and receives the Outline choice.</p></div>
+        <div data-op-tab="Search" data-op-key="search"><p>Both. This set sends and receives the Search choice.</p></div>
       </div>
-      <ul data-df-role="on-request">
-        <li data-df-selection-group="reading-tools-modes" data-df-key="outline">Use the outline when you know the heading.</li>
-        <li data-df-selection-group="reading-tools-modes" data-df-key="search">Use search when you know a word.</li>
+      <ul data-op-role="on-request">
+        <li data-op-selection-group="reading-tools-modes" data-op-key="outline">Use the outline when you know the heading.</li>
+        <li data-op-selection-group="reading-tools-modes" data-op-key="search">Use search when you know a word.</li>
       </ul>
       <figcaption>Three sets of tabs share a group. The two lines below stay in view and highlight the group’s current choice.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Choose Search in the first set. Both sets below follow. Choose Outline in the third set. The middle set and the highlight follow, while the first set stays on Search. Change the middle set by itself to see that it sends no choice back.</p>
 
     <h2 id="what-it-does">How a group shares choices</h2>
-    <dl class="df-fields">
+    <dl class="op-fields">
       <dt>Publish</dt><dd>Send your choice to the group and keep control of your own view.</dd>
       <dt>Follow</dt><dd>Receive the group’s choices. Your own local changes stay local.</dd>
       <dt>Both</dt><dd>Send and receive choices. This is the default for linked controls.</dd>
     </dl>
-    <p>A <span data-df-term="selection key">selection key</span> is the shared name for an item. It lets a tab, point or row refer to the same thing even when their visible labels differ. Prose, rows and shapes can simply highlight the choice without becoming controls.</p>
+    <p>A <span data-op-term="selection key">selection key</span> is the shared name for an item. It lets a tab, point or row refer to the same thing even when their visible labels differ. Prose, rows and shapes can simply highlight the choice without becoming controls.</p>
 
     <h3 id="startup-seeds">Pick a starting choice</h3>
     <p>A startup seed is a control’s offer to start the group on its current item. The publish-only set above offers Outline, so the other sets start there. An explicit group starting choice takes priority. Otherwise a remembered choice that still belongs to the group takes priority over a seed. With none of these, the group starts clear.</p>
 
     <h3 id="remembered-choices">Remember a choice across pages</h3>
     <figure>
-      <div class="df-tabs" data-df-selection-group="explain-reading-view">
-        <div data-df-tab="Read" data-df-key="read"><p>Use headings and links to read at your own pace.</p></div>
-        <div data-df-tab="Explore" data-df-key="explore"><p>Use Search to jump to a topic as it comes to mind.</p></div>
+      <div class="op-tabs" data-op-selection-group="explain-reading-view">
+        <div data-op-tab="Read" data-op-key="read"><p>Use headings and links to read at your own pace.</p></div>
+        <div data-op-tab="Explore" data-op-key="explore"><p>Use Search to jump to a topic as it comes to mind.</p></div>
       </div>
       <figcaption>This group is also on the Tabs page and is set up to remember your choice.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Pick Explore here, then <a href="tabs.html#see-it">open the Tabs demo</a>. Its matching choice should be open if your browser lets these pages share saved settings.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>

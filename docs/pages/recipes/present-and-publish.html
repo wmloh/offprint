@@ -3,26 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Present and publish a site · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <link rel="stylesheet" href="../../../docform/css/anim.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Present and publish a site · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <link rel="stylesheet" href="../../../offprint/css/anim.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {"features": {"zoom-tools": true}}
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Recipes</p>
+      <p class="op-eyebrow">Recipes</p>
       <h1>Present and publish a site</h1>
       <p>Turn a set of pages into a site people can find their way around, present from, and use offline. This recipe combines navigation, search, the glossary, themes, roles, and zoom tools.</p>
-      <dl class="df-fields">
+      <dl class="op-fields">
         <dt>Goal</dt><dd>Share a finished multi-page site</dd>
         <dt>Combines</dt><dd>Navigation, search, glossary, theme, colour roles, figure zoom, zoom tools, the offline asset tool</dd>
         <dt>Reading time</dt><dd>About 10 minutes</dd>
@@ -30,63 +30,63 @@
     </header>
 
     <h2 id="the-goal">The goal</h2>
-    <p>Share a DocForm site that readers can explore on their own and that you can present from a single screen. An <strong>offline</strong> copy opens on the reader’s device without an internet connection.</p>
+    <p>Share an OffPrint site that readers can explore on their own and that you can present from a single screen. An <strong>offline</strong> copy opens on the reader’s device without an internet connection.</p>
 
     <h2 id="build-it-up">Give readers a route through the site</h2>
-    <p>These docs put orientation first, group the feature guides by goal, and collect <span data-df-term="worked example">worked examples</span> under Recipes. The <strong>Navigation</strong> sidebar at the left lets you move between pages. The outline, a list of headings on the current page, gets you to the right section.</p>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p data-df-no-search>Find this recipe in the sidebar. Open <strong>Search</strong> with the magnifying glass or press <kbd>S</kbd>, then look for <strong>The signal ladder</strong> in the results. Open the <a href="../glossary.html">Glossary</a> and find “visual hierarchy” for a definition you can use across the site.</p>
+    <p>These docs put orientation first, group the feature guides by goal, and collect <span data-op-term="worked example">worked examples</span> under Recipes. The <strong>Navigation</strong> sidebar at the left lets you move between pages. The outline, a list of headings on the current page, gets you to the right section.</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p data-op-no-search>Find this recipe in the sidebar. Open <strong>Search</strong> with the magnifying glass or press <kbd>S</kbd>, then look for <strong>The signal ladder</strong> in the results. Open the <a href="../glossary.html">Glossary</a> and find “visual hierarchy” for a definition you can use across the site.</p>
     <p>Give pages names that will make sense out of context in search results. Add terms to the glossary when readers will meet them on several pages.</p>
 
     <h2 id="appearance">Keep meaning consistent</h2>
-    <figure data-df-no-zoom>
-      <div data-df-legend>
+    <figure data-op-no-zoom>
+      <div data-op-legend>
         <p>Green means on by default, blue means on request, purple marks an action to try, yellow marks a tip, and red marks a caution.</p>
       </div>
-      <div data-df-theme-toggle></div>
+      <div data-op-theme-toggle></div>
       <figcaption>The <strong>Colour roles</strong> legend explains what accents mean across the docs. A <strong>Theme</strong> changes the page’s appearance, including the background and text shades.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Switch between light and dark. Check whether the role labels and the figure below still read clearly. A role gives a colour a job, and the label carries that meaning in either theme.</p>
 
     <h2 id="present-a-figure">Show one figure on the big screen</h2>
-    <figure id="build-it-up-demo" class="df-figure">
+    <figure id="build-it-up-demo" class="op-figure">
       <svg viewBox="0 0 480 140" role="img" aria-label="A site plan showing Start here, Feature guides, and Recipes, in that order.">
-        <rect class="df-grid" x="18" y="32" width="128" height="64" rx="8"/>
-        <rect class="df-grid" x="176" y="32" width="128" height="64" rx="8"/>
-        <rect class="df-grid" x="334" y="32" width="128" height="64" rx="8"/>
-        <path class="df-grid" d="M 149 64 h 24 m -7 -5 7 5 -7 5 M 307 64 h 24 m -7 -5 7 5 -7 5"/>
+        <rect class="op-grid" x="18" y="32" width="128" height="64" rx="8"/>
+        <rect class="op-grid" x="176" y="32" width="128" height="64" rx="8"/>
+        <rect class="op-grid" x="334" y="32" width="128" height="64" rx="8"/>
+        <path class="op-grid" d="M 149 64 h 24 m -7 -5 7 5 -7 5 M 307 64 h 24 m -7 -5 7 5 -7 5"/>
         <text x="82" y="70" text-anchor="middle">Start here</text>
         <text x="240" y="70" text-anchor="middle">Feature guides</text>
         <text x="398" y="70" text-anchor="middle">Recipes</text>
       </svg>
       <figcaption>Three stops in the docs’ reading order. Open the figure to point out where a new reader should begin.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Open the drawing with a click, or focus it and press <kbd>Enter</kbd>. In <strong>Figure zoom</strong>, try the laser pointer to indicate Start here, or use the magnifier to enlarge a label. Press <kbd>Esc</kbd> to return to this section.</p>
     <p><strong>Zoom tools</strong> give the presenter a way to point, enlarge, mark, or measure a detail while the figure fills the screen. Keep the caption useful for someone reading on their own.</p>
 
     <h2 id="prepare-the-offline-copy">Prepare the offline copy</h2>
-    <p>The <a href="../../../docform/tools/assets.html">offline asset tool</a> checks the prepared files a site needs. A <strong>search index</strong> is a saved list of page titles, headings, and text that search can use across the whole site. The tool also prepares separate data files so <span data-df-term="chart">charts</span> and tables can open their data offline, a feature called <strong>Data file wrapper</strong>.</p>
+    <p>The <a href="../../../offprint/tools/assets.html">offline asset tool</a> checks the prepared files a site needs. A <strong>search index</strong> is a saved list of page titles, headings, and text that search can use across the whole site. The tool also prepares separate data files so <span data-op-term="chart">charts</span> and tables can open their data offline, a feature called <strong>Data file wrapper</strong>.</p>
     <ol>
       <li>Open the tool in a browser that supports choosing a site folder. A folder is the container that holds the site’s pages and supporting files.</li>
       <li>Choose the folder and check the report. Current means the prepared file is up to date. Missing means it has yet to be created. Stale means a page or data file has changed since it was prepared. A blocked item needs the issue shown beside it resolved first.</li>
       <li>Rebuild missing or stale items, then reopen the site and check a search result on another page and a figure that uses prepared data.</li>
-      <li>Share the pages, supporting files, and DocForm library together, keeping their folders in the same arrangement. Have the reader open the welcome page from the copy on their device.</li>
+      <li>Share the pages, supporting files, and OffPrint library together, keeping their folders in the same arrangement. Have the reader open the welcome page from the copy on their device.</li>
     </ol>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Open the asset tool and find its folder chooser. If you have a site folder handy, choose it to inspect the report before deciding whether anything needs rebuilding.</p>
 
     <h2 id="features-used">Features used</h2>
     <ul>
       <li><a href="../shape/navigation.html">Navigation</a>, <a href="../shape/search.html">Search</a>, and the <a href="../write/terms.html">Glossary</a> help readers find pages, passages, and definitions.</li>
-      <li><a href="../shape/colour.html">Colour roles and Theme</a> keep the site readable and its <span data-df-term="accent">accents</span> consistent.</li>
+      <li><a href="../shape/colour.html">Colour roles and Theme</a> keep the site readable and its <span data-op-term="accent">accents</span> consistent.</li>
       <li><a href="../explain/zoom.html">Figure zoom and Zoom tools</a> give a presenter room to work with a figure.</li>
-      <li>The <a href="../../../docform/tools/assets.html">offline asset tool</a> prepares the Search index and data files for sharing.</li>
+      <li>The <a href="../../../offprint/tools/assets.html">offline asset tool</a> prepares the Search index and data files for sharing.</li>
     </ul>
 
     <h2 id="hierarchy-walkthrough">Hierarchy walkthrough</h2>
-    <dl class="df-fields">
+    <dl class="op-fields">
       <dt>Loud</dt><dd>The laser or ink marks draw attention to one place while the presenter talks about it.</dd>
       <dt>Strong</dt><dd>The section headings and the site-plan drawing give readers clear landmarks for finding, presenting, and sharing the site.</dd>
       <dt>Quiet</dt><dd>The sidebar, outline, search button, and theme switch stay within reach while the content occupies the reading column.</dd>

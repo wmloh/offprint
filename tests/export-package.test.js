@@ -21,7 +21,7 @@ function load(sourceDocs = new Map(), createExportDocument, DOMParser) {
           },
           querySelector(selector) {
             const source = sourceDocs.get(this.documentElement.innerHTML);
-            return selector === 'script[data-df-site]' && source?.manifest ?
+            return selector === 'script[data-op-site]' && source?.manifest ?
               { getAttribute: () => source.manifest } : null;
           }
         };
@@ -31,18 +31,18 @@ function load(sourceDocs = new Map(), createExportDocument, DOMParser) {
   const context = vm.createContext({ URL, TextEncoder, atob, btoa, Blob, document, DOMParser, crypto });
   context.window = context;
   function loadScript(path) {
-    vm.runInContext(fs.readFileSync(new URL('../docform/' + path, 'file://' + __filename), 'utf8'),
+    vm.runInContext(fs.readFileSync(new URL('../offprint/' + path, 'file://' + __filename), 'utf8'),
       context, { filename: path });
   }
-  context.DocForm = {
-    _boot: { entryURL: 'file:///opt/shared/DocForm%20library/docform.js', loadExport: loadScript },
+  context.OffPrint = {
+    _boot: { entryURL: 'file:///opt/shared/OffPrint%20library/offprint.js', loadExport: loadScript },
     _pageSnapshot: { capture() { throw new Error('Unexpected page capture.'); } }
   };
   for (const path of ['js/core.js', 'tools/asset-build.js', 'js/export-resources.js',
     'js/export-reader.js', 'js/export-package.js']) {
     loadScript(path);
   }
-  return context.DocForm;
+  return context.OffPrint;
 }
 
 function file(path, text) {
@@ -70,7 +70,7 @@ test('prepares nested manifest groups and embeds assets from a separately instal
   runtime._site = { provided: true, base: 'file:///work/project/docs/assets/site.js' };
   const files = [
     file('docs/index.html', 'home'),
-    file('docs/assets/site.js', 'window.DocFormSite = ' + JSON.stringify(manifest) + ';'),
+    file('docs/assets/site.js', 'window.OffPrintSite = ' + JSON.stringify(manifest) + ';'),
     file('docs/guide/Chapter #1.html', 'chapter'),
     file('docs/guide/glossary/index.html', 'glossary')
   ];
@@ -108,9 +108,9 @@ test('prepares nested manifest groups and embeds assets from a separately instal
   const issues = [];
   const report = (...issue) => issues.push(issue);
   const entry = runtime._boot.entryURL;
-  await resources.stylesheet('docform.css', entry, report);
+  await resources.stylesheet('offprint.css', entry, report);
   await resources.stylesheet('vendor/katex/katex.min.css', entry, report);
-  const font = fs.readFileSync(new URL('../docform/vendor/katex/fonts/KaTeX_Main-Regular.woff2',
+  const font = fs.readFileSync(new URL('../offprint/vendor/katex/fonts/KaTeX_Main-Regular.woff2',
     'file://' + __filename));
   assert.ok(resources.assets.includes('data:font/woff2;base64,' + font.toString('base64')));
   assert.deepEqual(issues, []);
@@ -120,7 +120,7 @@ test('prepares nested manifest groups and embeds assets from a separately instal
   });
   await assert.rejects(runtime._exportPackage.prepare(files.map(item =>
     file(item.webkitRelativePath.replace('docs/', 'wrong/'), 'home'))),
-  error => error.folder === 'documents' && /does not contain the open DocForm page/.test(error.message));
+  error => error.folder === 'documents' && /does not contain the open OffPrint page/.test(error.message));
 });
 
 test('a standalone page supplies its own title and single selectable page', async () => {
@@ -141,7 +141,7 @@ test('a Windows network-share folder resolves pages on the same host only', asyn
   const manifest = { pages: ['chapter.html', 'file://other-host/Ubuntu/project/chapter.html'] };
   const prepared = await runtime._exportPackage.prepare([
     file('project/index.html', 'home'),
-    file('project/site.js', 'window.DocFormSite = ' + JSON.stringify(manifest) + ';'),
+    file('project/site.js', 'window.OffPrintSite = ' + JSON.stringify(manifest) + ';'),
     file('project/chapter.html', 'chapter')
   ]);
   assert.deepEqual(Array.from(prepared.tree, page => page.available), [true, false, true]);
@@ -208,20 +208,20 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
         const descendants = this.children.flatMap(child => [child, ...child.querySelectorAll('*')]);
         if (selector === '*') return descendants;
         if (selector === 'script') return descendants.filter(child => child.localName === 'script');
-        if (selector.startsWith('[data-df-source]:not(')) return descendants.filter(child =>
-          child.localName !== 'script' && child.localName !== 'pre' && child.hasAttribute('data-df-source') ||
-          child.hasAttribute('data-df-dropzone') && child.hasAttribute('data-df-target-source'));
-        if (selector.startsWith('script:not([src])[data-df-source]')) return descendants.filter(child =>
-          child.localName === 'pre' && child.hasAttribute('data-df-source'));
-        if (selector === '[data-df-more-id]') return descendants.filter(child => child.hasAttribute('data-df-more-id'));
+        if (selector.startsWith('[data-op-source]:not(')) return descendants.filter(child =>
+          child.localName !== 'script' && child.localName !== 'pre' && child.hasAttribute('data-op-source') ||
+          child.hasAttribute('data-op-dropzone') && child.hasAttribute('data-op-target-source'));
+        if (selector.startsWith('script:not([src])[data-op-source]')) return descendants.filter(child =>
+          child.localName === 'pre' && child.hasAttribute('data-op-source'));
+        if (selector === '[data-op-more-id]') return descendants.filter(child => child.hasAttribute('data-op-more-id'));
         if (selector === '[id],a[name]') return descendants.filter(child => child.id);
         if (selector === 'h1,h2,h3') return descendants.filter(child => /^h[123]$/.test(child.localName));
         if (selector.startsWith('a[href],area[href]')) return descendants.filter(child => child.localName === 'a' && child.href);
         return [];
       },
       closest(selector) {
-        if (selector === '[data-df-no-pager]') return this.hasAttribute('data-df-no-pager') ? this : null;
-        return this.getAttribute('data-df-no-outline') === 'true' ? this : null;
+        if (selector === '[data-op-no-pager]') return this.hasAttribute('data-op-no-pager') ? this : null;
+        return this.getAttribute('data-op-no-outline') === 'true' ? this : null;
       },
       contains: () => true,
       hasAttribute(name) { return attributes.has(name); },
@@ -285,21 +285,21 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       const links = html === 'home' ? 'nested/index.html#caf%C3%A9%2Fmore' : '../index.html';
       const doc = exportDocument('Interactive input');
       const entry = element('script');
-      entry.setAttribute('src', '/local/docform.js');
+      entry.setAttribute('src', '/local/offprint.js');
       const link = element('a', 'Switch pages');
       link.href = links;
       const heading = element('h2', 'Café');
       heading.id = 'café/more';
       const custom = element('script', authorCode);
-      custom.setAttribute('data-df-export-resources', JSON.stringify([html === 'home' ? 'author.txt' : '../author.txt']));
+      custom.setAttribute('data-op-export-resources', JSON.stringify([html === 'home' ? 'author.txt' : '../author.txt']));
       const unavailable = element('script', 'unavailable()');
-      unavailable.setAttribute('data-df-export-dependencies', '["missing.js"]');
+      unavailable.setAttribute('data-op-export-dependencies', '["missing.js"]');
       custom.remove = () => doc.body.children.splice(doc.body.children.indexOf(custom), 1);
       doc.body.append(heading, link, custom);
       const consumer = element('figure');
       consumer.id = 'runs-figure';
-      consumer.setAttribute('data-df-chart', 'scatter');
-      consumer.setAttribute('data-df-source', html === 'home' ? 'runs' : 'alias');
+      consumer.setAttribute('data-op-chart', 'scatter');
+      consumer.setAttribute('data-op-source', html === 'home' ? 'runs' : 'alias');
       const chartSpec = element('script', '{"x":"Run","y":"Value","brush":true}');
       chartSpec.type = 'application/json';
       chartSpec.namespaceURI = 'http://www.w3.org/1999/xhtml';
@@ -307,25 +307,25 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       chartSpec.matches = selector => selector.startsWith('script:not([src])') || matchesSpec(selector);
       consumer.append(chartSpec);
       const inline = element('pre', 'id,value\ninline-record,7');
-      inline.setAttribute('data-df-source', 'inline');
+      inline.setAttribute('data-op-source', 'inline');
       const inlineView = element('div');
-      inlineView.setAttribute('data-df-source', 'inline');
+      inlineView.setAttribute('data-op-source', 'inline');
       doc.body.append(consumer, inline, inlineView);
       if (html === 'home') {
         const panel = element('div');
-        panel.className = 'df-card-panel';
+        panel.className = 'op-card-panel';
         const detail = element('section');
         detail.id = 'alternate-card';
         const figure = element('figure');
         const declaration = element('script', '{"steps":[{"key":"draw","actions":[]}]}');
-        declaration.setAttribute('data-df-animation', '');
+        declaration.setAttribute('data-op-animation', '');
         declaration.type = 'application/json';
         declaration.namespaceURI = 'http://www.w3.org/1999/xhtml';
         const matches = declaration.matches;
         declaration.matches = selector => selector.startsWith('script:not([src])') || matches(selector);
         figure.append(declaration);
         const term = element('span', 'An annotated term');
-        term.setAttribute('data-df-more-id', 'term-detail');
+        term.setAttribute('data-op-more-id', 'term-detail');
         const template = element('template');
         template.id = 'term-detail';
         Object.defineProperty(template, 'content', { value: element('fragment') });
@@ -340,27 +340,27 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
         doc.body.append(panel);
         const pipeline = element('figure');
         pipeline.id = 'flow';
-        pipeline.className = 'df-pipeline';
+        pipeline.className = 'op-pipeline';
         const edge = element('a', 'Next block');
-        edge.className = 'df-pipe-link';
+        edge.className = 'op-pipe-link';
         edge.href = '#flow-2';
         const matchesEdge = edge.matches;
-        edge.matches = selector => selector === '.df-pipe-link' || matchesEdge(selector);
-        edge.closest = selector => selector === '.df-pipeline' ? pipeline : null;
+        edge.matches = selector => selector === '.op-pipe-link' || matchesEdge(selector);
+        edge.closest = selector => selector === '.op-pipeline' ? pipeline : null;
         const blocks = element('ol');
-        blocks.className = 'df-pipe-blocks';
+        blocks.className = 'op-pipe-blocks';
         const first = element('li');
-        first.className = 'df-pipe-block';
+        first.className = 'op-pipe-block';
         first.append(edge);
         const second = element('li', 'An unnamed block');
-        second.className = 'df-pipe-block';
+        second.className = 'op-pipe-block';
         blocks.append(first, second);
         const details = element('div');
-        details.className = 'df-detail-pane';
+        details.className = 'op-detail-pane';
         const overview = element('section', 'Pipeline overview');
-        overview.setAttribute('data-df-key', 'flow-1');
+        overview.setAttribute('data-op-key', 'flow-1');
         const alternate = element('section');
-        alternate.setAttribute('data-df-key', 'flow-2');
+        alternate.setAttribute('data-op-key', 'flow-2');
         const alternateImage = element('img');
         alternateImage.setAttribute('src', 'detail.png');
         const alternateLink = element('a', 'Read the pipeline detail');
@@ -377,7 +377,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   });
   runtime._boot.exportPlan = () => ({
     features: ['base', 'tabs', 'data'], styles: ['css/tabs.css'],
-    scripts: ['docform.js', 'js/core.js', 'js/reader-state.js', 'js/tabs.js']
+    scripts: ['offprint.js', 'js/core.js', 'js/reader-state.js', 'js/tabs.js']
   });
   runtime._readerState = { identify: () => new Map() };
   runtime._page = 'file:///work/project/index.html';
@@ -394,17 +394,17 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const importText = 'id,name\n1,private full record café <script>';
   runtime._boot.loadExport('js/page-snapshot.js');
   const authoredText = 'id,name\n1,authored record';
-  const wrapper = (name, path) => 'Object.defineProperty(window.DocFormData || (window.DocFormData = Object.create(null)), ' +
+  const wrapper = (name, path) => 'Object.defineProperty(window.OffPrintData || (window.OffPrintData = Object.create(null)), ' +
     JSON.stringify(name) + ', { configurable: true, enumerable: true, writable: true, value: ' +
-    JSON.stringify({ format: 'docform-data', version: 1, type: 'csv', text: authoredText, metadata: { output: path } }) + ' });';
+    JSON.stringify({ format: 'offprint-data', version: 1, type: 'csv', text: authoredText, metadata: { output: path } }) + ' });';
   runtime._pageSnapshot.capture = async (page, options) => {
     const nested = page.url.endsWith('/nested/index.html');
     const body = element('body');
-    if (noPager && nested) body.setAttribute('data-df-no-pager', '');
+    if (noPager && nested) body.setAttribute('data-op-no-pager', '');
     const title = element('h1', 'Repeat');
     const section = element('h2', 'Repeat');
     const excluded = element('h3', 'Outline exclusion');
-    excluded.setAttribute('data-df-no-outline', 'true');
+    excluded.setAttribute('data-op-no-outline', 'true');
     const crossLink = element('a', nested ? 'Back to home' : 'Go to café');
     crossLink.href = nested ? '../index.html#repeat-2' : 'nested/index.html#caf%C3%A9%2Fmore';
     const accented = element('h2', 'Café');
@@ -423,19 +423,19 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     svg.append(svgImage);
     const script = element('script', 'sourceScript()');
     script.remove = () => body.children.splice(body.children.indexOf(script), 1);
-    body.append(element('p', 'df-export-asset-0-ref &lt;/script&gt; café'), image, svg, script);
+    body.append(element('p', 'op-export-asset-0-ref &lt;/script&gt; café'), image, svg, script);
     if (committedImport && nested) body.append(element('p', 'Rendered chart data from import'));
     if (stepCount) {
       const options = Array.from({ length: stepCount }, (_, i) => [`step-${i}`, `Step ${i + 1}`, [i % 2], '']);
       const controls = element('div', 'Step 1');
-      controls.setAttribute('data-df-reader-steps', JSON.stringify([0, 0, options]));
+      controls.setAttribute('data-op-reader-steps', JSON.stringify([0, 0, options]));
       const path = element('path');
       path.setAttribute('d', 'M 0 0' + ' l 2 2'.repeat(300));
-      path.setAttribute('data-df-reader-step-svg', JSON.stringify([0, options.map((_, i) => [i, '.opacity', String(i % 2)])]));
+      path.setAttribute('data-op-reader-step-svg', JSON.stringify([0, options.map((_, i) => [i, '.opacity', String(i % 2)])]));
       svg.append(path);
       const alternate = element('div');
       alternate.setAttribute('hidden', '');
-      alternate.setAttribute('data-df-reader-step-detail', '0:1');
+      alternate.setAttribute('data-op-reader-step-detail', '0:1');
       const detailImage = element('img');
       detailImage.setAttribute('src', nested ? '../copy.png' : 'image.png');
       alternate.append(detailImage);
@@ -459,7 +459,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     file('project/index.html', 'home'),
     file('project/nested/index.html', 'nested'),
     file('project/omitted.html', 'omitted'),
-    file('project/site.js', 'window.DocFormSite = {"title":"Example site","pages":[{"title":"Included group","pages":["index.html","nested/index.html"]},{"title":"Omitted group","pages":["omitted.html"]}],"assets":{"data":{"runs":{"output":"runs.js"},"alias":{"output":"alias.js"},"omitted":{"output":"unused.js"}}}};'),
+    file('project/site.js', 'window.OffPrintSite = {"title":"Example site","pages":[{"title":"Included group","pages":["index.html","nested/index.html"]},{"title":"Omitted group","pages":["omitted.html"]}],"assets":{"data":{"runs":{"output":"runs.js"},"alias":{"output":"alias.js"},"omitted":{"output":"unused.js"}}}};'),
     asset('runs.js', wrapper('runs', 'runs.js')),
     asset('alias.js', wrapper('alias', 'alias.js')),
     asset('base.css', sharedCSS),
@@ -489,16 +489,16 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const serializedBundle = /<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(html)[1];
   assert.doesNotMatch(serializedBundle, /</);
   const shell = html.split('<script id="export-bundle"')[0];
-  assert.match(shell, /id="export-controls" class="df-controls-bar"/);
-  assert.match(shell, /id="export-pill" class="df-controls"[^>]*aria-label="Page controls"/);
+  assert.match(shell, /id="export-controls" class="op-controls-bar"/);
+  assert.match(shell, /id="export-pill" class="op-controls"[^>]*aria-label="Page controls"/);
   assert.deepEqual(JSON.parse(serializedBundle).icons, { ...runtime._icons });
   assert.match(shell, /id="export-resize"[^>]*role="separator"/);
-  assert.match(shell, /<details class="df-nav-page-group" open=""><summary class="df-nav-row">/);
-  assert.match(shell, /class="df-nav-label">Included group<\/span>/);
-  assert.match(shell, /class="df-nav-title" href="#page-1"[^>]*>Example site<\/a>/);
-  assert.match(shell, /class="df-nav-link" href="#page-1"/);
-  assert.match(shell, /\.df-outline-link\.is-active\s*\{/);
-  assert.match(shell, /--df-bg-sidebar:\s*light-dark\(/);
+  assert.match(shell, /<details class="op-nav-page-group" open=""><summary class="op-nav-row">/);
+  assert.match(shell, /class="op-nav-label">Included group<\/span>/);
+  assert.match(shell, /class="op-nav-title" href="#page-1"[^>]*>Example site<\/a>/);
+  assert.match(shell, /class="op-nav-link" href="#page-1"/);
+  assert.match(shell, /\.op-outline-link\.is-active\s*\{/);
+  assert.match(shell, /--op-bg-sidebar:\s*light-dark\(/);
   assert.doesNotMatch(shell, /Omitted group|Outline exclusion|Café/);
   const runtimeScript = /<script>\((function reader.*?)<\/script>/s.exec(html)[1];
   assert.doesNotThrow(() => new vm.Script('(' + runtimeScript));
@@ -526,22 +526,22 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     assert.equal(decodeSheet(sheets[1][1]), overrideCSS.replace('image.png', `"${image}"`));
     assert.equal(decodeSheet(sheets[2][1]), css);
     assert.equal(sheets[2][2], ' media="print"');
-    assert.match(decodeSheet(sheets[3][1]), /\.df-page \.df-pager-link/);
+    assert.match(decodeSheet(sheets[3][1]), /\.op-page \.op-pager-link/);
     const focusStyles = decodeSheet(sheets[4][1]);
     assert.match(focusStyles, /transition: filter 0\.35s ease, opacity 0\.35s ease/);
     assert.match(focusStyles, /filter: blur\(3px\);\s*opacity: 0\.45/);
-    assert.match(decodeSheet(sheets[5][1]), /^\.df-export-pop/);
+    assert.match(decodeSheet(sheets[5][1]), /^\.op-export-pop/);
     const rel = index === 0 ? 'next' : 'prev';
-    assert.ok(frame.includes('class="df-pager-link df-pager-' + rel + '" rel="' + rel +
+    assert.ok(frame.includes('class="op-pager-link op-pager-' + rel + '" rel="' + rel +
       '" href="#page-' + (index === 0 ? '2' : '1') + '" data-export-destination=""'));
-    assert.equal([...frame.matchAll(/class="df-pager-link /g)].length, 1);
+    assert.equal([...frame.matchAll(/class="op-pager-link /g)].length, 1);
     assert.ok(frame.includes(`src="${sharedImage}#view&amp;detail"`));
     assert.ok(frame.includes(`srcset="${image} 2x"`));
     assert.ok(frame.includes(`<image href="${image}#svg-view"`));
     assert.ok(frame.includes(`style="background:url(&quot;${image}&quot;); --marker:&quot;&lt;/script&gt; café&quot;"`));
-    assert.ok(frame.includes('df-export-asset-0-ref &lt;/script&gt; café'));
+    assert.ok(frame.includes('op-export-asset-0-ref &lt;/script&gt; café'));
     assert.match(frame, /<h1 id="repeat-2">Repeat<\/h1><h2 id="repeat">Repeat<\/h2>/);
-    assert.match(frame, /<h3 data-df-no-outline="true">Outline exclusion<\/h3>/);
+    assert.match(frame, /<h3 data-op-no-outline="true">Outline exclusion<\/h3>/);
     assert.ok(frame.includes('href="' + (index === 0 ? '#page-2/caf%C3%A9%2Fmore' : '#page-1/repeat-2') + '"'));
     assert.equal(runtime._exportReader.assemble(page.markup, bundle.assets), frame);
   }
@@ -549,7 +549,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const one = await prepared.build([selected[0]]);
   const oneHTML = await one.blob.text();
   const oneBundle = JSON.parse(/<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(oneHTML)[1]);
-  assert.doesNotMatch(runtime._exportReader.assemble(oneBundle.pages[0].markup, oneBundle.assets), /class="df-pager"/);
+  assert.doesNotMatch(runtime._exportReader.assemble(oneBundle.pages[0].markup, oneBundle.assets), /class="op-pager"/);
   assert.equal(one.bytes, Buffer.byteLength(oneHTML));
   assert.ok(one.bytes < result.bytes);
   assert.equal(/<script>\((function reader.*?)<\/script>/s.exec(oneHTML)[1], runtimeScript);
@@ -557,7 +557,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   const optedOut = JSON.parse(/<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(
     await (await prepared.build(selected)).blob.text())[1]);
   assert.equal(optedOut.pages[1].noPager, true);
-  assert.doesNotMatch(runtime._exportReader.assemble(optedOut.pages[1].markup, optedOut.assets), /class="df-pager"/);
+  assert.doesNotMatch(runtime._exportReader.assemble(optedOut.pages[1].markup, optedOut.assets), /class="op-pager"/);
   noPager = false;
   t.diagnostic(`Reader fixture: ${one.bytes} bytes for one page, ${result.bytes} bytes for two ` +
     `(${result.bytes - one.bytes} additional bytes). Fixed shell JavaScript: ${Buffer.byteLength(runtimeScript)} bytes.`);
@@ -575,7 +575,7 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
       const frame = runtime._exportReader.assemble(page.markup, measuredBundle.assets);
       assert.equal([...frame.matchAll(/<svg>/g)].length, 1);
       assert.equal([...frame.matchAll(/<path /g)].length, 1);
-      assert.match(frame, /hidden="" data-df-reader-step-detail="0:1"><img src="data:image\/png;base64,/);
+      assert.match(frame, /hidden="" data-op-reader-step-detail="0:1"><img src="data:image\/png;base64,/);
     }
   }
   const bytesPerStep = Math.round((sizes[2] - sizes[0]) / 60);
@@ -611,14 +611,14 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
   assert.doesNotMatch(interactiveHTML, /doNotPackageThisAuthorScript|sourceScript|sourceHandler/);
   assert.doesNotThrow(() => new vm.Script('(' + /<script>\((function reader.*?)<\/script>/s.exec(interactiveHTML)[1]));
   const liveHTML = runtime._exportReader.assemble(packed.pages[0].interactive.markup, packed.assets);
-  assert.match(liveHTML, /class="df-pager-link df-pager-next" rel="next" href="#page-2" data-export-destination=""/);
-  assert.match(liveHTML, /data-df-chart="scatter" data-df-source="runs"><script type="application\/json">\{"x":"Run"/);
-  assert.match(liveHTML, /class="df-pipe-link" href="#flow-2">Next block/);
+  assert.match(liveHTML, /class="op-pager-link op-pager-next" rel="next" href="#page-2" data-export-destination=""/);
+  assert.match(liveHTML, /data-op-chart="scatter" data-op-source="runs"><script type="application\/json">\{"x":"Run"/);
+  assert.match(liveHTML, /class="op-pipe-link" href="#flow-2">Next block/);
   assert.ok(!interactive.issues.some(issue => issue.target === '#flow-2'));
-  assert.match(liveHTML, /data-df-key="flow-2"><img src="data:image\/png;base64,ZGV0YWlsIGltYWdl"[^>]*>.*?#page-2\/caf%C3%A9%2Fmore[^>]*>Read the pipeline detail/);
-  assert.match(liveHTML, /script-src 'nonce-df-export-nonce' 'unsafe-eval'/);
+  assert.match(liveHTML, /data-op-key="flow-2"><img src="data:image\/png;base64,ZGV0YWlsIGltYWdl"[^>]*>.*?#page-2\/caf%C3%A9%2Fmore[^>]*>Read the pipeline detail/);
+  assert.match(liveHTML, /script-src 'nonce-op-export-nonce' 'unsafe-eval'/);
   assert.match(liveHTML, /href="#page-2\/caf%C3%A9%2Fmore"/);
-  assert.match(liveHTML, /<section id="alternate-card"><figure><script data-df-animation="" type="application\/json">\{"steps":/);
+  assert.match(liveHTML, /<section id="alternate-card"><figure><script data-op-animation="" type="application\/json">\{"steps":/);
   assert.match(liveHTML, /<template id="term-detail"><img src="data:image\/png;base64,ZGV0YWlsIGltYWdl"/);
   assert.match(liveHTML, /<a href="#page-2\/caf%C3%A9%2Fmore" data-export-destination="">Read the section<\/a><\/template>/);
   const interactiveOne = await prepared.build([selected[0]], { mode: 'interactive' });
@@ -802,7 +802,7 @@ test('Interactive routing cancels stale startup, disposes frames, and restores s
   } };
   const pages = ['page-1', 'page-2'].map(id => ({
     id, title: id, url: 'file:///source/' + id + '.html', markup: ['fallback for ' + id],
-    interactive: { url: 'file:///source/' + id + '.html', base: 'file:///source/', markup: ["'nonce-df-export-nonce'"],
+    interactive: { url: 'file:///source/' + id + '.html', base: 'file:///source/', markup: ["'nonce-op-export-nonce'"],
       state: { choice: 'exported ' + id } }
   }));
   const bundle = { textContent: JSON.stringify({ version: 1, mode: 'interactive', assets: [], pages, shared: ['code'] }),

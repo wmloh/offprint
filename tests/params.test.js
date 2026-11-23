@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 class FakeElement extends EventTarget {
   constructor(tag, attrs = {}, children = []) {
     super();
@@ -49,33 +49,33 @@ function page({ hosts = [], scoped = [], chosen = [], presets = [], bound = [], 
     createElement: (tag) => new FakeElement(tag),
     dispatchEvent: (event) => events.push(event),
     querySelectorAll(selector) {
-      if (selector === '[data-df-param]') return hosts;
-      if (selector === '[data-df-parameter]') return scoped;
-      if (selector === '[data-df-choice]') return chosen;
-      if (selector === '[data-df-preset]') return presets;
-      if (selector === '[data-df-bind], [data-df-template]') return bound;
+      if (selector === '[data-op-param]') return hosts;
+      if (selector === '[data-op-parameter]') return scoped;
+      if (selector === '[data-op-choice]') return chosen;
+      if (selector === '[data-op-preset]') return presets;
+      if (selector === '[data-op-bind], [data-op-template]') return bound;
       return [];
     }
   };
-  const ctx = vm.createContext({ URL, document, CustomEvent, DocForm: { _boot: boot }, requestAnimationFrame: frames && ((fn) => frames.push(fn)),
+  const ctx = vm.createContext({ URL, document, CustomEvent, OffPrint: { _boot: boot }, requestAnimationFrame: frames && ((fn) => frames.push(fn)),
     location: { href: 'file:///page.html' }, console: { warn: (m) => warned.push(m) } });
   ctx.window = ctx;
   vm.runInContext(read('core.js'), ctx);
   vm.runInContext(read('params.js'), ctx);
-  if (setup) setup(ctx.DocForm._parameters, events);
+  if (setup) setup(ctx.OffPrint._parameters, events);
   boot.initialize();
   after.forEach((fn) => fn());
-  return { parameters: ctx.DocForm._parameters, warned, events };
+  return { parameters: ctx.OffPrint._parameters, warned, events };
 }
 
 test('legacy parameter hosts and per-control options are ignored', () => {
   const legacyAttrs = {
-    'data-df-type': 'toggle', 'data-df-min': '10', 'data-df-max': '20', 'data-df-step': '5',
-    'data-df-value': '15', 'data-df-digits': '2', 'data-df-label': 'Old label'
+    'data-op-type': 'toggle', 'data-op-min': '10', 'data-op-max': '20', 'data-op-step': '5',
+    'data-op-value': '15', 'data-op-digits': '2', 'data-op-label': 'Old label'
   };
-  const legacy = new FakeElement('div', { ...legacyAttrs, 'data-df-param': 'k' });
+  const legacy = new FakeElement('div', { ...legacyAttrs, 'data-op-param': 'k' });
   legacy.textContent = 'Authored fallback';
-  const current = new FakeElement('div', { ...legacyAttrs, 'data-df-parameter': 'k' });
+  const current = new FakeElement('div', { ...legacyAttrs, 'data-op-parameter': 'k' });
   const { parameters, warned } = page({ hosts: [legacy], scoped: [current], setup(api) {
     api.define('page', { k: { type: 'range', min: 0, max: 5, step: 0.5, default: 2 } });
   } });
@@ -91,9 +91,9 @@ test('legacy parameter hosts and per-control options are ignored', () => {
 
 test('scoped templates format expressions and report repeated errors once', () => {
   const template = new FakeElement('span', {
-    'data-df-template': '{{sqrt(a*a + b*b)}} {{sin(theta)|3}} {{a || 1}} {{a > 2 ? "big" : "small"}}'
+    'data-op-template': '{{sqrt(a*a + b*b)}} {{sin(theta)|3}} {{a || 1}} {{a > 2 ? "big" : "small"}}'
   });
-  const invalid = new FakeElement('span', { 'data-df-template': '{{missing + 1}} {{missing + 1}}' });
+  const invalid = new FakeElement('span', { 'data-op-template': '{{missing + 1}} {{missing + 1}}' });
   const { warned } = page({ bound: [template, invalid], setup(api) {
     api.define('page', {
       a: { type: 'number', default: 3 }, b: { type: 'number', default: 4 },
@@ -107,26 +107,26 @@ test('scoped templates format expressions and report repeated errors once', () =
 });
 
 test('scoped markup resolves nesting and explicit targets and uses one definition per scope', () => {
-  const outer = new FakeElement('div', { 'data-df-parameter-scope': 'decoder' });
-  const inner = new FakeElement('div', { 'data-df-parameter-scope': 'comparison' });
+  const outer = new FakeElement('div', { 'data-op-parameter-scope': 'decoder' });
+  const inner = new FakeElement('div', { 'data-op-parameter-scope': 'comparison' });
   inner.parentElement = outer;
   function child(tag, attrs, parent) {
     const el = new FakeElement(tag, attrs);
     el.parentElement = parent;
     return el;
   }
-  const native = child('input', { type: 'range', 'data-df-parameter': 'k' }, outer);
-  const linked = child('div', { 'data-df-parameter': 'k', 'data-df-scope': 'decoder',
-    'data-df-parameter-label': 'Decoder', 'data-df-parameter-digits': '2' }, inner);
-  const local = child('div', { 'data-df-parameter': 'k' }, inner);
-  const implicit = child('div', { 'data-df-parameter': 'mode' });
-  const toggle = child('input', { type: 'checkbox', 'data-df-parameter': 'flag' });
-  const missing = child('div', { 'data-df-parameter': 'k', 'data-df-scope': 'missing' }, inner);
+  const native = child('input', { type: 'range', 'data-op-parameter': 'k' }, outer);
+  const linked = child('div', { 'data-op-parameter': 'k', 'data-op-scope': 'decoder',
+    'data-op-parameter-label': 'Decoder', 'data-op-parameter-digits': '2' }, inner);
+  const local = child('div', { 'data-op-parameter': 'k' }, inner);
+  const implicit = child('div', { 'data-op-parameter': 'mode' });
+  const toggle = child('input', { type: 'checkbox', 'data-op-parameter': 'flag' });
+  const missing = child('div', { 'data-op-parameter': 'k', 'data-op-scope': 'missing' }, inner);
   missing.textContent = 'Fallback';
-  const text = child('span', { 'data-df-bind': 'k' }, inner);
-  const crossText = child('span', { 'data-df-template': '{{k}}', 'data-df-scope': 'decoder' }, inner);
-  const preset = child('button', { 'data-df-preset': '{"k":"4.5"}', 'data-df-scope': 'decoder' }, inner);
-  const bad = child('button', { 'data-df-preset': '{"k":4.5}' }, inner);
+  const text = child('span', { 'data-op-bind': 'k' }, inner);
+  const crossText = child('span', { 'data-op-template': '{{k}}', 'data-op-scope': 'decoder' }, inner);
+  const preset = child('button', { 'data-op-preset': '{"k":"4.5"}', 'data-op-scope': 'decoder' }, inner);
+  const bad = child('button', { 'data-op-preset': '{"k":4.5}' }, inner);
   const frames = [];
   const { parameters, events, warned } = page({
     scoped: [native, linked, local, implicit, toggle, missing], bound: [text, crossText], presets: [preset, bad], frames,
@@ -143,7 +143,7 @@ test('scoped markup resolves nesting and explicit targets and uses one definitio
   assert.equal(linked.find('label').textContent, 'Decoder');
   assert.equal(linked.find('output').textContent, '2.00');
   assert.equal(local.find('input').min, '10');
-  assert.match(warned.join('\n'), /"mode" is a select; author it as <fieldset data-df-choice="mode">/);
+  assert.match(warned.join('\n'), /"mode" is a select; author it as <fieldset data-op-choice="mode">/);
   assert.equal(toggle.checked, false);
   assert.equal(missing.textContent, 'Fallback');
   assert.equal(bad.getAttribute('aria-disabled'), 'true');
@@ -208,13 +208,13 @@ test('scoped batches validate before publication and notify filtered subscribers
   assert.equal(scope.update({ gain: 0.315, total: 3 }), true);
   assert.deepEqual(order, [['init', 'gain', 'total'], ['api', 'gain', 'total'], [2, 1], ['api', 'total'], [3, 2]]);
   assert.deepEqual(events.map(event => [event.type, event.detail.scope, event.detail.current.total]),
-    [['df:parameters:change', 'page', 2], ['df:parameters:change', 'page', 3]]);
+    [['op:parameters:change', 'page', 2], ['op:parameters:change', 'page', 3]]);
   assert.equal(initial.total, 1);
   assert.match(warned.join('\n'), /subscriber.*callback failure/);
 });
 
 test('scoped multiple choices use ordered immutable arrays in presets and subscriptions', () => {
-  const preset = new FakeElement('button', { 'data-df-preset': '{"runs":["b","a"]}' });
+  const preset = new FakeElement('button', { 'data-op-preset': '{"runs":["b","a"]}' });
   const { parameters, events } = page({ presets: [preset], setup(params) {
     params.define('page', { runs: { type: 'multiselect', choices: [
       { value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }

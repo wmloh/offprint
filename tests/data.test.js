@@ -4,21 +4,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint', file), 'utf8');
 const warnings = [];
 const context = vm.createContext({ URL, TextEncoder, console: { warn: (m) => warnings.push(m) } });
 context.window = context;
 vm.runInContext(read('vendor/js-yaml/js-yaml.min.js'), context);
 vm.runInContext(read('js/core.js'), context);
 vm.runInContext(read('js/data.js'), context);
-const data = context.DocForm.data;
-const helpers = context.DocForm._dataSource;
+const data = context.OffPrint.data;
+const helpers = context.OffPrint._dataSource;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 const fakeEl = (attrs) => ({ getAttribute: (name) => (name in attrs ? attrs[name] : null) });
 const message = (fn) => { try { fn(); } catch (e) { return e.message; } return null; };
 
 test('named sources accept typed and raw data with immutable snapshots and revisioned updates', () => {
-  const api = context.DocForm.data;
+  const api = context.OffPrint.data;
   const input = [{ id: '007', values: { a: true, b: [1, null] } }];
   const source = api.define(' typed ', { type: 'value', value: input });
   const received = [];
@@ -64,8 +64,8 @@ test('size caps parse units and default to 1 MB and 5,000 rows', () => {
   assert.equal(helpers.size('é€'), 5);
   assert.deepEqual(['12 bytes', '1.5 KB', '200 KB', '2.0 MB'], [12, 1536, 204800, 2097152].map(helpers.formatSize));
   assert.deepEqual(plain(helpers.limits(fakeEl({}))), { maxBytes: 1048576, maxRows: 5000 });
-  assert.deepEqual(plain(helpers.limits(fakeEl({ 'data-df-max-size': '2 MB', 'data-df-max-rows': '200' }))), { maxBytes: 2097152, maxRows: 200 });
-  assert.deepEqual(plain(helpers.limits(fakeEl({ 'data-df-max-size': 'lots', 'data-df-max-rows': '2.5' }))), { maxBytes: 1048576, maxRows: 5000 });
+  assert.deepEqual(plain(helpers.limits(fakeEl({ 'data-op-max-size': '2 MB', 'data-op-max-rows': '200' }))), { maxBytes: 2097152, maxRows: 200 });
+  assert.deepEqual(plain(helpers.limits(fakeEl({ 'data-op-max-size': 'lots', 'data-op-max-rows': '2.5' }))), { maxBytes: 1048576, maxRows: 5000 });
 });
 
 test('CSV keeps quoted commas, quotes, and line breaks, and types only unquoted fields', () => {

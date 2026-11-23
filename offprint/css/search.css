@@ -1,0 +1,164 @@
+/* Search palette from search.js: a frosted dialog with a results list. */
+.op-search {
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(560px, calc(100vh - 96px));
+  margin: 12vh auto auto;
+  padding: 0;
+  border: 1px solid var(--op-border-strong);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--op-bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+  box-shadow: 0 24px 64px light-dark(rgba(15, 15, 15, 0.18), rgba(0, 0, 0, 0.55));
+  color: var(--op-text);
+  font-family: var(--op-font);
+  font-size: 15px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.16s ease, display 0.16s allow-discrete, overlay 0.16s allow-discrete;
+}
+
+.op-search[open] {
+  display: flex;
+  opacity: 1;
+}
+
+.op-search::backdrop {
+  background: light-dark(rgba(15, 15, 15, 0.18), rgba(0, 0, 0, 0.45));
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.16s ease, display 0.16s allow-discrete, overlay 0.16s allow-discrete;
+}
+
+.op-search[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .op-search[open] {
+    opacity: 0;
+  }
+
+  .op-search[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+.op-search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--op-space-2);
+  padding: var(--op-space-3) var(--op-space-4);
+  border-bottom: 1px solid var(--op-border);
+}
+
+.op-search-icon {
+  display: inline-flex;
+  color: var(--op-text-faint);
+}
+
+.op-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 17px;
+}
+
+.op-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.op-search-results {
+  flex: 1;
+  margin: 0;
+  padding: var(--op-space-1);
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.op-search-results:empty {
+  display: none;
+}
+
+.op-search-item {
+  padding: var(--op-space-2) var(--op-space-3);
+  border-radius: var(--op-radius-lg);
+  cursor: pointer;
+}
+
+.op-search-item[aria-selected="true"] {
+  background: var(--op-bg-hover);
+  box-shadow: inset 2px 0 0 var(--op-blue);
+}
+
+.op-search-title {
+  font-weight: 500;
+}
+
+.op-search-title.is-sub {
+  padding-left: var(--op-space-3);
+}
+
+.op-search-where {
+  color: var(--op-text-faint);
+  font-size: 12px;
+}
+
+.op-search-snippet {
+  margin-top: 2px;
+  color: var(--op-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.op-search mark {
+  border-radius: 2px;
+  background: var(--op-yellow-bg);
+  color: inherit;
+}
+
+.op-search-status {
+  padding: var(--op-space-2) var(--op-space-4);
+  color: var(--op-text-faint);
+  font-size: 13px;
+}
+
+.op-search-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--op-space-4);
+  padding: var(--op-space-2) var(--op-space-4);
+  border-top: 1px solid var(--op-border);
+  color: var(--op-text-faint);
+  font-size: 12px;
+}
+
+.op-search-close {
+  margin-inline-start: auto;
+}
+
+.op-search kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  margin-right: 3px;
+  padding: 0 4px;
+  border: 1px solid var(--op-border-strong);
+  border-radius: var(--op-radius-sm);
+  font-family: var(--op-font);
+  font-size: 11px;
+  text-align: center;
+}

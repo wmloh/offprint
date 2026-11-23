@@ -1,0 +1,14 @@
+.op-chart-interval-stem {
+  stroke: var(--op-series);
+  stroke-width: 1.5;
+  stroke-opacity: 0.55;
+  pointer-events: none;
+}
+
+.op-chart.is-bar.is-interval .op-chart-whisker {
+  stroke: var(--op-series);
+}
+
+.op-chart.is-interval.is-hovering .op-chart-dot:not(.is-active, [data-op-selection-active]) {
+  opacity: 0.45;
+}

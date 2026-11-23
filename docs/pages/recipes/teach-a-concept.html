@@ -3,58 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Teach a concept · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Teach a concept · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {
       "features": {"math": true, "peek-bubbles": true, "figure-steps": true, "animation": true},
       "options": {
         "citations": {"entries": {
-          "hierarchy-guide": {"title": "Visual hierarchy: guiding the eye", "venue": "DocForm guide", "note": "Explains how headings and other landmarks guide scanning."}
+          "hierarchy-guide": {"title": "Visual hierarchy: guiding the eye", "venue": "OffPrint guide", "note": "Explains how headings and other landmarks guide scanning."}
         }}
       }
     }
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Recipes</p>
+      <p class="op-eyebrow">Recipes</p>
       <h1>Teach a concept</h1>
-      <p>Explain one idea so a newcomer can follow it from first sight to full detail. This recipe combines <span data-df-term="formula">formulas</span>, explained terms, layered detail, and stepped figures.</p>
-      <dl class="df-fields">
+      <p>Explain one idea so a newcomer can follow it from first sight to full detail. This recipe combines <span data-op-term="formula">formulas</span>, explained terms, layered detail, and stepped figures.</p>
+      <dl class="op-fields">
         <dt>Goal</dt><dd>Help a newcomer understand one idea</dd>
-        <dt>Combines</dt><dd>TeX math, tooltips, peek bubbles, sidenotes, figure steps, <span data-df-term="SVG">SVG</span> animations, cross-references, citations</dd>
+        <dt>Combines</dt><dd>TeX math, tooltips, peek bubbles, sidenotes, figure steps, <span data-op-term="SVG">SVG</span> animations, cross-references, citations</dd>
         <dt>Reading time</dt><dd>About 10 minutes</dd>
       </dl>
     </header>
 
     <h2 id="the-goal">The goal</h2>
-    <p>Teach a reader how a page outline is built. By the end, they should be able to count the entries in a simple outline and tell where each entry belongs. An <span data-df-tip="A list of the headings on the current page. Choosing an entry takes you to its section." data-df-tip-tags="Reading interface">outline</span> turns the headings on a page into a list you can follow <cite data-df-cite="hierarchy-guide">(Visual hierarchy: guiding the eye)</cite>.</p>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Teach a reader how a page outline is built. By the end, they should be able to count the entries in a simple outline and tell where each entry belongs. An <span data-op-tip="A list of the headings on the current page. Choosing an entry takes you to its section." data-op-tip-tags="Reading interface">outline</span> turns the headings on a page into a list you can follow <cite data-op-cite="hierarchy-guide">(Visual hierarchy: guiding the eye)</cite>.</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Point at the underlined word “outline” to see its definition. Pause over the source number to see which guide explains the idea.</p>
 
     <h2 id="build-it-up">Show where the entries come from</h2>
-    <div class="df-figure-steps">
-      <figure id="build-it-up-demo" class="df-figure">
+    <div class="op-figure-steps">
+      <figure id="build-it-up-demo" class="op-figure">
         <svg viewBox="0 0 440 158" role="img" aria-label="An illustrative outline with two section headings, Open a site and Read a page, and one smaller heading, Find a section, indented under Read a page.">
-          <rect class="df-grid" x="28" y="14" width="384" height="130" rx="8"/>
+          <rect class="op-grid" x="28" y="14" width="384" height="130" rx="8"/>
           <g id="outline-sections">
             <text x="58" y="53">Open a site</text>
             <text x="58" y="86">Read a page</text>
           </g>
           <g id="outline-subheading">
-            <path class="df-grid" d="M 64 96 v 21 h 16"/>
+            <path class="op-grid" d="M 64 96 v 21 h 16"/>
             <text x="90" y="120">Find a section</text>
           </g>
         </svg>
-        <script type="application/json" data-df-animation>
+        <script type="application/json" data-op-animation>
           {
             "steps": [
               {"key": "sections", "label": "Two section headings make two entries.", "actions": [{"fade": "#outline-subheading", "from": 0, "to": 0}]},
@@ -64,35 +64,35 @@
         </script>
         <figcaption>This illustrative outline has two section headings and one smaller heading tucked under its parent.</figcaption>
       </figure>
-      <div class="df-step-panel" role="group" aria-labelledby="outline-steps-title">
-        <p class="df-step-heading" id="outline-steps-title">Build the outline</p>
-        <div class="df-step-list">
-          <button type="button" data-df-key="sections" data-df-detail="outline-sections-detail"><span data-df-step-label>Count sections</span></button>
-          <button type="button" data-df-key="all" data-df-detail="outline-all-detail"><span data-df-step-label>Add the smaller heading</span></button>
+      <div class="op-step-panel" role="group" aria-labelledby="outline-steps-title">
+        <p class="op-step-heading" id="outline-steps-title">Build the outline</p>
+        <div class="op-step-list">
+          <button type="button" data-op-key="sections" data-op-detail="outline-sections-detail"><span data-op-step-label>Count sections</span></button>
+          <button type="button" data-op-key="all" data-op-detail="outline-all-detail"><span data-op-step-label>Add the smaller heading</span></button>
         </div>
       </div>
-      <div class="df-step-details">
+      <div class="op-step-details">
         <div id="outline-sections-detail"><p>Two section headings make two outline entries.</p></div>
         <div id="outline-all-detail"><p>“Find a section” belongs under “Read a page” and makes a third entry.</p></div>
       </div>
     </div>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
-    <p>Move over the <span data-df-term="figure step">figure steps</span>, focus them with <kbd>Tab</kbd>, or tap them. Watch the little heading appear under its parent. Use Play on the figure to see the reveal in motion.</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Move over the <span data-op-term="figure step">figure steps</span>, focus them with <kbd>Tab</kbd>, or tap them. Watch the little heading appear under its parent. Use Play on the figure to see the reveal in motion.</p>
     <p>Use <strong>Figure steps</strong> to let readers pause on either state. The <strong>SVG animation</strong>, a moving drawing made from shapes and text, shows exactly where the new entry goes.</p>
 
     <h2 id="count-the-entries">Give the pattern a formula</h2>
-    <div class="df-math" id="outline-total" data-df-display>2 + 1 = 3</div>
-    <p>The two section entries and the one smaller entry make three. Compare the count in the <a href="#outline-total">equation</a> with the entries in the <a href="#build-it-up-demo">outline figure</a>.<span class="df-note">This example counts headings in the outline. The page title labels the page.</span></p>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <div class="op-math" id="outline-total" data-op-display>2 + 1 = 3</div>
+    <p>The two section entries and the one smaller entry make three. Compare the count in the <a href="#outline-total">equation</a> with the entries in the <a href="#build-it-up-demo">outline figure</a>.<span class="op-note">This example counts headings in the outline. The page title labels the page.</span></p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Pause over either link or reach it with <kbd>Tab</kbd> to preview what it points to. Choose the small note number to find the <strong>sidenote</strong>.</p>
-    <p>Use <strong>TeX math</strong> to lay out the calculation and <strong><span data-df-term="cross-reference">Cross-references</span></strong> to let readers return to the picture or the equation when they need it.</p>
+    <p>Use <strong>TeX math</strong> to lay out the calculation and <strong><span data-op-term="cross-reference">Cross-references</span></strong> to let readers return to the picture or the equation when they need it.</p>
 
     <h2 id="optional-detail">Make room for a second question</h2>
     <details>
       <summary>Why does the smaller heading move to the right?</summary>
       <p>That extra space shows which section the smaller heading belongs to. Someone looking for “Find a section” can scan for “Read a page” first, then look underneath it.</p>
     </details>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Scroll the panel near the middle of the screen and point at it, or choose its title. This <strong>peek bubble</strong> keeps the extra explanation within reach.</p>
 
     <h2 id="features-used">Features used</h2>
@@ -104,13 +104,13 @@
     </ul>
 
     <h2 id="bibliography">Source</h2>
-    <div data-df-bibliography>
-      <ol><li>Visual hierarchy: guiding the eye. DocForm guide.</li></ol>
+    <div data-op-bibliography>
+      <ol><li>Visual hierarchy: guiding the eye. OffPrint guide.</li></ol>
     </div>
     <p><a href="../hierarchy/guiding-the-eye.html">Read the guide on visual hierarchy</a> for more about why outlines help people scan.</p>
 
     <h2 id="hierarchy-walkthrough">Hierarchy walkthrough</h2>
-    <dl class="df-fields">
+    <dl class="op-fields">
       <dt>Loud</dt><dd>The selected figure step draws the eye to the part of the idea being explained now.</dd>
       <dt>Strong</dt><dd>The outline drawing and the displayed equation give readers a picture to inspect and a count to check.</dd>
       <dt>Quiet</dt><dd>The inline definition, sidenote marker, and folded peek bubble offer detail at the point of need and leave the main explanation easy to scan.</dd>

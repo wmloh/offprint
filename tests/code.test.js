@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const context = vm.createContext({ URL, console });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('code.js'), context);
-const code = context.DocForm._code;
+const code = context.OffPrint._code;
 
 // Typed tokens only, as "type:text" strings.
 const typed = (src, lang) => JSON.parse(JSON.stringify(
@@ -112,9 +112,9 @@ test('YAML keys, scalars, anchors, tags, and block text', () => {
 });
 
 test('highlight escapes markup, and dedent strips shared indentation', () => {
-  assert.equal(code.highlight('a < "<b>"', 'js'), 'a <span class="df-tok-operator">&lt;</span> <span class="df-tok-string">"&lt;b&gt;"</span>');
-  assert.equal(code.highlight("x <> '<b>&'", 'sql'), 'x <span class="df-tok-operator">&lt;&gt;</span> <span class="df-tok-string">\'&lt;b&gt;&amp;\'</span>');
-  assert.equal(code.highlight('List<int> s = "<i>";', 'c#'), '<span class="df-tok-builtin">List</span><span class="df-tok-operator">&lt;</span><span class="df-tok-keyword">int</span><span class="df-tok-operator">&gt;</span> s <span class="df-tok-operator">=</span> <span class="df-tok-string">"&lt;i&gt;"</span>;');
+  assert.equal(code.highlight('a < "<b>"', 'js'), 'a <span class="op-tok-operator">&lt;</span> <span class="op-tok-string">"&lt;b&gt;"</span>');
+  assert.equal(code.highlight("x <> '<b>&'", 'sql'), 'x <span class="op-tok-operator">&lt;&gt;</span> <span class="op-tok-string">\'&lt;b&gt;&amp;\'</span>');
+  assert.equal(code.highlight('List<int> s = "<i>";', 'c#'), '<span class="op-tok-builtin">List</span><span class="op-tok-operator">&lt;</span><span class="op-tok-keyword">int</span><span class="op-tok-operator">&gt;</span> s <span class="op-tok-operator">=</span> <span class="op-tok-string">"&lt;i&gt;"</span>;');
   assert.equal(code.highlight('<b>', 'text'), '&lt;b&gt;');
   assert.equal(code.dedent('\n    if x:\n\n      y\n  '), 'if x:\n\n  y');
 });

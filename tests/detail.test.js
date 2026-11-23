@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 
 function element(attrs = {}, children = []) {
   const attributes = new Map(Object.entries(attrs));
@@ -21,20 +21,20 @@ function element(attrs = {}, children = []) {
 }
 
 function setup({ follow, group, initial } = {}) {
-  const details = ['raw', 'clean', 'report'].map((key) => element({ 'data-df-key': key, ...(key === initial ? { 'data-df-initial': '' } : {}) }));
-  const pane = element({ ...(follow ? { 'data-df-detail-for': follow } : {}), ...(group ? { 'data-df-selection-group': group } : {}) }, details);
+  const details = ['raw', 'clean', 'report'].map((key) => element({ 'data-op-key': key, ...(key === initial ? { 'data-op-initial': '' } : {}) }));
+  const pane = element({ ...(follow ? { 'data-op-detail-for': follow } : {}), ...(group ? { 'data-op-selection-group': group } : {}) }, details);
   pane.id = 'pane';
   const source = element();
   const warnings = [];
   const boot = { canInitialize: () => true, report: (_, feature, host, message) => warnings.push(message), moduleFailed: (_, error) => { throw error; } };
   const document = { readyState: 'interactive', getElementById: (id) => ({ flow: source, pane })[id] ?? null };
-  const DocForm = { _boot: boot };
-  const context = vm.createContext({ DocForm, document, CustomEvent, getComputedStyle: () => ({}) });
+  const OffPrint = { _boot: boot };
+  const context = vm.createContext({ OffPrint, document, CustomEvent, getComputedStyle: () => ({}) });
   vm.runInContext(read('core.js'), context);
-  DocForm._all = (selector) => selector === '.df-detail-pane' ? [pane] : [];
+  OffPrint._all = (selector) => selector === '.op-detail-pane' ? [pane] : [];
   vm.runInContext(read('detail.js'), context);
   boot.initialize();
-  return { DocForm, pane, details, source, warnings, shown: () => details.findIndex((d) => !d.inert) };
+  return { OffPrint, pane, details, source, warnings, shown: () => details.findIndex((d) => !d.inert) };
 }
 
 function keyed(start) {
@@ -48,8 +48,8 @@ function keyed(start) {
 }
 
 test('a pane starts on its initial child and keeps the last detail for unknown keys', () => {
-  const { DocForm, pane, details, shown, warnings } = setup({ initial: 'clean' });
-  const controller = DocForm._detailPane.get(pane);
+  const { OffPrint, pane, details, shown, warnings } = setup({ initial: 'clean' });
+  const controller = OffPrint._detailPane.get(pane);
   assert.deepEqual(warnings, []);
   assert.equal(shown(), 1);
   assert.equal(details[0].getAttribute('tabindex'), '0');
@@ -64,12 +64,12 @@ test('a pane starts on its initial child and keeps the last detail for unknown k
 test('a pane follows a keyed source registered before or after it', () => {
   const late = setup({ follow: 'flow' });
   const source = keyed('report');
-  late.DocForm._detail.source(late.source, source);
+  late.OffPrint._detail.source(late.source, source);
   assert.equal(late.shown(), 2);
   source.set('raw');
   assert.equal(late.shown(), 0);
   const events = [];
-  late.pane.addEventListener('df:detail-pane:change', (event) => events.push(event.detail.current.key));
+  late.pane.addEventListener('op:detail-pane:change', (event) => events.push(event.detail.current.key));
   source.set('clean');
   assert.deepEqual(events, ['clean']);
 });

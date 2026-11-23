@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const context = vm.createContext({ URL, console: { warn() {} } });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('reveal.js'), context);
-const reveal = context.DocForm._reveal;
+const reveal = context.OffPrint._reveal;
 
 test('a block enters the centre band, stays through a narrower edge, and replays after leaving', () => {
   const v = (top, bottom, shown) => reveal.revealVisible(top, bottom, 800, 400, 400, shown);

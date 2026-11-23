@@ -3,27 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sequence diagrams · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Sequence diagrams · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     { "features": { "sequence": true, "selection": true, "data": true, "zoom-tools": true } }
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Explain step by step</p>
+      <p class="op-eyebrow">Explain step by step</p>
       <h1>Sequence diagrams</h1>
-      <p>A <span data-df-tip="A diagram that gives each participant a column and draws their messages in order, from top to bottom." data-df-tip-tags="Interaction">sequence diagram</span> shows who sends what to whom, and in what order.</p>
-      <dl class="df-fields">
+      <p>A <span data-op-tip="A diagram that gives each participant a column and draws their messages in order, from top to bottom." data-op-tip-tags="Interaction">sequence diagram</span> shows who sends what to whom, and in what order.</p>
+      <dl class="op-fields">
         <dt>Official name</dt><dd>Sequence diagrams · Detail panes</dd>
-        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="on-request">On request</span></dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
         <dt>Works with</dt><dd><a href="selection.html">Linked selection</a>, <a href="../data/sources.html">named data sources</a>, and <a href="zoom.html#zoom-tools">zoom tools</a></dd>
         <dt>Good for</dt><dd>Requests and replies between people, services, or parts of a program</dd>
@@ -31,29 +31,29 @@
     </header>
 
     <h2 id="see-it">See it</h2>
-    <figure class="df-sequence" id="payment" data-df-zoom data-df-selection-group="checkout-steps">
-      <ul class="df-sequence-participants">
-        <li data-df-key="buyer">Buyer</li>
-        <li data-df-key="shop">Shop</li>
-        <li data-df-key="payment">Payment service</li>
+    <figure class="op-sequence" id="payment" data-op-zoom data-op-selection-group="checkout-steps">
+      <ul class="op-sequence-participants">
+        <li data-op-key="buyer">Buyer</li>
+        <li data-op-key="shop">Shop</li>
+        <li data-op-key="payment">Payment service</li>
       </ul>
-      <ol class="df-sequence-messages">
-        <li data-df-key="submit" data-df-from="buyer" data-df-to="shop" data-df-label="Place order">Buyer → Shop · Place order</li>
-        <li data-df-key="request" data-df-from="shop" data-df-to="payment" data-df-label="Request payment">Shop → Payment service · Request payment</li>
-        <li data-df-key="verify" data-df-from="payment" data-df-to="payment" data-df-label="Check payment">Payment service · Check payment</li>
-        <li data-df-key="result" data-df-from="payment" data-df-to="shop" data-df-label="Approve">Payment service → Shop · Approve</li>
-        <li data-df-key="confirm" data-df-from="shop" data-df-to="buyer" data-df-label="Confirm order">Shop → Buyer · Confirm order</li>
+      <ol class="op-sequence-messages">
+        <li data-op-key="submit" data-op-from="buyer" data-op-to="shop" data-op-label="Place order">Buyer → Shop · Place order</li>
+        <li data-op-key="request" data-op-from="shop" data-op-to="payment" data-op-label="Request payment">Shop → Payment service · Request payment</li>
+        <li data-op-key="verify" data-op-from="payment" data-op-to="payment" data-op-label="Check payment">Payment service · Check payment</li>
+        <li data-op-key="result" data-op-from="payment" data-op-to="shop" data-op-label="Approve">Payment service → Shop · Approve</li>
+        <li data-op-key="confirm" data-op-from="shop" data-op-to="buyer" data-op-label="Confirm order">Shop → Buyer · Confirm order</li>
       </ol>
-      <div class="df-detail-pane">
-        <p data-df-key="submit">The buyer submits an order and chooses how to pay.</p>
-        <p data-df-key="request">The shop sends the order reference and amount to the payment service.</p>
-        <p data-df-key="verify">The payment service checks whether the payment can be authorized.</p>
-        <p data-df-key="result">The payment service approves the payment and tells the shop.</p>
-        <p data-df-key="confirm">The shop confirms the order after receiving approval.</p>
+      <div class="op-detail-pane">
+        <p data-op-key="submit">The buyer submits an order and chooses how to pay.</p>
+        <p data-op-key="request">The shop sends the order reference and amount to the payment service.</p>
+        <p data-op-key="verify">The payment service checks whether the payment can be authorized.</p>
+        <p data-op-key="result">The payment service approves the payment and tells the shop.</p>
+        <p data-op-key="confirm">The shop confirms the order after receiving approval.</p>
       </div>
       <figcaption>One successful checkout, from order to confirmation.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Move your pointer down the arrows and read each step in the pane below. Then click the empty background of the diagram to open it full screen.</p>
 
     <h2 id="what-it-does">Columns, arrows, and loops</h2>
@@ -61,8 +61,8 @@
     <p>The selected message is marked and its detail appears below the diagram. A wide diagram scrolls sideways inside its own frame rather than widening the page.</p>
 
     <h3 id="named-source">Read messages from a data source</h3>
-    <p>A diagram can also read its messages from a <span data-df-term="data source">named data source</span>. This one lists a declined payment. It shares message keys with the checkout above through <a href="selection.html">linked selection</a>, so choosing a step in either diagram marks the same step in the other.</p>
-    <script type="application/json" data-df-source="declined-payment">
+    <p>A diagram can also read its messages from a <span data-op-term="data source">named data source</span>. This one lists a declined payment. It shares message keys with the checkout above through <a href="selection.html">linked selection</a>, so choosing a step in either diagram marks the same step in the other.</p>
+    <script type="application/json" data-op-source="declined-payment">
       [
         { "key": "submit", "from": "buyer", "to": "shop", "label": "Place order" },
         { "key": "request", "from": "shop", "to": "payment", "label": "Request payment" },
@@ -71,13 +71,13 @@
         { "key": "retry", "from": "shop", "to": "buyer", "label": "Ask for another card" }
       ]
     </script>
-    <figure class="df-sequence" id="declined" data-df-zoom data-df-source="declined-payment" data-df-selection-group="checkout-steps">
-      <ul class="df-sequence-participants">
-        <li data-df-key="buyer">Buyer</li>
-        <li data-df-key="shop">Shop</li>
-        <li data-df-key="payment">Payment service</li>
+    <figure class="op-sequence" id="declined" data-op-zoom data-op-source="declined-payment" data-op-selection-group="checkout-steps">
+      <ul class="op-sequence-participants">
+        <li data-op-key="buyer">Buyer</li>
+        <li data-op-key="shop">Shop</li>
+        <li data-op-key="payment">Payment service</li>
       </ul>
-      <ol class="df-sequence-messages">
+      <ol class="op-sequence-messages">
         <li>Buyer → Shop · Place order</li>
         <li>Shop → Payment service · Request payment</li>
         <li>Payment service · Check payment</li>
@@ -86,27 +86,27 @@
       </ol>
       <figcaption>The same checkout when the payment is declined, read from a data source.</figcaption>
     </figure>
-    <div class="df-detail-pane" data-df-detail-for="declined">
-      <p data-df-key="submit"><strong>Same start.</strong> The order is placed exactly as before.</p>
-      <p data-df-key="request"><strong>Same request.</strong> The shop asks for the same amount.</p>
-      <p data-df-key="verify"><strong>Same check.</strong> The payment service runs its usual checks.</p>
-      <p data-df-key="result"><strong>Different answer.</strong> This time the payment service declines.</p>
-      <p data-df-key="retry"><strong>New step.</strong> Only the declined path asks the buyer for another card.</p>
+    <div class="op-detail-pane" data-op-detail-for="declined">
+      <p data-op-key="submit"><strong>Same start.</strong> The order is placed exactly as before.</p>
+      <p data-op-key="request"><strong>Same request.</strong> The shop asks for the same amount.</p>
+      <p data-op-key="verify"><strong>Same check.</strong> The payment service runs its usual checks.</p>
+      <p data-op-key="result"><strong>Different answer.</strong> This time the payment service declines.</p>
+      <p data-op-key="retry"><strong>New step.</strong> Only the declined path asks the buyer for another card.</p>
     </div>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Select <strong>Decline</strong> in the second diagram and watch the first diagram move to <strong>Approve</strong>, the matching step. The detail pane for the second diagram sits outside its figure and still follows it.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
     <p>Use a sequence diagram when the order of messages matters more than the structure of the system. Keep to a handful of participants; if the arrows start to cross the whole page, split the story into two diagrams. For a process without senders and receivers, a <a href="pipelines.html">pipeline diagram</a> is usually clearer.</p>
 
     <h2 id="for-every-reader">For every reader</h2>
-    <p><kbd>Tab</kbd> reaches the selected message. <kbd>↑</kbd> and <kbd>↓</kbd> move through messages, and <kbd>Home</kbd> and <kbd>End</kbd> jump to the first and last. Each message button names its sender, receiver, and step number for <span data-df-term="screen reader">screen readers</span>. In the enlarged view, the cursor, magnifier, laser, pen, highlighter, and eraser are available; there is no ruler. With scripts off, or in print, the authored list of messages and every detail stay readable.</p>
+    <p><kbd>Tab</kbd> reaches the selected message. <kbd>↑</kbd> and <kbd>↓</kbd> move through messages, and <kbd>Home</kbd> and <kbd>End</kbd> jump to the first and last. Each message button names its sender, receiver, and step number for <span data-op-term="screen reader">screen readers</span>. In the enlarged view, the cursor, magnifier, laser, pen, highlighter, and eraser are available; there is no ruler. With scripts off, or in print, the authored list of messages and every detail stay readable.</p>
 
     <h2 id="related">Related</h2>
     <ul>
       <li><a href="timelines.html">Timeline diagrams</a> and <a href="tree-diagrams.html">tree diagrams</a>, which share the same selection and detail behaviour</li>
       <li><a href="pipelines.html#detail-panes">Detail panes elsewhere on the page</a></li>
-      <li><a href="../../../docform/docs/diagram/sequences.md">Sequence diagram reference</a> for markup and data fields</li>
+      <li><a href="../../../offprint/docs/diagram/sequences.md">Sequence diagram reference</a> for markup and data fields</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (name) => fs.readFileSync(path.join(__dirname, '../docform/js', name), 'utf8');
+const read = (name) => fs.readFileSync(path.join(__dirname, '../offprint/js', name), 'utf8');
 const core = read('core.js');
 const controls = read('controls.js');
 
@@ -35,7 +35,7 @@ function load(stored = {}, session = null) {
   const context = vm.createContext({ window, URL, console: { warn() {} } });
   vm.runInContext(core, context);
   vm.runInContext(controls, context);
-  return { controls: window.DocForm._controls, store, classes };
+  return { controls: window.OffPrint._controls, store, classes };
 }
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
@@ -89,48 +89,48 @@ test('focus mode and the hidden sidebar persist, apply on load, and store explic
   assert.deepEqual(plain(fresh.controls.state()), { focus: false, nav: true });
   fresh.controls.setNav(false);
   fresh.controls.setFocus(true);
-  assert.equal(fresh.store.get('docform-nav'), 'hidden');
-  assert.equal(fresh.store.get('docform-focus'), 'on');
-  assert.ok(fresh.classes.has('df-nav-hidden') && fresh.classes.has('df-focus-mode'));
+  assert.equal(fresh.store.get('offprint-nav'), 'hidden');
+  assert.equal(fresh.store.get('offprint-focus'), 'on');
+  assert.ok(fresh.classes.has('op-nav-hidden') && fresh.classes.has('op-focus-mode'));
 
   const next = load(Object.fromEntries(fresh.store));
   assert.deepEqual(plain(next.controls.state()), { focus: true, nav: false });
-  assert.ok(next.classes.has('df-nav-hidden') && next.classes.has('df-focus-mode'));
+  assert.ok(next.classes.has('op-nav-hidden') && next.classes.has('op-focus-mode'));
   next.controls.setNav(true);
   next.controls.setFocus(false);
-  assert.equal(next.store.get('docform-focus'), 'off');
-  assert.equal(next.store.get('docform-nav'), 'shown');
-  assert.equal(next.classes.has('df-nav-hidden') || next.classes.has('df-focus-mode'), false);
+  assert.equal(next.store.get('offprint-focus'), 'off');
+  assert.equal(next.store.get('offprint-nav'), 'shown');
+  assert.equal(next.classes.has('op-nav-hidden') || next.classes.has('op-focus-mode'), false);
 });
 
 test('auto-hide persists with the sidebar initially closed and keeps the subsection rail outside its trigger', () => {
   const fresh = load();
   assert.equal(fresh.controls.setNavMode('auto'), true);
-  assert.equal(fresh.store.get('docform-nav'), 'auto');
-  assert.ok(fresh.classes.has('df-nav-hidden'));
+  assert.equal(fresh.store.get('offprint-nav'), 'auto');
+  assert.ok(fresh.classes.has('op-nav-hidden'));
 
   const next = load(Object.fromEntries(fresh.store));
   assert.equal(next.controls.state().nav, false);
-  assert.ok(next.classes.has('df-nav-hidden'));
+  assert.ok(next.classes.has('op-nav-hidden'));
   assert.equal(next.controls.nearNavEdge(8, 260, false), true);
   assert.equal(next.controls.nearNavEdge(10, 260, false), false);
   assert.equal(next.controls.nearNavEdge(264, 260, true), true);
   assert.equal(next.controls.nearNavEdge(265, 260, true), false);
   assert.equal(next.controls.setNavMode('shown'), true);
-  assert.equal(next.store.get('docform-nav'), 'shown');
+  assert.equal(next.store.get('offprint-nav'), 'shown');
 });
 
 test('a recent sidebar link click opens the next auto-hide page with the panel shown, once', () => {
-  const carried = new Map([['docform-nav-peek', String(Date.now())]]);
-  const next = load({ 'docform-nav': 'auto' }, carried);
+  const carried = new Map([['offprint-nav-peek', String(Date.now())]]);
+  const next = load({ 'offprint-nav': 'auto' }, carried);
   assert.equal(next.controls.state().nav, true);
-  assert.equal(next.classes.has('df-nav-hidden'), false);
+  assert.equal(next.classes.has('op-nav-hidden'), false);
   assert.equal(carried.size, 0);
 
-  const stale = load({ 'docform-nav': 'auto' }, new Map([['docform-nav-peek', String(Date.now() - 60000)]]));
+  const stale = load({ 'offprint-nav': 'auto' }, new Map([['offprint-nav-peek', String(Date.now() - 60000)]]));
   assert.equal(stale.controls.state().nav, false);
-  const hidden = new Map([['docform-nav-peek', String(Date.now())]]);
-  assert.equal(load({ 'docform-nav': 'hidden' }, hidden).controls.state().nav, false);
+  const hidden = new Map([['offprint-nav-peek', String(Date.now())]]);
+  assert.equal(load({ 'offprint-nav': 'hidden' }, hidden).controls.state().nav, false);
   assert.equal(hidden.size, 0);
 
   const { controls } = load();

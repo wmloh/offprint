@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (name) => fs.readFileSync(path.join(__dirname, '../docform/js', name), 'utf8');
+const read = (name) => fs.readFileSync(path.join(__dirname, '../offprint/js', name), 'utf8');
 const core = read('core.js');
 const nav = read('nav.js');
 
@@ -13,7 +13,7 @@ function load() {
   const context = vm.createContext({ window, URL, console: { warn() {} } });
   vm.runInContext(core, context);
   vm.runInContext(nav, context);
-  return window.DocForm;
+  return window.OffPrint;
 }
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
@@ -34,15 +34,15 @@ test('duplicate slugs get numeric suffixes that avoid existing IDs', () => {
 });
 
 test('current page matches by path, ignoring index files, query, and hash', () => {
-  const DocForm = load();
-  const site = DocForm._normalizeSite({
+  const OffPrint = load();
+  const site = OffPrint._normalizeSite({
     pages: [
       { title: 'Home', path: 'index.html' },
       { title: 'Group', pages: [{ title: 'My Page', path: 'basics/my%20page.html' }] },
       { title: 'Folder', path: 'folder/' }
     ]
   }, 'file:///notes/site.js');
-  const find = (href) => DocForm._navigation.findCurrent(site.order, href);
+  const find = (href) => OffPrint._navigation.findCurrent(site.order, href);
   assert.equal(find('file:///notes/'), 0);
   assert.equal(find('file:///notes/index.html?x=1#top'), 0);
   assert.equal(find('file:///notes/basics/my page.html'), 1);

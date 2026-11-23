@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 
 function load() {
   const warnings = [];
@@ -12,7 +12,7 @@ function load() {
   context.window = context;
   vm.runInContext(read('core.js'), context);
   vm.runInContext(read('tooltip.js'), context);
-  return { tip: context.DocForm._tooltips, warnings };
+  return { tip: context.OffPrint._tooltips, warnings };
 }
 
 const json = (value) => JSON.parse(JSON.stringify(value));
@@ -99,18 +99,18 @@ test('glossary accepts extended text and ignores a non-text one', () => {
   assert.equal(warnings.length, 1);
 });
 
-test('extended text comes from data-df-more-id, inline data-df-more, or the glossary', () => {
+test('extended text comes from data-op-more-id, inline data-op-more, or the glossary', () => {
   const { tip, warnings } = load();
   const entry = { title: 'Basis', text: 'Short.', more: '<p>Glossary.</p>' };
   const doc = { getElementById: (id) => (id === 'basis-more' ? { nodeType: 1, innerHTML: '\n<p>Template.</p>\n' } : null) };
   const node = (attrs) => ({ ownerDocument: doc, getAttribute: (name) => (name in attrs ? attrs[name] : null) });
   assert.equal(tip.extended(entry, node({})), '<p>Glossary.</p>');
-  assert.equal(tip.extended(entry, node({ 'data-df-more': 'Inline <b>override</b>' })), 'Inline <b>override</b>');
-  assert.equal(tip.extended(entry, node({ 'data-df-more-id': 'basis-more', 'data-df-more': 'Ignored' })), '<p>Template.</p>');
-  assert.equal(tip.extended(entry, node({ 'data-df-more': '#basis-more' })), '#basis-more');
-  assert.equal(tip.extended(entry, node({ 'data-df-more': '' })), '');
+  assert.equal(tip.extended(entry, node({ 'data-op-more': 'Inline <b>override</b>' })), 'Inline <b>override</b>');
+  assert.equal(tip.extended(entry, node({ 'data-op-more-id': 'basis-more', 'data-op-more': 'Ignored' })), '<p>Template.</p>');
+  assert.equal(tip.extended(entry, node({ 'data-op-more': '#basis-more' })), '#basis-more');
+  assert.equal(tip.extended(entry, node({ 'data-op-more': '' })), '');
   assert.equal(tip.extended({ title: 'X', text: 'Y', more: '' }, node({})), '');
-  assert.equal(tip.extended(entry, node({ 'data-df-more-id': 'missing' })), '<p>Glossary.</p>');
+  assert.equal(tip.extended(entry, node({ 'data-op-more-id': 'missing' })), '<p>Glossary.</p>');
   assert.equal(warnings.length, 1);
 });
 
@@ -148,7 +148,7 @@ test('term keys with regex characters match literally', () => {
 
 test('auto-linking only enters paragraphs and list items outside skipped contexts', () => {
   const { tip } = load();
-  const page = el('main', { class: 'df-page' });
+  const page = el('main', { class: 'op-page' });
   const p = el('p', {}, page);
   const li = el('li', {}, el('ul', {}, page));
   assert.equal(tip.linkable(text(p), page), true);
@@ -156,9 +156,9 @@ test('auto-linking only enters paragraphs and list items outside skipped context
   assert.equal(tip.linkable(text(el('h2', {}, page)), page), false);
   assert.equal(tip.linkable(text(el('figcaption', {}, page)), page), false);
   const skipped = [
-    ['code'], ['a', { href: '#' }], ['span', { class: 'df-math' }], ['span', { class: 'katex' }],
-    ['span', { 'data-df-term': '' }], ['span', { 'data-df-tip': 'x' }], ['span', { 'data-df-template': '{{a}}' }],
-    ['span', { 'data-df-no-autolink': '' }], ['span', { class: 'df-tag' }], ['div', { 'data-df-autolink': 'false' }]
+    ['code'], ['a', { href: '#' }], ['span', { class: 'op-math' }], ['span', { class: 'katex' }],
+    ['span', { 'data-op-term': '' }], ['span', { 'data-op-tip': 'x' }], ['span', { 'data-op-template': '{{a}}' }],
+    ['span', { 'data-op-no-autolink': '' }], ['span', { class: 'op-tag' }], ['div', { 'data-op-autolink': 'false' }]
   ];
   for (const [tag, attrs] of skipped) {
     assert.equal(tip.linkable(text(el(tag, attrs, p)), page), false, tag + ' ' + JSON.stringify(attrs));
@@ -179,8 +179,8 @@ test('tags whose whole label is a glossary term become its anchor unless they ca
   });
   assert.equal(tip.tagTerm(tag(' On-request '), keys), 'on request');
   assert.equal(tip.tagTerm(tag('On request soon'), keys), null);
-  assert.equal(tip.tagTerm(tag('On request', { 'data-df-tip': 'x' }), keys), null);
-  assert.equal(tip.tagTerm(tag('On request', { 'data-df-term': 'other' }), keys), null);
+  assert.equal(tip.tagTerm(tag('On request', { 'data-op-tip': 'x' }), keys), null);
+  assert.equal(tip.tagTerm(tag('On request', { 'data-op-term': 'other' }), keys), null);
   assert.equal(tip.tagTerm(tag('On request', {}, { nested: true }), keys), null);
   assert.equal(tip.tagTerm(tag('On request', {}, { inside: {} }), keys), null);
 });
@@ -198,20 +198,20 @@ test('every tag gets a tooltip: own tip or term kept, role tip inherited, otherw
     querySelector: () => (nested ? {} : null)
   });
   const tags = [
-    tag('Draft', { 'data-df-tip': 'Not final.' }),
-    tag('Basis', { 'data-df-term': 'basis' }),
+    tag('Draft', { 'data-op-tip': 'Not final.' }),
+    tag('Basis', { 'data-op-term': 'basis' }),
     tag('Wrapped', {}, true),
-    tag('On by default', { 'data-df-role': 'Default' }),
-    tag('Try it', { 'data-df-role': 'try' }),
+    tag('On by default', { 'data-op-role': 'Default' }),
+    tag('Try it', { 'data-op-role': 'try' }),
     tag(' New  label ')
   ];
   tags.forEach((el) => { el.classList.owner = el; });
   const scope = { querySelectorAll: () => tags };
   const missing = tip.tipTags(scope, { roleTips: { default: 'On without any setup.' } });
-  assert.deepEqual(tags.map((el) => el.attrs['data-df-tip'] ?? null),
+  assert.deepEqual(tags.map((el) => el.attrs['data-op-tip'] ?? null),
     ['Not final.', null, null, 'On without any setup.', 'Colour role: try', 'New label']);
   assert.deepEqual([...missing], [tags[4], tags[5]]);
-  assert.ok(missing.every((el) => el.classes.includes('df-tag-untipped')));
+  assert.ok(missing.every((el) => el.classes.includes('op-tag-untipped')));
   assert.equal(warnings.length, 2);
   assert.match(warnings[0], /Tag "Try it" has no tooltip.*options\.roles\.tips\["try"\]/);
 });
@@ -227,10 +227,10 @@ test('glossary entries keep known tags, drop unknown ones, and one warning lists
   assert.deepEqual(json([terms.browser.tags, terms.file.tags, terms.folder.tags]), [['web', 'basics'], [], []]);
   assert.equal(warnings.length, 2);
   assert.match(warnings[0], /Glossary entry "file" names unknown glossary tag "storage"/);
-  assert.match(warnings[1], /^\[docform\] 2 glossary entries have no tags.*: file, folder\.$/);
+  assert.match(warnings[1], /^\[offprint\] 2 glossary entries have no tags.*: file, folder\.$/);
 });
 
-test('tags take their class shape from data-df-tag-class or a listed label, else a warned dashed fallback', () => {
+test('tags take their class shape from data-op-tag-class or a listed label, else a warned dashed fallback', () => {
   const { tip, warnings } = load();
   const tag = (label, attrs = {}, cls = []) => {
     const node = {
@@ -249,11 +249,11 @@ test('tags take their class shape from data-df-tag-class or a listed label, else
   };
   const tags = [
     tag('On request'),
-    tag('Blue', { 'data-df-tag-class': 'Swatch' }),
+    tag('Blue', { 'data-op-tag-class': 'Swatch' }),
     tag('Basics'),
     tag('Draft'),
-    tag('Web', { 'data-df-tag-class': 'glossary' }),
-    tag('Web', {}, ['df-tag-glossary'])
+    tag('Web', { 'data-op-tag-class': 'glossary' }),
+    tag('Web', {}, ['op-tag-glossary'])
   ];
   const site = {
     tags: {
@@ -263,9 +263,9 @@ test('tags take their class shape from data-df-tag-class or a listed label, else
     }
   };
   const missing = tip.classifyTags({ querySelectorAll: () => tags }, site);
-  assert.deepEqual(tags.map((el) => el.attrs['data-df-shape'] ?? null), ['triangle', 'square', 'circle', 'none', 'none', null]);
+  assert.deepEqual(tags.map((el) => el.attrs['data-op-shape'] ?? null), ['triangle', 'square', 'circle', 'none', 'none', null]);
   assert.deepEqual([...missing], [tags[3], tags[4]]);
-  assert.ok(missing.every((el) => el.classes.has('df-tag-unclassified')));
+  assert.ok(missing.every((el) => el.classes.has('op-tag-unclassified')));
   assert.match(warnings.join('\n'), /Tag "Web" names unknown tag class "glossary"; glossary tags are matched by their label/);
   assert.match(warnings.join('\n'), /Tag "Draft" has no tag class/);
 });

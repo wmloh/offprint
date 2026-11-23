@@ -1,0 +1,77 @@
+/* Section colours: each top-level h2 gets the next colour from --op-section-cycle, or its own data-op-color or
+   data-op-role. One thin line in the left margin marks the heading. Without the script it is the heading's ::before,
+   at heading height. sections.js instead draws it in a separate .op-section-lines layer that runs at the same width
+   and colour to the end of the section, so blurring a heading or block (focus mode) never blurs the line.
+   Heading text keeps its usual colour. */
+.op-page:not(.op-bubble-body) > h2 {
+  --op-section-color: var(--op-blue);
+  --op-section-line: color-mix(in srgb, var(--op-section-color) var(--op-section-line-strength), transparent);
+  position: relative;
+
+  &:nth-of-type(6n + 2) { --op-section-color: var(--op-green); }
+  &:nth-of-type(6n + 3) { --op-section-color: var(--op-purple); }
+  &:nth-of-type(6n + 4) { --op-section-color: var(--op-orange); }
+  &:nth-of-type(6n + 5) { --op-section-color: var(--op-pink); }
+  &:nth-of-type(6n) { --op-section-color: var(--op-brown); }
+  &:is([data-op-color], [data-op-role]):nth-of-type(n) { --op-section-color: var(--op-accent); }
+
+  /* Heading height without the script; sections.js sets --op-section-length to reach the end of the section. */
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0.15em;
+    left: calc(-1 * var(--op-section-offset) - var(--op-section-line-width) / 2);
+    width: var(--op-section-line-width);
+    height: var(--op-section-length, calc(100% - 0.3em));
+    border-radius: 999px;
+    background: var(--op-section-line);
+    pointer-events: none;
+  }
+}
+
+/* sections.js sets this while the numbered section rail covers the margin. */
+.op-page.op-sections-covered > h2::before,
+.op-page.op-sections-covered > .op-section-lines {
+  display: none;
+}
+
+/* Lines drawn by sections.js, positioned against the page so they follow it as the sidebar slides. */
+.op-page.op-sections-drawn {
+  position: relative;
+
+  & > h2::before {
+    display: none;
+  }
+}
+
+.op-section-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.op-section-line {
+  position: absolute;
+  width: var(--op-section-line-width);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--op-section-color, var(--op-blue)) var(--op-section-line-strength), transparent);
+}
+
+@media (max-width: 860px), (any-hover: none) {
+  :root {
+    --op-section-offset: 9px;
+  }
+}
+
+/* Printed pages keep the heading-height mark only. */
+@media print {
+  .op-section-lines {
+    display: none;
+  }
+
+  .op-page:not(.op-bubble-body) > h2::before,
+  .op-page.op-sections-drawn > h2::before {
+    display: block;
+    height: calc(100% - 0.3em);
+  }
+}

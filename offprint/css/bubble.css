@@ -1,0 +1,128 @@
+/* Peek bubbles from bubble.js: tinted bubbles in the text that grow in place to show their content. */
+.op-bubble {
+  --op-bubble-accent: var(--op-accent, var(--op-purple));
+  --op-bubble-tint: var(--op-accent-bg, var(--op-purple-bg));
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  max-width: min(100%, 34em);
+  margin: var(--op-space-4) 0;
+  padding: 0.45em 1.15em;
+  border: 1px solid color-mix(in srgb, var(--op-bubble-accent) 22%, transparent);
+  border-radius: 1.4em;
+  background: var(--op-bubble-tint);
+  color: var(--op-text);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: opacity 0.35s ease, translate 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease,
+    background-color 0.42s ease;
+}
+
+.op-bubble:hover {
+  translate: 0 -1px;
+  border-color: color-mix(in srgb, var(--op-bubble-accent) 40%, transparent);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--op-bubble-accent) 18%, transparent);
+}
+
+.op-bubble:focus-visible {
+  outline: 2px solid var(--op-bubble-accent);
+  outline-offset: 2px;
+}
+
+.op-bubble-title {
+  color: var(--op-bubble-accent);
+  font-weight: 600;
+}
+
+.op-bubble-title::after {
+  content: "→";
+  display: inline-block;
+  margin-left: 0.45em;
+  opacity: 0.55;
+  transition: translate 0.2s ease;
+}
+
+.op-bubble:hover .op-bubble-title::after {
+  translate: 3px 0;
+}
+
+.op-bubble-title > :is(h1, h2, h3, h4, h5, h6, p) {
+  display: inline;
+  margin: 0;
+}
+
+/* Collapsed bubbles keep their content here, laid out at the column width but never shown. */
+.op-bubble-store {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(var(--op-content-width), 100vw);
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* bubble.js pauses scroll anchoring while it holds the text still under a shrinking bubble. */
+html.op-bubble-holding {
+  overflow-anchor: none;
+}
+
+/* The sheet holds the content; it moves between the store and the open bubble. bubble.js animates its height. */
+.op-bubble-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.op-bubble-sheet > .op-bubble-body.op-page {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--op-space-3) 1.15em 0.7em;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
+
+.op-bubble-body:focus-visible {
+  outline: none;
+}
+
+.op-bubble-body > :first-child { margin-top: 0; }
+.op-bubble-body > :last-child { margin-bottom: 0; }
+
+/* Open: the bubble grows in place to the column width. The title keeps its spot, so only the size changes. */
+.op-bubble.is-open {
+  width: auto;
+  max-width: none;
+  padding-inline: 0;
+  background: color-mix(in srgb, var(--op-bubble-tint) 70%, transparent);
+  cursor: default;
+}
+
+.op-bubble.is-open:hover {
+  translate: none;
+}
+
+.op-bubble.is-open > .op-bubble-title {
+  padding: 0 1.15em;
+}
+
+.op-bubble.is-open > .op-bubble-title::after {
+  display: none;
+}
+
+.op-bubble.is-open .op-bubble-sheet {
+  max-height: 70vh;
+}
+
+/* Frosted except while the pointer is over it, focus is inside it, or after a tap. */
+.op-bubble.is-open:not(.is-revealed) .op-bubble-body {
+  filter: blur(6px);
+  opacity: 0.7;
+  user-select: none;
+}

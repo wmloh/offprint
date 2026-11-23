@@ -1,0 +1,450 @@
+/* OffPrint base typography and page layout. Needs tokens.css first.
+   Layout: <body> holds an optional <nav class="op-sidebar"> and a <main class="op-page">. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--op-bg);
+  color: var(--op-text);
+  font-family: var(--op-font);
+  font-size: var(--op-font-size);
+  line-height: var(--op-line-height);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--op-selection);
+}
+
+:focus-visible {
+  outline: 2px solid var(--op-focus);
+  outline-offset: 2px;
+  border-radius: var(--op-radius-sm);
+}
+
+body:has(> .op-sidebar) {
+  display: grid;
+  grid-template-columns: var(--op-sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.op-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: var(--op-space-4) var(--op-space-3);
+  background: var(--op-bg-sidebar);
+  border-right: 1px solid var(--op-border);
+  font-size: 15px;
+  color: var(--op-text-muted);
+}
+
+.op-page {
+  --op-page-max-width: calc(var(--op-content-width) + 2 * var(--op-page-gutter));
+  width: 100%;
+  max-width: var(--op-page-max-width);
+  margin-inline: auto;
+  padding: var(--op-space-8) var(--op-page-gutter) 30vh;
+  min-width: 0;
+}
+
+@media (width > 860px) and (any-hover: hover) {
+  body > .op-sidebar {
+    grid-area: 1 / 1;
+  }
+
+  /* Share the full grid row with the sidebar to centre against the viewport. Keep enough room for it in either state. */
+  body:has(> .op-sidebar) > .op-page {
+    grid-area: 1 / 1 / 2 / -1;
+    --op-page-width: min(var(--op-page-max-width), 100% - var(--op-sidebar-width));
+    width: var(--op-page-width);
+    margin-inline-start: max(var(--op-sidebar-slot, var(--op-sidebar-width)), (100% - var(--op-page-width)) / 2);
+  }
+}
+
+@media (max-width: 860px), (any-hover: none) {
+  body:has(> .op-sidebar) {
+    display: block;
+  }
+
+  .op-sidebar {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--op-border);
+  }
+
+  .op-page {
+    padding: var(--op-space-6) var(--op-space-4) 20vh;
+  }
+}
+
+/* Headings */
+.op-page :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1.6em 0 0.25em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--op-text);
+}
+
+.op-page h1 { font-size: 1.875em; margin-top: 2em; }
+.op-page h2 { font-size: 1.5em; margin-top: 1.4em; }
+.op-page h3 { font-size: 1.25em; margin-top: 1.2em; }
+.op-page :is(h4, h5, h6) { font-size: 1em; }
+
+/* Emphasis colours from tokens.css; elements with their own colour keep it. */
+.op-page :is(h1, h2, h3, h4, h5, h6, strong, b, em, i):not([data-op-color], [data-op-role]) {
+  &:is(h1) { color: var(--op-h1); }
+  &:is(h2) { color: var(--op-h2); }
+  &:is(h3) { color: var(--op-h3); }
+  &:is(h4, h5, h6) { color: var(--op-h4); }
+  &:is(strong, b):not(a *) { color: var(--op-strong); }
+  &:is(em, i):not(a *) { color: var(--op-em); }
+}
+
+.op-page > h1:first-child {
+  margin: 0 0 0.5em;
+  font-size: 2.5em;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.op-page :is(h1, h2, h3, h4, h5, h6) + * {
+  margin-top: 0.25em;
+}
+
+/* Standard space before the page's own subsections; none at the page top, and little between adjacent headings. */
+.op-page:not(.op-bubble-body) > h2 { margin-top: var(--op-space-h2); }
+.op-page:not(.op-bubble-body) > h3 { margin-top: var(--op-space-h3); }
+.op-page:not(.op-bubble-body) > :is(h1, h2, h3, h4, h5, h6) + :is(h2, h3) { margin-top: 0.5em; }
+.op-page:not(.op-bubble-body) > :is(h2, h3):first-child { margin-top: 0; }
+
+/* Text blocks */
+.op-page :is(p, ul, ol, blockquote, table, pre, figure) {
+  margin: 0.5em 0;
+}
+
+.op-page :is(figure, table):not(:where(figure *, .op-chart *)) {
+  margin-block: 1.1em;
+}
+
+.op-page :is(ul, ol) {
+  padding-left: 1.6em;
+}
+
+.op-page li {
+  padding-left: 0.15em;
+  margin: 0.15em 0;
+}
+
+.op-page li > :is(ul, ol) {
+  margin: 0.15em 0;
+}
+
+.op-page ul { list-style-type: disc; }
+.op-page ul ul { list-style-type: circle; }
+.op-page ul ul ul { list-style-type: square; }
+.op-page ol { list-style-type: decimal; }
+.op-page ol ol { list-style-type: lower-alpha; }
+.op-page ol ol ol { list-style-type: lower-roman; }
+
+.op-page li::marker {
+  color: var(--op-text-muted);
+}
+
+/* Styled list markers: numbers in tinted circles, bullets as tinted dots. The tint comes from data-op-color or
+   data-op-role on the list, an item, or an ancestor (gray otherwise); data-op-no-list-style keeps native markers.
+   Sizes assume the inherited unitless line height: an ordered marker is 0.75em text in a 1.25em-wide circle. */
+.op-page :is(ul, ol):not(.op-legend-list, [role], nav *, :where(.op-dropdown-panel *),
+  :is([data-op-no-list-style=""], [data-op-no-list-style="true"]),
+  :is([data-op-no-list-style=""], [data-op-no-list-style="true"]) *) {
+  --op-list-tint: var(--op-accent, var(--op-gray));
+  --op-list-tint-bg: var(--op-accent-bg, var(--op-gray-bg));
+  list-style: none;
+  padding-left: 1.9em;
+
+  &:is([data-op-color], [data-op-role]),
+  & > li:is([data-op-color], [data-op-role]) {
+    color: inherit;
+  }
+
+  & > li {
+    position: relative;
+  }
+
+  & > li::before {
+    content: "";
+    position: absolute;
+    right: 100%;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+
+  &:is(ol) > li::before {
+    content: counter(list-item);
+    top: 0.2333em;
+    min-width: 1.6667em;
+    height: 1.6667em;
+    margin-right: 0.6em;
+    padding: 0 0.4em;
+    border-radius: 999px;
+    background: var(--op-list-tint-bg);
+    color: var(--op-list-tint);
+    font-size: 0.75em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.6667em;
+    text-align: center;
+  }
+
+  &:is(ol ol) > li::before { content: counter(list-item, lower-alpha); }
+  &:is(ol ol ol) > li::before { content: counter(list-item, lower-roman); }
+
+  &:is(ul) > li::before {
+    top: 0.6125em;
+    width: 0.375em;
+    height: 0.375em;
+    margin-right: 0.7em;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--op-list-tint) 55%, transparent);
+  }
+
+  &:is(ul ul) > li::before {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--op-list-tint) 70%, transparent);
+  }
+
+  &:is(ul ul ul) > li::before {
+    border-radius: 1.5px;
+    background: color-mix(in srgb, var(--op-list-tint) 55%, transparent);
+    box-shadow: none;
+  }
+
+  /* Figure steps keep the same marker treatment for the step currently shown. */
+  &:is(ol) > li:is(:hover:not(:has(li:hover), .op-figure-steps-ready .op-step-panel > li), :has(> [aria-current="step"]))::before {
+    background: var(--op-list-tint);
+    color: var(--op-bg);
+  }
+
+  &:is(ul) > li:is(:hover:not(:has(li:hover), .op-figure-steps-ready .op-step-panel > li), :has(> [aria-current="step"]))::before {
+    background: var(--op-list-tint);
+    box-shadow: inset 0 0 0 1.5px var(--op-list-tint);
+    transform: scale(1.35);
+  }
+}
+
+.op-page a {
+  color: var(--op-link);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color 0.15s, color 0.15s;
+}
+
+.op-page a:hover {
+  text-decoration-color: currentColor;
+}
+
+.op-page blockquote {
+  padding: 0.1em 0 0.1em 0.9em;
+  border-left: 3px solid currentColor;
+  font-size: 1.1em;
+}
+
+.op-page blockquote > :first-child { margin-top: 0; }
+.op-page blockquote > :last-child { margin-bottom: 0; }
+
+.op-page hr {
+  margin: 1.25em 0;
+  border: 0;
+  border-top: 1px solid var(--op-border-strong);
+}
+
+.op-page :is(img, svg, video, canvas) {
+  max-width: 100%;
+  height: auto;
+}
+
+.op-page :is(iframe, embed, object) {
+  max-width: 100%;
+}
+
+/* Display blocks stay within the reading column; contents scale (media, charts) or scroll (tables, code) inside.
+   --op-figure-max-width narrows every outermost block; data-op-max-width narrows one block (core.js validates it into
+   --op-max-width, and browsers with typed attr() read it directly). Nothing grows past the column. */
+@property --op-max-width {
+  syntax: "*";
+  inherits: false;
+}
+
+.op-page :where(figure, table, pre, .op-code, [data-op-chart], .op-figure, .op-anim, .op-tabs, [data-op-tabs],
+  .op-split, .op-data, [data-op-data-view], .op-tree):not(:where(figure, table, pre, .op-code, [data-op-chart],
+  .op-figure, .op-anim, .op-tabs, [data-op-tabs], .op-split, .op-data, [data-op-data-view], .op-tree) *,
+  [data-op-max-width]) {
+  max-width: min(100%, var(--op-figure-max-width));
+  margin-inline: auto;
+}
+
+.op-page [data-op-max-width] {
+  max-width: min(100%, var(--op-max-width, 100%));
+  max-width: min(100%, attr(data-op-max-width type(<length-percentage>), var(--op-max-width, 100%)));
+  margin-inline: auto;
+}
+
+.op-page :is(figure, table):not(:where(.op-split *)) {
+  margin-inline: auto;
+}
+
+.op-page > :is(img, svg, video, canvas),
+.op-page > picture > img,
+.op-page figure:not(:where(.op-split *)) > :is(img, svg, video, canvas),
+.op-page figure:not(:where(.op-split *)) > :is(a, picture) > img {
+  display: block;
+  margin-inline: auto;
+}
+
+.op-page :is(figcaption, caption, .op-anim-caption):not(:where(.op-split *)) {
+  text-align: center;
+}
+
+.op-page :is(strong, b) { font-weight: 600; }
+
+/* Code */
+.op-page :not(pre) > code {
+  padding: 0.2em 0.4em;
+  border-radius: var(--op-radius);
+  background: var(--op-code-bg);
+  color: var(--op-code-text);
+  font-family: var(--op-font-mono);
+  font-size: 0.85em;
+  overflow-wrap: break-word;
+}
+
+.op-page pre {
+  padding: var(--op-space-4) var(--op-space-5);
+  overflow-x: auto;
+  border-radius: var(--op-radius);
+  background: var(--op-bg-subtle);
+  box-shadow: inset 0 0 0 1px var(--op-border);
+  font-family: var(--op-font-mono);
+  font-size: 0.85em;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+/* Tables scroll sideways in narrow columns instead of overflowing the page. */
+.op-page table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.op-page table:not(:where(.op-split *)) {
+  width: fit-content;
+}
+
+.op-page :is(th, td) {
+  padding: 0.4em 0.6em;
+  border: 1px solid var(--op-border-strong);
+  text-align: left;
+  vertical-align: top;
+}
+
+.op-page th {
+  background: var(--op-bg-subtle);
+  font-weight: 600;
+  color: var(--op-text-muted);
+}
+
+.op-page table[data-op-concept] > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+  border-inline: 0;
+  padding: 0.65rem 0.75rem;
+}
+
+.op-page table[data-op-concept] > thead > tr:first-child > :is(th, td) {
+  border-block-start: 0;
+}
+
+.op-page table[data-op-concept] > :is(thead, tbody, tfoot) > tr > th {
+  background-color: transparent;
+  color: color-mix(in srgb, var(--op-gray) 85%, var(--op-text));
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.op-page table[data-op-concept] > thead > tr > th:first-child {
+  width: 34%;
+  min-width: min(16ch, 28vw);
+}
+
+.op-page table[data-op-concept] .op-tag {
+  white-space: normal;
+}
+
+/* Hovering any cell, header included, tints its row and its column; the crossing cell gets both tints.
+   Images layer over cell backgrounds such as heatmap shading. Columns count cells, so colspan shifts them. */
+.op-page :is(th, td) {
+  --op-row-tint: transparent;
+  --op-col-tint: transparent;
+  background-image: linear-gradient(var(--op-row-tint), var(--op-row-tint)),
+    linear-gradient(var(--op-col-tint), var(--op-col-tint));
+}
+
+.op-page tr:hover > :is(th, td) {
+  --op-row-tint: var(--op-table-hover);
+}
+
+.op-page table:has(> * > tr > :nth-child(1):hover) > * > tr > :nth-child(1) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(2):hover) > * > tr > :nth-child(2) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(3):hover) > * > tr > :nth-child(3) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(4):hover) > * > tr > :nth-child(4) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(5):hover) > * > tr > :nth-child(5) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(6):hover) > * > tr > :nth-child(6) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(7):hover) > * > tr > :nth-child(7) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(8):hover) > * > tr > :nth-child(8) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(9):hover) > * > tr > :nth-child(9) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(10):hover) > * > tr > :nth-child(10) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(11):hover) > * > tr > :nth-child(11) { --op-col-tint: var(--op-table-hover); }
+.op-page table:has(> * > tr > :nth-child(12):hover) > * > tr > :nth-child(12) { --op-col-tint: var(--op-table-hover); }
+
+/* Sidebar, code block, and table scrollbars stay transparent (keeping their size) until the pointer is on them.
+   controls.js handles the page scrollbar. */
+.op-sidebar,
+.op-page pre,
+.op-page table {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+:is(.op-sidebar, .op-page pre, .op-page table):is(:hover, :focus-visible) {
+  scrollbar-color: var(--op-border-strong) transparent;
+}
+
+/* Colour contract: [data-op-color] and [data-op-role] set --op-accent and --op-accent-bg.
+   Plain elements use the accent as text colour; modules opt into the background. */
+:where([data-op-role], [data-op-color]) {
+  color: var(--op-accent);
+}
+
+[data-op-color="gray" i] { --op-accent: var(--op-gray); --op-accent-bg: var(--op-gray-bg); }
+[data-op-color="brown" i] { --op-accent: var(--op-brown); --op-accent-bg: var(--op-brown-bg); }
+[data-op-color="orange" i] { --op-accent: var(--op-orange); --op-accent-bg: var(--op-orange-bg); }
+[data-op-color="yellow" i] { --op-accent: var(--op-yellow); --op-accent-bg: var(--op-yellow-bg); }
+[data-op-color="green" i] { --op-accent: var(--op-green); --op-accent-bg: var(--op-green-bg); }
+[data-op-color="blue" i] { --op-accent: var(--op-blue); --op-accent-bg: var(--op-blue-bg); }
+[data-op-color="purple" i] { --op-accent: var(--op-purple); --op-accent-bg: var(--op-purple-bg); }
+[data-op-color="pink" i] { --op-accent: var(--op-pink); --op-accent-bg: var(--op-pink-bg); }
+[data-op-color="red" i] { --op-accent: var(--op-red); --op-accent-bg: var(--op-red-bg); }

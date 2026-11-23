@@ -7,24 +7,24 @@ const { createHash, webcrypto } = require('node:crypto');
 function load() {
   const context = vm.createContext({ URL, crypto: webcrypto, TextDecoder, console: { warn() {} } });
   context.window = context;
-  context.DocForm = { _boot: { report() {}, optionLayers: () => [] } };
+  context.OffPrint = { _boot: { report() {}, optionLayers: () => [] } };
   for (const path of ['vendor/js-yaml/js-yaml.min.js', 'js/core.js', 'js/tooltip.js',
     'js/search.js', 'js/data.js', 'tools/asset-build.js']) {
-    const file = new URL('../docform/' + path, 'file://' + __filename);
+    const file = new URL('../offprint/' + path, 'file://' + __filename);
     vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: path });
   }
-  return { build: context.DocForm._assetBuild, runtime: context.DocForm, context };
+  return { build: context.OffPrint._assetBuild, runtime: context.OffPrint, context };
 }
 
 function html(text) {
-  const scripts = Array.from(text.matchAll(/<script src="([^"]+)" data-df-site>/g), match => ({
+  const scripts = Array.from(text.matchAll(/<script src="([^"]+)" data-op-site>/g), match => ({
     getAttribute: () => match[1]
   }));
   const body = { hasAttribute: () => false, querySelector: () => null, querySelectorAll: () => [], closest: () => null };
   return {
     body,
     querySelector: () => null,
-    querySelectorAll: selector => selector === 'script[data-df-site][src]' ? scripts : [],
+    querySelectorAll: selector => selector === 'script[data-op-site][src]' ? scripts : [],
     createTreeWalker: () => {
       let remaining = true;
       return {
@@ -73,17 +73,17 @@ function config() {
 test('manifests are discovered by marked paths, are explicitly disambiguated, and are parsed as data', async () => {
   const { build, context } = load();
   const files = new Map([
-    ['index.html', file('<script src="config/notes%20site.js" data-df-site></script><script>window.executed = true;</script>')],
-    ['docs/b.html', file('<script src="../second/site.js" data-df-site></script>')],
-    ['docs/c.html', file('<script src="../../escape.js" data-df-site></script>')],
-    ['config/notes site.js', file('window.DocFormSite = {"title":"Notes"}; window.executed = true;')],
-    ['second/site.js', file('\ufeff window.DocFormSite = {"title":"Other"};\n')]
+    ['index.html', file('<script src="config/notes%20site.js" data-op-site></script><script>window.executed = true;</script>')],
+    ['docs/b.html', file('<script src="../second/site.js" data-op-site></script>')],
+    ['docs/c.html', file('<script src="../../escape.js" data-op-site></script>')],
+    ['config/notes site.js', file('window.OffPrintSite = {"title":"Notes"}; window.executed = true;')],
+    ['second/site.js', file('\ufeff window.OffPrintSite = {"title":"Other"};\n')]
   ]);
   const result = await build.discover(files, html);
   assert.deepEqual(Array.from(result.paths), ['config/notes site.js', 'second/site.js']);
   assert.match(result.diagnostics[0], /docs\/c\.html.*leaves the selected folder/);
-  assert.throws(() => build.parseManifest('window.DocFormSite = {}; window.executed = true;'));
-  assert.throws(() => build.parseManifest('window.DocFormSite = {title: "JS"};'));
+  assert.throws(() => build.parseManifest('window.OffPrintSite = {}; window.executed = true;'));
+  assert.throws(() => build.parseManifest('window.OffPrintSite = {title: "JS"};'));
   assert.equal(context.executed, undefined);
   assert.equal(build.parseManifest(await files.get('second/site.js').text()).title, 'Other');
   assert.deepEqual(Array.from((await build.discover(new Map([['nested/site.js', file('')]]), html)).paths), ['nested/site.js']);
@@ -101,17 +101,17 @@ test('nested outputs are reproducible, independent across sites, and load throug
   assert.deepEqual(paths(build.selected(first.jobs, new Set([search.output, values.output]))), [search.output, values.output]);
 
   for (const job of first.jobs) vm.runInContext(job.script, context);
-  assert.equal(context.DocFormSearch.version, 1);
-  assert.deepEqual(Array.from(context.DocFormSearch.pages, page => page.path),
+  assert.equal(context.OffPrintSearch.version, 1);
+  assert.deepEqual(Array.from(context.OffPrintSearch.pages, page => page.path),
     ['../index.html', '../docs/Chapter%20%231.html', '../glossary/index.html']);
-  assert.equal(context.DocFormSearch.metadata.inputs[0].sha256, createHash('sha256').update('First site').digest('hex'));
+  assert.equal(context.OffPrintSearch.metadata.inputs[0].sha256, createHash('sha256').update('First site').digest('hex'));
   assert.equal(runtime._boot.registerData('runs').snapshot().text, 'run,time\nA,12\n');
   assert.equal(runtime._boot.registerData('values').snapshot().type, 'yaml');
   runtime._search.load(index => assert.equal(index.pages[0].sections[0].text, 'First site'));
-  context.DocFormSearch.version++;
+  context.OffPrintSearch.version++;
   runtime._search.load(index => assert.equal(index, null));
-  context.DocFormData.values.version++;
-  context.DocFormData.unsupported = context.DocFormData.values;
+  context.OffPrintData.values.version++;
+  context.OffPrintData.unsupported = context.OffPrintData.values;
   assert.equal(runtime._boot.registerData('unsupported'), null);
 
   for (const job of build.selected(first.jobs, new Set([search.output, values.output]))) files.set(job.output, file(job.script));

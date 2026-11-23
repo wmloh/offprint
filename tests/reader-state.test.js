@@ -4,7 +4,7 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const vm = require('node:vm');
 
-const source = readFileSync(join(__dirname, '../docform/js/reader-state.js'), 'utf8');
+const source = readFileSync(join(__dirname, '../offprint/js/reader-state.js'), 'utf8');
 const site = 'file:///book/site.js';
 const chapter = 'file:///book/pages/chapter.html';
 const review = 'file:///book/review.html';
@@ -67,23 +67,23 @@ function element(id, markup, parent = null) {
 function page(db, pageURL, { isolated = false, edited = false, config = {}, identities } = {}) {
   const body = element('main', '');
   const tabs = body.appendChild(element('', edited ? '<div>new tabs</div>' : '<div>tabs</div>', body));
-  const zone = body.appendChild(element('zone', '<div data-df-dropzone></div>', body));
+  const zone = body.appendChild(element('zone', '<div data-op-dropzone></div>', body));
   const doc = {
     body,
     documentElement: { hasAttribute() { return isolated; } },
     querySelector: () => null,
     querySelectorAll: selector => selector.startsWith('[id],') ? [body, tabs, zone] :
-      selector === '[data-df-export-identity]' && identities ? [tabs] : [],
+      selector === '[data-op-export-identity]' && identities ? [tabs] : [],
     createElement: () => element('', ''),
     addEventListener() {}
   };
   const context = vm.createContext({
-    DocForm: {}, URL, TextEncoder, indexedDB: db, document: doc, addEventListener() {}, setTimeout, clearTimeout,
-    DocFormExportContext: identities && { interactive: true, identities }
+    OffPrint: {}, URL, TextEncoder, indexedDB: db, document: doc, addEventListener() {}, setTimeout, clearTimeout,
+    OffPrintExportContext: identities && { interactive: true, identities }
   });
-  if (identities) tabs.setAttribute('data-df-export-identity', '0');
+  if (identities) tabs.setAttribute('data-op-export-identity', '0');
   vm.runInContext(source, context);
-  const state = context.DocForm._readerState;
+  const state = context.OffPrint._readerState;
   state.prepare(doc, pageURL, site, config);
   return { state, doc, tabs, zone };
 }
@@ -194,7 +194,7 @@ test('Interactive exports restore original identities and keep only committed ch
   live.state.start();
   assert.equal(live.state.replay(seed).issues.length, 0);
   assert.equal(tab.get(), 'results');
-  assert.equal(live.tabs.getAttribute('data-df-export-identity'), null);
+  assert.equal(live.tabs.getAttribute('data-op-export-identity'), null);
   tab.select('new choice');
   tab.select('temporary preview', 'hover');
   const last = live.state.capture();

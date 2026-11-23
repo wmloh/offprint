@@ -3,27 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Concept tables and results tables · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Concept tables and results tables · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {"features": {"data": true, "results": true}}
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Show data</p>
+      <p class="op-eyebrow">Show data</p>
       <h1>Concept tables and results tables</h1>
-      <p><span data-df-term="concept table">Concept tables</span> compare ideas in words, and <span data-df-term="results table">results tables</span> sort, shade, and filter numbers. Both keep the reader's eye on what matters most.</p>
-      <dl class="df-fields">
+      <p><span data-op-term="concept table">Concept tables</span> compare ideas in words, and <span data-op-term="results table">results tables</span> sort, shade, and filter numbers. Both keep the reader's eye on what matters most.</p>
+      <dl class="op-fields">
         <dt>Official name</dt><dd>Concept tables · Results tables</dd>
-        <dt>Turned on</dt><dd>Concept table styling <span class="df-tag" data-df-role="default">On by default</span> · Results tables <span class="df-tag" data-df-role="on-request">On request</span></dd>
+        <dt>Turned on</dt><dd>Concept table styling <span class="op-tag" data-op-role="default">On by default</span> · Results tables <span class="op-tag" data-op-role="on-request">On request</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a> (tables) · <a href="../hierarchy/signal-ladder.html#loud">Loud</a> (heatmap cells and pass or fail marks)</dd>
         <dt>Works with</dt><dd>Named data sources and parameters</dd>
         <dt>Good for</dt><dd>Comparing items side by side</dd>
@@ -33,7 +33,7 @@
     <h2 id="see-it">See it</h2>
 
     <div id="see-it-demo">
-    <table data-df-concept>
+    <table data-op-concept>
       <caption>Three ways to help a reader check a value</caption>
       <thead><tr><th scope="col">Reader’s goal</th><th scope="col">What to use</th><th scope="col">What they see</th></tr></thead>
       <tbody>
@@ -44,21 +44,21 @@
     </table>
     </div>
 
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Scan down the first column to pick a goal, then read across that row for an answer.</p>
 
     <h2 id="what-it-does">Compare words in a concept table</h2>
     <p>A concept table gives the first column extra room for row labels. Light rules and subdued headings keep attention on the words. Move over a cell to see its row and column together.</p>
     <h2 id="results">Sort and shade results</h2>
 
-    <table id="group-results" data-df-results data-df-source="Reference counts" data-df-filters
-      data-df-row-key="group" data-df-chips="At least nine: references >= 9">
+    <table id="group-results" data-op-results data-op-source="Reference counts" data-op-filters
+      data-op-row-key="group" data-op-chips="At least nine: references >= 9">
       <caption>Repository reference counts with an example cutoff of nine</caption>
       <thead>
         <tr>
-          <th scope="col" data-df-field="group">Group</th>
-          <th scope="col" data-df-field="references" data-df-best="max" data-df-heat="max" data-df-heat-range="0, 20"
-            data-df-threshold=">= 9" data-df-threshold-label="Example cutoff">References</th>
+          <th scope="col" data-op-field="group">Group</th>
+          <th scope="col" data-op-field="references" data-op-best="max" data-op-heat="max" data-op-heat-range="0, 20"
+            data-op-threshold=">= 9" data-op-threshold-label="Example cutoff">References</th>
         </tr>
       </thead>
       <tbody>
@@ -70,14 +70,14 @@
       </tbody>
     </table>
 
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Choose the <strong>References</strong> heading and watch the rows slide into order. Choose it again to reverse the order, then a third time to restore the starting order. Interact holds the best count, while reading and data share the same value.</p>
 
     <p>A heatmap uses tint strength to show magnitude. Here, the fixed scale runs from zero to 20, so a count keeps its shade even when you filter the rows. A relative scale adjusts to the visible values. The tint colour is also configurable. The threshold gives every qualifying number a Pass label and every lower number a Fail label.</p>
     <h2 id="filters">Narrow the rows</h2>
     <p>The filter button beside each heading opens choices for that column. Group offers a checklist and References offers minimum and maximum values. A date column can offer a from and to range. A filter chip applies a named rule in one press. The table shows rows that meet every active rule and reports how many are visible.</p>
 
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Turn on <strong>At least nine</strong> to fade out the rows below the cutoff, then set the References maximum to 10. Layout is the only match. Choose <strong>Clear</strong> to restore all the rows.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
@@ -90,6 +90,7 @@
       <li><a href="sources.html">Named data sources and data views</a></li>
       <li><a href="comparisons.html">Evaluation matrices and scenario comparisons</a></li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
+      <li><a href="../recipes/share-experiment-results.html">Share experiment results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>
     </ul>
   </main>

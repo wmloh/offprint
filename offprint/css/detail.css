@@ -1,0 +1,70 @@
+/* Shared detail panes and the thin hover scrollbar used by card panels, figure steps, and pipelines. */
+.op-detail-pane {
+  --op-detail-pane-max: min(22rem, 38svh);
+  min-width: 0;
+  margin: var(--op-space-4) 0;
+  border: 1px solid var(--op-border);
+  border-radius: var(--op-radius-lg);
+}
+
+.op-detail-pane > * {
+  margin: 0;
+  padding: var(--op-space-2) var(--op-space-4);
+}
+
+.op-detail-pane > * + * {
+  border-top: 1px solid var(--op-border);
+}
+
+@media screen {
+  /* Overlay details so the longest sets the height; each one scrolls on its own. */
+  .op-detail-pane-ready {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    max-block-size: var(--op-detail-pane-max);
+  }
+
+  .op-detail-pane-ready > * {
+    grid-area: 1 / 1;
+    min-width: 0;
+    min-block-size: 0;
+    max-block-size: calc(var(--op-detail-pane-max) - 2px);
+    overflow: hidden auto;
+    scrollbar-gutter: stable;
+    border-top: 0;
+    transition: opacity 0.15s ease-out;
+  }
+
+  .op-detail-pane-ready > [inert] {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .op-scrollport {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .op-scrollport.op-scrollbar-hover {
+    scrollbar-color: var(--op-border-strong) transparent;
+  }
+}
+
+/* Native scrollbar hover also catches direct entry onto the thumb. */
+@supports selector(::-webkit-scrollbar) {
+  .op-scrollport::-webkit-scrollbar { width: 8px; }
+  .op-scrollport::-webkit-scrollbar-track { background: transparent; }
+  .op-scrollport::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+
+  .op-scrollport.op-scrollbar-hover::-webkit-scrollbar-thumb,
+  .op-scrollport::-webkit-scrollbar-thumb:hover,
+  .op-scrollport::-webkit-scrollbar-thumb:active {
+    background: var(--op-border-strong);
+  }
+}
+
+.op-scrollport:focus-visible {
+  outline-offset: -2px;
+}

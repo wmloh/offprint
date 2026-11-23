@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const warnings = [];
 const context = vm.createContext({ URL, console: { warn: (message) => warnings.push(message) } });
 context.window = context;
 ['core.js', 'chart.js', 'chart-heatmap.js'].forEach((file) => vm.runInContext(read(file), context));
-const chart = context.DocForm._chart;
+const chart = context.OffPrint._chart;
 const heatmap = chart._heatmap;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 

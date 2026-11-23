@@ -3,37 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cross-references and citations · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Cross-references and citations · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {
       "features": {"math": true},
       "options": {
         "citations": {
           "entries": {
-            "guiding-the-eye": {"title": "Visual hierarchy: guiding the eye", "venue": "DocForm guide", "note": "Shows how readers scan a page."},
-            "signal-ladder": {"title": "The signal ladder", "venue": "DocForm guide", "note": "Groups page features by how strongly they draw attention."}
+            "guiding-the-eye": {"title": "Visual hierarchy: guiding the eye", "venue": "OffPrint guide", "note": "Shows how readers scan a page."},
+            "signal-ladder": {"title": "The signal ladder", "venue": "OffPrint guide", "note": "Groups page features by how strongly they draw attention."}
           }
         }
       }
     }
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Write clearly</p>
+      <p class="op-eyebrow">Write clearly</p>
       <h1>Cross-references and citations</h1>
-      <p>DocForm numbers figures, tables, and equations for you and turns links to them into previews. <span data-df-term="citation">Citations</span> number your sources and build a reference list at the end of the page.</p>
-      <dl class="df-fields">
+      <p>OffPrint numbers figures, tables, and equations for you and turns links to them into previews. <span data-op-term="citation">Citations</span> number your sources and build a reference list at the end of the page.</p>
+      <dl class="op-fields">
         <dt>Official name</dt><dd>Cross-references · Citations</dd>
-        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="default">On by default</span></dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="default">On by default</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#medium">Medium</a></dd>
         <dt>Works with</dt><dd>Tooltips, for previews and source cards</dd>
         <dt>Good for</dt><dd>Pointing back to figures and crediting sources</dd>
@@ -42,7 +42,7 @@
 
     <h2 id="see-it">Numbers for figures, tables, and equations</h2>
     <figure id="outline-figure">
-      <p class="df-eyebrow">Reading order</p>
+      <p class="op-eyebrow">Reading order</p>
       <p><strong>Title → Section heading → Caption</strong></p>
       <figcaption>Three landmarks to look for when scanning a page.</figcaption>
     </figure>
@@ -54,33 +54,33 @@
         <tr><th scope="row">Subsections</th><td>2</td></tr>
       </tbody>
     </table>
-    <div class="df-math" id="outline-equation" data-df-display>3 + 2 = 5</div>
+    <div class="op-math" id="outline-equation" data-op-display>3 + 2 = 5</div>
     <p>Follow the links to the <a href="#outline-figure">scanning figure</a>, the <a href="#outline-table">heading counts</a>, or the <a href="#outline-equation">total equation</a>.</p>
     <p>The same figure has an automatically labelled link here: <a href="#outline-figure" aria-label="Figure 1, landmarks in reading order"></a><noscript>the scanning figure</noscript>.</p>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Point at one of these links or reach it with <kbd>Tab</kbd> for a preview. Then choose it and watch the linked item briefly light up.</p>
     <noscript><p>Numbers and previews appear when scripts are on. The figure, table, and equation are shown just above.</p></noscript>
-    <p>A <strong>cross-reference</strong> points to another part of the document. DocForm counts figures, tables, and equations separately on each page and can fill in the link text with the right number.</p>
+    <p>A <strong>cross-reference</strong> points to another part of the document. OffPrint counts figures, tables, and equations separately on each page and can fill in the link text with the right number.</p>
 
     <h2 id="numbering-options">Choosing what to number</h2>
-    <figure data-df-no-number>
+    <figure data-op-no-number>
       <p>Read the title. Scan the headings. Stop at the section you need.</p>
       <figcaption>This reminder has a caption and has opted out of numbering.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Compare this caption with the one above. A figure or table with a caption or a link target can be numbered automatically. By default, display equations are numbered when they have a link target or are marked for numbering. A page can also number all its display equations.</p>
 
     <h2 id="cross-page-previews">A look at another page</h2>
     <p>For a look at how readers scan a page, visit <a href="../hierarchy/guiding-the-eye.html">Visual hierarchy: guiding the eye</a>.</p>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Pause over the link or reach it with <kbd>Tab</kbd> before opening it. The preview draws its title and a little text from the offline search index. If the index is unavailable, the card shows the link’s address.</p>
 
     <h2 id="citations">Giving credit</h2>
-    <p>Start with a title and a few landmarks the eye can find easily <cite data-df-cite="guiding-the-eye">(Visual hierarchy: guiding the eye)</cite>. Save the strongest colour <span data-df-term="accent">accents</span> for things that need immediate attention <cite data-df-cite="signal-ladder">(The signal ladder)</cite>.</p>
-    <p>Both guides cover ways to direct attention <cite data-df-cite="guiding-the-eye, signal-ladder">(Visual hierarchy: guiding the eye and The signal ladder)</cite>.</p>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p>Start with a title and a few landmarks the eye can find easily <cite data-op-cite="guiding-the-eye">(Visual hierarchy: guiding the eye)</cite>. Save the strongest colour <span data-op-term="accent">accents</span> for things that need immediate attention <cite data-op-cite="signal-ladder">(The signal ladder)</cite>.</p>
+    <p>Both guides cover ways to direct attention <cite data-op-cite="guiding-the-eye, signal-ladder">(Visual hierarchy: guiding the eye and The signal ladder)</cite>.</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Pause over a bracketed number or reach it with <kbd>Tab</kbd> to see the full source in a card. Choose the number to jump to the source list, then use its return arrow to go back to the first mention.</p>
-    <p>A <strong>citation</strong> credits a source. DocForm numbers sources in the order you first mention them, reuses the number on later mentions, and builds a <strong>bibliography</strong>, the list of cited sources.</p>
+    <p>A <strong>citation</strong> credits a source. OffPrint numbers sources in the order you first mention them, reuses the number on later mentions, and builds a <strong>bibliography</strong>, the list of cited sources.</p>
 
     <h2 id="when-to-use">When to reach for it</h2>
     <p>Use cross-references when readers may want to inspect a figure or equation again. Use citations when a claim comes from a source readers may want to look up.</p>
@@ -89,10 +89,10 @@
     <p>Give each figure and table a caption that makes sense in print and on a narrow screen. With scripts off, the source titles stay in the paragraphs and the bibliography still gives their names.</p>
 
     <h2 id="bibliography">Bibliography</h2>
-    <div data-df-bibliography>
+    <div data-op-bibliography>
       <ol>
-        <li>Visual hierarchy: guiding the eye. DocForm guide.</li>
-        <li>The signal ladder. DocForm guide.</li>
+        <li>Visual hierarchy: guiding the eye. OffPrint guide.</li>
+        <li>The signal ladder. OffPrint guide.</li>
       </ol>
     </div>
 

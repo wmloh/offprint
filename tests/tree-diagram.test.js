@@ -6,9 +6,9 @@ const vm = require('node:vm');
 
 const context = vm.createContext({ console });
 for (const name of ['core', 'detail', 'diagram', 'tree-diagram']) {
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../docform/js', name + '.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../offprint/js', name + '.js'), 'utf8'), context);
 }
-const { prepare, layout } = context.DocForm._treeDiagram;
+const { prepare, layout } = context.OffPrint._treeDiagram;
 
 test('tree layout centers parents, preserves sibling order, and repacks collapsed branches', () => {
   const nodes = prepare([

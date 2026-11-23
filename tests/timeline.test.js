@@ -6,9 +6,9 @@ const vm = require('node:vm');
 
 const context = vm.createContext({ console });
 for (const name of ['core', 'detail', 'diagram', 'timeline']) {
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../docform/js', name + '.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../offprint/js', name + '.js'), 'utf8'), context);
 }
-const { scale, ticks, layout } = context.DocForm._timeline;
+const { scale, ticks, layout } = context.OffPrint._timeline;
 
 test('timeline scales numeric and UTC date domains, including a single point', () => {
   const numeric = scale(-10, 30, 100, 500);

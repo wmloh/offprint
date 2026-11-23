@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 const context = vm.createContext({ URL, console, Intl });
 context.window = context;
 vm.runInContext(read('core.js'), context);
 vm.runInContext(read('results.js'), context);
-const results = context.DocForm._results;
+const results = context.OffPrint._results;
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 test('result cells parse numbers with spreads, units, and marks', () => {
@@ -132,7 +132,7 @@ function makeTable(headers, cells, tableAttrs = {}, holder = null) {
   Object.entries(tableAttrs).forEach(([name, value]) => table.setAttribute(name, value));
   table.appendChild(el('thead', '', [el('tr', '', ths)]));
   table.appendChild(el('tbody', '', rows));
-  table.closest = (selector) => (selector === '.df-data' ? holder : null);
+  table.closest = (selector) => (selector === '.op-data' ? holder : null);
   el('div', '', [table]);
   return { table, ths, rows: rows.slice(), body: table.tBodies[0] };
 }
@@ -144,8 +144,8 @@ function build(headers, cells, tableAttrs = {}, holder = null, environment = {})
   const context = vm.createContext({
     Intl, WeakMap, ...environment,
     document: environment.document ?? { createElement: (tag) => el(tag), createTextNode: (text) => el('#text', text) },
-    DocForm: {
-      _data: (node, key, fallback) => node.getAttribute('data-df-' + key) ?? fallback,
+    OffPrint: {
+      _data: (node, key, fallback) => node.getAttribute('data-op-' + key) ?? fallback,
       _warnOnce: (key, message) => warnings.push(message),
       _all: () => [table],
       register: (name, fn) => { init = fn; }
@@ -155,7 +155,7 @@ function build(headers, cells, tableAttrs = {}, holder = null, environment = {})
   vm.runInContext(read('choices.js'), context);
   vm.runInContext(read('results.js'), context);
   init();
-  return { table, ths, rows, body: table.tBodies[0], warnings, results: context.DocForm._results };
+  return { table, ths, rows, body: table.tBodies[0], warnings, results: context.OffPrint._results };
 }
 
 function enhanceTable(header, cells) {
@@ -166,13 +166,13 @@ function enhanceTable(header, cells) {
 test('a table threshold adds verdicts and a header rule without changing sorting', () => {
   const cells = [['Inverse', '61.0 ± 2.1'], ['LU', '21.4'], ['Edge', '25'], ['CG', '—'], ['Tuned', '30']];
   const { th, rows, body, warnings } = enhanceTable({
-    'data-df-threshold': '<= 25 ms', 'data-df-threshold-label': 'Time budget', 'data-df-heat-range': '0, 60', 'data-df-best': 'min'
+    'data-op-threshold': '<= 25 ms', 'data-op-threshold-label': 'Time budget', 'data-op-heat-range': '0, 60', 'data-op-best': 'min'
   }, cells);
   assert.deepEqual(warnings, []);
   assert.deepEqual(rows.map((tr) => tr.cells[1].textContent), ['61.0 ± 2.1 Fail', '21.4 Pass', '25 Pass', '—', '30 Fail']);
-  assert.equal(rows[3].cells[1].classes.has('df-pass') || rows[3].cells[1].classes.has('df-fail'), false);
+  assert.equal(rows[3].cells[1].classes.has('op-pass') || rows[3].cells[1].classes.has('op-fail'), false);
   assert.equal(th.children.at(-1).textContent, 'Time budget: ≤ 25 ms');
-  assert.deepEqual(rows.map((tr) => tr.cells[1].props.get('--df-heat') ?? null), [0, 0.6433, 0.5833, null, 0.5]);
+  assert.deepEqual(rows.map((tr) => tr.cells[1].props.get('--op-heat') ?? null), [0, 0.6433, 0.5833, null, 0.5]);
   const order = () => body.children.map((tr) => tr.cells[0].textContent);
   th.children[0].dispatchEvent(new Event('click'));
   assert.deepEqual(order(), ['LU', 'Edge', 'Tuned', 'Inverse', 'CG']);
@@ -181,10 +181,10 @@ test('a table threshold adds verdicts and a header rule without changing sorting
 });
 
 test('invalid ranges and thresholds warn and are ignored', () => {
-  const { th, rows, warnings } = enhanceTable({ 'data-df-threshold': 'under 25', 'data-df-heat-range': '60, 0' }, [['A', '10'], ['B', '20']]);
+  const { th, rows, warnings } = enhanceTable({ 'data-op-threshold': 'under 25', 'data-op-heat-range': '60, 0' }, [['A', '10'], ['B', '20']]);
   assert.equal(warnings.length, 2);
   assert.deepEqual(rows.map((tr) => tr.cells[1].textContent), ['10', '20']);
-  assert.equal(rows[0].cells[1].classes.has('df-heat'), false);
+  assert.equal(rows[0].cells[1].classes.has('op-heat'), false);
   assert.equal(th.children.length, 1);
 });
 
@@ -217,8 +217,8 @@ test('time cells, chip text, and filter checks', () => {
 });
 
 const BENCH = [
-  ['Model'], ['Optimizer'], ['Accuracy', { 'data-df-best': 'max', 'data-df-heat': '' }],
-  ['Latency (ms)', { 'data-df-best': 'min', 'data-df-heat-range': '0, 40', 'data-df-threshold': '<= 25' }], ['Date']
+  ['Model'], ['Optimizer'], ['Accuracy', { 'data-op-best': 'max', 'data-op-heat': '' }],
+  ['Latency (ms)', { 'data-op-best': 'min', 'data-op-heat-range': '0, 40', 'data-op-threshold': '<= 25' }], ['Date']
 ];
 const BENCH_ROWS = [
   ['A', 'sgd', '0.80', '10', '2026-03-01'], ['B', 'adam', '0.90', '20', '2026-03-02'],
@@ -232,11 +232,11 @@ const press = (chip) => {
 };
 const find = (node, cls) => node.classes.has(cls) ? node : node.children.map((child) => find(child, cls)).find(Boolean);
 const shownNames = (body) => body.children.filter((tr) => !tr.hidden).map((tr) => tr.cells[0].textContent);
-const marks = (rows, c) => rows.map((tr) => [tr.cells[c].classes.has('df-best'), tr.cells[c].props.get('--df-heat') ?? null]);
+const marks = (rows, c) => rows.map((tr) => [tr.cells[c].classes.has('op-best'), tr.cells[c].props.get('--op-heat') ?? null]);
 
 test('column filter menus stay near their button and focus without scrolling', () => {
-  const css = fs.readFileSync(path.join(__dirname, '../docform/css/results.css'), 'utf8');
-  assert.match(css, /\.df-filter-menu\s*\{[^}]*\bposition:\s*fixed\b/);
+  const css = fs.readFileSync(path.join(__dirname, '../offprint/css/results.css'), 'utf8');
+  assert.match(css, /\.op-filter-menu\s*\{[^}]*\bposition:\s*fixed\b/);
   const windowEvents = new EventTarget();
   const focus = [];
   const document = Object.assign(new EventTarget(), {
@@ -247,17 +247,17 @@ test('column filter menus stay near their button and focus without scrolling', (
       node.focus = (options) => focus.push([node, options?.preventScroll]);
       if (tag === 'div') {
         Object.assign(node, { offsetWidth: 200, offsetHeight: 200, clientHeight: 198, scrollHeight: 248 });
-        node.querySelector = () => find(node, 'df-filter-bounds').children[0].children[1];
+        node.querySelector = () => find(node, 'op-filter-bounds').children[0].children[1];
       }
       return node;
     }
   });
-  const { ths } = build([['Score']], [['12'], ['24']], { 'data-df-filters': '' }, null, {
+  const { ths } = build([['Score']], [['12'], ['24']], { 'data-op-filters': '' }, null, {
     document,
     addEventListener: windowEvents.addEventListener.bind(windowEvents),
     removeEventListener: windowEvents.removeEventListener.bind(windowEvents)
   });
-  const trigger = find(ths[0], 'df-filter-toggle');
+  const trigger = find(ths[0], 'op-filter-toggle');
   const rect = { left: 285, right: 305, top: 180, bottom: 205 };
   trigger.getBoundingClientRect = () => rect;
   trigger.dispatchEvent(new Event('click'));
@@ -281,25 +281,25 @@ test('column filter menus stay near their button and focus without scrolling', (
   assert.deepEqual(focus.at(-1), [trigger, true]);
 });
 
-test('chips match columns by data-df-field or header text, not the removed data-df-column', () => {
-  const { warnings } = build([['Run'], ['Latency (ms)', { 'data-df-field': 'latency' }],
-    ['Validation loss', { 'data-df-column': 'loss' }]], [['a', '10', '1'], ['b', '30', '2']],
-  { 'data-df-chips': 'Fast: latency <= 25; Low: Validation loss < 2; Old: loss < 2' });
+test('chips match columns by data-op-field or header text, not the removed data-op-column', () => {
+  const { warnings } = build([['Run'], ['Latency (ms)', { 'data-op-field': 'latency' }],
+    ['Validation loss', { 'data-op-column': 'loss' }]], [['a', '10', '1'], ['b', '30', '2']],
+  { 'data-op-chips': 'Fast: latency <= 25; Low: Validation loss < 2; Old: loss < 2' });
   assert.equal(warnings.length, 1);
   assert.match(warnings[0], /Old.*no column "loss"/);
 });
 
 test('column filters and chips combine, recompute marks over visible rows, and keep fixed ranges and verdicts', () => {
   const { table, ths, rows, body, warnings, results: api } = build(BENCH, BENCH_ROWS, {
-    'data-df-filters': '', 'data-df-chips': 'Within budget: Latency (ms) <= 25; Adam: optimizer = adam; Broken: Nope = 1'
+    'data-op-filters': '', 'data-op-chips': 'Within budget: Latency (ms) <= 25; Adam: optimizer = adam; Broken: Nope = 1'
   });
   assert.equal(warnings.length, 1);
   assert.match(warnings[0], /Broken.*no column "Nope"/);
   const bar = table.parentNode.children[0];
-  const count = find(bar, 'df-filter-count');
-  const clear = find(bar, 'df-filter-clear');
-  const [, budget, adam] = find(bar, 'df-filter-chips').children;
-  const empty = table.children.find((child) => child.classes.has('df-filter-empty'));
+  const count = find(bar, 'op-filter-count');
+  const clear = find(bar, 'op-filter-clear');
+  const [, budget, adam] = find(bar, 'op-filter-chips').children;
+  const empty = table.children.find((child) => child.classes.has('op-filter-empty'));
   assert.equal(count.textContent, '4 rows');
   assert.equal(clear.disabled, true);
   assert.deepEqual(marks(rows, 2), [[false, 0], [false, 0.6667], [true, 1], [false, 0.3333]]);
@@ -315,7 +315,7 @@ test('column filters and chips combine, recompute marks over visible rows, and k
   const filters = api.filters(table);
   assert.equal(filters.set('optimizer', { excluded: ['adam'] }), true);
   assert.deepEqual(shownNames(body), ['A']);
-  assert.equal(ths[1].children[0].children[1].getAttribute('data-df-active'), 'true');
+  assert.equal(ths[1].children[0].children[1].getAttribute('data-op-active'), 'true');
   assert.deepEqual(marks(rows, 2)[0], [true, 0]);
 
   // Sorting moves hidden rows too and keeps them hidden.
@@ -340,21 +340,21 @@ test('column filters and chips combine, recompute marks over visible rows, and k
 
 test('a data table redrawn in the same block keeps the reader\'s filters and chips', () => {
   const holder = {};
-  const first = build(BENCH, BENCH_ROWS, { 'data-df-filters': '', 'data-df-chips': 'Adam: Optimizer = adam' }, holder);
+  const first = build(BENCH, BENCH_ROWS, { 'data-op-filters': '', 'data-op-chips': 'Adam: Optimizer = adam' }, holder);
   first.results.filters(first.table).set('Accuracy', { min: 0.9, max: null });
   first.results.filters(first.table).chip('adam');
   assert.deepEqual(shownNames(first.body), ['B', 'C']);
   const more = makeTable(BENCH, BENCH_ROWS.concat([['E', 'adam', '0.97', '12', '2026-03-05'], ['F', 'adam', '0.5', '9', '2026-03-06']]),
-    { 'data-df-filters': '', 'data-df-chips': 'Adam: Optimizer = adam' }, holder);
+    { 'data-op-filters': '', 'data-op-chips': 'Adam: Optimizer = adam' }, holder);
   first.results.enhance(more.table);
   assert.deepEqual(shownNames(more.body), ['B', 'C', 'E']);
-  assert.equal(find(more.table.parentNode.children[0], 'df-filter-count').textContent, '3 of 6 rows match');
+  assert.equal(find(more.table.parentNode.children[0], 'op-filter-count').textContent, '3 of 6 rows match');
   assert.equal(first.results.filters(more.table).shown(), 3);
 });
 
 test('keyed row motion follows data replacement, sorting, and filtering', () => {
   const { table } = makeTable([['Name'], ['Score']], [], {
-    'data-df-row-key': 'id', 'data-df-filters': '', 'data-df-source': 'scores'
+    'data-op-row-key': 'id', 'data-op-filters': '', 'data-op-source': 'scores'
   });
   const animations = [];
   function animate(frames) {
@@ -394,8 +394,8 @@ test('keyed row motion follows data replacement, sorting, and filtering', () => 
   function payload(rows) {
     return { type: 'value', value: rows.map(([id, Name, Score]) => ({ id, Name, Score })) };
   }
-  const source = context.DocForm.data.define('scores', payload([['a', 'Alpha', 10], ['b', 'Beta', 20], ['c', 'Gamma', 30]]));
-  context.DocForm._results.mount(table);
+  const source = context.OffPrint.data.define('scores', payload([['a', 'Alpha', 10], ['b', 'Beta', 20], ['c', 'Gamma', 30]]));
+  context.OffPrint._results.mount(table);
   assert.deepEqual(animations, []);
 
   assert.equal(source.update(payload([['b', 'Renamed', 25], ['a', 'Alpha', 10], ['d', 'Delta', 15]])), true);
@@ -412,7 +412,7 @@ test('keyed row motion follows data replacement, sorting, and filtering', () => 
   table.tHead.rows[0].cells[1].children[0].children[0].dispatchEvent(new Event('click'));
   assert.deepEqual(shownNames(table.tBodies[0]), ['Renamed', 'Delta', 'Alpha']);
   assert.equal(animations.splice(0).length, 2);
-  const filters = context.DocForm._results.filters(table);
+  const filters = context.OffPrint._results.filters(table);
   filters.set('Score', { min: null, max: 20 });
   assert.deepEqual(shownNames(table.tBodies[0]), ['Delta', 'Alpha']);
   assert.deepEqual(animations.splice(0).map(({ from }) => from), [

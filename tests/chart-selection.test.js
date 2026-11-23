@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const script = (name) => fs.readFileSync(path.join(__dirname, '../docform/js', name + '.js'), 'utf8');
+const script = (name) => fs.readFileSync(path.join(__dirname, '../offprint/js', name + '.js'), 'utf8');
 // Choice chips are native inputs in labels; choosing one checks it (clearing radio siblings) and reports the change.
 const choiceInputs = (host) => host.all().filter((el) => el.tag === 'input');
 const choose = (host, value) => {
@@ -15,8 +15,8 @@ const choose = (host, value) => {
   target.dispatchEvent(new Event('change'));
 };
 const chosen = (host) => choiceInputs(host).filter((input) => input.checked).map((input) => input.value);
-const GROUP = 'data-df-selection-group';
-const KEY = 'data-df-key';
+const GROUP = 'data-op-selection-group';
+const KEY = 'data-op-key';
 const hover = (el, pointerType = 'mouse') => el.dispatchEvent(Object.assign(new Event('pointermove'), { pointerType }));
 const CONTROL = 'button:not([role="tab"]), [role="button"][tabindex]';
 
@@ -105,7 +105,7 @@ class Node extends EventTarget {
   }
   closest(selector) {
     for (let node = this; node; node = node.parentNode) {
-      if (selector === '.df-data' && node.classList.contains('df-data')) return node;
+      if (selector === '.op-data' && node.classList.contains('op-data')) return node;
       if (node.matches(selector)) return node;
     }
     return null;
@@ -124,7 +124,7 @@ class Node extends EventTarget {
     const simple = direct ? selector.slice(9) : selector;
     return (direct ? this.children : this.all()).filter((node) => {
       if (simple === `[${GROUP}][${KEY}]`) return node.matches(simple);
-      if (simple === `[data-df-stepper-view][${KEY}]`) return node.hasAttribute('data-df-stepper-view') && node.hasAttribute(KEY);
+      if (simple === `[data-op-stepper-view][${KEY}]`) return node.hasAttribute('data-op-stepper-view') && node.hasAttribute(KEY);
       if (simple.startsWith('.')) return node.classList.contains(simple.slice(1));
       return node.matchesAttribute(simple);
     });
@@ -151,24 +151,24 @@ function setup({ groups, enhance, modules = [], animation = {} } = {}) {
   const sets = [];
   const warnings = [];
   const after = [];
-  document.addEventListener('df:selection:change', ({ detail }) => {
+  document.addEventListener('op:selection:change', ({ detail }) => {
     if (detail.origin !== 'init') sets.push([detail.group, detail.current.key]);
   });
   const boot = { canInitialize: () => true, setupComplete: true, optionLayers: () => [], merge: Object.assign,
     after: (_, fn) => after.push(fn),
     report: (_, feature, host, message) => warnings.push(message),
     moduleFailed: (_, error) => { throw error; } };
-  const DocForm = { _boot: boot, _site: { base: 'file:///site.js', selectionGroups: groups } };
+  const OffPrint = { _boot: boot, _site: { base: 'file:///site.js', selectionGroups: groups } };
   const reads = [];
-  const context = vm.createContext({ DocForm, document, CustomEvent, TextEncoder, console: { warn: (message) => warnings.push(message.replace(/^\[docform\] /, '')) },
+  const context = vm.createContext({ OffPrint, document, CustomEvent, TextEncoder, console: { warn: (message) => warnings.push(message.replace(/^\[offprint\] /, '')) },
     FileReader: class { readAsText(file) { this.result = file.text; reads.push(() => this.onload()); } },
     MutationObserver: class { observe() {} }, ...animation });
   context.window = context;
   for (const name of ['core', 'choices', 'highlight', 'chart', 'stepper', 'tabs', ...modules]) vm.runInContext(script(name), context);
-  if (enhance) enhance(DocForm, document, boot);
+  if (enhance) enhance(OffPrint, document, boot);
   boot.initialize();
   after.forEach((fn) => fn());
-  return { chart: DocForm._chart, selection: DocForm.selection, sets, warnings, document, DocForm, reads };
+  return { chart: OffPrint._chart, selection: OffPrint.selection, sets, warnings, document, OffPrint, reads };
 }
 
 function draw(spec, options) {
@@ -176,10 +176,10 @@ function draw(spec, options) {
   const host = new Node('div');
   env.document.body.appendChild(host);
   const api = env.chart(host, spec);
-  const plot = host.all().find((el) => el.classList.contains('df-chart-plot'));
+  const plot = host.all().find((el) => el.classList.contains('op-chart-plot'));
   const marks = () => host.all().filter((el) => el.getAttribute(KEY) !== null && el.tag !== 'td' && el.tag !== 'tr');
   const mark = (key) => marks().find((el) => el.getAttribute(KEY) === key);
-  const tip = () => host.all().find((el) => el.classList.contains('df-chart-tip'));
+  const tip = () => host.all().find((el) => el.classList.contains('op-chart-tip'));
   const fire = (type, props) => {
     const event = new Event(type, { cancelable: true });
     plot.dispatchEvent(Object.assign(event, props));
@@ -205,14 +205,14 @@ function guided(reduced = false, author, groups, intervals = false) {
   const observers = new Map();
   const chartHost = new Node('div');
   chartHost.id = 'trace';
-  chartHost.setAttribute('data-df-chart', 'line');
-  chartHost.setAttribute('data-df-source', 'readings');
+  chartHost.setAttribute('data-op-chart', 'line');
+  chartHost.setAttribute('data-op-source', 'readings');
   const host = new Node('ol');
   host.id = 'walkthrough';
-  host.setAttribute('data-df-chart-playback', '');
-  host.setAttribute('data-df-target', 'trace');
+  host.setAttribute('data-op-chart-playback', '');
+  host.setAttribute('data-op-target', 'trace');
   const events = [];
-  host.addEventListener('df:step', ({ detail }) => events.push(detail));
+  host.addEventListener('op:step', ({ detail }) => events.push(detail));
   const data = (end = 10) => ({ type: 'csv', text: intervals ?
     `x,y,key,lo,hi\n0,1,zero,0,2\n2,3,two,1,5\n4,,gap,,\n6,9,six,7,11\n${end},15,last,12,30` :
     `x,y,key\n0,1,zero\n2,3,two\n4,,gap\n6,9,six\n${end},15,last` });
@@ -222,8 +222,8 @@ function guided(reduced = false, author, groups, intervals = false) {
     requestAnimationFrame(fn) { frames.set(++nextId, fn); return nextId; },
     cancelAnimationFrame(id) { frames.delete(id); },
     ResizeObserver: class { constructor(fn) { this.fn = fn; } observe(el) { observers.set(el, this.fn); } }
-  }, enhance(df, document, boot) {
-    df.data.define('readings', data());
+  }, enhance(op, document, boot) {
+    op.data.define('readings', data());
     boot.optionLayers = (feature, id) => {
       if (feature === 'chart') return [{ brush: true, gaps: 'break', selectionGroup: 'trace',
         mapping: { x: 'x', pointKey: 'key', series: [{ field: 'y', key: 'series',
@@ -237,12 +237,12 @@ function guided(reduced = false, author, groups, intervals = false) {
     };
     document.body.appendChild(chartHost);
     document.body.appendChild(host);
-    if (author) author(host, document, df);
+    if (author) author(host, document, op);
   } });
-  const playback = env.DocForm.sequence.get(host.id);
+  const playback = env.OffPrint.sequence.get(host.id);
   const chart = env.chart.get(chartHost);
-  const plot = chartHost.querySelector('.df-chart-plot');
-  const controls = env.document.body.querySelector('.df-chart-playback-controls');
+  const plot = chartHost.querySelector('.op-chart-plot');
+  const controls = env.document.body.querySelector('.op-chart-playback-controls');
   function advance(ms) {
     now += ms;
     for (const [id, fn] of [...frames]) if (frames.delete(id)) fn(now);
@@ -254,32 +254,32 @@ function guided(reduced = false, author, groups, intervals = false) {
   return { ...env, host, chartHost, chart, playback, plot, controls, events, frames, advance, data, resize };
 }
 
-function positionChart(DocForm, document, id, group, spec) {
+function positionChart(OffPrint, document, id, group, spec) {
   const host = document.body.appendChild(new Node('div'));
   host.id = id;
-  host.setAttribute('data-df-x-group', group);
-  const api = DocForm._chart(host, spec);
-  const plot = host.querySelector('.df-chart-plot');
+  host.setAttribute('data-op-x-group', group);
+  const api = OffPrint._chart(host, spec);
+  const plot = host.querySelector('.op-chart-plot');
   return { host, api, plot };
 }
 
-const cursor = (plot) => plot.querySelector('.df-chart-x-cursor');
-const playhead = (plot) => plot.querySelector('.df-chart-playhead');
+const cursor = (plot) => plot.querySelector('.op-chart-x-cursor');
+const playhead = (plot) => plot.querySelector('.op-chart-playhead');
 const display = (el) => el.getAttribute('display');
 const firePlot = (plot, type, props) => plot.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), props));
 
 test('x-position groups share keyboard and pointer inspection in data units with independent viewports', () => {
-  const { DocForm, document } = setup();
-  const a = positionChart(DocForm, document, 'a', 'steps', { type: 'line', data: [[0, 1], [4, 2], [10, 3]] });
-  const b = positionChart(DocForm, document, 'b', 'steps',
+  const { OffPrint, document } = setup();
+  const a = positionChart(OffPrint, document, 'a', 'steps', { type: 'line', data: [[0, 1], [4, 2], [10, 3]] });
+  const b = positionChart(OffPrint, document, 'b', 'steps',
     { type: 'line', brush: true, data: [[1, 10], [3, 20], [6, 30], [9, 50]] });
-  const c = positionChart(DocForm, document, 'c', 'other', { type: 'scatter', data: [[0, 10], [10, 20]] });
-  const group = DocForm._chart.xGroup('steps');
+  const c = positionChart(OffPrint, document, 'c', 'other', { type: 'scatter', data: [[0, 10], [10, 20]] });
+  const group = OffPrint._chart.xGroup('steps');
   const events = [];
   const seen = [];
   group.subscribe((current, meta) => seen.push([current.x, meta.origin, display(cursor(b.plot))]), { immediate: true });
-  document.addEventListener('df:chart:x', ({ detail }) => events.push(detail));
-  assert.equal(DocForm._chart.xGroup('unknown'), null);
+  document.addEventListener('op:chart:x', ({ detail }) => events.push(detail));
+  assert.equal(OffPrint._chart.xGroup('unknown'), null);
   assert.equal(group.set('4'), false);
   assert.equal(group.set(Infinity), false);
   assert.equal(b.api.setRange([2, 8]), true);
@@ -288,8 +288,8 @@ test('x-position groups share keyboard and pointer inspection in data units with
   assert.deepEqual(seen, [[null, 'init', 'none'], [0, 'user', 'none'], [4, 'user', 'inline']]);
   assert.equal(events.at(-1).group, 'steps');
   assert.equal(events.at(-1).previous.x, 0);
-  assert.match(a.plot.querySelector('.df-chart-tip-head').textContent, /4$/);
-  assert.equal(b.plot.querySelector('.df-chart-tip').hidden, true);
+  assert.match(a.plot.querySelector('.op-chart-tip-head').textContent, /4$/);
+  assert.equal(b.plot.querySelector('.op-chart-tip').hidden, true);
   const pixel = +cursor(b.plot).getAttribute('x1');
   assert.notEqual(pixel, +cursor(a.plot).getAttribute('x1'));
   assert.equal(b.api.coords(pixel, 80).x, 4);
@@ -299,7 +299,7 @@ test('x-position groups share keyboard and pointer inspection in data units with
   firePlot(b.plot, 'pointermove', { clientX: pixel, clientY: 80 });
   assert.equal(group.snapshot().x, 4, 'pointer uses the exact x even between observations');
   assert.equal(events.length, 2, 'same x transfers ownership without an event');
-  assert.match(b.plot.querySelector('.df-chart-tip-head').textContent, /3$/, 'the readout shows its actual observation');
+  assert.match(b.plot.querySelector('.op-chart-tip-head').textContent, /3$/, 'the readout shows its actual observation');
   firePlot(a.plot, 'blur');
   assert.equal(group.snapshot().x, 4);
   firePlot(b.plot, 'pointerleave');
@@ -314,7 +314,7 @@ test('x-position groups share keyboard and pointer inspection in data units with
   assert.equal(display(cursor(b.plot)), 'inline');
   firePlot(a.plot, 'pointerleave');
   assert.equal(group.snapshot().x, 7, 'local exits preserve a programmatic position');
-  assert.equal(DocForm._chart.xGroup('other').set(5), true);
+  assert.equal(OffPrint._chart.xGroup('other').set(5), true);
   assert.equal(group.clear(), true);
   assert.equal(display(cursor(c.plot)), 'inline');
   assert.equal(events.at(-1).origin, 'api');
@@ -323,16 +323,16 @@ test('x-position groups share keyboard and pointer inspection in data units with
 test('one x-group playback clock gates independently sampled charts through source, resize and table redraws', () => {
   let follower;
   const followerSpec = { type: 'line', brush: true, data: [[1, 100], [3, 900], [7, 200], [13, 500]] };
-  const env = guided(false, (host, document, DocForm) => {
-    host.removeAttribute('data-df-target');
-    host.setAttribute('data-df-x-group', 'steps');
-    document.getElementById('trace').setAttribute('data-df-x-group', 'steps');
-    follower = positionChart(DocForm, document, 'score', 'steps', followerSpec);
+  const env = guided(false, (host, document, OffPrint) => {
+    host.removeAttribute('data-op-target');
+    host.setAttribute('data-op-x-group', 'steps');
+    document.getElementById('trace').setAttribute('data-op-x-group', 'steps');
+    follower = positionChart(OffPrint, document, 'score', 'steps', followerSpec);
   });
-  const { DocForm, document, chart, chartHost, plot, playback, advance, frames, data, warnings } = env;
+  const { OffPrint, document, chart, chartHost, plot, playback, advance, frames, data, warnings } = env;
   const other = follower.plot;
-  const group = DocForm._chart.xGroup('steps');
-  const visible = (p) => p.querySelectorAll('.df-chart-dot').filter((dot) => display(dot) !== 'none').length;
+  const group = OffPrint._chart.xGroup('steps');
+  const visible = (p) => p.querySelectorAll('.op-chart-dot').filter((dot) => display(dot) !== 'none').length;
   assert.equal(playback.position, 0, 'the first chart in document order supplies the domain');
   assert.equal(display(playhead(other)), 'none');
   assert.equal(visible(other), 0);
@@ -347,7 +347,7 @@ test('one x-group playback clock gates independently sampled charts through sour
   assert.deepEqual([visible(plot), visible(other)], [2, 0]);
   assert.equal(group.set(2), true);
   assert.equal(group.set(3), false);
-  const future = other.querySelectorAll('.df-chart-dot').find((dot) => display(dot) === 'none');
+  const future = other.querySelectorAll('.op-chart-dot').find((dot) => display(dot) === 'none');
   const point = { clientX: +future.getAttribute('cx'), clientY: +future.getAttribute('cy') };
   assert.equal(follower.api.coords(point.clientX, point.clientY), null);
   firePlot(other, 'pointermove', point);
@@ -361,7 +361,7 @@ test('one x-group playback clock gates independently sampled charts through sour
   assert.equal(group.snapshot().x, 3);
   assert.equal(playback.position, 4.5);
   assert.deepEqual([...follower.api.range()], [2, 9]);
-  const toggle = follower.host.querySelector('.df-chart-toggle');
+  const toggle = follower.host.querySelector('.op-chart-toggle');
   click(toggle);
   const rows = () => follower.host.querySelector('tbody').rows.map((row) => row.firstChild.textContent);
   assert.deepEqual(rows(), ['3']);
@@ -384,7 +384,7 @@ test('one x-group playback clock gates independently sampled charts through sour
   assert.notEqual(other.querySelector('svg'), beforeResize);
   assert.equal(display(cursor(other)), 'inline');
 
-  const source = DocForm.data.source('readings');
+  const source = OffPrint.data.source('readings');
   let observed;
   source.subscribe(() => { observed = [playback.position, visible(plot), visible(other)]; });
   playback.play();
@@ -395,7 +395,7 @@ test('one x-group playback clock gates independently sampled charts through sour
   assert.equal(playback.snapshot().key, 'later');
   assert.equal(chart.range(), null);
   assert.deepEqual([...follower.api.range()], [2, 9]);
-  const marker = other.querySelector('.df-chart-checkpoint');
+  const marker = other.querySelector('.op-chart-checkpoint');
   playback.play();
   assert.equal(display(marker), 'none');
   assert.equal(source.update(data(13)), true);
@@ -412,22 +412,22 @@ test('one x-group playback clock gates independently sampled charts through sour
   assert.ok(warnings.some((warning) => warning.includes('incompatible chart')));
 
   const competing = document.body.appendChild(new Node('ol'));
-  assert.equal(DocForm._chartPlayback.mount(competing, { xGroup: 'steps' }), null);
-  assert.equal(DocForm._chartPlayback.mount(competing, { target: follower.host.id }), null);
-  assert.equal(DocForm.sequence.get(env.host), playback);
-  assert.equal(chartHost.querySelector('.df-chart-playhead'), playhead(plot));
+  assert.equal(OffPrint._chartPlayback.mount(competing, { xGroup: 'steps' }), null);
+  assert.equal(OffPrint._chartPlayback.mount(competing, { target: follower.host.id }), null);
+  assert.equal(OffPrint.sequence.get(env.host), playback);
+  assert.equal(chartHost.querySelector('.op-chart-playhead'), playhead(plot));
 });
 
 test('configured group playback rejects incompatible charts and claims all members together', () => {
-  const { DocForm, document } = setup({ modules: ['chart-playback'], animation: {
+  const { OffPrint, document } = setup({ modules: ['chart-playback'], animation: {
     matchMedia: () => ({ matches: true })
   } });
   const spec = { type: 'line', data: [[0, 2], [5, 3]] };
-  const a = positionChart(DocForm, document, 'a', 'steps', spec);
-  const b = positionChart(DocForm, document, 'b', 'steps', { ...spec, type: 'scatter' });
+  const a = positionChart(OffPrint, document, 'a', 'steps', spec);
+  const b = positionChart(OffPrint, document, 'b', 'steps', { ...spec, type: 'scatter' });
   const host = document.body.appendChild(new Node('ol'));
   const single = document.body.appendChild(new Node('ol'));
-  const api = DocForm._chartPlayback;
+  const api = OffPrint._chartPlayback;
   assert.equal(api.mount(host, { xGroup: 'steps' }), null);
   assert.equal(playhead(a.plot), null);
   assert.equal(playhead(b.plot), null);
@@ -441,16 +441,16 @@ test('configured group playback rejects incompatible charts and claims all membe
 });
 
 test('guided playback reveals exact observations while clipping the same line geometry over time', () => {
-  const { chart, chartHost, playback, plot, controls, events, frames, advance, DocForm, host } = guided();
+  const { chart, chartHost, playback, plot, controls, events, frames, advance, OffPrint, host } = guided();
   const shape = () => ({ ...playback.snapshot() });
   const keys = () => plot.all().filter((el) => el.hasAttribute(KEY)).map((el) => el.getAttribute(KEY));
   const button = (label) => controls.children.find((el) => el.getAttribute('aria-label') === label);
   const fire = (type, props) => plot.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), props));
-  const line = plot.querySelector('.df-chart-line');
+  const line = plot.querySelector('.op-chart-line');
   const clip = plot.all().find((el) => el.tag === 'clipPath').firstChild;
-  const playhead = plot.querySelector('.df-chart-playhead');
-  const ticks = plot.querySelectorAll('.df-chart-tick');
-  assert.equal(DocForm._chartPlayback.mount(host), playback);
+  const playhead = plot.querySelector('.op-chart-playhead');
+  const ticks = plot.querySelectorAll('.op-chart-tick');
+  assert.equal(OffPrint._chartPlayback.mount(host), playback);
   assert.deepEqual(shape(), { key: 'start', index: 0, count: 3, canPrev: false, canNext: true, playing: false });
   assert.equal(events[0].origin, 'init');
   assert.deepEqual({ ...events[0] }, { key: 'start', index: 0, origin: 'init' });
@@ -472,18 +472,18 @@ test('guided playback reveals exact observations while clipping the same line ge
   assert.equal(playback.position, 2.25);
   assert.deepEqual(keys(), ['zero', 'two']);
   assert.equal(clip.getAttribute('width'), String(+playhead.getAttribute('x1') - +clip.getAttribute('x')));
-  assert.equal(plot.querySelector('.df-chart-line'), line);
-  assert.deepEqual(plot.querySelectorAll('.df-chart-tick'), ticks);
+  assert.equal(plot.querySelector('.op-chart-line'), line);
+  assert.deepEqual(plot.querySelectorAll('.op-chart-tick'), ticks);
 
-  const future = plot.querySelectorAll('.df-chart-dot').find((el) => el.getAttribute('display') === 'none');
+  const future = plot.querySelectorAll('.op-chart-dot').find((el) => el.getAttribute('display') === 'none');
   const position = { clientX: +future.getAttribute('cx'), clientY: +future.getAttribute('cy') };
   assert.equal(chart.coords(position.clientX, position.clientY), null);
   fire('pointermove', position);
-  assert.equal(plot.querySelector('.df-chart-tip').hidden, true);
+  assert.equal(plot.querySelector('.op-chart-tip').hidden, true);
   fire('keydown', { key: 'End' });
-  assert.equal(plot.querySelector('.df-chart-tip-head').textContent, 'x 2');
+  assert.equal(plot.querySelector('.op-chart-tip-head').textContent, 'x 2');
   fire('keydown', { key: 'Enter' });
-  assert.equal(DocForm.selection.group('trace').get(), 'two');
+  assert.equal(OffPrint.selection.group('trace').get(), 'two');
 
   toggle.dispatchEvent(new Event('click'));
   advance(5000);
@@ -495,8 +495,8 @@ test('guided playback reveals exact observations while clipping the same line ge
   assert.equal(controls.children[2].textContent, 'Between readings');
   assert.deepEqual(keys(), ['zero', 'two']);
 
-  const table = chartHost.querySelector('.df-chart-table');
-  const tableToggle = chartHost.querySelector('.df-chart-toggle');
+  const table = chartHost.querySelector('.op-chart-table');
+  const tableToggle = chartHost.querySelector('.op-chart-toggle');
   tableToggle.dispatchEvent(new Event('click'));
   assert.deepEqual(table.querySelector('tbody').rows.map((row) => row.firstChild.textContent), ['0', '2', '4']);
   playback.play();
@@ -505,7 +505,7 @@ test('guided playback reveals exact observations while clipping the same line ge
   tableToggle.dispatchEvent(new Event('click'));
   assert.equal(chart.setRange([1, 7]), true);
   assert.deepEqual([...chart.range()], [1, 7]);
-  assert.equal(plot.querySelector('.df-chart-playhead').getAttribute('display'), 'none');
+  assert.equal(plot.querySelector('.op-chart-playhead').getAttribute('display'), 'none');
   playback.prev();
   assert.equal(playback.position, 4.5);
   assert.deepEqual([...chart.range()], [1, 7]);
@@ -515,8 +515,8 @@ test('guided playback reveals exact observations while clipping the same line ge
 });
 
 test('reduced motion reaches each stop immediately and chart replacement reconciles the last reached key', () => {
-  const { chart, playback, controls, chartHost, DocForm, frames, events, data, warnings } = guided(true);
-  const source = DocForm.data.source('readings');
+  const { chart, playback, controls, chartHost, OffPrint, frames, events, data, warnings } = guided(true);
+  const source = OffPrint.data.source('readings');
   assert.equal(playback.select('unknown'), false);
   assert.equal(playback.play(), true);
   assert.equal(playback.snapshot().key, 'gap');
@@ -543,17 +543,17 @@ test('reduced motion reaches each stop immediately and chart replacement reconci
   assert.equal(events.at(-1).origin, 'source');
   assert.equal(playback.play(), false);
   assert.match(warnings.at(-1), /Checkpoint "later"/);
-  assert.equal(chartHost.querySelector('.df-chart-playhead'), null);
+  assert.equal(chartHost.querySelector('.op-chart-playhead'), null);
   assert.equal(source.update(data(12)), true);
   assert.deepEqual(playback.snapshot(), reached);
-  assert.ok(chartHost.querySelector('.df-chart-playhead'));
+  assert.ok(chartHost.querySelector('.op-chart-playhead'));
   assert.equal(chart.reset(), true);
   assert.deepEqual(playback.snapshot(), reached);
 });
 
 test('replacement during a leg cancels its clock before source subscribers see the restored chart', () => {
-  const { playback, DocForm, data, frames, advance, events } = guided();
-  const source = DocForm.data.source('readings');
+  const { playback, OffPrint, data, frames, advance, events } = guided();
+  const source = OffPrint.data.source('readings');
   playback.select('gap');
   playback.play();
   advance(500);
@@ -570,42 +570,42 @@ test('replacement during a leg cancels its clock before source subscribers see t
 });
 
 test('invalid targets and checkpoints preserve authored content and leave the chart available', () => {
-  const { DocForm, document, warnings } = setup({ modules: ['chart-playback'] });
+  const { OffPrint, document, warnings } = setup({ modules: ['chart-playback'] });
   const host = document.body.appendChild(new Node('ol'));
   const note = host.appendChild(new Node('li'));
   note.setAttribute(KEY, 'finish');
-  note.setAttribute('data-df-x', '5');
+  note.setAttribute('data-op-x', '5');
   note.textContent = 'Static walkthrough';
   const chart = document.body.appendChild(new Node('div'));
   chart.id = 'manual';
-  DocForm._chart(chart, { type: 'scatter', data: [[0, 1], [5, 3]] });
-  const api = DocForm._chartPlayback;
+  OffPrint._chart(chart, { type: 'scatter', data: [[0, 1], [5, 3]] });
+  const api = OffPrint._chartPlayback;
   assert.equal(api.mount(host, { target: chart.id }), null);
-  DocForm._chart(chart, { type: 'line', data: [[0, 1], [5, 3]] });
+  OffPrint._chart(chart, { type: 'line', data: [[0, 1], [5, 3]] });
   const competitor = document.body.appendChild(new Node('ol'));
   assert.equal(api.mount(competitor, { target: chart.id, checkpoints: [{ key: 'duplicate', x: 1 }, { key: 'duplicate', x: 2 }] }), null);
-  assert.equal(document.querySelectorAll('.df-chart-playback-controls').length, 0);
+  assert.equal(document.querySelectorAll('.op-chart-playback-controls').length, 0);
   assert.equal(host.textContent, 'Static walkthrough');
   assert.ok(warnings.some((warning) => warning.includes('no playable numeric line range')));
   assert.ok(warnings.some((warning) => warning.includes('Invalid checkpoint "duplicate"')));
-  note.setAttribute('data-df-x', '5 steps');
+  note.setAttribute('data-op-x', '5 steps');
   assert.equal(api.mount(host, { target: chart.id, checkpoints: [{ key: 'valid', x: 5 }] }), null);
   assert.equal(note.hidden, false);
-  note.setAttribute('data-df-x', '5');
+  note.setAttribute('data-op-x', '5');
   const playback = api.mount(host, { target: chart.id });
   assert.equal(playback.select('finish'), true);
   assert.equal(playback.snapshot().key, 'finish');
   assert.equal(playback.snapshot().canNext, false);
   assert.equal(api.mount(competitor, { target: chart.id }), null);
-  assert.equal(DocForm.sequence.get(host), playback);
+  assert.equal(OffPrint.sequence.get(host), playback);
 });
 
 function checkpointItem(host, key, x, label) {
   const item = host.appendChild(new Node('li'));
   item.setAttribute(KEY, key);
-  item.setAttribute('data-df-x', x);
+  item.setAttribute('data-op-x', x);
   const title = item.appendChild(new Node('strong'));
-  title.setAttribute('data-df-step-label', '');
+  title.setAttribute('data-op-step-label', '');
   title.textContent = label;
   item.appendChild(new Node('p')).textContent = 'Notes for ' + key;
   return item;
@@ -613,17 +613,17 @@ function checkpointItem(host, key, x, label) {
 
 test('authored checkpoints reveal HTML and an off-sample marker and link to a companion button', () => {
   let start, gap, finish, companion, detail;
-  const { playback, chart, document, controls, selection, events, sets, plot, DocForm, data, advance } =
+  const { playback, chart, document, controls, selection, events, sets, plot, OffPrint, data, advance } =
     guided(false, (host, doc) => {
       host.setAttribute(GROUP, 'checkpoints');
-      host.setAttribute('data-df-selection-seed', '');
+      host.setAttribute('data-op-selection-seed', '');
       start = checkpointItem(host, 'opening', 0, 'Opening');
       gap = checkpointItem(host, 'schedule', 4.5, 'Schedule change');
       finish = checkpointItem(host, 'final', 10, 'Final checkpoint');
       detail = doc.body.appendChild(new Node('aside'));
       detail.id = 'schedule-note';
       detail.appendChild(new Node('em')).textContent = 'The schedule changed here.';
-      gap.setAttribute('data-df-detail', detail.id);
+      gap.setAttribute('data-op-detail', detail.id);
       companion = doc.body.appendChild(new Node('button'));
       companion.setAttribute(GROUP, 'checkpoints');
       companion.setAttribute(KEY, 'schedule');
@@ -638,7 +638,7 @@ test('authored checkpoints reveal HTML and an off-sample marker and link to a co
   playback.play();
   advance(500);
   assert.equal(gap.hidden, true);
-  assert.equal(plot.querySelector('.df-chart-checkpoint').getAttribute('display'), 'none');
+  assert.equal(plot.querySelector('.op-chart-checkpoint').getAttribute('display'), 'none');
   const click = new Event('click');
   Object.defineProperties(click, { target: { value: companion }, button: { value: 0 } });
   document.dispatchEvent(click);
@@ -652,12 +652,12 @@ test('authored checkpoints reveal HTML and an off-sample marker and link to a co
   assert.equal(detail.hidden, false);
   assert.equal(detail.firstChild.tag, 'em');
   assert.equal(controls.children[2].textContent, 'Schedule change');
-  const marker = plot.querySelector('.df-chart-checkpoint');
+  const marker = plot.querySelector('.op-chart-checkpoint');
   assert.equal(marker.getAttribute('display'), 'inline');
-  assert.equal(marker.getAttribute('cx'), plot.querySelector('.df-chart-playhead').getAttribute('x1'));
-  assert.equal(plot.querySelectorAll('.df-chart-line')[0].getAttribute('d').match(/M/g).length, 2);
-  const table = chart.element.querySelector('.df-chart-table');
-  const toggle = chart.element.querySelector('.df-chart-toggle');
+  assert.equal(marker.getAttribute('cx'), plot.querySelector('.op-chart-playhead').getAttribute('x1'));
+  assert.equal(plot.querySelectorAll('.op-chart-line')[0].getAttribute('d').match(/M/g).length, 2);
+  const table = chart.element.querySelector('.op-chart-table');
+  const toggle = chart.element.querySelector('.op-chart-toggle');
   toggle.dispatchEvent(new Event('click'));
   assert.deepEqual(table.querySelector('tbody').rows.map((row) => row.firstChild.textContent), ['0', '2', '4']);
   toggle.dispatchEvent(new Event('click'));
@@ -669,7 +669,7 @@ test('authored checkpoints reveal HTML and an off-sample marker and link to a co
   assert.equal(playback.snapshot().canNext, false);
   assert.equal(group.get(), 'final');
   assert.equal(finish.getAttribute('aria-current'), 'step');
-  const source = DocForm.data.source('readings');
+  const source = OffPrint.data.source('readings');
   assert.equal(source.update(data(7)), true);
   assert.deepEqual([start, gap, finish, detail].map((item) => item.hidden), [false, false, false, false]);
   assert.equal(finish.getAttribute('aria-current'), null);
@@ -680,15 +680,15 @@ test('authored checkpoints reveal HTML and an off-sample marker and link to a co
 });
 
 test('configured note references validate before enhancement and cannot be claimed twice', () => {
-  const { DocForm, document, warnings } = setup({ modules: ['chart-playback'] });
+  const { OffPrint, document, warnings } = setup({ modules: ['chart-playback'] });
   const host = document.body.appendChild(new Node('ol'));
   const chart = document.body.appendChild(new Node('div'));
   chart.id = 'manual';
-  DocForm._chart(chart, { type: 'line', data: [[0, 2], [2, 4], [8, 8]] });
+  OffPrint._chart(chart, { type: 'line', data: [[0, 2], [2, 4], [8, 8]] });
   const note = document.body.appendChild(new Node('aside'));
   note.id = 'note';
   note.textContent = 'Static note';
-  const mount = (target, detailId, playbackHost = host) => DocForm._chartPlayback.mount(playbackHost, {
+  const mount = (target, detailId, playbackHost = host) => OffPrint._chartPlayback.mount(playbackHost, {
     target, checkpoints: [{ key: 'schedule', x: 4.5, label: 'Schedule change', detail: detailId }]
   });
   assert.equal(mount(chart.id, 'missing'), null);
@@ -698,7 +698,7 @@ test('configured note references validate before enhancement and cannot be claim
   duplicate.remove();
   assert.equal(mount(chart.id, chart.id), null);
   assert.equal(note.hidden, false);
-  assert.equal(chart.querySelector('.df-chart-playhead'), null);
+  assert.equal(chart.querySelector('.op-chart-playhead'), null);
   assert.ok(warnings.some((warning) => warning.includes('Invalid detail reference "missing"')));
   const playback = mount(chart.id, note.id);
   assert.equal(note.hidden, true);
@@ -706,25 +706,25 @@ test('configured note references validate before enhancement and cannot be claim
   assert.equal(note.hidden, false);
   const other = document.body.appendChild(new Node('div'));
   other.id = 'other';
-  DocForm._chart(other, { type: 'line', data: [[0, 2], [3, 4], [8, 8]] });
+  OffPrint._chart(other, { type: 'line', data: [[0, 2], [3, 4], [8, 8]] });
   const otherHost = document.body.appendChild(new Node('ol'));
   assert.equal(mount(other.id, note.id, otherHost), null);
   assert.equal(note.hidden, false);
-  assert.equal(other.querySelector('.df-chart-playhead'), null);
+  assert.equal(other.querySelector('.op-chart-playhead'), null);
   const otherNote = document.body.appendChild(new Node('aside'));
   otherNote.id = 'other-note';
   const otherPlayback = mount(other.id, otherNote.id, otherHost);
   otherPlayback.select('schedule');
   assert.equal(otherPlayback.position, 4.5);
   assert.equal(otherNote.hidden, false);
-  assert.equal(other.querySelector('.df-chart-checkpoint').getAttribute('display'), 'inline');
+  assert.equal(other.querySelector('.op-chart-checkpoint').getAttribute('display'), 'inline');
 });
 
 test('publish-only and follow-only modes respect a configured startup selection', () => {
   for (const mode of ['publish', 'follow']) {
     const { playback, selection } = guided(true, (host) => {
       host.setAttribute(GROUP, 'checkpoints');
-      host.setAttribute('data-df-selection-mode', mode);
+      host.setAttribute('data-op-selection-mode', mode);
       checkpointItem(host, 'start', 0, 'Start');
       checkpointItem(host, 'off-sample', 4.5, 'Midpoint');
     }, { checkpoints: { initial: 'off-sample' } });
@@ -741,26 +741,26 @@ test('publish-only and follow-only modes respect a configured startup selection'
 
 test('line intervals split at chart gaps and advance within the playback and brush clips', () => {
   const { chart, chartHost, plot, playback, advance } = guided(false, undefined, undefined, true);
-  const band = plot.querySelector('.df-chart-band-interval');
+  const band = plot.querySelector('.op-chart-band-interval');
   const bandClip = () => plot.all().find((el) => el.tag === 'clipPath' && el.id.endsWith('-band')).firstChild;
   assert.equal(band.getAttribute('d').match(/M/g).length, 2);
   assert.equal(+bandClip().getAttribute('width'), 0);
-  assert.ok(plot.querySelectorAll('.df-chart-tick').some((tick) => tick.textContent === '30'));
+  assert.ok(plot.querySelectorAll('.op-chart-tick').some((tick) => tick.textContent === '30'));
   const fire = (key) => plot.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key }));
   fire('End');
-  assert.match(plot.querySelector('.df-chart-tip').textContent, /90% interval \[0, 2\]/);
+  assert.match(plot.querySelector('.op-chart-tip').textContent, /90% interval \[0, 2\]/);
   playback.play();
   advance(500);
   assert.ok(+bandClip().getAttribute('width') > 0);
-  assert.equal(plot.querySelector('.df-chart-band-interval'), band);
+  assert.equal(plot.querySelector('.op-chart-band-interval'), band);
   fire('End');
-  assert.match(plot.querySelector('.df-chart-tip').textContent, /90% interval \[1, 5\]/);
+  assert.match(plot.querySelector('.op-chart-tip').textContent, /90% interval \[1, 5\]/);
   assert.equal(chart.setRange([1, 7]), true);
   const clip = bandClip();
-  const playhead = plot.querySelector('.df-chart-playhead');
+  const playhead = plot.querySelector('.op-chart-playhead');
   assert.equal(+clip.getAttribute('width'), +playhead.getAttribute('x1') - +clip.getAttribute('x'));
-  chartHost.querySelector('.df-chart-toggle').dispatchEvent(new Event('click'));
-  const table = chartHost.querySelector('.df-chart-table');
+  chartHost.querySelector('.op-chart-toggle').dispatchEvent(new Event('click'));
+  const table = chartHost.querySelector('.op-chart-table');
   assert.match(table.textContent, /90% interval \[1, 5\]/);
   assert.doesNotMatch(table.textContent, /\[7, 11\]|\[12, 30\]/);
   playback.select('later');
@@ -774,10 +774,10 @@ test('direct intervals handle disjoint bounds, missing intervals, fixed scales, 
     { x: 1, y: 2, interval }, { x: 2, y: 2 }, { x: 3, y: 2, interval }, { x: 4, y: 4, interval }
   ] };
   const env = draw(spec);
-  assert.equal(env.plot.querySelectorAll('.df-chart-whisker').length, 1);
-  assert.equal(env.plot.querySelector('.df-chart-band-interval').getAttribute('d').match(/M/g).length, 1);
+  assert.equal(env.plot.querySelectorAll('.op-chart-whisker').length, 1);
+  assert.equal(env.plot.querySelector('.op-chart-band-interval').getAttribute('d').match(/M/g).length, 1);
   assert.equal(env.api.model().series[0].points[1].interval, undefined);
-  const band = env.plot.querySelector('.df-chart-band-interval');
+  const band = env.plot.querySelector('.op-chart-band-interval');
   for (const invalid of [{ lower: 1 }, { lower: 3, upper: 2 }, { lower: 0, upper: Infinity }, { ...interval, count: 1.2 }]) {
     assert.equal(env.api.update({ data: [{ x: 1, y: 2, interval: invalid }] }), false);
   }
@@ -785,14 +785,14 @@ test('direct intervals handle disjoint bounds, missing intervals, fixed scales, 
   assert.equal(env.api.update({ y: { type: 'log' }, data: [
     { x: 1, y: 2, interval: { lower: 0, upper: 3 } }
   ] }), false);
-  assert.equal(env.plot.querySelector('.df-chart-band-interval'), band);
+  assert.equal(env.plot.querySelector('.op-chart-band-interval'), band);
   for (const type of ['bar', 'scatter']) {
     const { plot, tip, fire } = draw({ type, y: { min: 0, max: 4 }, data: [{ x: 1, y: 2, interval }] });
-    assert.equal(plot.querySelectorAll('.df-chart-whisker').length, 1);
+    assert.equal(plot.querySelectorAll('.op-chart-whisker').length, 1);
     const clip = plot.all().find((el) => el.tag === 'clipPath' && el.id.endsWith('-interval')).firstChild;
     assert.ok(+clip.getAttribute('height') > 0);
-    assert.ok(plot.querySelectorAll('.df-chart-tick').some((tick) => tick.textContent === '4'));
-    assert.ok(!plot.querySelectorAll('.df-chart-tick').some((tick) => tick.textContent === '5'));
+    assert.ok(plot.querySelectorAll('.op-chart-tick').some((tick) => tick.textContent === '4'));
+    assert.ok(!plot.querySelectorAll('.op-chart-tick').some((tick) => tick.textContent === '5'));
     fire('keydown', { key: 'End' });
     assert.match(tip().textContent, /Supplied bounds \[3, 5\] \(n = 0\)/);
   }
@@ -807,7 +807,7 @@ test('mapped intervals retain numeric results behavior and paired differences re
     { run: 'other', device: 'TPU', x: 3, score: 8, lo: null, hi: null, n: null, delta: null, reference: null, dlo: null, dhi: null }
   ];
   const hosts = {};
-  const { DocForm: df } = setup({ modules: ['data', 'results', 'scenarios'], enhance(df, document, boot) {
+  const { OffPrint: op } = setup({ modules: ['data', 'results', 'scenarios'], enhance(op, document, boot) {
     const options = {
       chart: { mapping: { x: 'x', value: 'score', group: { field: 'run' }, interval: bounds } },
       results: { mapping: { columns: [{ field: 'run' }, { field: 'score', interval: bounds }] } },
@@ -816,36 +816,36 @@ test('mapped intervals retain numeric results behavior and paired differences re
         outcomes: [{ field: 'score', unit: '%', interval: bounds, pairedDifference: paired }] } }
     };
     boot.optionLayers = (feature) => [options[feature] || {}];
-    df.data.define('scores', { type: 'value', value: records });
+    op.data.define('scores', { type: 'value', value: records });
     for (const [id, tag, mode] of [['chart', 'div', 'scatter'], ['results', 'table', ''], ['scenarios', 'table', '']]) {
       const host = document.createElement(tag);
       host.id = id;
-      host.setAttribute('data-df-' + id, mode);
-      host.setAttribute('data-df-source', 'scores');
+      host.setAttribute('data-op-' + id, mode);
+      host.setAttribute('data-op-source', 'scores');
       hosts[id] = document.body.appendChild(host);
     }
     const header = hosts.results.createTHead().insertRow().appendChild(new Node('th'));
-    header.setAttribute('data-df-field', 'score');
-    header.setAttribute('data-df-threshold', '>= 10');
-    header.setAttribute('data-df-best', 'max');
+    header.setAttribute('data-op-field', 'score');
+    header.setAttribute('data-op-threshold', '>= 10');
+    header.setAttribute('data-op-best', 'max');
   } });
-  const source = df.data.source('scores');
-  const chart = df._chart.get('chart');
+  const source = op.data.source('scores');
+  const chart = op._chart.get('chart');
   const results = () => hosts.results.tBodies[0].rows;
   const outcome = (index) => hosts.scenarios.tBodies[0].rows[1].cells[index];
   const cell = results()[1].cells[1];
-  assert.equal(cell.getAttribute('data-df-value'), '20');
+  assert.equal(cell.getAttribute('data-op-value'), '20');
   assert.match(cell.textContent, /Outcome bounds \[12, 24\] \(n = 3\)/);
-  assert.ok(cell.classList.contains('df-pass'));
-  assert.ok(cell.classList.contains('df-best'));
-  assert.ok(results()[2].cells[1].classList.contains('df-fail'));
+  assert.ok(cell.classList.contains('op-pass'));
+  assert.ok(cell.classList.contains('op-best'));
+  assert.ok(results()[2].cells[1].classList.contains('op-fail'));
   const sort = hosts.results.tHead.rows[0].cells[1].querySelector('button');
   sort.dispatchEvent(new Event('click'));
   assert.deepEqual(results().map((row) => row.cells[0].textContent), ['alt', 'base', 'other']);
   sort.dispatchEvent(new Event('click'));
   sort.dispatchEvent(new Event('click'));
   assert.match(outcome(3).textContent, /Outcome bounds \[12%, 24%\].*Paired difference vs Reference \(base\) -2%.*Paired bounds \[-5%, 1%\]/);
-  assert.equal(df.sequence.get('scenarios').select('other'), true);
+  assert.equal(op.sequence.get('scenarios').select('other'), true);
   assert.equal(outcome(4).hidden, false);
   assert.doesNotMatch(outcome(4).textContent, /bounds|Paired difference/);
   assert.equal(chart.model().series.find((s) => s.key === 'alt').points[0].interval.upper, 24);
@@ -857,7 +857,7 @@ test('mapped intervals retain numeric results behavior and paired differences re
   assert.equal(source.update({ type: 'value', value: [records[0], { ...records[1], hi: 60 }, records[2]] }), true);
   assert.equal(chart.model().series.find((s) => s.key === 'alt').points[0].interval.upper, 60);
   assert.match(outcome(3).textContent, /Outcome bounds \[12%, 60%\].*Paired bounds \[-5%, 1%\]/);
-  assert.equal(df._scenarios.get('scenarios').snapshot().key, 'other');
+  assert.equal(op._scenarios.get('scenarios').snapshot().key, 'other');
   assert.equal(source.reset(), true);
   assert.match(results()[1].cells[1].textContent, /Outcome bounds \[12, 24\]/);
 });
@@ -878,17 +878,17 @@ r04,3,7,0.6,Lab` });
       conditions: [{ field: 'device' }], outcomes: [{ field: 'ms', label: 'Latency', unit: 'ms' }] } }
   };
   const hosts = {};
-  const env = setup({ modules: ['data', 'dropzone', 'results', 'scenarios'], enhance(df, document, boot) {
+  const env = setup({ modules: ['data', 'dropzone', 'results', 'scenarios'], enhance(op, document, boot) {
     boot.optionLayers = (feature) => [options[feature] || {}];
-    df.data.defineTransform('budget', ({ value }) => value.map((record) => {
+    op.data.defineTransform('budget', ({ value }) => value.map((record) => {
       if (record.device === 'Broken') throw new Error('Rejected device');
       return { ...record, derived: 12 - record.ms };
     }));
-    df.data.define('runs', csv());
+    op.data.define('runs', csv());
     function element(tag, id, attrs) {
       const el = document.createElement(tag);
       el.setAttribute('id', id);
-      for (const [key, value] of Object.entries(attrs)) el.setAttribute('data-df-' + key, value);
+      for (const [key, value] of Object.entries(attrs)) el.setAttribute('data-op-' + key, value);
       hosts[id] = document.body.appendChild(el);
       return el;
     }
@@ -898,9 +898,9 @@ r04,3,7,0.6,Lab` });
     const head = results.createTHead().insertRow();
     for (const field of ['run', 'ms']) {
       const th = head.appendChild(new Node('th'));
-      th.setAttribute('data-df-field', field);
+      th.setAttribute('data-op-field', field);
       th.textContent = field;
-      if (field === 'ms') th.setAttribute('data-df-threshold', '<= 8');
+      if (field === 'ms') th.setAttribute('data-op-threshold', '<= 8');
     }
     results.createTBody().insertRow().insertCell().textContent = 'Authored results';
     element('table', 'scenario', { scenarios: 'configurations', source: 'runs' });
@@ -908,27 +908,27 @@ r04,3,7,0.6,Lab` });
     element('div', 'local', { dropzone: '', target: 'plot' });
     for (const id of ['shared-one', 'shared-two']) element('div', id, { dropzone: '', 'target-source': 'runs' });
   } });
-  const df = env.DocForm;
-  const source = df.data.source('runs');
-  const chart = df._chart.get('plot');
-  const results = df._results.get('results');
-  const scenario = df._scenarios.get('scenario');
-  const raw = df._dataView.get('raw');
+  const op = env.OffPrint;
+  const source = op.data.source('runs');
+  const chart = op._chart.get('plot');
+  const results = op._results.get('results');
+  const scenario = op._scenarios.get('scenario');
+  const raw = op._dataView.get('raw');
   function choose(zone, input, name = 'runs.csv') {
     const field = hosts[zone].querySelector('input');
     field.files = [{ name, text: input.text, size: input.text.length }];
     field.dispatchEvent(new Event('change'));
     return env.reads.pop();
   }
-  function reset(zone) { hosts[zone].querySelector('.df-dropzone-reset').dispatchEvent(new Event('click')); }
+  function reset(zone) { hosts[zone].querySelector('.op-dropzone-reset').dispatchEvent(new Event('click')); }
   const chartY = () => chart.spec().series[0].data[0].y;
   const snapshots = [];
   source.subscribe(({ revision }, { origin }) => snapshots.push([revision, origin, chartY(), results.snapshot().shown,
     scenario.snapshot().key, raw.snapshot().total]));
   assert.equal(chartY(), 7);
   assert.equal(hosts.results.tHead.rows[0].cells[1].textContent.startsWith('Latency'), true);
-  assert.equal(df._results.filters(hosts.results).chip('Budget', true), true);
-  assert.equal(df.sequence.get('scenario').select('r04'), true);
+  assert.equal(op._results.filters(hosts.results).chip('Budget', true), true);
+  assert.equal(op.sequence.get('scenario').select('r04'), true);
   assert.equal(chart.setSeriesVisible('duration', false), true);
   assert.equal(chart.setRange([1.25, 2.75]), true);
   assert.equal(source.update(reordered), true);
@@ -988,12 +988,12 @@ test('a shared parameter scope commits filtered charts and results with coordina
   const payload = (value) => ({ type: 'value', value });
   const hosts = {};
   const filter = { scope: 'eval', fields: { runs: 'run', split: 'split' }, where: { accepted: true } };
-  const env = setup({ modules: ['params', 'data', 'dropzone', 'results'], enhance(df, document, boot) {
-    df._parameters.define('eval', {
+  const env = setup({ modules: ['params', 'data', 'dropzone', 'results'], enhance(op, document, boot) {
+    op._parameters.define('eval', {
       runs: { type: 'multiselect', choices: choices('a', 'b') },
       split: { type: 'select', choices: choices('dev', 'test') }
     });
-    df.data.define('runs', payload(initial));
+    op.data.define('runs', payload(initial));
     const options = {
       plot: { filter, brush: true, maxRows: 8, mapping: { x: 'step', value: 'value', group: { field: 'run' } },
         transform: 'observations' },
@@ -1002,12 +1002,12 @@ test('a shared parameter scope commits filtered charts and results with coordina
       fixedPlot: { filter: { where: { accepted: 'true' } },
         mapping: { x: 'step', series: [{ key: 'loss', field: 'loss' }] } }
     };
-    df.data.defineTransform('observations', ({ value }) => value.map((record) => ({ ...record, value: record.loss })));
+    op.data.defineTransform('observations', ({ value }) => value.map((record) => ({ ...record, value: record.loss })));
     boot.optionLayers = (_, id) => [options[id] || {}];
     function element(tag, id, attrs) {
       const el = document.createElement(tag);
       el.id = id;
-      for (const [key, value] of Object.entries(attrs)) el.setAttribute('data-df-' + key, value);
+      for (const [key, value] of Object.entries(attrs)) el.setAttribute('data-op-' + key, value);
       return hosts[id] = document.body.appendChild(el);
     }
     element('div', 'plot', { chart: 'line', source: 'runs' });
@@ -1016,9 +1016,9 @@ test('a shared parameter scope commits filtered charts and results with coordina
     const head = table.createTHead().insertRow();
     for (const field of ['tableRun', 'loss']) {
       const th = head.appendChild(new Node('th'));
-      th.setAttribute('data-df-field', field);
+      th.setAttribute('data-op-field', field);
       th.textContent = field;
-      if (field === 'loss') th.setAttribute('data-df-best', 'max');
+      if (field === 'loss') th.setAttribute('data-op-best', 'max');
     }
     element('table', 'fixed', { results: '', source: 'runs' });
     element('div', 'fixedPlot', { chart: 'line', source: 'runs' });
@@ -1026,12 +1026,12 @@ test('a shared parameter scope commits filtered charts and results with coordina
     element('fieldset', 'split', { scope: 'eval', choice: 'split' });
     element('button', 'preset', { scope: 'eval', preset: '{"runs":["b"],"split":"dev"}' });
   } });
-  const df = env.DocForm;
-  const scope = df._parameters.scope('eval');
-  const source = df.data.source('runs');
-  const chart = df._chart.get('plot');
-  const results = df._results.get('results');
-  const fixed = df._results.get('fixed');
+  const op = env.OffPrint;
+  const scope = op._parameters.scope('eval');
+  const source = op.data.source('runs');
+  const chart = op._chart.get('plot');
+  const results = op._results.get('results');
+  const fixed = op._results.get('fixed');
   const table = hosts.results;
   const series = () => Array.from(chart.spec().series, ({ key, data }) => [key, ...Array.from(data, ({ y }) => y)]);
   const rendered = () => table.tBodies[0].rows.filter((tr) => !tr.hidden).map((tr) => tr.cells[1].textContent);
@@ -1045,17 +1045,17 @@ test('a shared parameter scope commits filtered charts and results with coordina
   assert.equal(fixed.snapshot().shown, 1, 'fixed predicates compare the original scalar type');
   assert.equal(chart.setSeriesVisible('a', false), true);
   assert.equal(chart.setRange([1, 3]), true);
-  hosts.plot.querySelector('.df-chart-toggle').dispatchEvent(new Event('click'));
-  const localFilters = () => df._results.filters(table);
+  hosts.plot.querySelector('.op-chart-toggle').dispatchEvent(new Event('click'));
+  const localFilters = () => op._results.filters(table);
   localFilters().set('loss', { min: 6 });
   localFilters().chip('Small', true);
   const header = () => table.tHead.rows[0].cells[1];
-  header().querySelector('.df-sort').dispatchEvent(new Event('click'));
+  header().querySelector('.op-sort').dispatchEvent(new Event('click'));
   observations.length = 0;
   hosts.preset.dispatchEvent(new Event('click'));
   const presetState = [['b'], 'dev', [['b', 8, 9]], ['8'], 1];
   assert.deepEqual(observations, [['results', presetState], ['scope', presetState]]);
-  assert.equal(table.tBodies[0].rows[1].cells[1].classList.contains('df-best'), true);
+  assert.equal(table.tBodies[0].rows[1].cells[1].classList.contains('op-best'), true);
   assert.equal(hosts.preset.getAttribute('aria-current'), 'true');
   assert.equal(header().getAttribute('aria-sort'), 'descending');
 
@@ -1072,8 +1072,8 @@ test('a shared parameter scope commits filtered charts and results with coordina
 
   assert.equal(scope.set('runs', []), true);
   assert.deepEqual(series(), []);
-  assert.match(hosts.plot.querySelector('.df-chart-table').textContent, /No readings match/);
-  assert.match(table.querySelector('.df-filter-empty').textContent, /No rows match/);
+  assert.match(hosts.plot.querySelector('.op-chart-table').textContent, /No readings match/);
+  assert.match(table.querySelector('.op-filter-empty').textContent, /No rows match/);
   assert.deepEqual([...results.snapshot().chips], ['Small']);
   assert.equal(results.snapshot().filters.loss.min, 6);
   const { tableRun, ...missingColumn } = row('a', 0, 5);
@@ -1086,7 +1086,7 @@ test('a shared parameter scope commits filtered charts and results with coordina
   assert.equal(source.update(payload(replacement)), true);
   assert.deepEqual(observations.at(-1), ['source', [[], 'dev', [], [], 0]]);
   assert.match(hosts.fixed.textContent, /No rows match/);
-  assert.match(hosts.fixedPlot.querySelector('.df-chart-empty').textContent, /No readings match/);
+  assert.match(hosts.fixedPlot.querySelector('.op-chart-empty').textContent, /No readings match/);
   assert.equal(scope.update({ runs: ['b'], split: 'test' }), true);
   assert.deepEqual(series(), [['b', 7, 8]]);
   assert.equal(chart.snapshot().table, true);
@@ -1109,7 +1109,7 @@ test('a shared parameter scope commits filtered charts and results with coordina
   assert.equal(source.reset(), true);
   assert.deepEqual(series(), [['a', 15, 16]]);
   assert.deepEqual(rendered(), ['6']);
-  hosts.local.querySelector('.df-dropzone-reset').dispatchEvent(new Event('click'));
+  hosts.local.querySelector('.op-dropzone-reset').dispatchEvent(new Event('click'));
   assert.equal(results.reset(), true);
   assert.deepEqual(series(), [['a', 5, 6], ['b', 8, 9]]);
 
@@ -1127,27 +1127,27 @@ test('grouped line charts keep irregular observations, gaps, and colors through 
   const replacement = { type: 'csv', text: 'ID,Run,Loss,Step\nz2,z,6,2\nc3,control,4,3\nb1,b,7,1' };
   const host = new Node('div');
   host.id = 'plot';
-  host.setAttribute('data-df-chart', 'line');
-  host.setAttribute('data-df-source', 'observations');
-  host.setAttribute('data-df-gaps', 'break');
+  host.setAttribute('data-op-chart', 'line');
+  host.setAttribute('data-op-source', 'observations');
+  host.setAttribute('data-op-gaps', 'break');
   const zone = new Node('div');
-  zone.setAttribute('data-df-dropzone', '');
-  zone.setAttribute('data-df-target', 'plot');
-  zone.setAttribute('data-df-max-rows', '2');
-  const env = setup({ modules: ['data', 'dropzone'], enhance(df, document, boot) {
+  zone.setAttribute('data-op-dropzone', '');
+  zone.setAttribute('data-op-target', 'plot');
+  zone.setAttribute('data-op-max-rows', '2');
+  const env = setup({ modules: ['data', 'dropzone'], enhance(op, document, boot) {
     boot.optionLayers = (feature) => feature === 'chart' ? [{ maxRows: 6, mapping: {
       x: { field: 'Step', label: 'Training step' }, value: 'Loss', pointKey: 'ID',
       group: { field: 'Run', series: [{ key: 'control', label: 'Reference', role: 'baseline' }, { key: 'absent' }] }
     } }] : [];
-    df.data.define('observations', initial);
+    op.data.define('observations', initial);
     document.body.appendChild(host);
     document.body.appendChild(zone);
   } });
   const chart = env.chart.get(host);
-  const source = env.DocForm.data.source('observations');
+  const source = env.OffPrint.data.source('observations');
   const series = () => JSON.parse(JSON.stringify(chart.model().series));
   const input = zone.querySelector('input');
-  const status = zone.querySelector('.df-dropzone-status');
+  const status = zone.querySelector('.op-dropzone-status');
   function choose(text, name = 'observations.json') {
     input.files = [{ name, text, size: text.length }];
     input.dispatchEvent(new Event('change'));
@@ -1191,7 +1191,7 @@ test('grouped line charts keep irregular observations, gaps, and colors through 
   assert.equal(observed.length, 1);
   assert.equal(source.update({ type: 'value', value: [{ ...local[0], Step: 12 }] }), true);
   assert.deepEqual(observed.at(-1), [2, ['a', 'z']], 'source replacement retains the local override');
-  zone.querySelector('.df-dropzone-reset').dispatchEvent(new Event('click'));
+  zone.querySelector('.op-dropzone-reset').dispatchEvent(new Event('click'));
   assert.deepEqual(series().map(({ key, points }) => [key, points[0].x]), [['z', 12]]);
   assert.equal(series()[0].index, zColor);
   assert.equal(source.reset(), true);
@@ -1206,18 +1206,18 @@ test('grouped line charts keep irregular observations, gaps, and colors through 
 test('grouped scatter charts match exact fields and compare timestamps by instant within each series', () => {
   const host = new Node('div');
   host.id = 'plot';
-  host.setAttribute('data-df-chart', 'scatter');
-  host.setAttribute('data-df-source', 'observations');
+  host.setAttribute('data-op-chart', 'scatter');
+  host.setAttribute('data-op-source', 'observations');
   const utc = { time: '2025-05-01T00:00:00Z', ' score ': 2, run: 'utc' };
   const offset = { time: '2025-05-01T01:00:00+01:00', ' score ': 3, run: 'offset' };
-  const env = setup({ modules: ['data'], enhance(df, document, boot) {
+  const env = setup({ modules: ['data'], enhance(op, document, boot) {
     boot.optionLayers = () => [{ x: { type: 'time' }, y: { type: 'log' },
       mapping: { x: 'time', value: ' score ', group: { field: 'run' } } }];
-    df.data.define('observations', { type: 'value', value: [utc, offset] });
+    op.data.define('observations', { type: 'value', value: [utc, offset] });
     document.body.appendChild(host);
   } });
   const chart = env.chart.get(host);
-  const source = env.DocForm.data.source('observations');
+  const source = env.OffPrint.data.source('observations');
   const time = Date.parse(utc.time);
   assert.deepEqual(Array.from(chart.model().series, ({ key, points }) => [key, points[0].x]), [['offset', time], ['utc', time]]);
   for (const bad of [{ ...offset, run: 'utc' }, { ...offset, time: '2025-05-01T00:00:00' }, { ...offset, ' score ': 0 }]) {
@@ -1229,46 +1229,46 @@ test('grouped scatter charts match exact fields and compare timestamps by instan
 
 test('inline sources preserve raw fallbacks and full chart transforms keep series identity across renaming', () => {
   const host = new Node('div');
-  host.setAttribute('data-df-chart', 'line');
-  host.setAttribute('data-df-source', 'trace');
+  host.setAttribute('data-op-chart', 'line');
+  host.setAttribute('data-op-source', 'trace');
   const fallback = host.appendChild(new Node('table'));
   const raw = new Node('pre');
-  raw.setAttribute('data-df-source', 'draft');
-  raw.setAttribute('data-df-source-type', 'json');
-  raw.setAttribute('data-df-data-view', 'code');
+  raw.setAttribute('data-op-source', 'draft');
+  raw.setAttribute('data-op-source-type', 'json');
+  raw.setAttribute('data-op-data-view', 'code');
   raw.textContent = '{"bad":}';
   const preview = new Node('div');
-  preview.setAttribute('data-df-source', 'preview');
-  preview.setAttribute('data-df-data-view', 'code');
-  preview.setAttribute('data-df-max-size', '8');
-  preview.setAttribute('data-df-max-rows', '2');
-  const env = setup({ modules: ['data'], enhance(df, document, boot) {
+  preview.setAttribute('data-op-source', 'preview');
+  preview.setAttribute('data-op-data-view', 'code');
+  preview.setAttribute('data-op-max-size', '8');
+  preview.setAttribute('data-op-max-rows', '2');
+  const env = setup({ modules: ['data'], enhance(op, document, boot) {
     const inline = new Node('script');
-    inline.setAttribute('data-df-source', 'trace');
+    inline.setAttribute('data-op-source', 'trace');
     inline.setAttribute('type', 'application/json');
     inline.textContent = '{"label":"Before","y":3}';
     [inline, host, raw, preview].forEach((node) => document.body.appendChild(node));
     boot.optionLayers = (feature) => feature === 'chart' ? [{ transform: 'full', transformOutput: 'spec' }] : [];
     boot.readData();
-    df.data.define('preview', { type: 'csv', text: 'id,n\na,1\nb,2\nc,3' });
-    df.data.defineTransform('full', ({ value }) => ({ series: [
+    op.data.define('preview', { type: 'csv', text: 'id,n\na,1\nb,2\nc,3' });
+    op.data.defineTransform('full', ({ value }) => ({ series: [
       { key: 'first', name: value.label, data: [[1, value.y]] },
       { key: 'second', name: value.label, data: [[1, 2]] }
     ] }));
   } });
-  assert.equal(env.DocForm.data.source('draft'), null);
+  assert.equal(env.OffPrint.data.source('draft'), null);
   assert.equal(raw.hidden, true);
   assert.match(env.document.body.textContent, /Could not read "draft"/);
-  const view = env.DocForm._dataView.get(preview);
+  const view = env.OffPrint._dataView.get(preview);
   assert.equal(view.snapshot(), null);
   preview.querySelector('button').dispatchEvent(new Event('click'));
   assert.equal(view.snapshot().shown, 2);
   preview.querySelector('button').dispatchEvent(new Event('click'));
   assert.equal(view.snapshot().shown, 4);
   const api = env.chart.get(host);
-  const source = env.DocForm.data.source('trace');
+  const source = env.OffPrint.data.source('trace');
   assert.equal(api.spec().series[0].name, 'Before');
-  assert.equal(fallback.parentNode?.classList.contains('df-chart-table'), true);
+  assert.equal(fallback.parentNode?.classList.contains('op-chart-table'), true);
   assert.equal(api.setSeriesVisible('first', false), true);
   assert.equal(source.update({ type: 'value', value: { label: 'After', y: 4 } }), true);
   assert.equal(api.spec().series[0].name, 'After');
@@ -1281,8 +1281,8 @@ test('inline sources preserve raw fallbacks and full chart transforms keep serie
 test('a static results upload resets to the same authored rows, sort and filters', () => {
   const table = new Node('table');
   table.id = 'static';
-  table.setAttribute('data-df-results', '');
-  table.setAttribute('data-df-filters', '');
+  table.setAttribute('data-op-results', '');
+  table.setAttribute('data-op-filters', '');
   const header = table.createTHead().insertRow();
   header.appendChild(new Node('th')).textContent = 'Run';
   header.appendChild(new Node('th')).textContent = 'Latency';
@@ -1293,17 +1293,17 @@ test('a static results upload resets to the same authored rows, sort and filters
     row.insertCell().textContent = String(ms);
   }
   const zone = new Node('div');
-  zone.setAttribute('data-df-dropzone', '');
-  zone.setAttribute('data-df-target', table.id);
-  const env = setup({ modules: ['data', 'results', 'dropzone'], enhance(df, document) {
+  zone.setAttribute('data-op-dropzone', '');
+  zone.setAttribute('data-op-target', table.id);
+  const env = setup({ modules: ['data', 'results', 'dropzone'], enhance(op, document) {
     document.body.appendChild(table);
     document.body.appendChild(zone);
   } });
-  const results = env.DocForm._results;
+  const results = env.OffPrint._results;
   const run = results.get(table);
   const originalFilter = results.filters(table);
   assert.equal(originalFilter.set('Latency', { max: 5 }), true);
-  header.cells[1].querySelector('.df-sort').dispatchEvent(new Event('click'));
+  header.cells[1].querySelector('.op-sort').dispatchEvent(new Event('click'));
   const originalOrder = [...body.rows];
   const text = 'latency,run\n8,replacement\n3,another';
   const input = zone.querySelector('input');
@@ -1312,7 +1312,7 @@ test('a static results upload resets to the same authored rows, sort and filters
   env.reads.pop()();
   assert.equal(table.tBodies[0].rows[0].cells[0].textContent, 'replacement');
   assert.equal(run.snapshot().shown, 1);
-  zone.querySelector('.df-dropzone-reset').dispatchEvent(new Event('click'));
+  zone.querySelector('.op-dropzone-reset').dispatchEvent(new Event('click'));
   assert.equal(table.tBodies[0], body);
   assert.deepEqual(body.rows, originalOrder);
   assert.equal(results.filters(table), originalFilter);
@@ -1368,7 +1368,7 @@ test('outside selections refresh the readout, and keys survive redraws, gaps in 
   assert.equal(c.selection.group('trace').get(), 'b2', 'the selection is kept by key while its point is absent');
   assert.equal(c.mark('b2').getAttribute(GROUP), 'trace');
 
-  c.host.all().find((el) => el.classList.contains('df-chart-toggle')).dispatchEvent(new Event('click'));
+  c.host.all().find((el) => el.classList.contains('op-chart-toggle')).dispatchEvent(new Event('click'));
   const cells = c.host.all().filter((el) => el.tag === 'td' && el.getAttribute(KEY));
   assert.deepEqual(cells.map((el) => el.getAttribute(KEY)), ['a1', 'b1', 'a2', 'b2']);
   assert.ok(cells.every((el) => el.getAttribute(GROUP) === 'trace'));
@@ -1383,7 +1383,7 @@ test('bars and scatter points are keyed, and charts without a group keep one rea
 
   const legacy = draw(Object.assign({}, shared, { selectionGroup: undefined }));
   assert.equal(legacy.marks().length, 0);
-  const dot = legacy.host.all().find((el) => el.classList.contains('df-chart-dot'));
+  const dot = legacy.host.all().find((el) => el.classList.contains('op-chart-dot'));
   assert.equal(legacy.point(dot, 'click').defaultPrevented, false);
   assert.deepEqual(legacy.sets, []);
   legacy.fire('keydown', { key: 'Home' });
@@ -1410,14 +1410,14 @@ test('a time axis draws UTC ticks and a zoned title, and readouts and the table 
     series: [{ name: 'Rows', data: [['2026-11-16T17:02:00-05:00', 14], ['2026-11-17T00:40:00Z', null], ['2026-11-17T01:10:00Z', 9]] }]
   });
   const texts = (cls) => c.host.all().filter((el) => el.classList.contains(cls)).map((el) => el.textContent);
-  assert.ok(texts('df-chart-tick').includes('Nov 17'));
-  assert.ok(texts('df-chart-label').includes('Arrival (UTC)'));
+  assert.ok(texts('op-chart-tick').includes('Nov 17'));
+  assert.ok(texts('op-chart-label').includes('Arrival (UTC)'));
   assert.match(c.plot.getAttribute('aria-label'), /Times are in UTC/);
   c.fire('keydown', { key: 'Home' });
   assert.match(c.tip().textContent, /^Arrival 2026-11-16 22:02 UTC14/);
   c.fire('keydown', { key: 'ArrowRight' });
   assert.match(c.tip().textContent, /^Arrival 2026-11-17 00:40 UTCNo data/);
-  c.host.all().find((el) => el.classList.contains('df-chart-toggle')).dispatchEvent(new Event('click'));
+  c.host.all().find((el) => el.classList.contains('op-chart-toggle')).dispatchEvent(new Event('click'));
   const heads = c.host.all().filter((el) => el.tag === 'th').map((el) => el.textContent);
   assert.deepEqual(heads, ['Arrival', 'Rows', '2026-11-16 22:02 UTC', '2026-11-17 00:40 UTC', '2026-11-17 01:10 UTC']);
 });
@@ -1432,10 +1432,10 @@ test('log axes draw decade ticks and original readouts; invalid data is not draw
   };
   const c = draw(sweep);
   const texts = (cls) => c.host.all().filter((el) => el.classList.contains(cls)).map((el) => el.textContent);
-  assert.deepEqual(texts('df-chart-tick').slice(-4), ['0.00001', '0.0001', '0.001', '0.01']);
-  const dots = c.host.all().filter((el) => el.classList.contains('df-chart-dot')).map((el) => +el.getAttribute('cx'));
+  assert.deepEqual(texts('op-chart-tick').slice(-4), ['0.00001', '0.0001', '0.001', '0.01']);
+  const dots = c.host.all().filter((el) => el.classList.contains('op-chart-dot')).map((el) => +el.getAttribute('cx'));
   assert.ok(Math.abs((dots[1] - dots[0]) - (dots[3] - dots[2])) < 1e-6, 'decades are evenly spaced');
-  assert.deepEqual(texts('df-chart-ref-label'), ['Uniform guess']);
+  assert.deepEqual(texts('op-chart-ref-label'), ['Uniform guess']);
   assert.match(c.plot.getAttribute('aria-label'), /x and y axes use a log scale/);
   c.fire('keydown', { key: 'Home' });
   assert.match(c.tip().textContent, /^Learning rate 0\.000011\.73/);
@@ -1451,12 +1451,12 @@ test('log axes draw decade ticks and original readouts; invalid data is not draw
   const fallback = host.appendChild(new Node('table'));
   assert.equal(env.chart(host, Object.assign({}, sweep, { y: { type: 'log', min: 0 } })), null);
   assert.deepEqual(host.children, [fallback], 'the authored content stays as it was');
-  assert.equal(host.classList.contains('df-chart'), false);
+  assert.equal(host.classList.contains('op-chart'), false);
   assert.match(env.warnings.pop(), /^Chart not drawn.*min must be a positive number/);
 });
 
 const byClass = (c, cls) => c.host.all().filter((el) => el.classList.contains(cls));
-const legendButton = (c, name) => byClass(c, 'df-chart-series-toggle').find((el) => el.textContent === name);
+const legendButton = (c, name) => byClass(c, 'op-chart-series-toggle').find((el) => el.textContent === name);
 const legendInput = (chip) => chip.children.find((el) => el.tag === 'input');
 // A legend chip is a checkbox inside its label: a press flips the box and reports the change.
 const toggleLegend = (chip) => {
@@ -1464,7 +1464,7 @@ const toggleLegend = (chip) => {
   input.checked = !input.checked;
   input.dispatchEvent(new Event('change'));
 };
-const dotsOf = (c) => byClass(c, 'df-chart-dot');
+const dotsOf = (c) => byClass(c, 'op-chart-dot');
 const click = (el) => el.dispatchEvent(new Event('click'));
 
 test('legend chips hide series from the plot, readout, and table; rescale is opt-in; all hidden shows a message', () => {
@@ -1485,9 +1485,9 @@ test('legend chips hide series from the plot, readout, and table; rescale is opt
   assert.doesNotMatch(c.tip().textContent, /High/);
   assert.equal(c.api.visible('High'), false);
 
-  click(byClass(c, 'df-chart-toggle')[0]);
+  click(byClass(c, 'op-chart-toggle')[0]);
   assert.deepEqual(c.host.all().filter((el) => el.tag === 'th').map((el) => el.textContent).slice(0, 3), ['', 'Low', 'Mid']);
-  click(byClass(c, 'df-chart-toggle')[0]);
+  click(byClass(c, 'op-chart-toggle')[0]);
 
   const fitted = draw(Object.assign({ rescale: true }, spec));
   const fittedLow = () => dotsOf(fitted)[0].getAttribute('cy');
@@ -1497,7 +1497,7 @@ test('legend chips hide series from the plot, readout, and table; rescale is opt
 
   c.api.visible('Low', false);
   c.api.visible('Mid', false);
-  const empty = byClass(c, 'df-chart-empty')[0];
+  const empty = byClass(c, 'op-chart-empty')[0];
   assert.equal(empty.hidden, false);
   assert.match(empty.textContent, /Every series is hidden/);
   assert.equal(c.fire('keydown', { key: 'Home' }).defaultPrevented, false, 'nothing to read');
@@ -1531,7 +1531,7 @@ test('legend transitions retarget surviving bars and remove departing bars after
   ] };
   const clock = legendClock();
   const c = draw(spec, clock);
-  const bars = () => byClass(c, 'df-chart-bar');
+  const bars = () => byClass(c, 'op-chart-bar');
   const first = () => bars().at(-1).getAttribute('d');
   const before = bars()[0].getAttribute('d');
   toggleLegend(legendButton(c, 'Second'));
@@ -1556,7 +1556,7 @@ test('legend transitions retarget surviving bars and remove departing bars after
   const still = legendClock(true);
   const reduced = draw(spec, still);
   toggleLegend(legendButton(reduced, 'Second'));
-  assert.equal(byClass(reduced, 'df-chart-bar').length, 1);
+  assert.equal(byClass(reduced, 'op-chart-bar').length, 1);
   assert.equal(still.frames.size, 0);
 });
 
@@ -1568,8 +1568,8 @@ test('pie slices interpolate their angles and update the visible shares, with st
   const c = draw(spec, clock);
   c.fire('pointermove', { clientX: 200, clientY: 50 });
   assert.match(c.tip().textContent, /North.*75%/);
-  const pathOf = () => byClass(c, 'df-chart-slice').at(-1).getAttribute('d');
-  const north = byClass(c, 'df-chart-slice')[0].getAttribute('d');
+  const pathOf = () => byClass(c, 'op-chart-slice').at(-1).getAttribute('d');
+  const north = byClass(c, 'op-chart-slice')[0].getAttribute('d');
   toggleLegend(legendButton(c, 'South'));
   assert.equal(pathOf(), north);
   clock.tick(0);
@@ -1578,11 +1578,11 @@ test('pie slices interpolate their angles and update the visible shares, with st
   assert.notEqual(middle, north);
   clock.tick(240);
   assert.notEqual(pathOf(), middle);
-  assert.equal(byClass(c, 'df-chart-slice').length, 1);
+  assert.equal(byClass(c, 'op-chart-slice').length, 1);
   c.fire('keydown', { key: 'Home' });
   assert.match(c.tip().textContent, /North.*100%/);
-  click(byClass(c, 'df-chart-toggle')[0]);
-  const table = byClass(c, 'df-chart-table')[0];
+  click(byClass(c, 'op-chart-toggle')[0]);
+  const table = byClass(c, 'op-chart-table')[0];
   assert.match(table.textContent, /North3100%/);
   assert.doesNotMatch(table.textContent, /South/);
   assert.ok(c.api.update({ ...spec, data: [{ label: 'South updated', key: 's', value: 4 }] }));
@@ -1594,25 +1594,25 @@ test('pie markup and mapped sources both use slice labels and opt-in legend cont
   const authored = new Node('div');
   const mapped = new Node('div');
   mapped.id = 'mapped-pie';
-  mapped.setAttribute('data-df-source', 'counts');
-  for (const host of [authored, mapped]) host.setAttribute('data-df-chart', 'pie');
-  authored.setAttribute('data-df-toggles', '');
+  mapped.setAttribute('data-op-source', 'counts');
+  for (const host of [authored, mapped]) host.setAttribute('data-op-chart', 'pie');
+  authored.setAttribute('data-op-toggles', '');
   const table = new Node('table');
   for (const values of [['Region', 'Count'], ['West', '1'], ['East', '3']]) {
     const row = table.insertRow();
     values.forEach((value) => { row.insertCell().textContent = value; });
   }
   authored.appendChild(table);
-  const env = setup({ modules: ['data'], enhance(df, document, boot) {
-    df.data.define('counts', { type: 'csv', text: 'area,count,code\nWest,1,w\nEast,3,e' });
+  const env = setup({ modules: ['data'], enhance(op, document, boot) {
+    op.data.define('counts', { type: 'csv', text: 'area,count,code\nWest,1,w\nEast,3,e' });
     boot.optionLayers = (feature, id) => feature === 'chart' && id === mapped.id ? [{
       mapping: { x: 'area', series: [{ field: 'count', key: 'count', label: 'Count' }], pointKey: 'code' }
     }] : [];
     document.body.appendChild(authored);
     document.body.appendChild(mapped);
   } });
-  assert.equal(byClass({ host: authored }, 'df-chart-series-toggle').length, 2);
-  assert.equal(byClass({ host: mapped }, 'df-chart-series-toggle').length, 0);
+  assert.equal(byClass({ host: authored }, 'op-chart-series-toggle').length, 2);
+  assert.equal(byClass({ host: mapped }, 'op-chart-series-toggle').length, 0);
   assert.deepEqual(Array.from(env.chart.get(mapped).model().series, (s) => [s.key, s.name]), [['w', 'West'], ['e', 'East']]);
   assert.equal(env.chart.get(mapped).model().y.label, 'Count');
 });
@@ -1647,9 +1647,9 @@ test('dragging narrows a time axis, readouts and the table follow, and Reset res
   const range = c.api.range();
   assert.ok(Math.abs(range[0] - (t0 + hour)) < 1 && Math.abs(range[1] - (t0 + 4 * hour)) < 1);
   assert.equal(c.selection.group('ops').get(), null, 'a drag selects nothing');
-  assert.equal(byClass(c, 'df-chart-reset')[0].hidden, false);
-  assert.match(byClass(c, 'df-chart-range')[0].textContent, /^Time 2026-11-10 01:00 – 2026-11-10 04:00 UTC$/);
-  assert.equal(byClass(c, 'df-chart-ref-note')[0].textContent, 'outside range');
+  assert.equal(byClass(c, 'op-chart-reset')[0].hidden, false);
+  assert.match(byClass(c, 'op-chart-range')[0].textContent, /^Time 2026-11-10 01:00 – 2026-11-10 04:00 UTC$/);
+  assert.equal(byClass(c, 'op-chart-ref-note')[0].textContent, 'outside range');
   assert.ok(c.host.all().some((el) => el.tag === 'clipPath'));
 
   c.fire('keydown', { key: 'Home' });
@@ -1657,15 +1657,15 @@ test('dragging narrows a time axis, readouts and the table follow, and Reset res
   c.fire('keydown', { key: 'ArrowRight' });
   assert.match(c.tip().textContent, /02:00 UTCNo data/);
 
-  click(byClass(c, 'df-chart-toggle')[0]);
+  click(byClass(c, 'op-chart-toggle')[0]);
   const rows = c.host.all().filter((el) => el.tag === 'th' && el.getAttribute('scope') === 'row').map((el) => el.textContent);
   assert.deepEqual(rows, ['2026-11-10 01:00 UTC', '2026-11-10 02:00 UTC', '2026-11-10 03:00 UTC', '2026-11-10 04:00 UTC']);
-  click(byClass(c, 'df-chart-toggle')[0]);
+  click(byClass(c, 'op-chart-toggle')[0]);
 
-  click(byClass(c, 'df-chart-reset')[0]);
+  click(byClass(c, 'op-chart-reset')[0]);
   assert.equal(c.api.range(), null);
-  assert.equal(byClass(c, 'df-chart-reset')[0].hidden, true);
-  assert.equal(byClass(c, 'df-chart-ref-note')[0].textContent, '');
+  assert.equal(byClass(c, 'op-chart-reset')[0].hidden, true);
+  assert.equal(byClass(c, 'op-chart-ref-note')[0].textContent, '');
 
   const tiny = dotsOf(c)[0];
   c.fire('pointerdown', { button: 0, clientX: +tiny.getAttribute('cx') + 10, clientY: +tiny.getAttribute('cy') });
@@ -1744,7 +1744,7 @@ test('coords reads the data under a viewport point of the drawn plot, following 
   c.api.range([t0 + 3 * hour, t0 + 5 * hour]);
   const narrowed = c.mark('spike');
   assert.equal(c.api.coords(+narrowed.getAttribute('cx'), +narrowed.getAttribute('cy')).xText, '2026-11-10 04:00 UTC');
-  click(byClass(c, 'df-chart-toggle')[0]);
+  click(byClass(c, 'op-chart-toggle')[0]);
   assert.equal(c.api.coords(hit.plot.left + 1, hit.plot.top + 1), null, 'nothing to read while the table shows');
 });
 
@@ -1752,31 +1752,31 @@ test('a chart, stepper and passive markup follow the same seeded group without b
   let chartHost, list, row, companion;
   const { selection } = setup({
     groups: { trace: { initial: 'b1' } },
-    enhance(DF, document, boot) {
+    enhance(OP, document, boot) {
       const add = (parent, tag, attrs = {}, value = '') => {
         const el = parent.appendChild(new Node(tag));
         for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
         el.textContent = value;
         return el;
       };
-      chartHost = add(document.body, 'div', { 'data-df-chart': '' });
+      chartHost = add(document.body, 'div', { 'data-op-chart': '' });
       add(chartHost, 'script', { type: 'application/json' }, JSON.stringify(shared));
-      list = add(document.body, 'ol', { 'data-df-stepper': '', [GROUP]: 'trace' });
+      list = add(document.body, 'ol', { 'data-op-stepper': '', [GROUP]: 'trace' });
       list.id = 'timeline';
       for (const key of ['a1', 'b1', 'a2']) {
-        add(add(list, 'li', { [KEY]: key }), 'strong', { 'data-df-step-label': '' }, key);
+        add(add(list, 'li', { [KEY]: key }), 'strong', { 'data-op-step-label': '' }, key);
       }
       row = add(document.body, 'p', { [GROUP]: 'trace', [KEY]: 'b1' });
-      companion = add(document.body, 'p', { 'data-df-stepper-view': 'timeline', [KEY]: 'a2' });
+      companion = add(document.body, 'p', { 'data-op-stepper-view': 'timeline', [KEY]: 'a2' });
       boot.prepareSelection();
       const commits = [];
-      document.addEventListener('df:selection:change', ({ detail }) => {
+      document.addEventListener('op:selection:change', ({ detail }) => {
         const key = detail.current.key;
-        const step = DF.sequence.get(list).snapshot().key;
+        const step = OP.sequence.get(list).snapshot().key;
         commits.push(key);
         assert.equal(step, key === null || key === 'unmatched' ? 'a2' : key);
-        assert.equal(row.hasAttribute('data-df-selection-active'), key === 'b1');
-        const active = chartHost.all().filter(el => el.hasAttribute('data-df-selection-active'));
+        assert.equal(row.hasAttribute('data-op-selection-active'), key === 'b1');
+        const active = chartHost.all().filter(el => el.hasAttribute('data-op-selection-active'));
         assert.equal(active.length > 0, key !== null && key !== 'unmatched');
       });
       list.commits = commits;
@@ -1786,7 +1786,7 @@ test('a chart, stepper and passive markup follow the same seeded group without b
   assert.deepEqual(list.commits, ['b1']);
   assert.equal(list.children[1].getAttribute('aria-current'), 'step');
   assert.equal(companion.hasAttribute('hidden'), true);
-  const plot = chartHost.all().find(el => el.classList.contains('df-chart-plot'));
+  const plot = chartHost.all().find(el => el.classList.contains('op-chart-plot'));
   const point = chartHost.all().find(el => el.tag === 'circle' && el.getAttribute(KEY) === 'a1');
   const click = Object.assign(new Event('click', { cancelable: true }), {
     button: 0, clientX: Number(point.getAttribute('cx')), clientY: Number(point.getAttribute('cy'))
@@ -1795,7 +1795,7 @@ test('a chart, stepper and passive markup follow the same seeded group without b
   assert.equal(click.defaultPrevented, true);
   assert.equal(group.get(), 'a1');
   assert.equal(list.children[0].getAttribute('aria-current'), 'step');
-  const next = list.parentNode.children.find(el => el.classList.contains('df-stepper-controls')).children[3];
+  const next = list.parentNode.children.find(el => el.classList.contains('op-stepper-controls')).children[3];
   next.dispatchEvent(new Event('click'));
   next.dispatchEvent(new Event('click'));
   assert.equal(group.get(), 'a2');
@@ -1809,24 +1809,24 @@ test('tabs synchronize different labels and orders by key, with local follow-onl
   let tabs, first, second;
   const { selection } = setup({
     groups: { languages: { initial: 'js' } },
-    enhance(DF, document) {
-      tabs = DF._tabs;
+    enhance(OP, document) {
+      tabs = OP._tabs;
       const tabSet = (labels, follow = false) => {
         const host = document.body.appendChild(new Node('div'));
-        host.setAttribute('data-df-tabs', '');
+        host.setAttribute('data-op-tabs', '');
         host.setAttribute(GROUP, 'languages');
-        if (follow) host.setAttribute('data-df-selection-mode', 'follow');
+        if (follow) host.setAttribute('data-op-selection-mode', 'follow');
         labels.forEach(([key, label]) => {
           const panel = host.appendChild(new Node('div'));
           panel.setAttribute(KEY, key);
-          panel.setAttribute('data-df-tab', label);
+          panel.setAttribute('data-op-tab', label);
         });
         return host;
       };
       first = tabSet([['python', 'Python'], ['js', 'JavaScript']]);
       second = tabSet([['js', 'JS'], ['python', 'Python 3']], true);
-      DF._all = (selector, scope = document.body) => {
-        if (selector === '.df-tabs, [data-df-tabs]') return [first, second];
+      OP._all = (selector, scope = document.body) => {
+        if (selector === '.op-tabs, [data-op-tabs]') return [first, second];
         return scope.querySelectorAll(selector);
       };
     }
@@ -1862,8 +1862,8 @@ function entranceClock(reduced = false) {
 }
 
 const barSpec = { type: 'bar', series: [{ name: 'Runs', data: [{ x: 'a', y: 2, key: 'a' }, { x: 'b', y: 6, key: 'b' }] }] };
-const awaiting = (c) => c.host.classList.contains('df-chart-await');
-const barOf = (c, x) => byClass(c, 'df-chart-bar').find((el) => el.getAttribute('data-df-x') === x && !el.parentNode.getAttribute('pointer-events'));
+const awaiting = (c) => c.host.classList.contains('op-chart-await');
+const barOf = (c, x) => byClass(c, 'op-chart-bar').find((el) => el.getAttribute('data-op-x') === x && !el.parentNode.getAttribute('pointer-events'));
 const barD = (c, x) => barOf(c, x).getAttribute('d');
 
 test('the entrance waits until the chart scrolls into view, grows bars and draws lines once, then stays put', () => {
@@ -1888,7 +1888,7 @@ test('the entrance waits until the chart scrolls into view, grows bars and draws
   const lineClock = entranceClock();
   const line = draw({ series: [{ name: 'Loss', data: [[0, 3], [1, 2], [2, 1]] }] }, lineClock);
   lineClock.scrollTo(line.host);
-  const path = byClass(line, 'df-chart-line')[0];
+  const path = byClass(line, 'op-chart-line')[0];
   assert.equal(path.getAttribute('pathLength'), '1');
   assert.equal(path.getAttribute('stroke-dashoffset'), '1', 'the line starts undrawn');
   assert.equal(dotsOf(line)[0].getAttribute('r'), '0', 'dots pop in from nothing');
@@ -1898,18 +1898,18 @@ test('the entrance waits until the chart scrolls into view, grows bars and draws
   assert.equal(dotsOf(line)[0].getAttribute('r'), '4');
 });
 
-test('data-df-animate="false", motion: false, and reduced motion draw in place without waiting or tweening', () => {
+test('data-op-animate="false", motion: false, and reduced motion draw in place without waiting or tweening', () => {
   const clock = entranceClock();
   const env = setup(clock);
   const host = new Node('div');
-  host.setAttribute('data-df-animate', 'false');
+  host.setAttribute('data-op-animate', 'false');
   env.document.body.appendChild(host);
   const api = env.chart(host, barSpec);
-  assert.ok(!host.classList.contains('df-chart-await'));
+  assert.ok(!host.classList.contains('op-chart-await'));
   assert.equal(api.model().motion, false);
   api.update({ ...barSpec, series: [{ name: 'Runs', data: [{ x: 'a', y: 9, key: 'a' }] }] });
   assert.equal(clock.frames.size, 0);
-  assert.equal(host.all().filter((el) => el.classList.contains('df-chart-bar')).length, 1, 'no departing bar lingers');
+  assert.equal(host.all().filter((el) => el.classList.contains('op-chart-bar')).length, 1, 'no departing bar lingers');
 
   const spec = draw({ ...barSpec, motion: false }, entranceClock());
   assert.ok(!awaiting(spec));
@@ -1930,15 +1930,15 @@ test('data updates tween each keyed bar from where it was drawn, fade new bars i
   assert.ok(c.api.update(next));
   assert.equal(barD(c, 'b'), oldB, 'b starts where it was, though it moved to the first category');
   assert.equal(barOf(c, 'c').getAttribute('opacity'), '0');
-  const leaving = byClass(c, 'df-chart-bar').filter((el) => el.parentNode.getAttribute('pointer-events') === 'none');
-  assert.deepEqual(leaving.map((el) => el.getAttribute('data-df-x')), ['a']);
+  const leaving = byClass(c, 'op-chart-bar').filter((el) => el.parentNode.getAttribute('pointer-events') === 'none');
+  assert.deepEqual(leaving.map((el) => el.getAttribute('data-op-x')), ['a']);
   assert.equal(leaving[0].getAttribute(KEY), null, 'departing marks leave the selection group');
   clock.tick(0);
   clock.tick(120);
   assert.notEqual(barD(c, 'b'), oldB);
   clock.tick(240);
   assert.equal(barOf(c, 'c').getAttribute('opacity'), null);
-  assert.deepEqual(byClass(c, 'df-chart-bar').map((el) => el.getAttribute('data-df-x')), ['b', 'c']);
+  assert.deepEqual(byClass(c, 'op-chart-bar').map((el) => el.getAttribute('data-op-x')), ['b', 'c']);
   const settled = barD(c, 'b');
   c.api.update(next);
   assert.equal(clock.frames.size, 0, 'an unchanged redraw has nothing to move');
@@ -1951,27 +1951,27 @@ test('add-on types draw through the core with their own description, legend, rea
     base: 'bar',
     legend: 'note',
     describe: (model) => 'Lollipop chart of ' + model.series.length + ' series.',
-    readout(chart, spot, tip, kit) { kit.html('div', 'df-chart-tip-head', tip, 'Lollipop ' + spot.x); },
+    readout(chart, spot, tip, kit) { kit.html('div', 'op-chart-tip-head', tip, 'Lollipop ' + spot.x); },
     table(model, kit) {
       const table = kit.html('table');
       model.series[0].points.forEach((p) => kit.html('td', '', kit.html('tr', '', table), p.x + '=' + p.y));
       return table;
     }
   };
-  assert.ok(env.DocForm.chart.addon('test-lollipops', { types: { lollipop }, legends: {
-    note(chart, legend, kit) { kit.html('span', 'df-test-note', legend, 'stems'); }
+  assert.ok(env.OffPrint.chart.addon('test-lollipops', { types: { lollipop }, legends: {
+    note(chart, legend, kit) { kit.html('span', 'op-test-note', legend, 'stems'); }
   } }));
   const host = new Node('div');
   env.document.body.appendChild(host);
   env.chart(host, { type: 'lollipop', series: [{ data: [['a', 1], ['b', 3]] }] });
   assert.ok(host.classList.contains('is-bar') && host.classList.contains('is-lollipop'));
-  const plot = host.querySelector('.df-chart-plot');
+  const plot = host.querySelector('.op-chart-plot');
   assert.match(plot.getAttribute('aria-label'), /^Lollipop chart of 1 series\./);
-  assert.equal(host.querySelector('.df-test-note').textContent, 'stems');
+  assert.equal(host.querySelector('.op-test-note').textContent, 'stems');
   plot.dispatchEvent(Object.assign(new Event('keydown'), { key: 'End' }));
-  assert.equal(host.querySelector('.df-chart-tip').textContent, 'Lollipop b');
-  host.querySelector('.df-chart-toggle').dispatchEvent(new Event('click'));
-  assert.equal(host.querySelector('.df-chart-table').textContent, 'a=1b=3');
+  assert.equal(host.querySelector('.op-chart-tip').textContent, 'Lollipop b');
+  host.querySelector('.op-chart-toggle').dispatchEvent(new Event('click'));
+  assert.equal(host.querySelector('.op-chart-table').textContent, 'a=1b=3');
   env.chart(host, { type: 'bar', data: [1] });
   assert.ok(!host.classList.contains('is-lollipop'));
 });
@@ -1992,10 +1992,10 @@ test('horizontal bars list categories down the left with wrapped labels and read
   assert.ok(Math.min(...ysOf(b)) > Math.max(...ysOf(a)), 'categories run down in order');
   assert.ok(Math.max(...xsOf(b)) > Math.max(...xsOf(a)) && Math.min(...xsOf(a)) === Math.min(...xsOf(b)),
     'values grow across from one baseline');
-  const labels = byClass(c, 'df-chart-category');
+  const labels = byClass(c, 'op-chart-category');
   assert.ok(labels[0].children.filter((el) => el.tag === 'tspan').length > 1, 'the long label wraps');
   assert.ok(Math.max(...labels[0].children.map((el) => el.textContent.length)) < long.length);
-  const [value, category] = byClass(c, 'df-chart-ref');
+  const [value, category] = byClass(c, 'op-chart-ref');
   assert.equal(value.getAttribute('x1'), value.getAttribute('x2'), 'value guides cross the plot vertically');
   assert.equal(category.getAttribute('y1'), category.getAttribute('y2'), 'category guides run across');
 
@@ -2021,9 +2021,9 @@ test('stacked bars restack after legend toggles while the readout and table foll
   assert.match(c.plot.getAttribute('aria-label'), /^100% stacked bar chart of A, B\./);
   c.fire('keydown', { key: 'Home' });
   assert.match(c.tip().textContent, /1 · 25%A3 · 75%B4Total/);
-  const before = byClass(c, 'df-chart-series')[1].children[0].getAttribute('d');
+  const before = byClass(c, 'op-chart-series')[1].children[0].getAttribute('d');
   toggleLegend(legendButton(c, 'A'));
-  const series = byClass(c, 'df-chart-series').filter((g) => !g.getAttribute('pointer-events'));
+  const series = byClass(c, 'op-chart-series').filter((g) => !g.getAttribute('pointer-events'));
   assert.equal(series.length, 1);
   const moving = series[0].children[0];
   const round = (d) => nums(d).map((v) => +v.toFixed(3));
@@ -2038,8 +2038,8 @@ test('stacked bars restack after legend toggles while the readout and table foll
   c.fire('keydown', { key: 'Home' });
   assert.match(c.tip().textContent, /3 · 100%B/);
   assert.doesNotMatch(c.tip().textContent, /Total/, 'one series has no total');
-  click(c.host.querySelector('.df-chart-toggle'));
-  const table = c.host.querySelector('.df-chart-table').textContent;
+  click(c.host.querySelector('.op-chart-toggle'));
+  const table = c.host.querySelector('.op-chart-table').textContent;
   assert.match(table, /BTotalx3 \(100%\)3y1 \(100%\)1/);
   assert.doesNotMatch(table, /A/);
 });
@@ -2057,7 +2057,7 @@ test('switching orientation or stacking morphs keyed bars in place and keeps the
   const upright = c.mark('b').getAttribute('d');
   assert.ok(c.api.update({ ...spec, orientation: 'horizontal' }));
   assert.equal(c.mark('b').getAttribute('d'), upright, 'the bar starts upright');
-  assert.equal(c.host.all().filter((el) => el.classList.contains('df-chart-bar')).length, 4, 'no cross-fade copies');
+  assert.equal(c.host.all().filter((el) => el.classList.contains('op-chart-bar')).length, 4, 'no cross-fade copies');
   clock.tick(0);
   clock.tick(120);
   const turning = c.mark('b').getAttribute('d');
@@ -2066,7 +2066,7 @@ test('switching orientation or stacking morphs keyed bars in place and keeps the
   clock.tick(400);
   const flat = c.mark('b').getAttribute('d');
   assert.ok(Math.max(...xsOf(flat)) - Math.min(...xsOf(flat)) > Math.max(...ysOf(flat)) - Math.min(...ysOf(flat)));
-  assert.ok(c.mark('a').hasAttribute('data-df-selection-active'), 'the selection survives the switch');
+  assert.ok(c.mark('a').hasAttribute('data-op-selection-active'), 'the selection survives the switch');
 
   assert.ok(c.api.update({ ...spec, orientation: 'horizontal', stack: 'stacked' }));
   clock.tick(0);
@@ -2074,17 +2074,17 @@ test('switching orientation or stacking morphs keyed bars in place and keeps the
   const runs = xsOf(c.mark('b').getAttribute('d'));
   const cost = xsOf(c.mark('cb').getAttribute('d'));
   assert.equal(Math.min(...cost), Math.max(...runs), 'Cost starts where Runs ends');
-  assert.ok(c.mark('a').hasAttribute('data-df-selection-active'));
+  assert.ok(c.mark('a').hasAttribute('data-op-selection-active'));
   assert.equal(c.api.update({ ...spec, stack: 'percent', series: [{ name: 'Net', data: [['a', -1]] }] }), false);
   assert.equal(c.mark('b').getAttribute('d') !== null, true, 'a rejected update keeps the chart');
 });
 
-test('data-df-orientation and data-df-stack lay out bars from markup and leave the source table for a generated one', () => {
+test('data-op-orientation and data-op-stack lay out bars from markup and leave the source table for a generated one', () => {
   const env = setup();
   const host = env.document.body.appendChild(new Node('div'));
-  host.setAttribute('data-df-chart', 'bar');
-  host.setAttribute('data-df-orientation', 'horizontal');
-  host.setAttribute('data-df-stack', 'stacked');
+  host.setAttribute('data-op-chart', 'bar');
+  host.setAttribute('data-op-orientation', 'horizontal');
+  host.setAttribute('data-op-stack', 'stacked');
   const table = host.appendChild(new Node('table'));
   [['Run', 'Train', 'Eval'], ['a', '2', '1'], ['b', '3', '4']].forEach((cells) => {
     const tr = table.appendChild(new Node('tr'));
@@ -2092,8 +2092,8 @@ test('data-df-orientation and data-df-stack lay out bars from markup and leave t
   });
   const api = env.chart.mount(host);
   assert.deepEqual([api.model().orientation, api.model().stack], ['horizontal', 'stacked']);
-  host.querySelector('.df-chart-toggle').dispatchEvent(new Event('click'));
-  assert.equal(host.querySelector('.df-chart-table').textContent, 'RunTrainEvalTotala213b347');
+  host.querySelector('.op-chart-toggle').dispatchEvent(new Event('click'));
+  assert.equal(host.querySelector('.op-chart-table').textContent, 'RunTrainEvalTotala213b347');
 });
 
 test('interval plots dodge, draw bounds and references in both orientations, and keep selection through tweens', () => {
@@ -2110,13 +2110,13 @@ test('interval plots dodge, draw bounds and references in both orientations, and
   assert.match(c.plot.getAttribute('aria-label'), /^Horizontal lollipop plot/);
   assert.equal(at('b', 'cx'), at('b-follow', 'cx'));
   assert.ok(at('b', 'cy') < at('b-follow', 'cy') && at('b-follow', 'cy') < at('a', 'cy'));
-  const bound = () => byClass(c, 'df-chart-whisker')[0].getAttribute('d');
+  const bound = () => byClass(c, 'op-chart-whisker')[0].getAttribute('d');
   const horizontal = bound();
   const [lowerX, lowerY, upperX, upperY] = nums(horizontal);
   assert.equal(lowerY, upperY);
   assert.ok(lowerX < at('b', 'cx') && upperX > at('b', 'cx'));
-  assert.equal(byClass(c, 'df-chart-interval-stem').length, 3);
-  const valueRef = () => byClass(c, 'df-chart-ref')[0];
+  assert.equal(byClass(c, 'op-chart-interval-stem').length, 3);
+  const valueRef = () => byClass(c, 'op-chart-ref')[0];
   assert.equal(valueRef().getAttribute('x1'), valueRef().getAttribute('x2'));
   c.point(c.mark('b'), 'pointermove');
   assert.match(c.tip().textContent, /Bravo.*Example bounds \[7, 9\] \(n = 12\)/);
@@ -2133,7 +2133,7 @@ test('interval plots dodge, draw bounds and references in both orientations, and
   assert.equal(at('b', 'cy'), at('b-follow', 'cy'));
   assert.ok(at('b', 'cx') < at('b-follow', 'cx') && at('b-follow', 'cx') < at('a', 'cx'));
   assert.equal(valueRef().getAttribute('y1'), valueRef().getAttribute('y2'));
-  assert.ok(c.mark('b').hasAttribute('data-df-selection-active'));
+  assert.ok(c.mark('b').hasAttribute('data-op-selection-active'));
   const before = at('b', 'cx');
   toggleLegend(legendButton(c, 'Follow-up'));
   assert.equal(at('b', 'cx'), before);
@@ -2141,18 +2141,18 @@ test('interval plots dodge, draw bounds and references in both orientations, and
   clock.tick(800);
   assert.ok(at('b', 'cx') > before, 'the remaining series recentres');
   assert.equal(c.mark('b-follow'), undefined);
-  click(c.host.querySelector('.df-chart-toggle'));
-  const table = c.host.querySelector('.df-chart-table');
+  click(c.host.querySelector('.op-chart-toggle'));
+  const table = c.host.querySelector('.op-chart-table');
   assert.deepEqual(table.querySelectorAll('tr').map((row) => row.textContent), [
     'GroupBaseline', 'Bravo8Example bounds [7, 9] (n = 12)', 'Alpha3'
   ]);
-  assert.ok(table.querySelector('[data-df-key="b"]').hasAttribute('data-df-selection-active'));
+  assert.ok(table.querySelector('[data-op-key="b"]').hasAttribute('data-op-selection-active'));
 });
 
 test('interval markup ranks the interactive table while retaining the authored fallback', () => {
   const env = setup({ modules: ['chart-intervals'] });
   const host = env.document.body.appendChild(new Node('div'));
-  host.setAttribute('data-df-chart', 'interval');
+  host.setAttribute('data-op-chart', 'interval');
   const table = host.appendChild(new Node('table'));
   [['Group', 'Score'], ['Alpha', '2'], ['Bravo', '4']].forEach((cells) => {
     const tr = table.appendChild(new Node('tr'));
@@ -2160,17 +2160,17 @@ test('interval markup ranks the interactive table while retaining the authored f
   });
   const api = env.chart.mount(host);
   assert.equal(api.model().intervalMark, 'dot');
-  assert.equal(host.querySelectorAll('.df-chart-dot').length, 2);
-  assert.equal(host.querySelectorAll('.df-chart-interval-stem').length, 0);
-  click(host.querySelector('.df-chart-toggle'));
-  assert.equal(host.querySelector('.df-chart-table').textContent, 'GroupScoreBravo4Alpha2');
+  assert.equal(host.querySelectorAll('.op-chart-dot').length, 2);
+  assert.equal(host.querySelectorAll('.op-chart-interval-stem').length, 0);
+  click(host.querySelector('.op-chart-toggle'));
+  assert.equal(host.querySelector('.op-chart-table').textContent, 'GroupScoreBravo4Alpha2');
   assert.equal(table.textContent, 'GroupScoreAlpha2Bravo4');
 });
 
 test('log histogram renders zero bins empty and reads them by their actual edges in the plot and table', () => {
   const c = draw({ type: 'histogram', x: { type: 'log' }, y: { type: 'log' },
     edges: [1, 2, 100, 1000], counts: [2, 0, 4] }, { modules: ['chart-histogram', 'data'] });
-  const [first, zero, last] = byClass(c, 'df-chart-histogram-bar');
+  const [first, zero, last] = byClass(c, 'op-chart-histogram-bar');
   assert.equal(Number(zero.getAttribute('height')), 0);
   assert.ok(Number(first.getAttribute('height')) > 0 && Number(last.getAttribute('height')) > 0);
   const x = Number(zero.getAttribute('x')) + 2;
@@ -2178,12 +2178,12 @@ test('log histogram renders zero bins empty and reads them by their actual edges
   c.fire('pointermove', { clientX: x, clientY: y });
   assert.equal(c.tip().textContent, '[2, 100)0', 'the pointer enters the bin at its edge even far from its midpoint');
   assert.ok(c.api.coords(x, y).y > 0);
-  click(c.host.querySelector('.df-chart-toggle'));
-  assert.deepEqual(c.host.querySelector('.df-chart-table').querySelectorAll('tr').map((row) => row.textContent),
+  click(c.host.querySelector('.op-chart-toggle'));
+  assert.deepEqual(c.host.querySelector('.op-chart-table').querySelectorAll('tr').map((row) => row.textContent),
     ['BinCount', '[1, 2)2', '[2, 100)0', '[100, 1,000]4']);
   assert.equal(c.api.update({ ...c.api.spec(), counts: [1, -2, 3] }), false);
   assert.equal(c.api.update({ ...c.api.spec(), counts: [1, 0, 3] }), true);
-  assert.match(c.host.querySelector('.df-chart-table').textContent, /\[100, 1,000\]3$/);
+  assert.match(c.host.querySelector('.op-chart-table').textContent, /\[100, 1,000\]3$/);
 });
 
 test('a live bin slider tweens existing histogram slots and preserves exact-edge selection', () => {
@@ -2191,16 +2191,16 @@ test('a live bin slider tweens existing histogram slots and preserves exact-edge
   let slider, scope;
   const c = draw({ type: 'histogram', bins: 2, y: { max: 6 }, data: [0, 1, 2, 3, 4], selectionGroup: 'bins' }, {
     ...clock, modules: ['chart-histogram', 'params', 'data'],
-    enhance(DF, document) {
-      scope = DF._parameters.define('histogram', { bins: { type: 'range', min: 1, max: 6, step: 1, default: 2 } });
+    enhance(OP, document) {
+      scope = OP._parameters.define('histogram', { bins: { type: 'range', min: 1, max: 6, step: 1, default: 2 } });
       const controls = document.body.appendChild(new Node('div'));
-      controls.setAttribute('data-df-parameter-scope', 'histogram');
-      controls.setAttribute('data-df-parameter', 'bins');
+      controls.setAttribute('data-op-parameter-scope', 'histogram');
+      controls.setAttribute('data-op-parameter', 'bins');
       slider = controls;
     }
   });
   scope.subscribe((values) => c.api.update({ ...c.api.spec(), bins: values.bins }), { keys: ['bins'] });
-  const first = () => byClass(c, 'df-chart-histogram-bar').find((bar) => bar.getAttribute('data-df-bin') === '0');
+  const first = () => byClass(c, 'op-chart-histogram-bar').find((bar) => bar.getAttribute('data-op-bin') === '0');
   const width = () => Number(first().getAttribute('width'));
   const before = width();
   c.fire('keydown', { key: 'Home' });
@@ -2217,19 +2217,19 @@ test('a live bin slider tweens existing histogram slots and preserves exact-edge
   clock.tick(400);
   assert.equal(width(), before / 2);
   assert.equal(c.selection.group('bins').get(), 'bin:0:2');
-  assert.equal(c.marks().filter((el) => el.hasAttribute('data-df-selection-active')).length, 0);
+  assert.equal(c.marks().filter((el) => el.hasAttribute('data-op-selection-active')).length, 0);
   input.valueAsNumber = 2;
   input.dispatchEvent(new Event('input'));
   clock.tick(400);
   clock.tick(800);
-  assert.equal(byClass(c, 'df-chart-histogram-bar').length, 2);
-  assert.ok(first().hasAttribute('data-df-selection-active'));
+  assert.equal(byClass(c, 'op-chart-histogram-bar').length, 2);
+  assert.ok(first().hasAttribute('data-op-selection-active'));
 });
 
 test('stacked histogram bars restack and retain shared bin widths and counts after legend filtering', () => {
   const c = draw({ type: 'histogram', stack: 'stacked', toggles: true, edges: [0, 1, 3],
     series: [{ name: 'A', counts: [1, 1] }, { name: 'B', counts: [2, 2] }] }, { modules: ['chart-histogram'] });
-  const [a, , b] = byClass(c, 'df-chart-histogram-bar');
+  const [a, , b] = byClass(c, 'op-chart-histogram-bar');
   const coord = (el, attr) => Number(el.getAttribute(attr));
   assert.equal(coord(a, 'width'), coord(b, 'width'));
   assert.equal(coord(a, 'y'), coord(b, 'y') + coord(b, 'height'));
@@ -2238,20 +2238,20 @@ test('stacked histogram bars restack and retain shared bin widths and counts aft
   c.fire('keydown', { key: 'ArrowRight' });
   assert.equal(c.tip().textContent, '[1, 3]1A2B');
   toggleLegend(legendButton(c, 'A'));
-  const [visible, wider] = byClass(c, 'df-chart-histogram-bar');
+  const [visible, wider] = byClass(c, 'op-chart-histogram-bar');
   assert.equal(coord(visible, 'y') + coord(visible, 'height'), coord(a, 'y') + coord(a, 'height'));
   assert.ok(Math.abs(coord(wider, 'width') / coord(visible, 'width') - 2) < 1e-12);
-  click(c.host.querySelector('.df-chart-toggle'));
-  assert.deepEqual(c.host.querySelector('.df-chart-table').querySelectorAll('tr').map((row) => row.textContent),
+  click(c.host.querySelector('.op-chart-toggle'));
+  assert.deepEqual(c.host.querySelector('.op-chart-table').querySelectorAll('tr').map((row) => row.textContent),
     ['BinB', '[0, 1)2', '[1, 3]2']);
   assert.ok(c.api.setRange([2.5, 3]));
-  assert.deepEqual(c.host.querySelector('.df-chart-table').querySelectorAll('tr').map((row) => row.textContent),
+  assert.deepEqual(c.host.querySelector('.op-chart-table').querySelectorAll('tr').map((row) => row.textContent),
     ['BinB', '[1, 3]2'], 'narrowing into the edge of a bin keeps its original interval and count');
 });
 
 const heatSpec = { type: 'heatmap', x: 'Hour', y: 'Day', value: { label: 'Visits' }, columns: ['9', '10', '11'],
   rows: ['Mon', 'Tue'], z: [[1, 5, 9], [3, null, 7]], selectionGroup: 'cells' };
-const cellsOf = (c) => byClass(c, 'df-heatmap-cell');
+const cellsOf = (c) => byClass(c, 'op-heatmap-cell');
 const cellAt = (c, key) => cellsOf(c).find((el) => el.getAttribute(KEY) === key);
 
 test('heatmap cells read by row and column, move between rows, select keys, and list a grid table', () => {
@@ -2277,24 +2277,24 @@ test('heatmap cells read by row and column, move between rows, select keys, and 
   assert.match(c.tip().textContent, /^Mon · 91/);
   assert.deepEqual([c.api.coords(x, y).x, c.api.coords(x, y).y, c.api.coords(x, y).yText], ['9', 'Mon', 'Mon · 1']);
   assert.match(c.plot.getAttribute('aria-label'), /^Heatmap of Visits by Day and Hour, 2 rows by 3 columns/);
-  click(c.host.querySelector('.df-chart-toggle'));
-  const table = c.host.querySelector('.df-chart-table');
+  click(c.host.querySelector('.op-chart-toggle'));
+  const table = c.host.querySelector('.op-chart-table');
   assert.deepEqual(table.querySelectorAll('tr').map((row) => row.textContent), ['Day91011', 'Mon159', 'Tue37']);
-  assert.ok(table.querySelectorAll('td').find((td) => td.getAttribute(KEY) === 'cell:Mon:11').hasAttribute('data-df-selection-active'));
+  assert.ok(table.querySelectorAll('td').find((td) => td.getAttribute(KEY) === 'cell:Mon:11').hasAttribute('data-op-selection-active'));
 });
 
 test('the heatmap colour scale filters cells by value range from the pointer, keys, and API', () => {
   const c = draw(heatSpec, { modules: ['chart-heatmap'] });
   const events = [];
-  c.host.addEventListener('df:chart:heatmap-range', ({ detail }) => events.push(detail));
+  c.host.addEventListener('op:chart:heatmap-range', ({ detail }) => events.push(detail));
   const dimmed = () => cellsOf(c).filter((el) => el.classList.contains('is-dimmed')).map((el) => el.getAttribute(KEY));
-  const reset = c.host.querySelector('.df-heatmap-filter-reset');
+  const reset = c.host.querySelector('.op-heatmap-filter-reset');
   assert.equal(reset.hidden, true);
   c.fire('keydown', { key: 'PageUp' });
   assert.deepEqual([...c.chart._heatmap.valueRange(c.host)], [8, 9]);
   assert.deepEqual(dimmed(), ['cell:Mon:9', 'cell:Mon:10', 'cell:Tue:9', 'cell:Tue:11']);
   assert.equal(reset.hidden, false);
-  assert.equal(c.host.querySelector('.df-heatmap-filter-text').textContent, 'Values 8 – 9');
+  assert.equal(c.host.querySelector('.op-heatmap-filter-text').textContent, 'Values 8 – 9');
   c.fire('keydown', { key: 'PageDown' });
   assert.deepEqual([...c.chart._heatmap.valueRange(c.host)], [6, 8]);
   c.fire('keydown', { key: 'Home' });
@@ -2303,7 +2303,7 @@ test('the heatmap colour scale filters cells by value range from the pointer, ke
   assert.equal(c.chart._heatmap.valueRange(c.host), null);
   assert.deepEqual(dimmed(), []);
 
-  const hit = c.host.querySelector('.df-heatmap-scale-hit');
+  const hit = c.host.querySelector('.op-heatmap-scale-hit');
   const top = +hit.getAttribute('y') + 4;
   const bottom = top + +hit.getAttribute('height') - 8;
   const at = (value) => bottom - (value - 1) / 8 * (bottom - top);
@@ -2344,7 +2344,7 @@ test('heatmap cells enter by fading in and tween colour strength on updates', ()
   assert.equal(cell('cell:r:a').getAttribute('fill-opacity'), '0');
   clock.tick(1000);
   assert.equal(cell('cell:r:a').getAttribute('fill-opacity'), '0.9');
-  assert.equal(cell('cell:r:a').getAttribute('data-df-heat'), 'low');
+  assert.equal(cell('cell:r:a').getAttribute('data-op-heat'), 'low');
   assert.equal(c.api.update({ ...spec, z: [[-1, 2]] }), true);
   clock.tick(1000);
   clock.tick(1120);
@@ -2357,21 +2357,21 @@ test('heatmap cells enter by fading in and tween colour strength on updates', ()
 test('heatmaps draw contours on numeric grids and read long-form records from a named source', () => {
   const host = new Node('div');
   host.id = 'grid';
-  host.setAttribute('data-df-chart', 'heatmap');
-  host.setAttribute('data-df-source', 'field');
-  const env = setup({ modules: ['data', 'chart-heatmap'], enhance(df, document, boot) {
-    df.data.define('field', { type: 'csv', text: 'col,row,v,id\n0,0,0,a\n1,0,4,b\n0,1,4,c\n1,1,8,d' });
+  host.setAttribute('data-op-chart', 'heatmap');
+  host.setAttribute('data-op-source', 'field');
+  const env = setup({ modules: ['data', 'chart-heatmap'], enhance(op, document, boot) {
+    op.data.define('field', { type: 'csv', text: 'col,row,v,id\n0,0,0,a\n1,0,4,b\n0,1,4,c\n1,1,8,d' });
     boot.optionLayers = (feature) => feature === 'chart' ?
       [{ mapping: { x: 'col', y: 'row', z: 'v', pointKey: 'id' }, contours: { levels: [2, 6], labels: true } }] : [];
     document.body.appendChild(host);
   } });
   const api = env.chart.get(host);
   assert.deepEqual(JSON.parse(JSON.stringify(api.model().heatmap.z)), [[0, 4], [4, 8]]);
-  const contours = host.querySelectorAll('.df-heatmap-contour');
-  assert.deepEqual(contours.map((el) => el.getAttribute('data-df-level')), ['2', '6']);
-  assert.deepEqual(host.querySelectorAll('.df-heatmap-contour-label').map((el) => el.textContent), ['2', '6']);
+  const contours = host.querySelectorAll('.op-heatmap-contour');
+  assert.deepEqual(contours.map((el) => el.getAttribute('data-op-level')), ['2', '6']);
+  assert.deepEqual(host.querySelectorAll('.op-heatmap-contour-label').map((el) => el.textContent), ['2', '6']);
   assert.equal(api.model().series[0].points[3].key, 'd');
-  assert.match(host.querySelector('.df-chart-plot').getAttribute('aria-label'), /Contour lines mark levels 2, 6/);
+  assert.match(host.querySelector('.op-chart-plot').getAttribute('aria-label'), /Contour lines mark levels 2, 6/);
 });
 
 const choiceList = (...values) => values.map((value) => ({ value, label: value }));
@@ -2379,8 +2379,8 @@ const choiceList = (...values) => values.map((value) => ({ value, label: value }
 function linked({ define, groups, animation, build, modules = [] }) {
   let scope;
   const nodes = {};
-  const env = setup({ groups, animation, modules: ['params', 'chart-histogram', 'chart-heatmap', ...modules], enhance(df, document) {
-    scope = df._parameters.define('look', define);
+  const env = setup({ groups, animation, modules: ['params', 'chart-histogram', 'chart-heatmap', ...modules], enhance(op, document) {
+    scope = op._parameters.define('look', define);
     build?.((tag, id, attrs) => {
       const el = document.body.appendChild(new Node(tag));
       el.id = id;
@@ -2391,8 +2391,8 @@ function linked({ define, groups, animation, build, modules = [] }) {
   const mount = (id, bind, spec) => {
     const host = env.document.body.appendChild(new Node('div'));
     host.id = id;
-    host.setAttribute('data-df-scope', 'look');
-    host.setAttribute('data-df-chart-bind', typeof bind === 'string' ? bind : JSON.stringify(bind));
+    host.setAttribute('data-op-scope', 'look');
+    host.setAttribute('data-op-chart-bind', typeof bind === 'string' ? bind : JSON.stringify(bind));
     return env.chart(host, spec);
   };
   return { ...env, scope, nodes, mount };
@@ -2409,7 +2409,7 @@ test('chart bindings apply parameter values through update and roll back values 
       bins: { type: 'range', min: 1, max: 600, step: 1, default: 3 },
       lo: { type: 'range', min: 0, max: 10, default: 0 }
     },
-    build: (el) => el('fieldset', 'stacking', { 'data-df-scope': 'look', 'data-df-choice': 'stacking' })
+    build: (el) => el('fieldset', 'stacking', { 'data-op-scope': 'look', 'data-op-choice': 'stacking' })
   });
   const { scope, warnings } = env;
   const barSpec = { type: 'bar', referenceLines: [{ axis: 'y', value: 0, label: 'Cut' }], series: [
@@ -2471,8 +2471,8 @@ test('show conditions evaluate expressions, values, and choice lists and animate
       shown: { type: 'multiselect', choices: choiceList('a', 'b') }
     },
     build(el) {
-      const scoped = (id, when, value) => el('p', id, { 'data-df-scope': 'look', 'data-df-show-when': when,
-        ...(value === undefined ? {} : { 'data-df-show-value': value }) });
+      const scoped = (id, when, value) => el('p', id, { 'data-op-scope': 'look', 'data-op-show-when': when,
+        ...(value === undefined ? {} : { 'data-op-show-value': value }) });
       scoped('high', 'cut > 2');
       scoped('wide', 'layout', 'horizontal');
       scoped('withB', 'shown', 'b');
@@ -2484,18 +2484,18 @@ test('show conditions evaluate expressions, values, and choice lists and animate
   const visible = () => Object.fromEntries(Object.entries(nodes).map(([id, el]) => [id, !el.hidden]));
   assert.deepEqual(visible(), { high: true, wide: false, withB: true, any: true, broken: true });
   assert.match(env.warnings.join('\n'), /Cannot evaluate show condition "missing \+ 1"/);
-  assert.ok(nodes.high.classList.contains('df-show-when'));
+  assert.ok(nodes.high.classList.contains('op-show-when'));
 
   assert.equal(scope.update({ cut: 1, layout: 'horizontal', shown: [] }), true);
-  assert.ok(nodes.high.classList.contains('df-show-leave'));
+  assert.ok(nodes.high.classList.contains('op-show-leave'));
   assert.equal(nodes.high.hidden, false, 'a leaving element stays until its fade ends');
   assert.equal(nodes.wide.hidden, false);
-  assert.ok(nodes.wide.classList.contains('df-show-enter'));
+  assert.ok(nodes.wide.classList.contains('op-show-enter'));
   timers.splice(0).forEach((fn) => fn());
   frames.splice(0).forEach((fn) => fn());
   frames.splice(0).forEach((fn) => fn());
   assert.deepEqual(visible(), { high: false, wide: true, withB: false, any: false, broken: true });
-  assert.ok(!nodes.wide.classList.contains('df-show-enter') && !nodes.high.classList.contains('df-show-leave'));
+  assert.ok(!nodes.wide.classList.contains('op-show-enter') && !nodes.high.classList.contains('op-show-leave'));
   assert.equal(scope.set('shown', ['a']), true);
   assert.equal(nodes.any.hidden, false);
   assert.equal(nodes.withB.hidden, true);
@@ -2510,21 +2510,21 @@ test('select and multiselect parameters publish and follow keys in a selection g
       quiet: { type: 'select', choices: choiceList('a', 'b'), selectionGroup: 'runs', selectionMode: 'follow' }
     },
     build(el) {
-      el('p', 'passive', { 'data-df-selection-group': 'runs', 'data-df-key': 'c' });
-      el('fieldset', 'many', { 'data-df-scope': 'look', 'data-df-choice': 'many' });
+      el('p', 'passive', { 'data-op-selection-group': 'runs', 'data-op-key': 'c' });
+      el('fieldset', 'many', { 'data-op-scope': 'look', 'data-op-choice': 'many' });
     }
   });
-  const { scope, selection, DocForm: df } = env;
+  const { scope, selection, OffPrint: op } = env;
   const runs = selection.group('runs');
   const picked = selection.group('picked');
   const origins = [];
-  env.document.addEventListener('df:parameters:change', ({ detail }) => origins.push(detail.origin));
+  env.document.addEventListener('op:parameters:change', ({ detail }) => origins.push(detail.origin));
   assert.equal(scope.get('run'), 'b', 'a configured group key starts the select');
   assert.equal(scope.get('quiet'), 'b');
 
   assert.equal(scope.set('run', 'c'), true);
   assert.equal(runs.get(), 'c');
-  assert.ok(env.nodes.passive.hasAttribute('data-df-selection-active'));
+  assert.ok(env.nodes.passive.hasAttribute('data-op-selection-active'));
   assert.equal(scope.get('quiet'), 'b', 'a follower ignores keys outside its choices');
   assert.equal(runs.select('a'), true);
   assert.equal(scope.get('run'), 'a');
@@ -2542,9 +2542,9 @@ test('select and multiselect parameters publish and follow keys in a selection g
   assert.equal(scope.set('many', ['a', 'b']), true);
   assert.equal(picked.get(), null, 'removing the shared key clears the group');
   const labels = env.nodes.many.all().filter((node) => node.tag === 'label');
-  assert.deepEqual(labels.map((label) => [label.getAttribute('data-df-selection-group'), label.getAttribute('data-df-key')]),
+  assert.deepEqual(labels.map((label) => [label.getAttribute('data-op-selection-group'), label.getAttribute('data-op-key')]),
     [['picked', 'a'], ['picked', 'b'], ['picked', 'c']]);
-  assert.equal(df._parameters.define('bad', { n: { type: 'range', selectionGroup: 'runs' } }), null);
+  assert.equal(op._parameters.define('bad', { n: { type: 'range', selectionGroup: 'runs' } }), null);
 });
 
 function stateClock(reduced = false) {
@@ -2571,11 +2571,11 @@ function stateClock(reduced = false) {
 function statePlayback(env, id, target, checkpoints, attrs = {}) {
   const host = env.document.body.appendChild(new Node('ol'));
   host.id = id;
-  host.setAttribute('data-df-chart-playback', 'state');
-  host.setAttribute('data-df-target', target);
-  host.setAttribute('data-df-scope', 'look');
+  host.setAttribute('data-op-chart-playback', 'state');
+  host.setAttribute('data-op-target', target);
+  host.setAttribute('data-op-scope', 'look');
   for (const [name, value] of Object.entries(attrs)) host.setAttribute(name, value);
-  return { host, playback: env.DocForm._chartPlayback.mount(host, checkpoints && { checkpoints }) };
+  return { host, playback: env.OffPrint._chartPlayback.mount(host, checkpoints && { checkpoints }) };
 }
 
 test('state checkpoints carry series, selection, and parameters forward, tween on Play, and step back exactly', () => {
@@ -2592,8 +2592,8 @@ test('state checkpoints carry series, selection, and parameters forward, tween o
     { key: 'all', series: null, select: null }
   ]);
   const picks = env.selection.group('picks');
-  const status = env.document.body.querySelector('.df-pill-count');
-  const barCount = () => bars.element.all().filter((el) => el.classList.contains('df-chart-bar')).length;
+  const status = env.document.body.querySelector('.op-pill-count');
+  const barCount = () => bars.element.all().filter((el) => el.classList.contains('op-chart-bar')).length;
   assert.deepEqual({ ...playback.snapshot() }, { key: null, index: null, count: 3, canPrev: false, canNext: true, playing: false });
 
   assert.equal(playback.play(), true);
@@ -2654,27 +2654,27 @@ test('state checkpoints validate against the chart and restore the last reached 
   rejects([{ key: 'k', select: 'bin:0:2' }], /own selection group/);
   rejects([{ key: 'k', params: { nope: 1 } }], /Unknown checkpoint parameter "nope"/);
   rejects([], /no checkpoints/);
-  rejects([{ key: 'k' }], /Unknown playback mode "steps"/, { 'data-df-chart-playback': 'steps' });
+  rejects([{ key: 'k' }], /Unknown playback mode "steps"/, { 'data-op-chart-playback': 'steps' });
   assert.equal(statePlayback(env, 'line-state', 'trend', [{ key: 'k' }]).playback, null);
   assert.match(warnings.at(-1), /non-line chart/);
 
   const markup = env.document.body.appendChild(new Node('ol'));
   markup.id = 'markup';
-  markup.setAttribute('data-df-chart-playback', 'state');
-  markup.setAttribute('data-df-target', 'hist');
-  markup.setAttribute('data-df-scope', 'look');
+  markup.setAttribute('data-op-chart-playback', 'state');
+  markup.setAttribute('data-op-target', 'hist');
+  markup.setAttribute('data-op-scope', 'look');
   const item = (key, state) => {
     const li = markup.appendChild(new Node('li'));
-    li.setAttribute('data-df-key', key);
-    li.setAttribute('data-df-state', state);
+    li.setAttribute('data-op-key', key);
+    li.setAttribute('data-op-state', state);
     return li;
   };
   const zoom = item('zoom', '{"range": [2, 6], "params": {"bins": 8}}');
   const broken = item('one', '{series: m}');
-  assert.equal(env.DocForm._chartPlayback.mount(markup), null);
+  assert.equal(env.OffPrint._chartPlayback.mount(markup), null);
   assert.match(warnings.at(-1), /Invalid checkpoint "one"/);
-  broken.setAttribute('data-df-state', '{"series": ["m"]}');
-  const playback = env.DocForm._chartPlayback.mount(markup);
+  broken.setAttribute('data-op-state', '{"series": ["m"]}');
+  const playback = env.OffPrint._chartPlayback.mount(markup);
   assert.ok(playback, 'failed mounts leave the chart free for a valid controller');
   assert.equal(zoom.hidden, true, 'notes show only at their checkpoint');
 
@@ -2704,11 +2704,11 @@ test('state checkpoints validate against the chart and restore the last reached 
 test('a mounted pipeline preserves fork geometry, tracing, keyboard navigation, and keyed details', () => {
   let host, document, inline, external;
   const graph = [];
-  const { DocForm, warnings } = setup({
+  const { OffPrint, warnings } = setup({
     modules: ['detail', 'diagram', 'pipeline'],
     groups: { flow: { initial: 'write' } },
     animation: { addEventListener() {}, getComputedStyle: () => ({ columnGap: '40px', rowGap: '20px', position: 'fixed' }) },
-    enhance(_df, doc) {
+    enhance(_op, doc) {
       document = doc;
       document.readyState = 'complete';
       function add(parent, tag, attrs) {
@@ -2716,11 +2716,11 @@ test('a mounted pipeline preserves fork geometry, tracing, keyboard navigation, 
         Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
         return el;
       }
-      host = add(document.body, 'figure', { id: 'flow', class: 'df-pipeline', [GROUP]: 'flow', 'data-df-detail-layout': 'side' });
+      host = add(document.body, 'figure', { id: 'flow', class: 'op-pipeline', [GROUP]: 'flow', 'data-op-detail-layout': 'side' });
       // A connected stage allows the production measurement and SVG drawing to run.
       const create = doc.createElement;
       doc.createElement = (tag) => Object.assign(create(tag), { isConnected: true });
-      const list = add(host, 'ol', { class: 'df-pipe-blocks' });
+      const list = add(host, 'ol', { class: 'op-pipe-blocks' });
       [
         ['write', 'links terms', 100, 40],
         ['links', 'merge', 80, 30],
@@ -2728,7 +2728,7 @@ test('a mounted pipeline preserves fork geometry, tracing, keyboard navigation, 
         ['merge', 'share', 12, 12],
         ['share', '', 90, 40]
       ].forEach(([id, to, width, height]) => {
-        const el = add(list, 'li', { id, class: id === 'merge' ? 'df-pipe-junction' : 'df-pipe-block', 'data-df-to': to });
+        const el = add(list, 'li', { id, class: id === 'merge' ? 'op-pipe-junction' : 'op-pipe-block', 'data-op-to': to });
         el.offsetWidth = width;
         el.offsetHeight = height;
         el.focus = () => {
@@ -2737,24 +2737,24 @@ test('a mounted pipeline preserves fork geometry, tracing, keyboard navigation, 
         };
         graph.push(el);
       });
-      const route = add(graph[2], 'a', { class: 'df-pipe-link', href: '#merge', 'data-df-line': 'dashed', 'data-df-label': 'Review' });
+      const route = add(graph[2], 'a', { class: 'op-pipe-link', href: '#merge', 'data-op-line': 'dashed', 'data-op-label': 'Review' });
       route.textContent = 'Review';
-      inline = add(host, 'div', { class: 'df-detail-pane' });
-      external = add(doc.body, 'div', { class: 'df-detail-pane', 'data-df-detail-for': 'flow' });
+      inline = add(host, 'div', { class: 'op-detail-pane' });
+      external = add(doc.body, 'div', { class: 'op-detail-pane', 'data-op-detail-for': 'flow' });
       [inline, external].forEach(pane => {
         ['write', 'links', 'terms', 'share'].forEach(key => add(pane, 'div', { [KEY]: key }));
       });
     }
   });
-  const stage = host.querySelector('.df-pipe-stage');
-  const lines = host.querySelector('.df-pipe-lines');
-  const controller = DocForm._pipeline.get('flow');
+  const stage = host.querySelector('.op-pipe-stage');
+  const lines = host.querySelector('.op-pipe-lines');
+  const controller = OffPrint._pipeline.get('flow');
   const [write, links, terms, merge, share] = graph;
   const geometry = () => ({
     blocks: graph.map(({ style }) => [style.left, style.top, style.minHeight]),
     viewBox: lines.getAttribute('viewBox'),
-    paths: lines.querySelectorAll('.df-pipe-path').map(path => path.getAttribute('d')),
-    label: host.querySelector('.df-pipe-label').textContent
+    paths: lines.querySelectorAll('.op-pipe-path').map(path => path.getAttribute('d')),
+    label: host.querySelector('.op-pipe-label').textContent
   });
   const original = geometry();
   assert.deepEqual(original, {
@@ -2778,16 +2778,16 @@ test('a mounted pipeline preserves fork geometry, tracing, keyboard navigation, 
   });
   assert.equal(controller.layout(), true);
   assert.deepEqual(geometry(), original);
-  assert.equal(terms.querySelector('.df-pipe-link').tabIndex, -1);
-  assert.ok(lines.querySelector('.df-pipe-line-dashed'));
+  assert.equal(terms.querySelector('.op-pipe-link').tabIndex, -1);
+  assert.ok(lines.querySelector('.op-pipe-line-dashed'));
   assert.deepEqual(warnings, []);
 
   function current(key) {
     assert.equal(controller.snapshot().key, key);
     assert.equal(controller.snapshot().blockId, key);
-    assert.equal(DocForm.selection.group('flow').get(), key);
+    assert.equal(OffPrint.selection.group('flow').get(), key);
     [inline, external].forEach(pane => {
-      assert.equal(DocForm._detailPane.get(pane).snapshot().key, key);
+      assert.equal(OffPrint._detailPane.get(pane).snapshot().key, key);
       assert.deepEqual(pane.children.filter(child => !child.inert).map(child => child.getAttribute(KEY)), [key]);
     });
     assert.deepEqual(graph.filter(el => el.hasAttribute('aria-current')).map(el => el.id), [key]);
@@ -2805,9 +2805,9 @@ test('a mounted pipeline preserves fork geometry, tracing, keyboard navigation, 
   current('write');
   fire(terms, 'pointermove', { pointerType: 'mouse' });
   current('terms');
-  assert.deepEqual(graph.filter(el => el.hasAttribute('data-df-pipe-trace')), [write, terms, merge, share]);
+  assert.deepEqual(graph.filter(el => el.hasAttribute('data-op-pipe-trace')), [write, terms, merge, share]);
   fire(stage, 'pointerleave');
-  assert.equal(host.classList.contains('df-pipe-tracing'), false);
+  assert.equal(host.classList.contains('op-pipe-tracing'), false);
 
   write.focus();
   assert.equal(fire(write, 'keydown', { key: 'ArrowRight' }).defaultPrevented, true);
@@ -2821,8 +2821,8 @@ test('a mounted pipeline preserves fork geometry, tracing, keyboard navigation, 
   current('share');
   assert.equal(document.activeElement, share);
   fire(host, 'focusout', { relatedTarget: document.body });
-  assert.equal(host.classList.contains('df-pipe-tracing'), false);
-  DocForm.selection.group('flow').select('write');
+  assert.equal(host.classList.contains('op-pipe-tracing'), false);
+  OffPrint.selection.group('flow').select('write');
   current('write');
   assert.equal(share.tabIndex, 0);
   fire(terms, 'click');
@@ -2838,7 +2838,7 @@ test('all six sequence members share navigation, events, and bidirectional keyed
   const intervals = new Map();
   const pendingFrames = new Map();
   let serial = 0;
-  const { DocForm, selection } = setup({
+  const { OffPrint, selection } = setup({
     modules: ['detail', 'steps', 'anim', 'diagram', 'pipeline', 'chart-playback', 'scenarios'],
     groups: { tour: { initial: 'middle' } },
     animation: {
@@ -2849,7 +2849,7 @@ test('all six sequence members share navigation, events, and bidirectional keyed
       cancelAnimationFrame(id) { pendingFrames.delete(id); },
       matchMedia: () => ({ matches: true })
     },
-    enhance(df, document, boot) {
+    enhance(op, document, boot) {
       document.readyState = 'complete';
       function add(parent, tag, attrs = {}, text = '') {
         const node = parent.appendChild(new Node(tag));
@@ -2861,7 +2861,7 @@ test('all six sequence members share navigation, events, and bidirectional keyed
         const host = add(document.body, tag, { id: name, [GROUP]: 'tour', ...attrs });
         hosts.set(name, host);
         events.set(name, []);
-        host.addEventListener('df:step', event => {
+        host.addEventListener('op:step', event => {
           assert.equal(event.bubbles, true);
           events.get(name).push({ ...event.detail });
         });
@@ -2869,38 +2869,38 @@ test('all six sequence members share navigation, events, and bidirectional keyed
       }
       function item(parent, tag, key, labelTag = 'span') {
         const node = add(parent, tag, { [KEY]: key });
-        add(node, labelTag, { 'data-df-step-label': '' }, key);
-        if (key === 'start') node.setAttribute('data-df-initial', '');
+        add(node, labelTag, { 'data-op-step-label': '' }, key);
+        if (key === 'start') node.setAttribute('data-op-initial', '');
         return node;
       }
 
-      const stepper = member('stepper', 'ol', { 'data-df-stepper': '' });
+      const stepper = member('stepper', 'ol', { 'data-op-stepper': '' });
       keys.forEach(key => item(stepper, 'li', key));
-      const figure = member('figure', 'div', { class: 'df-figure-steps' });
+      const figure = member('figure', 'div', { class: 'op-figure-steps' });
       add(figure, 'figure');
-      const panel = add(figure, 'div', { class: 'df-step-panel' });
+      const panel = add(figure, 'div', { class: 'op-step-panel' });
       keys.forEach(key => item(panel, 'button', key));
       const animation = member('animation', 'figure', {});
       add(animation, 'svg');
       boot.prepareSelection();
       boot.setupComplete = false;
-      df._animation.mount(animation, { steps: keys.slice(1).map(key => ({ key, actions: [] })) });
+      op._animation.mount(animation, { steps: keys.slice(1).map(key => ({ key, actions: [] })) });
       boot.setupComplete = true;
 
-      const chart = add(document.body, 'div', { id: 'chart-target', 'data-df-chart': 'line' });
+      const chart = add(document.body, 'div', { id: 'chart-target', 'data-op-chart': 'line' });
       add(chart, 'script', { type: 'application/json' }, JSON.stringify({ type: 'line', data: [[0, 1], [2, 3]] }));
-      const tour = member('chart', 'ol', { 'data-df-chart-playback': '', 'data-df-target': chart.id });
-      keys.forEach((key, index) => item(tour, 'li', key).setAttribute('data-df-x', String(index)));
+      const tour = member('chart', 'ol', { 'data-op-chart-playback': '', 'data-op-target': chart.id });
+      keys.forEach((key, index) => item(tour, 'li', key).setAttribute('data-op-x', String(index)));
 
-      const pipeline = member('pipeline', 'figure', { class: 'df-pipeline' });
-      const stages = add(pipeline, 'ol', { 'data-df-pipeline-steps': '' });
-      const flow = add(pipeline, 'ol', { class: 'df-pipe-blocks' });
+      const pipeline = member('pipeline', 'figure', { class: 'op-pipeline' });
+      const stages = add(pipeline, 'ol', { 'data-op-pipeline-steps': '' });
+      const flow = add(pipeline, 'ol', { class: 'op-pipe-blocks' });
       keys.forEach((key) => {
         item(stages, 'li', key);
-        blocks.push(add(flow, 'li', { id: 'block-' + key, class: 'df-pipe-block', 'data-df-reveal-step': key }));
+        blocks.push(add(flow, 'li', { id: 'block-' + key, class: 'op-pipe-block', 'data-op-reveal-step': key }));
       });
 
-      const scenarios = member('scenarios', 'table', { 'data-df-scenarios': '' });
+      const scenarios = member('scenarios', 'table', { 'data-op-scenarios': '' });
       const header = scenarios.createTHead().insertRow();
       add(header, 'th', {}, 'Measure');
       add(header, 'th', {}, 'Unit');
@@ -2908,7 +2908,7 @@ test('all six sequence members share navigation, events, and bidirectional keyed
       keys.forEach(key => item(header, 'th', key));
       const body = scenarios.createTBody();
       const condition = body.insertRow();
-      condition.setAttribute('data-df-condition', '');
+      condition.setAttribute('data-op-condition', '');
       const outcome = body.insertRow();
       ['Setting', '', '0', '1', '2', '3'].forEach((text, i) => add(condition, i ? 'td' : 'th', {}, text));
       ['Score', '', '1', '2', '3', '4'].forEach((text, i) => add(outcome, i ? 'td' : 'th', {}, text));
@@ -2916,8 +2916,8 @@ test('all six sequence members share navigation, events, and bidirectional keyed
   });
   const group = selection.group('tour');
   function check(name, index, origin) {
-    const controller = DocForm.sequence.get(hosts.get(name));
-    assert.equal(DocForm.sequence.get(name), controller);
+    const controller = OffPrint.sequence.get(hosts.get(name));
+    assert.equal(OffPrint.sequence.get(name), controller);
     assert.equal(controller.key, keys[index], name);
     assert.equal(controller.index, index);
     assert.deepEqual([...controller.keys], keys);
@@ -2935,9 +2935,9 @@ test('all six sequence members share navigation, events, and bidirectional keyed
   }
 
   for (const name of hosts.keys()) check(name, 1, 'init');
-  assert.deepEqual(blocks.map(block => block.hasAttribute('data-df-pipe-hidden')), [false, false, true]);
+  assert.deepEqual(blocks.map(block => block.hasAttribute('data-op-pipe-hidden')), [false, false, true]);
   for (const name of hosts.keys()) {
-    const controller = DocForm.sequence.get(name);
+    const controller = OffPrint.sequence.get(name);
     const seen = [];
     const stop = controller.subscribe((state, meta) => seen.push([state.key, meta.origin]), { immediate: true });
     assert.equal(controller.select('missing'), false);
@@ -2945,7 +2945,7 @@ test('all six sequence members share navigation, events, and bidirectional keyed
     assert.equal(controller.next(), false);
     assert.equal(group.get(), 'end');
     for (const peer of hosts.keys()) check(peer, 2, peer === name ? 'api' : 'group');
-    assert.ok(blocks.every(block => !block.hasAttribute('data-df-pipe-hidden')));
+    assert.ok(blocks.every(block => !block.hasAttribute('data-op-pipe-hidden')));
     assert.equal(controller.reset(), true);
     assert.equal(controller.prev(), false);
     assert.equal(group.get(), 'start');
@@ -2956,8 +2956,8 @@ test('all six sequence members share navigation, events, and bidirectional keyed
     assert.deepEqual(seen, [['middle', 'init'], ['end', 'api'], ['start', 'reset']], name);
   }
 
-  const pipeline = DocForm._pipeline.get('pipeline').steps;
-  assert.equal(pipeline, DocForm.sequence.get('pipeline'));
+  const pipeline = OffPrint._pipeline.get('pipeline').steps;
+  assert.equal(pipeline, OffPrint.sequence.get('pipeline'));
   assert.equal(pipeline.play(), true);
   assert.equal(pipeline.snapshot().playing, true);
   intervals.values().next().value();
@@ -2967,7 +2967,7 @@ test('all six sequence members share navigation, events, and bidirectional keyed
   assert.equal(pipeline.snapshot().playing, false);
   assert.equal(intervals.size, 0);
 
-  const animation = DocForm.sequence.get('animation');
+  const animation = OffPrint.sequence.get('animation');
   group.select('middle');
   assert.equal(animation.play(), true);
   assert.equal(animation.snapshot().playing, true);
@@ -2981,27 +2981,27 @@ test('all six sequence members share navigation, events, and bidirectional keyed
 
 test('figure step controls paint keyed SVG frames and restore the opening drawing', () => {
   let box, figure, route, marker, jump;
-  const { DocForm } = setup({
+  const { OffPrint } = setup({
     modules: ['detail', 'steps', 'anim'],
     animation: { cancelAnimationFrame() {}, clearTimeout() {} },
-    enhance(df, document) {
+    enhance(op, document) {
       document.readyState = 'complete';
       box = document.body.appendChild(new Node('div'));
-      box.className = 'df-figure-steps';
-      box.setAttribute('data-df-step-layout', 'side');
+      box.className = 'op-figure-steps';
+      box.setAttribute('data-op-step-layout', 'side');
       figure = box.appendChild(new Node('figure'));
       const svg = figure.appendChild(new Node('svg'));
       route = svg.appendChild(new Node('path'));
       marker = svg.appendChild(new Node('circle'));
       marker.setAttribute('r', '5');
       const panel = box.appendChild(new Node('div'));
-      panel.className = 'df-step-panel';
+      panel.className = 'op-step-panel';
       const start = panel.appendChild(new Node('button'));
       start.setAttribute(KEY, 'start');
       jump = panel.appendChild(new Node('button'));
       jump.setAttribute(KEY, 'jump');
 
-      df._animation.mount(figure, {
+      op._animation.mount(figure, {
         duration: 800, easing: 'linear', steps: [{
           key: 'jump', actions: [
             { draw: 'path' }, { fade: 'circle' },
@@ -3014,18 +3014,18 @@ test('figure step controls paint keyed SVG frames and restore the opening drawin
 
   const frame = () => [route.style.strokeDashoffset, marker.style.opacity, marker.style.translate, marker.getAttribute('r')];
   assert.deepEqual(frame(), ['1', '0', '0px 0px', '5']);
-  DocForm.sequence.get(figure).seek(400);
+  OffPrint.sequence.get(figure).seek(400);
   assert.deepEqual(frame(), ['0.5', '0.5', '20px 0px', '7']);
 
   jump.dispatchEvent(new Event('focus'));
   assert.deepEqual(frame(), ['', '1', '40px 0px', '9']);
   assert.equal(jump.getAttribute('aria-current'), 'step');
 
-  const controls = figure.querySelector('.df-figure-step-controls');
-  controls.querySelector('.df-pill-previous').dispatchEvent(new Event('click'));
+  const controls = figure.querySelector('.op-figure-step-controls');
+  controls.querySelector('.op-pill-previous').dispatchEvent(new Event('click'));
   assert.deepEqual(frame(), ['1', '0', '0px 0px', '5']);
-  assert.equal(DocForm.sequence.get(box).key, 'start');
-  assert.equal(DocForm.sequence.get(figure).key, 'start');
+  assert.equal(OffPrint.sequence.get(box).key, 'start');
+  assert.equal(OffPrint.sequence.get(figure).key, 'start');
 });
 
 test('timelines link authored and mapped events, detail panes, and transactional source replacements', () => {
@@ -3034,41 +3034,41 @@ test('timelines link authored and mapped events, detail panes, and transactional
     return node;
   };
   const figure = (id, attrs) => set(new Node('figure'), {
-    class: 'df-timeline', id, [GROUP]: 'schedule', ...attrs
+    class: 'op-timeline', id, [GROUP]: 'schedule', ...attrs
   });
   const pane = (attrs) => {
-    const el = set(new Node('div'), { class: 'df-detail-pane', ...attrs });
+    const el = set(new Node('div'), { class: 'op-detail-pane', ...attrs });
     for (const key of ['draft', 'publish']) el.appendChild(set(new Node('p'), { [KEY]: key }));
     return el;
   };
   const calendar = figure('calendar', {});
-  const sourceTimeline = figure('days', { 'data-df-source': 'releases' });
-  const list = set(new Node('ol'), { class: 'df-timeline-events' });
+  const sourceTimeline = figure('days', { 'data-op-source': 'releases' });
+  const list = set(new Node('ol'), { class: 'op-timeline-events' });
   list.append(set(new Node('li'), {
-    [KEY]: 'draft', 'data-df-start': '2028-02-28', 'data-df-end': '2028-03-01',
-    'data-df-lane': 'Writing', 'data-df-label': 'Draft'
+    [KEY]: 'draft', 'data-op-start': '2028-02-28', 'data-op-end': '2028-03-01',
+    'data-op-lane': 'Writing', 'data-op-label': 'Draft'
   }), set(new Node('li'), {
-    id: 'publish', 'data-df-start': '2028-03-02', 'data-df-label': 'Publish', 'data-df-initial': ''
+    id: 'publish', 'data-op-start': '2028-03-02', 'data-op-label': 'Publish', 'data-op-initial': ''
   }));
   const directPane = pane({});
-  const externalPane = pane({ 'data-df-detail-for': 'days' });
+  const externalPane = pane({ 'data-op-detail-for': 'days' });
   calendar.append(list, directPane);
   const input = (rows) => ({ type: 'csv', text: 'id,from,through,team,title\n' + rows.join('\n') });
   const original = input(['draft,0,2,Writing,Draft', 'publish,3,,Release,Publish']);
   const changes = [];
-  sourceTimeline.addEventListener('df:timeline:change', ({ detail }) => changes.push(detail));
+  sourceTimeline.addEventListener('op:timeline:change', ({ detail }) => changes.push(detail));
   let data;
   let resize;
   const env = setup({
     groups: { schedule: { initial: 'draft' } },
     modules: ['data', 'detail', 'diagram', 'timeline'],
     animation: { ResizeObserver: class { constructor(fn) { resize = fn; } observe() {} } },
-    enhance(DF, document, boot) {
+    enhance(OP, document, boot) {
       boot.optionLayers = (feature) => feature === 'timeline' ? [{
         mapping: { key: 'id', start: 'from', end: 'through', lane: 'team', label: 'title' }
       }] : [];
       document.body.append(calendar, sourceTimeline, externalPane);
-      data = DF.data.define('releases', original);
+      data = OP.data.define('releases', original);
       document.createElement = (tag) => {
         const element = new Node(tag);
         element.focus = () => { document.activeElement = element; element.dispatchEvent(new Event('focus')); };
@@ -3076,11 +3076,11 @@ test('timelines link authored and mapped events, detail panes, and transactional
       };
     }
   });
-  const { DocForm: DF, document, warnings } = env;
-  const calendarAPI = DF._timeline.get('calendar');
-  const source = DF._timeline.get(sourceTimeline);
-  const detail = (el) => DF._detailPane.get(el).snapshot().key;
-  const marks = (host) => host.querySelectorAll('.df-timeline-event');
+  const { OffPrint: OP, document, warnings } = env;
+  const calendarAPI = OP._timeline.get('calendar');
+  const source = OP._timeline.get(sourceTimeline);
+  const detail = (el) => OP._detailPane.get(el).snapshot().key;
+  const marks = (host) => host.querySelectorAll('.op-timeline-event');
   const keyOf = (button) => button.getAttribute(KEY);
 
   assert.deepEqual(warnings, []);
@@ -3089,30 +3089,30 @@ test('timelines link authored and mapped events, detail panes, and transactional
   assert.equal(source.snapshot().key, 'draft');
   assert.equal(detail(directPane), 'draft');
   assert.equal(detail(externalPane), 'draft');
-  const spanWidth = parseFloat(marks(calendar)[0].querySelector('.df-timeline-span').style.width);
-  const axis = calendar.querySelector('.df-timeline-axis');
+  const spanWidth = parseFloat(marks(calendar)[0].querySelector('.op-timeline-span').style.width);
+  const axis = calendar.querySelector('.op-timeline-axis');
   const [left, right] = ['x1', 'x2'].map((attr) => Number(axis.getAttribute(attr)));
   assert.ok(Math.abs(spanWidth - (right - left) * 2 / 3) < 0.01);
   const [draft, publish] = marks(calendar);
   assert.equal(draft.tabIndex, 0);
   assert.equal(publish.tabIndex, -1);
-  const scroll = sourceTimeline.querySelector('.df-timeline-scroll');
-  const stage = sourceTimeline.querySelector('.df-timeline-stage');
+  const scroll = sourceTimeline.querySelector('.op-timeline-scroll');
+  const stage = sourceTimeline.querySelector('.op-timeline-stage');
   scroll.clientWidth = 1100;
   resize();
   assert.equal(stage.style.width, '1100px');
-  assert.equal(sourceTimeline.querySelector('.df-timeline-axis').getAttribute('x2'), String(right + 356));
+  assert.equal(sourceTimeline.querySelector('.op-timeline-axis').getAttribute('x2'), String(right + 356));
   const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
   const width = parseFloat(stage.style.width);
   const height = parseFloat(stage.style.height);
   stage.getBoundingClientRect = () => rect(20, 30, width, height);
   scroll.getBoundingClientRect = sourceTimeline.getBoundingClientRect = () => rect(20, 30, width, height);
   const mid = 20 + (left + right + 356) / 2;
-  const hit = DF._timeline.coords(sourceTimeline, mid, 70);
+  const hit = OP._timeline.coords(sourceTimeline, mid, 70);
   assert.equal(hit.value, '1.5');
   assert.equal(hit.lane, 'Writing');
   scroll.getBoundingClientRect = () => rect(mid + 1, 30, 400, height);
-  assert.equal(DF._timeline.coords(sourceTimeline, mid, 70), null);
+  assert.equal(OP._timeline.coords(sourceTimeline, mid, 70), null);
   hover(publish, 'touch');
   assert.equal(calendarAPI.snapshot().key, 'draft');
   hover(publish);
@@ -3127,7 +3127,7 @@ test('timelines link authored and mapped events, detail panes, and transactional
   assert.equal(draft.getAttribute('aria-current'), null);
   assert.equal(detail(directPane), 'publish');
   assert.equal(detail(externalPane), 'publish');
-  assert.equal(DF.selection.group('schedule').get(), 'publish');
+  assert.equal(OP.selection.group('schedule').get(), 'publish');
 
   const updated = input(['publish,12,,Release,Ship', 'draft,0,10,Writing,Revise']);
   marks(sourceTimeline)[1].focus();
@@ -3152,7 +3152,7 @@ test('timelines link authored and mapped events, detail panes, and transactional
   assert.equal(source.snapshot().key, 'draft');
   assert.equal(source.snapshot().end, 2);
   marks(sourceTimeline)[1].dispatchEvent(new Event('click'));
-  assert.equal(DF.selection.group('schedule').get(), 'publish');
+  assert.equal(OP.selection.group('schedule').get(), 'publish');
   assert.equal(calendarAPI.snapshot().key, 'publish');
 
   const stop = source.subscribe(() => {
@@ -3175,9 +3175,9 @@ test('sequence diagrams keep message and participant order while linking selecti
   };
   const input = (rows) => ({ type: 'csv', text: 'id,sender,recipient,caption\n' + rows.join('\n') });
   let diagram, named, pane, data;
-  const { DocForm: DF, document, warnings } = setup({
+  const { OffPrint: OP, document, warnings } = setup({
     modules: ['data', 'detail', 'diagram', 'sequence-diagram'],
-    enhance(DF, document, boot) {
+    enhance(OP, document, boot) {
       document.createElement = (tag) => {
         const el = new Node(tag);
         el.focus = () => { document.activeElement = el; el.dispatchEvent(new Event('focus')); };
@@ -3186,25 +3186,25 @@ test('sequence diagrams keep message and participant order while linking selecti
       boot.optionLayers = (feature) => feature === 'sequence' ? [{
         mapping: { key: 'id', from: 'sender', to: 'recipient', label: 'caption' }
       }] : [];
-      diagram = add(document.body, 'figure', { class: 'df-sequence', id: 'messages', [GROUP]: 'order' });
-      const participants = add(diagram, 'ul', { class: 'df-sequence-participants' });
+      diagram = add(document.body, 'figure', { class: 'op-sequence', id: 'messages', [GROUP]: 'order' });
+      const participants = add(diagram, 'ul', { class: 'op-sequence-participants' });
       add(participants, 'li', { [KEY]: 'shop' }, 'Shop');
       add(participants, 'li', { [KEY]: 'buyer' }, 'Buyer');
-      const messages = add(diagram, 'ol', { class: 'df-sequence-messages' });
-      add(messages, 'li', { [KEY]: 'request', 'data-df-from': 'buyer', 'data-df-to': 'shop' }, 'Request');
-      add(messages, 'li', { [KEY]: 'check', 'data-df-from': 'shop', 'data-df-to': 'shop' }, 'Check');
-      add(messages, 'li', { [KEY]: 'reply', 'data-df-from': 'shop', 'data-df-to': 'buyer' }, 'Reply');
-      pane = add(diagram, 'div', { class: 'df-detail-pane' });
+      const messages = add(diagram, 'ol', { class: 'op-sequence-messages' });
+      add(messages, 'li', { [KEY]: 'request', 'data-op-from': 'buyer', 'data-op-to': 'shop' }, 'Request');
+      add(messages, 'li', { [KEY]: 'check', 'data-op-from': 'shop', 'data-op-to': 'shop' }, 'Check');
+      add(messages, 'li', { [KEY]: 'reply', 'data-op-from': 'shop', 'data-op-to': 'buyer' }, 'Reply');
+      pane = add(diagram, 'div', { class: 'op-detail-pane' });
       for (const key of ['request', 'check', 'reply']) add(pane, 'p', { [KEY]: key }, key);
-      named = add(document.body, 'figure', { class: 'df-sequence', [GROUP]: 'order', 'data-df-source': 'messages' });
-      data = DF.data.define('messages', input(['request,buyer,shop,Request', 'reply,shop,buyer,Reply']));
+      named = add(document.body, 'figure', { class: 'op-sequence', [GROUP]: 'order', 'data-op-source': 'messages' });
+      data = OP.data.define('messages', input(['request,buyer,shop,Request', 'reply,shop,buyer,Reply']));
     }
   });
-  const authored = DF._sequenceDiagram.get('messages');
-  const mapped = DF._sequenceDiagram.get(named);
-  const buttons = diagram.querySelectorAll('.df-sequence-message');
+  const authored = OP._sequenceDiagram.get('messages');
+  const mapped = OP._sequenceDiagram.get(named);
+  const buttons = diagram.querySelectorAll('.op-sequence-message');
   assert.deepEqual(warnings, []);
-  assert.deepEqual(diagram.querySelectorAll('.df-sequence-participant').map((el) => el.textContent), ['Shop', 'Buyer']);
+  assert.deepEqual(diagram.querySelectorAll('.op-sequence-participant').map((el) => el.textContent), ['Shop', 'Buyer']);
   assert.deepEqual(buttons.map((el) => el.getAttribute(KEY)), ['request', 'check', 'reply']);
   assert.equal(diagram.querySelectorAll('path')[2].getAttribute('d'), 'M82 158h54v17H82');
   assert.equal(authored.snapshot().key, 'request');
@@ -3212,14 +3212,14 @@ test('sequence diagrams keep message and participant order while linking selecti
   assert.equal(authored.snapshot().key, 'request');
   hover(buttons[2], 'pen');
   assert.equal(mapped.snapshot().key, 'reply');
-  assert.equal(DF._detailPane.get(pane).snapshot().key, 'reply');
+  assert.equal(OP._detailPane.get(pane).snapshot().key, 'reply');
   hover(buttons[0]);
   const end = Object.assign(new Event('keydown', { cancelable: true }), { key: 'End' });
   buttons[0].dispatchEvent(end);
   assert.equal(end.defaultPrevented, true);
   assert.equal(document.activeElement, buttons[2]);
   assert.equal(mapped.snapshot().key, 'reply');
-  assert.equal(DF._detailPane.get(pane).snapshot().key, 'reply');
+  assert.equal(OP._detailPane.get(pane).snapshot().key, 'reply');
   assert.equal(data.update(input(['reply,shop,buyer,Done', 'request,buyer,shop,Go'])), true);
   assert.equal(mapped.snapshot().index, 0);
   assert.equal(mapped.snapshot().label, 'Done');
@@ -3241,9 +3241,9 @@ test('tree disclosure repositions persistent nodes and keeps details and selecti
   ];
   const input = (value) => ({ type: 'value', value });
   let diagram, named, pane, data;
-  const { DocForm: DF, document, warnings } = setup({
+  const { OffPrint: OP, document, warnings } = setup({
     modules: ['data', 'detail', 'diagram', 'tree-diagram'],
-    enhance(DF, document, boot) {
+    enhance(OP, document, boot) {
       document.createElement = (tag) => {
         const el = new Node(tag);
         el.focus = () => { document.activeElement = el; el.dispatchEvent(new Event('focus')); };
@@ -3252,32 +3252,32 @@ test('tree disclosure repositions persistent nodes and keeps details and selecti
       boot.optionLayers = (feature) => feature === 'tree-diagram' ? [{
         mapping: { key: 'name', parent: 'under', label: 'title' }
       }] : [];
-      diagram = add(document.body, 'figure', { class: 'df-tree-diagram', id: 'tree-plan', [GROUP]: 'plan' });
-      named = add(document.body, 'figure', { class: 'df-tree-diagram', [GROUP]: 'plan', 'data-df-source': 'plan' });
-      const list = add(diagram, 'ul', { class: 'df-tree-diagram-nodes' });
+      diagram = add(document.body, 'figure', { class: 'op-tree-diagram', id: 'tree-plan', [GROUP]: 'plan' });
+      named = add(document.body, 'figure', { class: 'op-tree-diagram', [GROUP]: 'plan', 'data-op-source': 'plan' });
+      const list = add(diagram, 'ul', { class: 'op-tree-diagram-nodes' });
       const node = (list, key, attrs = {}) => {
         const el = add(list, 'li', { [KEY]: key, ...attrs });
-        add(el, 'span', { class: 'df-tree-diagram-label' }, key);
+        add(el, 'span', { class: 'op-tree-diagram-label' }, key);
         return el;
       };
       const siblings = add(node(list, 'root'), 'ul', {});
-      const leaves = add(node(siblings, 'branch', { 'data-df-collapsed': '' }), 'ol', {});
+      const leaves = add(node(siblings, 'branch', { 'data-op-collapsed': '' }), 'ol', {});
       node(leaves, 'leaf');
       node(leaves, 'tip');
       node(siblings, 'other');
-      pane = add(document.body, 'div', { class: 'df-detail-pane', 'data-df-detail-for': 'tree-plan' });
+      pane = add(document.body, 'div', { class: 'op-detail-pane', 'data-op-detail-for': 'tree-plan' });
       rows.forEach((row) => add(pane, 'p', { [KEY]: row.name }, row.title));
-      data = DF.data.define('plan', input(rows));
+      data = OP.data.define('plan', input(rows));
     }
   });
-  const tree = DF._treeDiagram.get(diagram);
-  const mapped = DF._treeDiagram.get(named);
-  const picks = (host) => host.querySelectorAll('.df-tree-diagram-pick');
+  const tree = OP._treeDiagram.get(diagram);
+  const mapped = OP._treeDiagram.get(named);
+  const picks = (host) => host.querySelectorAll('.op-tree-diagram-pick');
   const [root, branch, leaf, tip, other] = picks(diagram);
   const closed = other.parentNode.style.transform;
-  const toggle = branch.parentNode.querySelector('.df-tree-diagram-toggle');
+  const toggle = branch.parentNode.querySelector('.op-tree-diagram-toggle');
   const icon = toggle.querySelector('svg');
-  const detail = DF._detailPane.get(pane);
+  const detail = OP._detailPane.get(pane);
   assert.deepEqual(warnings, []);
   assert.equal(icon.getAttribute('viewBox'), '0 0 16 16');
   assert.deepEqual(icon.children.map((path) => path.getAttribute('d')), ['M5 8h6', 'M8 5v6']);
@@ -3316,7 +3316,7 @@ test('tree disclosure repositions persistent nodes and keeps details and selecti
   assert.equal(document.activeElement, leaf);
   assert.equal(picks(named)[2].getAttribute('aria-current'), 'true');
 
-  const namedBranch = picks(named)[1].parentNode.querySelector('.df-tree-diagram-toggle');
+  const namedBranch = picks(named)[1].parentNode.querySelector('.op-tree-diagram-toggle');
   namedBranch.dispatchEvent(new Event('click'));
   assert.equal(data.update(input(rows.map((row) => ({ ...row, title: row.title + ' updated' })))), true);
   assert.equal(mapped.snapshot().label, 'Branch updated');

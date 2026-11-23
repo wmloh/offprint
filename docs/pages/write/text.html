@@ -3,27 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Base layout, text roles, tags, buttons · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script type="application/json" data-df-page>
+  <title>Base layout, text roles, tags, buttons · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
     {"features": {"dropdowns": true, "stepper": true}}
   </script>
-  <script src="../../../docform/docform.js"></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Write clearly</p>
+      <p class="op-eyebrow">Write clearly</p>
       <h1>Base layout, text roles, tags, buttons</h1>
-      <p>Every DocForm page starts with a calm reading column, clear headings, and tidy lists and tables. Labels organise quick facts, tags mark status, and buttons make actions easy to find.</p>
-      <dl class="df-fields">
+      <p>Every OffPrint page starts with a calm reading column, clear headings, and tidy lists and tables. Labels organise quick facts, tags mark status, and buttons make actions easy to find.</p>
+      <dl class="op-fields">
         <dt>Official name</dt><dd>Base layout · Text roles · Tags · Buttons</dd>
-        <dt>Turned on</dt><dd><span class="df-tag" data-df-role="default">On by default</span></dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="default">On by default</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a> (headings) · <a href="../hierarchy/signal-ladder.html#medium">Medium</a> (eyebrows and labelled fields) · <a href="../hierarchy/signal-ladder.html#loud">Loud</a> (tags and buttons)</dd>
         <dt>Works with</dt><dd>Nothing extra; every page has these</dd>
         <dt>Good for</dt><dd>Any page that should be easy to read</dd>
@@ -31,24 +31,24 @@
     </header>
 
     <h2 id="see-it">The reading column</h2>
-    <figure id="see-it-demo" data-df-max-width="60%">
-      <p class="df-eyebrow">At a glance</p>
-      <dl class="df-fields">
-        <dt>Page title</dt><dd>Open a DocForm site</dd>
+    <figure id="see-it-demo" data-op-max-width="60%">
+      <p class="op-eyebrow">At a glance</p>
+      <dl class="op-fields">
+        <dt>Page title</dt><dd>Open an OffPrint site</dd>
         <dt>Group</dt><dd>Start here</dd>
       </dl>
       <figcaption>This demo has its own width limit. Notice how it stays centred inside the reading column.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Compare the demo’s width with the space available to this paragraph. Then make your browser window narrower and watch the labels move above their values as space runs out.</p>
-    <p>The <strong>reading column</strong> keeps lines short enough to follow. DocForm also keeps figures, tables, and code within that column. You can cap one block at a narrower width. Pictures can shrink to fit, and wide tables and <span data-df-term="code block">code blocks</span> can scroll sideways.</p>
+    <p>The <strong>reading column</strong> keeps lines short enough to follow. OffPrint also keeps figures, tables, and code within that column. You can cap one block at a narrower width. Pictures can shrink to fit, and wide tables and <span data-op-term="code block">code blocks</span> can scroll sideways.</p>
 
     <h2 id="headings-and-labels">Headings and labels</h2>
     <h3 id="section-details">Section details</h3>
-    <p>Compare this page’s title, the section heading above, and the smaller “Section details” heading. Each size tells you how much of the page the heading covers. In the demo, “At a glance” is an <strong>eyebrow</strong>, a short label that introduces a block. The aligned pairs underneath are <a href="../../../docform/docs/layout/text-roles.md"><strong>labelled fields</strong></a>. Use them for a handful of named facts a reader can scan.</p>
+    <p>Compare this page’s title, the section heading above, and the smaller “Section details” heading. Each size tells you how much of the page the heading covers. In the demo, “At a glance” is an <strong>eyebrow</strong>, a short label that introduces a block. The aligned pairs underneath are <a href="../../../offprint/docs/layout/text-roles.md"><strong>labelled fields</strong></a>. Use them for a handful of named facts a reader can scan.</p>
 
     <h2 id="lists">List markers</h2>
-    <figure data-df-role="try">
+    <figure data-op-role="try">
       <ol>
         <li>Find a page by its title.</li>
         <li>Open it from the sidebar.</li>
@@ -59,9 +59,9 @@
       </ul>
       <figcaption>Number badges show order. Dots group items that can be read in any order.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Point at each item to see its marker react. The markers take their tint from the surrounding colour role. A list can also keep the browser’s plain markers.</p>
-    <ul data-df-no-list-style>
+    <ul data-op-no-list-style>
       <li>Example with a plain browser marker</li>
     </ul>
 
@@ -75,35 +75,35 @@
         <tr><th scope="row">Pager</th><td>At the end</td><td>Previous and next pages</td></tr>
       </tbody>
     </table>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Point at “Previous and next pages”. Follow the tinted row to “Pager” and the tinted column up to its heading. Very wide tables tint columns only in the first twelve cell positions.</p>
 
     <h2 id="tags-and-buttons">Tags and buttons</h2>
-    <p>DocForm groups Tags and <a href="callouts.html">Callouts</a> under the name <strong>Blocks</strong>. Both come with the reading profile.</p>
-    <h3 id="examples-of-status">Reading aids <span class="df-tag" data-df-role="default">On by default</span></h3>
+    <p>OffPrint groups Tags and <a href="callouts.html">Callouts</a> under the name <strong>Blocks</strong>. Both come with the reading profile.</p>
+    <h3 id="examples-of-status">Reading aids <span class="op-tag" data-op-role="default">On by default</span></h3>
     <table>
       <caption>The same status tag works next to prose, in a heading, or inside a table.</caption>
       <thead><tr><th scope="col">Feature</th><th scope="col">Availability</th></tr></thead>
-      <tbody><tr><th scope="row">TeX math</th><td><span class="df-tag" data-df-role="on-request">On request</span></td></tr></tbody>
+      <tbody><tr><th scope="row">TeX math</th><td><span class="op-tag" data-op-role="on-request">On request</span></td></tr></tbody>
     </table>
-    <p><span data-df-term="sidenote">Sidenotes</span> are <span class="df-tag" data-df-role="default">On by default</span>. A <strong>tag</strong> names a status in a few words. Rest the pointer on a tag to see what it means. Every tag has a tooltip: give it its own short explanation, or let it borrow the description of its colour role. DocForm warns when one is missing. A <a href="../../../docform/docs/layout/buttons.md"><strong>button</strong></a> gives the reader an action. Its tint can use the same colour roles as tags, and an icon can sit beside its label.</p>
-    <p>A shape on the left of each tag shows what <em>kind</em> of tag it is, so two tags of the same colour are never confused. On this site a triangle marks availability, as in <span class="df-tag" data-df-role="on-request">On request</span>, a square marks a colour sample, and a diamond marks a keyboard shortcut. The circle is kept for term types, such as <span class="df-tag">Design</span>, which sort the glossary. The site settings list each kind and its shape. A tag that belongs to no kind gets a dashed red outline and a warning, so it is easy to spot.</p>
-    <p><a class="df-button" data-df-role="on-request" href="math.html"><span class="df-button-icon" aria-hidden="true">→</span> Open TeX math</a></p>
+    <p><span data-op-term="sidenote">Sidenotes</span> are <span class="op-tag" data-op-role="default">On by default</span>. A <strong>tag</strong> names a status in a few words. Rest the pointer on a tag to see what it means. Every tag has a tooltip: give it its own short explanation, or let it borrow the description of its colour role. OffPrint warns when one is missing. A <a href="../../../offprint/docs/layout/buttons.md"><strong>button</strong></a> gives the reader an action. Its tint can use the same colour roles as tags, and an icon can sit beside its label.</p>
+    <p>A shape on the left of each tag shows what <em>kind</em> of tag it is, so two tags of the same colour are never confused. On this site a triangle marks availability, as in <span class="op-tag" data-op-role="on-request">On request</span>, a square marks a colour sample, and a diamond marks a keyboard shortcut. The circle is kept for term types, such as <span class="op-tag">Design</span>, which sort the glossary. The site settings list each kind and its shape. A tag that belongs to no kind gets a dashed red outline and a warning, so it is easy to spot.</p>
+    <p><a class="op-button" data-op-role="on-request" href="math.html"><span class="op-button-icon" aria-hidden="true">→</span> Open TeX math</a></p>
     <figure>
-      <ol id="reading-order" data-df-stepper>
-        <li data-df-key="title"><strong data-df-step-label>Title</strong> Find out what the page covers.</li>
-        <li data-df-key="heading"><strong data-df-step-label>Section heading</strong> Find the part you need.</li>
+      <ol id="reading-order" data-op-stepper>
+        <li data-op-key="title"><strong data-op-step-label>Title</strong> Find out what the page covers.</li>
+        <li data-op-key="heading"><strong data-op-step-label>Section heading</strong> Find the part you need.</li>
       </ol>
       <figcaption>The step pill groups the arrow buttons and the step counter.</figcaption>
     </figure>
-    <p class="df-eyebrow" data-df-role="try">Try it</p>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
     <p>Move to the next step with the right arrow button. Use <kbd>Tab</kbd> to reach a button and <kbd>Enter</kbd> to use it.</p>
 
     <h2 id="dropdowns">Dropdowns</h2>
     <p>Group related links and actions under one button. An entry can open another level of choices inside the menu.</p>
-    <div class="df-dropdown" data-df-color="blue" data-df-no-search>
-      <button class="df-button" type="button" popovertarget="page-actions">Page actions</button>
-      <div class="df-dropdown-panel" id="page-actions" popover="auto">
+    <div class="op-dropdown" data-op-color="blue" data-op-no-search>
+      <button class="op-button" type="button" popovertarget="page-actions">Page actions</button>
+      <div class="op-dropdown-panel" id="page-actions" popover="auto">
         <ul>
           <li><a href="#headings-and-labels">Headings and labels</a></li>
           <li><details>

@@ -1,0 +1,150 @@
+.op-export-dialog {
+  box-sizing: border-box;
+  width: min(42rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--op-border-strong, GrayText);
+  border-radius: 12px;
+  background: var(--op-bg, Canvas);
+  color: var(--op-text, CanvasText);
+  box-shadow: 0 24px 64px #0003;
+  font: 0.9375rem/1.45 var(--op-font, system-ui);
+}
+
+.op-export-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.op-export-dialog::backdrop {
+  background: #0004;
+  backdrop-filter: blur(3px);
+}
+
+.op-export-dialog > header,
+.op-export-dialog > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-color: var(--op-border, GrayText);
+}
+
+.op-export-dialog > header {
+  border-bottom: 1px solid var(--op-border, GrayText);
+}
+
+.op-export-dialog > footer {
+  flex-wrap: wrap;
+  border-top: 1px solid var(--op-border, GrayText);
+}
+
+.op-export-dialog > footer > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.op-export-dialog :is(h2, h3, p) {
+  margin: 0;
+}
+
+.op-export-dialog h2 { font-size: 1.2rem; }
+.op-export-dialog h3 { font-size: 1rem; }
+.op-export-dialog h2::before { content: none; }
+
+.op-export-dialog .op-button {
+  min-height: 2.25rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--op-border, GrayText);
+  border-radius: 999px;
+  background: var(--op-blue-bg, ButtonFace);
+  color: var(--op-text, ButtonText);
+  font: inherit;
+}
+
+.op-export-dialog .op-button:enabled { cursor: pointer; }
+.op-export-dialog .op-button:hover:enabled { border-color: var(--op-blue, Highlight); }
+.op-export-dialog .op-button:disabled { opacity: 0.55; }
+.op-export-dialog :focus-visible { outline: 2px solid var(--op-blue, Highlight); outline-offset: 2px; }
+.op-export-dialog [hidden] { display: none !important; }
+
+.op-export-content {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+}
+
+.op-export-content > p,
+.op-export-dialog fieldset,
+.op-export-dialog section {
+  margin-block: 0 0.75rem;
+}
+
+.op-export-source,
+.op-export-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+  margin-block: 0 0.5rem;
+}
+
+.op-export-source small { color: var(--op-text-label, CanvasText); }
+
+.op-export-folder {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.op-export-folder:empty { display: none; }
+
+.op-export-saved > p { margin-block: 0.25rem 0.5rem; }
+.op-export-confirm { margin-block: 0; }
+.op-export-confirm > p { flex-basis: 100%; }
+
+.op-export-dialog fieldset,
+.op-export-dialog section {
+  min-width: 0;
+  margin-block-start: 1rem;
+  margin-inline: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--op-border, GrayText);
+  border-radius: var(--op-radius-lg, 8px);
+}
+
+.op-export-dialog legend { font-weight: 600; }
+.op-export-dialog ul { margin-block: 0.25rem; padding-inline-start: 1.35em; }
+.op-export-dialog fieldset ul { list-style: none; padding-inline-start: 0.85em; }
+.op-export-dialog fieldset > ul { padding-inline-start: 0; }
+
+.op-export-dialog fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  cursor: pointer;
+}
+
+.op-export-dialog fieldset input {
+  flex: none;
+  margin: 0;
+  accent-color: var(--op-blue, Highlight);
+}
+
+.op-export-dialog fieldset small {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--op-text-label, CanvasText);
+}
+
+.op-export-dialog details {
+  margin-block: 0.5rem 0;
+  padding: 0.25rem 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.op-export-dialog summary { cursor: pointer; }
+.op-export-dialog summary::before { content: none; }

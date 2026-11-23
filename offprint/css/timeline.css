@@ -1,0 +1,98 @@
+.op-timeline-scroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--op-border);
+  border-radius: var(--op-radius-lg);
+  background: var(--op-bg);
+}
+
+.op-timeline-ready > .op-timeline-events,
+.op-timeline-summary {
+  display: none;
+}
+
+.op-timeline-stage {
+  position: relative;
+  direction: ltr;
+}
+
+.op-timeline-grid {
+  display: block;
+  pointer-events: none;
+}
+
+.op-timeline-grid line { stroke: var(--op-border); }
+.op-timeline-grid .op-timeline-axis { stroke: var(--op-text-faint); }
+
+.op-timeline-grid text {
+  fill: var(--op-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-timeline-lane,
+.op-timeline-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+}
+
+.op-timeline-lane {
+  position: absolute;
+  left: 12px;
+  width: 104px;
+  color: var(--op-text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.op-timeline-event {
+  position: absolute;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 4px 0 14px;
+  border: 0;
+  border-radius: var(--op-radius-sm);
+  background: none;
+  color: var(--op-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.op-timeline-label {
+  max-width: 108px;
+  padding-inline: 4px;
+}
+
+.op-timeline-mark {
+  position: absolute;
+  bottom: 5px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--op-accent, var(--op-blue));
+}
+
+.op-timeline-span { left: 0; }
+
+.op-timeline-event:hover,
+.op-timeline-event[aria-current="true"] {
+  background: var(--op-accent-bg, var(--op-blue-bg));
+}
+
+.op-timeline-event[aria-current="true"] {
+  box-shadow: inset 0 0 0 1px var(--op-accent, var(--op-blue));
+}
+
+@media print {
+  .op-timeline-scroll { overflow: visible; border: 0; }
+  .op-timeline-stage { width: auto !important; height: auto !important; }
+  .op-timeline-stage > :not(.op-timeline-summary) { display: none; }
+  .op-timeline-summary { display: block; }
+}

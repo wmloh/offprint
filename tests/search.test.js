@@ -4,14 +4,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const read = (file) => fs.readFileSync(path.join(__dirname, '../docform/js', file), 'utf8');
+const read = (file) => fs.readFileSync(path.join(__dirname, '../offprint/js', file), 'utf8');
 
 function load() {
   const context = vm.createContext({ URL, console: { warn: () => {} } });
   context.window = context;
   vm.runInContext(read('core.js'), context);
   vm.runInContext(read('search.js'), context);
-  return Object.assign({}, context.DocForm._search, { context });
+  return Object.assign({}, context.OffPrint._search, { context });
 }
 
 const json = (value) => JSON.parse(JSON.stringify(value));
@@ -59,11 +59,11 @@ test('highlights mark every token without overlaps, and snippets centre the firs
 test('indexed pages are listed with URLs resolved against the manifest base', () => {
   const search = load();
   const context = search.context;
-  context.DocForm._site = { provided: true, base: 'file:///notes/' };
+  context.OffPrint._site = { provided: true, base: 'file:///notes/' };
   const sections = [{ id: 'x', level: 2, title: 'X' }];
   const outline = [{ id: 'heading', level: 1, title: 'B' }, ...sections];
   const page = { path: 'a/b.html', title: 'B', sections };
-  context.DocFormSearch = { pages: [page, { ...page, path: 'c.html', outline }] };
+  context.OffPrintSearch = { pages: [page, { ...page, path: 'c.html', outline }] };
   let result;
   search.pages((pages) => { result = pages; });
   assert.deepEqual(json(result), [

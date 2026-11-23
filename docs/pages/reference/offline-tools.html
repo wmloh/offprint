@@ -3,30 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offline tools · DocForm</title>
-  <link rel="stylesheet" href="../../../docform/docform.css">
-  <script src="../../assets/site.js" data-df-site></script>
-  <script src="../../../docform/docform.js"></script>
+  <title>Offline tools · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script src="../../../offprint/offprint.js"></script>
 </head>
 <body>
-  <nav class="df-sidebar" aria-label="Site navigation">
-    <div data-df-nav></div>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
   </nav>
 
-  <main class="df-page">
+  <main class="op-page">
     <header>
-      <p class="df-eyebrow">Reference</p>
+      <p class="op-eyebrow">Reference</p>
       <h1>Offline tools</h1>
-      <p>DocForm includes a tool that prepares a site's search index and data files without the internet. This page explains what it checks and when to run it again.</p>
-      <dl class="df-fields">
+      <p>OffPrint includes a tool that prepares a site's search index and data files without the internet. This page explains what it checks and when to run it again.</p>
+      <dl class="op-fields">
         <dt>Use it to</dt><dd>Keep search and data files up to date</dd>
         <dt>Reading time</dt><dd>About 5 minutes</dd>
       </dl>
     </header>
 
     <h2 id="what-it-does">What the asset tool does</h2>
-    <p>Open the <a href="../../../docform/tools/assets.html">offline asset tool</a>, a page for checking and rebuilding your prepared files. Choose the folder containing your site. The tool reads the site settings, finds the pages and data they name, and compares each prepared file with the version it would make from those inputs today.</p>
-    <dl class="df-fields">
+    <p>Open the <a href="../../../offprint/tools/assets.html">offline asset tool</a>, a page for checking and rebuilding your prepared files. Choose the folder containing your site. The tool reads the site settings, finds the pages and data they name, and compares each prepared file with the version it would make from those inputs today.</p>
+    <dl class="op-fields">
       <dt>Current</dt><dd>The prepared file matches the current inputs.</dd>
       <dt>Missing</dt><dd>The prepared file has yet to be saved where the site expects it.</dd>
       <dt>Stale</dt><dd>The saved file is out of date and can be rebuilt.</dd>
@@ -35,15 +35,15 @@
     <p>Choose the files to regenerate. Where the browser offers save access, the tool can save them into the site folder. Otherwise it downloads them and shows where each belongs. The files stay on your device.</p>
 
     <h2 id="search-index">The search index</h2>
-    <p>The <a href="../../../docform/docs/tools/search-index.md">search index</a> collects written page text, headings, term uses, and definitions attached to words on individual pages. Search reads the index to find matches on other pages. Navigation and link previews use it too, and the glossary uses it to show where terms were used.</p>
+    <p>The <a href="../../../offprint/docs/tools/search-index.md">search index</a> collects written page text, headings, term uses, and definitions attached to words on individual pages. Search reads the index to find matches on other pages. Navigation and link previews use it too, and the glossary uses it to show where terms were used.</p>
     <p>Search can still read the current page directly. This explains why a new heading may appear in search while you are on that page and be missing when you search from another page.</p>
 
     <h2 id="data-files">Offline data files</h2>
-    <p>The <a href="../../../docform/docs/tools/file-wrapper.md">Data file wrapper</a> packages a CSV, JSON, or YAML source so a local page can read it. The tool checks that the source can be read and prepares it under the site's chosen name. The site can then use it in <span data-df-term="chart">charts</span>, tables, and other views.</p>
+    <p>The <a href="../../../offprint/docs/tools/file-wrapper.md">Data file wrapper</a> packages a CSV, JSON, or YAML source so a local page can read it. The tool checks that the source can be read and prepares it under the site's chosen name. The site can then use it in <span data-op-term="chart">charts</span>, tables, and other views.</p>
     <p>A reader can still open a file temporarily with <a href="../data/dropzones.html">File dropzones</a>. That choice affects the current page. The prepared file stays as it was.</p>
 
     <h2 id="refresh-from-terminal">Refresh from the terminal</h2>
-    <p>The <a href="../../../docform/docs/tools/refresh-assets.md">Terminal asset refresh</a> script does the asset tool's job without opening a browser. From the DocForm checkout, run it with Python 3.9 or later. It rebuilds every prepared file that is out of date, both the search index and the data file wrappers, and leaves current files untouched. Then reload the open page.</p>
+    <p>The <a href="../../../offprint/docs/tools/refresh-assets.md">Terminal asset refresh</a> script does the asset tool's job without opening a browser. From the OffPrint checkout, run it with Python 3.9 or later. It rebuilds every prepared file that is out of date, both the search index and the data file wrappers, and leaves current files untouched. Then reload the open page.</p>
     <pre><code class="language-shell">python3 docs/refresh-assets.py</code></pre>
     <p>Add <code>--check</code> to only report each file as Current, Missing, Stale, or Blocked, without changing anything. If anything is blocked, nothing is written until it is fixed.</p>
     <ul>
@@ -51,7 +51,7 @@
       <li>YAML data files also need the PyYAML package.</li>
       <li>The script reads pages more strictly than a browser. If it reports a page and line, fix the markup there, such as a tag left open or a <code>&amp;</code> that should be written <code>&amp;amp;</code>.</li>
     </ul>
-    <p>For your own site, copy <a href="../../refresh-assets.py">the project launcher</a> next to your pages. Adjust the paths to DocForm's <code>tools/refresh_assets.py</code> and your <code>site.js</code>.</p>
+    <p>For your own site, copy <a href="../../refresh-assets.py">the project launcher</a> next to your pages. Adjust the paths to OffPrint's <code>tools/refresh_assets.py</code> and your <code>site.js</code>.</p>
 
     <h2 id="when-to-rerun">When to run it again</h2>
     <ul>

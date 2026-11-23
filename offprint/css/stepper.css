@@ -1,0 +1,18 @@
+.op-stepper-controls {
+  margin-block: var(--op-space-4) var(--op-space-2);
+}
+
+.op-page ol.op-stepper-ready,
+ol.op-stepper-ready {
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+.op-stepper-ready > li {
+  padding-inline-start: 0;
+}
+
+.op-stepper-ready > li[hidden],
+[data-op-stepper-view][hidden] {
+  display: none !important;
+}

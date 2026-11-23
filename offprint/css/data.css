@@ -1,0 +1,44 @@
+/* Data blocks from data.js: parse errors with the raw text, size notices, and the show-more row. */
+.op-data {
+  margin-block: 0.75em;
+}
+
+.op-data > table {
+  margin-block: 0;
+}
+
+.op-data-error {
+  margin-block: 0 var(--op-space-2);
+  padding: var(--op-space-3) var(--op-space-4);
+  border-radius: var(--op-radius);
+  background: var(--op-red-bg);
+  color: var(--op-text);
+  font-size: 0.92em;
+}
+
+.op-data-error strong {
+  color: var(--op-red);
+}
+
+.op-data-raw {
+  max-height: 24em;
+  overflow: auto;
+}
+
+.op-data-more,
+.op-data-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--op-space-2);
+  margin-block: var(--op-space-2) 0;
+  color: var(--op-text-muted);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-data-notice {
+  padding: var(--op-space-3) var(--op-space-4);
+  border: 1px dashed var(--op-border-strong);
+  border-radius: var(--op-radius);
+}

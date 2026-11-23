@@ -1,0 +1,104 @@
+/* Heatmaps from chart-heatmap.js: cells in a palette hue over a neutral backdrop, dimmed cells outside the chosen
+   value range, contour lines with haloed labels and their legend toggle, and the side colour scale. */
+.op-chart.is-heatmap {
+  --op-heatmap-high: var(--op-blue);
+  --op-heatmap-low: var(--op-orange);
+}
+
+.op-heatmap-backdrop {
+  fill: var(--op-gray-bg);
+}
+
+.op-heatmap-cell,
+.op-heatmap-swatch,
+.op-heatmap-key > span {
+  fill: var(--op-heatmap-high);
+  background: var(--op-heatmap-high);
+}
+
+:is(.op-heatmap-cell, .op-heatmap-swatch, .op-heatmap-key > span)[data-op-heat="low"] {
+  fill: var(--op-heatmap-low);
+  background: var(--op-heatmap-low);
+}
+
+.op-heatmap-cell {
+  transition: opacity 0.2s ease-out;
+}
+
+.op-heatmap-cell.is-dimmed {
+  opacity: 0.12;
+}
+
+.op-heatmap-cell.is-active {
+  stroke: var(--op-text);
+  stroke-width: 1.5;
+}
+
+.op-heatmap-key {
+  position: relative;
+  overflow: hidden;
+  background: var(--op-gray-bg);
+}
+
+.op-heatmap-key > span {
+  position: absolute;
+  inset: 0;
+}
+
+.op-heatmap-contours {
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+/* The Contour lines legend chip hides every line and label together. */
+.op-heatmap-contours.is-off {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.op-heatmap-contour-key {
+  background: var(--op-text);
+  opacity: 0.7;
+}
+
+.op-heatmap-contour-toggle:not(:has(:checked)) .op-heatmap-contour-key {
+  opacity: 0.3;
+}
+
+.op-heatmap-contour {
+  fill: none;
+  stroke: var(--op-text);
+  stroke-opacity: 0.7;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.op-heatmap-contour-label {
+  fill: var(--op-text);
+  font-size: 10px;
+  paint-order: stroke;
+  stroke: var(--op-bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.op-heatmap-scale-tick {
+  stroke: var(--op-border-strong);
+}
+
+.op-heatmap-scale-range {
+  fill: none;
+  stroke: var(--op-text);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.op-heatmap-scale-hit {
+  fill: transparent;
+  cursor: ns-resize;
+}
+
+.op-heatmap-filter-text {
+  font-variant-numeric: tabular-nums;
+}

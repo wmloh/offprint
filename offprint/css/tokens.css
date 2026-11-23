@@ -1,0 +1,121 @@
+/* OffPrint design tokens. Load before every other offprint stylesheet. */
+:root {
+  color-scheme: light dark;
+
+  /* Named colours: text and background pairs, muted for light and dark. */
+  --op-gray: light-dark(#787774, #9b9b9b);
+  --op-gray-bg: light-dark(#f1f1ef, #2f2f2f);
+  --op-brown: light-dark(#9f6b53, #ba856f);
+  --op-brown-bg: light-dark(#f4eeee, #4a3228);
+  --op-orange: light-dark(#d9730d, #c77d48);
+  --op-orange-bg: light-dark(#fbecdd, #5c3b23);
+  --op-yellow: light-dark(#cb912f, #ca9849);
+  --op-yellow-bg: light-dark(#fbf3db, #564328);
+  --op-green: light-dark(#448361, #529e72);
+  --op-green-bg: light-dark(#edf3ec, #243d30);
+  --op-blue: light-dark(#337ea9, #379ad3);
+  --op-blue-bg: light-dark(#e7f3f8, #143a4e);
+  --op-purple: light-dark(#9065b0, #9d68d3);
+  --op-purple-bg: light-dark(#f6f3f9, #3c2d49);
+  --op-pink: light-dark(#c14c8a, #d15796);
+  --op-pink-bg: light-dark(#faf1f5, #4e2c3c);
+  --op-red: light-dark(#d44c47, #df5452);
+  --op-red-bg: light-dark(#fdebec, #522e2a);
+
+  /* Chart series, in fixed order: brighter steps of the named hues, checked for colour-blind separation on both
+     surfaces. Series with data-op-role or data-op-color use that colour instead. */
+  --op-chart-1: #2477b3;
+  --op-chart-2: #d9730d;
+  --op-chart-3: #8f5bc4;
+  --op-chart-4: #2e8b57;
+  --op-chart-5: #d44c47;
+  --op-chart-6: #b8860b;
+
+  /* Neutral surfaces and text. */
+  --op-bg: light-dark(#ffffff, #191919);
+  --op-bg-sidebar: light-dark(#f7f7f5, #202020);
+  --op-bg-hover: light-dark(rgba(55, 53, 47, 0.06), rgba(255, 255, 255, 0.055));
+  --op-bg-subtle: light-dark(rgba(55, 53, 47, 0.03), rgba(255, 255, 255, 0.03));
+  --op-text: light-dark(#37352f, rgba(255, 255, 255, 0.9));
+  --op-text-muted: light-dark(rgba(55, 53, 47, 0.65), rgba(255, 255, 255, 0.46));
+  --op-text-faint: light-dark(rgba(55, 53, 47, 0.45), rgba(255, 255, 255, 0.28));
+  --op-border: light-dark(rgba(55, 53, 47, 0.09), rgba(255, 255, 255, 0.094));
+  --op-border-strong: light-dark(rgba(55, 53, 47, 0.16), rgba(255, 255, 255, 0.16));
+  --op-code-text: light-dark(#eb5757, #ff7369);
+  --op-code-bg: light-dark(rgba(135, 131, 120, 0.15), rgba(135, 131, 120, 0.2));
+  --op-selection: light-dark(rgba(35, 131, 226, 0.28), rgba(35, 131, 226, 0.35));
+  --op-focus: var(--op-blue);
+  --op-link: light-dark(#0b65d6, #5aa5ff);
+  --op-xref: var(--op-green);
+  --op-table-hover: light-dark(rgba(55, 53, 47, 0.045), rgba(255, 255, 255, 0.045));
+
+  /* Emphasis colours, set separately for light and dark mode. Override the -light and -dark values in a page
+     stylesheet loaded after this one; values close to the defaults keep text calm. currentColor keeps the
+     surrounding colour, so bold and italic text inside coloured text stays coloured. */
+  --op-h1-light: #37352f;
+  --op-h1-dark: rgba(255, 255, 255, 0.9);
+  --op-h2-light: #37352f;
+  --op-h2-dark: rgba(255, 255, 255, 0.9);
+  --op-h3-light: #37352f;
+  --op-h3-dark: rgba(255, 255, 255, 0.9);
+  --op-h4-light: #37352f;
+  --op-h4-dark: rgba(255, 255, 255, 0.9);
+  --op-strong-light: currentColor;
+  --op-strong-dark: currentColor;
+  --op-em-light: currentColor;
+  --op-em-dark: currentColor;
+  --op-h1: light-dark(var(--op-h1-light), var(--op-h1-dark));
+  --op-h2: light-dark(var(--op-h2-light), var(--op-h2-dark));
+  --op-h3: light-dark(var(--op-h3-light), var(--op-h3-dark));
+  --op-h4: light-dark(var(--op-h4-light), var(--op-h4-dark));
+  --op-strong: light-dark(var(--op-strong-light), var(--op-strong-dark));
+  --op-em: light-dark(var(--op-em-light), var(--op-em-dark));
+
+  /* Type: system fonts only, no web fonts. */
+  --op-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --op-font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --op-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --op-font-size: 16px;
+  --op-line-height: 1.6;
+
+  /* Spacing scale (4px steps), radii, and layout widths. */
+  --op-space-1: 4px;
+  --op-space-2: 8px;
+  --op-space-3: 12px;
+  --op-space-4: 16px;
+  --op-space-5: 24px;
+  --op-space-6: 32px;
+  --op-space-7: 48px;
+  --op-space-8: 64px;
+  --op-radius-sm: 3px;
+  --op-radius: 4px;
+  --op-radius-lg: 8px;
+  --op-content-width: 1120px;
+  --op-figure-max-width: 100%;
+  --op-page-gutter: var(--op-space-5);
+  --op-sidebar-width: 260px;
+
+  /* Page sections: space before top-level headings, and the h2 colour cycle with its left-margin line.
+     The cycle lists named colours in order; sections.js reads it, and the no-script bars use the default order. */
+  --op-space-h2: 56px;
+  --op-space-h3: 32px;
+  --op-section-cycle: blue green purple orange pink brown;
+  --op-section-offset: 14px;
+  --op-section-line-width: 2px;
+  --op-section-line-strength: 45%;
+
+  /* Text roles (text.css): eyebrows are short context lines above a heading or block, and labelled fields pair
+     labels with values. Module context labels such as step counts share these values. --op-text-label is quieter
+     than body text but keeps small labels readable (about 5:1 in light mode). Set --op-eyebrow-case to none for
+     sentence-case labels, which keep familiar word shapes for dyslexic and early readers. */
+  --op-text-label: light-dark(rgba(55, 53, 47, 0.76), rgba(255, 255, 255, 0.62));
+  --op-eyebrow-size: max(12px, 0.75em);
+  --op-eyebrow-weight: 650;
+  --op-eyebrow-tracking: 0.07em;
+  --op-eyebrow-case: uppercase;
+  --op-field-label-width: 11em;
+}
+
+/* Forced themes set by theme.js; without the attribute, the system preference applies. */
+:root[data-op-theme="light"] { color-scheme: light; }
+:root[data-op-theme="dark"] { color-scheme: dark; }

@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
-const { parseHTML, inspect, ParseError } = require('../docform/tools/refresh-assets.js');
+const { parseHTML, inspect, ParseError } = require('../offprint/tools/refresh-assets.js');
 
 const docs = path.join(__dirname, '../docs');
 
@@ -55,9 +55,9 @@ test('the parser builds the browser tree for optional end tags, implied table se
   assert.equal(body('a<!-- c -->b'), 'body("a" #comment "b")');
   assert.equal(parseHTML('<div class="x" data-flag">a</div>').body.firstChild.hasAttribute('data-flag"'), true);
   const doc = parseHTML('<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>A &amp; B</title></head>' +
-    '<body data-df-autolink><main class="df-page"><h1>A</h1></main></body>\n</html>\n');
+    '<body data-op-autolink><main class="op-page"><h1>A</h1></main></body>\n</html>\n');
   assert.equal(doc.querySelector('title').textContent, 'A & B');
-  assert.equal(doc.body.getAttribute('data-df-autolink'), '');
+  assert.equal(doc.body.getAttribute('data-op-autolink'), '');
   assert.equal(tree(doc.body), 'body(main(h1("A")) "\\n\\n")');
 });
 
@@ -82,21 +82,21 @@ test('the parser refuses markup whose browser tree it would not reproduce', () =
 });
 
 test('the CLI writes stale outputs, reports them in check mode, and writes nothing when one is blocked', async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'docform-refresh-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'offprint-refresh-'));
   try {
     const write = (name, text) => {
       fs.mkdirSync(path.dirname(path.join(dir, name)), { recursive: true });
       fs.writeFileSync(path.join(dir, name), text);
     };
-    write('site.js', 'window.DocFormSite = ' + JSON.stringify({ title: 'Site', pages: ['index.html'],
+    write('site.js', 'window.OffPrintSite = ' + JSON.stringify({ title: 'Site', pages: ['index.html'],
       assets: { search: { output: 'out/search.js' }, data: { Values: { source: 'values.csv', output: 'out/values.js' } } } }) + ';');
-    write('index.html', '<!doctype html><title>Home</title><script src="site.js" data-df-site></script>' +
-      '<main class="df-page"><h1>Home</h1><h2>Part</h2><p>Body text.</p></main>');
+    write('index.html', '<!doctype html><title>Home</title><script src="site.js" data-op-site></script>' +
+      '<main class="op-page"><h1>Home</h1><h2>Part</h2><p>Body text.</p></main>');
     write('values.csv', 'a,b\n1,2\n');
     const run = async options => JSON.parse(JSON.stringify((await inspect(dir, options)).jobs.map(job => [job.output, job.status])));
     assert.deepEqual(await run(), [['out/search.js', 'missing'], ['out/values.js', 'missing']]);
     assert.deepEqual(await run({ search: true }), [['out/search.js', 'missing']]);
-    const cli = (...args) => spawnSync(process.execPath, [path.join(__dirname, '../docform/tools/refresh-assets.js'), dir, ...args],
+    const cli = (...args) => spawnSync(process.execPath, [path.join(__dirname, '../offprint/tools/refresh-assets.js'), dir, ...args],
       { encoding: 'utf8' });
     assert.equal(cli('--check').status, 1);
     assert.equal(fs.existsSync(path.join(dir, 'out')), false);

@@ -67,8 +67,9 @@
   list-style: none;
 }
 
-.op-quiz-tag {
-  padding: 0 0.6em;
+.op-quiz-tags > .op-quiz-tag {
+  margin: 0;
+  padding: 0 0.7em;
   border-radius: 999px;
   background: var(--op-bg-hover);
   color: var(--op-text-muted);
@@ -77,7 +78,7 @@
 }
 
 .op-quiz-tag-group {
-  margin-right: 0.35em;
+  margin-inline-end: 0.35em;
   color: var(--op-text-faint);
   font-size: 0.9em;
   text-transform: uppercase;

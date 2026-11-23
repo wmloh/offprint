@@ -4,26 +4,28 @@ Recommended structure and conventions for agents building OffPrint sites: docume
 
 ## Project layout
 
-A project holds one shared `offprint/` copy and one or more **sites**. A site is a self-contained root with exactly one manifest, its own navigation, search, glossary, and export. Names in `<…>` are placeholders.
+A project keeps one shared library copy in `showcase/offprint/` and one or more **sites** in `showcase/sites/`. Keep project code, pipelines, and raw run outputs outside `showcase/`. A site is a self-contained root with exactly one manifest, its own navigation, search, glossary, and export. Names in `<…>` are placeholders.
 
 ```text
-<project>/                      any repository; code, pipelines, and raw run outputs may sit beside the sites
-  offprint/                      one shared library copy; never edit it
-  <site>/                       site root, e.g. guide/ or sweep-results/; select it for export and refresh
-    index.html                  first manifest page
-    glossary.html               optional glossaryPage
-    refresh-assets.py           site launcher for data wrappers and search index (see Data)
-    pages/<group>/<page>.html   one folder per manifest group, one level deep
-    assets/
-      site.js                   manifest: the only shared configuration
-      site.css                  optional single author stylesheet
-      scripts/<name>.js         author scripts (last resort, see Custom code)
-      data/                     raw named sources: dynamic, or large static
-        quizzes/<stack>.json    quiz stacks and banks, one file per stack (see Data)
-      generated/                wrappers and search index; tool output only
-      media/                    local images, SVG, fonts, video posters
-  <other-site>/                 same structure, loading the same ../offprint/
-  <folder>/<site>/              sites may be grouped in plain folders; add one ../ per level
+<project>/
+  showcase/
+    offprint/                        shared library copy, kept as shipped
+    sites/
+      <site>/                        e.g. guide/ or sweep-results/ (select this root for export and refresh)
+        index.html                   first manifest page
+        glossary.html                optional glossaryPage
+        refresh-assets.py            site launcher for data wrappers and search index (see Data)
+        pages/<group>/<page>.html     one folder per manifest group, one level deep
+        assets/
+          site.js                    site manifest
+          site.css                   optional author stylesheet
+          scripts/<name>.js          author scripts (last resort, see Custom code)
+          data/                      dynamic or large static named sources
+            quizzes/<stack>.json     quiz stacks and banks, one file per stack (see Data)
+          generated/                 generated data wrappers and search index
+          media/                     local images, SVG, fonts, and video posters
+      <other-site>/                  same structure, loading the same ../../offprint/
+      <folder>/<site>/               optional grouping folder (add one ../ per level)
 ```
 
 - Site root holds everything its pages load except `offprint/`. Use only relative URLs. `../` may leave the root only to reach the library. Match path case exactly. [Site structure](setup/site-structure.md)
@@ -32,7 +34,7 @@ A project holds one shared `offprint/` copy and one or more **sites**. A site is
 - Only the library is shared. Stylesheets, scripts, media, data, terms, and citations are per site. Copy a small common file into each site rather than linking outside the root.
 - Pipelines write dynamic sources into `<site>/assets/data/`, either directly or as a copy step of the run, because refresh rejects source paths that leave the site root. Keep raw run directories outside sites.
 - Relative links to another site's pages work from disk, but export disables them. Do not rely on them for content.
-- The page skeleton paths below assume `<project>/<site>/`. Adjust the `../` count to the library for deeper sites.
+- The skeleton below is for `showcase/sites/<site>/pages/<group>/<page>.html`. From a site-root page such as `index.html`, use `../../offprint/` for the library and `assets/` for site files. Add one `../` to library paths per grouping level under `sites/`.
 - Mirror manifest groups in `pages/<group>/`. Use lowercase hyphenated file and site folder names that are stable, because export routes, search paths, and cross-page anchors depend on them.
 - Keep heavy unrelated trees such as `.git`, `node_modules`, raw archives, and pipeline outputs not consumed by pages outside every site root.
 
@@ -45,11 +47,11 @@ A project holds one shared `offprint/` copy and one or more **sites**. A site is
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Page · Site</title>
-  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <link rel="stylesheet" href="../../../../offprint/offprint.css">
   <link rel="stylesheet" href="../../assets/site.css">          <!-- optional -->
   <script src="../../assets/site.js" data-op-site></script>
   <script type="application/json" data-op-page>{"features": {"chart": true}}</script>  <!-- page-only -->
-  <script src="../../../offprint/offprint.js"></script>
+  <script src="../../../../offprint/offprint.js"></script>
   <script src="../../assets/scripts/name.js"></script>          <!-- optional, after entry -->
 </head>
 <body>
@@ -117,7 +119,7 @@ Take the first rung that works. Moving down a rung requires that every rung abov
 #!/usr/bin/env python3
 from pathlib import Path
 from runpy import run_path
-LIBRARY = '../offprint'
+LIBRARY = '../../offprint'
 if __name__ == '__main__':
     site = Path(__file__).resolve().parent
     main = run_path(str(site / LIBRARY / 'tools/refresh_assets.py'))['main']
@@ -165,7 +167,7 @@ Every page must work in both **Reader** and **Interactive** standalone export. [
 Run per site.
 
 - [ ] No `[offprint]` console warnings. `OffPrint.diagnostics.list()` is empty on every page.
-- [ ] `python3 <site>/refresh-assets.py --check` exits with status 0: the search index and all wrappers are current (or `tools/assets.html` reports them current when Node.js is unavailable). Regenerate after any page, heading, term, data, or manifest change.
+- [ ] From the project root, `python3 showcase/sites/<site>/refresh-assets.py --check` exits with status 0 (or `showcase/offprint/tools/assets.html` reports the search index and wrappers current when Node.js is unavailable). Regenerate after any page, heading, term, data, or manifest change.
 - [ ] Every page is in the manifest, prev/next order reads correctly, and cross-page anchors resolve.
 - [ ] Light and dark themes, 1920×1080 and narrow widths, focus mode, and print all look correct.
 - [ ] The export preview builds in Reader and Interactive modes with no missing resources or fallback pages.

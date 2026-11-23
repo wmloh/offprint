@@ -1654,7 +1654,7 @@ window.OffPrintSearch = {
         "file": "pages/explain/tabs.html",
         "path": "../pages/explain/tabs.html",
         "title": "Tabs",
-        "sha256": "7dae7a46dfc357baaf8c81a7e83b278f9bc032c9bd080d9c2cd9cada451a0d5d"
+        "sha256": "1cc0f560aaad5cc5fe4e253ebd520682a64782c891f24b16dd4810fe70cbc4e6"
       },
       {
         "file": "pages/explain/cards.html",
@@ -5494,7 +5494,7 @@ window.OffPrintSearch = {
           "id": "for-every-reader",
           "title": "For every reader",
           "level": 2,
-          "text": "Press Tab to reach the selected tab. Use Left and Right to move and select, or Home and End to jump to the ends. Press Tab again to continue into the selected panel. On narrow screens the tab strip can scroll sideways. The underline and weight mark the choice in either theme. With scripts off, all panel contents appear together. Print the selected panel, then switch and print again if you need another."
+          "text": "Press Tab to reach the selected tab. Use Left and Right to move and select, or Home and End to jump to the ends. Press Tab again to continue into the selected panel. On narrow screens, tabs wrap onto additional rows. The underline and weight mark the choice in either theme. With scripts off, all panel contents appear together. Print the selected panel, then switch and print again if you need another."
         },
         {
           "id": "related",
@@ -5546,11 +5546,6 @@ window.OffPrintSearch = {
           "text": "linked selection",
           "term": "linked selection",
           "section": "what-it-does"
-        },
-        {
-          "text": "scroll",
-          "term": "scroll",
-          "section": "for-every-reader"
         },
         {
           "text": "theme",

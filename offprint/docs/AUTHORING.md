@@ -98,8 +98,15 @@ Take the first rung that works. Moving down a rung requires that every rung abov
 - Order of preference: semantic classes and text roles (`.op-eyebrow`, `.op-fields`, callouts, tags), then `data-op-role` or `data-op-color`, then token overrides, then rules in `site.css`. [Tokens](layout/tokens.md) · [Roles](layout/roles.md) · [Text roles](layout/text-roles.md)
 - Restyle by overriding tokens on `:root` or a wrapper. Set `-light`/`-dark` inputs where a token has them.
 - One author stylesheet, `assets/site.css`. Its rules use token variables only (`var(--op-…)`): no literal colours, fonts, font sizes, or spacing. Do not restyle `.op-*` internals. Do not use `<style>` blocks or style-bearing `style=""` attributes in pages.
-- Give colour a meaning: define a role with a tip and reuse it across prose, tags, callouts, SVG, and legends. Do not use colour as decoration only.
+- Reserve accent colours for a small set of site-wide meanings. Define a role with a tip and reuse it across prose, tags, callouts, SVG, and legends. Tags with the same purpose can share a colour. Use explicit labels or grouping to distinguish them.
 - Check both themes. Size layouts for a 1920×1080 viewport, and confirm they still work in the narrow layout.
+
+### Visual composition
+
+- Keep pages minimalist and deliberate. Start with OffPrint’s reading styles and customize where it helps the subject or the reader’s task. Decide what should stand out on each page based on that task. Use typography, spacing, and grouping to keep supporting elements quiet.
+- When a diagram, chart, or example makes a long explanation easier to grasp, lead with it and state the takeaway briefly. Keep essential context and caveats visible beside the visual. Put optional depth in [peek bubbles](reading/peek-bubbles.md) or [sidenotes](reading/sidenotes.md).
+- Use an interactive view when readers benefit from comparing cases, exploring data, or working through a process. Use a static visual when the point is visible at a glance. Give readers enough context to know what to look for or try.
+- Use motion to explain a change, show a sequence, or provide feedback after an action. Keep nearby elements quiet so the motion is easy to follow.
 
 ## Data
 
@@ -161,17 +168,3 @@ Every page must work in both **Reader** and **Interactive** standalone export. [
 - Shared options duplicated in page JSON, and data duplicated across pages.
 - `profile: "none"` or blanket feature enabling without a reason.
 - Content that is empty or broken without script.
-
-## Pre-ship checklist
-
-Run per site.
-
-- [ ] No `[offprint]` console warnings. `OffPrint.diagnostics.list()` is empty on every page.
-- [ ] From the project root, `python3 showcase/sites/<site>/refresh-assets.py --check` exits with status 0 (or `showcase/offprint/tools/assets.html` reports the search index and wrappers current when Node.js is unavailable). Regenerate after any page, heading, term, data, or manifest change.
-- [ ] Every page is in the manifest, prev/next order reads correctly, and cross-page anchors resolve.
-- [ ] Light and dark themes, 1920×1080 and narrow widths, focus mode, and print all look correct.
-- [ ] The export preview builds in Reader and Interactive modes with no missing resources or fallback pages.
-- [ ] Every quiz starts, finishes, and shows its results card without diagnostics; answers appear only where `feedback` allows.
-- [ ] Author scripts start with their gap comment and register through `OffPrint.register`. `site.css` uses only tokens.
-
-[Site structure](setup/site-structure.md) · [Manifest](setup/manifest.md) · [Include order](setup/include-order.md) · [Extension API](extend/api.md)

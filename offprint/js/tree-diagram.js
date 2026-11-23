@@ -146,10 +146,10 @@
         var toggle = diagram.element('button', 'op-tree-diagram-toggle', wrap);
         toggle.type = 'button';
         toggle.tabIndex = -1;
-        var icon = diagram.svg('svg', { viewBox: '0 0 16 16', fill: 'none', stroke: 'currentColor',
-          'stroke-width': 1.25, 'stroke-linecap': 'round', 'aria-hidden': 'true', focusable: 'false' }, toggle);
-        diagram.svg('path', { d: 'M5 8h6' }, icon);
-        diagram.svg('path', { d: 'M8 5v6', class: 'op-tree-diagram-toggle-vertical' }, icon);
+        var icon = diagram.svg('svg', { viewBox: '0 0 10 8', fill: 'none', stroke: 'currentColor',
+          'stroke-width': 1.25, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+          'aria-hidden': 'true', focusable: 'false' }, toggle);
+        diagram.svg('path', { d: 'M2 2.5 5 5.5 8 2.5' }, icon);
         toggle.addEventListener('click', function () {
           setCollapsed(i, !collapsed.has(node.key));
           actions.focus(i);

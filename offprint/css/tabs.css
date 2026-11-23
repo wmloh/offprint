@@ -14,15 +14,13 @@
 
 .op-tab-list {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px;
   margin-bottom: var(--op-space-2);
-  overflow-x: auto;
   border-bottom: 1px solid var(--op-border-strong);
-  scrollbar-width: thin;
 }
 
 .op-tab {
-  flex: none;
   margin: 0 0 -1px;
   padding: 0.35em 0.75em;
   border: 0;
@@ -32,6 +30,7 @@
   color: var(--op-text-muted);
   font: inherit;
   font-size: 14px;
+  overflow-wrap: anywhere;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }

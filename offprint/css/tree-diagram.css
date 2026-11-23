@@ -67,41 +67,34 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.875rem;
-}
-
-.op-tree-diagram-pick[aria-expanded] {
-  padding-inline-end: 28px;
+  text-align: center;
 }
 
 .op-tree-diagram-toggle {
   position: absolute;
-  inset-inline-end: 3px;
-  inset-block-end: 3px;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
   display: grid;
   place-items: center;
   width: 24px;
-  height: 24px;
+  height: 18px;
   padding: 0;
-  border-radius: 50%;
   color: var(--op-text-muted);
 }
 
 .op-tree-diagram-toggle > svg {
-  box-sizing: border-box;
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--op-border);
-  border-radius: 50%;
-  background: var(--op-bg);
+  width: 10px;
+  height: 8px;
   pointer-events: none;
 }
 
-.op-tree-diagram-toggle[aria-expanded="true"] .op-tree-diagram-toggle-vertical {
-  display: none;
+.op-tree-diagram-toggle[aria-expanded="true"] > svg {
+  transform: rotate(180deg);
 }
 
 .op-tree-diagram-pick:hover,
-.op-tree-diagram-toggle:hover > svg,
+.op-tree-diagram-toggle:hover,
 .op-tree-diagram-pick[aria-current="true"] {
   background: var(--op-accent-bg, var(--op-blue-bg));
 }

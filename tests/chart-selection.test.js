@@ -3279,8 +3279,8 @@ test('tree disclosure repositions persistent nodes and keeps details and selecti
   const icon = toggle.querySelector('svg');
   const detail = OP._detailPane.get(pane);
   assert.deepEqual(warnings, []);
-  assert.equal(icon.getAttribute('viewBox'), '0 0 16 16');
-  assert.deepEqual(icon.children.map((path) => path.getAttribute('d')), ['M5 8h6', 'M8 5v6']);
+  assert.equal(icon.getAttribute('viewBox'), '0 0 10 8');
+  assert.deepEqual(icon.children.map((path) => path.getAttribute('d')), ['M2 2.5 5 5.5 8 2.5']);
   assert.equal(root.tabIndex, 0);
   assert.equal(branch.getAttribute('aria-expanded'), 'false');
   assert.equal(leaf.parentNode.inert, true);

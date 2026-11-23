@@ -267,14 +267,14 @@ window.OffPrintSite = {
     },
     "tags": {
       "glossary": {
-        "Computer basics": "Everyday computer words, such as files, folders, and browsers.",
-        "Web technology": "Words for what web pages are made of and how browsers show them.",
-        "Design": "Words for how a page looks and guides the eye.",
-        "Setup": "Words for setting up an OffPrint site and its features.",
-        "Reading interface": "Parts of the screen readers use to move around an OffPrint site.",
-        "Writing": "Building blocks for text, notes, maths, code, and sources.",
-        "Interaction": "Figures and controls that respond to the reader.",
-        "Data and charts": "Words for data files, charts, and comparing results."
+        "Computer basics": { "tip": "Everyday computer words, such as files, folders, and browsers.", "color": "brown" },
+        "Web technology": { "tip": "Words for what web pages are made of and how browsers show them.", "color": "blue" },
+        "Design": { "tip": "Words for how a page looks and guides the eye.", "color": "pink" },
+        "Setup": { "tip": "Words for setting up an OffPrint site and its features.", "color": "orange" },
+        "Reading interface": { "tip": "Parts of the screen readers use to move around an OffPrint site.", "color": "yellow" },
+        "Writing": { "tip": "Building blocks for text, notes, maths, code, and sources.", "color": "red" },
+        "Interaction": { "tip": "Figures and controls that respond to the reader.", "color": "purple" },
+        "Data and charts": { "tip": "Words for data files, charts, and comparing results.", "color": "green" }
       },
       "classes": {
         "availability": { "shape": "triangle", "label": "Availability", "tags": ["On by default", "On request", "Chart add-on"] },

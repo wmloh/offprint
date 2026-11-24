@@ -1219,9 +1219,91 @@
       (interval.count === undefined ? '' : ' (n = ' + interval.count + ')');
   }
 
+  // Reading-control behaviour shared by controls.js, nav.js, and the standalone export shell. The shell receives
+  // these as source text (export-package.js), so each function must stay self-contained.
+  var READING = {
+    // Milliseconds within which another heading jump steps on from the last target, even mid-scroll.
+    jumpChain: 1000,
+
+    // Sharp elements: the page title and anything overlapping the central band, whichever section they are in.
+    dimmed: function dimmed(top, bottom, vh, title) {
+      if (title) return false;
+      return bottom <= vh * 0.2 || top >= vh * 0.8;
+    },
+
+    // Focus-mode blocks: plain section, article, and attribute-free div wrappers open so each element inside blurs
+    // on its own. Each block is marked op-focus-block and reports whether it is the page title.
+    focusBlocks: function focusBlocks(main) {
+      var blocks = [];
+      (function walk(parent) {
+        Array.prototype.forEach.call(parent.children, function (node) {
+          var name = String(node.localName || '').toLowerCase();
+          if (/^(script|style|template)$/.test(name) ||
+            node.matches('.op-outline-sentinel, .op-section-lines, .op-export-pop, [data-op-snapshot-tips]')) return;
+          var wrapper = name === 'section' || name === 'article' || name === 'div' && !node.attributes.length;
+          if (wrapper && node.children.length) walk(node);
+          else blocks.push(node);
+        });
+      })(main);
+      return blocks.map(function (node) {
+        node.classList.add('op-focus-block');
+        return { node: node, title: node.matches('h1, header') || !!node.querySelector('h1') };
+      });
+    },
+
+    // offsets[i] is heading i's distance below where a jump leaves it, or null while it is not rendered. Steps from
+    // index `from` when it is at least 0; otherwise skips headings already within 4px of their resting place.
+    nextHeading: function nextHeading(offsets, dir, from) {
+      var order = offsets.map(function (offset, index) { return index; });
+      if (dir < 0) order.reverse();
+      var at = order.find(function (index) {
+        if (offsets[index] === null) return false;
+        return from >= 0 ? dir * (index - from) > 0 : dir * offsets[index] > 4;
+      });
+      return at === undefined ? -1 : at;
+    },
+
+    // Animates a disclosure list's height and opacity to its natural size or zero, reversing from wherever a running
+    // slide in `motions` had reached. how.collapsed says the list is not shown now; how.expand() lays it out to
+    // measure and how.settle() applies the final state, immediately when how.animate is false.
+    slide: function slide(list, open, motions, how) {
+      var animating = how.animate !== false && typeof list.animate === 'function';
+      var running = motions.get(list);
+      var from = 0;
+      var fade = 0;
+      if (animating && !how.collapsed) {
+        from = list.getBoundingClientRect().height;
+        fade = Number(list.ownerDocument.defaultView.getComputedStyle(list).opacity);
+      }
+      if (running) {
+        running.cancel();
+        motions.delete(list);
+      }
+      how.expand();
+      if (!animating) {
+        list.style.overflow = '';
+        how.settle();
+        return;
+      }
+      var to = open ? list.getBoundingClientRect().height : 0;
+      list.style.overflow = 'hidden';
+      var motion = list.animate([
+        { height: from + 'px', opacity: fade },
+        { height: to + 'px', opacity: open ? 1 : 0 }
+      ], { duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+      motions.set(list, motion);
+      motion.onfinish = function () {
+        motions.delete(list);
+        list.style.overflow = '';
+        how.settle();
+      };
+    }
+  };
+
   var OffPrint = root.OffPrint = Object.assign(root.OffPrint || { _site: null, _page: null }, {
     _colors: COLORS.slice(),
     _icons: CONTROL_ICONS,
+    _reading: READING,
     register: register,
     _data: data,
     _flag: flag,

@@ -14,8 +14,6 @@
   var CARET = SVG + ' width="12" height="12"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
   var MENU = SVG + ' width="18" height="18"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg>';
 
-  var SLIDE_MS = 180;
-  var SLIDE_EASE = 'cubic-bezier(0.2, 0, 0, 1)';
   var WIDTH_KEY = 'offprint-nav-width';
   var WIDTH_MIN = 200;
   var WIDTH_MAX = 480;
@@ -151,35 +149,14 @@
     return list;
   }
 
-  var motions = typeof WeakMap === 'function' ? new WeakMap() : null;
+  var motions = new WeakMap();
 
-  // Animates a list's height between its natural size and zero, starting from wherever a running slide had reached.
   function slide(list, open, animate) {
-    var running = motions && motions.get(list);
-    var from = list.hidden ? 0 : list.getBoundingClientRect().height;
-    var fade = list.hidden ? 0 : Number(root.getComputedStyle(list).opacity);
-    if (running) {
-      running.cancel();
-      motions.delete(list);
-    }
-    list.hidden = false;
-    if (!animate || !motions || typeof list.animate !== 'function') {
-      list.style.overflow = '';
-      list.hidden = !open;
-      return;
-    }
-    var to = open ? list.getBoundingClientRect().height : 0;
-    list.style.overflow = 'hidden';
-    var motion = list.animate([
-      { height: from + 'px', opacity: fade },
-      { height: to + 'px', opacity: open ? 1 : 0 }
-    ], { duration: SLIDE_MS, easing: SLIDE_EASE });
-    motions.set(list, motion);
-    motion.onfinish = function () {
-      motions.delete(list);
-      list.style.overflow = '';
-      list.hidden = !open;
-    };
+    OffPrint._reading.slide(list, open, motions, {
+      collapsed: list.hidden, animate: animate,
+      expand: function () { list.hidden = false; },
+      settle: function () { list.hidden = !open; }
+    });
   }
 
   function disclosure(caret, list, open) {

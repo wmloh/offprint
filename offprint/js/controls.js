@@ -23,9 +23,7 @@
     theme: ['t', 'Toggle theme'], focus: ['f', 'Toggle focus mode'], nav: ['n', 'Toggle navigation'],
     next: ['j', 'Next heading'], prev: ['k', 'Previous heading']
   };
-  var JUMP_CHAIN = 1000;
-  // Fractions of the viewport height: blocks overlapping this central band stay sharp in focus mode.
-  var FOCUS_BAND = [0.2, 0.8];
+  var reading = OffPrint._reading;
   // Pixels from the window's right edge within which the page scrollbar shows.
   var SCROLLBAR_ZONE = 40;
   var ICONS = OffPrint._icons;
@@ -129,23 +127,6 @@
     applyClasses();
     listeners.forEach(function (fn) { fn(); });
     return true;
-  }
-
-  // Sharp elements: the page title and anything overlapping the central band, whichever section they are in.
-  function dimmed(top, bottom, vh, title) {
-    if (title) return false;
-    return bottom <= vh * FOCUS_BAND[0] || top >= vh * FOCUS_BAND[1];
-  }
-
-  // Headings rest about `margin` below the viewport top after a jump, so only those clearly past it count.
-  function stepHeading(tops, dir, margin) {
-    var i;
-    if (dir > 0) {
-      for (i = 0; i < tops.length; i++) if (tops[i] > margin + 4) return i;
-    } else {
-      for (i = tops.length - 1; i >= 0; i--) if (tops[i] < margin - 4) return i;
-    }
-    return -1;
   }
 
   function progress(scrollY, max) {
@@ -306,35 +287,14 @@
     };
   }
 
-  function focusable(el) {
-    return !/^(SCRIPT|STYLE|TEMPLATE)$/.test(el.tagName) && !el.matches('.op-outline-sentinel, .op-section-lines');
-  }
-
-  // Plain wrappers such as <section> are opened so each element inside blurs on its own.
-  function isWrapper(el) {
-    return /^(SECTION|ARTICLE)$/.test(el.tagName) || el.tagName === 'DIV' && !el.attributes.length;
-  }
-
-  function focusBlocks(parent, out) {
-    Array.prototype.forEach.call(parent.children, function (el) {
-      if (!focusable(el)) return;
-      if (isWrapper(el) && el.children.length) focusBlocks(el, out);
-      else out.push(el);
-    });
-    return out;
-  }
-
   function focusElements(main) {
-    var blocks = focusBlocks(main, []);
-    var titles = blocks.map(function (el) { return el.matches('h1, header') || !!el.querySelector('h1'); });
-    blocks.forEach(function (el) { el.classList.add('op-focus-block'); });
-
+    var blocks = reading.focusBlocks(main);
     return {
       update: function () {
         var vh = root.innerHeight;
-        blocks.forEach(function (el, i) {
-          var r = el.getBoundingClientRect();
-          el.classList.toggle('op-focus-dim', dimmed(r.top, r.bottom, vh, titles[i]));
+        blocks.forEach(function (block) {
+          var r = block.node.getBoundingClientRect();
+          block.node.classList.toggle('op-focus-dim', reading.dimmed(r.top, r.bottom, vh, block.title));
         });
       }
     };
@@ -430,14 +390,10 @@
     if (headings.length) {
       var jump = function (dir) {
         var now = Date.now();
-        var target;
-        if (lastJump && now - lastJump.time < JUMP_CHAIN) {
-          target = lastJump.index + dir;
-        } else {
-          var margin = parseFloat(root.getComputedStyle(headings[0]).scrollMarginTop) || 0;
-          target = stepHeading(headings.map(function (h) { return h.getBoundingClientRect().top; }), dir, margin);
-        }
-        if (target < 0 || target >= headings.length) return;
+        var margin = parseFloat(root.getComputedStyle(headings[0]).scrollMarginTop) || 0;
+        var target = reading.nextHeading(headings.map(function (h) { return h.getBoundingClientRect().top - margin; }), dir,
+          lastJump && now - lastJump.time < reading.jumpChain ? lastJump.index : -1);
+        if (target < 0) return;
         lastJump = { index: target, time: now };
         headings[target].scrollIntoView({ behavior: 'smooth', block: 'start' });
       };
@@ -487,9 +443,6 @@
 
   OffPrint._controls = {
     keys: KEYS,
-    dimmed: dimmed,
-    focusBand: FOCUS_BAND.slice(),
-    stepHeading: stepHeading,
     nearNavEdge: nearNavEdge,
     leavesPage: leavesPage,
     nearScrollbar: nearScrollbar,

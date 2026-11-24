@@ -136,31 +136,16 @@
     });
   }
 
-  // Focus-mode blocks as in controls.js: plain section, article, and attribute-free div wrappers open so each element
-  // inside blurs on its own. dim(block, height) applies the live page's band around the viewport centre.
-  function focusBlocks(main) {
-    var blocks = [];
-    (function walk(parent) {
-      for (var node of parent.children) {
-        if (node.matches('script,style,template,.op-outline-sentinel,.op-section-lines,.op-export-pop,' +
-          '[data-op-snapshot-tips]')) continue;
-        var wrapper = /^(section|article)$/.test(node.localName) || node.localName === 'div' && !node.attributes.length;
-        if (wrapper && node.children.length) walk(node);
-        else blocks.push(node);
-      }
-    })(main);
-    return blocks.map(function (node) {
-      node.classList.add('op-focus-block');
-      var title = node.matches('h1,header') || !!node.querySelector('h1');
-      return { node: node, dim: function (height) {
-        if (title) return false;
-        var rect = node.getBoundingClientRect();
-        return rect.bottom <= height * .2 || rect.top >= height * .8;
-      } };
-    });
+  // Source text for an object of self-contained functions and JSON values, such as core.js OffPrint._reading.
+  function readingSource(reading) {
+    return '{' + Object.keys(reading).map(function (key) {
+      var value = reading[key];
+      return JSON.stringify(key) + ':' + (typeof value === 'function' ? String(value) : JSON.stringify(value));
+    }).join(',') + '}';
   }
 
-  function controls(host, headings, tips, navigate, icons, focusBlocks) {
+  // reading is core.js OffPrint._reading, shared with the live controls.js and nav.js.
+  function controls(host, headings, tips, navigate, icons, reading) {
     var html = document.documentElement;
     var pill = document.querySelector('#export-pill');
     var pager = document.querySelector('#export-pager');
@@ -188,7 +173,6 @@
     var currentSection;
     var jumpOrigin;
     var lastJump = null;
-    var JUMP_CHAIN = 1000;
     var zoomed = false;
     var zoomWatch;
     var railActive = null;
@@ -477,32 +461,26 @@
       if (closeFocused || restore && (!navOpen || document.activeElement === separator)) navButton.focus();
     });
     window.addEventListener('resize', function () { if (!compact.matches) setWidth(width); });
-    // Page groups slide open and shut like nav.js, reversing from wherever a running slide had reached.
+    // Page groups slide open and shut like nav.js. data-closing keeps a closing group laid out until its slide ends.
     var slides = new WeakMap();
     toc.addEventListener('click', function (event) {
       var summary = event.target.closest?.('summary');
       var group = summary?.parentElement;
       var list = group?.querySelector(':scope > ul');
-      if (!list || !toc.contains(group) || typeof list.animate !== 'function') return;
+      if (!list || !toc.contains(group)) return;
       event.preventDefault();
-      var running = slides.get(group);
-      var open = running ? !running.open : !group.open;
-      var from = group.open ? list.getBoundingClientRect().height : 0;
-      var fade = group.open ? Number(getComputedStyle(list).opacity) : 0;
-      running?.motion.cancel();
-      group.open = true;
-      group.toggleAttribute('data-closing', !open);
-      var to = open ? list.getBoundingClientRect().height : 0;
-      list.style.overflow = 'hidden';
-      var motion = list.animate([{ height: from + 'px', opacity: fade }, { height: to + 'px', opacity: open ? 1 : 0 }],
-        { duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
-      slides.set(group, { motion: motion, open: open });
-      motion.onfinish = function () {
-        slides.delete(group);
-        list.style.overflow = '';
-        group.removeAttribute('data-closing');
-        group.open = open;
-      };
+      var open = !group.open || group.hasAttribute('data-closing');
+      reading.slide(list, open, slides, {
+        collapsed: !group.open,
+        expand: function () {
+          group.open = true;
+          group.toggleAttribute('data-closing', !open);
+        },
+        settle: function () {
+          group.removeAttribute('data-closing');
+          group.open = open;
+        }
+      });
     });
     close.addEventListener('click', function () { closeDrawer(true); });
     shade.addEventListener('click', function () { closeDrawer(true); });
@@ -620,7 +598,10 @@
       updateRail(sections.filter(function (section) { return section.rail; }).map(function (section) {
         return visible(section) ? section.node.getBoundingClientRect().top : null;
       }), height, max > 0 ? max - scroller.scrollTop : null, end, bottom);
-      blocks.forEach(function (block) { block.node.classList.toggle('op-focus-dim', focused && block.dim(height)); });
+      blocks.forEach(function (block) {
+        var rect = block.node.getBoundingClientRect();
+        block.node.classList.toggle('op-focus-dim', focused && reading.dimmed(rect.top, rect.bottom, height, block.title));
+      });
     }
 
     function schedule() {
@@ -664,34 +645,27 @@
       return { hash: hash, item: item, link: link, rail: rail };
     }
 
-    // Jumps glide like controls.js; presses within JUMP_CHAIN of the last one step on from its target mid-scroll.
+    // Jumps glide like controls.js and chain from the last target while a quick run of presses is still scrolling.
     function jump(direction) {
-      var chained = lastJump && Date.now() - lastJump.time < JUMP_CHAIN ? lastJump.index : -1;
-      var at = -1;
+      var now = Date.now();
+      var from = lastJump && now - lastJump.time < reading.jumpChain ? lastJump.index : -1;
+      var offsets;
       if (remote) {
-        var readings = remote.readings || [];
-        var anchored = chained >= 0 ? chained : sections.findIndex(function (section) { return section.hash === remote.anchor; });
-        at = direction > 0 ? readings.findIndex(function (top, index) {
-          return top !== null && (anchored >= 0 ? index > anchored : top > 4);
-        }) : readings.findLastIndex(function (top, index) {
-          return top !== null && (anchored >= 0 ? index < anchored : top < -4);
-        });
+        if (from < 0) from = sections.findIndex(function (section) { return section.hash === remote.anchor; });
+        offsets = remote.readings || [];
       } else if (view) {
-        var anchored = chained >= 0 ? chained : jumpOrigin?.top === view.scrollY ? sections.findIndex(function (section) {
-          return section.hash === jumpOrigin.hash;
-        }) : -1;
-        var order = sections.map(function (section, index) { return index; });
-        if (direction < 0) order.reverse();
-        at = order.find(function (index) {
-          var section = sections[index];
-          if (!visible(section)) return false;
-          if (anchored >= 0) return direction * (index - anchored) > 0;
+        if (from < 0 && jumpOrigin?.top === view.scrollY) {
+          from = sections.findIndex(function (section) { return section.hash === jumpOrigin.hash; });
+        }
+        offsets = sections.map(function (section) {
+          if (!visible(section)) return null;
           var margin = parseFloat(view.getComputedStyle(section.node).scrollMarginTop) || 0;
-          return direction * (section.node.getBoundingClientRect().top - margin) > 4;
-        }) ?? -1;
-      }
+          return section.node.getBoundingClientRect().top - margin;
+        });
+      } else return;
+      var at = reading.nextHeading(offsets, direction, from);
       if (at < 0) return;
-      lastJump = { index: at, time: Date.now() };
+      lastJump = { index: at, time: now };
       navigate(sections[at].hash, true);
     }
 
@@ -800,7 +774,7 @@
         if (!outline?.children.length) outline?.remove();
         focusButton.hidden = !sections.length;
         var main = doc.querySelector('.op-page') || doc.querySelector('main') || doc.body;
-        blocks = focusBlocks(main);
+        blocks = reading.focusBlocks(main);
         content = main;
         rail.hidden = !railList.children.length;
         railSpace = doc.createElement('div');
@@ -1016,7 +990,7 @@
     return runtime._readerState;
   }
 
-  function authorFrame(session, startInteractive, headings, focusBlocks) {
+  function authorFrame(session, startInteractive, headings, reading) {
     // Keep the bootstrap nonce out of the DOM seen by any later script.
     document.currentScript.remove();
     document.querySelector('meta[http-equiv="Content-Security-Policy"]').remove();
@@ -1036,7 +1010,10 @@
       var readings = sections.map(function (node) {
         return node.getClientRects().length ? node.getBoundingClientRect().top : null;
       });
-      for (var block of mount) block.node.classList.toggle('op-focus-dim', focus && block.dim(height));
+      for (var block of mount) {
+        var rect = block.node.getBoundingClientRect();
+        block.node.classList.toggle('op-focus-dim', focus && reading.dimmed(rect.top, rect.bottom, height, block.title));
+      }
       var main = document.querySelector('.op-page') || document.querySelector('main') || document.body;
       send({ type: 'progress', readings: readings, height: height,
         percent: max > 0 ? Math.round(100 * scroller.scrollTop / max) : 100,
@@ -1061,7 +1038,7 @@
       state = await startInteractive(document, data.payload, data.shared, null, data.saved, controller.signal);
       var main = document.querySelector('.op-page') || document.querySelector('main') || document.body;
       sections = headings(document).filter(function (node) { return node.id; });
-      mount = focusBlocks(main);
+      mount = reading.focusBlocks(main);
       send({ type: 'ready', headings: sections.map(function (node) {
         return [node.id, node.textContent.trim().replace(/\s+/g, ' '), Number(node.localName[1])];
       }), theme: document.documentElement.getAttribute('data-op-theme') });
@@ -1140,7 +1117,8 @@
     parent.postMessage({ type: 'offprint-author-connect', session: session }, '*', [channel.port2]);
   }
 
-  function reader(assemble, figureSteps, headings, controls, startInteractive, fileKey, authorFrame, focusBlocks) {
+  function reader(assemble, figureSteps, headings, controls, startInteractive, fileKey, authorFrame, reading,
+      readingSource) {
     var bundle = JSON.parse(document.querySelector('#export-bundle').textContent);
     document.querySelector('#export-bundle').remove();
     var pages = new Map(bundle.pages.map(function (page) { return [page.id, page]; }));
@@ -1160,7 +1138,7 @@
       return [fileKey(new URL(page.url), true), page.id];
     }) : []);
     var running, pageState, isolated;
-    var chrome = controls(host, headings, tips, navigate, bundle.icons, focusBlocks);
+    var chrome = controls(host, headings, tips, navigate, bundle.icons, reading);
 
     function destination() {
       var [page, fragment] = location.hash.slice(1).split('/');
@@ -1472,7 +1450,7 @@
       });
       window.addEventListener('message', connect);
       var code = '(' + authorFrame + ')(' + JSON.stringify(session) + ',' +
-        startInteractive + ',' + headings + ',' + focusBlocks + ');';
+        startInteractive + ',' + headings + ',' + readingSource(reading) + ');';
       var end = markup.lastIndexOf('</body>');
       current.srcdoc = markup.slice(0, end) + '<script nonce="' + nonce + '">' + code + '<' + '/script>' + markup.slice(end);
     }
@@ -1585,5 +1563,5 @@
   }
 
   root.OffPrint._exportReader = { run: reader, assemble: assemble, figureSteps: figureSteps, headings: headings,
-    controls: controls, startInteractive: startInteractive, authorFrame: authorFrame, focusBlocks: focusBlocks };
+    controls: controls, startInteractive: startInteractive, authorFrame: authorFrame, readingSource: readingSource };
 })(window);

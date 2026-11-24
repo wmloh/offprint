@@ -2004,10 +2004,10 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   const route = [];
   const controls = p.OP._exportReader.controls;
   // Give the shell control module only the browser APIs it uses.
-  const chrome = vm.runInNewContext(`(${controls})(host, headings, tips, navigate, icons, focusBlocks)`, {
+  const chrome = vm.runInNewContext(`(${controls})(host, headings, tips, navigate, icons, reading)`, {
     host,
     icons,
-    focusBlocks: p.OP._exportReader.focusBlocks,
+    reading: core.OffPrint._reading,
     document: Object.assign(p.document, {
       querySelector: selector => parts.get(selector),
       getElementById: id => p.body.lastChild.children.find(node => node.id === id)
@@ -2174,13 +2174,18 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   assert.deepEqual(route.at(-1), ['#page-1/leaf', true]);
 });
 
-test('Export focus mode blurs each element inside plain wrappers and never the page title', () => {
-  const context = { window: { OffPrint: {} } };
-  vm.runInNewContext(fs.readFileSync(new URL('offprint/js/export-reader.js', repo), 'utf8'), context);
+test('Shared focus blocks blur each element inside plain wrappers, never the title, and run from source text', () => {
+  const context = vm.createContext({ console });
+  context.window = context;
+  vm.runInContext(fs.readFileSync(new URL('offprint/js/core.js', repo), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(new URL('offprint/js/export-reader.js', repo), 'utf8'), context);
+  const exportReader = context.OffPrint._exportReader;
+  // The export shell runs the helpers from their source text, so they must work without core.js around them.
+  const reading = vm.runInNewContext('(' + exportReader.readingSource(context.OffPrint._reading) + ')');
   function node(localName, children = [], attributes = [], box = { top: 0, bottom: 10 }) {
     const classes = new Set();
     return { localName, children, attributes, classes,
-      matches: selector => selector.split(',').includes(localName),
+      matches: selector => selector.split(',').map(part => part.trim()).includes(localName),
       querySelector: () => null,
       classList: { add: name => classes.add(name) },
       getBoundingClientRect: () => box };
@@ -2190,10 +2195,14 @@ test('Export focus mode blurs each element inside plain wrappers and never the p
   const second = node('p', [], [], { top: 40, bottom: 60 });
   const wrapper = node('section', [first, second]);
   const card = node('div', [node('p')], [{ name: 'class', value: 'card' }], { top: 90, bottom: 120 });
-  const blocks = context.window.OffPrint._exportReader.focusBlocks(node('main', [title, node('script'), wrapper, card]));
+  const blocks = reading.focusBlocks(node('main', [title, node('script'), wrapper, card]));
   assert.deepEqual([...blocks].map(block => block.node), [title, first, second, card]);
   assert.equal(first.classes.has('op-focus-block'), true);
-  assert.deepEqual([...blocks].map(block => block.dim(100)), [false, true, false, true]);
+  assert.deepEqual([...blocks].map(({ node, title }) => {
+    const rect = node.getBoundingClientRect();
+    return reading.dimmed(rect.top, rect.bottom, 100, title);
+  }), [false, true, false, true]);
+  assert.equal(reading.jumpChain, 1000);
 });
 
 test('custom figures expose keyed animation state and committed zoom lifecycle events', async () => {

@@ -922,7 +922,7 @@
     shade.hidden = true;
     var host = create(doc, 'main');
     host.id = 'export-page';
-    host.dataset.initial = pages.find(function (page) { return page.id === site.active; })?.id || pages[0].id;
+    host.setAttribute('data-initial', pages[0].id);
     if (interactive) {
       var status = create(doc, 'p');
       status.id = 'export-status';
@@ -980,7 +980,7 @@
     var reader = OP._exportReader;
     var runtime = [reader.assemble, reader.figureSteps, reader.headings, reader.controls,
       interactive ? reader.startInteractive : null, interactive ? fileKey : null, withAuthor ? reader.authorFrame : null,
-      reader.focusBlocks];
+      reader.readingSource(OP._reading), withAuthor ? reader.readingSource : null];
     doc.body.append(create(doc, 'script', '(' + reader.run.toString() + ')(' + runtime.map(String).join(',') + ');'));
     return '<!doctype html>\n' + doc.documentElement.outerHTML;
   }

@@ -546,6 +546,13 @@ test('a cancelled two-page export rebuilds a shared bundle and reconstructs each
     assert.equal(runtime._exportReader.assemble(page.markup, bundle.assets), frame);
   }
   assert.equal(await (await prepared.build(selected)).blob.text(), html);
+  assert.match(shell, /id="export-page" data-initial="page-1"/);
+  runtime._page = 'file:///work/project/nested/index.html';
+  const fromNested = await runtime._exportPackage.prepare(files);
+  assert.equal(fromNested.active, 'page-2');
+  assert.match(await (await fromNested.build(selected)).blob.text(), /id="export-page" data-initial="page-1"/,
+    'an export opens on its first page wherever it was started');
+  runtime._page = 'file:///work/project/index.html';
   const one = await prepared.build([selected[0]]);
   const oneHTML = await one.blob.text();
   const oneBundle = JSON.parse(/<script id="export-bundle"[^>]*>(.*?)<\/script>/s.exec(oneHTML)[1]);

@@ -5,7 +5,7 @@ Enable `controls`. Inserts the top-left pill (no markup) with a page progress ri
 | Control | Requirement and action |
 | --- | --- |
 | `N` | Sidebar present. Cycle desktop modes `shown` → `hidden` → `auto` → `shown`. On a narrow or hoverless screen with `navigation`, toggle the drawer. |
-| `F` | At least one `h2` or `h3`. Toggle focus mode. |
+| `F` | Toggle focus mode. |
 | `J` / `K` | At least one `h2` or `h3`. Jump to the next or previous heading. |
 | `T` | `theme`. Switch light/dark. |
 | `S` | `search` handles the shortcut and provides the pill button. |
@@ -14,7 +14,7 @@ Enable `controls`. Inserts the top-left pill (no markup) with a page progress ri
 
 - Binding IDs and remapping: [keyboard shortcuts](../interact/shortcuts.md). Progress = scroll position over scrollable height.
 - With `tooltips`, pill buttons use [control hints](../reading/tooltips.md) showing effective keys; the progress hint updates on scroll. Without it: native `title` (Export: none).
-- Focus mode blurs top-level content blocks outside the section at the viewport centre and outside the central 20–80% viewport band. The title stays sharp. Hover reveals a dimmed block. Section lines are in a separate layer and are never blurred or dimmed.
+- Focus mode blurs each content element outside the central 20–80% viewport band, regardless of section. Plain `section`, `article`, and attribute-free `div` wrappers are opened so their children blur individually. The title stays sharp. Hover reveals a dimmed block. Section lines are in a separate layer and are never blurred or dimmed.
 - Auto sidebar opens at the first 8 px on the left, stays open during pointer or keyboard interaction, and closes on leaving. A plain pointer click on a sidebar link to another page stores a timestamp in `sessionStorage` (`offprint-nav-peek`, read and cleared on load, honoured within 5 s); the next page then starts peeking and closes on the first pointer move outside the panel. Page scrollbar reveals within 40 px of the right edge.
 - Initial `focus` and `navMode` via `options.controls`; saved preferences win.
 

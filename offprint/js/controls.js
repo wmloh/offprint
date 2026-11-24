@@ -131,30 +131,9 @@
     return true;
   }
 
-  // The focused section is the last heading at or above the viewport centre (-1 is the text before any heading),
-  // or the last heading once the page is scrolled to the end.
-  function pickFocus(tops, centre, atBottom) {
-    if (atBottom && tops.length) return tops.length - 1;
-    var index = -1;
-    for (var i = 0; i < tops.length && tops[i] <= centre; i++) index = i;
-    return index;
-  }
-
-  // Each block lists the indexes of the headings it is or contains. A block without headings belongs to the
-  // section before it; a block with headings spans from its first to its last heading.
-  function blockSpans(blocks) {
-    var current = -1;
-    return blocks.map(function (inner) {
-      if (!inner.length) return [current, current];
-      current = inner[inner.length - 1];
-      return [inner[0], current];
-    });
-  }
-
-  // Sharp blocks: the page title, the focused section, and anything overlapping the central band.
-  function dimmed(span, index, top, bottom, vh, title) {
+  // Sharp elements: the page title and anything overlapping the central band, whichever section they are in.
+  function dimmed(top, bottom, vh, title) {
     if (title) return false;
-    if (index >= span[0] && index <= span[1]) return false;
     return bottom <= vh * FOCUS_BAND[0] || top >= vh * FOCUS_BAND[1];
   }
 
@@ -327,34 +306,35 @@
     };
   }
 
-  function topLevelBlock(el, main) {
-    while (el.parentElement && el.parentElement !== main) el = el.parentElement;
-    return el.parentElement === main ? el : null;
+  function focusable(el) {
+    return !/^(SCRIPT|STYLE|TEMPLATE)$/.test(el.tagName) && !el.matches('.op-outline-sentinel, .op-section-lines');
   }
 
-  function focusSections(main, headings) {
-    var blocks = Array.prototype.filter.call(main.children, function (el) {
-      return !/^(SCRIPT|STYLE|TEMPLATE)$/.test(el.tagName) && !el.matches('.op-outline-sentinel, .op-section-lines');
+  // Plain wrappers such as <section> are opened so each element inside blurs on its own.
+  function isWrapper(el) {
+    return /^(SECTION|ARTICLE)$/.test(el.tagName) || el.tagName === 'DIV' && !el.attributes.length;
+  }
+
+  function focusBlocks(parent, out) {
+    Array.prototype.forEach.call(parent.children, function (el) {
+      if (!focusable(el)) return;
+      if (isWrapper(el) && el.children.length) focusBlocks(el, out);
+      else out.push(el);
     });
-    var inner = blocks.map(function () { return []; });
-    headings.forEach(function (h, i) {
-      var at = blocks.indexOf(topLevelBlock(h, main));
-      if (at >= 0) inner[at].push(i);
-    });
-    var spans = blockSpans(inner);
+    return out;
+  }
+
+  function focusElements(main) {
+    var blocks = focusBlocks(main, []);
     var titles = blocks.map(function (el) { return el.matches('h1, header') || !!el.querySelector('h1'); });
     blocks.forEach(function (el) { el.classList.add('op-focus-block'); });
 
     return {
-      reset: function () {},
       update: function () {
         var vh = root.innerHeight;
-        var max = document.documentElement.scrollHeight - vh;
-        var index = pickFocus(headings.map(function (h) { return h.getBoundingClientRect().top; }),
-          vh / 2, max > 0 && root.scrollY >= max - 2);
         blocks.forEach(function (el, i) {
           var r = el.getBoundingClientRect();
-          el.classList.toggle('op-focus-dim', dimmed(spans[i], index, r.top, r.bottom, vh, titles[i]));
+          el.classList.toggle('op-focus-dim', dimmed(r.top, r.bottom, vh, titles[i]));
         });
       }
     };
@@ -373,7 +353,7 @@
     var focusButton = null;
     var navHint;
     var focusHint;
-    var sections = headings.length ? focusSections(main, headings) : null;
+    var sections = focusElements(main);
     var lastJump = null;
     var pending = false;
 
@@ -407,10 +387,7 @@
       var text = state.focus ? 'Turn off focus mode' : 'Turn on focus mode';
       focusButton.setAttribute('aria-label', text);
       focusHint(text);
-      if (sections) {
-        sections.reset();
-        if (state.focus) sections.update();
-      }
+      if (state.focus) sections.update();
     }
 
     if (sidebar) {
@@ -429,12 +406,10 @@
       watchAutoNav(sidebar, navButton, drawerMode, syncNav);
     }
 
-    if (sections) {
-      focusButton = pill.appendChild(iconButton('focus'));
-      focusHint = controlHint(focusButton, 'controls.focus');
-      actions.focus = function () { setFocus(!state.focus); };
-      focusButton.addEventListener('click', actions.focus);
-    }
+    focusButton = pill.appendChild(iconButton('focus'));
+    focusHint = controlHint(focusButton, 'controls.focus');
+    actions.focus = function () { setFocus(!state.focus); };
+    focusButton.addEventListener('click', actions.focus);
 
     if (OffPrint._search && typeof OffPrint._search.open === 'function') {
       var searchButton = pill.appendChild(make('button', 'op-controls-btn op-controls-search'));
@@ -473,7 +448,7 @@
     function update() {
       pending = false;
       progressRing.set(progress(root.scrollY, document.documentElement.scrollHeight - root.innerHeight));
-      if (sections && state.focus) sections.update();
+      if (state.focus) sections.update();
     }
 
     function schedule() {
@@ -512,8 +487,6 @@
 
   OffPrint._controls = {
     keys: KEYS,
-    pickFocus: pickFocus,
-    blockSpans: blockSpans,
     dimmed: dimmed,
     focusBand: FOCUS_BAND.slice(),
     stepHeading: stepHeading,

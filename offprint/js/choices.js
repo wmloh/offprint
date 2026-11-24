@@ -200,6 +200,7 @@
     if (multi) {
       picked = make('ul', 'op-combo-chips');
       picked.setAttribute('aria-label', 'Chosen');
+      picked.setAttribute('data-op-no-list-style', '');
       field.appendChild(picked);
     }
     var input = make('input', 'op-combo-input');

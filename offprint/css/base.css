@@ -119,7 +119,8 @@ body:has(> .op-sidebar) {
   line-height: 1.2;
 }
 
-.op-page :is(h1, h2, h3, h4, h5, h6) + * {
+/* Lists keep the list default below. */
+.op-page :is(h1, h2, h3, h4, h5, h6) + :not(:where(ul, ol)) {
   margin-top: 0.25em;
 }
 
@@ -130,7 +131,7 @@ body:has(> .op-sidebar) {
 .op-page:not(.op-bubble-body) > :is(h2, h3):first-child { margin-top: 0; }
 
 /* Text blocks */
-.op-page :is(p, ul, ol, blockquote, table, pre, figure) {
+.op-page :is(p, blockquote, table, pre, figure) {
   margin: 0.5em 0;
 }
 
@@ -138,27 +139,29 @@ body:has(> .op-sidebar) {
   margin-block: 1.1em;
 }
 
-.op-page :is(ul, ol) {
+/* List defaults have zero specificity so any module class rule (chips, trees, menus) overrides them. */
+:where(.op-page :is(ul, ol)) {
+  margin: 0.5em 0;
   padding-left: 1.6em;
 }
 
-.op-page li {
+:where(.op-page li) {
   padding-left: 0.15em;
   margin: 0.15em 0;
 }
 
-.op-page li > :is(ul, ol) {
+:where(.op-page li > :is(ul, ol)) {
   margin: 0.15em 0;
 }
 
-.op-page ul { list-style-type: disc; }
-.op-page ul ul { list-style-type: circle; }
-.op-page ul ul ul { list-style-type: square; }
-.op-page ol { list-style-type: decimal; }
-.op-page ol ol { list-style-type: lower-alpha; }
-.op-page ol ol ol { list-style-type: lower-roman; }
+:where(.op-page ul) { list-style-type: disc; }
+:where(.op-page ul ul) { list-style-type: circle; }
+:where(.op-page ul ul ul) { list-style-type: square; }
+:where(.op-page ol) { list-style-type: decimal; }
+:where(.op-page ol ol) { list-style-type: lower-alpha; }
+:where(.op-page ol ol ol) { list-style-type: lower-roman; }
 
-.op-page li::marker {
+:where(.op-page li)::marker {
   color: var(--op-text-muted);
 }
 

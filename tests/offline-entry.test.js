@@ -1048,7 +1048,8 @@ test('floating controls show shared tooltip cards with current labels and effect
   await fallback.start();
   const fallbackPill = fallback.body.children.find(el => el.className === 'op-controls-bar').firstChild;
   assert.equal(fallbackPill.firstChild.title, 'Read 100%');
-  assert.equal(fallbackPill.children[1].title, 'Theme: Light. Switch to Dark. (T)');
+  assert.equal(fallbackPill.children[1].title, 'Turn on focus mode (F)', 'focus mode needs no headings');
+  assert.equal(fallbackPill.children[2].title, 'Theme: Light. Switch to Dark. (T)');
   const fallbackExport = fallbackPill.children.find(el => el.getAttribute('aria-label') === 'Export');
   assert.ok(fallbackExport);
   assert.equal(fallbackExport.hasAttribute('title'), false);

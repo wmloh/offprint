@@ -314,6 +314,7 @@ test('a multiple-choice combobox keeps ordered removable chips with All and None
   const [all, none] = el.byClass('op-combo-action');
   const chipText = () => el.byClass('op-combo-chip-text').map((c) => c.textContent);
   assert.equal(el.one('op-combo-list').getAttribute('aria-multiselectable'), 'true');
+  assert.equal(el.one('op-combo-chips').getAttribute('data-op-no-list-style'), '', 'chips skip the page list dots');
   assert.equal(options[4].getAttribute('data-op-key'), 'epsilon');
   assert.deepEqual(chipText(), ['Beta']);
   assert.ok(!el.one('op-combo-chip').classList.contains('is-new'), 'starting chips do not animate in');

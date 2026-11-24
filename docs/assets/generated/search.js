@@ -1702,7 +1702,7 @@ window.OffPrintSearch = {
         "file": "pages/explain/quizzes.html",
         "path": "../pages/explain/quizzes.html",
         "title": "Quizzes",
-        "sha256": "1d0d5a894995c703b75b8ec9eaa1a9614330c27869b670cb817176dc1f81c760"
+        "sha256": "e42e720ec1517a1f2835eeaeaef1680e05f0c1ecab372d44c3b94c0683617dc0"
       },
       {
         "file": "pages/explain/reveals.html",
@@ -6817,7 +6817,7 @@ window.OffPrintSearch = {
           "id": "see-it",
           "title": "See it",
           "level": 2,
-          "text": "A three-question quiz about offline pages opens here with scripts on. A single quiz with a stopwatch, a hint, and feedback after each question. Try it Press Start. Pick an answer to the first question and the card marks it straight away. Open the hint first if you like, but it halves that question’s score. Press Hide to fold the card away; the stopwatch stops until you resume."
+          "text": "A three-question quiz about offline pages opens here with scripts on. A single quiz with a stopwatch, a hint, and feedback after each question. Try it Press Start. Pick an answer to the first question, then press Check to lock it in and see how you did. Open the hint first if you like, but it halves that question’s score. Press Hide to fold the card away; the stopwatch stops until you resume."
         },
         {
           "id": "stack",

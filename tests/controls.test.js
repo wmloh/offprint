@@ -40,37 +40,21 @@ function load(stored = {}, session = null) {
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
-test('focus picks the last heading at or above the centre, the intro before any heading, and the last at the end', () => {
-  const { controls } = load();
-  assert.equal(controls.pickFocus([-400, 120, 380, 900], 400, false), 2);
-  assert.equal(controls.pickFocus([-400, 400, 900], 400, false), 1);
-  assert.equal(controls.pickFocus([450, 900], 400, false), -1);
-  assert.equal(controls.pickFocus([-900, -300, 100], 400, true), 2);
-  assert.equal(controls.pickFocus([], 400, true), -1);
-});
-
-test('focus keeps the title, the focused section, and blocks in the central band sharp', () => {
+test('focus keeps the title and elements in the central band sharp, regardless of section', () => {
   const { controls } = load();
   const vh = 1000;
-  assert.equal(controls.dimmed([2, 2], 2, -900, -500, vh, false), false);
-  assert.equal(controls.dimmed([1, 1], 2, 150, 260, vh, false), false);
-  assert.equal(controls.dimmed([3, 3], 2, 790, 900, vh, false), false);
-  assert.equal(controls.dimmed([1, 1], 2, -300, 190, vh, false), true);
-  assert.equal(controls.dimmed([3, 3], 2, 820, 900, vh, false), true);
-  assert.equal(controls.dimmed([-1, -1], 2, -400, -300, vh, true), false);
+  assert.equal(controls.dimmed(150, 260, vh, false), false);
+  assert.equal(controls.dimmed(790, 900, vh, false), false);
+  assert.equal(controls.dimmed(-900, 2000, vh, false), false);
+  assert.equal(controls.dimmed(-300, 190, vh, false), true);
+  assert.equal(controls.dimmed(820, 900, vh, false), true);
+  assert.equal(controls.dimmed(-400, -300, vh, true), false);
 });
 
 test('the page scrollbar shows only near the right edge', () => {
   const { controls } = load();
   assert.equal(controls.nearScrollbar(1890, 1920), true);
   assert.equal(controls.nearScrollbar(1860, 1920), false);
-});
-
-test('page blocks join the section before them, and blocks holding headings span them', () => {
-  const { controls } = load();
-  // intro paragraph, h2 (0), paragraph, h3 (1), figure, <section> holding h2 (2) and h3 (3), pager
-  const spans = controls.blockSpans([[], [0], [], [1], [], [2, 3], []]);
-  assert.deepEqual(plain(spans), [[-1, -1], [0, 0], [0, 0], [1, 1], [1, 1], [2, 3], [3, 3]]);
 });
 
 test('section jumps skip the heading already at the top and step back from mid-section', () => {

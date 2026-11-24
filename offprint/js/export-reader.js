@@ -136,7 +136,31 @@
     });
   }
 
-  function controls(host, headings, tips, navigate, icons) {
+  // Focus-mode blocks as in controls.js: plain section, article, and attribute-free div wrappers open so each element
+  // inside blurs on its own. dim(block, height) applies the live page's band around the viewport centre.
+  function focusBlocks(main) {
+    var blocks = [];
+    (function walk(parent) {
+      for (var node of parent.children) {
+        if (node.matches('script,style,template,.op-outline-sentinel,.op-section-lines,.op-export-pop,' +
+          '[data-op-snapshot-tips]')) continue;
+        var wrapper = /^(section|article)$/.test(node.localName) || node.localName === 'div' && !node.attributes.length;
+        if (wrapper && node.children.length) walk(node);
+        else blocks.push(node);
+      }
+    })(main);
+    return blocks.map(function (node) {
+      node.classList.add('op-focus-block');
+      var title = node.matches('h1,header') || !!node.querySelector('h1');
+      return { node: node, dim: function (height) {
+        if (title) return false;
+        var rect = node.getBoundingClientRect();
+        return rect.bottom <= height * .2 || rect.top >= height * .8;
+      } };
+    });
+  }
+
+  function controls(host, headings, tips, navigate, icons, focusBlocks) {
     var html = document.documentElement;
     var pill = document.querySelector('#export-pill');
     var pager = document.querySelector('#export-pager');
@@ -163,6 +187,8 @@
     var updateID = 0;
     var currentSection;
     var jumpOrigin;
+    var lastJump = null;
+    var JUMP_CHAIN = 1000;
     var zoomed = false;
     var zoomWatch;
     var railActive = null;
@@ -451,6 +477,33 @@
       if (closeFocused || restore && (!navOpen || document.activeElement === separator)) navButton.focus();
     });
     window.addEventListener('resize', function () { if (!compact.matches) setWidth(width); });
+    // Page groups slide open and shut like nav.js, reversing from wherever a running slide had reached.
+    var slides = new WeakMap();
+    toc.addEventListener('click', function (event) {
+      var summary = event.target.closest?.('summary');
+      var group = summary?.parentElement;
+      var list = group?.querySelector(':scope > ul');
+      if (!list || !toc.contains(group) || typeof list.animate !== 'function') return;
+      event.preventDefault();
+      var running = slides.get(group);
+      var open = running ? !running.open : !group.open;
+      var from = group.open ? list.getBoundingClientRect().height : 0;
+      var fade = group.open ? Number(getComputedStyle(list).opacity) : 0;
+      running?.motion.cancel();
+      group.open = true;
+      group.toggleAttribute('data-closing', !open);
+      var to = open ? list.getBoundingClientRect().height : 0;
+      list.style.overflow = 'hidden';
+      var motion = list.animate([{ height: from + 'px', opacity: fade }, { height: to + 'px', opacity: open ? 1 : 0 }],
+        { duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+      slides.set(group, { motion: motion, open: open });
+      motion.onfinish = function () {
+        slides.delete(group);
+        list.style.overflow = '';
+        group.removeAttribute('data-closing');
+        group.open = open;
+      };
+    });
     close.addEventListener('click', function () { closeDrawer(true); });
     shade.addEventListener('click', function () { closeDrawer(true); });
 
@@ -555,32 +608,19 @@
       var percent = max > 0 ? Math.round(100 * Math.max(0, Math.min(1, scroller.scrollTop / max))) : 100;
       updateProgress(percent);
       var sectionAtTop;
-      var sectionAtCentre;
-      var lastVisible;
       sections.forEach(function (section) {
         var shown = visible(section);
         if (section.item) section.item.hidden = !shown;
         if (!shown) return;
         var top = section.node.getBoundingClientRect().top;
         if (section.link && (bottom || top <= height * .25)) sectionAtTop = section;
-        if (top <= height * .5) sectionAtCentre = section;
-        lastVisible = section;
       });
-      if (bottom) sectionAtCentre = lastVisible;
       activateSection(sectionAtTop);
       var end = content.getBoundingClientRect().bottom - (parseFloat(view.getComputedStyle(content).paddingBottom) || 0);
       updateRail(sections.filter(function (section) { return section.rail; }).map(function (section) {
         return visible(section) ? section.node.getBoundingClientRect().top : null;
       }), height, max > 0 ? max - scroller.scrollTop : null, end, bottom);
-      var index = sections.indexOf(sectionAtCentre);
-      blocks.forEach(function (block) {
-        var dim = false;
-        if (focused && !block.title && (index < block.first || index > block.last)) {
-          var rect = block.node.getBoundingClientRect();
-          dim = rect.bottom <= height * .2 || rect.top >= height * .8;
-        }
-        block.node.classList.toggle('op-focus-dim', dim);
-      });
+      blocks.forEach(function (block) { block.node.classList.toggle('op-focus-dim', focused && block.dim(height)); });
     }
 
     function schedule() {
@@ -624,33 +664,35 @@
       return { hash: hash, item: item, link: link, rail: rail };
     }
 
+    // Jumps glide like controls.js; presses within JUMP_CHAIN of the last one step on from its target mid-scroll.
     function jump(direction) {
+      var chained = lastJump && Date.now() - lastJump.time < JUMP_CHAIN ? lastJump.index : -1;
+      var at = -1;
       if (remote) {
         var readings = remote.readings || [];
-        var anchored = sections.findIndex(function (section) { return section.hash === remote.anchor; });
-        var at = direction > 0 ? readings.findIndex(function (top, index) {
+        var anchored = chained >= 0 ? chained : sections.findIndex(function (section) { return section.hash === remote.anchor; });
+        at = direction > 0 ? readings.findIndex(function (top, index) {
           return top !== null && (anchored >= 0 ? index > anchored : top > 4);
         }) : readings.findLastIndex(function (top, index) {
           return top !== null && (anchored >= 0 ? index < anchored : top < -4);
         });
-        if (at >= 0) navigate(sections[at].hash);
-        return;
-      }
-      if (!view) return;
-      var candidates = sections.filter(visible);
-      var anchored = jumpOrigin?.top === view.scrollY ? candidates.findIndex(function (section) {
-        return section.hash === jumpOrigin.hash;
-      }) : -1;
-      var target;
-      if (anchored >= 0) target = candidates[anchored + direction];
-      else {
-        if (direction < 0) candidates.reverse();
-        target = candidates.find(function (section) {
+      } else if (view) {
+        var anchored = chained >= 0 ? chained : jumpOrigin?.top === view.scrollY ? sections.findIndex(function (section) {
+          return section.hash === jumpOrigin.hash;
+        }) : -1;
+        var order = sections.map(function (section, index) { return index; });
+        if (direction < 0) order.reverse();
+        at = order.find(function (index) {
+          var section = sections[index];
+          if (!visible(section)) return false;
+          if (anchored >= 0) return direction * (index - anchored) > 0;
           var margin = parseFloat(view.getComputedStyle(section.node).scrollMarginTop) || 0;
           return direction * (section.node.getBoundingClientRect().top - margin) > 4;
-        });
+        }) ?? -1;
       }
-      if (target) navigate(target.hash);
+      if (at < 0) return;
+      lastJump = { index: at, time: Date.now() };
+      navigate(sections[at].hash, true);
     }
 
     function keys(event) {
@@ -719,7 +761,7 @@
         sections = [];
         blocks = [];
         observer.disconnect();
-        jumpOrigin = null;
+        jumpOrigin = lastJump = null;
         currentSection = null;
         outline?.remove();
         outline = null;
@@ -758,18 +800,7 @@
         if (!outline?.children.length) outline?.remove();
         focusButton.hidden = !sections.length;
         var main = doc.querySelector('.op-page') || doc.querySelector('main') || doc.body;
-        var last = -1;
-        blocks = Array.from(main.children).filter(function (node) {
-          return !node.matches('script,style,template,[data-op-snapshot-tips],.op-export-pop,.op-section-lines');
-        })
-          .map(function (node) {
-            node.classList.add('op-focus-block');
-            var first;
-            sections.forEach(function (section, index) {
-              if (node.contains(section.node)) { first ??= index; last = index; }
-            });
-            return { node: node, first: first ?? last, last: last, title: node.matches('h1,header') || !!node.querySelector('h1') };
-          });
+        blocks = focusBlocks(main);
         content = main;
         rail.hidden = !railList.children.length;
         railSpace = doc.createElement('div');
@@ -985,7 +1016,7 @@
     return runtime._readerState;
   }
 
-  function authorFrame(session, startInteractive, headings) {
+  function authorFrame(session, startInteractive, headings, focusBlocks) {
     // Keep the bootstrap nonce out of the DOM seen by any later script.
     document.currentScript.remove();
     document.querySelector('meta[http-equiv="Content-Security-Policy"]').remove();
@@ -1005,13 +1036,7 @@
       var readings = sections.map(function (node) {
         return node.getClientRects().length ? node.getBoundingClientRect().top : null;
       });
-      var at = readings.findLastIndex(function (top) { return top !== null && top <= height * .5; });
-      if (max > 0 && scroller.scrollTop >= max - 2) at = readings.findLastIndex(function (top) { return top !== null; });
-      for (var [node, first, last] of mount) {
-        var rect = node.getBoundingClientRect();
-        node.classList.toggle('op-focus-dim', focus && (at < first || at > last) &&
-          (rect.bottom <= height * .2 || rect.top >= height * .8));
-      }
+      for (var block of mount) block.node.classList.toggle('op-focus-dim', focus && block.dim(height));
       var main = document.querySelector('.op-page') || document.querySelector('main') || document.body;
       send({ type: 'progress', readings: readings, height: height,
         percent: max > 0 ? Math.round(100 * scroller.scrollTop / max) : 100,
@@ -1019,10 +1044,10 @@
         end: main.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(main).paddingBottom) || 0) });
     }
 
-    function scroll(fragment, takeFocus) {
+    function scroll(fragment, takeFocus, smooth) {
       var target = fragment && (document.getElementById(fragment) ||
         Array.from(document.getElementsByName(fragment)).find(function (node) { return node.localName === 'a'; }));
-      if (target) target.scrollIntoView({ behavior: 'instant' });
+      if (target) target.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' });
       else scrollTo({ left: 0, top: 0, behavior: 'instant' });
       if (takeFocus) {
         target ||= document.body;
@@ -1036,19 +1061,7 @@
       state = await startInteractive(document, data.payload, data.shared, null, data.saved, controller.signal);
       var main = document.querySelector('.op-page') || document.querySelector('main') || document.body;
       sections = headings(document).filter(function (node) { return node.id; });
-      var last = -1;
-      mount = Array.from(main.children).filter(function (node) {
-        return !node.matches('script,style,template,.op-section-lines');
-      })
-        .map(function (node) {
-          var first;
-          sections.forEach(function (section, index) {
-            if (node.contains(section)) { first ??= index; last = index; }
-          });
-          node.classList.add('op-focus-block');
-          if (node.matches('h1,header') || node.querySelector('h1')) return null;
-          return [node, first ?? last, last];
-        }).filter(Boolean);
+      mount = focusBlocks(main);
       send({ type: 'ready', headings: sections.map(function (node) {
         return [node.id, node.textContent.trim().replace(/\s+/g, ' '), Number(node.localName[1])];
       }), theme: document.documentElement.getAttribute('data-op-theme') });
@@ -1111,7 +1124,7 @@
             document.documentElement.classList.toggle('op-focus-mode', focus);
             inspect();
             break;
-          case 'scroll': scroll(data.fragment, data.focus); break;
+          case 'scroll': scroll(data.fragment, data.focus, data.smooth === true); break;
           case 'rail':
             document.documentElement.toggleAttribute('data-export-rail', data.value !== null);
             if (data.value !== null) document.documentElement.style.setProperty('--export-rail-right', data.value + 'px');
@@ -1127,7 +1140,7 @@
     parent.postMessage({ type: 'offprint-author-connect', session: session }, '*', [channel.port2]);
   }
 
-  function reader(assemble, figureSteps, headings, controls, startInteractive, fileKey, authorFrame) {
+  function reader(assemble, figureSteps, headings, controls, startInteractive, fileKey, authorFrame, focusBlocks) {
     var bundle = JSON.parse(document.querySelector('#export-bundle').textContent);
     document.querySelector('#export-bundle').remove();
     var pages = new Map(bundle.pages.map(function (page) { return [page.id, page]; }));
@@ -1136,6 +1149,7 @@
     var active;
     var ready = false;
     var focusHash;
+    var smoothHash = null;
     var hideTip = null;
     var revealStep = null;
     var pageSteps = new Map();
@@ -1146,7 +1160,7 @@
       return [fileKey(new URL(page.url), true), page.id];
     }) : []);
     var running, pageState, isolated;
-    var chrome = controls(host, headings, tips, navigate, bundle.icons);
+    var chrome = controls(host, headings, tips, navigate, bundle.icons, focusBlocks);
 
     function destination() {
       var [page, fragment] = location.hash.slice(1).split('/');
@@ -1158,8 +1172,10 @@
     function scroll(fragment) {
       if (!ready) return;
       var focus = focusHash === location.hash;
+      var behavior = smoothHash === location.hash ? 'smooth' : 'instant';
+      smoothHash = null;
       if (isolated) {
-        isolated.send({ type: 'scroll', fragment: fragment, focus: focus });
+        isolated.send({ type: 'scroll', fragment: fragment, focus: focus, smooth: behavior === 'smooth' });
         focusHash = null;
         chrome.scrolled(location.hash);
         return;
@@ -1169,7 +1185,7 @@
         Array.from(doc.getElementsByName(fragment)).find(function (node) { return node.localName === 'a'; }));
       if (heading) {
         revealStep?.(heading);
-        heading.scrollIntoView({ behavior: 'instant' });
+        heading.scrollIntoView({ behavior: behavior });
         if (focus) {
           if (!heading.hasAttribute('tabindex') && heading.tabIndex < 0) heading.tabIndex = -1;
           heading.focus({ preventScroll: true });
@@ -1196,6 +1212,7 @@
       doc.body.append(pop);
       var active = null;
       var timer = 0;
+      var leaving = 0;
       var touched = false;
 
       function place() {
@@ -1206,28 +1223,42 @@
         var below = rect.bottom + 8;
         var above = rect.top - 8 - pop.offsetHeight;
         var top = below + pop.offsetHeight <= height - 8 || above < 8 ? below : above;
+        pop.setAttribute('data-op-side', top === below ? 'below' : 'above');
         var left = rect.left + rect.width / 2 - pop.offsetWidth / 2;
         pop.style.top = Math.round(top) + 'px';
         pop.style.left = Math.round(Math.max(8, Math.min(left, width - 8 - pop.offsetWidth))) + 'px';
       }
 
+      // The pop fades and slides in and out like the live tooltip cards.
       function show(anchor, cards) {
         clearTimeout(timer);
         if (active === anchor) return;
-        hide();
+        active = null;
+        stow();
         active = anchor;
         pop.append(...cards);
         pop.classList.toggle('is-wide', cards.some(function (card) { return card.querySelector('.op-tooltip-more'); }));
         pop.hidden = false;
         place();
+        pop.getBoundingClientRect();
+        pop.classList.add('is-visible');
+      }
+
+      function stow() {
+        clearTimeout(leaving);
+        pop.classList.remove('is-visible');
+        if (active || pop.hidden) return;
+        pop.hidden = true;
+        bank.append(...pop.children);
       }
 
       function hide() {
         clearTimeout(timer);
         if (!active) return;
         active = null;
-        pop.hidden = true;
-        bank.append(...pop.children);
+        pop.classList.remove('is-visible');
+        clearTimeout(leaving);
+        leaving = setTimeout(stow, 150);
       }
 
       function later(fn) {
@@ -1269,10 +1300,11 @@
       return hide;
     }
 
-    function navigate(hash) {
+    function navigate(hash, smooth) {
       hideTip?.();
       chrome.follow();
       focusHash = hash;
+      smoothHash = smooth ? hash : null;
       if (location.hash === hash) render();
       else location.hash = hash;
     }
@@ -1440,7 +1472,7 @@
       });
       window.addEventListener('message', connect);
       var code = '(' + authorFrame + ')(' + JSON.stringify(session) + ',' +
-        startInteractive + ',' + headings + ');';
+        startInteractive + ',' + headings + ',' + focusBlocks + ');';
       var end = markup.lastIndexOf('</body>');
       current.srcdoc = markup.slice(0, end) + '<script nonce="' + nonce + '">' + code + '<' + '/script>' + markup.slice(end);
     }
@@ -1553,5 +1585,5 @@
   }
 
   root.OffPrint._exportReader = { run: reader, assemble: assemble, figureSteps: figureSteps, headings: headings,
-    controls: controls, startInteractive: startInteractive, authorFrame: authorFrame };
+    controls: controls, startInteractive: startInteractive, authorFrame: authorFrame, focusBlocks: focusBlocks };
 })(window);

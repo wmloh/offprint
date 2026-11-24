@@ -1356,7 +1356,7 @@
 
   function motionEnv(chart) {
     return {
-      reduced: OffPrint._boot?.replaying || media('(prefers-reduced-motion: reduce)'),
+      reduced: OffPrint._boot?.capturing || OffPrint._readerState?.applying?.() || media('(prefers-reduced-motion: reduce)'),
       print: media('print'),
       zoomed: !!(chart && chart.box.closest && chart.box.closest('.op-zoom')),
       frames: typeof root.requestAnimationFrame === 'function' && typeof root.cancelAnimationFrame === 'function'

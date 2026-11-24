@@ -281,7 +281,7 @@
 
   function captureRowMotion(table) {
     if (!table.hasAttribute('data-op-row-key') || !table.isConnected || !table.animate ||
-        OffPrint._boot?.replaying || root.matchMedia?.('print').matches) return;
+        OffPrint._boot?.capturing || OffPrint._readerState?.applying?.() || root.matchMedia?.('print').matches) return;
     var before = rowPositions(table);
     before.forEach(function (item) {
       if (!item?.box) return;

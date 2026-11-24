@@ -873,7 +873,7 @@
   }
 
   function readerCapture() {
-    return !!(OffPrint._boot && OffPrint._boot.replaying && !(root.OffPrintExportContext && root.OffPrintExportContext.interactive));
+    return !!(OffPrint._boot && OffPrint._boot.capturing);
   }
 
   // ---- Static Reader sheet: questions only, never answers ----

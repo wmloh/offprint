@@ -27,6 +27,7 @@
   var started = false;
   var muted = 0;
   var restoring;
+  var applying = false;
   var revision = 0;
   var session = Math.random().toString(36).slice(2);
 
@@ -449,6 +450,12 @@
     if (!currentFormat(record) || record.page !== pageKey || record.configuration !== configuration) {
       return { status: 'stale', issues: [] };
     }
+    applying = true;
+    try { return applyRecord(saved, record); }
+    finally { applying = false; }
+  }
+
+  function applyRecord(saved, record) {
     var issues = [];
     function attempt(kind, key, run) {
       try {
@@ -522,6 +529,8 @@
     preserveOrigin: function (fn) { return muted ? function () { return transient(fn); } : fn; },
     isolated: function () { return mode === 'replay' || mode === 'session'; },
     restoring: function (kind, host) { return restoring?.has(identity(kind, host)?.key); },
+    // True while a saved view is applied, so features can show it in place instead of animating to it.
+    applying: function () { return applying; },
     registerImport: registerImport, removeImport: removeImport, targetStamp: targetStamp, stamp: stamp,
     capture: capture, read: read, replay: replay, clear: clear,
     enabled: function () { return mode === 'reading'; }

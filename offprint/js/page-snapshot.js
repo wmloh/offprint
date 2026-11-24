@@ -126,7 +126,7 @@
   // The packager can scope these rules with the page and run its own tooltip reader.
   var style = '[data-op-snapshot] *,[data-op-snapshot] *::before,[data-op-snapshot] *::after{' +
     'animation:none!important}' +
-    '[data-op-snapshot] :not(.op-focus-block),[data-op-snapshot] *::before,[data-op-snapshot] *::after{' +
+    '[data-op-snapshot] :not(.op-focus-block,.op-export-pop),[data-op-snapshot] *::before,[data-op-snapshot] *::after{' +
     'transition:none!important}' +
     '[data-op-snapshot] [hidden]{display:none!important}' +
     '[data-op-snapshot] [data-op-snapshot-selected]{font-weight:700}' +

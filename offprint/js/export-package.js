@@ -7,8 +7,10 @@
     "base-uri 'none'; form-action 'none'";
   var declarations = 'script:not([src]):is([type="application/json"],[type="text/csv"],[type="text/json"],' +
     '[type="text/yaml"],[type="application/yaml"],[type="text/x-yaml"],[type="application/x-yaml"])';
+  var popMotion = 'opacity:0;transform:translateY(-3px);transition:opacity .12s,transform .12s}' +
+    '.op-export-pop[data-op-side=above]{transform:translateY(3px)}.op-export-pop.is-visible{opacity:1;transform:none}';
   var tipCSS = '.op-export-pop{position:fixed;z-index:50;display:flex;flex-direction:column;gap:6px;' +
-    'max-width:min(320px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}' +
+    'max-width:min(320px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;' + popMotion +
     '.op-export-pop[hidden]{display:none}' +
     '.op-export-pop.is-wide{max-width:min(480px,calc(100vw - 16px))}' +
     '.op-export-pop .op-tooltip{position:static;max-width:none;max-height:none;opacity:1;transform:none;overflow:visible}' +
@@ -51,7 +53,7 @@
     #export-sidebar :focus-visible{outline:2px solid var(--op-focus);outline-offset:-2px}
     #export-contents summary{list-style:none;cursor:pointer}
     #export-contents summary::-webkit-details-marker{display:none}
-    #export-contents details[open] > summary .op-nav-caret svg{transform:rotate(90deg)}
+    #export-contents details[open]:not([data-closing]) > summary .op-nav-caret svg{transform:rotate(90deg)}
     #export-contents details:not([open]) > ul{display:none}
     #export-resize{position:fixed;z-index:4;inset:0 auto 0 calc(var(--nav-width) - 4px);width:8px;
       cursor:col-resize;touch-action:none}
@@ -74,7 +76,7 @@
     #export-close{font:inherit;color:inherit;background:var(--op-bg);
       border:1px solid var(--op-border-strong);border-radius:var(--op-radius-lg);
       min-height:31px;padding:var(--op-space-1) var(--op-space-2);margin-bottom:var(--op-space-2);cursor:pointer}
-    .op-export-pop{position:fixed;z-index:6;max-width:calc(100% - 16px);pointer-events:none}
+    .op-export-pop{position:fixed;z-index:6;max-width:calc(100% - 16px);pointer-events:none;${popMotion}
     .op-tooltip{box-sizing:border-box;max-width:min(320px,calc(100vw - 16px));padding:.4rem .7rem;
       border-radius:.45rem;background:light-dark(#fff,#252525);box-shadow:0 0 0 1px var(--line),0 6px 20px #0002;
       color:CanvasText;font-size:14px;line-height:1.5}
@@ -976,9 +978,9 @@
     bundle.type = 'application/json';
     doc.body.append(bundle);
     var reader = OP._exportReader;
-    var runtime = [reader.assemble, reader.figureSteps, reader.headings, reader.controls];
-    if (interactive) runtime.push(reader.startInteractive, fileKey);
-    if (withAuthor) runtime.push(reader.authorFrame);
+    var runtime = [reader.assemble, reader.figureSteps, reader.headings, reader.controls,
+      interactive ? reader.startInteractive : null, interactive ? fileKey : null, withAuthor ? reader.authorFrame : null,
+      reader.focusBlocks];
     doc.body.append(create(doc, 'script', '(' + reader.run.toString() + ')(' + runtime.map(String).join(',') + ');'));
     return '<!doctype html>\n' + doc.documentElement.outerHTML;
   }

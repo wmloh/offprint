@@ -530,6 +530,8 @@
   var boot = OP._boot = {
     entryURL: exportContext?.entryURL || entry.src,
     replaying: replaying,
+    // Only the Reader capture freezes the page; Interactive export frames keep the live page's motion.
+    capturing: replaying && !exportContext.interactive,
     enabled: function (id) { return active.has(id) && !failed.has(id); },
     canInitialize: function (name) {
       var id = own(moduleFeatures, name) ? moduleFeatures[name] : name;

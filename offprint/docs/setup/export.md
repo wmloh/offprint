@@ -11,14 +11,14 @@ Reading-pill **Export** (footer link when `controls` is off) builds one offline 
 ## Modes
 
 - **Reader** (default): captured page content. Declarative figure steps and their details stay steppable; other controls show their captured state.
-- **Interactive**: restarts the active page's supported built-in controls from authored inputs: card panels and nested controls, timed SVG animations, pipelines, sequences, trees, timelines, charts and playback, linked views, zoom tools. Committed changes replay on revisits within the open file. Missing inputs or failed startup fall back to that page's Reader capture.
+- **Interactive**: restarts the active page's supported built-in controls from authored inputs: card panels and nested controls, timed SVG animations, pipelines, sequences, trees, timelines, charts and playback, linked views, zoom tools. Motion matches the live page (chart tweens and entrances, row animation, autoplay on first view); committed changes replay on revisits within the open file and show in place. Missing inputs or failed startup fall back to that page's Reader capture.
 - Interactive embeds authored data automatically. **Include full imported datasets** opts in per page and file revision; preview lists bytes and consumers. A page needing an omitted import uses its Reader capture, which can still show values from that file; reset imports and clear saved data first to exclude them.
 
 ## Exported file
 
 - Sidebar lists selected page groups and outlines the active page's visible `h1`–`h3` (honours `data-op-no-outline`). Routes `#page-N` and `#page-N/heading-id` with Back/Forward.
 - Fixed pill keys: `N` navigation, `F` focus, `T` theme, `J`/`K` headings; progress ring per page. Sidebar mode, width, focus, and theme persist across pages. `N` cycles shown/hidden/auto on desktop (auto: approach left edge or Down Arrow on the button; resize by drag or Left/Right/Home/End); on narrow or touch-only screens it opens the drawer (Escape or backdrop closes).
-- Pill and arrow pill reuse the live page's `controls.css` styles and icons; both hide while a figure zoom view is open. Arrow pill for adjacent pages. Definitions work on hover, focus, and touch. Supported assets embedded; links to omitted pages disabled; external links work when online.
+- Pill and arrow pill reuse the live page's `controls.css` styles and icons; both hide while a figure zoom view is open. As on the live page, hints fade, `J`/`K` jumps glide, sidebar groups slide, and focus mode blurs each element. Arrow pill for adjacent pages. Definitions work on hover, focus, and touch. Supported assets embedded; links to omitted pages disabled; external links work when online.
 
 ## Local author scripts
 

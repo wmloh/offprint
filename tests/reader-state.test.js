@@ -119,10 +119,15 @@ test('capture identifies transient previews and keeps their committed controller
   assert.equal(tab.get(), 'preview');
 
   const rendered = page(db, chapter, { isolated: true });
-  const restored = controller(rendered.state, 'tabs', rendered.tabs, 'overview');
+  // Features read applying() to show a restored view in place instead of animating to it.
+  const during = [];
+  const restored = controller(rendered.state, 'tabs', rendered.tabs, 'overview',
+    { accept: () => during.push(rendered.state.applying()) });
   rendered.state.start();
   assert.equal(rendered.state.replay(capture).issues.length, 0);
   assert.equal(restored.get(), 'runs');
+  assert.deepEqual(during, [true]);
+  assert.equal(rendered.state.applying(), false);
 
   tab.select('preview');
   assert.equal(live.state.capture().preview, false);

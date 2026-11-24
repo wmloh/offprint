@@ -260,6 +260,9 @@ test('the trusted Interactive loader initializes the feature closure from embedd
   assert.equal(runtime._boot.enabled('tabs'), true);
   assert.equal(runtime._boot.enabled('sections'), true);
   assert.equal(runtime._readerState.isolated(), true);
+  // Interactive frames replay their inputs but keep the live page's motion; only Reader captures freeze it.
+  assert.equal(runtime._boot.replaying, true);
+  assert.equal(runtime._boot.capturing, false);
   assert.deepEqual(exported.loads, []);
 
   const broken = page({ config, site, interactive: true });
@@ -2001,9 +2004,10 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   const route = [];
   const controls = p.OP._exportReader.controls;
   // Give the shell control module only the browser APIs it uses.
-  const chrome = vm.runInNewContext(`(${controls})(host, headings, tips, navigate, icons)`, {
+  const chrome = vm.runInNewContext(`(${controls})(host, headings, tips, navigate, icons, focusBlocks)`, {
     host,
     icons,
+    focusBlocks: p.OP._exportReader.focusBlocks,
     document: Object.assign(p.document, {
       querySelector: selector => parts.get(selector),
       getElementById: id => p.body.lastChild.children.find(node => node.id === id)
@@ -2015,7 +2019,7 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
     ResizeObserver: class { observe() {} disconnect() {} },
     headings: doc => doc.body.children.filter(node => node.localName),
     tips: () => () => {},
-    navigate: hash => route.push(hash)
+    navigate: (hash, smooth) => route.push([hash, !!smooth])
   });
   const [progress, nav, focus, theme] = pill.children;
   assert.equal(pill.children.length, 4);
@@ -2111,7 +2115,9 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   assert.equal(nav.getAttribute('data-op-snapshot-tip'), 'export-hint-nav');
   chrome.scrolled('#page-1/intro');
   p.key('j');
-  assert.deepEqual(route, ['#page-1/more']);
+  // Heading jumps glide, and a quick second press steps on from the first target before the scroll settles.
+  p.key('j');
+  assert.deepEqual(route, [['#page-1/more', true], ['#page-1/next', true]]);
   p.key('t');
   assert.equal(theme.innerHTML, icons.dark);
   p.key('f');
@@ -2165,7 +2171,29 @@ test('Reader controls draw full section lines, keep a first-level outline, and o
   assert.deepEqual(ringLinks().map(arc), ['0', '68']);
   chrome.scrolled('#page-1/child');
   chrome.remoteKey('j');
-  assert.deepEqual(route, ['#page-1/more', '#page-1/leaf']);
+  assert.deepEqual(route.at(-1), ['#page-1/leaf', true]);
+});
+
+test('Export focus mode blurs each element inside plain wrappers and never the page title', () => {
+  const context = { window: { OffPrint: {} } };
+  vm.runInNewContext(fs.readFileSync(new URL('offprint/js/export-reader.js', repo), 'utf8'), context);
+  function node(localName, children = [], attributes = [], box = { top: 0, bottom: 10 }) {
+    const classes = new Set();
+    return { localName, children, attributes, classes,
+      matches: selector => selector.split(',').includes(localName),
+      querySelector: () => null,
+      classList: { add: name => classes.add(name) },
+      getBoundingClientRect: () => box };
+  }
+  const title = node('h1', [], [], { top: -200, bottom: -150 });
+  const first = node('p', [], [], { top: -100, bottom: -10 });
+  const second = node('p', [], [], { top: 40, bottom: 60 });
+  const wrapper = node('section', [first, second]);
+  const card = node('div', [node('p')], [{ name: 'class', value: 'card' }], { top: 90, bottom: 120 });
+  const blocks = context.window.OffPrint._exportReader.focusBlocks(node('main', [title, node('script'), wrapper, card]));
+  assert.deepEqual([...blocks].map(block => block.node), [title, first, second, card]);
+  assert.equal(first.classes.has('op-focus-block'), true);
+  assert.deepEqual([...blocks].map(block => block.dim(100)), [false, true, false, true]);
 });
 
 test('custom figures expose keyed animation state and committed zoom lifecycle events', async () => {

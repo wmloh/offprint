@@ -1744,7 +1744,7 @@ window.OffPrintSearch = {
         "file": "pages/data/charts.html",
         "path": "../pages/data/charts.html",
         "title": "SVG charts",
-        "sha256": "973c1d0a9bc33df4bdf61e26557b6ed9d3b478cc7a60036512819763d7a3f1bb"
+        "sha256": "bd5368b5e38e7b219bd15f8e7eab5b4a1215f9304a65f925a6be65cd66bee6fe"
       },
       {
         "file": "pages/data/heatmaps.html",
@@ -1810,13 +1810,13 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "c2b82220cff713ffcfeec5df9d5913ab0a0abf3f034028f3ff11a6475ae4b35c"
+        "sha256": "095ec1d19cd0a0324daeafbbd2fe857acbcb1506f5a4eb90b321b4cbec943c4d"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
         "path": "../pages/reference/behind-the-scenes.html",
         "title": "Behind the scenes",
-        "sha256": "c663e051c705732c46fe25463f8f95992ca47fe8e47c5de393aa3b4037fbffd5"
+        "sha256": "6630427efc1390f2400ea25b8b0f201f4c6f39bdc64f986fc3920be2de15757d"
       },
       {
         "file": "pages/reference/offline-tools.html",
@@ -8099,6 +8099,12 @@ window.OffPrintSearch = {
           "text": "When values sit on a grid, such as two settings crossed with each other, a heatmap colours each cell by its value and can draw contour lines through equal values. Heatmaps has its own page."
         },
         {
+          "id": "annotations",
+          "title": "Point things out with chart annotations",
+          "level": 2,
+          "text": "Chart annotations add a note to the chart itself, so the reader sees what happened where it happened. A note points at a value with a short line, a range shades a stretch of the chart, and a marker draws a labelled line at one moment. Notes find a free spot on their own, away from the data and from each other. Before the release Requests run steadily, apart from a planned maintenance window. The spike The new release ships and waiting time climbs. Recovery Clearing the cache brings waiting time back down. Hour Waiting time (ms) 1 120 2 118 3 125 4 122 5 130 6 210 7 340 8 290 9 180 10 135 11 128 12 124 Illustrative waiting times over twelve hours. The step buttons above add the release and recovery annotations one step at a time. Try it Step through the list to reveal each annotation. Then drag across hours 1 to 5 to narrow the chart: annotations outside the range disappear, and the legend says how many are hidden. Choose Table to see every annotation listed under the values. Annotations stay in place when the chart changes size, follow its data when it updates, and work on every chart type with axes, including bars, interval plots, histograms, and heatmaps. A long note is shortened on the chart, and the full text appears when you point at it. Any step sequence can reveal annotations, such as a worked example, figure steps, or a guided playback tour. In an exported Reader copy, they come with their own step buttons."
+        },
+        {
           "id": "shared-position",
           "title": "Share a position between charts",
           "level": 2,
@@ -8120,7 +8126,7 @@ window.OffPrintSearch = {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Concept tables and results tables Guided chart playback Heatmaps Parameters, for controls linked to charts Report results, a recipe that uses it Share experiment results, a recipe that uses it Feature directory"
+          "text": "Concept tables and results tables Guided chart playback Heatmaps Worked-example steppers, which can reveal annotations step by step Parameters, for controls linked to charts Report results, a recipe that uses it Share experiment results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -8391,6 +8397,41 @@ window.OffPrintSearch = {
           "section": "heatmap-pointer"
         },
         {
+          "text": "Chart",
+          "term": "chart",
+          "section": "annotations"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "annotations"
+        },
+        {
+          "text": "annotation",
+          "term": "annotation",
+          "section": "annotations"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "annotations"
+        },
+        {
+          "text": "interval",
+          "term": "interval",
+          "section": "annotations"
+        },
+        {
+          "text": "worked example",
+          "term": "worked example",
+          "section": "annotations"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
+          "section": "annotations"
+        },
+        {
           "text": "chart",
           "term": "chart",
           "section": "when-to-use"
@@ -8470,6 +8511,11 @@ window.OffPrintSearch = {
         {
           "id": "heatmap-pointer",
           "title": "Colour a grid of values",
+          "level": 2
+        },
+        {
+          "id": "annotations",
+          "title": "Point things out with chart annotations",
           "level": 2
         },
         {
@@ -10584,7 +10630,7 @@ window.OffPrintSearch = {
           "id": "show-data",
           "title": "Show data",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
         },
         {
           "id": "reference",
@@ -10715,7 +10761,7 @@ window.OffPrintSearch = {
           "id": "extend",
           "title": "Extend OffPrint",
           "level": 2,
-          "text": "When no built-in feature fits, an agent can add its own behaviour with the Extension API. A small script loaded after OffPrint registers the custom feature during setup, and OffPrint starts it alongside the built-in ones, so it can use the same linked selections, data sources, and problem reports. Chart add-ons use the same route to add a new chart type, scale, or legend that works with chart controls, readouts, and table views. Histograms and heatmaps are built this way."
+          "text": "When no built-in feature fits, an agent can add its own behaviour with the Extension API. A small script loaded after OffPrint registers the custom feature during setup, and OffPrint starts it alongside the built-in ones, so it can use the same linked selections, data sources, and problem reports. Chart add-ons use the same route to add a new chart type, scale, or legend that works with chart controls, readouts, and table views, or a layer drawn over every chart. Histograms and heatmaps are built this way, and chart annotations are a layer."
         },
         {
           "id": "startup",

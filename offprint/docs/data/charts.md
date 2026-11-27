@@ -40,7 +40,7 @@ Enable `chart`. A `[data-op-chart]` host takes a direct `script[type="applicatio
 
 ## Add-ons
 
-See [Dot and interval plots](chart-intervals.md) for ranked categories with whiskers, [Histograms](chart-histogram.md) for binned distributions on continuous axes, and [Heatmaps](chart-heatmap.md) for colour grids with contours.
+See [Dot and interval plots](chart-intervals.md) for ranked categories with whiskers, [Histograms](chart-histogram.md) for binned distributions on continuous axes, and [Heatmaps](chart-heatmap.md) for colour grids with contours. [Chart annotations](chart-annotations.md) add notes, shaded ranges, and event markers to any of them.
 
 [Register a chart add-on](../extend/chart-addons.md).
 

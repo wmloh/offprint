@@ -39,7 +39,7 @@ Zoom tools	Magnify, point, draw, erase, and measure in the zoom dialog	interact/
 Choice groups	Choose one or more options with chips or a combobox	interact/choices.md
 Parameters	Define scoped values and link controls, presets, visibility, charts, and selections	interact/parameters.md
 Linked selection	Synchronize keyed controls, charts, and passive views	interact/linked-highlighting.md
-Step sequences	Control steps and synchronize keyed sequences	interact/step-contract.md
+Step sequences	Control steps, synchronize keyed sequences, and reveal items by step	interact/step-contract.md
 Worked-example steppers	Step through worked examples and their linked views	interact/worked-examples.md
 Scenario comparisons	Compare baseline and variant outcomes on shared scales	interact/scenarios.md
 Quizzes	Quiz stacks with choice, fill-in, matching, and custom questions, stopwatch, hints, feedback, and a results chart	interact/quiz.md
@@ -51,6 +51,7 @@ SVG charts	Draw line, bar, scatter, and pie charts with keyed motion	data/charts
 Dot and interval plots	Compare categories with dots, lollipop stems, and supplied intervals	data/chart-intervals.md
 Histograms	Bin observations with optional log axes, live binning, and stacked bars	data/chart-histogram.md
 Heatmaps	Colour grids by value and explore ranges and contours	data/chart-heatmap.md
+Chart annotations	Mark notes, shaded ranges, and event markers on any chart, placed clear of the data and revealed by steps	data/chart-annotations.md
 Guided chart playback	Play chart checkpoints or step through keyed chart states	data/chart-playback.md
 Concept tables	Compare text and concepts in semantic tables	data/concept-tables.md
 Results tables	Sort, shade, classify, and filter results	data/results-tables.md
@@ -62,4 +63,4 @@ Search index	Check and export the offline page and glossary index	tools/search-i
 Data file wrapper	Check and export local data files as named offline sources	tools/file-wrapper.md
 Terminal asset refresh	Check or refresh the search index and data wrappers from Python or a Node CLI, with strict page parsing	tools/refresh-assets.md
 Extension API	Register custom features and use lifecycle hooks, shared controllers, and events	extend/api.md
-Chart add-ons	Register chart types, scales, and legends	extend/chart-addons.md
+Chart add-ons	Register chart types, scales, legends, and overlay layers	extend/chart-addons.md

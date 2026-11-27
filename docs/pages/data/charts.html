@@ -8,7 +8,7 @@
   <script src="../../assets/site.js" data-op-site></script>
   <script type="application/json" data-op-page>
     {
-      "features": {"chart": true, "chart-intervals": true, "chart-histogram": true, "results": true, "data": true, "parameters": true, "selection": true},
+      "features": {"chart": true, "chart-intervals": true, "chart-histogram": true, "chart-annotations": true, "stepper": true, "results": true, "data": true, "parameters": true, "selection": true},
       "parameterScopes": {
         "reading-times": {
           "bins": {"type": "range", "min": 2, "max": 12, "step": 1, "default": 4}
@@ -410,6 +410,54 @@
     <p>Choose Table to see the exact bin boundaries and counts. A logarithmic horizontal axis can help when positive measurements span several orders of magnitude. The slider is linked straight to the chart, so it needs no extra page code. <a href="../explain/parameters.html#chart-bindings">Parameters</a> explains these links.</p>
     <h2 id="heatmap-pointer">Colour a grid of values</h2>
     <p>When values sit on a grid, such as two settings crossed with each other, a <span data-op-term="heatmap">heatmap</span> colours each cell by its value and can draw <span data-op-term="contour line">contour lines</span> through equal values. <a href="heatmaps.html">Heatmaps</a> has its own page.</p>
+    <h2 id="annotations">Point things out with chart annotations</h2>
+    <p>Chart annotations add a note to the chart itself, so the reader sees what happened where it happened. A <em>note</em> points at a value with a short line, a <em>range</em> shades a stretch of the chart, and a <em>marker</em> draws a labelled line at one moment. Notes find a free spot on their own, away from the data and from each other.</p>
+
+    <ol id="incident-steps" data-op-stepper>
+      <li data-op-key="before" data-op-initial><strong data-op-step-label>Before the release</strong> Requests run steadily, apart from a planned maintenance window.</li>
+      <li data-op-key="spike"><strong data-op-step-label>The spike</strong> The new release ships and waiting time climbs.</li>
+      <li data-op-key="recover"><strong data-op-step-label>Recovery</strong> Clearing the cache brings waiting time back down.</li>
+    </ol>
+
+    <figure>
+      <div data-op-chart="line" data-op-brush data-op-reveal-sequence="incident-steps">
+        <script type="application/json">
+          {
+            "x": "Hour",
+            "y": "Waiting time (ms)",
+            "series": [
+              {
+                "key": "wait",
+                "name": "Waiting time",
+                "data": [[1, 120], [2, 118], [3, 125], [4, 122], [5, 130], [6, 210], {"x": 7, "y": 340, "key": "peak"}, [8, 290], [9, 180], [10, 135], [11, 128], [12, 124]]
+              }
+            ],
+            "annotations": [
+              {"key": "maintenance", "type": "range", "x": 2, "x2": 4, "text": "Maintenance window"},
+              {"key": "release", "type": "marker", "x": 5.5, "text": "Release 2.1", "revealStep": "spike"},
+              {"key": "peak", "point": "peak", "text": "Requests queue behind a slow cache", "role": "caution", "revealStep": "spike"},
+              {"key": "flush", "type": "marker", "x": 8.5, "text": "Cache cleared", "revealStep": "recover"},
+              {"key": "normal", "x": 11, "text": "Back to normal", "revealStep": "recover"}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Hour</th><th scope="col">Waiting time (ms)</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>120</td></tr><tr><td>2</td><td>118</td></tr><tr><td>3</td><td>125</td></tr><tr><td>4</td><td>122</td></tr>
+            <tr><td>5</td><td>130</td></tr><tr><td>6</td><td>210</td></tr><tr><td>7</td><td>340</td></tr><tr><td>8</td><td>290</td></tr>
+            <tr><td>9</td><td>180</td></tr><tr><td>10</td><td>135</td></tr><tr><td>11</td><td>128</td></tr><tr><td>12</td><td>124</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative waiting times over twelve hours. The step buttons above add the release and recovery annotations one step at a time.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Step through the list to reveal each annotation. Then drag across hours 1 to 5 to narrow the chart: annotations outside the range disappear, and the legend says how many are hidden. Choose Table to see every annotation listed under the values.</p>
+
+    <p>Annotations stay in place when the chart changes size, follow its data when it updates, and work on every chart type with axes, including bars, interval plots, histograms, and heatmaps. A long note is shortened on the chart, and the full text appears when you point at it. Any step sequence can reveal annotations, such as a worked example, figure steps, or a guided playback tour. In an exported Reader copy, they come with their own step buttons.</p>
+
     <h2 id="shared-position">Share a position between charts</h2>
     <p>Charts with a common linear horizontal scale can share an inspection cursor while keeping their own vertical scales and visible ranges. Try the two charts in <a href="playback.html#shared-position">Guided chart playback</a>.</p>
     <h2 id="when-to-use">When to reach for it</h2>
@@ -422,6 +470,7 @@
       <li><a href="tables.html">Concept tables and results tables</a></li>
       <li><a href="playback.html">Guided chart playback</a></li>
       <li><a href="heatmaps.html">Heatmaps</a></li>
+      <li><a href="../explain/steppers.html">Worked-example steppers</a>, which can reveal annotations step by step</li>
       <li><a href="../explain/parameters.html#linking">Parameters</a>, for controls linked to charts</li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
       <li><a href="../recipes/share-experiment-results.html">Share experiment results</a>, a recipe that uses it</li>

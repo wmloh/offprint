@@ -451,3 +451,15 @@ body:has(> .op-sidebar) {
 [data-op-color="purple" i] { --op-accent: var(--op-purple); --op-accent-bg: var(--op-purple-bg); }
 [data-op-color="pink" i] { --op-accent: var(--op-pink); --op-accent-bg: var(--op-pink-bg); }
 [data-op-color="red" i] { --op-accent: var(--op-red); --op-accent-bg: var(--op-red-bg); }
+
+/* Reveal steps: items keyed to a later step of their figure's sequence fade out in place, keeping their space. */
+.op-reveal-ready {
+  transition: opacity 0.3s ease;
+}
+
+.op-reveal-pending {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}

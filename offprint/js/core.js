@@ -744,6 +744,119 @@
     return controls;
   }
 
+  // ---- Reveal steps ----
+  // A host with data-op-reveal-sequence="<id>" follows the step sequence mounted on that element. Items with
+  // data-op-reveal-step="<step key>" show once the sequence reaches that step and stay shown at later steps, fading
+  // in place without moving anything. Between steps, as on a chart tour between checkpoints, the last step reached
+  // holds. Unkeyed items always show, and every item shows when the sequence cannot be found after startup.
+  var revealFollowers = new Set();
+  var revealSettled = !boot;
+  var revealListening = false;
+  var REVEAL_ALL = Infinity;
+
+  function revealTarget(follower) {
+    var target = root.document && root.document.getElementById(follower.id);
+    var controller = target && sequenceGet(target);
+    return controller ? { target: target, controller: controller } : null;
+  }
+
+  // Reads the followed sequence; true when the shown step changed.
+  function revealRead(follower, detail) {
+    var found = revealTarget(follower);
+    var level = follower.level;
+    if (found) {
+      var snapshot = found.controller.snapshot();
+      follower.target = found.target;
+      follower.keys = found.controller.keys.slice();
+      follower.resolved = true;
+      var index = detail && detail.index !== undefined ? detail.index : snapshot.index;
+      if (index !== null && index !== undefined) level = index;
+      else if (level === REVEAL_ALL) level = -1;
+    } else if (revealSettled && !follower.resolved) {
+      if (level !== REVEAL_ALL) {
+        warnOnce('reveal-sequence:' + follower.id, 'Reveal steps follow "' + follower.id + '", which has no step sequence; ' +
+          'every item is shown.', follower.host);
+      }
+      level = REVEAL_ALL;
+    }
+    var changed = level !== follower.level;
+    follower.level = level;
+    return changed;
+  }
+
+  function revealUpdate(follower, detail) {
+    if (revealRead(follower, detail) && follower.onChange) follower.onChange(follower);
+  }
+
+  function revealListen() {
+    if (revealListening || !root.document || typeof root.document.addEventListener !== 'function') return;
+    revealListening = true;
+    root.document.addEventListener('op:step', function (event) {
+      var source = event.target;
+      revealFollowers.forEach(function (follower) {
+        if (source === follower.target || (source && source.id === follower.id)) revealUpdate(follower, event.detail);
+      });
+    });
+  }
+
+  function revealFollow(host, onChange) {
+    var id = host && host.getAttribute && (host.getAttribute('data-op-reveal-sequence') || '').trim();
+    if (!id) return null;
+    var follower = {
+      host: host, id: id, target: null, keys: [], level: -1, resolved: false, onChange: onChange || null,
+      // True when an item keyed to step should show now; an unknown step key warns once and shows.
+      shown: function (step) {
+        if (step === null || step === undefined || step === '' || follower.level === REVEAL_ALL) return true;
+        var at = follower.keys.indexOf(String(step));
+        if (at < 0) {
+          if (!follower.resolved) return false;
+          warnOnce('reveal-step:' + follower.id + ':' + step, 'Reveal step "' + step + '" is not a step of "' + follower.id +
+            '"; the item is shown.', host);
+          return true;
+        }
+        return at <= follower.level;
+      },
+      index: function (step) { return follower.keys.indexOf(String(step)); },
+      // A step's label from its keyed item in the sequence host, else its key.
+      label: function (step) {
+        var item = follower.target && all('[data-op-key]', follower.target).find(function (el) {
+          return selectionKey(el.getAttribute('data-op-key')) === step;
+        });
+        return item && sequenceLabel(item, { textContent: step }) || step;
+      },
+      items: function (scope) {
+        var list = all('[data-op-reveal-step]', scope || host);
+        if (scope && scope.hasAttribute && scope.hasAttribute('data-op-reveal-step')) list.unshift(scope);
+        return list;
+      },
+      // Fades items in or out to match the current step.
+      apply: function (scope) {
+        follower.items(scope).forEach(function (el) {
+          el.classList.add('op-reveal-ready');
+          el.classList.toggle('op-reveal-pending', !follower.shown(el.getAttribute('data-op-reveal-step')));
+        });
+      },
+      destroy: function () { revealFollowers.delete(follower); }
+    };
+    revealFollowers.add(follower);
+    revealListen();
+    revealRead(follower);
+    return follower;
+  }
+
+  // Plain HTML figures follow their sequence on their own; charts and other modules call follow themselves.
+  function revealMount() {
+    revealSettled = true;
+    revealFollowers.forEach(function (follower) { revealUpdate(follower); });
+    all('[data-op-reveal-sequence]').forEach(function (host) {
+      if (host.hasAttribute('data-op-chart') || Array.from(revealFollowers).some(function (f) { return f.host === host; })) return;
+      var follower = revealFollow(host, function (current) { current.apply(); });
+      if (follower) follower.apply();
+    });
+  }
+
+  if (boot && typeof boot.after === 'function') boot.after('reveal-steps', revealMount);
+
   function warnOnce(key, message, detail) {
     if (warned[key]) return;
     warned[key] = true;
@@ -1336,6 +1449,20 @@
     shortcuts: { register: registerShortcut, keys: shortcutKeys },
     _shortcutHint: shortcutHint,
     sequence: { get: sequenceGet },
+    _revealSteps: {
+      follow: revealFollow, mount: revealMount,
+      // Followers of the sequence on host, for Reader capture of each step.
+      followers: function (host) {
+        return Array.from(revealFollowers).filter(function (follower) {
+          return follower.resolved && follower.target === host && follower.host.isConnected !== false;
+        });
+      },
+      all: function () {
+        return Array.from(revealFollowers).filter(function (follower) {
+          return follower.resolved && follower.host.isConnected !== false;
+        });
+      }
+    },
     _sequence: {
       define: defineSequence, indexed: indexedSequence, binding: sequenceBinding, start: startSequence,
       pill: sequencePill, label: sequenceLabel, detail: sequenceDetail, showDetails: showStepDetails,

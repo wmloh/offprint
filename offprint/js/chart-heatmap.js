@@ -445,7 +445,7 @@
         kit.tagKey(model, rect, p);
         state.cells.push({ el: rect, value: p.y });
         kit.addMark(marks, kit.markId(series.key, 'cell', p), {
-          el: rect, paint: paint.hue, from: { 'fill-opacity': 0 }, order: cols > 1 ? p.col / (cols - 1) : 0
+          el: rect, paint: paint.hue, from: { 'fill-opacity': 0 }, order: cols > 1 ? p.col / (cols - 1) : 0, obstacle: false
         });
         spots.push({ px: x + cw / 2, py: y + ch / 2, p: p, s: series, el: rect });
       });
@@ -515,8 +515,23 @@
     if (!(info.contours && info.contours.levels.length)) state.lines = null;
     chart.heatmapGeom = { cw: cw, ch: ch, cols: cols, rows: rows };
     var empty = spots.length ? '' : 'No values to show.';
+    // Layers place data on the grid by column (x) and row (y) label; cells fill the plot, so only contours are obstacles.
+    var columnKeys = info.columns.map(String);
+    var rowKeys = info.rows.map(String);
+    var span = function (axis, v) {
+      var i = (axis === 'x' ? columnKeys : rowKeys).indexOf(String(v));
+      if (i < 0) return null;
+      return axis === 'x' ? [left + cw * i, left + cw * (i + 1)] : [top + ch * i, top + ch * (i + 1)];
+    };
     var result = { frame: frame, layer: layer, marks: marks, spots: spots, empty: empty,
-      geom: { left: left, right: left + plotW, top: top, bottom: plotB } };
+      geom: { left: left, right: left + plotW, top: top, bottom: plotB,
+        px: function (axis, v) { var at = span(axis, v); return at && (at[0] + at[1]) / 2; },
+        span: span,
+        cell: function (row, col) {
+          var r = span('y', row);
+          var c = span('x', col);
+          return r && c ? { x: c[0], y: r[0], width: c[1] - c[0], height: r[1] - r[0] } : null;
+        } } };
     paintRange(chart);
     paintContours(chart);
     return result;

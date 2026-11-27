@@ -196,17 +196,18 @@
   stroke-width: 1;
 }
 
-/* A first drawing waiting for its entrance keeps its marks hidden; print and zoom-lens clones always show them. */
-.op-chart-await .op-chart-marks {
+/* A first drawing waiting for its entrance keeps its marks and overlay layers hidden; print and zoom-lens clones
+   always show them. */
+.op-chart-await :is(.op-chart-marks, .op-chart-layer) {
   visibility: hidden;
 }
 
-.op-zoomtools-lens-view .op-chart-await .op-chart-marks {
+.op-zoomtools-lens-view .op-chart-await :is(.op-chart-marks, .op-chart-layer) {
   visibility: visible;
 }
 
 @media print {
-  .op-chart-await .op-chart-marks {
+  .op-chart-await :is(.op-chart-marks, .op-chart-layer) {
     visibility: visible;
   }
 }

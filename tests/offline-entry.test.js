@@ -900,7 +900,7 @@ test('the offline entry exposes the extension surface and initializes a custom f
   assert.deepEqual(Object.getOwnPropertyNames(p.OP).filter(name => !name.startsWith('_')).sort(), [
     'chart', 'data', 'diagnostics', 'ready', 'register', 'selection', 'sequence', 'setup', 'shortcuts', 'util'
   ]);
-  assert.deepEqual(Object.keys(p.OP.chart).sort(), ['addon', 'addons', 'legend', 'scale']);
+  assert.deepEqual(Object.keys(p.OP.chart).sort(), ['addon', 'addons', 'layers', 'legend', 'scale']);
   assert.deepEqual(Object.keys(p.OP.data).sort(), ['define', 'defineTransform', 'names', 'parse', 'source', 'table', 'valueOf']);
   assert.equal(p.OP.diagnostics.list().length, 0);
 });

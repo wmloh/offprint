@@ -169,6 +169,46 @@
       }
     });
 
+    var revealed = new Set();
+    // [copy, changes] for each reachable item of a reveal follower; shownAt(r) lists, per step, whether an item keyed to
+    // sequence index r shows.
+    function revealTracks(follower, shownAt) {
+      return follower.items().flatMap(function (item) {
+        var copy = mapped.get(item);
+        var r = follower.index(item.getAttribute('data-op-reveal-step'));
+        if (!copy || r < 0 || !reachable(copy)) return [];
+        var changes = shownAt(r).flatMap(function (on, i, all) {
+          return i && all[i - 1] === on ? [] : [[i, '.opacity', on ? '1' : '0'], [i, '.visibility', on ? 'visible' : 'hidden']];
+        });
+        return [[copy, changes]];
+      });
+    }
+
+    // A follower of a sequence the Reader does not step, such as a worked example or chart tour, gets its own steps.
+    function captureReveals(follower) {
+      var hostCopy = mapped.get(follower.host);
+      if (!hostCopy || !reachable(hostCopy) || !follower.keys.length || !isFinite(follower.level)) return;
+      var lead = follower.level < 0 ? 1 : 0;
+      var steps = (lead ? [['start', 'Start', [], '']] : []).concat(follower.keys.map(function (key) {
+        return [key, follower.label(key), [], ''];
+      }));
+      var initial = Math.min(steps.length - 1, follower.level + lead);
+      var items = revealTracks(follower, function (r) {
+        return steps.map(function (step, i) { return i - lead >= r; });
+      });
+      if (!items.length) return;
+      items.forEach(function ([copy, changes]) {
+        mark(copy, stepAttributes[1], JSON.stringify([group, changes]));
+        changes.forEach(function ([step, prop, value]) {
+          if (step <= initial) copy.style.setProperty(prop.slice(1), value);
+        });
+      });
+      var controls = hostCopy.ownerDocument.createElement('div');
+      mark(controls, stepAttributes[0], JSON.stringify([group++, initial, steps]));
+      controls.textContent = steps[initial][1];
+      hostCopy.before(controls);
+    }
+
     function capture(host, model, animation) {
       var figure = model.figure || host;
       var indices = animation && model.keys.map(function (key) { return animation.keys.indexOf(key); });
@@ -187,6 +227,17 @@
         if (!tracks.has(copy)) tracks.set(copy, []);
         tracks.get(copy).push(...changes);
       }
+      // Items that follow this sequence by reveal step fade in from their step on.
+      var joined = [];
+      var followed = [[host, function (i) { return i; }]];
+      if (model.figure && model.figure !== host) followed.push([model.figure, function (i) { return indices ? indices[i] : i; }]);
+      followed.forEach(function ([sequenceHost, at]) {
+        (runtime?._revealSteps?.followers(sequenceHost) || []).forEach(function (follower) {
+          joined.push(follower);
+          revealTracks(follower, function (r) { return model.keys.map(function (key, i) { return at(i) >= r; }); })
+            .forEach(function ([copy, changes]) { tracks.set(copy, (tracks.get(copy) || []).concat(changes)); });
+        });
+      });
       var panes = [...(followers.get(host) || []), ...(host === figure ? [] : followers.get(figure) || [])]
         .map(function (pane) {
           return new Map(Array.from(pane.children, function (child) {
@@ -249,6 +300,7 @@
         caption.textContent = steps[initial][3];
         controls.append(caption);
       }
+      joined.forEach(function (follower) { revealed.add(follower); });
     }
 
     source.querySelectorAll('.op-figure-steps').forEach(function (box) {
@@ -275,6 +327,9 @@
       if (leftover.length === candidates.length) break;
       candidates = leftover;
     }
+    (runtime?._revealSteps?.all() || []).forEach(function (follower) {
+      if (!revealed.has(follower)) captureReveals(follower);
+    });
     return { retained: retained, markers: markers };
   }
 

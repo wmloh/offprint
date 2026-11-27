@@ -10,7 +10,7 @@
 // Motion is on by default: keyed marks morph between drawings and play an entrance the first time the chart
 // scrolls into view. motion: false or data-op-animate="false" turns it off; reduced motion and print skip it.
 // Bar charts lie horizontal with orientation: 'horizontal' and stack with stack: 'stacked' or 'percent'.
-// Add-on features register further chart types, scales, and legends with OffPrint.chart.addon.
+// Add-on features register further chart types, scales, legends, and overlay layers with OffPrint.chart.addon.
 (function (root) {
   'use strict';
 
@@ -43,6 +43,7 @@
   var addonFeatures = new Set();
   var scales = Object.create(null);
   var legends = Object.create(null);
+  var chartLayers = Object.create(null);
 
   function linearX(model) {
     return model && !model.errors.length && !model.categories && !model.x.time && !model.x.log;
@@ -780,6 +781,10 @@
   // renderers that any chart type can look up. Nothing is registered unless every part is valid.
   var HOOKS = ['prepare', 'normalize', 'extent', 'draw', 'categoryMarks', 'continuousMarks', 'pick', 'readout', 'table', 'describe',
     'keys', 'coords', 'mapFields', 'mapRecords', 'fromTable'];
+  // Layers draw over the marks of every chart type: layers[name] = { draw(chart, geom, kit, layer), normalize?(model,
+  // spec, kit), legend?(chart, legendEl, kit), describe?(model), table?(view, kit, chart) }, where the spec field named
+  // after the layer holds its input and layer = { group, marks } gives the layer's SVG group and the chart's mark map.
+  var LAYER_HOOKS = ['normalize', 'legend', 'describe', 'table'];
 
   function addon(feature, parts) {
     var problem = addonProblem(feature, parts);
@@ -791,6 +796,7 @@
     Object.keys(types).forEach(function (name) { addons[name] = Object.assign({ feature: feature }, types[name]); });
     Object.keys(parts.scales || {}).forEach(function (name) { scales[name] = parts.scales[name]; });
     Object.keys(parts.legends || {}).forEach(function (name) { legends[name] = parts.legends[name]; });
+    Object.keys(parts.layers || {}).forEach(function (name) { chartLayers[name] = Object.assign({ feature: feature }, parts.layers[name]); });
     addonFeatures.add(feature);
     return true;
   }
@@ -798,10 +804,10 @@
   function addonProblem(feature, parts) {
     var plain = function (value) { return !!value && typeof value === 'object' && !Array.isArray(value); };
     if (typeof feature !== 'string' || !/^[a-z][a-z0-9-]*$/.test(feature) || !plain(parts)) {
-      return 'use a lowercase feature ID and an object of types, scales, and legends.';
+      return 'use a lowercase feature ID and an object of types, scales, legends, and layers.';
     }
     if (addonFeatures.has(feature)) return 'it is already registered.';
-    var groups = ['types', 'scales', 'legends'];
+    var groups = ['types', 'scales', 'legends', 'layers'];
     var bad = groups.find(function (group) { return parts[group] !== undefined && !plain(parts[group]); });
     if (bad) return 'parts.' + bad + ' must be an object.';
     var types = parts.types || {};
@@ -827,6 +833,15 @@
       if (def.legend !== undefined && !Object.hasOwn(legends, def.legend) && !Object.hasOwn(newLegends, def.legend)) {
         return 'chart type ' + JSON.stringify(name) + ' names an unknown legend ' + JSON.stringify(def.legend) + '.';
       }
+    }
+    for (var layerName of Object.keys(parts.layers || {})) {
+      var layer = parts.layers[layerName];
+      if (!/^[a-z][a-z0-9-]*$/.test(layerName) || Object.hasOwn(chartLayers, layerName) || Object.hasOwn(TYPES, layerName)) {
+        return 'layer ' + JSON.stringify(layerName) + ' is invalid or taken.';
+      }
+      if (!plain(layer) || typeof layer.draw !== 'function') return 'layer ' + JSON.stringify(layerName) + ' needs a draw function.';
+      var layerHook = LAYER_HOOKS.find(function (h) { return layer[h] !== undefined && typeof layer[h] !== 'function'; });
+      if (layerHook) return 'layer ' + JSON.stringify(layerName) + ' has a ' + layerHook + ' that is not a function.';
     }
     for (var group of ['scales', 'legends']) {
       var taken = group === 'scales' ? scales : legends;
@@ -1700,6 +1715,125 @@
     if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
   }
 
+  // ---- Layer geometry ----
+  // Boxes { x, y, w, h } around drawn marks, for layers that keep labels clear of them. Open paths give boxes along
+  // each segment so a label can sit beside a line; closed shapes give one box. Entries with obstacle: false are skipped.
+  function markBounds(markMap) {
+    var out = [];
+    (markMap || new Map()).forEach(function (entry) {
+      if (entry.obstacle !== false && !entry.leaving && entry.el) shapeBoxes(entry.el, out);
+    });
+    return out;
+  }
+
+  function shapeBoxes(el, out) {
+    var tag = String(el.tagName || '').toLowerCase();
+    if (el.getAttribute && el.getAttribute('display') === 'none') return out;
+    var n = function (name) { return parseFloat(el.getAttribute(name)); };
+    var push = function (x0, y0, x1, y1) {
+      if ([x0, y0, x1, y1].every(isFinite)) {
+        out.push({ x: Math.min(x0, x1), y: Math.min(y0, y1), w: Math.abs(x1 - x0), h: Math.abs(y1 - y0) });
+      }
+    };
+    if (tag === 'g') Array.from(el.children || []).forEach(function (child) { shapeBoxes(child, out); });
+    else if (tag === 'circle') push(n('cx') - n('r'), n('cy') - n('r'), n('cx') + n('r'), n('cy') + n('r'));
+    else if (tag === 'rect') push(n('x'), n('y'), n('x') + n('width'), n('y') + n('height'));
+    else if (tag === 'line') push(n('x1'), n('y1'), n('x2'), n('y2'));
+    else if (tag === 'text') {
+      var w = String(el.textContent || '').length * 6.5;
+      var x = n('x');
+      var anchor = el.getAttribute('text-anchor');
+      var x0 = anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x;
+      var y0 = el.getAttribute('dominant-baseline') === 'middle' ? n('y') - 6 : n('y') - 10;
+      push(x0, y0, x0 + w, y0 + 12);
+    } else if (tag === 'path') {
+      var d = el.getAttribute('d') || '';
+      var closed = /z/i.test(d);
+      var all = [];
+      var at = null;
+      d.replace(/([MLQCA])([^MLQCAZ]*)/gi, function (_, command, args) {
+        var v = (args.match(svgNumber) || []).map(Number);
+        var c = command.toUpperCase();
+        var pts = [];
+        if (c === 'A') { for (var i = 5; i + 1 < v.length; i += 7) pts.push([v[i], v[i + 1]]); }
+        else for (var j = 0; j + 1 < v.length; j += 2) pts.push([v[j], v[j + 1]]);
+        pts.forEach(function (pt, k) {
+          all.push(pt);
+          if (!closed && at && !(c === 'M' && k === 0)) {
+            // Long segments split into short pieces so their boxes hug a sloping line.
+            var pieces = Math.max(1, Math.ceil(Math.hypot(pt[0] - at[0], pt[1] - at[1]) / 12));
+            for (var q = 0; q < pieces; q++) {
+              push(at[0] + (pt[0] - at[0]) * q / pieces, at[1] + (pt[1] - at[1]) * q / pieces,
+                at[0] + (pt[0] - at[0]) * (q + 1) / pieces, at[1] + (pt[1] - at[1]) * (q + 1) / pieces);
+            }
+          }
+          at = pt;
+        });
+        return '';
+      });
+      if (closed && all.length) {
+        var xs = all.map(function (pt) { return pt[0]; });
+        var ys = all.map(function (pt) { return pt[1]; });
+        push(Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys));
+      } else if (all.length === 1) push(all[0][0], all[0][1], all[0][0], all[0][1]);
+    }
+    return out;
+  }
+
+  // Adds data-to-pixel mapping to a renderer's geometry: px(axis, value) is a data value's position along the screen
+  // direction of the data axis 'x' or 'y' (or null off the axis), span(axis, value) a category's [from, to] extent,
+  // and bounds() the mark boxes, measured once.
+  function layerGeom(geom, px, span, markMap) {
+    geom.px = px;
+    geom.span = span || function () { return null; };
+    if (typeof geom.bounds !== 'function') {
+      var boxes = null;
+      geom.bounds = function () { return boxes || (boxes = markBounds(markMap)); };
+    }
+    return geom;
+  }
+
+  // Each registered layer draws into its own group above the marks, before the hover overlay.
+  function drawLayers(chart, frame, markMap, before) {
+    Object.keys(chartLayers).forEach(function (name) {
+      var g = svg('g', { class: 'op-chart-layer', 'data-op-layer': name });
+      frame.insertBefore(g, before && before.parentNode === frame ? before : null);
+      try { chartLayers[name].draw(chart, chart.geom, kit, { group: g, marks: markMap }); }
+      catch (error) {
+        OffPrint._warnOnce('chart-layer:' + name + ':' + (error && error.message), 'Chart layer "' + name + '" failed to draw: ' +
+          String(error && error.message || error), chart.box);
+      }
+      if (!g.firstChild) g.remove();
+    });
+  }
+
+  // Layer input lives in the spec field named after the layer; an unregistered layer's field warns once.
+  function layerModel(model, spec, host) {
+    Object.keys(chartLayers).forEach(function (name) {
+      var layer = chartLayers[name];
+      if (!layer.normalize) return;
+      try { layer.normalize(model, spec || {}, kit); }
+      catch (error) { model.errors.push(String(error && error.message || error)); }
+    });
+    var boot = OffPrint._boot;
+    if (spec && boot && typeof boot.chartLayerFeature === 'function') Object.keys(spec).forEach(function (field) {
+      var needs = spec[field] != null && !Object.hasOwn(chartLayers, field) ? boot.chartLayerFeature(field) : null;
+      if (needs) {
+        OffPrint._warnOnce('chart-layer-missing:' + field, 'Chart ' + field + ' need the "' + needs +
+          '" feature; enable it in features. The chart is drawn without them.', host);
+      }
+    });
+    return model;
+  }
+
+  function layerTables(chart) {
+    Object.keys(chartLayers).forEach(function (name) {
+      var layer = chartLayers[name];
+      var table = layer.table && layer.table(chart.view, kit, chart);
+      if (table) chart.table.appendChild(table);
+    });
+  }
+
   // An add-on type draws its own frame: def.draw(chart, width, kit) returns { frame, marks, layer, overlay, spots,
   // geom, empty }, where marks is a markId-keyed Map of mark entries and layer the group that holds them.
   function drawAddon(chart, width, previous, def) {
@@ -1709,6 +1843,8 @@
     chart.overlay = out.overlay || svg('g', { class: 'op-chart-hover' }, out.frame);
     chart.spots = out.spots || [];
     chart.geom = out.geom || {};
+    if (chart.geom.px) layerGeom(chart.geom, chart.geom.px, chart.geom.span, out.marks);
+    drawLayers(chart, out.frame, out.marks || new Map(), out.overlay);
     chart.cursor = chart.revealPlot = null;
     chart.empty.textContent = out.empty || '';
     chart.empty.hidden = !out.empty;
@@ -1864,7 +2000,14 @@
     });
     spots.sort(function (a, b) { return a.py - b.py || a.px - b.px; });
     chart.spots = spots;
-    chart.geom = { left: left, right: plotR, top: top, bottom: plotB, band: band, horizontal: true, value: v, x: null, y: null };
+    chart.geom = layerGeom({ left: left, right: plotR, top: top, bottom: plotB, band: band, horizontal: true, value: v, x: null, y: null },
+      function (axis, value) {
+        if (axis === 'x') return cats.indexOf(String(value)) < 0 ? null : pos(value);
+        return isNum(value) ? v(value) : null;
+      }, function (axis, value) {
+        return axis === 'x' && cats.indexOf(String(value)) >= 0 ? [pos(value) - band / 2, pos(value) + band / 2] : null;
+      }, markMap);
+    drawLayers(chart, frame, markMap);
     chart.revealPlot = null;
     chart.cursor = null;
     chart.overlay = svg('g', { class: 'op-chart-hover' }, frame);
@@ -2176,7 +2319,15 @@
       spots = spots.filter(function (spot) { return spot.px >= left && spot.px <= plotR; });
     }
     chart.spots = playback ? [] : spots;
-    chart.geom = { left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0 };
+    chart.geom = layerGeom({ left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0 },
+      function (axis, v) {
+        if (axis === 'y') return isNum(v) && (!yLog || v > 0) ? y(v) : null;
+        if (cats) return cats.indexOf(String(v)) < 0 ? null : xAt(v);
+        return isNum(v) && (!model.x.log || v > 0) ? xs0(v) : null;
+      }, function (axis, v) {
+        return axis === 'x' && cats && cats.indexOf(String(v)) >= 0 ? [xAt(v) - band / 2, xAt(v) + band / 2] : null;
+      }, markMap);
+    drawLayers(chart, frame, markMap);
     chart.revealPlot = playback ? drawPlayhead(chart, frame, future, spots,
       intervalRect ? [clipRect, intervalRect] : [clipRect]) : null;
     chart.cursor = chart.xGroup && linearX(model) ? svg('line', {
@@ -2495,6 +2646,10 @@
       (model.brush ? ' Drag across the plot, or press plus and minus, to narrow or widen the x range; Shift with ' +
         'the left and right arrow keys moves it.' : '') +
       (model.toggles ? ' The legend chips hide and show ' + (model.type === 'pie' ? 'slices.' : 'series.') : '') +
+      Object.keys(chartLayers).map(function (name) {
+        var text = chartLayers[name].describe ? chartLayers[name].describe(model) : '';
+        return text ? ' ' + text : '';
+      }).join('') +
       (model.table ? ' The Table button lists the values shown.' : '');
   }
 
@@ -2554,6 +2709,9 @@
       return item;
     });
     if (def && def.legend) legends[def.legend](chart, chart.legend, kit);
+    Object.keys(chartLayers).forEach(function (name) {
+      if (chartLayers[name].legend) chartLayers[name].legend(chart, chart.legend, kit);
+    });
     syncHead(chart);
   }
 
@@ -2590,6 +2748,7 @@
         rows.push(entry);
       }) : tableView(chart.view);
       chart.table.appendChild(table);
+      layerTables(chart);
       chart.revealTable = revealInOrder(rows, function (entry) {
         entry.body.appendChild(entry.row);
         if (OffPrint._selection) OffPrint._all('[' + GROUP + '][' + KEY + ']', entry.row).forEach(OffPrint._selection.sync);
@@ -2597,6 +2756,7 @@
       chart.revealTable(chart.playhead);
     } else if (sourceShown(chart)) chart.table.appendChild(chart.sourceTable);
     else if (chart.plot.hidden) chart.table.appendChild(tableView(chart.view));
+    if (chart.table.firstChild) layerTables(chart);
   }
 
   // An authored source table stands in for the table view while it shows the same values as the chart.
@@ -2810,7 +2970,10 @@
     chart.sourceTable = sourceTable || null;
     chart.sourceSpec = useSourceTable ? spec : null;
     chart.ownTable = Boolean(sourceTable && useSourceTable);
-    if (sourceTable && chart.playhead === null && (!model.stack || addonOf(model)?.table)) chart.table.appendChild(sourceTable);
+    if (sourceTable && chart.playhead === null && (!model.stack || addonOf(model)?.table)) {
+      chart.table.appendChild(sourceTable);
+      layerTables(chart);
+    }
     host.insertBefore(chart.table, host.firstChild);
     host.insertBefore(chart.plot, chart.table);
     host.insertBefore(head, chart.plot);
@@ -3096,6 +3259,23 @@
         else OffPrint._warnOnce('chart-refs:' + e.message, 'Chart reference lines are not valid JSON: ' + e.message, host);
       }
     }
+    var layerNames = Object.keys(chartLayers);
+    var boot = OffPrint._boot;
+    if (boot && typeof boot.chartLayerFeature === 'function' && host.attributes && typeof host.attributes.length === 'number') {
+      Array.from(host.attributes).forEach(function (attr) {
+        var name = /^data-op-([a-z][a-z0-9-]*)$/.exec(attr.name || '');
+        if (name && layerNames.indexOf(name[1]) < 0 && boot.chartLayerFeature(name[1])) layerNames.push(name[1]);
+      });
+    }
+    layerNames.forEach(function (name) {
+      var raw = OffPrint._data(host, name, null);
+      if (raw === null) return;
+      try { spec[name] = JSON.parse(raw); }
+      catch (e) {
+        if (OffPrint._boot) invalidOption(host, name, 'Use JSON for data-op-' + name + '.', raw);
+        else OffPrint._warnOnce('chart-' + name + ':' + e.message, 'Chart ' + name + ' are not valid JSON: ' + e.message, host);
+      }
+    });
     var axisOf = function (axis) {
       if (typeof spec[axis] === 'string') spec[axis] = { label: spec[axis] };
       else if (!spec[axis] || typeof spec[axis] !== 'object') spec[axis] = {};
@@ -3149,7 +3329,7 @@
 
   function chartModel(host, spec) {
     var bound = boundSpec(host, spec);
-    var model = normalize(bound.spec);
+    var model = layerModel(normalize(bound.spec), bound.spec, host);
     model.errors.push.apply(model.errors, bound.errors);
     if (OffPrint._items) model.selectionMode = OffPrint._items.mode(host, 'chart');
     model.motion = resolveMotion(animateAttribute(host), spec, OffPrint._boot ? OffPrint._boot.optionLayers('chart', host.id) : []);
@@ -3686,7 +3866,7 @@
   chart.log = log;
   chart.logTicks = logTicks;
   chart.logTickFormat = logTickFormat;
-  chart.validate = function (spec) { return normalize(spec).errors.slice(); };
+  chart.validate = function (spec) { return layerModel(normalize(spec), spec).errors.slice(); };
   chart.nearest = nearest;
   chart.normalize = normalize;
   chart.fromTable = fromTable;
@@ -3703,6 +3883,7 @@
   chart.format = format;
   chart.tickFormat = tickFormat;
   chart.barPath = barPath;
+  chart.markBounds = markBounds;
   chart.stackLayout = stackLayout;
   chart.wrapLabel = wrapLabel;
   chart.toNumber = toNumber;
@@ -3717,7 +3898,8 @@
     addon: addon,
     addons: function () { return Array.from(addonFeatures); },
     scale: function (name) { return Object.hasOwn(scales, name) ? scales[name] : null; },
-    legend: function (name) { return Object.hasOwn(legends, name) ? legends[name] : null; }
+    legend: function (name) { return Object.hasOwn(legends, name) ? legends[name] : null; },
+    layers: function () { return Object.keys(chartLayers); }
   };
   scales.linear = linear;
   scales.log = log;
@@ -3727,7 +3909,8 @@
     svg: svg, html: html, paint: paint, legendKey: key, tagKey: tagKey, barPath: barPath, whisker: whisker,
     ticks: ticks, logTicks: logTicks, timeTicks: timeTicks, tickFormat: tickFormat, logTickFormat: logTickFormat,
     format: format, toNumber: toNumber, isNum: isNum, extent: extent, intervalReadout: intervalReadout, row: row,
-    markId: markId, addMark: addMark, scale: OffPrint.chart.scale, COLORS: COLORS, CHAR: CHAR, inspect: inspectSpot, hide: hide
+    markId: markId, addMark: addMark, scale: OffPrint.chart.scale, COLORS: COLORS, CHAR: CHAR, inspect: inspectSpot, hide: hide,
+    markBounds: markBounds, wrapLabel: wrapLabel, toTime: toTime, hint: function (el, text) { if (OffPrint.util) OffPrint.util.hint(el, text); }
   };
   chart.get = function (target) {
     var el = typeof target === 'string' ? document.getElementById(target) : target;

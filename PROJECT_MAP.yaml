@@ -4,7 +4,7 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
   site.template.js: Starter JSON site manifest to copy beside pages
   css/: Design tokens, base typography, and per-module styles
     tokens.css: Notion-style named colours, chart series colours, neutrals, link and cross-reference colours, per-mode heading and emphasis colours, spacing, radii, fonts, reading-column and figure-cap widths, section spacing and colour cycle, and eyebrow and field-label text roles via light-dark()
-    base.css: Centered reading column, typography, section heading spacing, links, figure and table width limits, concept tables, table hover, list markers, scrollbars, and data-op-color accents
+    base.css: Centered reading column, typography, section heading spacing, links, figure and table width limits, concept tables, table hover, list markers, scrollbars, data-op-color accents, and reveal-step fades
     text.css: Muted small-caps eyebrows and aligned labelled-field lists for visual hierarchy
     sections.css: Cycled h2 section colours and uniform left-margin section lines in an unblurred overlay layer
     buttons.css: Shared soft tinted pill buttons with optional icons for author and module actions, and the frosted icon pill for step controls
@@ -40,6 +40,7 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     chart-intervals.css: Interval whisker and lollipop stem styling
     chart-histogram.css: Overlaid histogram bar opacity and active-bin styling
     chart-heatmap.css: Heatmap cell hues over a neutral backdrop, dimmed out-of-range cells, contour lines and labels with their toggle chip, and the side colour scale
+    chart-annotations.css: Annotation callouts with leader lines, shaded range bands, event marker lines, haloed labels, the hidden-annotation legend note, and the annotations table
     chart-playback.css: Guided playback pill spacing, playhead, checkpoint marker, and note visibility
     results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with blue choice chips and a row-count bar
     matrix.css: Evaluation matrix measure chooser layout, numeric cells, and shared color scale
@@ -54,14 +55,14 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     glossary.css: Glossary page tag filter chips, letter jumps, letter groups, definitions with tags, variant definitions, and used-on links
   js/: Per-module classic scripts on a shared OffPrint namespace
     reader-state.js: Versioned browser-local export views, data revision checks, import persistence, and in-memory Interactive session replay
-    page-snapshot.js: Page capture, isolated replay, reachable figure steps and details, tooltip materialization, and fallback reporting for export
+    page-snapshot.js: Page capture, isolated replay, reachable figure steps and details, reveal-step tracks, tooltip materialization, and fallback reporting for export
     export-package.js: Folder and manifest resolution, authored Interactive inputs, consented datasets and local scripts, shared assets, Reader fallbacks, link rewriting, and build diagnostics
     export-library.js: Generated library styles and KaTeX fonts loaded on demand for standalone exports
     export-runtime.js: Generated trusted classic scripts loaded on demand for Interactive exports
     export-resources.js: Offline resolution and content-based sharing of stylesheets, fonts, and images
     export-reader.js: Active-page Interactive startup and session replay for cards, diagrams, charts, and linked views, isolated author pages, Reader capture with declarative steps, and shared navigation, history, reading controls, and tooltips
     export-dialog.js: Reader and Interactive mode selection, folder and page pickers, preview and consent for imports and author scripts, cancellation, download, and saved-data clearing
-    core.js: OffPrint namespace, shared reading-control and theme icons, self-contained focus-block, heading-jump, and disclosure-slide helpers also run by the export shell, module and shortcut registries, data-op-* and clipboard helpers, shared control hints in the tooltip card, data-op-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
+    core.js: OffPrint namespace, shared reading-control and theme icons, self-contained focus-block, heading-jump, and disclosure-slide helpers also run by the export shell, module and shortcut registries, data-op-* and clipboard helpers, shared control hints in the tooltip card, data-op-max-width limits, the shared sequence registry, controller, events, group binding, and step pill, reveal-step followers, heading slugs, glossary term keys, tag shapes and the tag class registry, manifest normalization including the glossary page entry
     roles.js: Manifest role colours as CSS variables, role tips, and data-op-legend rendering with tooltips
     nav.js: Sidebar tree and h1 outlines, subsection progress rail, resizing, heading and prev/next links, and a subscribable drawer
     theme.js: Light and dark theme state, saved preferences, and mountable toggles
@@ -89,10 +90,11 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .op-note footnotes shown as margin sidenotes when there is room, else as hover notes
     search.js: Search palette over the current page and a script-global site index, plus the index extractor (sections, inline tips, and glossary-term uses), ranking, and indexed page list
-    chart.js: SVG line, scatter, pie, and vertical or horizontal grouped, stacked, and percent bar charts with default-on keyed tweens and scroll entrances, add-on chart type, scale, and legend registration, named data mappings, declarative parameter bindings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
+    chart.js: SVG line, scatter, pie, and vertical or horizontal grouped, stacked, and percent bar charts with default-on keyed tweens and scroll entrances, add-on chart type, scale, legend, and overlay layer registration with data-to-pixel geometry and mark bounds, named data mappings, declarative parameter bindings, supplied intervals, keyed selection, shared x-position groups, interactive ranges, and table views
     chart-intervals.js: Ranked dot and lollipop plots with supplied intervals and dodged series in either orientation
     chart-histogram.js: Raw and pre-binned distributions with live binning, continuous log axes, and overlaid or stacked bars
     chart-heatmap.js: Matrix or record heatmaps with sequential, diverging, and log colour scales, a brushable value-range scale, and marching-squares contours with a show/hide legend chip
+    chart-annotations.js: Note, range, and marker annotations anchored to values, categories, or keyed points on any chart, with automatic label placement, off-range legend notes, table and description entries, and reveal steps
     chart-playback.js: Guided playback for individual numeric line charts and x-position groups, plus opt-in keyed-state checkpoints for non-line charts, with the shared timed sequence controls, authored checkpoint notes, and linked selection
     results.js: Source-mapped or authored tables with supplied intervals, sorting, heatmaps, thresholds, column filters, saved state, and opt-in keyed row animation
     matrix.js: Named evaluation records pivoted into semantic tables with keyed axes, interchangeable measures, and static fallbacks

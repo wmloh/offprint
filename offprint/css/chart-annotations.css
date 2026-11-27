@@ -1,0 +1,80 @@
+/* Chart annotations: muted by default, or the accent of their colour or role. */
+.op-annotation {
+  --op-annotation: var(--op-text-muted);
+}
+
+.op-annotation:is([data-op-role], [data-op-color]) {
+  --op-annotation: var(--op-accent);
+}
+
+/* Ranges: a faint band behind a haloed label. */
+.op-annotation-band {
+  fill: var(--op-annotation);
+  fill-opacity: 0.1;
+  stroke: none;
+}
+
+/* Markers: a solid event line, lighter than the data. */
+.op-annotation-line {
+  stroke: var(--op-annotation);
+  stroke-width: 1.25;
+  stroke-opacity: 0.8;
+  shape-rendering: crispEdges;
+}
+
+.op-annotation-label {
+  fill: var(--op-annotation);
+  font-size: 11px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--op-bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* Notes: a dot on the anchor, a hairline leader, and a framed callout in the page colour. */
+.op-annotation-leader {
+  stroke: var(--op-annotation);
+  stroke-width: 1;
+}
+
+.op-annotation-anchor {
+  fill: var(--op-annotation);
+  stroke: var(--op-bg);
+  stroke-width: 1.5;
+}
+
+.op-annotation-box {
+  fill: var(--op-bg);
+  fill-opacity: 0.92;
+  stroke: var(--op-annotation);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+
+.op-annotation-text {
+  fill: var(--op-text);
+  font-size: 11px;
+}
+
+/* Legend note for annotations that cannot be drawn, and the dotted key beside it. */
+.op-chart-annotation-note {
+  color: var(--op-text-faint);
+}
+
+.op-chart-key.is-annotation {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--op-text-faint);
+  border-radius: 2px;
+}
+
+.op-chart-annotations-table {
+  margin-block-start: 0.75rem;
+}
+
+.op-chart-annotations-table caption {
+  text-align: start;
+  font-weight: 600;
+  padding-block-end: 0.25rem;
+}

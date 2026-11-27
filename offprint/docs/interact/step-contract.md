@@ -8,6 +8,12 @@ Worked-example steppers, figure steps, guided chart playback, SVG animations, st
 - Enable `selection` and set `data-op-selection-group` on each host. Use matching keys. A mounted sequence follows the group's initial key if it has that key. Matching changes jump to a step. Clear and unmatched keys leave the local step in place. `data-op-selection-mode="both|publish|follow"` controls direction. `data-op-selection-seed` offers the initial key at startup if the sequence starts on a keyed step.
 - The generated step pill keeps focus at boundaries. Timed sequences also offer Play/Pause. Native choices in figure steps or scenarios can select a step directly.
 
+## Reveal steps
+
+- Any host can follow a sequence: `data-op-reveal-sequence="<id>"` names the element the sequence is mounted on (the ID `OffPrint.sequence.get` accepts). Descendants with `data-op-reveal-step="<step key>"` show from that step on (cumulative) and fade without layout shift (`.op-reveal-pending`: opacity 0, hidden, no pointer input). Between steps (chart playback between checkpoints) the last reached step holds; before the first, keyed items wait. Unknown step keys warn once and show. A sequence still missing after startup warns once and shows everything.
+- Plain HTML hosts mount automatically after startup. [Chart annotations](../data/chart-annotations.md) use `revealStep` on each annotation. Pipelines keep their own `data-op-reveal-step` on blocks.
+- Reader export steps followers with captured figure steps or animations; other followers get their own step controls. Internal helper: `OffPrint._revealSteps.follow(host, onChange)` → `{shown(step), apply(scope?), items(), label(step)}`.
+
 ## JavaScript
 
 - `OffPrint.sequence.get(idOrElement)` returns the mounted controller or `null`. Read `key`, zero-based `index`, and the frozen ordered `keys` array.

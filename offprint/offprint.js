@@ -45,6 +45,8 @@
     'chart-intervals': { needs: ['chart'], css: ['chart-intervals'], script: 'chart-intervals', chartTypes: ['interval'] },
     'chart-histogram': { needs: ['chart'], css: ['chart-histogram'], script: 'chart-histogram', chartTypes: ['histogram'] },
     'chart-heatmap': { needs: ['chart'], css: ['chart-heatmap'], script: 'chart-heatmap', chartTypes: ['heatmap'] },
+    // Layer add-ons draw over every chart type from the spec field named after the layer.
+    'chart-annotations': { needs: ['chart'], css: ['chart-annotations'], script: 'chart-annotations', chartLayers: ['annotations'] },
     results: { needs: ['base', 'choices'], css: ['results'], script: 'results', api: '_results' },
     matrix: { needs: ['base', 'data', 'choices'], css: ['matrix'], script: 'matrix', api: '_matrix' },
     scenarios: { needs: ['chart'], css: ['scenarios'], script: 'scenarios' },
@@ -406,7 +408,7 @@
     if (item.script) {
       var script = new URL('js/' + item.script + '.js', library).href;
       var loaded = await load(script, false);
-      var present = item.chartTypes ? !!OP.chart && OP.chart.addons().indexOf(id) >= 0 :
+      var present = item.chartTypes || item.chartLayers ? !!OP.chart && OP.chart.addons().indexOf(id) >= 0 :
         item.api ? !!OP[item.api] : boot.registered(item.module || item.script);
       if (!loaded || !present) {
         assetFailure(id, script);
@@ -546,6 +548,9 @@
     after: function (name, fn) { after.push({ name: name, fn: fn }); },
     chartFeature: function (type) {
       return Object.keys(catalog).find(function (id) { return (catalog[id].chartTypes || []).indexOf(type) >= 0; }) || null;
+    },
+    chartLayerFeature: function (name) {
+      return Object.keys(catalog).find(function (id) { return (catalog[id].chartLayers || []).indexOf(name) >= 0; }) || null;
     },
     load: function (url) {
       return replaying ? exportContext.loadAsset('search', url) : load(url, false);

@@ -1,11 +1,18 @@
 # Chart add-on registration
 
-Enable `chart`. In an author setup callback, call `OffPrint.chart.addon(id, {types?, scales?, legends?})` before automatic chart enhancement. It returns `true` on success or `false` with a warning on rejection. Use distinct lowercase-hyphenated IDs and type names. After registration, use the type name as `data-op-chart` or as the spec’s `type`.
+Enable `chart`. In an author setup callback, call `OffPrint.chart.addon(id, {types?, scales?, legends?, layers?})` before automatic chart enhancement. It returns `true` on success or `false` with a warning on rejection. Use distinct lowercase-hyphenated IDs and type names. After registration, use the type name as `data-op-chart` or as the spec’s `type`.
 
 - `types[name]` sets `base` to `line`, `bar`, `scatter`, or `pie`. Optional `prepare(spec, kit)` transforms input before base normalization. `normalize(model, spec, kit, prepared)` returns the adapted model. Throw from either hook to report invalid input.
 - Inherit the base renderer or supply `draw(chart, width, kit)` returning `{frame, marks, spots, geom, layer?, overlay?, empty?}`. Bar types can use `categoryMarks(ctx, series, visibleIndex, group, model, kit)` and scatter types can use `continuousMarks(ctx, model, kit)` to share the base axes. Use `ctx.place` for point inspection and selection, and stable mark keys for motion.
 - Optional hooks cover readouts, tables, descriptions, keyboard input, coordinate mapping, and markup or record adapters. The hook `kit` supplies helpers including `svg`, `html`, `paint`, `markId`, `addMark`, `scale`, and tick formatting.
 - `scales[name](d0, d1, r0, r1)` returns a scale function with `invert`. Core scales are `linear`, `log`, and `time`. `legends[name](chart, legendEl, kit)` renders extra legend items when a type declares `legend: name`.
-- `OffPrint.chart.addons()` lists registered IDs. `OffPrint.chart.scale(name)` and `OffPrint.chart.legend(name)` look up registered functions or return `null`.
+- `OffPrint.chart.addons()` lists registered IDs and `OffPrint.chart.layers()` registered layer names. `OffPrint.chart.scale(name)` and `OffPrint.chart.legend(name)` look up registered functions or return `null`.
+
+## Layers
+
+- `layers[name]: {draw(chart, geom, kit, layer), normalize?(model, spec, kit), legend?(chart, legendEl, kit), describe?(model), table?(view, kit, chart)}` overlays every chart type except pie. Input is the spec field `name`, or host `data-op-<name>` JSON. A spec using a catalog layer whose feature is off warns once and draws without it.
+- `normalize` stores parsed input on the model and throws to fail validation. `draw` runs on each drawing after the marks and before the hover overlay; `layer.group` is its own `<g class="op-chart-layer" data-op-layer=name>` (removed when empty) and `layer.marks` the chart's mark map: add entries with `kit.addMark` for motion, with `obstacle: false` to stay out of `bounds()`. `legend` runs with the legend; `table` returns an element appended to the table view; `describe` returns a sentence for the plot description.
+- `geom` (every renderer; add-on `draw` returns supply `px`, optional `span`/`bounds`/`cell`): `left right top bottom`, `horizontal`, `px(axis, value)` = screen position of a data value along data axis `'x'` or `'y'` (category centre on categorical axes; `null` when not on the axis; continuous values may fall outside the plot), `span(axis, value)` = `[from, to]` of a category band or `null`, `bounds()` = `[{x, y, w, h}]` mark boxes (open paths as short pieces along each segment), heatmap `cell(row, col)` = `{x, y, width, height}`. Horizontal bars: data x runs down the screen.
+- Kit extras for layers: `markBounds(map)`, `wrapLabel(text, width, lines)`, `toTime`, `hint(el, text)` (shared tooltip panel). See [chart annotations](../../js/chart-annotations.js).
 
 Built-in implementations [interval plots](../../js/chart-intervals.js), [histograms](../../js/chart-histogram.js), and [heatmaps](../../js/chart-heatmap.js) show the renderer and adapter hooks.

@@ -145,4 +145,14 @@ docs/: Human-facing beginner OffPrint HTML site with a Start here orientation an
   assets/: Site manifest with page tree, docs colour roles, and glossary terms; repository-derived demo data and downloadable samples; offline data wrappers and search index
 scripts/: Node development tools for generating shipped assets
   build-export-library.js: Regenerates bundled export styles, fonts, and trusted scripts with Node, or verifies freshness with --check
-tests/: Built-in node:test checks of module logic
+tests/: Dependency-free Node unit and integration suites
+  core.test.js: Shared runtime helpers and controllers
+  charts/: Chart normalization, rendering, interaction, and add-ons
+  data/: Data parsing, views, uploads, and results
+  diagrams/: Diagram layout, rendering, and controls
+  export/: Standalone export packaging, Reader controls, and Interactive replay
+  integration/: Offline startup and behavior shared by multiple modules
+  interaction/: Animation, choices, parameters, linked controls, and zoom
+  reading/: Navigation, reading controls, references, search, and tooltips
+  support/: Shared DOM doubles and classic-script loaders
+  tools/: Asset builder and refresh CLI checks

@@ -8,10 +8,20 @@
   <script src="../../assets/site.js" data-op-site></script>
   <script type="application/json" data-op-page>
     {
-      "features": {"chart": true, "chart-intervals": true, "chart-histogram": true, "chart-annotations": true, "stepper": true, "results": true, "data": true, "parameters": true, "selection": true},
+      "features": {"chart": true, "chart-intervals": true, "chart-histogram": true, "chart-annotations": true, "chart-combo": true, "stepper": true, "results": true, "data": true, "parameters": true, "selection": true},
       "parameterScopes": {
         "reading-times": {
           "bins": {"type": "range", "min": 2, "max": 12, "step": 1, "default": 4}
+        },
+        "combo-layout": {
+          "layout": {
+            "type": "select",
+            "choices": [
+              {"value": "stacked", "label": "Stacked"},
+              {"value": "none", "label": "Side by side"}
+            ],
+            "default": "stacked"
+          }
         },
         "bar-layout": {
           "direction": {
@@ -457,6 +467,52 @@
     <p>Step through the list to reveal each annotation. Then drag across hours 1 to 5 to narrow the chart: annotations outside the range disappear, and the legend says how many are hidden. Choose Table to see every annotation listed under the values.</p>
 
     <p>Annotations stay in place when the chart changes size, follow its data when it updates, and work on every chart type with axes, including bars, interval plots, histograms, and heatmaps. A long note is shortened on the chart, and the full text appears when you point at it. Any step sequence can reveal annotations, such as a worked example, figure steps, or a guided playback tour. In an exported Reader copy, they come with their own step buttons.</p>
+
+    <h2 id="combo-charts">Combine bars and a line, with a second axis</h2>
+    <p>A <span data-op-term="combo chart">combo chart</span> draws some series as bars and others as a line over the same categories or dates. When the line measures something different, such as a rate next to a count, it can read on a second axis at the right. That axis is off unless a series asks for it, both axes start at zero, and each axis takes the colour of its series. If the two axes share a unit, or one has none, OffPrint warns the author: a second axis then invites the reader to compare heights that mean different things.</p>
+    <div class="op-params" data-op-parameter-scope="combo-layout">
+      <fieldset data-op-choice="layout">
+        <legend>Bars</legend>
+        <label><input type="radio" name="combo-layout" value="stacked" checked> Stacked</label>
+        <label><input type="radio" name="combo-layout" value="none"> Side by side</label>
+      </fieldset>
+    </div>
+    <figure>
+      <div data-op-chart="combo" data-op-scope="combo-layout" data-op-chart-bind='{"stack": "layout"}' data-op-toggles>
+        <script type="application/json">
+          {
+            "x": "Month",
+            "y": {"label": "Builds", "unit": " builds"},
+            "y2": {"label": "Pass rate", "unit": "%", "digits": 1},
+            "stack": "stacked",
+            "series": [
+              {"key": "passed", "name": "Passed", "color": "green", "data": [["Jan", 42], ["Feb", 48], ["Mar", 51], ["Apr", 39], ["May", 57], ["Jun", 63]]},
+              {"key": "failed", "name": "Failed", "color": "red", "data": [["Jan", 8], ["Feb", 7], ["Mar", 9], ["Apr", 15], ["May", 6], ["Jun", 4]]},
+              {"key": "rate", "name": "Pass rate", "mark": "line", "axis": "y2", "data": [["Jan", 84.0], ["Feb", 87.3], ["Mar", 85.0], {"x": "Apr", "y": 72.2, "key": "dip"}, ["May", 90.5], ["Jun", 94.0]]}
+            ],
+            "annotations": [
+              {"key": "dip", "point": "dip", "text": "Flaky network tests"}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Month</th><th scope="col">Passed</th><th scope="col">Failed</th><th scope="col">Pass rate (%)</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Jan</th><td>42</td><td>8</td><td>84.0</td></tr>
+            <tr><th scope="row">Feb</th><td>48</td><td>7</td><td>87.3</td></tr>
+            <tr><th scope="row">Mar</th><td>51</td><td>9</td><td>85.0</td></tr>
+            <tr><th scope="row">Apr</th><td>39</td><td>15</td><td>72.2</td></tr>
+            <tr><th scope="row">May</th><td>57</td><td>6</td><td>90.5</td></tr>
+            <tr><th scope="row">Jun</th><td>63</td><td>4</td><td>94.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative monthly builds, split into passed and failed, with the pass rate as a line on the right axis.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Point at April to read every series, each with the side of its axis. Choose <strong>Side by side</strong> to see the bars move apart, then hide <strong>Failed</strong> in the legend. Choose Table to see which axis each column reads on.</p>
+    <p>Use a second axis only for a different kind of measure. Two measures in the same unit belong on one axis, where their heights can be compared directly. On a date axis, a combo chart can also be narrowed by dragging across it, like a line chart.</p>
 
     <h2 id="shared-position">Share a position between charts</h2>
     <p>Charts with a common linear horizontal scale can share an inspection cursor while keeping their own vertical scales and visible ranges. Try the two charts in <a href="playback.html#shared-position">Guided chart playback</a>.</p>

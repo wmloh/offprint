@@ -779,8 +779,8 @@
   // Chart add-on features call OffPrint.chart.addon(id, parts) as their script loads. parts.types maps new type names
   // to definitions drawn on a core base type; parts.scales and parts.legends add named scale factories and legend
   // renderers that any chart type can look up. Nothing is registered unless every part is valid.
-  var HOOKS = ['prepare', 'normalize', 'extent', 'draw', 'categoryMarks', 'continuousMarks', 'pick', 'readout', 'table', 'describe',
-    'keys', 'coords', 'mapFields', 'mapRecords', 'fromTable'];
+  var HOOKS = ['prepare', 'normalize', 'extent', 'draw', 'categoryMarks', 'continuousMarks', 'secondAxis', 'pick', 'readout', 'table',
+    'describe', 'keys', 'coords', 'mapFields', 'mapRecords', 'fromTable'];
   // Layers draw over the marks of every chart type: layers[name] = { draw(chart, geom, kit, layer), normalize?(model,
   // spec, kit), legend?(chart, legendEl, kit), describe?(model), table?(view, kit, chart) }, where the spec field named
   // after the layer holds its input and layer = { group, marks } gives the layer's SVG group and the chart's mark map.
@@ -1852,6 +1852,33 @@
     if (chart.active >= 0) show(chart, Math.min(chart.active, chart.spots.length - 1), null);
   }
 
+  // Tick labels of one value axis, tinted like a series when the axis belongs to it.
+  function axisGroup(frame, name, tint) {
+    var g = svg('g', { class: 'op-chart-axis ' + name + (tint ? ' is-tinted' : '') }, frame);
+    if (tint) paint(g, tint);
+    return g;
+  }
+
+  // Widens one of two linear tick ranges that both include zero so that zero sits at the same height on both axes.
+  // The shared zero level is the higher of the two, unless that leaves one axis with no room on one side.
+  function alignZero(a, b, count) {
+    var level = function (info) { return info.max > info.min ? -info.min / (info.max - info.min) : 0; };
+    if (!(a.min <= 0 && a.max >= 0 && b.min <= 0 && b.max >= 0)) return [a, b];
+    var fa = level(a);
+    var fb = level(b);
+    if (Math.abs(fa - fb) < 1e-9) return [a, b];
+    var f = Math.max(fa, fb);
+    if (f >= 1) f = Math.min(fa, fb);
+    if (f <= 0 || f >= 1) f = 0.5;
+    var widen = function (info, at) {
+      if (Math.abs(at - f) < 1e-9) return info;
+      var min = at < f ? -f * info.max / (1 - f) : info.min;
+      var max = at > f ? -info.min * (1 - f) / f : info.max;
+      return ticks(min, max, count, true, true);
+    };
+    return [widen(a, fa), widen(b, fb)];
+  }
+
   function barThickness(band, count, gap, stacked) {
     var m = Math.max(1, count);
     return Math.max(2, Math.min(stacked ? 36 : 24, (band * 0.72 - gap * (m - 1)) / m));
@@ -2062,16 +2089,29 @@
     var yLo = fit.yLo;
     var yHi = fit.yHi;
 
-    var top = 10 + (model.y.label ? 20 : 0);
+    // An add-on's second value axis: { lo, hi, axis, tintY?, tintY2? } on the right, its zero level with the left one.
+    var second = continuousMarks && def.secondAxis ? def.secondAxis(model, chart.model, kit) : null;
+    var top = 10 + (model.y.label || second && second.axis.label ? 20 : 0);
     var markerSpace = model.markedCategories ? 13 : 0;
     var xLabel = xTitle(model);
     var bottom = 26 + markerSpace + (xLabel ? 20 : 0);
     var yLog = model.y.log;
-    var yInfo = (yLog ? logTicks : ticks)(yLo, yHi, Math.max(2, Math.round((height - top - bottom) / 48)),
-      model.y.min !== null, model.y.max !== null);
+    var yCount = Math.max(2, Math.round((height - top - bottom) / 48));
+    var yInfo = (yLog ? logTicks : ticks)(yLo, yHi, yCount, model.y.min !== null, model.y.max !== null);
+    var y2Info = null;
+    if (second) {
+      y2Info = ticks(second.lo, second.hi, yCount, second.axis.min !== null, second.axis.max !== null);
+      if (!yLog) {
+        var aligned = alignZero(yInfo, y2Info, yCount);
+        yInfo = aligned[0];
+        y2Info = aligned[1];
+      }
+    }
     var yFmt = yLog ? logTickFormat() : percentTicks(model, tickFormat(yInfo));
     var left = 12 + CHAR * Math.max.apply(null, yInfo.ticks.map(function (v) { return yFmt(v).length; }).concat([1]));
     var y = (yLog ? log : linear)(yInfo.min, yInfo.max, height - bottom, top);
+    var y2Fmt = y2Info ? tickFormat(y2Info) : null;
+    var y2 = y2Info ? linear(y2Info.min, y2Info.max, height - bottom, top) : null;
 
     // End labels name up to four line series when their ends sit at least 14px apart.
     var ends = [];
@@ -2085,6 +2125,9 @@
       if (clash) ends = [];
     }
     var right = 14 + (ends.length ? 10 + 6.5 * Math.max.apply(null, ends.map(function (e) { return e.s.name.length; })) : 0);
+    if (y2Info) {
+      right = Math.max(right, 12 + CHAR * Math.max.apply(null, y2Info.ticks.map(function (v) { return y2Fmt(v).length; }).concat([1])));
+    }
     var plotW = Math.max(40, width - left - right);
 
     var xAt;
@@ -2138,13 +2181,25 @@
     }
 
     var grid = svg('g', { class: 'op-chart-grid' }, frame);
+    var axisY = second ? axisGroup(frame, 'is-y', second.tintY) : frame;
     yInfo.ticks.forEach(function (v) {
       var py = Math.round(y(v)) + 0.5;
       svg('line', { x1: left, x2: left + plotW, y1: py, y2: py, class: v === 0 && yInfo.min < 0 ? 'is-zero' : '' }, grid);
-      svg('text', { x: left - 8, y: py, 'text-anchor': 'end', 'dominant-baseline': 'middle', class: 'op-chart-tick' }, frame)
+      svg('text', { x: left - 8, y: py, 'text-anchor': 'end', 'dominant-baseline': 'middle', class: 'op-chart-tick' }, axisY)
         .textContent = yFmt(v);
     });
-    var baseY = Math.round(type === 'bar' && model.zeroBaseline !== false ?
+    if (second) {
+      // The right axis labels its own ticks; the grid lines follow the left axis only.
+      var axisY2 = axisGroup(frame, 'is-y2', second.tintY2);
+      y2Info.ticks.forEach(function (v) {
+        svg('text', { x: left + plotW + 8, y: Math.round(y2(v)) + 0.5, 'dominant-baseline': 'middle', class: 'op-chart-tick' }, axisY2)
+          .textContent = y2Fmt(v);
+      });
+      if (second.axis.label) {
+        svg('text', { x: width, y: 12, 'text-anchor': 'end', class: 'op-chart-label' }, axisY2).textContent = second.axis.label;
+      }
+    }
+    var baseY = Math.round((type === 'bar' ? model.zeroBaseline !== false : model.zeroBaseline === true) ?
       y(Math.max(yInfo.min, Math.min(0, yInfo.max))) : height - bottom) + 0.5;
     svg('line', { x1: left, x2: left + plotW, y1: baseY, y2: baseY, class: 'op-chart-base' }, frame);
 
@@ -2171,7 +2226,7 @@
         .textContent = xLabel;
     }
     if (model.y.label) {
-      svg('text', { x: 0, y: 12, class: 'op-chart-label' }, frame).textContent = model.y.label;
+      svg('text', { x: 0, y: 12, class: 'op-chart-label' }, axisY).textContent = model.y.label;
     }
 
     var refLines = svg('g', { class: 'op-chart-refs' }, frame);
@@ -2197,6 +2252,8 @@
     };
     if (continuousMarks) continuousMarks({
       pos: xAt, val: y, base: Math.max(yInfo.min, Math.min(0, yInfo.max)), left: left, right: left + plotW,
+      top: top, bottom: height - bottom, band: band, val2: y2,
+      base2: y2Info ? Math.max(y2Info.min, Math.min(0, y2Info.max)) : null,
       place: place, markMap: markMap, orderAt: orderAt,
       group: function (s) {
         var g = svg('g', { class: 'op-chart-series', 'clip-path': 'url(#' + chart.clip + '-plot)' }, marks);
@@ -2319,9 +2376,10 @@
       spots = spots.filter(function (spot) { return spot.px >= left && spot.px <= plotR; });
     }
     chart.spots = playback ? [] : spots;
-    chart.geom = layerGeom({ left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0 },
+    chart.geom = layerGeom({ left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0, y2: y2 },
       function (axis, v) {
         if (axis === 'y') return isNum(v) && (!yLog || v > 0) ? y(v) : null;
+        if (axis === 'y2') return y2 && isNum(v) ? y2(v) : null;
         if (cats) return cats.indexOf(String(v)) < 0 ? null : xAt(v);
         return isNum(v) && (!model.x.log || v > 0) ? xs0(v) : null;
       }, function (axis, v) {
@@ -3519,6 +3577,11 @@
         if (!s) return;
         s.role = OffPrint._data(cell, 'role', null);
         s.color = OffPrint._data(cell, 'color', null);
+        // Add-on types such as combo read a mark and value axis per series column.
+        ['mark', 'axis'].forEach(function (name) {
+          var value = OffPrint._data(cell, name, '').trim();
+          if (value) s[name] = value;
+        });
       });
     } else if (!options) return null;
     spec = overrides(host, configuredSpec(host, spec, options));
@@ -3698,7 +3761,7 @@
       }
       ids.add(id);
       var interval = readInterval(s.interval, keys[i + 1], 'Chart series ' + JSON.stringify(id));
-      return { key: id, name: s.label ?? keys[i + 1], role: s.role, color: s.color,
+      return { key: id, name: s.label ?? keys[i + 1], role: s.role, color: s.color, mark: s.mark, axis: s.axis,
         data: rows.map(function (record) {
           var pointKey = mapping.pointKey === undefined ? null : data.key(record[keys[keys.length - 1]]);
           if (mapping.pointKey !== undefined && !pointKey) throw new Error('Each mapped point needs a nonempty string key.');

@@ -1,0 +1,21 @@
+/* Combo charts: a value axis that belongs to one series takes its colour; axis tags name each series' side. */
+.op-chart-axis.is-tinted :is(.op-chart-tick, .op-chart-label) {
+  fill: color-mix(in srgb, var(--op-series) 80%, var(--op-text));
+}
+
+.op-chart-axis-tag {
+  margin-left: 4px;
+  color: var(--op-text-faint);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.op-chart-combo-table th > .op-chart-axis-tag {
+  display: block;
+  margin-left: 0;
+}
+
+.op-chart-legend-item > .op-chart-axis-tag {
+  margin-left: 0;
+}

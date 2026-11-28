@@ -207,6 +207,14 @@ window.OffPrintSearch = {
             "data and charts"
           ]
         },
+        "combo chart": {
+          "title": "combo chart",
+          "text": "A chart that draws some series as bars and others as a line over the same categories or dates, optionally with a second value axis at the right for a different measure.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
         "combobox": {
           "title": "combobox",
           "text": "A text field with a list of choices below it. Typing narrows the list, which helps when there are many options.",
@@ -1744,7 +1752,7 @@ window.OffPrintSearch = {
         "file": "pages/data/charts.html",
         "path": "../pages/data/charts.html",
         "title": "SVG charts",
-        "sha256": "bd5368b5e38e7b219bd15f8e7eab5b4a1215f9304a65f925a6be65cd66bee6fe"
+        "sha256": "24cdccbdc36a2a18c38f4532798f1d8943c2bf769edef9d2596f5b876b803b42"
       },
       {
         "file": "pages/data/heatmaps.html",
@@ -1810,7 +1818,7 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "095ec1d19cd0a0324daeafbbd2fe857acbcb1506f5a4eb90b321b4cbec943c4d"
+        "sha256": "16846dd8423d7433d273e3af5c51226e1638d457516416a2ca19db3aa3de5bf4"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -8105,6 +8113,12 @@ window.OffPrintSearch = {
           "text": "Chart annotations add a note to the chart itself, so the reader sees what happened where it happened. A note points at a value with a short line, a range shades a stretch of the chart, and a marker draws a labelled line at one moment. Notes find a free spot on their own, away from the data and from each other. Before the release Requests run steadily, apart from a planned maintenance window. The spike The new release ships and waiting time climbs. Recovery Clearing the cache brings waiting time back down. Hour Waiting time (ms) 1 120 2 118 3 125 4 122 5 130 6 210 7 340 8 290 9 180 10 135 11 128 12 124 Illustrative waiting times over twelve hours. The step buttons above add the release and recovery annotations one step at a time. Try it Step through the list to reveal each annotation. Then drag across hours 1 to 5 to narrow the chart: annotations outside the range disappear, and the legend says how many are hidden. Choose Table to see every annotation listed under the values. Annotations stay in place when the chart changes size, follow its data when it updates, and work on every chart type with axes, including bars, interval plots, histograms, and heatmaps. A long note is shortened on the chart, and the full text appears when you point at it. Any step sequence can reveal annotations, such as a worked example, figure steps, or a guided playback tour. In an exported Reader copy, they come with their own step buttons."
         },
         {
+          "id": "combo-charts",
+          "title": "Combine bars and a line, with a second axis",
+          "level": 2,
+          "text": "A combo chart draws some series as bars and others as a line over the same categories or dates. When the line measures something different, such as a rate next to a count, it can read on a second axis at the right. That axis is off unless a series asks for it, both axes start at zero, and each axis takes the colour of its series. If the two axes share a unit, or one has none, OffPrint warns the author: a second axis then invites the reader to compare heights that mean different things. Bars Stacked Side by side Month Passed Failed Pass rate (%) Jan 42 8 84.0 Feb 48 7 87.3 Mar 51 9 85.0 Apr 39 15 72.2 May 57 6 90.5 Jun 63 4 94.0 Illustrative monthly builds, split into passed and failed, with the pass rate as a line on the right axis. Try it Point at April to read every series, each with the side of its axis. Choose Side by side to see the bars move apart, then hide Failed in the legend. Choose Table to see which axis each column reads on. Use a second axis only for a different kind of measure. Two measures in the same unit belong on one axis, where their heights can be compared directly. On a date axis, a combo chart can also be narrowed by dragging across it, like a line chart."
+        },
+        {
           "id": "shared-position",
           "title": "Share a position between charts",
           "level": 2,
@@ -8432,6 +8446,31 @@ window.OffPrintSearch = {
           "section": "annotations"
         },
         {
+          "text": "combo chart",
+          "term": "combo chart",
+          "section": "combo-charts"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "combo-charts"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "combo-charts"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "combo-charts"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "combo-charts"
+        },
+        {
           "text": "chart",
           "term": "chart",
           "section": "when-to-use"
@@ -8516,6 +8555,11 @@ window.OffPrintSearch = {
         {
           "id": "annotations",
           "title": "Point things out with chart annotations",
+          "level": 2
+        },
+        {
+          "id": "combo-charts",
+          "title": "Combine bars and a line, with a second axis",
           "level": 2
         },
         {
@@ -10630,7 +10674,7 @@ window.OffPrintSearch = {
           "id": "show-data",
           "title": "Show data",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
         },
         {
           "id": "reference",

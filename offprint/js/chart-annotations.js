@@ -36,7 +36,13 @@
   function axisKind(model, axis) {
     if (model.heatmap) return 'category';
     if (axis === 'x') return model.categories ? 'category' : model.x.time ? 'time' : model.x.log ? 'log' : 'number';
-    return model.y.log ? 'log' : 'number';
+    return axis === 'y' && model.y.log ? 'log' : 'number';
+  }
+
+  // The value axis a note's y reads on: its series' axis, else the annotation's own axis (y2 on combo charts).
+  function valueAxis(model, a, seriesKey) {
+    var s = seriesKey && model.series.find(function (item) { return item.key === seriesKey; });
+    return s && s.axis === 'y2' ? 'y2' : s ? 'y' : a.axis;
   }
 
   function readValue(kind, value, kit) {
@@ -74,8 +80,13 @@
       if (!key || keys.has(key)) throw new Error(at + ' needs a unique nonempty string key.');
       keys.add(key);
       var out = { key: key, type: type, text: text, index: i, series: null, point: null, side: null, dx: null, dy: null,
-        color: null, role: null, revealStep: null };
-      [['x', 'x'], ['x2', 'x'], ['y', 'y'], ['y2', 'y']].forEach(function (field) {
+        color: null, role: null, revealStep: null, axis: 'y' };
+      if (a.axis !== undefined && a.axis !== null) {
+        if (a.axis !== 'y' && a.axis !== 'y2') throw new Error(at + ' needs an axis of "y" or "y2".');
+        if (a.axis === 'y2' && !model.y2) throw new Error(at + ' reads on axis y2, but the chart has no second y axis.');
+        out.axis = a.axis;
+      }
+      [['x', 'x'], ['x2', 'x'], ['y', out.axis], ['y2', out.axis]].forEach(function (field) {
         var value = readValue(axisKind(model, field[1]), a[field[0]], kit);
         if (value === undefined) throw new Error(at + ' has a ' + field[0] + ' that is not a value on the ' + field[1] + ' axis.');
         out[field[0]] = value;
@@ -294,7 +305,7 @@
       var ok = true;
       [['x', 'x2'], ['y', 'y2']].forEach(function (pair) {
         if (a[pair[0]] === null || a[pair[1]] === null) return;
-        var axis = pair[0];
+        var axis = pair[0] === 'y' ? a.axis : 'x';
         var h = screenAxis(geom, axis) === 'h';
         var span = clip(spanOf(geom, axis, a[pair[0]], a[pair[1]]), h ? plot.left : plot.top, h ? plot.right : plot.bottom);
         if (!span) { ok = false; return; }
@@ -315,8 +326,8 @@
     }
 
     function marker(a) {
-      var axis = a.x !== null ? 'x' : 'y';
-      var at = geom.px(axis, a[axis]);
+      var axis = a.x !== null ? 'x' : a.axis;
+      var at = geom.px(axis, a.x !== null ? a.x : a.y);
       var h = screenAxis(geom, axis) === 'h';
       if (at === null || at === undefined || !isFinite(at) ||
           (h ? at < plot.left - 0.5 || at > plot.right + 0.5 : at < plot.top - 0.5 || at > plot.bottom + 0.5)) {
@@ -351,8 +362,9 @@
       }
       if (at.series && !shownSeries.has(at.series)) return drop(a, 'series');
       var horizontal = geom.horizontal;
+      var yAxis = valueAxis(model, a, at.series);
       var sx = horizontal ? (at.y === null ? plot.right : geom.px('y', at.y)) : geom.px('x', at.x);
-      var sy = horizontal ? geom.px('x', at.x) : (at.y === null ? plot.top : geom.px('y', at.y));
+      var sy = horizontal ? geom.px('x', at.x) : (at.y === null ? plot.top : geom.px(yAxis, at.y));
       if (!isFinite(sx) || !isFinite(sy) || sx === null || sy === null ||
           sx < plot.left - 0.5 || sx > plot.right + 0.5 || sy < plot.top - 0.5 || sy > plot.bottom + 0.5) {
         return drop(a, 'outside');
@@ -418,10 +430,11 @@
   }
 
   function position(model, a, kit) {
+    var yAxis = a.axis === 'y2' && model.y2 ? 'y2' : 'y';
     var x = function (v) { return valueText(model, 'x', v, kit); };
-    var y = function (v) { return valueText(model, 'y', v, kit); };
+    var y = function (v) { return valueText(model, yAxis, v, kit); };
     var xName = model.heatmap ? 'column' : model.x.label || 'x';
-    var yName = model.heatmap ? 'row' : model.y.label || 'y';
+    var yName = model.heatmap ? 'row' : model[yAxis].label || (yAxis === 'y2' ? 'right axis' : 'y');
     if (a.type === 'range') {
       return [a.x !== null ? xName + ' ' + x(a.x) + ' to ' + x(a.x2) : '', a.y !== null ? yName + ' ' + y(a.y) + ' to ' + y(a.y2) : '']
         .filter(Boolean).join(', ');

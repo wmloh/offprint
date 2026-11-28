@@ -546,6 +546,7 @@ window.OffPrintSite = {
           "text": "A line that joins places with the same value, like the height lines on a hiking map.",
           "more": "<p>Rings of contour lines mark a peak or a dip. Lines packed close together mark a steep change; lines far apart mark a gentle one.</p>"
         },
+        "combo chart": { "tags": ["Data and charts"], "text": "A chart that draws some series as bars and others as a line over the same categories or dates, optionally with a second value axis at the right for a different measure." },
         "stacked bar": { "tags": ["Data and charts"], "text": "A bar built from several coloured segments, one per series, so its length shows their total. A percent bar stretches every total to 100% to compare shares." },
         "state checkpoint": { "tags": ["Data and charts"], "text": "A playback stop that sets what a chart shows, such as its visible series, highlighted item, or a linked choice, instead of growing a line." },
         "choice chip": { "tags": ["Interaction"], "text": "A small rounded button for one option in a short list. The chosen chips are filled in." },

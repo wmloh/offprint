@@ -1920,7 +1920,7 @@ window.OffPrintSearch = {
         "file": "pages/data/playback.html",
         "path": "../pages/data/playback.html",
         "title": "Guided chart playback",
-        "sha256": "8bcca4ce30964d210572bfae9b79531d42b96d9833dbe2a5ad1ef68e920cdc23"
+        "sha256": "1611e98e5a90f9a9533891c1ae7a3e17c8956fbdb2d155b680d48ec8c9a11868"
       },
       {
         "file": "pages/data/tables.html",
@@ -9986,7 +9986,7 @@ window.OffPrintSearch = {
           "id": "",
           "title": "Guided chart playback",
           "level": 1,
-          "text": "Show data Playback reveals a line chart in stages, or steps any other chart through a series of prepared views. A short note at each stop explains what changed. Official name Guided chart playback Turned on On request Signal strength Strong Works with SVG charts, linked selection, and parameters Good for Narrating how a result unfolded"
+          "text": "Show data Playback reveals a line chart in stages, or steps any other chart through a series of prepared views. A short note at each stop explains what changed. Official name Guided chart playback Turned on On request Signal strength Strong Works with SVG charts, chart annotations, Gantt charts, linked selection, and parameters Good for Narrating how a result unfolded: training runs, experiments, projects, and before-and-after comparisons"
         },
         {
           "id": "see-it",
@@ -10007,10 +10007,40 @@ window.OffPrintSearch = {
           "text": "Bar, pie, scatter, histogram, heatmap, and dot charts have no line to grow. Instead, each state checkpoint sets what the chart shows: which series are visible, which item is highlighted, the visible range, or the value of a linked control. The marks glide from one state to the next. Scripts only Hiding the stylesheets shows that scripts make up most of each feature’s size. Shares instead of sizes Stretching every bar to 100% shows the stylesheet share. Linked selection has the largest share. The largest feature SVG charts is highlighted. In sizes, it is more than twice as large as any other feature here. Show Sizes Shares Feature Script (kB) Stylesheet (kB) SVG charts 109.2 7.4 Results tables 44.9 6.8 Parameters 34.1 3.3 Linked selection 9.4 2.0 Download size of four features in an earlier library snapshot. Each checkpoint changes the visible series, the Show choice, or the highlighted bar. Try it Press Play and follow the three stops. Watch the Show choice switch to Shares at the second stop. Press Reset to return the chart to its starting view. Each checkpoint changes only what it names, and later stops keep earlier changes. Previous and Reset restore earlier views exactly, so readers can step back without losing their place."
         },
         {
+          "id": "training-run",
+          "title": "Replay a training run",
+          "level": 2,
+          "text": "A model’s training log is a story told in order: the loss falls, the settings change on a schedule, and at some point the model starts to memorise rather than learn. Playback lets readers watch that happen instead of reading the finished curve backwards. Here one tour drives two charts that share the same epochs, and chart annotations appear on the loss chart as each stop is reached. Warm-up ends The learning rate climbs to its full value over three epochs, so early updates stay small while the model settles. The learning rate starts to fall Both losses are still dropping. From here the schedule eases the learning rate down towards zero. Best validation loss Validation loss bottoms out at 0.46 in epoch 22. This is the checkpoint worth keeping. Training keeps going Training loss keeps creeping down, but validation loss climbs back to 0.66: the model is fitting noise in the training data. Epoch Training loss Validation loss 0 2.26 2.33 5 1.11 1.30 10 0.64 0.85 15 0.41 0.59 20 0.32 0.53 22 0.30 0.46 25 0.28 0.51 30 0.26 0.66 Training and validation loss for an illustrative 30-epoch run. Annotations appear as the tour reaches each stop. The table without scripts lists every fifth epoch and the best one. Epochs Learning rate (× 0.001) 0–3 Rises from 0 to 1 3–15 Holds at 1 15–30 Eases from 1 back to 0 The learning-rate schedule for the same run, on the same epochs. It advances with the loss chart above. Try it Press Play and watch both charts grow together. Pause between stops and move over either chart: the readouts only show epochs the tour has reached."
+        },
+        {
+          "id": "estimate-settles",
+          "title": "Watch an estimate settle",
+          "level": 2,
+          "text": "An experiment that runs for weeks gives a different answer every day. Early on, the uncertainty is wide and the estimate jumps around; with more data the interval narrows. Playing the experiment back shows readers why the team waited, and the stops can sit at the looks that were planned in advance. First planned look, day 3 The new checkout page looks 0.4 points better, but the interval runs from −1.0 to +1.8. Too early to say anything. One week The interval is a third narrower, yet it still includes zero: no difference remains a fair reading. Two weeks The whole interval now sits above zero. It first cleared zero on day 10, between planned looks; stopping on the first good-looking day is how peeking misleads. The planned end, day 21 The final estimate is +0.8 points, with an interval from +0.3 to +1.3. Day Estimated difference (points) 95% interval 3 +0.4 −0.99 to +1.79 7 +0.6 −0.31 to +1.51 10 +0.9 +0.14 to +1.66 14 +0.78 +0.14 to +1.42 21 +0.82 +0.30 to +1.34 The running estimate from an illustrative three-week checkout experiment, with its 95% interval as a band. The dashed line marks no difference. Try it Press Next to jump from look to look and watch the band tighten. Choose Table at any stop to see the bounds for each day reached so far."
+        },
+        {
+          "id": "follow-along",
+          "title": "Let other figures follow along",
+          "level": 2,
+          "text": "Any figure that can reveal parts of itself step by step can follow a playback tour, not only charts. Here the tour plays a burn-up line of finished tasks, and the Gantt chart below it fills in with the tasks finished by each stop. At the last stop it also outlines the critical path, the chain that set the launch date. Design done The brief and the sketches are finished by day 5, right on plan. Build done The service is ready on day 10, but the screens take until day 12. Everything after them now waits on the screens. Tests pass Testing the service finishes on day 15, with two days to spare. Launch The last fixes land on day 17 and the project launches. The red outline traces the tasks that set that date. Day Tasks finished 2 1 5 2 10 3 12 4 15 5 17 6 Tasks finished so far in an illustrative 17-day project. Days 0–2 · Write the brief Days 2–5 · Sketch the screens Days 5–10 · Build the service Days 5–12 · Build the screens Days 10–15 · Test the service Days 12–17 · Fix screen issues Day 17 · Launch The same project as a Gantt chart. Each task appears once the tour reaches the stop where it was finished. Try it Play the tour and watch the plan fill in under the line. Press Previous to hide the latest tasks again. The same works for anything else that reveals step by step, such as chart annotations, Venn diagram regions, and risk matrix items. Exported Reader copies give each following figure its own step buttons."
+        },
+        {
+          "id": "distribution-tour",
+          "title": "Compare distributions before and after",
+          "level": 2,
+          "text": "A histogram tour works well for a before-and-after story. Each stop changes one thing: which group is shown, how many bins the readings are sorted into, or which part of the scale is in view. The slider is an ordinary parameter, so the tour moves it and the reader can take it over at any point. Before the release Every request finishes in 75 to 155 milliseconds. After the release The main peak barely moves, but a second group of slow requests appears on the right. Finer bins With 24 bins the slow requests form a separate bump, not a stretched tail. Something new happens to about one request in six. Zoom into the bump All eight slow requests take 370 to 420 milliseconds, the time a cache miss costs. That points at the cache, not the new code. Number of bins: 8 Response time Before release After release Under 100 ms 12 8 100–149 ms 34 31 150–349 ms 2 1 350 ms or more 0 8 Response times for 48 illustrative requests before and 48 after a release. Try it Play the tour and watch the slider move on its own at the third stop. Then drag the slider yourself, and press Reset to put the chart and the slider back where they started."
+        },
+        {
+          "id": "scatter-tour",
+          "title": "Tour a cloud of points",
+          "level": 2,
+          "text": "A scatter chart with many points can be hard to read cold. A tour can introduce one group at a time, point at the result that matters, and then zoom in on the part of the chart the conclusion rests on. Small models Seven runs of the small model answer in 16 to 20 milliseconds and score 71 to 74 percent. Add the medium models Medium runs take about twice as long and gain around six points of accuracy. Add the large models Large runs double the time again for a smaller gain of about five points. One run stands out This medium run scores 85.6 percent, better than every large run, at half their time. It was trained with help from a large model. The fast end Zoomed in on runs under 60 milliseconds, the standout sits well above the other medium runs. Model size Time per answer (ms) Accuracy (%) Small, 7 runs 16–20 70.8–73.7 Medium, 6 runs 35–47 77.8–79.8 Medium, standout run 47 85.6 Large, 7 runs 83–103 81.8–85.0 Accuracy against answer time for 21 illustrative model runs in three sizes. Try it Play to the fourth stop, then hide Large in the legend yourself. The tour only changes what each stop names, so your choice stays until a later stop sets the series again."
+        },
+        {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "Use playback when readers benefit from seeing a few events in order. Use state checkpoints to guide readers through a few views of one chart. Give each stop one short note and let the chart show the change."
+          "text": "Use playback when readers benefit from seeing a few events in order. Use state checkpoints to guide readers through a few views of one chart. Give each stop one short note and let the chart show the change. The story Kind of playback Example on this page Something grew or changed over time A growing line with stops Commits, training run An answer became more certain A growing line with an interval band Experiment estimate Several figures tell one story Charts sharing a horizontal scale, or figures that reveal with the stops Daily commits, project plan One chart, several angles State checkpoints Feature sizes, response times, model runs Keep a tour to about three to five stops. If readers need to explore freely rather than follow a story, a plain chart with a range brush or legend toggles serves them better."
         },
         {
           "id": "for-every-reader",
@@ -10022,7 +10052,7 @@ window.OffPrintSearch = {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "SVG charts Linked selection Report results, a recipe that uses it Feature directory"
+          "text": "SVG charts, including chart annotations and histograms Gantt charts Linked selection Report results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -10157,6 +10187,96 @@ window.OffPrintSearch = {
           "section": "state-checkpoints"
         },
         {
+          "text": "Playback",
+          "term": "playback",
+          "section": "training-run"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "training-run"
+        },
+        {
+          "text": "checkpoint",
+          "term": "checkpoint",
+          "section": "training-run"
+        },
+        {
+          "text": "uncertainty",
+          "term": "uncertainty",
+          "section": "estimate-settles"
+        },
+        {
+          "text": "interval",
+          "term": "interval",
+          "section": "estimate-settles"
+        },
+        {
+          "text": "playback",
+          "term": "playback",
+          "section": "follow-along"
+        },
+        {
+          "text": "critical path",
+          "term": "critical path",
+          "section": "follow-along"
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "follow-along"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "follow-along"
+        },
+        {
+          "text": "histogram",
+          "term": "histogram",
+          "section": "distribution-tour"
+        },
+        {
+          "text": "bins",
+          "term": "bin",
+          "section": "distribution-tour"
+        },
+        {
+          "text": "slider",
+          "term": "slider",
+          "section": "distribution-tour"
+        },
+        {
+          "text": "parameter",
+          "term": "parameter",
+          "section": "distribution-tour"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "distribution-tour"
+        },
+        {
+          "text": "scatter chart",
+          "term": "scatter chart",
+          "section": "scatter-tour"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "scatter-tour"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "scatter-tour"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "scatter-tour"
+        },
+        {
           "text": "playback",
           "term": "playback",
           "section": "when-to-use"
@@ -10164,6 +10284,16 @@ window.OffPrintSearch = {
         {
           "text": "chart",
           "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "range brush",
+          "term": "range brush",
+          "section": "when-to-use"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
           "section": "when-to-use"
         },
         {
@@ -10216,6 +10346,31 @@ window.OffPrintSearch = {
         {
           "id": "state-checkpoints",
           "title": "Step through chart states",
+          "level": 2
+        },
+        {
+          "id": "training-run",
+          "title": "Replay a training run",
+          "level": 2
+        },
+        {
+          "id": "estimate-settles",
+          "title": "Watch an estimate settle",
+          "level": 2
+        },
+        {
+          "id": "follow-along",
+          "title": "Let other figures follow along",
+          "level": 2
+        },
+        {
+          "id": "distribution-tour",
+          "title": "Compare distributions before and after",
+          "level": 2
+        },
+        {
+          "id": "scatter-tour",
+          "title": "Tour a cloud of points",
           "level": 2
         },
         {

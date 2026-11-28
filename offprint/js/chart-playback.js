@@ -349,11 +349,13 @@
     }
 
     // Applies the state of the position being reached once, as the leg starts, so the chart tweens during the leg.
+    // A played leg tweens the chart over the whole leg; jumps keep the chart's own short tween.
     function applyState(origin) {
       var position = leg ? leg.to : x;
       if (position === null || position === applied) return;
       applied = position;
       var target = resolved[position];
+      if (leg && state === 'playing') handle.tween(duration);
       component.transaction(function () {
         if (target.params && !setup.scope.update(target.params)) {
           issue(host, 'The parameter scope rejected the values for "' + labelAt(position) + '".',
@@ -371,17 +373,19 @@
       return !leg && stopAt(x) || null;
     }
 
+    // During a leg the note of the stop it left stays shown, so the notes never collapse and move the chart.
     function renderControls() {
       pill.update();
       var active = checkpoint();
+      var shown = active || (leg && stopAt(leg.from)) || null;
       stops.forEach(function (stop) {
         var current = stop === active;
         if (stop.item) {
-          stop.item.hidden = !!range && !current;
+          stop.item.hidden = !!range && stop !== shown;
           if (current) stop.item.setAttribute('aria-current', 'step');
           else stop.item.removeAttribute('aria-current');
         }
-        if (stop.detail) stop.detail.hidden = !!range && !current;
+        if (stop.detail) stop.detail.hidden = !!range && stop !== shown;
       });
     }
 
@@ -416,6 +420,7 @@
     }
 
     function jump(to, origin) {
+      if (handle) handle.settle();
       var notify = arrive(to, origin);
       var active = checkpoint();
       binding.publish(active ? active.key : null, origin, notify);
@@ -500,6 +505,7 @@
       var nextRange = instance.state ? stateRange(host, models[0], stops, true) : playableRange(host, models, stops, true);
       if ((instance.state || !referenceChanged) && Boolean(range) === Boolean(nextRange)) return current();
       cancel();
+      if (handle) handle.tween(null);
       model = models[0];
       range = nextRange;
       var reached = stops.find(function (stop) { return stop.key === lastReached; });
@@ -583,6 +589,8 @@
 
     host.before(pill.element);
     stops.forEach(function (stop) {
+      // Hidden notes skip the list counter, so each note keeps its own number.
+      if (stop.item && !stop.item.hasAttribute('value')) stop.item.setAttribute('value', String(stop.index + 1));
       if (stop.item) controlledNotes.add(stop.item);
       if (stop.detail) {
         controlledNotes.add(stop.detail);

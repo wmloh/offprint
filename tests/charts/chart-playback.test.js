@@ -631,6 +631,7 @@ test('state checkpoints carry series, selection, and parameters forward, tween o
   clock.advance(0);
   clock.advance(500);
   assert.equal(playback.snapshot().playing, true);
+  assert.equal(barCount(), 4, 'a played leg tweens over its whole duration');
   clock.advance(400);
   assert.equal(playback.snapshot().key, 'focus');
   assert.equal(playback.snapshot().playing, false);
@@ -714,7 +715,9 @@ test('state checkpoints validate against the chart and restore the last reached 
   assert.equal(hist.visible('n'), true, 'and the series the reached state shows');
   assert.equal(playback.snapshot().key, 'zoom');
 
+  assert.deepEqual([zoom, broken].map((li) => li.getAttribute('value')), ['1', '2'], 'notes keep their numbers');
   assert.equal(playback.play(), true);
+  assert.deepEqual([zoom.hidden, broken.hidden], [false, true], 'the departing note holds during the leg');
   assert.equal(hist.visible('n'), false);
   hist.visible('n', true);
   assert.equal(hist.update(spec([10])), true);
@@ -724,4 +727,5 @@ test('state checkpoints validate against the chart and restore the last reached 
   clock.advance(900);
   assert.equal(playback.snapshot().key, 'one');
   assert.equal(playback.snapshot().canNext, false);
+  assert.deepEqual([zoom.hidden, broken.hidden], [true, false]);
 });

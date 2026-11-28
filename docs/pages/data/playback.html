@@ -8,8 +8,11 @@
   <script src="../../assets/site.js" data-op-site></script>
   <script type="application/json" data-op-page>
     {
-      "features": {"chart-playback": true, "selection": true, "split-views": true, "parameters": true},
+      "features": {"chart-playback": true, "chart-annotations": true, "chart-histogram": true, "gantt": true, "selection": true, "split-views": true, "parameters": true},
       "parameterScopes": {
+        "latency-tour": {
+          "bins": {"type": "range", "min": 4, "max": 30, "step": 1, "default": 8}
+        },
         "size-tour": {
           "layout": {
             "type": "select",
@@ -39,8 +42,8 @@
         <dt>Official name</dt><dd>Guided chart playback</dd>
         <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
         <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
-        <dt>Works with</dt><dd><span data-op-term="SVG">SVG</span> charts, linked selection, and parameters</dd>
-        <dt>Good for</dt><dd>Narrating how a result unfolded</dd>
+        <dt>Works with</dt><dd><span data-op-term="SVG">SVG</span> charts, chart annotations, Gantt charts, linked selection, and parameters</dd>
+        <dt>Good for</dt><dd>Narrating how a result unfolded: training runs, experiments, projects, and before-and-after comparisons</dd>
       </dl>
     </header>
 
@@ -184,14 +187,316 @@
     <p>Press <strong>Play</strong> and follow the three stops. Watch the <strong>Show</strong> choice switch to Shares at the second stop. Press <strong>Reset</strong> to return the chart to its starting view.</p>
     <p>Each checkpoint changes only what it names, and later stops keep earlier changes. Previous and Reset restore earlier views exactly, so readers can step back without losing their place.</p>
 
+    <h2 id="training-run">Replay a training run</h2>
+    <p>A model’s training log is a story told in order: the loss falls, the settings change on a schedule, and at some point the model starts to memorise rather than learn. Playback lets readers watch that happen instead of reading the finished curve backwards. Here one tour drives two charts that share the same epochs, and <a href="charts.html#annotations">chart annotations</a> appear on the loss chart as each stop is reached.</p>
+
+    <ol id="training-tour" data-op-chart-playback data-op-x-group="training-epoch" data-op-duration="1600">
+      <li data-op-key="warmup" data-op-x="3"><strong data-op-step-label>Warm-up ends</strong>
+        The learning rate climbs to its full value over three epochs, so early updates stay small while the model settles.</li>
+      <li data-op-key="decay" data-op-x="15"><strong data-op-step-label>The learning rate starts to fall</strong>
+        Both losses are still dropping. From here the schedule eases the learning rate down towards zero.</li>
+      <li data-op-key="best" data-op-x="22"><strong data-op-step-label>Best validation loss</strong>
+        Validation loss bottoms out at 0.46 in epoch 22. This is the checkpoint worth keeping.</li>
+      <li data-op-key="overfit" data-op-x="30"><strong data-op-step-label>Training keeps going</strong>
+        Training loss keeps creeping down, but validation loss climbs back to 0.66: the model is fitting noise in the training data.</li>
+    </ol>
+
+    <figure>
+      <div data-op-chart="line" data-op-x-group="training-epoch" data-op-reveal-sequence="training-tour">
+        <script type="application/json">
+          {
+            "x": "Epoch",
+            "y": {"label": "Loss", "min": 0},
+            "series": [
+              {"key": "train", "name": "Training loss", "data": [[0,2.26],[1,1.93],[2,1.67],[3,1.45],[4,1.28],[5,1.11],[6,0.99],[7,0.87],[8,0.77],[9,0.71],[10,0.64],[11,0.55],[12,0.53],[13,0.48],[14,0.45],[15,0.41],[16,0.38],[17,0.35],[18,0.35],[19,0.32],[20,0.32],[21,0.34],[22,0.3],[23,0.31],[24,0.28],[25,0.28],[26,0.27],[27,0.27],[28,0.29],[29,0.28],[30,0.26]]},
+              {"key": "validation", "name": "Validation loss", "data": [[0,2.33],[1,2.06],[2,1.85],[3,1.62],[4,1.44],[5,1.3],[6,1.16],[7,1.07],[8,0.97],[9,0.89],[10,0.85],[11,0.76],[12,0.72],[13,0.68],[14,0.65],[15,0.59],[16,0.57],[17,0.54],[18,0.54],[19,0.52],[20,0.53],[21,0.48],{"x": 22, "y": 0.46, "key": "best-epoch"},[23,0.47],[24,0.52],[25,0.51],[26,0.52],[27,0.54],[28,0.6],[29,0.61],[30,0.66]]}
+            ],
+            "annotations": [
+              {"key": "warmup", "type": "marker", "x": 3, "text": "Warm-up ends", "revealStep": "warmup"},
+              {"key": "decay", "type": "marker", "x": 15, "text": "Decay starts", "revealStep": "decay"},
+              {"key": "best", "series": "validation", "point": "best-epoch", "text": "Lowest validation loss", "role": "tip", "revealStep": "best"},
+              {"key": "overfit", "type": "range", "x": 22, "x2": 30, "text": "Overfitting", "role": "caution", "revealStep": "overfit"}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Epoch</th><th scope="col">Training loss</th><th scope="col">Validation loss</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>2.26</td><td>2.33</td></tr>
+            <tr><td>5</td><td>1.11</td><td>1.30</td></tr>
+            <tr><td>10</td><td>0.64</td><td>0.85</td></tr>
+            <tr><td>15</td><td>0.41</td><td>0.59</td></tr>
+            <tr><td>20</td><td>0.32</td><td>0.53</td></tr>
+            <tr><td>22</td><td>0.30</td><td>0.46</td></tr>
+            <tr><td>25</td><td>0.28</td><td>0.51</td></tr>
+            <tr><td>30</td><td>0.26</td><td>0.66</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Training and validation loss for an illustrative 30-epoch run. Annotations appear as the tour reaches each stop. The table without scripts lists every fifth epoch and the best one.</figcaption>
+    </figure>
+    <figure>
+      <div data-op-chart="line" data-op-x-group="training-epoch" data-op-height="160">
+        <script type="application/json">
+          {
+            "x": "Epoch",
+            "y": {"label": "Learning rate (× 0.001)", "min": 0, "max": 1},
+            "series": [
+              {"key": "rate", "name": "Learning rate", "data": [[0,0],[1,0.33],[2,0.67],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[16,0.99],[17,0.96],[18,0.9],[19,0.83],[20,0.75],[21,0.65],[22,0.55],[23,0.45],[24,0.35],[25,0.25],[26,0.17],[27,0.1],[28,0.04],[29,0.01],[30,0]]}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Epochs</th><th scope="col">Learning rate (× 0.001)</th></tr></thead>
+          <tbody>
+            <tr><td>0–3</td><td>Rises from 0 to 1</td></tr>
+            <tr><td>3–15</td><td>Holds at 1</td></tr>
+            <tr><td>15–30</td><td>Eases from 1 back to 0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>The learning-rate schedule for the same run, on the same epochs. It advances with the loss chart above.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Press <strong>Play</strong> and watch both charts grow together. Pause between stops and move over either chart: the readouts only show epochs the tour has reached.</p>
+
+    <h2 id="estimate-settles">Watch an estimate settle</h2>
+    <p>An experiment that runs for weeks gives a different answer every day. Early on, the <span data-op-term="uncertainty">uncertainty</span> is wide and the estimate jumps around; with more data the <span data-op-term="interval">interval</span> narrows. Playing the experiment back shows readers why the team waited, and the stops can sit at the looks that were planned in advance.</p>
+
+    <ol id="experiment-tour" data-op-chart-playback data-op-target="experiment-chart" data-op-duration="1400">
+      <li data-op-key="first-look" data-op-x="3"><strong data-op-step-label>First planned look, day 3</strong>
+        The new checkout page looks 0.4 points better, but the interval runs from −1.0 to +1.8. Too early to say anything.</li>
+      <li data-op-key="one-week" data-op-x="7"><strong data-op-step-label>One week</strong>
+        The interval is a third narrower, yet it still includes zero: no difference remains a fair reading.</li>
+      <li data-op-key="two-weeks" data-op-x="14"><strong data-op-step-label>Two weeks</strong>
+        The whole interval now sits above zero. It first cleared zero on day 10, between planned looks; stopping on the first good-looking day is how peeking misleads.</li>
+      <li data-op-key="planned-end" data-op-x="21"><strong data-op-step-label>The planned end, day 21</strong>
+        The final estimate is +0.8 points, with an interval from +0.3 to +1.3.</li>
+    </ol>
+
+    <figure>
+      <div id="experiment-chart" data-op-chart="line" data-op-reveal-sequence="experiment-tour">
+        <script type="application/json">
+          {
+            "x": "Day of the experiment",
+            "y": "Difference in conversion (percentage points)",
+            "referenceLines": [{"axis": "y", "value": 0, "label": "No difference"}],
+            "series": [
+              {"key": "lift", "name": "Estimated difference", "data": [
+                {"x":1,"y":1.6,"interval":{"lower":-0.8,"upper":4,"label":"95% interval"}},
+                {"x":2,"y":0.2,"interval":{"lower":-1.5,"upper":1.9,"label":"95% interval"}},
+                {"x":3,"y":0.4,"interval":{"lower":-0.99,"upper":1.79,"label":"95% interval"}},
+                {"x":4,"y":0.9,"interval":{"lower":-0.3,"upper":2.1,"label":"95% interval"}},
+                {"x":5,"y":0.5,"interval":{"lower":-0.57,"upper":1.57,"label":"95% interval"}},
+                {"x":6,"y":0.7,"interval":{"lower":-0.28,"upper":1.68,"label":"95% interval"}},
+                {"x":7,"y":0.6,"interval":{"lower":-0.31,"upper":1.51,"label":"95% interval"}},
+                {"x":8,"y":0.8,"interval":{"lower":-0.05,"upper":1.65,"label":"95% interval"}},
+                {"x":9,"y":0.7,"interval":{"lower":-0.1,"upper":1.5,"label":"95% interval"}},
+                {"x":10,"y":0.9,"interval":{"lower":0.14,"upper":1.66,"label":"95% interval"}},
+                {"x":11,"y":0.75,"interval":{"lower":0.03,"upper":1.47,"label":"95% interval"}},
+                {"x":12,"y":0.8,"interval":{"lower":0.11,"upper":1.49,"label":"95% interval"}},
+                {"x":13,"y":0.7,"interval":{"lower":0.03,"upper":1.37,"label":"95% interval"}},
+                {"x":14,"y":0.78,"interval":{"lower":0.14,"upper":1.42,"label":"95% interval"}},
+                {"x":15,"y":0.85,"interval":{"lower":0.23,"upper":1.47,"label":"95% interval"}},
+                {"x":16,"y":0.8,"interval":{"lower":0.2,"upper":1.4,"label":"95% interval"}},
+                {"x":17,"y":0.76,"interval":{"lower":0.18,"upper":1.34,"label":"95% interval"}},
+                {"x":18,"y":0.84,"interval":{"lower":0.27,"upper":1.41,"label":"95% interval"}},
+                {"x":19,"y":0.8,"interval":{"lower":0.25,"upper":1.35,"label":"95% interval"}},
+                {"x":20,"y":0.83,"interval":{"lower":0.29,"upper":1.37,"label":"95% interval"}},
+                {"x":21,"y":0.82,"interval":{"lower":0.3,"upper":1.34,"label":"95% interval"}}
+              ]}
+            ],
+            "annotations": [
+              {"key": "clears", "type": "marker", "x": 10, "text": "First clears zero", "revealStep": "two-weeks"}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Day</th><th scope="col">Estimated difference (points)</th><th scope="col">95% interval</th></tr></thead>
+          <tbody>
+            <tr><td>3</td><td>+0.4</td><td>−0.99 to +1.79</td></tr>
+            <tr><td>7</td><td>+0.6</td><td>−0.31 to +1.51</td></tr>
+            <tr><td>10</td><td>+0.9</td><td>+0.14 to +1.66</td></tr>
+            <tr><td>14</td><td>+0.78</td><td>+0.14 to +1.42</td></tr>
+            <tr><td>21</td><td>+0.82</td><td>+0.30 to +1.34</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>The running estimate from an illustrative three-week checkout experiment, with its 95% interval as a band. The dashed line marks no difference.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Press <strong>Next</strong> to jump from look to look and watch the band tighten. Choose <strong>Table</strong> at any stop to see the bounds for each day reached so far.</p>
+
+    <h2 id="follow-along">Let other figures follow along</h2>
+    <p>Any figure that can reveal parts of itself step by step can follow a playback tour, not only charts. Here the tour plays a burn-up line of finished tasks, and the <a href="../explain/gantt.html">Gantt chart</a> below it fills in with the tasks finished by each stop. At the last stop it also outlines the <span data-op-term="critical path">critical path</span>, the chain that set the launch date.</p>
+
+    <ol id="project-tour" data-op-chart-playback data-op-target="burn-up" data-op-duration="1500">
+      <li data-op-key="design" data-op-x="5"><strong data-op-step-label>Design done</strong>
+        The brief and the sketches are finished by day 5, right on plan.</li>
+      <li data-op-key="build" data-op-x="12"><strong data-op-step-label>Build done</strong>
+        The service is ready on day 10, but the screens take until day 12. Everything after them now waits on the screens.</li>
+      <li data-op-key="test" data-op-x="15"><strong data-op-step-label>Tests pass</strong>
+        Testing the service finishes on day 15, with two days to spare.</li>
+      <li data-op-key="launch" data-op-x="17"><strong data-op-step-label>Launch</strong>
+        The last fixes land on day 17 and the project launches. The red outline traces the tasks that set that date.</li>
+    </ol>
+
+    <figure>
+      <div id="burn-up" data-op-chart="line" data-op-height="180">
+        <script type="application/json">
+          {
+            "x": "Day",
+            "y": {"label": "Tasks finished", "min": 0, "max": 6},
+            "series": [
+              {"key": "done", "name": "Tasks finished", "data": [[0,0],[1,0],[2,1],[3,1],[4,1],[5,2],[6,2],[7,2],[8,2],[9,2],[10,3],[11,3],[12,4],[13,4],[14,4],[15,5],[16,5],[17,6]]}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Day</th><th scope="col">Tasks finished</th></tr></thead>
+          <tbody>
+            <tr><td>2</td><td>1</td></tr><tr><td>5</td><td>2</td></tr><tr><td>10</td><td>3</td></tr>
+            <tr><td>12</td><td>4</td></tr><tr><td>15</td><td>5</td></tr><tr><td>17</td><td>6</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Tasks finished so far in an illustrative 17-day project.</figcaption>
+    </figure>
+    <figure class="op-gantt" id="project-plan" data-op-reveal-sequence="project-tour" data-op-reveal-critical="launch">
+      <ol class="op-gantt-tasks">
+        <li data-op-key="brief" data-op-start="0" data-op-end="2" data-op-label="Write the brief" data-op-reveal-step="design">Days 0–2 · Write the brief</li>
+        <li data-op-key="sketch" data-op-start="2" data-op-end="5" data-op-depends="brief" data-op-label="Sketch the screens" data-op-reveal-step="design">Days 2–5 · Sketch the screens</li>
+        <li data-op-key="service" data-op-start="5" data-op-end="10" data-op-depends="sketch" data-op-label="Build the service" data-op-reveal-step="build">Days 5–10 · Build the service</li>
+        <li data-op-key="screens" data-op-start="5" data-op-end="12" data-op-depends="sketch" data-op-label="Build the screens" data-op-reveal-step="build">Days 5–12 · Build the screens</li>
+        <li data-op-key="tests" data-op-start="10" data-op-end="15" data-op-depends="service" data-op-label="Test the service" data-op-reveal-step="test">Days 10–15 · Test the service</li>
+        <li data-op-key="fixes" data-op-start="12" data-op-end="17" data-op-depends="screens" data-op-label="Fix screen issues" data-op-reveal-step="launch">Days 12–17 · Fix screen issues</li>
+        <li data-op-key="go-live" data-op-start="17" data-op-milestone data-op-depends="tests fixes" data-op-label="Launch" data-op-reveal-step="launch">Day 17 · Launch</li>
+      </ol>
+      <figcaption>The same project as a Gantt chart. Each task appears once the tour reaches the stop where it was finished.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Play the tour and watch the plan fill in under the line. Press <strong>Previous</strong> to hide the latest tasks again.</p>
+    <p>The same works for anything else that reveals step by step, such as chart annotations, <a href="sets.html">Venn diagram</a> regions, and <a href="grids.html">risk matrix</a> items. Exported Reader copies give each following figure its own step buttons.</p>
+
+    <h2 id="distribution-tour">Compare distributions before and after</h2>
+    <p>A <span data-op-term="histogram">histogram</span> tour works well for a before-and-after story. Each stop changes one thing: which group is shown, how many <span data-op-term="bin">bins</span> the readings are sorted into, or which part of the scale is in view. The slider is an ordinary <span data-op-term="parameter">parameter</span>, so the tour moves it and the reader can take it over at any point.</p>
+
+    <ol id="latency-tour" data-op-chart-playback="state" data-op-target="latency-chart" data-op-scope="latency-tour" data-op-duration="1600">
+      <li data-op-key="before" data-op-state='{"series": ["before"]}'><strong data-op-step-label>Before the release</strong>
+        Every request finishes in 75 to 155 milliseconds.</li>
+      <li data-op-key="after" data-op-state='{"series": null}'><strong data-op-step-label>After the release</strong>
+        The main peak barely moves, but a second group of slow requests appears on the right.</li>
+      <li data-op-key="finer" data-op-state='{"params": {"bins": 24}}'><strong data-op-step-label>Finer bins</strong>
+        With 24 bins the slow requests form a separate bump, not a stretched tail. Something new happens to about one request in six.</li>
+      <li data-op-key="tail" data-op-state='{"range": [340, 420]}'><strong data-op-step-label>Zoom into the bump</strong>
+        All eight slow requests take 370 to 420 milliseconds, the time a cache miss costs. That points at the cache, not the new code.</li>
+    </ol>
+
+    <figure>
+      <div class="op-params" data-op-parameter-scope="latency-tour">
+        <div data-op-parameter="bins" data-op-parameter-label="Number of bins"><p>Number of bins: 8</p></div>
+      </div>
+      <div id="latency-chart" data-op-chart="histogram" data-op-toggles data-op-brush data-op-scope="latency-tour"
+        data-op-chart-bind='{"bins": "bins"}' data-op-reveal-sequence="latency-tour">
+        <script type="application/json">
+          {
+            "bins": 8,
+            "x": "Response time (ms)",
+            "series": [
+              {"key": "before", "name": "Before release", "data": [77, 85, 86, 87, 87, 88, 90, 90, 96, 98, 99, 99, 100, 100, 101, 101, 101, 102, 103, 104, 105, 106, 106, 107, 109, 110, 110, 111, 113, 113, 114, 114, 119, 122, 122, 122, 123, 123, 125, 126, 132, 133, 142, 143, 145, 147, 151, 154]},
+              {"key": "after", "name": "After release", "data": [76, 83, 84, 84, 87, 89, 97, 99, 100, 102, 104, 105, 105, 106, 108, 110, 111, 113, 114, 116, 117, 117, 120, 122, 122, 123, 123, 123, 124, 125, 126, 126, 127, 130, 132, 132, 134, 134, 139, 156, 371, 377, 380, 382, 395, 396, 404, 420]}
+            ],
+            "annotations": [
+              {"key": "misses", "type": "range", "x": 365, "x2": 425, "text": "Cache misses", "role": "caution", "revealStep": "finer"}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Response time</th><th scope="col">Before release</th><th scope="col">After release</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Under 100 ms</th><td>12</td><td>8</td></tr>
+            <tr><th scope="row">100–149 ms</th><td>34</td><td>31</td></tr>
+            <tr><th scope="row">150–349 ms</th><td>2</td><td>1</td></tr>
+            <tr><th scope="row">350 ms or more</th><td>0</td><td>8</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Response times for 48 illustrative requests before and 48 after a release.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Play the tour and watch the slider move on its own at the third stop. Then drag the slider yourself, and press <strong>Reset</strong> to put the chart and the slider back where they started.</p>
+
+    <h2 id="scatter-tour">Tour a cloud of points</h2>
+    <p>A <span data-op-term="scatter chart">scatter chart</span> with many points can be hard to read cold. A tour can introduce one group at a time, point at the result that matters, and then zoom in on the part of the chart the conclusion rests on.</p>
+
+    <ol id="model-tour" data-op-chart-playback="state" data-op-target="model-chart" data-op-duration="2000">
+      <li data-op-key="small" data-op-state='{"series": ["small"]}'><strong data-op-step-label>Small models</strong>
+        Seven runs of the small model answer in 16 to 20 milliseconds and score 71 to 74 percent.</li>
+      <li data-op-key="medium" data-op-state='{"series": ["small", "medium"]}'><strong data-op-step-label>Add the medium models</strong>
+        Medium runs take about twice as long and gain around six points of accuracy.</li>
+      <li data-op-key="large" data-op-state='{"series": null}'><strong data-op-step-label>Add the large models</strong>
+        Large runs double the time again for a smaller gain of about five points.</li>
+      <li data-op-key="standout" data-op-state='{"select": "m-7"}'><strong data-op-step-label>One run stands out</strong>
+        This medium run scores 85.6 percent, better than every large run, at half their time. It was trained with help from a large model.</li>
+      <li data-op-key="fast" data-op-state='{"range": [10, 60]}'><strong data-op-step-label>The fast end</strong>
+        Zoomed in on runs under 60 milliseconds, the standout sits well above the other medium runs.</li>
+    </ol>
+
+    <figure>
+      <div id="model-chart" data-op-chart="scatter" data-op-toggles data-op-brush data-op-selection-group="model-run" data-op-reveal-sequence="model-tour">
+        <script type="application/json">
+          {
+            "x": "Time per answer (ms)",
+            "y": "Accuracy (%)",
+            "series": [
+              {"key": "small", "name": "Small", "data": [{"x":17,"y":73,"key":"s-1"},{"x":20,"y":73.7,"key":"s-2"},{"x":19,"y":73.1,"key":"s-3"},{"x":18,"y":72.3,"key":"s-4"},{"x":19,"y":70.8,"key":"s-5"},{"x":18,"y":71.9,"key":"s-6"},{"x":16,"y":72.4,"key":"s-7"}]},
+              {"key": "medium", "name": "Medium", "data": [{"x":38,"y":79.8,"key":"m-1"},{"x":35,"y":79,"key":"m-2"},{"x":47,"y":78.9,"key":"m-3"},{"x":38,"y":77.8,"key":"m-4"},{"x":39,"y":79.4,"key":"m-5"},{"x":40,"y":79.3,"key":"m-6"},{"x":47,"y":85.6,"key":"m-7"}]},
+              {"key": "large", "name": "Large", "data": [{"x":103,"y":81.8,"key":"l-1"},{"x":83,"y":82.9,"key":"l-2"},{"x":96,"y":84.3,"key":"l-3"},{"x":98,"y":85,"key":"l-4"},{"x":94,"y":83.5,"key":"l-5"},{"x":97,"y":84.6,"key":"l-6"},{"x":97,"y":84.3,"key":"l-7"}]}
+            ],
+            "annotations": [
+              {"key": "standout", "series": "medium", "point": "m-7", "text": "Trained with help from a large model", "role": "tip", "revealStep": "standout"}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Model size</th><th scope="col">Time per answer (ms)</th><th scope="col">Accuracy (%)</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Small, 7 runs</th><td>16–20</td><td>70.8–73.7</td></tr>
+            <tr><th scope="row">Medium, 6 runs</th><td>35–47</td><td>77.8–79.8</td></tr>
+            <tr><th scope="row">Medium, standout run</th><td>47</td><td>85.6</td></tr>
+            <tr><th scope="row">Large, 7 runs</th><td>83–103</td><td>81.8–85.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Accuracy against answer time for 21 illustrative model runs in three sizes.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Play to the fourth stop, then hide <strong>Large</strong> in the legend yourself. The tour only changes what each stop names, so your choice stays until a later stop sets the series again.</p>
+
     <h2 id="when-to-use">When to reach for it</h2>
     <p>Use playback when readers benefit from seeing a few events in order. Use state checkpoints to guide readers through a few views of one chart. Give each stop one short note and let the chart show the change.</p>
+    <table data-op-concept>
+      <thead><tr><th scope="col">The story</th><th scope="col">Kind of playback</th><th scope="col">Example on this page</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Something grew or changed over time</th><td>A growing line with stops</td><td><a href="#see-it">Commits</a>, <a href="#training-run">training run</a></td></tr>
+        <tr><th scope="row">An answer became more certain</th><td>A growing line with an interval band</td><td><a href="#estimate-settles">Experiment estimate</a></td></tr>
+        <tr><th scope="row">Several figures tell one story</th><td>Charts sharing a horizontal scale, or figures that reveal with the stops</td><td><a href="#shared-position">Daily commits</a>, <a href="#follow-along">project plan</a></td></tr>
+        <tr><th scope="row">One chart, several angles</th><td>State checkpoints</td><td><a href="#state-checkpoints">Feature sizes</a>, <a href="#distribution-tour">response times</a>, <a href="#scatter-tour">model runs</a></td></tr>
+      </tbody>
+    </table>
+    <p>Keep a tour to about three to five stops. If readers need to explore freely rather than follow a story, a plain chart with a <span data-op-term="range brush">range brush</span> or legend toggles serves them better.</p>
     <h2 id="for-every-reader">For every reader</h2>
     <p><kbd>Tab</kbd> reaches the playback controls and the status announces each stop. Playback jumps straight to the stop when reduced motion is on. On a phone, use the checkpoint controls to move through the chart. The charts follow the page theme, and the notes and tables are readable with scripts off. Advance to the last checkpoint to print the full charts.</p>
 
     <h2 id="related">Related</h2>
     <ul>
-      <li><a href="charts.html">SVG charts</a></li>
+      <li><a href="charts.html">SVG charts</a>, including <a href="charts.html#annotations">chart annotations</a> and <a href="charts.html#histograms">histograms</a></li>
+      <li><a href="../explain/gantt.html">Gantt charts</a></li>
       <li><a href="../explain/selection.html">Linked selection</a></li>
       <li><a href="../recipes/report-results.html">Report results</a>, a recipe that uses it</li>
       <li><a href="../reference/features.html">Feature directory</a></li>

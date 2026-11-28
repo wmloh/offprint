@@ -1381,6 +1381,7 @@
   function mix(from, to, t) { return from + (to - from) * t; }
 
   function ease(p) { return 1 - Math.pow(1 - p, 3); }
+  function easeInOut(p) { return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(2 - 2 * p, 3) / 2; }
 
   // [r, g, b, a] from #rgb, #rrggbb, rgb(), or rgba() text, else null.
   function parseColor(text) {
@@ -1646,7 +1647,8 @@
   }
 
   // Runs changes over duration ms with an ease-out curve, then calls done.
-  function play(chart, changes, duration, done) {
+  function play(chart, changes, duration, done, curve) {
+    var easing = curve || ease;
     if (!changes.length) {
       if (done) done();
       return;
@@ -1655,7 +1657,7 @@
       changes.forEach(function (change) {
         var local = change.order === undefined ? progress :
           Math.max(0, Math.min(1, (progress - change.order * STAGGER) / (1 - STAGGER)));
-        change.run(local >= 1 ? 1 : ease(local));
+        change.run(local >= 1 ? 1 : easing(local));
       });
     }
     function finish() {
@@ -1685,14 +1687,15 @@
     else chart.plot.insertBefore(frame, chart.plot.firstChild);
     chart.svg = frame;
     if (motion) {
-      play(chart, motion.changes.concat(tintChanges(motion.tints)), TWEEN, function () {
+      // A guided state leg sets chart.tween so its marks move for the whole leg.
+      play(chart, motion.changes.concat(tintChanges(motion.tints)), chart.tween || TWEEN, function () {
         motion.leaving.forEach(function (key) {
           var entry = markMap.get(key);
           if (!entry || !entry.leaving) return;
           (entry.wrap || entry.el).remove();
           markMap.delete(key);
         });
-      });
+      }, chart.tween ? easeInOut : null);
     }
     if (chart.entrance) {
       if (!motionAllowed(chart.model, motionEnv(chart))) cancelEntrance(chart);
@@ -4197,6 +4200,18 @@
         var shown = own.model.series.filter(function (s) { return !own.hidden[s.key]; });
         return { series: shown.length === own.model.series.length ? null : shown.map(function (s) { return s.key; }),
           range: own.range && own.range.slice() };
+      },
+      // Redraws tween over ms until settle, for the length of a played leg.
+      tween: function (ms) {
+        var own = charts.get(host);
+        if (own) own.tween = ms || null;
+      },
+      // Ends a leg's tween: finishes running motion so a jump starts from the state the leg was moving to.
+      settle: function () {
+        var own = charts.get(host);
+        if (!own || !own.tween) return;
+        own.tween = null;
+        if (own.finishMotion) own.finishMotion();
       },
       // Throws when the state does not fit the current data; otherwise tweens to it.
       apply: function (state, origin) {

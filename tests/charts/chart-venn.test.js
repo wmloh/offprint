@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { loadChartModules } = require('../support/chart-modules');
+const { Node, loadChartModules, setupChartModules } = require('../support/chart-modules');
 
 const { chart } = loadChartModules(['core.js', 'chart.js', 'data.js', 'chart-venn.js']);
 const { classify, geometry } = chart._venn;
@@ -77,6 +77,35 @@ test('Venn keys are stable under tuple and set reordering, and authors can overr
   const punctuation = [{ key: 'A,B' }, { key: '"C"' }, { key: 'A' }];
   const distinct = Object.values(keys(punctuation, []));
   assert.equal(new Set(distinct).size, 7);
+});
+
+test('Venn pointer coordinates shade a nested region once its step is revealed', () => {
+  const { OffPrint, document, draw } = setupChartModules(['core.js', 'chart.js', 'chart-venn.js']);
+  const steps = document.body.appendChild(new Node('ol'));
+  steps.id = 'sample-steps';
+  const sequence = OffPrint._sequence.indexed('test', steps, { keys: ['collection', 'review'], initial: 0 }, () => {});
+  sequence.start();
+  const view = draw({
+    type: 'venn',
+    sets: [
+      { key: 'current', label: 'Current', members: ['S01', 'S02', 'S03'] },
+      { key: 'reviewed', label: 'Reviewed', members: ['S02'] },
+      { key: 'reference', label: 'Reference', members: ['R01'] }
+    ],
+    regionOptions: [{ sets: ['current', 'reviewed'], key: 'reviewed', revealStep: 'review' }]
+  }, { 'data-op-reveal-sequence': steps.id });
+  const subset = view.find('op-venn-region').find(el => el.getAttribute('data-op-venn-overlap') === '2');
+  const label = subset.parentNode.querySelector('.op-venn-count');
+  const x = Number(label.getAttribute('x'));
+  const y = Number(label.getAttribute('y'));
+  view.move(x, y);
+  assert.equal(view.tip().hidden, true);
+  sequence.run('next', 'user');
+  view.move(x, y);
+  assert.equal(subset.classList.contains('is-active'), true);
+  assert.match(view.tip().textContent, /Current ∩ Reviewed.*S02/);
+  view.move(0, 0);
+  assert.equal(subset.classList.contains('is-active'), false);
 });
 
 test('Venn rejects ambiguous input and maps delimited or JSON region fields', () => {

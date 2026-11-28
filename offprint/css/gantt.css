@@ -124,12 +124,58 @@
 .op-gantt-bar,
 .op-gantt-planned,
 .op-gantt-summary,
+.op-gantt-milestone,
 .op-gantt-crit {
-  top: 4px;
-  height: 22px;
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.op-gantt-bar {
+  top: 8px;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--op-accent, var(--op-blue)) 35%, var(--op-bg));
+}
+
+.op-gantt-progress {
+  display: block;
+  height: 100%;
+  background: var(--op-accent, var(--op-blue));
+}
+
+.op-gantt-planned {
+  top: 26px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--op-text-muted);
+  transition: opacity 0.3s ease;
+}
+
+.op-gantt-planned.is-point { margin-left: -1px; }
+
+.op-gantt-summary {
+  top: 11px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--op-text-muted);
+}
+
+.op-gantt-milestone {
+  top: 10px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  transform: rotate(45deg);
+  background: var(--op-accent, var(--op-blue));
+}
+
+.op-gantt-crit {
+  top: 5px;
+  height: 20px;
   border: 2px solid var(--op-red);
   border-radius: 5px;
-  pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
@@ -150,12 +196,12 @@
 
 .op-gantt-link-line {
   fill: none;
-  stroke: var(--op-text-faint);
+  stroke: var(--op-text-muted);
   stroke-width: 1.25;
   transition: stroke 0.2s ease;
 }
 
-.op-gantt-link-head { fill: var(--op-text-faint); transition: fill 0.2s ease; }
+.op-gantt-link-head { fill: var(--op-text-muted); transition: fill 0.2s ease; }
 .op-gantt-link.is-active .op-gantt-link-line { stroke: var(--op-text); stroke-width: 1.75; }
 .op-gantt-link.is-active .op-gantt-link-head { fill: var(--op-text); }
 .op-gantt-link.is-unmet .op-gantt-link-line { stroke: var(--op-orange); stroke-dasharray: 4 3; stroke-width: 1.75; }

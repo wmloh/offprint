@@ -8,7 +8,6 @@
   var TURN = 2 * Math.PI;
   var EPSILON = 1e-8;
   var MEMBER_LIMIT = 8;
-  var HIT = 'data-op-venn-region';
   var FALLBACK = 'Circle boundaries cannot represent these overlaps exactly. Hatching marks empty regions.';
   var followers = new WeakMap();
   var permutations = [
@@ -390,10 +389,12 @@
     var w = bounds.right - bounds.left;
     var h = bounds.bottom - bounds.top;
     var scale = Math.min(Math.max(1, width - 24) / w, (height - 24) / h);
-    function transform(x, y) {
-      return [(width - w * scale) / 2 + (x - bounds.left) * scale,
-        (height - h * scale) / 2 + (y - bounds.top) * scale];
-    }
+    var originX = (width - w * scale) / 2 - bounds.left * scale;
+    var originY = (height - h * scale) / 2 - bounds.top * scale;
+    function transform(x, y) { return [originX + x * scale, originY + y * scale]; }
+    out.geom.regionAt = function (x, y) {
+      return position(layout.circles, (x - originX) / scale, (y - originY) / scale).mask;
+    };
     var hatch = chart.clip + '-venn-empty';
     if (layout.fallback) {
       var pattern = kit.svg('pattern', { id: hatch, width: 6, height: 6, patternUnits: 'userSpaceOnUse',
@@ -420,7 +421,7 @@
       layer.insertBefore(track, outlines);
       var el = kit.svg('path', { d: regionPath(shape.loops, geom.corners, transform, scale),
         class: 'op-venn-region' + (region.count ? '' : ' is-empty'), 'fill-rule': 'evenodd',
-        'data-op-venn-overlap': region.sets.length, [HIT]: region.mask }, track);
+        'data-op-venn-overlap': region.sets.length, 'data-op-venn-region': region.mask }, track);
       if (!region.count) el.setAttribute('fill', 'url(#' + hatch + ')');
       var paint = info.sets.find(function (set) { return region.mask & (1 << set.index); });
       kit.paint(el, paint);
@@ -445,9 +446,9 @@
     return out;
   }
 
-  function pick(chart, px, py, event) {
-    var target = event?.target?.closest?.('[' + HIT + ']');
-    return target ? chart.spots.findIndex(function (spot) { return spot.el === target; }) : -1;
+  function pick(chart, px, py) {
+    var mask = chart.geom.regionAt(px, py);
+    return chart.spots.findIndex(function (spot) { return spot.shape.mask === mask; });
   }
 
   function memberSummary(region) {

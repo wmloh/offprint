@@ -12,9 +12,7 @@
   var RIGHT = 720;
   var AXIS = 40;
   var ROW = 30;
-  var BAR = 8;
-  var BAR_H = 14;
-  var DIAMOND = 7;
+  var DIAMOND = 5 * Math.SQRT2;
   var MAX_ROWS = 60;
   var DAY = 86400000;
   var TYPES = { FS: 'finish to start', SS: 'start to start', FF: 'finish to finish', SF: 'start to finish' };
@@ -654,14 +652,13 @@
       drawLinks();
     }
 
-    // Anchors on a hidden task move to its group's summary row.
+    // Hidden tasks connect at the visible summary's start or finish edge.
     function anchor(task, end) {
-      var hidden = hiddenRow(task);
-      var y = place.y[task.index] + ROW / 2;
-      var value = end ? task.end : task.start;
-      var px = x(value);
-      if (!hidden && task.milestone) px += end ? DIAMOND : -DIAMOND;
-      return [px, y, hidden];
+      var row = hiddenRow(task) ? scene.groups.get(task.group) : task;
+      var start = x(row.start);
+      var px = row.milestone ? start + (end ? DIAMOND : -DIAMOND) :
+        end ? Math.max(start + 2, x(row.end)) : start;
+      return [px, place.y[row.index] + ROW / 2];
     }
 
     function drawLinks() {
@@ -671,14 +668,14 @@
       scene.links.forEach(function (link) {
         var fromEnd = link.type[0] === 'F';
         var toEnd = link.type[1] === 'F';
+        if (link.from.group === link.to.group && hiddenRow(link.from)) return;
         var a = anchor(link.from, fromEnd);
         var b = anchor(link.to, toEnd);
-        if (a[2] && b[2] && link.from.group === link.to.group) return;
         var into = toEnd ? -1 : 1;
         var points = route(a[0], a[1], fromEnd ? 1 : -1, b[0], b[1], into);
-        [base].concat(link.critical ? [critical] : []).forEach(function (parent, layer) {
+        [base].concat(link.critical && !link.unmet ? [critical] : []).forEach(function (parent) {
           var outer = revealAttr(diagram.svg('g', {}, parent), link.from.revealStep);
-          var g = revealAttr(diagram.svg('g', { class: 'op-gantt-link' + (link.unmet && !layer ? ' is-unmet' : ''),
+          var g = revealAttr(diagram.svg('g', { class: 'op-gantt-link' + (link.unmet ? ' is-unmet' : ''),
             'data-op-from': link.from.key, 'data-op-to': link.to.key }, outer), link.to.revealStep);
           diagram.svg('path', { d: pathOf(points), class: 'op-gantt-link-line' }, g);
           diagram.svg('path', { d: arrowHead(b[0], b[1], into), class: 'op-gantt-link-head' }, g);

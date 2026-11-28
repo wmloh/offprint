@@ -304,7 +304,7 @@
     var height = model.height;
     var frame = kit.svg('svg', { viewBox: '0 0 ' + width + ' ' + height, width: width, height: height,
       'aria-hidden': 'true', focusable: 'false' });
-    var layer = kit.svg('g', { class: 'op-chart-marks' }, frame);
+    var layer = kit.svg('g', { class: 'op-chart-marks' + (model.motion ? ' op-sankey-motion' : '') }, frame);
     var marks = new Map();
     var spots = [];
     var geom = { left: 0, right: width, top: 0, bottom: height };

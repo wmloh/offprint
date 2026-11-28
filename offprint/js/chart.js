@@ -787,9 +787,9 @@
   // spec, kit), legend?(chart, legendEl, kit), describe?(model), table?(view, kit, chart) }, where the spec field named
   // after the layer holds its input and layer = { group, marks } gives the layer's SVG group and the chart's mark map.
   // extent(model, span) widens the value span, panel(view, chart, kit) reserves { height, labels } under line and
-  // scatter plots, readout(chart, spot, tip, kit) adds readout rows, and mapRecords(rows, mapping, spec, kit) reads
-  // named-source records into the layer's spec field.
-  var LAYER_HOOKS = ['normalize', 'legend', 'describe', 'table', 'extent', 'panel', 'readout', 'mapRecords'];
+  // scatter plots, leftInset(chart) reserves a minimum width for the left axis, readout(chart, spot, tip, kit)
+  // adds readout rows, and mapRecords(rows, mapping, spec, kit) reads named-source records into the layer's spec field.
+  var LAYER_HOOKS = ['normalize', 'legend', 'describe', 'table', 'extent', 'panel', 'leftInset', 'readout', 'mapRecords'];
 
   function addon(feature, parts) {
     var problem = addonProblem(feature, parts);
@@ -1980,6 +1980,25 @@
     return model.stack === 'percent' ? function (v) { return fmt(v) + '%'; } : fmt;
   }
 
+  function valueTickCount(plotHeight) {
+    return Math.max(2, Math.round(plotHeight / 48));
+  }
+
+  function topInset(label) { return label ? 30 : 10; }
+  function bottomInset(label, markerSpace) { return 26 + markerSpace + (label ? 20 : 0); }
+
+  function valueTicks(model, span, count) {
+    return (model.y.log ? logTicks : ticks)(span.yLo, span.yHi, count, model.y.min !== null, model.y.max !== null);
+  }
+
+  function valueTickFormat(model, info) {
+    return model.y.log ? logTickFormat() : percentTicks(model, tickFormat(info));
+  }
+
+  function labelInset(labels) {
+    return 12 + CHAR * Math.max(1, ...labels.map(function (label) { return String(label).length; }));
+  }
+
   var LINE = 13;
   var PANEL_GAP = 24;
 
@@ -2179,18 +2198,16 @@
     var span = extent(model);
     var xs = span.xs;
     var fit = model.rescale && span.count ? span : extent(chart.model);
-    var yLo = fit.yLo;
-    var yHi = fit.yHi;
 
     // An add-on's second value axis: { lo, hi, axis, tintY?, tintY2? } on the right, its zero level with the left one.
     var second = continuousMarks && def.secondAxis ? def.secondAxis(model, chart.model, kit) : null;
-    var top = 10 + (model.y.label || second && second.axis.label ? 20 : 0);
+    var top = topInset(model.y.label || second && second.axis.label);
     var markerSpace = model.markedCategories ? 13 : 0;
     var xLabel = xTitle(model);
-    var bottom = 26 + markerSpace + (xLabel ? 20 : 0);
+    var bottom = bottomInset(xLabel, markerSpace);
     var yLog = model.y.log;
-    var yCount = Math.max(2, Math.round((height - top - bottom) / 48));
-    var yInfo = (yLog ? logTicks : ticks)(yLo, yHi, yCount, model.y.min !== null, model.y.max !== null);
+    var yCount = valueTickCount(height - top - bottom);
+    var yInfo = valueTicks(model, fit, yCount);
     var y2Info = null;
     if (second) {
       y2Info = ticks(second.lo, second.hi, yCount, second.axis.min !== null, second.axis.max !== null);
@@ -2200,16 +2217,18 @@
         y2Info = aligned[1];
       }
     }
-    var yFmt = yLog ? logTickFormat() : percentTicks(model, tickFormat(yInfo));
+    var yFmt = valueTickFormat(model, yInfo);
     // Layer panels, such as residuals, sit under the plot on the same x axis; the x ticks and title move below them.
     var panels = [];
+    var leftInset = 0;
     Object.keys(chartLayers).forEach(function (name) {
-      var want = chartLayers[name].panel ? chartLayers[name].panel(model, chart, kit) : null;
+      var layer = chartLayers[name];
+      var want = layer.panel?.(model, chart, kit);
       if (want && want.height > 0) panels.push({ name: name, height: want.height, labels: want.labels || [] });
+      if (layer.leftInset) leftInset = Math.max(leftInset, layer.leftInset(chart));
     });
     var below = panels.reduce(function (sum, p) { return sum + PANEL_GAP + p.height; }, 0);
-    var left = 12 + CHAR * Math.max.apply(null, yInfo.ticks.map(function (v) { return yFmt(v).length; }).concat([1],
-      panels.flatMap(function (p) { return p.labels.map(function (text) { return String(text).length; }); })));
+    var left = Math.max(leftInset, labelInset(yInfo.ticks.map(yFmt).concat(panels.flatMap(function (p) { return p.labels; }))));
     var y = (yLog ? log : linear)(yInfo.min, yInfo.max, height - bottom, top);
     var y2Fmt = y2Info ? tickFormat(y2Info) : null;
     var y2 = y2Info ? linear(y2Info.min, y2Info.max, height - bottom, top) : null;
@@ -4076,6 +4095,11 @@
   chart.validate = function (spec) { return layerModel(normalize(spec), spec).errors.slice(); };
   // The normalized model of a spec with its layers, for features such as facets that compare panel extents.
   chart.specModel = function (spec) { return layerModel(normalize(spec), spec); };
+  chart.valueAxisInset = function (model) {
+    var plotHeight = model.height - topInset(model.y.label) - bottomInset(xTitle(model), model.markedCategories ? 13 : 0);
+    var info = valueTicks(model, extent(model), valueTickCount(plotHeight));
+    return labelInset(info.ticks.map(valueTickFormat(model, info)));
+  };
   // Named-source records mapped to a chart spec as a mounted named chart would map them.
   chart._mapRecords = function (records, mapping, base, maxRows) {
     return mappedSpec(records, mapping, base, maxRows || Infinity, null, false).spec;

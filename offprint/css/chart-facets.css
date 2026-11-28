@@ -40,6 +40,19 @@
   gap: var(--op-space-1);
 }
 
+.op-facets.is-matrix.has-histograms .op-facets-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.op-facets.is-matrix.has-histograms .op-facets-panel {
+  margin-block-start: auto;
+}
+
+.op-facets.is-matrix .op-facets-panel .op-chart-head {
+  display: none;
+}
+
 .op-facets-grid[hidden],
 .op-facets-table[hidden] {
   display: none;

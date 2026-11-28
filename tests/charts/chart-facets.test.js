@@ -120,6 +120,12 @@ test('the matrix caps its fields, derives diagonal counts, and goes compact past
     'diagonal histograms count records into [lo, hi) bins over the shared field scale, 0 to 15');
   assert.equal(view.find('op-facets-field-range')[1].textContent, '0 – 24', 'the diagonal names the data range, not the rounded axis');
   assert.equal(view.host.classList.contains('is-compact'), false);
+  assert.equal(view.host.classList.contains('has-histograms'), true);
+  const plotBounds = view.find('op-chart-grid').map((grid) => {
+    const line = grid.querySelector('line');
+    return [line.getAttribute('x1'), line.getAttribute('x2')].join(',');
+  });
+  assert.equal(new Set(plotBounds).size, 1, 'scatter and histogram plots share both horizontal insets');
   const wide = env.facets({ fields: ['a', 'b', 'c', 'a2', 'e'],
     data: records.map((r) => ({ ...r, a2: r.a * 3, e: r.b - r.c })) }, { 'data-op-facets': 'matrix' });
   assert.equal(wide.host.classList.contains('is-compact'), true, 'five fields drop ticks and axis titles inline');

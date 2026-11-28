@@ -428,6 +428,17 @@
     return f.lo === f.hi ? format(f.lo) : format(f.lo) + ' – ' + format(f.hi);
   }
 
+  function matrixLeftInset(panels) {
+    var inset = 0;
+    panels.forEach(function (panel) {
+      if (!panel.spec) return;
+      // Scatter panels share their y domain within a row. Measure one per row, plus every histogram.
+      if (panel.kind === 'chart' && panel.col !== (panel.row === 0 ? 1 : 0)) return;
+      inset = Math.max(inset, chart.valueAxisInset(chart.specModel(panel.spec)));
+    });
+    return inset;
+  }
+
   function legendKey(mark, s) {
     var key = make('span', 'op-chart-key is-' + mark);
     chart.paint(key, s);
@@ -607,11 +618,15 @@
     try {
       var panels = layout.mode === 'matrix' ? matrixPanels(layout, full(state)) : layout.panels;
       var same = previous && previous.mode === layout.mode && state.panels.length === panels.length &&
-        state.panels.every(function (p, i) { return p.key === panels[i].key && p.kind === panels[i].kind; });
+        state.panels.every(function (p, i) {
+          return p.key === panels[i].key && p.kind === panels[i].kind && !!p.spec === !!panels[i].spec;
+        });
       state.host.style.setProperty('--op-facets-columns', String(layout.columns));
       var sized = panels.find(function (p) { return p.spec && isNum(p.spec.height); });
       if (sized) state.host.style.setProperty('--op-facets-height', sized.spec.height + 'px');
       state.host.classList.toggle('is-matrix', layout.mode === 'matrix');
+      state.host.classList.toggle('has-histograms', layout.diagonal === 'histogram');
+      state.matrixLeftInset = layout.mode === 'matrix' ? matrixLeftInset(panels) : 0;
       state.host.classList.toggle('is-compact', !full(state));
       state.host.classList.toggle('has-shared-legend', layout.series.length > 1 || layout.pie);
       state.caption.textContent = layout.title || '';
@@ -1044,7 +1059,10 @@
     return { row: row, col: col, x: { field: fields[col], range: xr }, y: { field: fields[row], range: yr } };
   }
 
-  OffPrint.chart.addon('chart-facets', { layers: { 'facets-brush': { draw: drawLayer } } });
+  OffPrint.chart.addon('chart-facets', { layers: { 'facets-brush': {
+    draw: drawLayer,
+    leftInset: function (c) { return owners.get(c.box)?.state.matrixLeftInset || 0; }
+  } } });
 
   OffPrint._chartFacets = {
     mount: mount,

@@ -1902,7 +1902,7 @@ window.OffPrintSearch = {
         "file": "pages/data/sets.html",
         "path": "../pages/data/sets.html",
         "title": "Venn diagrams",
-        "sha256": "102420fc22313e6f373c1f90aba8de36c86806b40e11ae59dd4c36267d57f43e"
+        "sha256": "2dcbb8a03b3f3cf71fe5e1caa0c27a7709ac3f3ab1cd0c0a7e0ec609542a1bdd"
       },
       {
         "file": "pages/data/fits.html",
@@ -9484,7 +9484,7 @@ window.OffPrintSearch = {
           "id": "see-it",
           "title": "See a subset and a separate group",
           "level": 2,
-          "text": "All reviewed samples came from the current collection, so their circle sits inside it. The reference samples came from a separate collection. When two groups contain the same members, their labels share one circle. Collections Start with current and reference samples. Review Reveal the count of reviewed samples inside the current collection. Region Count Samples Current only 3 S01, S03, S05 Current and reviewed only 2 S02, S04 Reference only 4 R01, R02, R03, R04 Illustrative sample membership. The layout comes from the sample IDs. Try it Advance to Review, point at the count inside the green circle, and select it. Open Table to find the same highlighted row."
+          "text": "All reviewed samples came from the current collection, so their circle sits inside it. The reference samples came from a separate collection. When two groups contain the same members, their labels share one circle. Region Count Samples Current only 3 S01, S03, S05 Current and reviewed only 2 S02, S04 Reference only 4 R01, R02, R03, R04 Illustrative sample membership. The layout comes from the sample IDs. Try it Hover inside the green circle to see the reviewed samples. Click the region to select it, then open Table to find the same highlighted row."
         },
         {
           "id": "named-source",
@@ -9496,7 +9496,7 @@ window.OffPrintSearch = {
           "id": "for-every-reader",
           "title": "Read by keyboard or table",
           "level": 2,
-          "text": "Tab to a plot and use the arrow keys to read its regions. Press Enter or Space to select a region in the sample example. Table view includes zero counts. Reader export keeps the reveal steps in the current view, and Interactive export restores the selected region."
+          "text": "Tab to a plot and use the arrow keys to read its regions. Press Enter or Space to select a region in the sample example. Table view includes zero counts. Interactive export restores the selected region."
         },
         {
           "id": "related",
@@ -9515,6 +9515,11 @@ window.OffPrintSearch = {
           "text": "On request",
           "term": "on request",
           "section": ""
+        },
+        {
+          "text": "Hover",
+          "term": "hover",
+          "section": "see-it"
         }
       ],
       "outline": [

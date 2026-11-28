@@ -500,6 +500,8 @@ test('Interactive Gantt charts restore selection, collapsed groups, and layer to
     add(list, 'li', '', { 'data-op-key': 'api', 'data-op-group': 'Build', 'data-op-start': '2026-06-04',
       'data-op-duration': '4', 'data-op-depends': 'design', 'data-op-planned-start': '2026-06-03',
       'data-op-planned-end': '2026-06-06' }, 'API');
+    add(list, 'li', '', { 'data-op-key': 'prep', 'data-op-group': 'Build', 'data-op-start': '2026-06-02',
+      'data-op-end': '2026-06-03' }, 'Prep');
     add(list, 'li', '', { 'data-op-key': 'ship', 'data-op-start': '2026-06-08', 'data-op-milestone': '',
       'data-op-depends': 'api' }, 'Ship');
     const runtime = await p.hydrate(payload, shared, new AbortController().signal, saved);
@@ -512,8 +514,16 @@ test('Interactive Gantt charts restore selection, collapsed groups, and layer to
   assert.equal(first.controller.snapshot().key, 'design');
   assert.equal(first.controller.snapshot().critical, true);
   assert.deepEqual(Array.from(first.view.layers()), ['critical', 'planned']);
+  const apiArrow = () => descendants(first.host).find(node => node.getAttribute('data-op-to') === 'api')
+    .children.find(node => node.getAttribute('class') === 'op-gantt-link-head').getAttribute('d');
+  const apiBar = descendants(first.host).find(node => node.getAttribute('data-op-key') === 'api' && node.localName === 'button')
+    .children.find(node => node.className === 'op-gantt-bar');
+  assert.ok(apiArrow().startsWith(`M${parseFloat(apiBar.style.left)} `));
   first.controller.select('ship');
   assert.equal(first.view.setCollapsed('Build', true), true);
+  const summary = descendants(first.host).find(node => node.className === 'op-gantt-summary');
+  assert.ok(parseFloat(summary.style.left) < parseFloat(apiBar.style.left));
+  assert.ok(apiArrow().startsWith(`M${parseFloat(summary.style.left)} `));
   assert.equal(first.view.setLayer('planned', false), true);
   assert.equal(first.host.classList.contains('op-gantt-hide-planned'), true);
 

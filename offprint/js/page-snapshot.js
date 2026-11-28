@@ -10,7 +10,7 @@
     '.op-step-label-bold,.op-code-copy,.op-step-search,.op-tree-bar,.op-tree-twisty,.op-choices-glider,' +
     '.op-dropzone-hint,.op-dropzone-prompt,' +
     '.op-pill-button,.op-anim-scrub,.op-chart-reset,.op-chart-toggle,.op-filter-toggle,.op-filter-clear,' +
-    '.op-tree-diagram-toggle,.op-glossary-clear,.op-facets-clear,.op-dropzone input,.op-dropzone button,.op-data-more button';
+    '.op-tree-diagram-toggle,.op-gantt-toggle,.op-gantt-layers,.op-glossary-clear,.op-facets-clear,.op-dropzone input,.op-dropzone button,.op-data-more button';
   var embeds = 'iframe,frame,object,embed,portal,fencedframe';
   var stepAttributes = ['data-op-reader-steps', 'data-op-reader-step-svg', 'data-op-reader-step-detail'];
   var declarative = 'script:not([src])[type="application/json"],script:not([src])[data-op-source],' +

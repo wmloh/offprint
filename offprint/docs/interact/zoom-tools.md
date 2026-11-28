@@ -10,10 +10,10 @@ Enable `zoom-tools`, which includes `zoom`. The add-on listens for the zoom life
 | `pen` | 4 | Thin ink. |
 | `highlighter` | 5 | Wide translucent ink. |
 | `eraser` | 7 | Shown first in the ink group, left of the swatches, only while pen, highlighter, or eraser is chosen. Drag a gray ring; any pen or highlighter stroke it touches is removed whole. 7 or the button returns to the last ink tool. |
-| `measure` | 6 | Crosshair with a chart data readout or a timeline axis and lane readout. For other figures, drag a ruler in SVG units or image pixels. Hold Shift to constrain the ruler. |
+| `measure` | 6 | Crosshair with a chart data readout, a timeline axis and lane readout, or a Gantt date and row readout. For other figures, drag a ruler in SVG units or image pixels. Hold Shift to constrain the ruler. |
 
 - Ink modes remember their own swatch within the session and expose Undo (Ctrl or Cmd+Z), which reverses the last stroke or erase, and Clear, which cannot be undone. Closing discards ink, measurement, and tool state. Tool keys follow toolbar order; on sequence and tree diagrams, which have no measure tool, 6 does nothing. Tool shortcuts skip typing fields. The magnifier's cloned content is inert and has IDs removed.
-- The crosshair follows the current chart or timeline scale. Sequence and tree diagrams offer every tool except measure.
+- The crosshair follows the current chart, timeline, or Gantt scale. Sequence and tree diagrams offer every tool except measure.
 - Tool buttons use [control hints](../reading/tooltips.md) naming the tool and key.
 
 [Figure zoom](figure-zoom.md) · [Charts](../data/charts.md) · [Source](../../js/zoomtools.js)

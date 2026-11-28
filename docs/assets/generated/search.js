@@ -271,6 +271,14 @@ window.OffPrintSearch = {
             "reading interface"
           ]
         },
+        "critical path": {
+          "title": "critical path",
+          "text": "The chain of tasks that sets a plan's finish date: if any of them is late, the whole plan finishes late.",
+          "more": "",
+          "tags": [
+            "interaction"
+          ]
+        },
         "cross reference": {
           "title": "cross-reference",
           "text": "A link to a numbered figure, table, or equation elsewhere, such as \"see Figure 2\", that shows a preview on hover.",
@@ -579,6 +587,14 @@ window.OffPrintSearch = {
             "computer basics"
           ]
         },
+        "gantt chart": {
+          "title": "Gantt chart",
+          "text": "A chart of a plan with one row per task, each drawn as a bar along a time axis, and arrows showing which tasks wait for which.",
+          "more": "",
+          "tags": [
+            "interaction"
+          ]
+        },
         "glossary": {
           "title": "glossary",
           "text": "A list of terms and their meanings. This site's glossary page also links to where each term is used.",
@@ -828,6 +844,14 @@ window.OffPrintSearch = {
           "more": "",
           "tags": [
             "data and charts"
+          ]
+        },
+        "milestone": {
+          "title": "milestone",
+          "text": "A single moment in a plan, such as a release or a deadline, drawn as a diamond rather than a bar.",
+          "more": "",
+          "tags": [
+            "interaction"
           ]
         },
         "normalization": {
@@ -1450,6 +1474,14 @@ window.OffPrintSearch = {
             "writing"
           ]
         },
+        "task dependency": {
+          "title": "task dependency",
+          "text": "A rule that one task has to wait for another, such as starting only once the other finishes. Gantt charts draw it as an arrow.",
+          "more": "",
+          "tags": [
+            "interaction"
+          ]
+        },
         "tex": {
           "title": "TeX",
           "text": "A widely used way of writing mathematical formulas as plain text, which OffPrint turns into neatly typeset maths.",
@@ -1513,6 +1545,14 @@ window.OffPrintSearch = {
           "more": "",
           "tags": [
             "writing"
+          ]
+        },
+        "total float": {
+          "title": "total float",
+          "text": "How long a task can slip without moving the plan's finish date. Tasks on the critical path have none.",
+          "more": "",
+          "tags": [
+            "interaction"
           ]
         },
         "tree": {
@@ -1747,6 +1787,12 @@ window.OffPrintSearch = {
         "sha256": "e59c13f82934b2b7499ea3e5927de57e40cd076b337ef7d8edca72e8b7932f01"
       },
       {
+        "file": "pages/explain/gantt.html",
+        "path": "../pages/explain/gantt.html",
+        "title": "Gantt charts",
+        "sha256": "2fce7e5a2d9526c6b2217f47d6bf386839a93a3ca86d6ea58e4b83e1fabb4576"
+      },
+      {
         "file": "pages/explain/sequences.html",
         "path": "../pages/explain/sequences.html",
         "title": "Sequence diagrams",
@@ -1900,7 +1946,7 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "c44d77fdb1b48513fa52f0b678d6a5264c24627d680db23088715ece10face33"
+        "sha256": "87918f055d6118957be86293da7e59c3a75e4d1a2f17c364f0c13d208add327f"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -6255,6 +6301,262 @@ window.OffPrintSearch = {
         {
           "id": "what-it-does",
           "title": "Points, spans, and lanes",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "path": "../pages/explain/gantt.html",
+      "title": "Gantt charts",
+      "sections": [
+        {
+          "id": "",
+          "title": "Gantt charts",
+          "level": 1,
+          "text": "Explain step by step A Gantt chart gives every task its own row on one time axis, with arrows for the task dependencies between them. It works out which tasks set the finish date, so readers can see what may slip and what may not. Official name Gantt charts · Detail panes Turned on On request Signal strength Strong Works with Linked selection, worked-example steppers, named data sources, and zoom tools Good for Project plans, release schedules, experiment campaigns, and status reports"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "1–3 June · Agree the brief · done 4–10 June · Writing · Draft chapter · after the brief · 85% done 5–9 June · Writing · Prepare figures · a day after drafting starts · done 11–15 June · Review · Edit chapter · after the draft 11–12 June · Review · Proof figures · after the figures 16 June · Publish · after editing and proofing Agree the brief. Settle the audience and the examples. Done on time. Draft chapter. Write the walkthrough. It started on plan but runs two days longer, which pushes editing and the publish date back. Prepare figures. Starts a day after drafting starts, so the examples exist to draw from. Finished, with four days to spare. Writing. The group row spans its two tasks. Collapse it to see the plan at a glance. Edit chapter. Can only start once the draft is finished. It is on the critical path, so any delay here moves the publish date. Proof figures. Waits for the figures and has three days of float. Review. Editing and proofing run side by side. Publish. A milestone: one moment, drawn as a diamond. Planned for 12 June, now 16 June. Chapter plan, with progress reported as of 10 June. Weekends are shaded. Try it Move your pointer down the rows and read each detail. Turn the Critical path and Planned dates chips off and on. Then collapse the Writing group with its arrow: the arrows into and out of it now meet the group row."
+        },
+        {
+          "id": "what-it-does",
+          "title": "Tasks, milestones, and groups",
+          "level": 2,
+          "text": "Each task has a start and either an end or a length. With calendar dates, the end date is included, so 4–10 June is seven days, and a length counts days. A milestone marks a single moment, such as a release, and is drawn as a diamond. The filled part of a bar shows how much of the task is done. Tasks that share a group appear together under a group row. The group's bar runs from its earliest start to its latest finish, and the arrow beside its name folds it away. The axis can also use plain numbers, such as days from kickoff or weeks of an experiment; put the unit in the caption."
+        },
+        {
+          "id": "dependencies",
+          "title": "Dependencies",
+          "level": 2,
+          "text": "An arrow means one task has to wait for another. Most arrows are finish to start: the next task starts when the previous one finishes. Three other kinds cover work that overlaps. Any of them can add a lag, such as “a day after drafting starts”. When the dates break a dependency, the arrow turns into a dashed orange line and the late task is outlined, so the problem is easy to spot. Days 0–4 · Pour foundation Days 4–9 · Frame walls · finish to start Days 6–10 · Run wiring · starts 2 days after framing starts Days 8–11 · Inspect wiring · finishes a day after wiring finishes Days 1–5 · Site lighting · runs until framing starts Days 10–13 · Paint walls · should wait for the inspection, but starts a day early The four kinds of dependency, in days from the start of work. Painting starts before the inspection ends, so its dependency is not met. Kind Means In the chart Finish to start B starts after A finishes Framing waits for the foundation Start to start B starts after A starts Wiring starts two days into framing Finish to finish B finishes after A finishes The inspection ends a day after wiring Start to finish B finishes after A starts Site lighting runs until framing starts A loop of dependencies, where a task ends up waiting for itself, cannot be scheduled. The chart refuses it, names the loop in the page’s problem report, and keeps the written list on the page instead."
+        },
+        {
+          "id": "critical-path",
+          "title": "The critical path and float",
+          "level": 2,
+          "text": "The critical path is the chain of tasks that sets the finish date: if any of them slips, the finish slips too. The chart works it out from the dates and arrows and outlines those tasks and arrows in red. Every other task has total float, the time it can slip without moving the finish. In the chapter plan, Proof figures has three days of float, while Edit chapter has none. Each row’s hint and the readout name the float."
+        },
+        {
+          "id": "planned-and-progress",
+          "title": "Plan, progress, and status",
+          "level": 2,
+          "text": "A thin grey bar under a task shows when it was planned, so a slipped task stands out at once. The purple as of line marks the date the progress was reported. It is written into the page rather than read from a clock, so the chart says the same thing whenever it is opened."
+        },
+        {
+          "id": "reveal-steps",
+          "title": "Reveal a plan step by step",
+          "level": 2,
+          "text": "Tasks and layers can appear one step at a time, following a worked-example stepper or other step controls. Here the first step shows the work already agreed, the next adds the review tasks, and the last two bring in the critical path and the status line. Agreed work The brief and the draft are settled. Add the review Editing waits for the draft; the milestone waits for editing. Find the critical path Every task here is on it, because each one waits for the last. Report status As of 10 June, the draft is nearly done. 1–3 June · Agree the brief 4–10 June · Draft chapter 11–15 June · Edit chapter 16 June · Publish The chapter’s main path, revealed one step at a time."
+        },
+        {
+          "id": "named-source",
+          "title": "Read tasks from a data source",
+          "level": 3,
+          "text": "This chart reads a CSV data source of the same plan in days from kickoff. Dependencies sit in one column, written as a task key with an optional kind and lag, such as draft:SS+1. It shares task keys with the charts above through linked selection. Days 0–3 · Agree the brief Days 3–10 · Writing · Draft chapter Days 4–9 · Writing · Prepare figures Days 10–15 · Review · Edit chapter Days 10–12 · Review · Proof figures Day 15 · Publish The same plan in days from kickoff. The Writing group starts collapsed. Try it Select Prepare figures in the first chart: this chart opens its Writing group to show the same task. Then click the background of either chart to enlarge it, choose the measure tool with 6, and point at a row to read its date and name."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use a Gantt chart when tasks wait for each other and the finish date matters. For events in parallel lanes without dependencies, a timeline is lighter, and for a strict order of steps without dates, a pipeline diagram or stepper fits better. Keep it to a few dozen rows; split a larger plan into one chart per phase."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "Tab reaches the selected row. ↑ and ↓ move between rows, Home and End jump to the ends, and on a group row ← and → fold and unfold it. Every row’s name reads out its dates, progress, dependencies, and float. On a phone the chart scrolls sideways inside the figure. Print shows a list of every row, and with scripts off the written list and every detail stay readable."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "Timeline diagrams for events in lanes without dependencies Linked selection and steppers, used by the examples above Gantt reference for markup, data fields, and how float is worked out Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "Gantt chart",
+          "term": "gantt chart",
+          "section": ""
+        },
+        {
+          "text": "time axis",
+          "term": "time axis",
+          "section": ""
+        },
+        {
+          "text": "task dependencies",
+          "term": "task dependency",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "critical path",
+          "term": "critical path",
+          "section": "see-it"
+        },
+        {
+          "text": "milestone",
+          "term": "milestone",
+          "section": "see-it"
+        },
+        {
+          "text": "Critical path",
+          "term": "critical path",
+          "section": "see-it"
+        },
+        {
+          "text": "milestone",
+          "term": "milestone",
+          "section": "what-it-does"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "what-it-does"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "what-it-does"
+        },
+        {
+          "text": "dependency",
+          "term": "dependency",
+          "section": "dependencies"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "dependencies"
+        },
+        {
+          "text": "critical path",
+          "term": "critical path",
+          "section": "critical-path"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "critical-path"
+        },
+        {
+          "text": "total float",
+          "term": "total float",
+          "section": "critical-path"
+        },
+        {
+          "text": "readout",
+          "term": "readout",
+          "section": "critical-path"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "planned-and-progress"
+        },
+        {
+          "text": "critical path",
+          "term": "critical path",
+          "section": "reveal-steps"
+        },
+        {
+          "text": "milestone",
+          "term": "milestone",
+          "section": "reveal-steps"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "named-source"
+        },
+        {
+          "text": "CSV",
+          "term": "csv",
+          "section": "named-source"
+        },
+        {
+          "text": "data source",
+          "term": "data source",
+          "section": "named-source"
+        },
+        {
+          "text": "Gantt chart",
+          "term": "gantt chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "markup",
+          "term": "markup",
+          "section": "related"
+        }
+      ],
+      "outline": [
+        {
+          "id": "gantt-charts",
+          "title": "Gantt charts",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Tasks, milestones, and groups",
+          "level": 2
+        },
+        {
+          "id": "dependencies",
+          "title": "Dependencies",
+          "level": 2
+        },
+        {
+          "id": "critical-path",
+          "title": "The critical path and float",
+          "level": 2
+        },
+        {
+          "id": "planned-and-progress",
+          "title": "Plan, progress, and status",
+          "level": 2
+        },
+        {
+          "id": "reveal-steps",
+          "title": "Reveal a plan step by step",
           "level": 2
         },
         {
@@ -11362,7 +11664,7 @@ window.OffPrintSearch = {
           "id": "explain-step-by-step",
           "title": "Explain step by step",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Detail panes Choose a card to see its details beside or below it. Figure steps On request Strong Detail panes; SVG animations for moving steps Show the state of a figure that matches each step. Pipeline diagrams On request Strong Detail panes; Linked selection to follow a stepper Show the stages of a process as connected blocks with details on hover. Choice groups On request Medium Base layout Pick one or several options from chips or a searchable list. Detail panes On request Strong Base layout Show more about the selected card, step, block, or event anywhere on the page. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change; Linked selection for shared choices Let readers change values with sliders, chips, or searchable lists, and link them to charts or blocks that appear on cue. Quizzes On request Strong SVG charts; Named data sources for quizzes kept in files Check understanding with timed quiz stacks and a results chart. Sequence diagrams On request Strong Detail panes; Data for named sources Show messages between participants in order. Tree diagrams On request Strong Detail panes; Data for named sources Explore a hierarchy with collapsible branches. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Step sequences On request Strong A stepped feature, such as a stepper or figure steps Share one set of step controls and keep stepped views in sync. Tabs On request Strong Base layout Switch among related panels in the same space. Timeline diagrams On request Strong Detail panes; Data for named sources Show milestones and durations in lanes on one time axis. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
+          "text": "Feature Availability Signal strength Needs Purpose Card panels On request Strong Detail panes Choose a card to see its details beside or below it. Figure steps On request Strong Detail panes; SVG animations for moving steps Show the state of a figure that matches each step. Pipeline diagrams On request Strong Detail panes; Linked selection to follow a stepper Show the stages of a process as connected blocks with details on hover. Choice groups On request Medium Base layout Pick one or several options from chips or a searchable list. Detail panes On request Strong Base layout Show more about the selected card, step, block, or event anywhere on the page. Figure zoom On request Quiet Base layout and a figure or image Open a figure full screen and return it to the page. Gantt charts On request Strong Detail panes and choice chips; Data for named sources Plan tasks with dependency arrows, progress, planned dates, and the critical path. Linked selection On request Loud Base layout and matching items in linked views Highlight the same choice wherever it appears. Parameters On request Medium Base layout and values for readers to change; Linked selection for shared choices Let readers change values with sliders, chips, or searchable lists, and link them to charts or blocks that appear on cue. Quizzes On request Strong SVG charts; Named data sources for quizzes kept in files Check understanding with timed quiz stacks and a results chart. Sequence diagrams On request Strong Detail panes; Data for named sources Show messages between participants in order. Tree diagrams On request Strong Detail panes; Data for named sources Explore a hierarchy with collapsible branches. SVG animations On request Strong Base layout and an SVG picture Play or step through changes in a drawing. Scroll reveals On request Medium Base layout Bring a block gently into view as the reader scrolls. Step sequences On request Strong A stepped feature, such as a stepper or figure steps Share one set of step controls and keep stepped views in sync. Tabs On request Strong Base layout Switch among related panels in the same space. Timeline diagrams On request Strong Detail panes; Data for named sources Show milestones and durations in lanes on one time axis. Worked-example steppers On request Strong Base layout and an ordered sequence Walk through an example with Previous, Next, and Reset. Zoom tools On request Loud Figure zoom Point, magnify, draw, or measure on an enlarged figure."
         },
         {
           "id": "show-data",

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gantt charts · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
+    { "features": { "gantt": true, "stepper": true, "selection": true, "data": true, "zoom-tools": true } }
+  </script>
+  <script src="../../../offprint/offprint.js"></script>
+</head>
+<body>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
+  </nav>
+
+  <main class="op-page">
+    <header>
+      <p class="op-eyebrow">Explain step by step</p>
+      <h1>Gantt charts</h1>
+      <p>A <span data-op-term>Gantt chart</span> gives every task its own row on one time axis, with arrows for the <span data-op-term="task dependency">task dependencies</span> between them. It works out which tasks set the finish date, so readers can see what may slip and what may not.</p>
+      <dl class="op-fields">
+        <dt>Official name</dt><dd>Gantt charts · Detail panes</dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
+        <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
+        <dt>Works with</dt><dd><a href="selection.html">Linked selection</a>, <a href="steppers.html">worked-example steppers</a>, <a href="../data/sources.html">named data sources</a>, and <a href="zoom.html#zoom-tools">zoom tools</a></dd>
+        <dt>Good for</dt><dd>Project plans, release schedules, experiment campaigns, and status reports</dd>
+      </dl>
+    </header>
+
+    <h2 id="see-it">See it</h2>
+    <figure class="op-gantt" id="chapter-plan" data-op-zoom data-op-weekends data-op-as-of="2026-06-10"
+            data-op-selection-group="chapter-plan">
+      <ol class="op-gantt-tasks">
+        <li data-op-key="brief" data-op-start="2026-06-01" data-op-end="2026-06-03" data-op-progress="100"
+            data-op-planned-start="2026-06-01" data-op-planned-end="2026-06-03" data-op-label="Agree the brief">1–3 June · Agree the brief · done</li>
+        <li data-op-key="draft" data-op-group="Writing" data-op-start="2026-06-04" data-op-end="2026-06-10" data-op-progress="85"
+            data-op-depends="brief" data-op-planned-start="2026-06-04" data-op-planned-end="2026-06-08" data-op-label="Draft chapter" data-op-initial>4–10 June · Writing · Draft chapter · after the brief · 85% done</li>
+        <li data-op-key="figures" data-op-group="Writing" data-op-start="2026-06-05" data-op-duration="5" data-op-progress="100"
+            data-op-depends="draft:SS+1" data-op-planned-start="2026-06-05" data-op-planned-end="2026-06-09" data-op-label="Prepare figures">5–9 June · Writing · Prepare figures · a day after drafting starts · done</li>
+        <li data-op-key="edit" data-op-group="Review" data-op-start="2026-06-11" data-op-end="2026-06-15"
+            data-op-depends="draft" data-op-planned-start="2026-06-09" data-op-planned-end="2026-06-12" data-op-label="Edit chapter">11–15 June · Review · Edit chapter · after the draft</li>
+        <li data-op-key="proof" data-op-group="Review" data-op-start="2026-06-11" data-op-duration="2"
+            data-op-depends="figures" data-op-label="Proof figures">11–12 June · Review · Proof figures · after the figures</li>
+        <li data-op-key="publish" data-op-start="2026-06-16" data-op-milestone data-op-depends="edit proof"
+            data-op-planned-start="2026-06-12" data-op-label="Publish">16 June · Publish · after editing and proofing</li>
+      </ol>
+      <div class="op-detail-pane">
+        <p data-op-key="brief"><strong>Agree the brief.</strong> Settle the audience and the examples. Done on time.</p>
+        <p data-op-key="draft"><strong>Draft chapter.</strong> Write the walkthrough. It started on plan but runs two days longer, which pushes editing and the publish date back.</p>
+        <p data-op-key="figures"><strong>Prepare figures.</strong> Starts a day after drafting starts, so the examples exist to draw from. Finished, with four days to spare.</p>
+        <p data-op-key="Writing"><strong>Writing.</strong> The group row spans its two tasks. Collapse it to see the plan at a glance.</p>
+        <p data-op-key="edit"><strong>Edit chapter.</strong> Can only start once the draft is finished. It is on the critical path, so any delay here moves the publish date.</p>
+        <p data-op-key="proof"><strong>Proof figures.</strong> Waits for the figures and has three days of float.</p>
+        <p data-op-key="Review"><strong>Review.</strong> Editing and proofing run side by side.</p>
+        <p data-op-key="publish"><strong>Publish.</strong> A milestone: one moment, drawn as a diamond. Planned for 12 June, now 16 June.</p>
+      </div>
+      <figcaption>Chapter plan, with progress reported as of 10 June. Weekends are shaded.</figcaption>
+    </figure>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Move your pointer down the rows and read each detail. Turn the <strong>Critical path</strong> and <strong>Planned dates</strong> chips off and on. Then collapse the <strong>Writing</strong> group with its arrow: the arrows into and out of it now meet the group row.</p>
+
+    <h2 id="what-it-does">Tasks, milestones, and groups</h2>
+    <p>Each task has a start and either an end or a length. With calendar dates, the end date is included, so 4–10 June is seven days, and a length counts days. A <span data-op-term>milestone</span> marks a single moment, such as a release, and is drawn as a diamond. The filled part of a bar shows how much of the task is done.</p>
+    <p>Tasks that share a group appear together under a group row. The group's bar runs from its earliest start to its latest finish, and the arrow beside its name folds it away. The axis can also use plain numbers, such as days from kickoff or weeks of an experiment; put the unit in the caption.</p>
+
+    <h2 id="dependencies">Dependencies</h2>
+    <p>An arrow means one task has to wait for another. Most arrows are <em>finish to start</em>: the next task starts when the previous one finishes. Three other kinds cover work that overlaps. Any of them can add a lag, such as “a day after drafting starts”. When the dates break a dependency, the arrow turns into a dashed orange line and the late task is outlined, so the problem is easy to spot.</p>
+    <figure class="op-gantt" id="dependency-kinds" data-op-zoom>
+      <ol class="op-gantt-tasks">
+        <li data-op-key="pour" data-op-start="0" data-op-end="4" data-op-label="Pour foundation">Days 0–4 · Pour foundation</li>
+        <li data-op-key="frame" data-op-start="4" data-op-end="9" data-op-depends="pour" data-op-label="Frame walls">Days 4–9 · Frame walls · finish to start</li>
+        <li data-op-key="wire" data-op-start="6" data-op-end="10" data-op-depends="frame:SS+2" data-op-label="Run wiring">Days 6–10 · Run wiring · starts 2 days after framing starts</li>
+        <li data-op-key="inspect" data-op-start="8" data-op-end="11" data-op-depends="wire:FF+1" data-op-label="Inspect wiring">Days 8–11 · Inspect wiring · finishes a day after wiring finishes</li>
+        <li data-op-key="lights" data-op-start="1" data-op-end="5" data-op-depends="frame:SF" data-op-label="Site lighting">Days 1–5 · Site lighting · runs until framing starts</li>
+        <li data-op-key="paint" data-op-start="10" data-op-end="13" data-op-depends="inspect" data-op-label="Paint walls">Days 10–13 · Paint walls · should wait for the inspection, but starts a day early</li>
+      </ol>
+      <figcaption>The four kinds of dependency, in days from the start of work. Painting starts before the inspection ends, so its dependency is not met.</figcaption>
+    </figure>
+    <table>
+      <thead><tr><th scope="col">Kind</th><th scope="col">Means</th><th scope="col">In the chart</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Finish to start</th><td>B starts after A finishes</td><td>Framing waits for the foundation</td></tr>
+        <tr><th scope="row">Start to start</th><td>B starts after A starts</td><td>Wiring starts two days into framing</td></tr>
+        <tr><th scope="row">Finish to finish</th><td>B finishes after A finishes</td><td>The inspection ends a day after wiring</td></tr>
+        <tr><th scope="row">Start to finish</th><td>B finishes after A starts</td><td>Site lighting runs until framing starts</td></tr>
+      </tbody>
+    </table>
+    <p>A loop of dependencies, where a task ends up waiting for itself, cannot be scheduled. The chart refuses it, names the loop in the page’s <a href="../reference/troubleshooting.html#reading-problem-reports">problem report</a>, and keeps the written list on the page instead.</p>
+
+    <h2 id="critical-path">The critical path and float</h2>
+    <p>The <span data-op-term>critical path</span> is the chain of tasks that sets the finish date: if any of them slips, the finish slips too. The chart works it out from the dates and arrows and outlines those tasks and arrows in red. Every other task has <span data-op-term>total float</span>, the time it can slip without moving the finish. In the chapter plan, <strong>Proof figures</strong> has three days of float, while <strong>Edit chapter</strong> has none. Each row’s hint and the readout name the float.</p>
+
+    <h2 id="planned-and-progress">Plan, progress, and status</h2>
+    <p>A thin grey bar under a task shows when it was <em>planned</em>, so a slipped task stands out at once. The purple <em>as of</em> line marks the date the progress was reported. It is written into the page rather than read from a clock, so the chart says the same thing whenever it is opened.</p>
+
+    <h2 id="reveal-steps">Reveal a plan step by step</h2>
+    <p>Tasks and layers can appear one step at a time, following a <a href="steppers.html">worked-example stepper</a> or other step controls. Here the first step shows the work already agreed, the next adds the review tasks, and the last two bring in the critical path and the status line.</p>
+    <ol id="plan-steps" data-op-stepper>
+      <li data-op-key="agreed" data-op-initial><strong data-op-step-label>Agreed work</strong> The brief and the draft are settled.</li>
+      <li data-op-key="review"><strong data-op-step-label>Add the review</strong> Editing waits for the draft; the milestone waits for editing.</li>
+      <li data-op-key="critical"><strong data-op-step-label>Find the critical path</strong> Every task here is on it, because each one waits for the last.</li>
+      <li data-op-key="status"><strong data-op-step-label>Report status</strong> As of 10 June, the draft is nearly done.</li>
+    </ol>
+    <figure class="op-gantt" id="stepped-plan" data-op-reveal-sequence="plan-steps" data-op-as-of="2026-06-10"
+            data-op-reveal-critical="critical" data-op-reveal-as-of="status" data-op-selection-group="chapter-plan">
+      <ol class="op-gantt-tasks">
+        <li data-op-key="brief" data-op-start="2026-06-01" data-op-end="2026-06-03" data-op-progress="100">1–3 June · Agree the brief</li>
+        <li data-op-key="draft" data-op-start="2026-06-04" data-op-end="2026-06-10" data-op-progress="85" data-op-depends="brief">4–10 June · Draft chapter</li>
+        <li data-op-key="edit" data-op-start="2026-06-11" data-op-end="2026-06-15" data-op-depends="draft" data-op-reveal-step="review">11–15 June · Edit chapter</li>
+        <li data-op-key="publish" data-op-start="2026-06-16" data-op-milestone data-op-depends="edit" data-op-reveal-step="review">16 June · Publish</li>
+      </ol>
+      <figcaption>The chapter’s main path, revealed one step at a time.</figcaption>
+    </figure>
+
+    <h3 id="named-source">Read tasks from a data source</h3>
+    <p>This chart reads a <span data-op-term>CSV</span> <span data-op-term>data source</span> of the same plan in days from kickoff. Dependencies sit in one column, written as a task key with an optional kind and lag, such as <code>draft:SS+1</code>. It shares task keys with the charts above through <a href="selection.html">linked selection</a>.</p>
+    <script type="text/csv" data-op-source="chapter-days">
+key,label,group,start,end,progress,depends
+brief,Agree the brief,,0,3,100,
+draft,Draft chapter,Writing,3,10,85,brief
+figures,Prepare figures,Writing,4,9,100,draft:SS+1
+edit,Edit chapter,Review,10,15,0,draft
+proof,Proof figures,Review,10,12,0,figures
+publish,Publish,,15,15,,edit proof
+    </script>
+    <figure class="op-gantt" id="chapter-days" data-op-zoom data-op-source="chapter-days" data-op-collapsed="Writing"
+            data-op-selection-group="chapter-plan">
+      <ol class="op-gantt-tasks">
+        <li>Days 0–3 · Agree the brief</li>
+        <li>Days 3–10 · Writing · Draft chapter</li>
+        <li>Days 4–9 · Writing · Prepare figures</li>
+        <li>Days 10–15 · Review · Edit chapter</li>
+        <li>Days 10–12 · Review · Proof figures</li>
+        <li>Day 15 · Publish</li>
+      </ol>
+      <figcaption>The same plan in days from kickoff. The Writing group starts collapsed.</figcaption>
+    </figure>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Select <strong>Prepare figures</strong> in the first chart: this chart opens its Writing group to show the same task. Then click the background of either chart to enlarge it, choose the measure tool with <kbd>6</kbd>, and point at a row to read its date and name.</p>
+
+    <h2 id="when-to-use">When to reach for it</h2>
+    <p>Use a Gantt chart when tasks wait for each other and the finish date matters. For events in parallel lanes without dependencies, a <a href="timelines.html">timeline</a> is lighter, and for a strict order of steps without dates, a <a href="pipelines.html">pipeline diagram</a> or <a href="steppers.html">stepper</a> fits better. Keep it to a few dozen rows; split a larger plan into one chart per phase.</p>
+
+    <h2 id="for-every-reader">For every reader</h2>
+    <p><kbd>Tab</kbd> reaches the selected row. <kbd>↑</kbd> and <kbd>↓</kbd> move between rows, <kbd>Home</kbd> and <kbd>End</kbd> jump to the ends, and on a group row <kbd>←</kbd> and <kbd>→</kbd> fold and unfold it. Every row’s name reads out its dates, progress, dependencies, and float. On a phone the chart scrolls sideways inside the figure. Print shows a list of every row, and with scripts off the written list and every detail stay readable.</p>
+
+    <h2 id="related">Related</h2>
+    <ul>
+      <li><a href="timelines.html">Timeline diagrams</a> for events in lanes without dependencies</li>
+      <li><a href="selection.html">Linked selection</a> and <a href="steppers.html">steppers</a>, used by the examples above</li>
+      <li><a href="../../../offprint/docs/diagram/gantt.md">Gantt reference</a> for markup, data fields, and how float is worked out</li>
+      <li><a href="../reference/features.html">Feature directory</a></li>
+    </ul>
+  </main>
+</body>
+</html>

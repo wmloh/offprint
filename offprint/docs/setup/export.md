@@ -11,7 +11,7 @@ Reading-pill **Export** (footer link when `controls` is off) builds one offline 
 ## Modes
 
 - **Reader** (default): captured page content. Declarative figure steps and their details stay steppable; other controls show their captured state.
-- **Interactive**: restarts the active page's supported built-in controls from authored inputs: card panels and nested controls, timed SVG animations, pipelines, sequences, trees, timelines, charts and playback, linked views, zoom tools. Motion matches the live page (chart tweens and entrances, row animation, autoplay on first view); committed changes replay on revisits within the open file and show in place. Missing inputs or failed startup fall back to that page's Reader capture.
+- **Interactive**: restarts the active page's supported built-in controls from authored inputs: card panels and nested controls, timed SVG animations, pipelines, sequences, trees, timelines, Gantt charts, charts and playback, linked views, zoom tools. Motion matches the live page (chart tweens and entrances, row animation, autoplay on first view); committed changes replay on revisits within the open file and show in place. Missing inputs or failed startup fall back to that page's Reader capture.
 - Interactive embeds authored data automatically. **Include full imported datasets** opts in per page and file revision; preview lists bytes and consumers. A page needing an omitted import uses its Reader capture, which can still show values from that file; reset imports and clear saved data first to exclude them.
 
 ## Exported file

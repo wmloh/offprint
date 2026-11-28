@@ -30,6 +30,7 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     sequence.css: Participant headers, message controls, arrows, and lifelines
     tree-diagram.css: Tree cards, disclosure controls, and animated branch positions
     timeline.css: Responsive timeline axes, lane labels, point and span event controls, and a print list
+    gantt.css: Gantt task rows, bars with progress fills, planned bars, milestones, group summaries and toggles, dependency arrows, critical and unmet highlights, the as-of line, layer chips, weekend shading, and a print list
     zoom.css: Frosted full-screen figure zoom view
     zoomtools.css: Zoom-view tool pill, magnifier lens, laser dot, trace and rings, ink, crosshair and ruler readouts
     bubble.css: Tinted peek bubbles that grow in place, with content blurred except while hovered and scrolling that passes to the page at their ends
@@ -88,8 +89,9 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     sequence-diagram.js: Ordered messages and participant lifelines from markup or named records
     tree-diagram.js: Collapsible visual hierarchy, animated layout, and keyed node selection
     timeline.js: Numeric and calendar timelines from markup or named records, with lane packing, keyed selection, and detail panes
+    gantt.js: Gantt charts from markup or named records with durations, milestones, collapsible groups, right-angled dependency arrows, unmet-link warnings, derived float and critical path, planned bars, progress, an as-of line, layer chips, reveal steps, and keyed selection
     zoom.js: Full-screen images and figures with subscribable state and a teardown event for extensions
-    zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with an eraser, Undo, and Clear, chart and timeline crosshairs, plus a ruler on other figures
+    zoomtools.js: Presentation tools in the zoom view: cursor, live-clone magnifier, laser pointer, pen and highlighter ink with an eraser, Undo, and Clear, chart, timeline, and Gantt crosshairs, plus a ruler on other figures
     bubble.js: Turns details into peek bubbles that smoothly enlarge in place near the viewport centre and shrink back once scrolled past
     refs.js: Numbered figures, tables, and equations, filled reference links with hover previews, and manifest-bibliography citations with a reference list
     notes.js: Inline .op-note footnotes shown as margin sidenotes when there is room, else as hover notes

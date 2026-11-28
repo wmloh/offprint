@@ -10,7 +10,7 @@
   }
 
   var TRIGGERS = '.op-page img, .op-page figure, [data-op-zoom]';
-  var DIAGRAMS = 'figure.op-timeline, figure.op-sequence, figure.op-tree-diagram';
+  var DIAGRAMS = 'figure.op-timeline, figure.op-gantt, figure.op-sequence, figure.op-tree-diagram';
   // Focusable regions without a control role, such as chart plots, still open the zoom view.
   var SKIP = 'a, button, input, select, textarea, label, summary, [contenteditable], [role="button"], [role="link"], ' +
     '[role="tab"], [role="slider"], [role="checkbox"], [role="switch"], [role="option"], [role="menuitem"], ' +

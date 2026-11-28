@@ -64,6 +64,7 @@
     'diagram-core': { needs: ['detail-pane'], script: 'diagram', api: '_diagram' },
     pipeline: { needs: ['diagram-core'], css: ['pipeline'], script: 'pipeline', api: '_pipeline' },
     timeline: { needs: ['diagram-core'], css: ['timeline'], script: 'timeline', api: '_timeline' },
+    gantt: { needs: ['diagram-core', 'choices'], css: ['gantt'], script: 'gantt', api: '_gantt' },
     sequence: { needs: ['diagram-core'], css: ['sequence'], script: 'sequence-diagram', api: '_sequenceDiagram' },
     'tree-diagram': { needs: ['diagram-core'], css: ['tree-diagram'], script: 'tree-diagram', api: '_treeDiagram' },
     'split-views': { needs: ['base'], css: ['reveal'], script: 'reveal', module: 'split-views' },

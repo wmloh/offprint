@@ -1,5 +1,5 @@
 // Presentation tools for the zoom view of zoom.js: a frosted pill with a cursor (the default), a magnifier lens, a
-// laser pointer, pen and highlighter ink, and a crosshair that reads chart and timeline axes.
+// laser pointer, pen and highlighter ink, and a crosshair that reads chart, timeline, and Gantt axes.
 // Letters pick tools while a figure is zoomed. Closing the view discards the ink and returns to the cursor.
 (function (root) {
   'use strict';
@@ -309,9 +309,10 @@
       overlay: overlay, target: target, state: createState(), pointer: null, frame: 0, traces: [], trace: null, ruler: null,
       charts: hostsWithAPI(target, 'op-chart', OffPrint._chart),
       timelines: hostsWithAPI(target, 'op-timeline', OffPrint._timeline),
+      gantts: hostsWithAPI(target, 'op-gantt', OffPrint._gantt),
       observer: null, clone: null, buttons: {}, swatches: []
     };
-    s.crosshair = s.timelines.length > 0 || s.charts.length > 0;
+    s.crosshair = s.timelines.length > 0 || s.gantts.length > 0 || s.charts.length > 0;
     s.presentationOnly = target.classList.contains('op-sequence') || target.classList.contains('op-tree-diagram');
     session = s;
 
@@ -731,6 +732,10 @@
     for (var i = 0; i < s.timelines.length && !hit; i++) {
       hit = OffPrint._timeline.coords(s.timelines[i], x, y);
       if (hit) rows = [[hit.label, hit.value], ['Lane', hit.lane]];
+    }
+    for (var k = 0; k < s.gantts.length && !hit; k++) {
+      hit = OffPrint._gantt.coords(s.gantts[k], x, y);
+      if (hit) rows = [[hit.label, hit.value], ['Row', hit.row]];
     }
     for (var j = 0; j < s.charts.length && !hit; j++) {
       var api = OffPrint._chart.get(s.charts[j]);

@@ -1,6 +1,6 @@
 # Detail panes
 
-Enable `detail-pane` (also loaded by `cards`, `figure-steps`, `pipeline`, `timeline`, `sequence`, and `tree-diagram`). A `.op-detail-pane` shows one direct child at a time, matched by its unique `data-op-key`.
+Enable `detail-pane` (also loaded by `cards`, `figure-steps`, `pipeline`, `timeline`, `gantt`, `sequence`, and `tree-diagram`). A `.op-detail-pane` shows one direct child at a time, matched by its unique `data-op-key`.
 
 ```html
 <div class="op-detail-pane" data-op-detail-for="setup-cards">

@@ -55,7 +55,7 @@
       'figure:has(> [data-op-animation-steps], > script[data-op-animation])',
       '[data-op-scenarios]', '[data-op-matrix]', '[data-op-facets]', '[data-op-stepper]', '[data-op-results]', '[data-op-dropzone]',
       '.op-tree-diagram',
-      '.op-timeline', '.op-sequence', '[data-op-data-view]', '[data-op-source]', 'details', '[data-op-selection-group]'
+      '.op-timeline', '.op-gantt', '.op-sequence', '[data-op-data-view]', '[data-op-source]', 'details', '[data-op-selection-group]'
     ].join(',');
     var counts = new Map();
     var ordinals = new Map();

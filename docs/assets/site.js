@@ -119,6 +119,10 @@ window.OffPrintSite = {
           "path": "../pages/explain/timelines.html"
         },
         {
+          "title": "Gantt charts",
+          "path": "../pages/explain/gantt.html"
+        },
+        {
           "title": "Sequence diagrams",
           "path": "../pages/explain/sequences.html"
         },
@@ -484,6 +488,11 @@ window.OffPrintSite = {
         "figure step": { "tags": ["Interaction"], "text": "One state of a figure that changes as the reader moves through a list of steps." },
         "pipeline diagram": { "tags": ["Interaction"], "text": "A picture of a process as blocks joined by lines, showing which stages lead to which." },
         "junction": { "tags": ["Interaction"], "text": "A small dot in a pipeline diagram where several lines meet before continuing." },
+        "Gantt chart": { "tags": ["Interaction"], "text": "A chart of a plan with one row per task, each drawn as a bar along a time axis, and arrows showing which tasks wait for which." },
+        "task dependency": { "tags": ["Interaction"], "text": "A rule that one task has to wait for another, such as starting only once the other finishes. Gantt charts draw it as an arrow." },
+        "milestone": { "tags": ["Interaction"], "text": "A single moment in a plan, such as a release or a deadline, drawn as a diamond rather than a bar." },
+        "critical path": { "tags": ["Interaction"], "text": "The chain of tasks that sets a plan's finish date: if any of them is late, the whole plan finishes late." },
+        "total float": { "tags": ["Interaction"], "text": "How long a task can slip without moving the plan's finish date. Tasks on the critical path have none." },
         "detail pane": { "tags": ["Interaction"], "text": "A box that shows more about whichever card or block is currently selected." },
         "stepper": { "tags": ["Interaction"], "text": "A control with Previous and Next buttons that moves through an example one step at a time." },
         "worked example": { "tags": ["Interaction"], "text": "A problem solved step by step, showing the reasoning at each step." },

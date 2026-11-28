@@ -939,6 +939,73 @@ test('Interactive diagrams rebuild and restore their authored controls at a move
   await assert.rejects(visit(stale), /committed view could not be restored/);
 });
 
+test('Interactive Gantt charts restore selection, collapsed groups, and layer toggles', async () => {
+  const config = { profile: 'none', features: { gantt: true } };
+  const plan = page({ config }).OP._boot.exportPlan({}, config, null, false);
+  const trusted = { window: { OffPrint: {} } };
+  vm.runInNewContext(fs.readFileSync(new URL('js/export-runtime.js', library), 'utf8'), trusted);
+  const shared = Array.from(plan.scripts, path => trusted.window.OffPrint._exportRuntime[path]);
+  assert.ok(plan.scripts.includes('js/gantt.js') && plan.styles.some(path => /gantt\.css$/.test(path)));
+  const url = 'file:///original/guide/plan.html';
+  const payload = { url, siteURL: url, entryURL: entryURL.href, site: null, profile: null,
+    features: plan.features, styles: plan.styles, modules: Array.from(plan.scripts, (path, i) => [path, i]), data: [],
+    identities: [{ key: ['id', 'plan'], stamp: 'plan' }] };
+
+  async function visit(saved) {
+    const p = page({ config, interactive: true, movedURL: 'file:///elsewhere/plan.html' });
+    const find = (node, selector) => selector.split(',').flatMap(part => {
+      part = part.trim();
+      const direct = part.startsWith(':scope > ');
+      const match = /^([\w-]+)?(?:\.([\w-]+))?(?:\[([\w-]+)\])?$/.exec(direct ? part.slice(9) : part);
+      if (!match) return [];
+      const [, tag, cls, attr] = match;
+      return (direct ? node.children : descendants(node)).filter(el =>
+        (!tag || el.localName === tag) && (!cls || el.className === cls) && (!attr || el.hasAttribute(attr)));
+    });
+    p.body.querySelectorAll = selector => find(p.body, selector);
+    const add = (parent, tag, cls, attrs = {}, label = '') => {
+      const node = parent.appendChild(p.document.createElement(tag));
+      node.className = cls;
+      if (cls) node.classList.add(cls);
+      node.textContent = label;
+      for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
+      node.querySelectorAll = selector => find(node, selector);
+      node.querySelector = selector => find(node, selector)[0] || null;
+      return node;
+    };
+    const host = add(p.body, 'figure', 'op-gantt', { id: 'plan', 'data-op-export-identity': 0 });
+    const list = add(host, 'ol', 'op-gantt-tasks');
+    add(list, 'li', '', { 'data-op-key': 'design', 'data-op-start': '2026-06-01', 'data-op-end': '2026-06-03' }, 'Design');
+    add(list, 'li', '', { 'data-op-key': 'api', 'data-op-group': 'Build', 'data-op-start': '2026-06-04',
+      'data-op-duration': '4', 'data-op-depends': 'design', 'data-op-planned-start': '2026-06-03',
+      'data-op-planned-end': '2026-06-06' }, 'API');
+    add(list, 'li', '', { 'data-op-key': 'ship', 'data-op-start': '2026-06-08', 'data-op-milestone': '',
+      'data-op-depends': 'api' }, 'Ship');
+    const runtime = await p.hydrate(payload, shared, new AbortController().signal, saved);
+    const controller = runtime._gantt.get(host);
+    assert.ok(controller, JSON.stringify(runtime.diagnostics.list().map(issue => issue.message)));
+    return { runtime, controller, view: runtime._gantt.view(host), host };
+  }
+
+  const first = await visit();
+  assert.equal(first.controller.snapshot().key, 'design');
+  assert.equal(first.controller.snapshot().critical, true);
+  assert.deepEqual(Array.from(first.view.layers()), ['critical', 'planned']);
+  first.controller.select('ship');
+  assert.equal(first.view.setCollapsed('Build', true), true);
+  assert.equal(first.view.setLayer('planned', false), true);
+  assert.equal(first.host.classList.contains('op-gantt-hide-planned'), true);
+
+  const restored = await visit(first.runtime._readerState.capture().record);
+  assert.equal(restored.controller.snapshot().key, 'ship');
+  assert.deepEqual(Array.from(restored.view.collapsed()), ['Build']);
+  assert.deepEqual(Array.from(restored.view.layers()), ['critical']);
+  assert.equal(restored.host.classList.contains('op-gantt-hide-planned'), true);
+  // Selecting a task inside a collapsed group opens the group.
+  restored.controller.select('api');
+  assert.deepEqual(Array.from(restored.view.collapsed()), []);
+});
+
 test('the offline entry exposes the extension surface and initializes a custom feature before ready', async () => {
   const p = page({ config: { features: { chart: true, data: true, selection: true } } });
   const phases = [];

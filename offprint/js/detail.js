@@ -159,7 +159,7 @@
     OffPrint._all('.op-detail-pane').forEach(function (pane) {
       // Diagrams link their direct panes during setup.
       var parent = pane.parentElement;
-      var diagram = parent && ['op-pipeline', 'op-timeline', 'op-sequence', 'op-tree-diagram'].some(function (cls) {
+      var diagram = parent && ['op-pipeline', 'op-timeline', 'op-gantt', 'op-sequence', 'op-tree-diagram'].some(function (cls) {
         return parent.classList.contains(cls);
       });
       if (!diagram) setupPane(pane);

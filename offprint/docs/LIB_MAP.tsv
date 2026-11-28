@@ -45,6 +45,7 @@ Scenario comparisons	Compare baseline and variant outcomes on shared scales	inte
 Quizzes	Quiz stacks with choice, fill-in, matching, and custom questions, stopwatch, hints, feedback, and a results chart	interact/quiz.md
 Pipeline diagrams	Connect structured blocks with curved routes, branches, steps, and details	diagram/pipelines.md
 Timeline diagrams	Plot point and span events in lanes on a numeric or calendar axis	diagram/timelines.md
+Gantt charts	Schedule tasks with durations, milestones, groups, dependency arrows, derived float and critical path, planned bars, progress, and an as-of line	diagram/gantt.md
 Sequence diagrams	Show ordered messages between participant lifelines	diagram/sequences.md
 Tree diagrams	Explore a hierarchy with animated collapsible branches	diagram/tree-diagrams.md
 SVG charts	Draw line, bar, scatter, and pie charts with keyed motion	data/charts.md

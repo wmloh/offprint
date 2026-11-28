@@ -12,7 +12,7 @@
   var STEPS = 48;
   var GAP = 28;
   var BAR = 12;
-  var COLORS = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];
+  var scaleFor = OffPrint._chart.colorScale;
   var states = new WeakMap();
   var hosts = new WeakMap();
 
@@ -118,83 +118,6 @@
         });
       })
     };
-  }
-
-  function scaleOptions(option) {
-    var raw = typeof option === 'string' ? { type: option } : option == null ? {} : option;
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-      throw new Error('Heatmap scale must be "sequential", "diverging", "log", or an object with a type.');
-    }
-    var type = raw.type ?? 'sequential';
-    if (!['sequential', 'diverging', 'log'].includes(type)) {
-      throw new Error('Heatmap scale type must be "sequential", "diverging", or "log".');
-    }
-    ['min', 'max', 'mid'].forEach(function (end) {
-      if (raw[end] != null && !(typeof raw[end] === 'number' && Number.isFinite(raw[end]))) {
-        throw new Error('Heatmap scale ' + end + ' must be a finite number.');
-      }
-    });
-    if (raw.mid != null && type !== 'diverging') throw new Error('Only a diverging heatmap scale takes a mid value.');
-    var colors = type === 'diverging' ? raw.colors ?? ['orange', 'blue'] : [raw.color ?? 'blue'];
-    if (!Array.isArray(colors) || colors.length !== (type === 'diverging' ? 2 : 1) ||
-        colors.some(function (name) { return !COLORS.includes(name); })) {
-      throw new Error('Heatmap colours must be palette names: ' + COLORS.join(', ') +
-        (type === 'diverging' ? '; a diverging scale takes colors: [low, high].' : '.'));
-    }
-    return { type: type, min: raw.min ?? null, max: raw.max ?? null, mid: raw.mid ?? null, colors: colors };
-  }
-
-  // A colour scale over the finite values: pos(v) in [0, 1] along the scale, invert(t) back to a value, and
-  // paint(v) -> {hue: 'low' | 'high', alpha} for a cell drawn in its palette hue over the neutral backdrop.
-  function scaleFor(option, values) {
-    var opts = scaleOptions(option);
-    var finite = values.filter(function (v) { return v !== null; });
-    var log = opts.type === 'log';
-    if (log) {
-      if (finite.some(function (v) { return !(v > 0); })) throw new Error('A log heatmap scale needs positive values.');
-      if ((opts.min !== null && !(opts.min > 0)) || (opts.max !== null && !(opts.max > 0))) {
-        throw new Error('Log heatmap scale bounds must be positive.');
-      }
-    }
-    var lo = finite.length ? Math.min.apply(null, finite) : log ? 1 : 0;
-    var hi = finite.length ? Math.max.apply(null, finite) : log ? 10 : 1;
-    var mid = opts.type === 'diverging' ? opts.mid ?? 0 : null;
-    if (mid !== null && opts.min === null && opts.max === null) {
-      var reach = Math.max(Math.abs(hi - mid), Math.abs(mid - lo)) || Math.abs(mid) * 0.1 || 1;
-      lo = mid - reach;
-      hi = mid + reach;
-    } else if (mid !== null) {
-      var arm = Math.max(Math.abs(hi - mid), Math.abs(mid - lo)) || 1;
-      lo = opts.min ?? mid - arm;
-      hi = opts.max ?? mid + arm;
-    }
-    if (mid === null) {
-      if (opts.min !== null) lo = opts.min;
-      if (opts.max !== null) hi = opts.max;
-    }
-    if (lo > hi) throw new Error('The heatmap scale min must be below its max.');
-    if (lo === hi) {
-      if (log) { lo /= 2; hi *= 2; }
-      else { var pad = Math.abs(lo) * 0.1 || 1; lo -= pad; hi += pad; }
-    }
-    if (mid !== null && !(mid > lo && mid < hi)) throw new Error('The diverging heatmap mid must lie between its min and max.');
-    var to = log ? Math.log10 : function (v) { return v; };
-    var from = log ? function (t) { return Math.pow(10, t); } : function (t) { return t; };
-    var a = to(lo);
-    var b = to(hi);
-    var clamp = function (t) { return Math.max(0, Math.min(1, t)); };
-    var scale = {
-      type: opts.type, lo: lo, hi: hi, mid: mid, colors: opts.colors, log: log,
-      pos: function (v) { return clamp((to(v) - a) / (b - a)); },
-      invert: function (t) { return from(a + clamp(t) * (b - a)); },
-      paint: function (v) {
-        if (mid === null) return { hue: 'high', alpha: round(0.1 + 0.85 * scale.pos(v)) };
-        var high = v >= mid;
-        var strength = high ? (Math.min(v, hi) - mid) / (hi - mid) : (mid - Math.max(v, lo)) / (mid - lo);
-        return { hue: high ? 'high' : 'low', alpha: round(0.9 * clamp(strength)) };
-      }
-    };
-    return scale;
   }
 
   function round(v) { return +v.toFixed(3); }

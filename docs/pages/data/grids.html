@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Risk and confusion grids · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
+    {"features": {"chart-grid": true, "selection": true}}
+  </script>
+  <script src="../../../offprint/offprint.js"></script>
+</head>
+<body>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
+  </nav>
+
+  <main class="op-page">
+    <header>
+      <p class="op-eyebrow">Show data</p>
+      <h1>Risk and confusion grids</h1>
+      <p>A grid chart lays out two ordered lists as rows and columns, such as a <span data-op-term="risk matrix">risk matrix</span> that places each risk by how bad and how likely it is, or a <span data-op-term="confusion matrix">confusion matrix</span> that counts how often each true class was predicted as each class. Each cell can hold a value, a coloured zone, and the items that sit there.</p>
+      <dl class="op-fields">
+        <dt>Official name</dt><dd>Categorical grids</dd>
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
+        <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#loud">Loud</a> · <a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
+        <dt>Works with</dt><dd>Named data sources, linked selection, detail panes, annotations, and reveal steps</dd>
+        <dt>Good for</dt><dd>Risk registers, and the results of a classifier or any sorting task</dd>
+      </dl>
+    </header>
+
+    <h2 id="see-it">See it</h2>
+
+    <figure id="see-it-demo">
+      <div data-op-chart="grid" data-op-selection-group="risks">
+        <script type="application/json">
+          {
+            "y": "Impact", "x": "Likelihood", "score": "product",
+            "rows": ["Severe", "Major", "Moderate", "Minor"],
+            "columns": ["Rare", "Unlikely", "Possible", "Likely"],
+            "zones": [
+              {"key": "low", "label": "Low", "color": "green", "score": [1, 3]},
+              {"key": "medium", "label": "Medium", "color": "yellow", "score": [4, 6]},
+              {"key": "high", "label": "High", "color": "red", "score": [8, 16]}
+            ],
+            "items": [
+              {"key": "supplier", "label": "Main supplier stops", "row": "Severe", "column": "Possible", "from": ["Severe", "Likely"], "text": "A second supplier is now under contract."},
+              {"key": "laptop", "label": "Lost laptop", "row": "Moderate", "column": "Possible"},
+              {"key": "backup", "label": "Backups fail", "row": "Major", "column": "Unlikely", "from": ["Major", "Possible"], "text": "Restores are now tested every month."},
+              {"key": "outage", "label": "Cloud outage", "row": "Major", "column": "Possible"},
+              {"key": "staff", "label": "Key person leaves", "row": "Moderate", "column": "Likely"},
+              {"key": "phishing", "label": "Phishing email", "row": "Minor", "column": "Likely"},
+              {"key": "flood", "label": "Office flood", "row": "Severe", "column": "Rare"}
+            ]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Risk</th><th scope="col">Impact</th><th scope="col">Likelihood</th></tr></thead>
+          <tbody>
+            <tr><td>Main supplier stops</td><td>Severe</td><td>Possible (was Likely)</td></tr>
+            <tr><td>Lost laptop</td><td>Moderate</td><td>Possible</td></tr>
+            <tr><td>Backups fail</td><td>Major</td><td>Unlikely (was Possible)</td></tr>
+            <tr><td>Cloud outage</td><td>Major</td><td>Possible</td></tr>
+            <tr><td>Key person leaves</td><td>Moderate</td><td>Likely</td></tr>
+            <tr><td>Phishing email</td><td>Minor</td><td>Likely</td></tr>
+            <tr><td>Office flood</td><td>Severe</td><td>Rare</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>An illustrative risk register. Each numbered dot is a risk. A dashed line shows where a risk sat before its fix took effect.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Move over dot <strong>1</strong>, then follow its dashed line back to where it started. Click a dot to select that risk. Then click the chart and use the arrow keys to walk the cells; press <kbd>]</kbd> to step through the risks in a cell.</p>
+
+    <h2 id="what-it-does">Rows, columns, and what sits in the cells</h2>
+    <p>You list the rows and the columns in the order they should read. For a risk matrix, list impact from worst at the top to mildest at the bottom, and likelihood from rarest at the left. Each cell can carry a number you supply, a set of items, or both. Items are packed into their cell as small numbered dots. When a cell fills up, the last dot becomes a count of the rest, and every item still shows in the readout and the table.</p>
+
+    <h2 id="zones">Colour cells by zone</h2>
+    <p>A zone gives a group of cells one colour and one name, such as High or Low. You can list a zone’s cells yourself, or give it a score range. With score ranges, each row and column gets a rank, counting up from the bottom row and the left column, and a cell’s score is the two ranks multiplied or added together. The first zone whose range holds the score claims the cell. Listed cells always win over score ranges, so you can carve out an exception.</p>
+
+    <h2 id="confusion">Read a confusion matrix</h2>
+    <figure>
+      <div data-op-chart="grid">
+        <script type="application/json">
+          {
+            "y": "Actual", "x": "Predicted", "value": "Images",
+            "rows": [{"key": "cat", "label": "Cat"}, {"key": "dog", "label": "Dog"}, {"key": "fox", "label": "Fox"}],
+            "columns": [{"key": "cat", "label": "Cat"}, {"key": "dog", "label": "Dog"}, {"key": "fox", "label": "Fox"}],
+            "z": [[42, 6, 2], [5, 38, 7], [1, 9, 40]],
+            "diagonal": true, "totals": "both", "metrics": true, "normalize": "none"
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Actual</th><th scope="col">Cat</th><th scope="col">Dog</th><th scope="col">Fox</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Cat</th><td>42</td><td>6</td><td>2</td></tr>
+            <tr><th scope="row">Dog</th><td>5</td><td>38</td><td>7</td></tr>
+            <tr><th scope="row">Fox</th><td>1</td><td>9</td><td>40</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative results of an image classifier on 150 test images. Outlined cells on the diagonal are correct answers.</figcaption>
+    </figure>
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Choose <strong>Row shares</strong>. Each row now adds up to 100%, so you can read what happened to every true fox. Then choose <strong>Column shares</strong> to read what the classifier meant each time it said fox.</p>
+    <p>Each row is a true class and each column a predicted class, so the diagonal holds the correct answers. OffPrint works out the totals, the shares, and two rates from the counts you supply. <span data-op-term="recall">Recall</span>, at the right, is the share of each true class that was found. <span data-op-term="precision">Precision</span>, along the bottom, is the share of each prediction that was right.</p>
+
+    <h2 id="data-sources">From a data file</h2>
+    <p>A grid can read a <a href="sources.html">named data source</a>. Records with a row, a column, and a value fill the cells. Records with a row, a column, and an item name place items, with two optional columns for the cell an item moved from. Rows and columns you have not listed appear in the order they first turn up, so list them when the order matters.</p>
+
+    <h2 id="when-to-use">When to reach for it</h2>
+    <p>Use a risk grid when readers should see at a glance which risks need attention, and use the trails to show what your fixes changed. Use a confusion grid when the mistakes matter as much as the score. To compare several supplied measures in one table, such as counts and percentages side by side, an <a href="comparisons.html#see-it">evaluation matrix</a> fits better. Zones and strong colours are loud, so keep one grid per section.</p>
+
+    <h2 id="for-every-reader">For every reader</h2>
+    <p>The arrow keys move from cell to cell, and the readout names the cell, its zone, its value, and the items in it. <kbd>[</kbd> and <kbd>]</kbd> step through a cell’s items. The normalization chips work with the keyboard like any other chips. Choose Table for the same grid as text, with a second table that lists every item. A grid can also follow a step sequence, so items and zones appear one step at a time. With scripts off, the written table stays readable.</p>
+
+    <h2 id="related">Related</h2>
+    <ul>
+      <li><a href="heatmaps.html">Heatmaps</a>, for large grids of numbers on the same colour scales</li>
+      <li><a href="comparisons.html">Evaluation matrices</a></li>
+      <li><a href="charts.html#annotations">Chart annotations</a></li>
+      <li><a href="../reference/features.html">Feature directory</a></li>
+    </ul>
+  </main>
+</body>
+</html>

@@ -785,7 +785,7 @@
   }
 
   function revealUpdate(follower, detail) {
-    if (revealRead(follower, detail) && follower.onChange) follower.onChange(follower);
+    if (revealRead(follower, detail)) follower.listeners.forEach(function (fn) { fn(follower); });
   }
 
   function revealListen() {
@@ -799,11 +799,17 @@
     });
   }
 
+  // Modules on one host, such as chart layers and the chart type, share its follower and each get onChange.
   function revealFollow(host, onChange) {
     var id = host && host.getAttribute && (host.getAttribute('data-op-reveal-sequence') || '').trim();
     if (!id) return null;
+    var existing = Array.from(revealFollowers).find(function (f) { return f.host === host && f.id === id; });
+    if (existing) {
+      if (onChange) existing.listeners.push(onChange);
+      return existing;
+    }
     var follower = {
-      host: host, id: id, target: null, keys: [], level: -1, resolved: false, onChange: onChange || null,
+      host: host, id: id, target: null, keys: [], level: -1, resolved: false, listeners: onChange ? [onChange] : [],
       // True when an item keyed to step should show now; an unknown step key warns once and shows.
       shown: function (step) {
         if (step === null || step === undefined || step === '' || follower.level === REVEAL_ALL) return true;

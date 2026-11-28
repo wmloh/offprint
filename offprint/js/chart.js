@@ -1182,6 +1182,89 @@
     return el;
   }
 
+  // Value colour scales shared by heatmaps and grids: sequential, diverging, or log over palette names.
+  var SCALE_COLORS = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];
+
+  function colorScaleOptions(option, noun) {
+    var raw = typeof option === 'string' ? { type: option } : option == null ? {} : option;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new Error(noun + ' scale must be "sequential", "diverging", "log", or an object with a type.');
+    }
+    var type = raw.type ?? 'sequential';
+    if (!['sequential', 'diverging', 'log'].includes(type)) {
+      throw new Error(noun + ' scale type must be "sequential", "diverging", or "log".');
+    }
+    ['min', 'max', 'mid'].forEach(function (end) {
+      if (raw[end] != null && !(typeof raw[end] === 'number' && Number.isFinite(raw[end]))) {
+        throw new Error(noun + ' scale ' + end + ' must be a finite number.');
+      }
+    });
+    if (raw.mid != null && type !== 'diverging') throw new Error('Only a diverging ' + noun.toLowerCase() + ' scale takes a mid value.');
+    var colors = type === 'diverging' ? raw.colors ?? ['orange', 'blue'] : [raw.color ?? 'blue'];
+    if (!Array.isArray(colors) || colors.length !== (type === 'diverging' ? 2 : 1) ||
+        colors.some(function (name) { return !SCALE_COLORS.includes(name); })) {
+      throw new Error(noun + ' colours must be palette names: ' + SCALE_COLORS.join(', ') +
+        (type === 'diverging' ? '; a diverging scale takes colors: [low, high].' : '.'));
+    }
+    return { type: type, min: raw.min ?? null, max: raw.max ?? null, mid: raw.mid ?? null, colors: colors };
+  }
+
+  // A colour scale over the finite values: pos(v) in [0, 1] along the scale, invert(t) back to a value, and
+  // paint(v) -> {hue: 'low' | 'high', alpha} for a cell drawn in its palette hue over the neutral backdrop.
+  function colorScale(option, values, noun) {
+    noun = noun || 'Heatmap';
+    var opts = colorScaleOptions(option, noun);
+    var finite = values.filter(function (v) { return v !== null; });
+    var log = opts.type === 'log';
+    if (log) {
+      if (finite.some(function (v) { return !(v > 0); })) throw new Error('A log ' + noun.toLowerCase() + ' scale needs positive values.');
+      if ((opts.min !== null && !(opts.min > 0)) || (opts.max !== null && !(opts.max > 0))) {
+        throw new Error('Log ' + noun.toLowerCase() + ' scale bounds must be positive.');
+      }
+    }
+    var lo = finite.length ? Math.min.apply(null, finite) : log ? 1 : 0;
+    var hi = finite.length ? Math.max.apply(null, finite) : log ? 10 : 1;
+    var mid = opts.type === 'diverging' ? opts.mid ?? 0 : null;
+    if (mid !== null && opts.min === null && opts.max === null) {
+      var reach = Math.max(Math.abs(hi - mid), Math.abs(mid - lo)) || Math.abs(mid) * 0.1 || 1;
+      lo = mid - reach;
+      hi = mid + reach;
+    } else if (mid !== null) {
+      var arm = Math.max(Math.abs(hi - mid), Math.abs(mid - lo)) || 1;
+      lo = opts.min ?? mid - arm;
+      hi = opts.max ?? mid + arm;
+    }
+    if (mid === null) {
+      if (opts.min !== null) lo = opts.min;
+      if (opts.max !== null) hi = opts.max;
+    }
+    if (lo > hi) throw new Error('The ' + noun.toLowerCase() + ' scale min must be below its max.');
+    if (lo === hi) {
+      if (log) { lo /= 2; hi *= 2; }
+      else { var pad = Math.abs(lo) * 0.1 || 1; lo -= pad; hi += pad; }
+    }
+    if (mid !== null && !(mid > lo && mid < hi)) throw new Error('The diverging ' + noun.toLowerCase() + ' mid must lie between its min and max.');
+    var to = log ? Math.log10 : function (v) { return v; };
+    var from = log ? function (t) { return Math.pow(10, t); } : function (t) { return t; };
+    var a = to(lo);
+    var b = to(hi);
+    var clamp = function (t) { return Math.max(0, Math.min(1, t)); };
+    var scale = {
+      type: opts.type, lo: lo, hi: hi, mid: mid, colors: opts.colors, log: log,
+      pos: function (v) { return clamp((to(v) - a) / (b - a)); },
+      invert: function (t) { return from(a + clamp(t) * (b - a)); },
+      paint: function (v) {
+        if (mid === null) return { hue: 'high', alpha: roundScale(0.1 + 0.85 * scale.pos(v)) };
+        var high = v >= mid;
+        var strength = high ? (Math.min(v, hi) - mid) / (hi - mid) : (mid - Math.max(v, lo)) / (mid - lo);
+        return { hue: high ? 'high' : 'low', alpha: roundScale(0.9 * clamp(strength)) };
+      }
+    };
+    return scale;
+  }
+
+  function roundScale(v) { return +v.toFixed(3); }
+
   // Series colour: its role or named colour, else the next chart colour in fixed order.
   function paint(el, s) {
     if (s.role) el.setAttribute('data-op-role', s.role);
@@ -3996,6 +4079,9 @@
     return mappedSpec(records, mapping, base, maxRows || Infinity, null, false).spec;
   };
   chart.paint = paint;
+  chart.describe = describe;
+  chart.colorScale = colorScale;
+  chart.SCALE_COLORS = SCALE_COLORS;
   chart.nearest = nearest;
   chart.normalize = normalize;
   chart.fromTable = fromTable;
@@ -4039,7 +4125,7 @@
     ticks: ticks, logTicks: logTicks, timeTicks: timeTicks, tickFormat: tickFormat, logTickFormat: logTickFormat,
     format: format, toNumber: toNumber, isNum: isNum, extent: extent, intervalReadout: intervalReadout, row: row,
     markId: markId, addMark: addMark, scale: OffPrint.chart.scale, COLORS: COLORS, CHAR: CHAR, inspect: inspectSpot, hide: hide,
-    markBounds: markBounds, wrapLabel: wrapLabel, toTime: toTime, redraw: redraw, hint: function (el, text) { if (OffPrint.util) OffPrint.util.hint(el, text); }
+    markBounds: markBounds, wrapLabel: wrapLabel, colorScale: colorScale, toTime: toTime, redraw: redraw, hint: function (el, text) { if (OffPrint.util) OffPrint.util.hint(el, text); }
   };
   chart.get = function (target) {
     var el = typeof target === 'string' ? document.getElementById(target) : target;

@@ -177,6 +177,10 @@ window.OffPrintSite = {
           "path": "../pages/data/heatmaps.html"
         },
         {
+          "title": "Risk and confusion grids",
+          "path": "../pages/data/grids.html"
+        },
+        {
           "title": "Fits and residuals",
           "path": "../pages/data/fits.html"
         },
@@ -556,6 +560,10 @@ window.OffPrintSite = {
         },
         "fit curve": { "tags": ["Data and charts"], "text": "A line drawn from a model that was fitted to the data elsewhere, such as a straight-line trend. The page draws the points it is given; it does not work out the fit itself." },
         "residual": { "tags": ["Data and charts"], "text": "How far an observation sits from its fitted value: the observed value minus the fitted one. Residuals scattered evenly around zero suggest the fit suits the data." },
+        "risk matrix": { "tags": ["Data and charts"], "text": "A grid that places each risk by how severe it would be and how likely it is, usually with coloured zones that show which risks need attention first." },
+        "confusion matrix": { "tags": ["Data and charts"], "text": "A grid that counts how often each true class was predicted as each class. Correct answers sit on the diagonal; everything else is a mix-up." },
+        "precision": { "tags": ["Data and charts"], "text": "Of everything predicted as a class, the share that really was that class." },
+        "recall": { "tags": ["Data and charts"], "text": "Of everything that really was a class, the share that was predicted as that class." },
         "small multiples": { "tags": ["Data and charts"], "text": "A grid of small charts of the same kind, one per group, drawn on the same scales so they can be compared at a glance." },
         "scatter-plot matrix": { "tags": ["Data and charts"], "text": "A grid of scatter charts that plots every pair of several measurements against each other, with each measurement on the diagonal." },
         "combo chart": { "tags": ["Data and charts"], "text": "A chart that draws some series as bars and others as a line over the same categories or dates, optionally with a second value axis at the right for a different measure." },

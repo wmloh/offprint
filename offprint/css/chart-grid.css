@@ -1,0 +1,125 @@
+/* Categorical grids from chart-grid.js: cells over a neutral backdrop, value hues from the shared heatmap scales, zone
+   tints, an emphasised diagonal, packed item badges with trails from earlier cells, margin totals and rates, the side
+   colour scale, the zone legend, and the normalization chips. */
+.op-chart.is-grid {
+  --op-grid-high: var(--op-blue);
+  --op-grid-low: var(--op-orange);
+}
+
+.op-grid-cell,
+.op-grid-backdrop {
+  fill: var(--op-gray-bg);
+}
+
+.op-grid-cell[data-op-heat],
+.op-grid-swatch {
+  fill: var(--op-grid-high);
+}
+
+:is(.op-grid-cell, .op-grid-swatch)[data-op-heat="low"] {
+  fill: var(--op-grid-low);
+}
+
+.op-grid-cell.is-diagonal {
+  stroke: var(--op-text);
+  stroke-opacity: 0.55;
+  stroke-width: 1.5;
+}
+
+.op-grid-cell.is-active {
+  stroke: var(--op-text);
+  stroke-opacity: 1;
+  stroke-width: 2;
+}
+
+.op-grid-zone {
+  fill: var(--op-accent, var(--op-gray));
+  fill-opacity: 0.32;
+  pointer-events: none;
+}
+
+.op-grid-value {
+  fill: var(--op-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.op-grid-value.is-corner {
+  font-size: 10px;
+  fill: var(--op-text-muted);
+}
+
+.op-grid-value.is-diagonal {
+  font-weight: 600;
+}
+
+.op-grid-item {
+  --op-grid-dot: var(--op-accent, var(--op-text));
+}
+
+.op-grid-dot,
+.op-grid-badge {
+  fill: var(--op-grid-dot, var(--op-text-muted));
+  stroke: var(--op-bg);
+  stroke-width: 1.5;
+}
+
+.op-grid-dot.is-active,
+.op-grid-badge.is-active {
+  stroke: var(--op-text);
+  stroke-width: 2;
+}
+
+.op-grid-dot-text,
+.op-grid-badge-text {
+  fill: var(--op-bg);
+  font-size: 9px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.op-grid-trail {
+  fill: none;
+  stroke: var(--op-grid-dot);
+  stroke-opacity: 0.6;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
+.op-grid-trail-from {
+  fill: none;
+  stroke: var(--op-grid-dot);
+  stroke-opacity: 0.6;
+  stroke-width: 1.2;
+  stroke-dasharray: 2 2;
+  pointer-events: none;
+}
+
+.op-grid-margin {
+  fill: var(--op-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-grid-margin.is-grand,
+.op-grid-margin-head {
+  font-weight: 600;
+}
+
+.op-grid-scale-tick {
+  stroke: var(--op-border-strong);
+}
+
+.op-grid-zone-key {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--op-accent, var(--op-gray)) 45%, transparent);
+}
+
+.op-grid-tables {
+  display: grid;
+  gap: var(--op-space-3);
+}

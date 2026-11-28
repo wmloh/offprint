@@ -26,6 +26,7 @@ Enable `"chart-heatmap": true` in site or page `features` (loads [SVG charts](ch
 - `x` (column axis title, under plot), `y` (row axis title, top left): label string or `{label}`. `value`: label string or `{label, unit, digits}` formats readouts, ticks, table, contour labels; its label tops the colour scale. `height` > 80, else 76 + clamp(rows × 26, 120, 480).
 - `scale`: `"sequential"` (default), `"diverging"`, `"log"`, or `{type, min?, max?, mid?, color?, colors?}`. Colours are palette names (`gray brown orange yellow green blue purple pink red`) resolved through `--op-<name>` tokens (light/dark aware). Sequential/log: `color` (default `blue`). Diverging: `colors: [low, high]` (default `["orange", "blue"]`).
 - Cells fill with the hue at `fill-opacity` over a `--op-gray-bg` backdrop. Sequential/log: 0.1 + 0.85 × position (log position in log10 units; log needs positive values and bounds). Diverging: neutral at `mid` (default 0), 0.9 × distance / arm length per side; without bounds both arms reach the farthest value; `min`/`max` set each arm's end; `mid` must lie strictly between. Values beyond bounds clamp. Equal bounds pad (±10% or ×/÷2 on log).
+- The scale is the shared chart-kit `colorScale`, also used by [grids](chart-grid.md).
 - Side scale right of the plot (high at top, 48 steps, ticks at the axis ticks within bounds). CSS vars `--op-heatmap-high` / `--op-heatmap-low` are set on the plot from the spec.
 
 ## Value-range filter

@@ -200,6 +200,19 @@
     if (models.some(function (m) { return m.errors.length; }) || !models.length) return;
     var first = models[0];
     if (first.type === 'pie') return;
+    if (first.addon === 'grid') {
+      // Grids share one value colour scale; zones and shares keep their own colours.
+      if (facet.scales === 'free-y') return;
+      var gridValues = models.flatMap(function (m) { return [].concat.apply([], m.grid.values).filter(function (v) { return v !== null; }); });
+      if (!gridValues.length) return;
+      panels.forEach(function (panel) {
+        var scale = typeof panel.spec.scale === 'string' ? { type: panel.spec.scale } : Object.assign({}, panel.spec.scale);
+        if (scale.min === undefined) scale.min = Math.min.apply(null, gridValues);
+        if (scale.max === undefined) scale.max = Math.max.apply(null, gridValues);
+        panel.spec.scale = scale;
+      });
+      return;
+    }
     if (first.addon === 'heatmap') {
       if (facet.scales === 'free-y') return;
       var values = models.flatMap(function (m) { return m.series[0].points.map(function (p) { return p.y; }); });

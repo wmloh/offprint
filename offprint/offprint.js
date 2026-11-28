@@ -46,6 +46,7 @@
     'chart-histogram': { needs: ['chart'], css: ['chart-histogram'], script: 'chart-histogram', chartTypes: ['histogram'] },
     'chart-heatmap': { needs: ['chart'], css: ['chart-heatmap'], script: 'chart-heatmap', chartTypes: ['heatmap'] },
     'chart-combo': { needs: ['chart'], css: ['chart-combo'], script: 'chart-combo', chartTypes: ['combo'] },
+    'chart-grid': { needs: ['chart'], css: ['chart-grid'], script: 'chart-grid', chartTypes: ['grid'] },
     // Layer add-ons draw over every chart type from the spec field named after the layer, in declaration order.
     'chart-fits': { needs: ['chart'], css: ['chart-fits'], script: 'chart-fits', chartLayers: ['fits', 'residuals'] },
     'chart-annotations': { needs: ['chart'], css: ['chart-annotations'], script: 'chart-annotations', chartLayers: ['annotations'] },

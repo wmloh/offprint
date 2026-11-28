@@ -34,7 +34,7 @@
 
   // How an axis reads annotation values: category labels, timestamps, positive log values, or numbers.
   function axisKind(model, axis) {
-    if (model.heatmap) return 'category';
+    if (model.heatmap || model.grid) return 'category';
     if (axis === 'x') return model.categories ? 'category' : model.x.time ? 'time' : model.x.log ? 'log' : 'number';
     return axis === 'y' && model.y.log ? 'log' : 'number';
   }
@@ -127,7 +127,7 @@
   // The data position a note points at: a keyed point, or x with y from the given or only series, else the plot top.
   // Returns { x, y, series } or { missing } when its point or series value cannot be found.
   function anchor(model, a) {
-    var cats = model.heatmap;
+    var cats = model.heatmap || model.grid;
     if (a.point) {
       for (var s of model.series) {
         if (a.series && s.key !== a.series) continue;
@@ -433,8 +433,8 @@
     var yAxis = a.axis === 'y2' && model.y2 ? 'y2' : 'y';
     var x = function (v) { return valueText(model, 'x', v, kit); };
     var y = function (v) { return valueText(model, yAxis, v, kit); };
-    var xName = model.heatmap ? 'column' : model.x.label || 'x';
-    var yName = model.heatmap ? 'row' : model[yAxis].label || (yAxis === 'y2' ? 'right axis' : 'y');
+    var xName = model.heatmap || model.grid ? 'column' : model.x.label || 'x';
+    var yName = model.heatmap || model.grid ? 'row' : model[yAxis].label || (yAxis === 'y2' ? 'right axis' : 'y');
     if (a.type === 'range') {
       return [a.x !== null ? xName + ' ' + x(a.x) + ' to ' + x(a.x2) : '', a.y !== null ? yName + ' ' + y(a.y) + ' to ' + y(a.y2) : '']
         .filter(Boolean).join(', ');

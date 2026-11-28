@@ -481,7 +481,7 @@ test('Interactive cards restore nested tabs, filters, and a paused SVG position 
 test('Interactive charts restore linked playback, filters, and nested chart controls offline', async () => {
   const config = { profile: 'none', features: { data: true, selection: true, parameters: true,
     'chart-intervals': true, 'chart-histogram': true, 'chart-heatmap': true, 'chart-combo': true, 'chart-fits': true,
-    'chart-facets': true, 'chart-playback': true, 'zoom-tools': true },
+    'chart-grid': true, 'chart-facets': true, 'chart-playback': true, 'zoom-tools': true },
     options: { chart: { instances: { trace: { mapping: {
       x: 'x', series: [{ field: 'y', key: 'observed' }], pointKey: 'key'
     } } } } },
@@ -497,7 +497,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const traceText = 'x,y,key\n0,0,start\n5,2,mid\n10,3,end';
   const original = shared.push({ type: 'csv', text: traceText }) - 1;
   const revised = shared.push({ type: 'csv', text: traceText.replace('5,2', '5,9') }) - 1;
-  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'tour', 'state-tour', 'facets', 'splom']
+  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'grid', 'tour', 'state-tour', 'facets', 'splom']
     .map(id => ({ key: ['id', id], stamp: id }));
   const payload = { url: 'file:///original/charts.html', siteURL: 'file:///original/site.js', entryURL: entryURL.href,
     site: manifest, profile: null, features: plan.features, styles: plan.styles, identities,
@@ -534,7 +534,9 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
         { key: 'rate', mark: 'line', axis: 'y2', data: [[0, 40], [5, 55], [10, 70]] }
       ] }],
       ['scatter', {}, { residuals: true, series: [{ key: 'obs', data: [{ x: 0, y: 1, fitted: 1.2 }, { x: 2, y: 3, fitted: 2.8 }] }],
-        fits: [{ key: 'trend', curve: [[0, 1.2], [2, 2.8]], band: [[0, 1, 1.4], [2, 2.5, 3.1]], stats: 'R² = 0.98' }] }]
+        fits: [{ key: 'trend', curve: [[0, 1.2], [2, 2.8]], band: [[0, 1, 1.4], [2, 2.5, 3.1]], stats: 'R² = 0.98' }] }],
+      ['grid', {}, { rows: ['a', 'b'], columns: ['a', 'b'], z: [[3, 1], [2, 4]], diagonal: true, normalize: 'none',
+        items: [{ key: 'case', row: 'b', column: 'a' }] }]
     ];
     const charts = specs.map(([type, attrs, spec], i) => {
       const host = add(detail, 'div', { id: identities[i].key[1], 'data-op-export-identity': i,
@@ -600,7 +602,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const chart = host => first.runtime._chart.get(host);
   for (const host of first.charts) assert.ok(chart(host), host.id);
   assert.deepEqual(first.charts.map(host => chart(host).model().addon ?? chart(host).model().type),
-    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line', 'combo', 'scatter']);
+    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line', 'combo', 'scatter', 'grid']);
   const [trace, linked, bars, pie, , , heatmap, brush] = first.charts;
   const control = (host, cls) => descendants(host).find(node => node.className?.split(' ').includes(cls) || node.getAttribute('class') === cls);
   const key = (host, name) => control(host, 'op-chart-plot').dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: name }));
@@ -629,6 +631,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const fits = first.charts[9];
   assert.equal(control(fits, 'op-chart-residual').getAttribute('class'), 'op-chart-residual');
   assert.equal(first.runtime._chartFits.visible(fits, 'trend', false), true);
+  assert.equal(first.runtime._chart._grid.normalize(first.charts[10], 'row'), true);
   const facets = first.runtime._chartFacets.get(first.facetHosts[0]);
   assert.equal(facets.panels().length, 2);
   assert.equal(facets.setSeriesVisible('b', false), true);
@@ -663,6 +666,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   assert.equal(getChart(8).visible('rate'), false);
   assert.deepEqual(Array.from(getChart(8).range()), comboRange);
   assert.equal(restored.runtime._chartFits.visible(restored.charts[9], 'trend'), false);
+  assert.equal(restored.runtime._chart._grid.normalize(restored.charts[10]), 'row', 'the grid restores its normalization');
   const restoredFacets = restored.runtime._chartFacets.get(restored.facetHosts[0]);
   assert.deepEqual(Array.from(restoredFacets.range()), [2, 6]);
   for (const panel of restoredFacets.panels()) {

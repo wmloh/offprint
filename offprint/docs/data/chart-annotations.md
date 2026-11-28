@@ -15,6 +15,7 @@ Enable `"chart-annotations": true` in site or page `features` (loads [SVG charts
 
 - `annotations: [{type?, text, key?, x?, x2?, y?, y2?, axis?, series?, point?, side?, dx?, dy?, color? | role?, revealStep?}]`. `type`: `note` (default), `range`, `marker`. `text`: nonempty. `key`: unique string, default `annotation-<n>`; identifies the annotation across redraws (motion) and in the DOM (`data-op-annotation`).
 - Values read on the chart's axes: numbers (numeric text accepted), timestamps on time x (epoch ms or zoned ISO), positive values on log axes, category labels on categorical x (bars, interval plots, string x) and on both heatmap axes (`x` = column, `y` = row). Horizontal bars keep data axes: `x` = category, `y` = value.
+- On [grids](chart-grid.md), as on heatmaps, `x` names a column and `y` a row by key or label; `point` may be a cell or item key.
 - `axis: "y2"` reads `y`/`y2` on a [combo chart](chart-combo.md)'s right axis (error without one); a note anchored on a point or series always reads on that series' axis.
 - `note`: a callout with a leader line and anchor dot. Anchor: `point` (a point key; `series` narrows the search), else `x` + `y`, else `x` with y from `series` or from the only series, else `x` at the plot top (value-axis end on horizontal bars). Needs `x` or `point`.
 - `range`: a shaded band with a label at its top left (beside the band when narrow). `x` + `x2` spans the x axis across the plot; `y` + `y2` the y axis; both pairs make a rectangle. Category ends cover whole bands. Partly visible bands clip to the plot.

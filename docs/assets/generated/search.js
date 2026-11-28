@@ -239,6 +239,14 @@ window.OffPrintSearch = {
             "writing"
           ]
         },
+        "confusion matrix": {
+          "title": "confusion matrix",
+          "text": "A grid that counts how often each true class was predicted as each class. Correct answers sit on the diagonal; everything else is a mix-up.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
         "contour line": {
           "title": "contour line",
           "text": "A line that joins places with the same value, like the height lines on a hiking map.",
@@ -959,6 +967,14 @@ window.OffPrintSearch = {
             "data and charts"
           ]
         },
+        "precision": {
+          "title": "precision",
+          "text": "Of everything predicted as a class, the share that really was that class.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
         "preset": {
           "title": "preset",
           "text": "A named button that sets several parameters at once to a prepared combination.",
@@ -1025,6 +1041,14 @@ window.OffPrintSearch = {
             "data and charts"
           ]
         },
+        "recall": {
+          "title": "recall",
+          "text": "Of everything that really was a class, the share that was predicted as that class.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
         "record": {
           "title": "record",
           "text": "One item in a data source, such as one row of a table, made of named fields.",
@@ -1084,6 +1108,14 @@ window.OffPrintSearch = {
         "results table": {
           "title": "results table",
           "text": "A table for comparing results that can sort, filter, or highlight its rows and values.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
+        "risk matrix": {
+          "title": "risk matrix",
+          "text": "A grid that places each risk by how severe it would be and how likely it is, usually with coloured zones that show which risks need attention first.",
           "more": "",
           "tags": [
             "data and charts"
@@ -1793,6 +1825,12 @@ window.OffPrintSearch = {
         "sha256": "25e7e2c58114a505e6c235d40bfd2d3cf1fb1050ce8543e9a2875690813f3b8e"
       },
       {
+        "file": "pages/data/grids.html",
+        "path": "../pages/data/grids.html",
+        "title": "Risk and confusion grids",
+        "sha256": "ce22db317e9f034ca2ad3d0e47dc4d97c42e0c3435d6e3ba3280bf7b7e6b9181"
+      },
+      {
         "file": "pages/data/fits.html",
         "path": "../pages/data/fits.html",
         "title": "Fits and residuals",
@@ -1820,7 +1858,7 @@ window.OffPrintSearch = {
         "file": "pages/data/comparisons.html",
         "path": "../pages/data/comparisons.html",
         "title": "Evaluation matrices and scenario comparisons",
-        "sha256": "092276bea5b64d5620f0ad815d17a8e53877e35b098a113ef229c31736458538"
+        "sha256": "aec9f02c0d51617fe99348ad76f5f651d003223eca03530847b73cb0294818b7"
       },
       {
         "file": "pages/data/dropzones.html",
@@ -1862,7 +1900,7 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "b9d8f092a3893bcb171632eca45cda4e06274903310d5c2f546a4d8db91bf1f8"
+        "sha256": "c44d77fdb1b48513fa52f0b678d6a5264c24627d680db23088715ece10face33"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -8833,6 +8871,170 @@ window.OffPrintSearch = {
       ]
     },
     {
+      "path": "../pages/data/grids.html",
+      "title": "Risk and confusion grids",
+      "sections": [
+        {
+          "id": "",
+          "title": "Risk and confusion grids",
+          "level": 1,
+          "text": "Show data A grid chart lays out two ordered lists as rows and columns, such as a risk matrix that places each risk by how bad and how likely it is, or a confusion matrix that counts how often each true class was predicted as each class. Each cell can hold a value, a coloured zone, and the items that sit there. Official name Categorical grids Turned on On request Signal strength Loud · Strong Works with Named data sources, linked selection, detail panes, annotations, and reveal steps Good for Risk registers, and the results of a classifier or any sorting task"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "Risk Impact Likelihood Main supplier stops Severe Possible (was Likely) Lost laptop Moderate Possible Backups fail Major Unlikely (was Possible) Cloud outage Major Possible Key person leaves Moderate Likely Phishing email Minor Likely Office flood Severe Rare An illustrative risk register. Each numbered dot is a risk. A dashed line shows where a risk sat before its fix took effect. Try it Move over dot 1, then follow its dashed line back to where it started. Click a dot to select that risk. Then click the chart and use the arrow keys to walk the cells; press ] to step through the risks in a cell."
+        },
+        {
+          "id": "what-it-does",
+          "title": "Rows, columns, and what sits in the cells",
+          "level": 2,
+          "text": "You list the rows and the columns in the order they should read. For a risk matrix, list impact from worst at the top to mildest at the bottom, and likelihood from rarest at the left. Each cell can carry a number you supply, a set of items, or both. Items are packed into their cell as small numbered dots. When a cell fills up, the last dot becomes a count of the rest, and every item still shows in the readout and the table."
+        },
+        {
+          "id": "zones",
+          "title": "Colour cells by zone",
+          "level": 2,
+          "text": "A zone gives a group of cells one colour and one name, such as High or Low. You can list a zone’s cells yourself, or give it a score range. With score ranges, each row and column gets a rank, counting up from the bottom row and the left column, and a cell’s score is the two ranks multiplied or added together. The first zone whose range holds the score claims the cell. Listed cells always win over score ranges, so you can carve out an exception."
+        },
+        {
+          "id": "confusion",
+          "title": "Read a confusion matrix",
+          "level": 2,
+          "text": "Actual Cat Dog Fox Cat 42 6 2 Dog 5 38 7 Fox 1 9 40 Illustrative results of an image classifier on 150 test images. Outlined cells on the diagonal are correct answers. Try it Choose Row shares. Each row now adds up to 100%, so you can read what happened to every true fox. Then choose Column shares to read what the classifier meant each time it said fox. Each row is a true class and each column a predicted class, so the diagonal holds the correct answers. OffPrint works out the totals, the shares, and two rates from the counts you supply. Recall, at the right, is the share of each true class that was found. Precision, along the bottom, is the share of each prediction that was right."
+        },
+        {
+          "id": "data-sources",
+          "title": "From a data file",
+          "level": 2,
+          "text": "A grid can read a named data source. Records with a row, a column, and a value fill the cells. Records with a row, a column, and an item name place items, with two optional columns for the cell an item moved from. Rows and columns you have not listed appear in the order they first turn up, so list them when the order matters."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use a risk grid when readers should see at a glance which risks need attention, and use the trails to show what your fixes changed. Use a confusion grid when the mistakes matter as much as the score. To compare several supplied measures in one table, such as counts and percentages side by side, an evaluation matrix fits better. Zones and strong colours are loud, so keep one grid per section."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "The arrow keys move from cell to cell, and the readout names the cell, its zone, its value, and the items in it. [ and ] step through a cell’s items. The normalization chips work with the keyboard like any other chips. Choose Table for the same grid as text, with a second table that lists every item. A grid can also follow a step sequence, so items and zones appear one step at a time. With scripts off, the written table stays readable."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "Heatmaps, for large grids of numbers on the same colour scales Evaluation matrices Chart annotations Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": ""
+        },
+        {
+          "text": "risk matrix",
+          "term": "risk matrix",
+          "section": ""
+        },
+        {
+          "text": "confusion matrix",
+          "term": "confusion matrix",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "see-it"
+        },
+        {
+          "text": "risk matrix",
+          "term": "risk matrix",
+          "section": "what-it-does"
+        },
+        {
+          "text": "readout",
+          "term": "readout",
+          "section": "what-it-does"
+        },
+        {
+          "text": "Recall",
+          "term": "recall",
+          "section": "confusion"
+        },
+        {
+          "text": "Precision",
+          "term": "precision",
+          "section": "confusion"
+        },
+        {
+          "text": "readout",
+          "term": "readout",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "normalization",
+          "term": "normalization",
+          "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "risk-and-confusion-grids",
+          "title": "Risk and confusion grids",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Rows, columns, and what sits in the cells",
+          "level": 2
+        },
+        {
+          "id": "zones",
+          "title": "Colour cells by zone",
+          "level": 2
+        },
+        {
+          "id": "confusion",
+          "title": "Read a confusion matrix",
+          "level": 2
+        },
+        {
+          "id": "data-sources",
+          "title": "From a data file",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
       "path": "../pages/data/fits.html",
       "title": "Fits and residuals",
       "sections": [
@@ -9722,7 +9924,7 @@ window.OffPrintSearch = {
           "id": "when-to-use",
           "title": "When to reach for it",
           "level": 2,
-          "text": "Use a matrix to scan many combinations at once. Use a scenario comparison to explain what changed from a specific starting point. Let the matrix shading or the comparison bars carry the emphasis in its section."
+          "text": "Use a matrix to scan many combinations at once. For a risk matrix with zones and placed items, or a confusion matrix with derived totals, shares, precision, and recall, use a risk or confusion grid instead. Use a scenario comparison to explain what changed from a specific starting point. Let the matrix shading or the comparison bars carry the emphasis in its section."
         },
         {
           "id": "for-every-reader",
@@ -9734,7 +9936,7 @@ window.OffPrintSearch = {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "SVG charts Concept tables and results tables Report results, a recipe that uses it Share experiment results, a recipe that uses it Feature directory"
+          "text": "SVG charts Concept tables and results tables Risk and confusion grids Report results, a recipe that uses it Share experiment results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -9821,6 +10023,26 @@ window.OffPrintSearch = {
         {
           "text": "matrix",
           "term": "matrix",
+          "section": "when-to-use"
+        },
+        {
+          "text": "risk matrix",
+          "term": "risk matrix",
+          "section": "when-to-use"
+        },
+        {
+          "text": "confusion matrix",
+          "term": "confusion matrix",
+          "section": "when-to-use"
+        },
+        {
+          "text": "precision",
+          "term": "precision",
+          "section": "when-to-use"
+        },
+        {
+          "text": "recall",
+          "term": "recall",
           "section": "when-to-use"
         },
         {
@@ -11146,7 +11368,7 @@ window.OffPrintSearch = {
           "id": "show-data",
           "title": "Show data",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Small multiples and scatter-plot matrices On request Strong SVG charts; Histograms for histogram diagonals Split one chart into panels on shared scales, or plot every pair of measurements and brush a group of records. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Risk and confusion grids On request Loud · Strong SVG charts and ordered rows and columns Place risks in coloured zones with trails showing how they moved, or read a confusion matrix with totals, shares, precision, and recall. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Small multiples and scatter-plot matrices On request Strong SVG charts; Histograms for histogram diagonals Split one chart into panels on shared scales, or plot every pair of measurements and brush a group of records. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
         },
         {
           "id": "reference",

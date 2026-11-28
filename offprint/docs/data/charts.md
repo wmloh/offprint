@@ -40,7 +40,7 @@ Enable `chart`. A `[data-op-chart]` host takes a direct `script[type="applicatio
 
 ## Add-ons
 
-See [Dot and interval plots](chart-intervals.md) for ranked categories with whiskers, [Histograms](chart-histogram.md) for binned distributions on continuous axes, [Heatmaps](chart-heatmap.md) for colour grids with contours, and [Combo charts](chart-combo.md) for bars and lines with an opt-in second y axis. [Supplied fits](chart-fits.md) add fit curves, bands, statistics, and a residual panel to line and scatter charts. [Chart annotations](chart-annotations.md) add notes, shaded ranges, and event markers to any of them. [Facets](chart-facets.md) split one chart into small multiples on shared scales, or plot every pair of record fields in a brushable scatter-plot matrix.
+See [Dot and interval plots](chart-intervals.md) for ranked categories with whiskers, [Histograms](chart-histogram.md) for binned distributions on continuous axes, [Heatmaps](chart-heatmap.md) for colour grids with contours, [Categorical grids](chart-grid.md) for risk and confusion matrices, and [Combo charts](chart-combo.md) for bars and lines with an opt-in second y axis. [Supplied fits](chart-fits.md) add fit curves, bands, statistics, and a residual panel to line and scatter charts. [Chart annotations](chart-annotations.md) add notes, shaded ranges, and event markers to any of them. [Facets](chart-facets.md) split one chart into small multiples on shared scales, or plot every pair of record fields in a brushable scatter-plot matrix.
 
 [Register a chart add-on](../extend/chart-addons.md).
 

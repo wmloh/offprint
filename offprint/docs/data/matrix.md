@@ -25,6 +25,7 @@ Set `options.matrix.instances.confusion.mapping`.
 }
 ```
 
+- For risk matrices or confusion matrices drawn as an SVG grid with zones, packed items, and derived totals, shares, precision, and recall, use [categorical grids](chart-grid.md).
 - Records use exact field names, e.g. `{"actual":"common","predicted":"common","count":10,"share":100}`. Axis and measure descriptors are ordered and need unique keys and nonempty labels. Each coordinate is unique and declared on both axes. All mapped measure values must be finite numbers or null. Absent coordinates and null values display as Missing. Zero displays as a value.
 - All cells of the active measure share a color scale from finite extents or an authored increasing `range`. Authored ranges clamp color while cell text retains the supplied number. A constant extent uses a neutral tone. A single-choice [chip group](../interact/choices.md) (`.op-matrix-picker`, legend Measure) appears for multiple measures and is rebuilt when measures change. `unit` is a suffix and `normalization` describes the supplied basis. Supply percentages as numbers in percent units. The component displays supplied normalization.
 - Standard input size and row limits apply. Set `maxCells` or `data-op-max-cells` to a positive integer dense-grid cap (default 5000). Record transforms can supply rows or use `transformOutput: "spec"` for `{records, mapping}`.

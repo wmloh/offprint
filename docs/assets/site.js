@@ -185,6 +185,10 @@ window.OffPrintSite = {
           "path": "../pages/data/grids.html"
         },
         {
+          "title": "Sankey diagrams",
+          "path": "../pages/data/flows.html"
+        },
+        {
           "title": "Fits and residuals",
           "path": "../pages/data/fits.html"
         },
@@ -528,6 +532,7 @@ window.OffPrintSite = {
         "data view": { "tags": ["Data and charts"], "text": "A block that shows a data source's raw values as a table, as text, or as a tree." },
         "tree": { "tags": ["Data and charts"], "text": "A view of nested information as branches you can open and close." },
         "chart": { "tags": ["Data and charts"], "text": "A picture of numbers, such as a line, bar, or scatter chart." },
+        "Sankey diagram": { "tags": ["Data and charts"], "text": "A flow chart where the width of each ribbon represents how much moves from one stage to another." },
         "axis": { "tags": ["Data and charts"], "text": "One of the scaled lines along the edge of a chart, usually horizontal (x) and vertical (y), with values marked along it." },
         "linear scale": { "tags": ["Data and charts"], "text": "An axis where equal distances mean equal differences, such as 0, 10, 20, 30." },
         "log scale": {

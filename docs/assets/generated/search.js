@@ -1153,6 +1153,14 @@ window.OffPrintSearch = {
             "design"
           ]
         },
+        "sankey diagram": {
+          "title": "Sankey diagram",
+          "text": "A flow chart where the width of each ribbon represents how much moves from one stage to another.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
         "scanning": {
           "title": "scanning",
           "text": "Reading quickly by jumping between headings, labels, and highlights instead of reading every word. Most readers scan first.",
@@ -1877,6 +1885,12 @@ window.OffPrintSearch = {
         "sha256": "ce22db317e9f034ca2ad3d0e47dc4d97c42e0c3435d6e3ba3280bf7b7e6b9181"
       },
       {
+        "file": "pages/data/flows.html",
+        "path": "../pages/data/flows.html",
+        "title": "Sankey diagrams",
+        "sha256": "a1a8407138844197dfd2798f4eca733d7d78f6c3058154f50d27238b4588bec2"
+      },
+      {
         "file": "pages/data/fits.html",
         "path": "../pages/data/fits.html",
         "title": "Fits and residuals",
@@ -1946,7 +1960,7 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "87918f055d6118957be86293da7e59c3a75e4d1a2f17c364f0c13d208add327f"
+        "sha256": "1b8dd85a7eb95a6f0bf19d9ecfd1f6f22cd14ee31a9b258af0cbfb87d3e178a2"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -9337,6 +9351,112 @@ window.OffPrintSearch = {
       ]
     },
     {
+      "path": "../pages/data/flows.html",
+      "title": "Sankey diagrams",
+      "sections": [
+        {
+          "id": "",
+          "title": "Sankey diagrams",
+          "level": 1,
+          "text": "Show data A Sankey diagram shows how an amount splits and merges as it moves through stages. Wider ribbons carry more. Official name Sankey diagrams Turned on On request Signal strength Strong Works with Named data sources, linked selection, and table view Good for Energy, materials, budgets, or any measured flow through stages"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "From To Energy (kWh) Solar Storage 42 Solar Direct supply 20 Grid Storage 18 Grid Direct supply 20 Direct supply Building loads 40 Storage Building loads 52 Storage Standby 3 Illustrative energy readings. Solar and grid power feed direct supply and storage. Try it Point at Storage to trace the paths that reach it and leave it. Point at the ribbon from Solar to Storage to read 42 kWh, about 68% of solar output and 70% of storage input. Select that ribbon, then choose Table to find the same highlighted flow in the Links table."
+        },
+        {
+          "id": "read-the-flow",
+          "title": "Read a difference in totals",
+          "level": 2,
+          "text": "Storage has a dashed outline. It received 60 kWh in this period and sent out 55 kWh. The readout shows the 5 kWh difference so you can compare it with the underlying measurements. A starting or ending node can have flows on just one side."
+        },
+        {
+          "id": "named-source",
+          "title": "Draw flows from records",
+          "level": 2,
+          "text": "Give each link a starting node, a destination, and an amount in a common unit. This example reads a named data source with one row per flow. OffPrint places stages from left to right and orders nodes within each stage to reduce crossings. You can also set the columns and order yourself. From To Items Collection Sorting 80 Sorting Reuse 25 Sorting Recycling 55 Illustrative sorting records. Each ribbon takes its destination’s colour."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "Read by keyboard or table",
+          "level": 2,
+          "text": "Tab to the plot and use the arrow keys to read nodes from left to right, then read individual links. Press Enter or Space to select a node or link in the energy example. Table view lists the same totals, differences, and shares in text. The written tables stay available when scripts are off or the data includes a loop. Interactive export restores the selected key."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "SVG charts Pipeline diagrams for tracing the steps in a process Linked selection"
+        }
+      ],
+      "terms": [
+        {
+          "text": "Sankey diagram",
+          "term": "sankey diagram",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "outline",
+          "term": "outline",
+          "section": "read-the-flow"
+        },
+        {
+          "text": "readout",
+          "term": "readout",
+          "section": "read-the-flow"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "named-source"
+        },
+        {
+          "text": "link",
+          "term": "link",
+          "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "sankey-diagrams",
+          "title": "Sankey diagrams",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "read-the-flow",
+          "title": "Read a difference in totals",
+          "level": 2
+        },
+        {
+          "id": "named-source",
+          "title": "Draw flows from records",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "Read by keyboard or table",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
       "path": "../pages/data/fits.html",
       "title": "Fits and residuals",
       "sections": [
@@ -11670,7 +11790,7 @@ window.OffPrintSearch = {
           "id": "show-data",
           "title": "Show data",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Risk and confusion grids On request Loud · Strong SVG charts and ordered rows and columns Place risks in coloured zones with trails showing how they moved, or read a confusion matrix with totals, shares, precision, and recall. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Small multiples and scatter-plot matrices On request Strong SVG charts; Histograms for histogram diagonals Split one chart into panels on shared scales, or plot every pair of measurements and brush a group of records. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Risk and confusion grids On request Loud · Strong SVG charts and ordered rows and columns Place risks in coloured zones with trails showing how they moved, or read a confusion matrix with totals, shares, precision, and recall. Sankey diagrams On request Strong SVG charts, linked selection, and named data sources Trace how flows split and merge, and see where incoming and outgoing totals differ. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Small multiples and scatter-plot matrices On request Strong SVG charts; Histograms for histogram diagonals Split one chart into panels on shared scales, or plot every pair of measurements and brush a group of records. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
         },
         {
           "id": "reference",

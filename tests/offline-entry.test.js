@@ -478,10 +478,57 @@ test('Interactive cards restore nested tabs, filters, and a paused SVG position 
   assert.equal(afterHover.views.find(([id]) => JSON.parse(id)[0] === 'cards')[1].value, 'motion');
 });
 
+test('Sankey charts mount named sources and preserve the fallback when flows contain a cycle', async () => {
+  const config = { profile: 'none', features: { 'chart-sankey': true, data: true },
+    options: { chart: { instances: { routes: { mapping: { source: 'From', target: 'To', value: 'Items' } } } } } };
+  const warnings = [];
+  const p = page({ config, globals: { console: { warn: message => warnings.push(message) } } });
+  const source = p.body.appendChild(p.document.createElement('script'));
+  source.setAttribute('data-op-source', 'Routes');
+  source.setAttribute('type', 'text/csv');
+  source.textContent = 'From,To,Items\nCollection,Sorting,80\nSorting,Reuse,25\nSorting,Recycling,55';
+  function mount(id, spec, from) {
+    const host = p.body.appendChild(p.document.createElement('div'));
+    host.id = id;
+    host.setAttribute('data-op-chart', 'sankey');
+    if (from) host.setAttribute('data-op-source', from);
+    const definition = host.appendChild(p.document.createElement('script'));
+    definition.textContent = JSON.stringify(spec);
+    const fallback = host.appendChild(p.document.createElement('table'));
+    host.querySelector = selector => selector === ':scope > script[type="application/json"]' ? definition :
+      selector === ':scope > table' ? fallback : null;
+    return { host, fallback };
+  }
+  const routes = mount('routes', { linkColor: 'target' }, 'Routes');
+  const invalid = mount('invalid-flow', { links: [
+    { source: 'A', target: 'B', value: 1 }, { source: 'B', target: 'A', value: 1 }
+  ] });
+  p.body.querySelectorAll = selector => ({
+    'script[data-op-source], pre[data-op-source]': [source], '[data-op-chart]': [routes.host, invalid.host]
+  })[selector] || [];
+  await p.start();
+  const chart = p.OP._chart.get(routes.host);
+  assert.ok(chart);
+  assert.equal(chart.model().sankey.nodes[1].value, 80);
+  const find = cls => descendants(routes.host).find(node => node.className === cls || node.getAttribute('class') === cls);
+  const svg = descendants(routes.host).find(node => node.localName === 'svg');
+  svg.getBoundingClientRect = () => ({ width: 400, left: 0, top: 0 });
+  const ribbon = find('op-sankey-ribbon');
+  assert.equal(ribbon.style.getPropertyValue('--op-series'), 'var(--op-chart-2)');
+  const plot = find('op-chart-plot');
+  plot.closest = selector => selector === '[data-op-sankey-index]' ? ribbon : null;
+  plot.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 100, clientY: 100 }));
+  assert.match(find('op-chart-tip').textContent, /Collection → Sorting80Items/);
+  assert.equal(p.OP._chart.get(invalid.host), null);
+  assert.equal(invalid.fallback.parentNode, invalid.host);
+  assert.equal(invalid.host.classList.contains('op-chart'), false);
+  assert.ok(warnings.some(message => /Sankey cycle: "A" → "B" → "A"/.test(message)));
+});
+
 test('Interactive charts restore linked playback, filters, and nested chart controls offline', async () => {
   const config = { profile: 'none', features: { data: true, selection: true, parameters: true,
     'chart-intervals': true, 'chart-histogram': true, 'chart-heatmap': true, 'chart-combo': true, 'chart-fits': true,
-    'chart-grid': true, 'chart-facets': true, 'chart-playback': true, 'zoom-tools': true },
+    'chart-grid': true, 'chart-sankey': true, 'chart-facets': true, 'chart-playback': true, 'zoom-tools': true },
     options: { chart: { instances: { trace: { mapping: {
       x: 'x', series: [{ field: 'y', key: 'observed' }], pointKey: 'key'
     } } } } },
@@ -497,7 +544,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const traceText = 'x,y,key\n0,0,start\n5,2,mid\n10,3,end';
   const original = shared.push({ type: 'csv', text: traceText }) - 1;
   const revised = shared.push({ type: 'csv', text: traceText.replace('5,2', '5,9') }) - 1;
-  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'grid', 'tour', 'state-tour', 'facets', 'splom']
+  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'grid', 'sankey', 'tour', 'state-tour', 'facets', 'splom']
     .map(id => ({ key: ['id', id], stamp: id }));
   const payload = { url: 'file:///original/charts.html', siteURL: 'file:///original/site.js', entryURL: entryURL.href,
     site: manifest, profile: null, features: plan.features, styles: plan.styles, identities,
@@ -536,7 +583,13 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
       ['scatter', {}, { residuals: true, series: [{ key: 'obs', data: [{ x: 0, y: 1, fitted: 1.2 }, { x: 2, y: 3, fitted: 2.8 }] }],
         fits: [{ key: 'trend', curve: [[0, 1.2], [2, 2.8]], band: [[0, 1, 1.4], [2, 2.5, 3.1]], stats: 'R² = 0.98' }] }],
       ['grid', {}, { rows: ['a', 'b'], columns: ['a', 'b'], z: [[3, 1], [2, 4]], diagonal: true, normalize: 'none',
-        items: [{ key: 'case', row: 'b', column: 'a' }] }]
+        items: [{ key: 'case', row: 'b', column: 'a' }] }],
+      ['sankey', { 'data-op-selection-group': 'energy' }, {
+        nodes: [{ key: 'Solar', order: 0 }, { key: 'Grid', order: 1 }, { key: 'Storage' }, { key: 'Loads' }],
+        links: [{ source: 'Solar', target: 'Storage', value: 42, key: 'solar-storage' },
+          { source: 'Grid', target: 'Storage', value: 18, key: 'grid-storage' },
+          { source: 'Storage', target: 'Loads', value: 55, key: 'stored-energy' }]
+      }]
     ];
     const charts = specs.map(([type, attrs, spec], i) => {
       const host = add(detail, 'div', { id: identities[i].key[1], 'data-op-export-identity': i,
@@ -590,7 +643,9 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
       '[data-op-chart]': charts, 'ol[data-op-chart-playback]': [tour, stateTour],
       '[data-op-x-group]': [charts[0], charts[1], tour],
       '[data-op-parameter]': [bins], '[data-op-export-identity]': [...charts, tour, stateTour, ...facetHosts],
-      '[data-op-facets]': facetHosts
+      '[data-op-facets]': facetHosts,
+      '[data-op-selection-group][data-op-key]': descendants(p.body).filter(node =>
+        node.hasAttribute('data-op-selection-group') && node.hasAttribute('data-op-key'))
     })[selector] || [];
     const dataEntries = source === null ? [] : [['trace', source]];
     const runtime = await p.hydrate({ ...payload, data: dataEntries }, shared, new AbortController().signal, saved);
@@ -602,7 +657,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const chart = host => first.runtime._chart.get(host);
   for (const host of first.charts) assert.ok(chart(host), host.id);
   assert.deepEqual(first.charts.map(host => chart(host).model().addon ?? chart(host).model().type),
-    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line', 'combo', 'scatter', 'grid']);
+    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line', 'combo', 'scatter', 'grid', 'sankey']);
   const [trace, linked, bars, pie, , , heatmap, brush] = first.charts;
   const control = (host, cls) => descendants(host).find(node => node.className?.split(' ').includes(cls) || node.getAttribute('class') === cls);
   const key = (host, name) => control(host, 'op-chart-plot').dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: name }));
@@ -632,6 +687,24 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   assert.equal(control(fits, 'op-chart-residual').getAttribute('class'), 'op-chart-residual');
   assert.equal(first.runtime._chartFits.visible(fits, 'trend', false), true);
   assert.equal(first.runtime._chart._grid.normalize(first.charts[10], 'row'), true);
+  const sankey = first.charts[11];
+  const flowMark = (host, markKey) => descendants(host).find(node => node.getAttribute('data-op-key') === markKey);
+  assert.ok(plan.styles.some(path => /chart-sankey\.css$/.test(path)));
+  assert.equal(chart(sankey).setRange([0, 1]), false, 'flows have no numeric x domain');
+  key(sankey, 'Home');
+  assert.ok(flowMark(sankey, 'solar-storage').classList.contains('is-active'));
+  assert.ok(flowMark(sankey, 'stored-energy').classList.contains('is-active'));
+  assert.equal(flowMark(sankey, 'grid-storage').classList.contains('is-active'), false);
+  key(sankey, 'ArrowRight');
+  key(sankey, 'ArrowRight');
+  assert.match(control(sankey, 'op-chart-tip').textContent, /Incoming exceeds outgoing by 5/);
+  key(sankey, 'End');
+  assert.match(control(sankey, 'op-chart-tip').textContent, /55.*100%of source outflow100%of destination inflow/);
+  key(sankey, 'Enter');
+  assert.equal(first.runtime.selection.group('energy').get(), 'stored-energy');
+  control(sankey, 'op-chart-toggle').click();
+  assert.deepEqual(descendants(sankey).filter(node => node.localName === 'caption').map(node => node.textContent), ['Nodes', 'Links']);
+  assert.ok(descendants(sankey).some(node => node.localName === 'tr' && node.hasAttribute('data-op-selection-active')));
   const facets = first.runtime._chartFacets.get(first.facetHosts[0]);
   assert.equal(facets.panels().length, 2);
   assert.equal(facets.setSeriesVisible('b', false), true);
@@ -667,6 +740,24 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   assert.deepEqual(Array.from(getChart(8).range()), comboRange);
   assert.equal(restored.runtime._chartFits.visible(restored.charts[9], 'trend'), false);
   assert.equal(restored.runtime._chart._grid.normalize(restored.charts[10]), 'row', 'the grid restores its normalization');
+  assert.equal(restored.runtime.selection.group('energy').get(), 'stored-energy');
+  const restoredSankey = restored.charts[11];
+  assert.equal(control(restoredSankey, 'op-chart-toggle').getAttribute('aria-pressed'), 'true');
+  assert.ok(descendants(restoredSankey).some(node => node.localName === 'tr' && node.hasAttribute('data-op-selection-active')));
+  control(restoredSankey, 'op-chart-toggle').click();
+  assert.ok(flowMark(restoredSankey, 'stored-energy').hasAttribute('data-op-selection-active'));
+  const restoredFlow = getChart(11);
+  const oldRibbon = flowMark(restoredSankey, 'stored-energy').getAttribute('d');
+  const changed = restoredFlow.spec();
+  changed.links.reverse();
+  changed.links[0].value = 20;
+  assert.equal(restoredFlow.update(changed), true);
+  assert.equal(flowMark(restoredSankey, 'stored-energy').getAttribute('d'), oldRibbon, 'keyed ribbon starts at its old geometry');
+  for (const now of [50, 330]) {
+    for (const [id, callback] of Array.from(restored.frames)) { restored.frames.delete(id); callback(now); }
+  }
+  assert.notEqual(flowMark(restoredSankey, 'stored-energy').getAttribute('d'), oldRibbon);
+  assert.ok(flowMark(restoredSankey, 'stored-energy').hasAttribute('data-op-selection-active'));
   const restoredFacets = restored.runtime._chartFacets.get(restored.facetHosts[0]);
   assert.deepEqual(Array.from(restoredFacets.range()), [2, 6]);
   for (const panel of restoredFacets.panels()) {

@@ -1462,7 +1462,8 @@
 
   function motionEnv(chart) {
     return {
-      reduced: OffPrint._boot?.capturing || OffPrint._readerState?.applying?.() || media('(prefers-reduced-motion: reduce)'),
+      reduced: OffPrint._boot?.capturing || OffPrint._readerState?.applying?.() ||
+        (!addonOf(chart?.model)?.ignoreReducedMotion && media('(prefers-reduced-motion: reduce)')),
       print: media('print'),
       zoomed: !!(chart && chart.box.closest && chart.box.closest('.op-zoom')),
       frames: typeof root.requestAnimationFrame === 'function' && typeof root.cancelAnimationFrame === 'function'
@@ -2679,7 +2680,7 @@
       if (near < 0 && chart.model.type !== 'scatter' && !def?.pick) near = closest(spots, px, null, g.horizontal);
       show(chart, near, py);
     } else if (def?.pick) {
-      show(chart, def.pick(chart, px, py), py);
+      show(chart, def.pick(chart, px, py, event), py);
     } else if (chart.model.type === 'scatter') {
       var best = -1;
       var dist = HIT;

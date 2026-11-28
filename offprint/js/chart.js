@@ -518,6 +518,8 @@
         key = typeof key === 'string' ? key.trim() : '';
         var point = { x: x, y: y, label: label == null ? '' : String(label), key: key || null };
         if (interval) point.interval = interval;
+        // A supplied fitted value rides along for layers such as residual panels, which validate it.
+        if (d && typeof d === 'object' && !Array.isArray(d) && d.fitted !== undefined) point.fitted = d.fitted;
         entries.push(point);
       });
       var name = s.name == null || s.name === '' ? (list.length > 1 ? 'Series ' + (si + 1) : '') : String(s.name);
@@ -784,7 +786,10 @@
   // Layers draw over the marks of every chart type: layers[name] = { draw(chart, geom, kit, layer), normalize?(model,
   // spec, kit), legend?(chart, legendEl, kit), describe?(model), table?(view, kit, chart) }, where the spec field named
   // after the layer holds its input and layer = { group, marks } gives the layer's SVG group and the chart's mark map.
-  var LAYER_HOOKS = ['normalize', 'legend', 'describe', 'table'];
+  // extent(model, span) widens the value span, panel(view, chart, kit) reserves { height, labels } under line and
+  // scatter plots, readout(chart, spot, tip, kit) adds readout rows, and mapRecords(rows, mapping, spec, kit) reads
+  // named-source records into the layer's spec field.
+  var LAYER_HOOKS = ['normalize', 'legend', 'describe', 'table', 'extent', 'panel', 'readout', 'mapRecords'];
 
   function addon(feature, parts) {
     var problem = addonProblem(feature, parts);
@@ -994,6 +999,9 @@
     var span = { yLo: yLo, yHi: yHi, xs: xs, count: count };
     var def = addonOf(model);
     if (def?.extent) def.extent(model, span);
+    Object.keys(chartLayers).forEach(function (name) {
+      if (chartLayers[name].extent) chartLayers[name].extent(model, span);
+    });
     if (model.y.min !== null) span.yLo = model.y.min;
     if (model.y.max !== null) span.yHi = model.y.max;
     return span;
@@ -1889,6 +1897,7 @@
   }
 
   var LINE = 13;
+  var PANEL_GAP = 24;
 
   // Horizontal bars: categories run down the left, wrapped onto up to three lines, and values run across the plot.
   // Reference lines on y mark values across the plot and those on x mark categories.
@@ -2108,7 +2117,15 @@
       }
     }
     var yFmt = yLog ? logTickFormat() : percentTicks(model, tickFormat(yInfo));
-    var left = 12 + CHAR * Math.max.apply(null, yInfo.ticks.map(function (v) { return yFmt(v).length; }).concat([1]));
+    // Layer panels, such as residuals, sit under the plot on the same x axis; the x ticks and title move below them.
+    var panels = [];
+    Object.keys(chartLayers).forEach(function (name) {
+      var want = chartLayers[name].panel ? chartLayers[name].panel(model, chart, kit) : null;
+      if (want && want.height > 0) panels.push({ name: name, height: want.height, labels: want.labels || [] });
+    });
+    var below = panels.reduce(function (sum, p) { return sum + PANEL_GAP + p.height; }, 0);
+    var left = 12 + CHAR * Math.max.apply(null, yInfo.ticks.map(function (v) { return yFmt(v).length; }).concat([1],
+      panels.flatMap(function (p) { return p.labels.map(function (text) { return String(text).length; }); })));
     var y = (yLog ? log : linear)(yInfo.min, yInfo.max, height - bottom, top);
     var y2Fmt = y2Info ? tickFormat(y2Info) : null;
     var y2 = y2Info ? linear(y2Info.min, y2Info.max, height - bottom, top) : null;
@@ -2153,8 +2170,15 @@
       xAt = function (x) { return xs0(x); };
     }
 
+    var frameH = height + below;
     var frame = svg('svg', {
-      viewBox: '0 0 ' + width + ' ' + height, width: width, height: height, 'aria-hidden': 'true', focusable: 'false'
+      viewBox: '0 0 ' + width + ' ' + frameH, width: width, height: frameH, 'aria-hidden': 'true', focusable: 'false'
+    });
+    var panelAt = {};
+    var reach = height - bottom;
+    panels.forEach(function (p) {
+      panelAt[p.name] = { top: reach + PANEL_GAP, bottom: reach + PANEL_GAP + p.height };
+      reach = panelAt[p.name].bottom;
     });
     // A narrowed range clips line paths that run on to the readings just beyond each end.
     var clipRect;
@@ -2203,7 +2227,7 @@
       y(Math.max(yInfo.min, Math.min(0, yInfo.max))) : height - bottom) + 0.5;
     svg('line', { x1: left, x2: left + plotW, y1: baseY, y2: baseY, class: 'op-chart-base' }, frame);
 
-    var tickY = height - bottom + 16 + markerSpace;
+    var tickY = reach + 16 + markerSpace;
     if (cats) {
       var widest = Math.max.apply(null, cats.map(function (c) { return c.length; }).concat([1])) * CHAR + 12;
       var every = Math.max(1, Math.ceil(widest / Math.max(1, band)));
@@ -2222,7 +2246,7 @@
       });
     }
     if (xLabel) {
-      svg('text', { x: left + plotW / 2, y: height - 6, 'text-anchor': 'middle', class: 'op-chart-label' }, frame)
+      svg('text', { x: left + plotW / 2, y: frameH - 6, 'text-anchor': 'middle', class: 'op-chart-label' }, frame)
         .textContent = xLabel;
     }
     if (model.y.label) {
@@ -2376,7 +2400,9 @@
       spots = spots.filter(function (spot) { return spot.px >= left && spot.px <= plotR; });
     }
     chart.spots = playback ? [] : spots;
-    chart.geom = layerGeom({ left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0, y2: y2 },
+    chart.panelSpots = null;
+    chart.geom = layerGeom({ left: left, right: left + plotW, top: top, bottom: height - bottom, band: band, y: y, x: xs0, y2: y2,
+      panels: panelAt, reach: reach, frameHeight: frameH },
       function (axis, v) {
         if (axis === 'y') return isNum(v) && (!yLog || v > 0) ? y(v) : null;
         if (axis === 'y2') return y2 && isNum(v) ? y2(v) : null;
@@ -2389,7 +2415,7 @@
     chart.revealPlot = playback ? drawPlayhead(chart, frame, future, spots,
       intervalRect ? [clipRect, intervalRect] : [clipRect]) : null;
     chart.cursor = chart.xGroup && linearX(model) ? svg('line', {
-      y1: top, y2: height - bottom, class: 'op-chart-x-cursor', display: 'none'
+      y1: top, y2: reach, class: 'op-chart-x-cursor', display: 'none'
     }, frame) : null;
     chart.overlay = svg('g', { class: 'op-chart-hover' }, frame);
     chart.marks = marks;
@@ -2485,7 +2511,7 @@
         });
       } else {
         if (!chart.cursor) {
-          svg('line', { x1: spot.cx, x2: spot.cx, y1: g.top, y2: g.bottom, class: 'op-chart-cross' }, chart.overlay);
+          svg('line', { x1: spot.cx, x2: spot.cx, y1: g.top, y2: g.reach || g.bottom, class: 'op-chart-cross' }, chart.overlay);
         }
         chart.marks.parentNode.appendChild(chart.overlay);
         // Per-point spots mark which of the readings at this x a click or Enter would select.
@@ -2515,6 +2541,9 @@
       }
       anchorY = g.horizontal ? spot.cy : pointerY == null ? g.top : pointerY;
     }
+    Object.keys(chartLayers).forEach(function (name) {
+      if (chartLayers[name].readout) chartLayers[name].readout(chart, spot, tip, kit);
+    });
     if (spot.p && spot.p.key && spot.p.key === selectedKey(model)) html('div', 'op-chart-tip-note', tip, 'Selected');
 
     tip.hidden = false;
@@ -2523,7 +2552,7 @@
     var x = spot.px + 14;
     if (x + w > chart.width) x = spot.px - 14 - w;
     tip.style.left = Math.max(0, x) + 'px';
-    tip.style.top = Math.max(0, Math.min(anchorY - h / 2, chart.model.height - h)) + 'px';
+    tip.style.top = Math.max(0, Math.min(anchorY - h / 2, (g.frameHeight || chart.model.height) - h)) + 'px';
   }
 
   // Pointer position in the chart's drawing units.
@@ -2551,9 +2580,21 @@
       return show(chart, slice, null);
     }
     if (chart.playhead !== null && px > g.x(chart.playhead)) return leaveInspection(chart);
-    if (chart.cursor && (px < g.left || px > g.right || py < g.top || py > g.bottom)) return leaveInspection(chart);
-    if (!spots.length || px < g.left - HIT || px > g.right + HIT || py < g.top - HIT || py > g.bottom + HIT) {
+    var reach = g.reach || g.bottom;
+    if (chart.cursor && (px < g.left || px > g.right || py < g.top || py > reach)) return leaveInspection(chart);
+    if (!spots.length || px < g.left - HIT || px > g.right + HIT || py < g.top - HIT || py > reach + HIT) {
       hide(chart);
+    } else if (py > g.bottom + HIT / 2 && reach > g.bottom) {
+      // Under the plot, a layer panel reads the same x: its nearest spot when the layer gives spots, else the
+      // nearest x (scatter charts read only spots).
+      var near = -1;
+      var gap = HIT;
+      (chart.panelSpots || []).forEach(function (s) {
+        var d = Math.hypot(s.px - px, s.py - py);
+        if (d <= gap) { gap = d; near = s.index; }
+      });
+      if (near < 0 && chart.model.type !== 'scatter' && !def?.pick) near = closest(spots, px, null, g.horizontal);
+      show(chart, near, py);
     } else if (def?.pick) {
       show(chart, def.pick(chart, px, py), py);
     } else if (chart.model.type === 'scatter') {
@@ -2890,6 +2931,14 @@
     if (!chart.plot.hidden) draw(chart, animate);
     if (chart.controller) chart.controller.change(chart.origin || 'user');
     chart.trackView?.(chart.origin || 'user');
+  }
+
+  // Redraws the current view without reporting a view change, for layer state such as hidden fits.
+  function redraw(chart) {
+    chart.view = viewOf(chart.model, chart.hidden, chart.range);
+    hide(chart);
+    fillTable(chart);
+    if (!chart.plot.hidden) draw(chart, true);
   }
 
   function setVisible(chart, name, on) {
@@ -3749,6 +3798,7 @@
     if (grouped) {
       var interval = readInterval(mapping.interval, keys[1], 'Grouped chart value ' + JSON.stringify(keys[1]));
       spec.series = groupedSeries(rows, mapping, spec, keys, interval);
+      layerRecords(rows, mapping, spec);
       groupedSpecs.add(spec);
       return { spec: spec, rows: rows.length, filterSeries: filter ?
         Array.from(new Set(value.map(function (record) { return data.key(record[keys[2]]); }).filter(Boolean))) : null };
@@ -3775,7 +3825,16 @@
         })
       };
     });
+    layerRecords(rows, mapping, spec);
     return { spec: spec, rows: rows.length };
+  }
+
+  // Layers read their own fields from the mapped records into the spec, such as fit curves and fitted values.
+  function layerRecords(rows, mapping, spec) {
+    Object.keys(chartLayers).forEach(function (name) {
+      if (chartLayers[name].mapRecords) chartLayers[name].mapRecords(rows, mapping, spec, kit);
+    });
+    return spec;
   }
 
   function preparedChart(host, input) {
@@ -3973,7 +4032,7 @@
     ticks: ticks, logTicks: logTicks, timeTicks: timeTicks, tickFormat: tickFormat, logTickFormat: logTickFormat,
     format: format, toNumber: toNumber, isNum: isNum, extent: extent, intervalReadout: intervalReadout, row: row,
     markId: markId, addMark: addMark, scale: OffPrint.chart.scale, COLORS: COLORS, CHAR: CHAR, inspect: inspectSpot, hide: hide,
-    markBounds: markBounds, wrapLabel: wrapLabel, toTime: toTime, hint: function (el, text) { if (OffPrint.util) OffPrint.util.hint(el, text); }
+    markBounds: markBounds, wrapLabel: wrapLabel, toTime: toTime, redraw: redraw, hint: function (el, text) { if (OffPrint.util) OffPrint.util.hint(el, text); }
   };
   chart.get = function (target) {
     var el = typeof target === 'string' ? document.getElementById(target) : target;

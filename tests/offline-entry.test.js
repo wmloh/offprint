@@ -480,8 +480,8 @@ test('Interactive cards restore nested tabs, filters, and a paused SVG position 
 
 test('Interactive charts restore linked playback, filters, and nested chart controls offline', async () => {
   const config = { profile: 'none', features: { data: true, selection: true, parameters: true,
-    'chart-intervals': true, 'chart-histogram': true, 'chart-heatmap': true, 'chart-combo': true, 'chart-playback': true,
-    'zoom-tools': true },
+    'chart-intervals': true, 'chart-histogram': true, 'chart-heatmap': true, 'chart-combo': true, 'chart-fits': true,
+    'chart-playback': true, 'zoom-tools': true },
     options: { chart: { instances: { trace: { mapping: {
       x: 'x', series: [{ field: 'y', key: 'observed' }], pointKey: 'key'
     } } } } },
@@ -497,7 +497,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const traceText = 'x,y,key\n0,0,start\n5,2,mid\n10,3,end';
   const original = shared.push({ type: 'csv', text: traceText }) - 1;
   const revised = shared.push({ type: 'csv', text: traceText.replace('5,2', '5,9') }) - 1;
-  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'tour', 'state-tour']
+  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'tour', 'state-tour']
     .map(id => ({ key: ['id', id], stamp: id }));
   const payload = { url: 'file:///original/charts.html', siteURL: 'file:///original/site.js', entryURL: entryURL.href,
     site: manifest, profile: null, features: plan.features, styles: plan.styles, identities,
@@ -532,7 +532,9 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
       ['combo', {}, { x: { type: 'time' }, brush: true, toggles: true, y: { unit: 'runs' }, y2: { unit: '%' }, series: [
         { key: 'runs', data: [[0, 4], [5, 6], [10, 3]] },
         { key: 'rate', mark: 'line', axis: 'y2', data: [[0, 40], [5, 55], [10, 70]] }
-      ] }]
+      ] }],
+      ['scatter', {}, { residuals: true, series: [{ key: 'obs', data: [{ x: 0, y: 1, fitted: 1.2 }, { x: 2, y: 3, fitted: 2.8 }] }],
+        fits: [{ key: 'trend', curve: [[0, 1.2], [2, 2.8]], band: [[0, 1, 1.4], [2, 2.5, 3.1]], stats: 'R² = 0.98' }] }]
     ];
     const charts = specs.map(([type, attrs, spec], i) => {
       const host = add(detail, 'div', { id: identities[i].key[1], 'data-op-export-identity': i,
@@ -582,7 +584,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const chart = host => first.runtime._chart.get(host);
   for (const host of first.charts) assert.ok(chart(host), host.id);
   assert.deepEqual(first.charts.map(host => chart(host).model().addon ?? chart(host).model().type),
-    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line', 'combo']);
+    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line', 'combo', 'scatter']);
   const [trace, linked, bars, pie, , , heatmap, brush] = first.charts;
   const control = (host, cls) => descendants(host).find(node => node.className?.split(' ').includes(cls) || node.getAttribute('class') === cls);
   const key = (host, name) => control(host, 'op-chart-plot').dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: name }));
@@ -608,6 +610,9 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   key(combo, '+');
   const comboRange = Array.from(chart(combo).range());
   assert.equal(comboRange.length, 2);
+  const fits = first.charts[9];
+  assert.equal(control(fits, 'op-chart-residual').getAttribute('class'), 'op-chart-residual');
+  assert.equal(first.runtime._chartFits.visible(fits, 'trend', false), true);
   key(heatmap, 'PageDown');
   assert.equal(first.runtime._chart._heatmap.contours(heatmap, false), true);
   control(heatmap, 'op-chart-toggle').click();
@@ -633,6 +638,9 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   assert.equal(getChart(8).model().series[1].axis, 'y2');
   assert.equal(getChart(8).visible('rate'), false);
   assert.deepEqual(Array.from(getChart(8).range()), comboRange);
+  assert.equal(restored.runtime._chartFits.visible(restored.charts[9], 'trend'), false);
+  assert.equal(control(restored.charts[9], 'op-chart-fit-curve'), undefined);
+  assert.ok(control(restored.charts[9], 'op-chart-residual-zero'), 'the residual panel is restored');
   assert.equal(control(restored.charts[7], 'op-chart-toggle').getAttribute('aria-pressed'), 'true');
   assert.deepEqual(Array.from(restored.runtime._chart._heatmap.valueRange(restored.charts[6])),
     Array.from(first.runtime._chart._heatmap.valueRange(heatmap)));

@@ -1,0 +1,66 @@
+/* Supplied fits from chart-fits.js: a fit curve in its series colour over a faint uncertainty band, fit chips with
+   statistics in the legend, and the residual panel's zero line, grid, and dots under the plot. */
+.op-chart-fit-curve {
+  fill: none;
+  stroke: var(--op-series);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* On line charts the fit is dashed so it stays apart from the observed line. */
+.op-chart.is-line .op-chart-fit-curve {
+  stroke-dasharray: 6 4;
+}
+
+.op-chart-fit-band {
+  fill: var(--op-series);
+  fill-opacity: 0.14;
+  stroke: none;
+  pointer-events: none;
+}
+
+.op-chart-key.is-fit {
+  height: 0;
+  border-top: 2px dashed var(--op-series);
+  background: none;
+}
+
+.op-chart-key.is-fit.has-band {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--op-series) 16%, transparent);
+}
+
+.op-chart-fit-toggles:not(:has(:checked)) .op-chart-key.is-fit,
+.op-chart-fit-toggle:not(:has(:checked)) .op-chart-key.is-fit {
+  opacity: 0.3;
+}
+
+.op-chart-fit-stats,
+.op-chart-fit-toggle .op-chip-note {
+  color: var(--op-text-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-chart-residual-zero {
+  stroke: var(--op-border-strong);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.op-chart-residual-grid {
+  stroke: var(--op-border);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.op-chart-residual {
+  fill: var(--op-series);
+  stroke: var(--op-bg);
+  stroke-width: 1.5;
+}
+
+.op-chart.is-hovering .op-chart-residual:not(.is-active, [data-op-selection-active]) {
+  opacity: 0.45;
+}

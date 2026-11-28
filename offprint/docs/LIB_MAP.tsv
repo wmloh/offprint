@@ -52,6 +52,7 @@ Dot and interval plots	Compare categories with dots, lollipop stems, and supplie
 Histograms	Bin observations with optional log axes, live binning, and stacked bars	data/chart-histogram.md
 Heatmaps	Colour grids by value and explore ranges and contours	data/chart-heatmap.md
 Combo charts	Draw bars and lines together on categories or dates, with an opt-in second y axis	data/chart-combo.md
+Supplied fits and residuals	Draw supplied fit curves, uncertainty bands, and statistics on line and scatter charts, with fit chips and a linked residual panel	data/chart-fits.md
 Chart annotations	Mark notes, shaded ranges, and event markers on any chart, placed clear of the data and revealed by steps	data/chart-annotations.md
 Guided chart playback	Play chart checkpoints or step through keyed chart states	data/chart-playback.md
 Concept tables	Compare text and concepts in semantic tables	data/concept-tables.md

@@ -531,6 +531,14 @@ window.OffPrintSearch = {
             "interaction"
           ]
         },
+        "fit curve": {
+          "title": "fit curve",
+          "text": "A line drawn from a model that was fitted to the data elsewhere, such as a straight-line trend. The page draws the points it is given; it does not work out the fit itself.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
         "focus mode": {
           "title": "focus mode",
           "text": "A reading mode that blurs text away from the section you are reading. Rest the pointer on a blurred block to see it clearly.",
@@ -1055,6 +1063,14 @@ window.OffPrintSearch = {
           "more": "",
           "tags": [
             "computer basics"
+          ]
+        },
+        "residual": {
+          "title": "residual",
+          "text": "How far an observation sits from its fitted value: the observed value minus the fitted one. Residuals scattered evenly around zero suggest the fit suits the data.",
+          "more": "",
+          "tags": [
+            "data and charts"
           ]
         },
         "responsive": {
@@ -1752,13 +1768,19 @@ window.OffPrintSearch = {
         "file": "pages/data/charts.html",
         "path": "../pages/data/charts.html",
         "title": "SVG charts",
-        "sha256": "24cdccbdc36a2a18c38f4532798f1d8943c2bf769edef9d2596f5b876b803b42"
+        "sha256": "6bb65f1a453d376a7254fa2da0f6f1747c0dfbefebb3c5ec59084930ed50fe52"
       },
       {
         "file": "pages/data/heatmaps.html",
         "path": "../pages/data/heatmaps.html",
         "title": "Heatmaps",
         "sha256": "25e7e2c58114a505e6c235d40bfd2d3cf1fb1050ce8543e9a2875690813f3b8e"
+      },
+      {
+        "file": "pages/data/fits.html",
+        "path": "../pages/data/fits.html",
+        "title": "Fits and residuals",
+        "sha256": "7534d1dae742852bde23ed723d98c2173ccf67699d5ac829bc2e64d2fcad46cb"
       },
       {
         "file": "pages/data/playback.html",
@@ -1818,7 +1840,7 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "16846dd8423d7433d273e3af5c51226e1638d457516416a2ca19db3aa3de5bf4"
+        "sha256": "4464f5a07edf878fc6ea83d0a1b043a325b9da6d0ca0ce8fd0e8156b856b3c7a"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -8140,7 +8162,7 @@ window.OffPrintSearch = {
           "id": "related",
           "title": "Related",
           "level": 2,
-          "text": "Concept tables and results tables Guided chart playback Heatmaps Worked-example steppers, which can reveal annotations step by step Parameters, for controls linked to charts Report results, a recipe that uses it Share experiment results, a recipe that uses it Feature directory"
+          "text": "Concept tables and results tables Guided chart playback Heatmaps Fits and residuals, for supplied fit curves over line and scatter charts Worked-example steppers, which can reveal annotations step by step Parameters, for controls linked to charts Report results, a recipe that uses it Share experiment results, a recipe that uses it Feature directory"
         }
       ],
       "terms": [
@@ -8769,6 +8791,215 @@ window.OffPrintSearch = {
         {
           "id": "value-range",
           "title": "Filter by value",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "path": "../pages/data/fits.html",
+      "title": "Fits and residuals",
+      "sections": [
+        {
+          "id": "",
+          "title": "Fits and residuals",
+          "level": 1,
+          "text": "Show data A fit curve shows the trend a model found in your data, drawn over the points it was fitted to. A shaded band can show its uncertainty, and a small panel under the plot shows each residual: how far each point sits from its fitted value. Official name Supplied fits and residuals Turned on On request Signal strength Strong Works with Line and scatter charts, named data sources, linked selection, and annotations Good for Showing a model next to the measurements it explains, and how well it fits them"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "Concentration (mg/L) Sensor reading Fitted Residual 0 0.9 0.6 +0.3 1 2.0 2.5 −0.5 2 4.8 4.4 +0.4 3 6.1 6.3 −0.2 4 8.8 8.2 +0.6 5 9.4 10.1 −0.7 6 12.1 12.0 +0.1 7 14.4 13.9 +0.5 8 15.4 15.8 −0.4 9 17.9 17.7 +0.2 10 19.3 19.6 −0.3 Illustrative calibration of a sensor against known concentrations. The straight-line fit, its band, and its R² were worked out beforehand and written into the page. The panel underneath shows each reading minus its fitted value. Try it Move over a dot in the panel under the plot. The readout names the same sample as the dot above it, with its fitted value and residual. Click a dot to select it, and its partner in the other half of the chart is selected too. Then click the Straight-line fit chip in the legend to hide the fit and its residuals."
+        },
+        {
+          "id": "what-it-does",
+          "title": "Supplied, not calculated",
+          "level": 2,
+          "text": "OffPrint never fits a model for you. You work out the fit in your analysis tool and write three things into the chart: the points of the curve, optionally the lower and upper edges of its band, and a short line of statistics such as R² or the equation. Each observed point can also carry its fitted value. The page joins the curve points you give it with straight segments, so give enough points for a smooth curve. This keeps the page honest. The numbers a reader sees are the numbers your analysis produced, and nothing is quietly re-estimated in the browser."
+        },
+        {
+          "id": "residuals",
+          "title": "Read the residual panel",
+          "level": 2,
+          "text": "Each dot in the panel is one observation minus its fitted value. Dots above the zero line are readings the fit underestimates; dots below are readings it overestimates. When the dots scatter evenly around zero, with no curve or funnel shape, the fit suits the data. The panel shares the plot’s x axis, so narrowing the range or reading a point works across both."
+        },
+        {
+          "id": "compare-fits",
+          "title": "Compare fits",
+          "level": 2,
+          "text": "A chart can carry several fits, each belonging to one series and drawn in its colour. On a line chart the fit is dashed, so it stays apart from the measured line. Illustrative voltage of two battery cells as they age, each with a supplied decay curve and its time constant. Try it Hide Cell B with its series chip, and its fit goes with it. Hide only Cell A decay to compare the raw line with nothing drawn over it."
+        },
+        {
+          "id": "data-sources",
+          "title": "From a data file",
+          "level": 2,
+          "text": "Fits can come from the same named data source as the points. Name the columns that hold the fitted values and the band edges, and OffPrint builds the curve and band from them, skipping rows where those columns are blank. A log axis needs every curve, band, and fitted value above zero; OffPrint reports a value of zero or less instead of hiding it."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use a fit when the model is part of the story: a calibration line, a growth or decay curve, or a trend you will refer back to. Add the residual panel when readers should judge how well it fits. A fit is a strong signal, so explain in the text what model it is and where its numbers came from, and keep one or two fits per chart."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "The arrow keys move between points and the readout adds each point’s fitted value and residual. The fit chips work with the keyboard like other legend chips. Choose Table to see the fit statistics and a list of every residual. With scripts off, the written table stays readable."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "SVG charts Chart annotations, for pointing out a single point or range Named data sources Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "fit curve",
+          "term": "fit curve",
+          "section": ""
+        },
+        {
+          "text": "uncertainty",
+          "term": "uncertainty",
+          "section": ""
+        },
+        {
+          "text": "residual",
+          "term": "residual",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "scatter charts",
+          "term": "scatter chart",
+          "section": ""
+        },
+        {
+          "text": "readout",
+          "term": "readout",
+          "section": "see-it"
+        },
+        {
+          "text": "residual",
+          "term": "residual",
+          "section": "see-it"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "see-it"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "see-it"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "what-it-does"
+        },
+        {
+          "text": "browser",
+          "term": "browser",
+          "section": "what-it-does"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "residuals"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "compare-fits"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "compare-fits"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "data-sources"
+        },
+        {
+          "text": "residual",
+          "term": "residual",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "readout",
+          "term": "readout",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "residual",
+          "term": "residual",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "legend",
+          "term": "legend",
+          "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "fits-and-residuals",
+          "title": "Fits and residuals",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "what-it-does",
+          "title": "Supplied, not calculated",
+          "level": 2
+        },
+        {
+          "id": "residuals",
+          "title": "Read the residual panel",
+          "level": 2
+        },
+        {
+          "id": "compare-fits",
+          "title": "Compare fits",
+          "level": 2
+        },
+        {
+          "id": "data-sources",
+          "title": "From a data file",
           "level": 2
         },
         {
@@ -10674,7 +10905,7 @@ window.OffPrintSearch = {
           "id": "show-data",
           "title": "Show data",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
         },
         {
           "id": "reference",

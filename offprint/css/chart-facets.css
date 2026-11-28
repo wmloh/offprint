@@ -1,0 +1,128 @@
+/* Small multiples and scatter-plot matrices from chart-facets.js: one shared legend, range, and table row above a
+   grid of titled panels, panel heads reduced to what is not shared, compact matrix panels without ticks, name-and-range
+   diagonals, the rectangle brush, and records dimmed outside it. */
+.op-facets-head {
+  display: flex;
+  align-items: center;
+  gap: var(--op-space-3);
+  flex-wrap: wrap;
+  min-height: 24px;
+  margin-bottom: var(--op-space-2);
+  color: var(--op-text-muted);
+  font-size: 13px;
+}
+
+.op-facets-head .op-chart-legend[hidden],
+.op-facets-tools > [hidden] {
+  display: none;
+}
+
+.op-facets-status {
+  font-variant-numeric: tabular-nums;
+}
+
+.op-facets-caption {
+  margin: 0 0 var(--op-space-2);
+  font-weight: 600;
+}
+
+.op-facets-caption[hidden] {
+  display: none;
+}
+
+.op-facets-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--op-facets-columns, 2), minmax(0, 1fr));
+  gap: var(--op-space-4) var(--op-space-4);
+}
+
+.op-facets.is-matrix .op-facets-grid {
+  gap: var(--op-space-1);
+}
+
+.op-facets-grid[hidden],
+.op-facets-table[hidden] {
+  display: none;
+}
+
+.op-facets-cell {
+  min-width: 0;
+}
+
+.op-facets-title {
+  margin: 0;
+  color: var(--op-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Panels share the facet head: their own tools go, and so do series keys the shared legend already names. */
+.op-facets-panel .op-chart-tools {
+  display: none;
+}
+
+.op-facets-panel .op-chart-head {
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.op-facets.has-shared-legend .op-facets-panel .op-chart-legend-item:has(> .op-chart-key:is(.is-line, .is-dot, .is-bar)) {
+  display: none;
+}
+
+.op-facets.is-compact .op-facets-panel .op-chart-tick {
+  visibility: hidden;
+}
+
+/* Diagonal cells name their field and its range, over a histogram or a tinted tile of the panel height. */
+.op-facets-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--op-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.op-facets-cell.is-diagonal:not(:has(.op-facets-panel)) .op-facets-field {
+  height: var(--op-facets-height, 160px);
+  border-radius: var(--op-radius);
+  background: var(--op-bg-subtle);
+}
+
+.op-facets-field-name {
+  color: var(--op-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.op-facets-field-missing {
+  color: var(--op-text-faint);
+}
+
+.op-facets.is-matrix .op-facets-cell.is-chart .op-chart-plot {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.op-facets-brush {
+  fill: var(--op-focus);
+  fill-opacity: 0.1;
+  stroke: var(--op-focus);
+  stroke-opacity: 0.7;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.op-chart-dot.is-facets-out {
+  opacity: 0.15;
+  transition: opacity 0.2s;
+}
+
+.op-facets-table tr.is-facets-out {
+  color: var(--op-text-faint);
+}

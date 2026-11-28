@@ -53,7 +53,7 @@
       '.op-tabs', '[data-op-tabs]', '.op-figure-steps', '.op-card-panel', '.op-detail-pane',
       '.op-pipeline', '[data-op-chart]', '[data-op-chart-playback]', '.op-anim',
       'figure:has(> [data-op-animation-steps], > script[data-op-animation])',
-      '[data-op-scenarios]', '[data-op-matrix]', '[data-op-stepper]', '[data-op-results]', '[data-op-dropzone]',
+      '[data-op-scenarios]', '[data-op-matrix]', '[data-op-facets]', '[data-op-stepper]', '[data-op-results]', '[data-op-dropzone]',
       '.op-tree-diagram',
       '.op-timeline', '.op-sequence', '[data-op-data-view]', '[data-op-source]', 'details', '[data-op-selection-group]'
     ].join(',');

@@ -42,6 +42,7 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     chart-heatmap.css: Heatmap cell hues over a neutral backdrop, dimmed out-of-range cells, contour lines and labels with their toggle chip, and the side colour scale
     chart-combo.css: Series-tinted value axes and left/right axis tags in combo legends, readouts, and tables
     chart-fits.css: Fit curves over faint uncertainty bands, dashed on line charts, fit chips with statistics, and residual-panel zero line, grid, and dots
+    chart-facets.css: Facet grid with a shared head, titled panels without their own tools, compact matrix panels, name-and-range diagonals, the brush rectangle, and dimmed records
     chart-annotations.css: Annotation callouts with leader lines, shaded range bands, event marker lines, haloed labels, the hidden-annotation legend note, and the annotations table
     chart-playback.css: Guided playback pill spacing, playhead, checkpoint marker, and note visibility
     results.css: Sortable results-table headers, heatmap shading, best-in-column values, threshold rules with pass/fail text, and column filter menus with blue choice chips and a row-count bar
@@ -98,6 +99,7 @@ offprint/: Copyable offline library folder for interactive, exportable guides, r
     chart-heatmap.js: Matrix or record heatmaps with sequential, diverging, and log colour scales, a brushable value-range scale, and marching-squares contours with a show/hide legend chip
     chart-combo.js: Combo charts mixing grouped or stacked bars and lines on categorical or time x, with an opt-in zero-aligned second y axis, axis-tagged legend, readout, and table, and time-range brushing
     chart-fits.js: Supplied fit curves, uncertainty bands, and statistics on line and scatter charts with legend chips, plus a linked residual panel of observed minus supplied fitted values, from specs or named-source fields
+    chart-facets.js: Small multiples splitting one spec or named source by field or series on shared or free-y scales with a linked legend, range, table, cursor, and selection, plus a scatter-plot matrix of 2 to 6 fields with range or histogram diagonals, zoom-only full detail past four fields, and a rectangle brush dimming records by key
     chart-annotations.js: Note, range, and marker annotations anchored to values, categories, or keyed points on any chart, with automatic label placement, off-range legend notes, table and description entries, and reveal steps
     chart-playback.js: Guided playback for individual numeric line charts and x-position groups, plus opt-in keyed-state checkpoints for non-line charts, with the shared timed sequence controls, authored checkpoint notes, and linked selection
     results.js: Source-mapped or authored tables with supplied intervals, sorting, heatmaps, thresholds, column filters, saved state, and opt-in keyed row animation

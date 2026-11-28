@@ -1113,6 +1113,14 @@ window.OffPrintSearch = {
             "data and charts"
           ]
         },
+        "scatter plot matrix": {
+          "title": "scatter-plot matrix",
+          "text": "A grid of scatter charts that plots every pair of several measurements against each other, with each measurement on the diagonal.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
         "scenario": {
           "title": "scenario",
           "text": "One version of a situation, set up to compare its outcome with others.",
@@ -1271,6 +1279,14 @@ window.OffPrintSearch = {
           "more": "",
           "tags": [
             "interaction"
+          ]
+        },
+        "small multiples": {
+          "title": "small multiples",
+          "text": "A grid of small charts of the same kind, one per group, drawn on the same scales so they can be compared at a glance.",
+          "more": "",
+          "tags": [
+            "data and charts"
           ]
         },
         "snapshot": {
@@ -1783,6 +1799,12 @@ window.OffPrintSearch = {
         "sha256": "7534d1dae742852bde23ed723d98c2173ccf67699d5ac829bc2e64d2fcad46cb"
       },
       {
+        "file": "pages/data/facets.html",
+        "path": "../pages/data/facets.html",
+        "title": "Small multiples and scatter-plot matrices",
+        "sha256": "630c8094e6af3df45794cf74d3d6f22ae5ad95884bdbd8bf5bbf2be80288858a"
+      },
+      {
         "file": "pages/data/playback.html",
         "path": "../pages/data/playback.html",
         "title": "Guided chart playback",
@@ -1840,7 +1862,7 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "4464f5a07edf878fc6ea83d0a1b043a325b9da6d0ca0ce8fd0e8156b856b3c7a"
+        "sha256": "b9d8f092a3893bcb171632eca45cda4e06274903310d5c2f546a4d8db91bf1f8"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -9020,6 +9042,225 @@ window.OffPrintSearch = {
       ]
     },
     {
+      "path": "../pages/data/facets.html",
+      "title": "Small multiples and scatter-plot matrices",
+      "sections": [
+        {
+          "id": "",
+          "title": "Small multiples and scatter-plot matrices",
+          "level": 1,
+          "text": "Show data Small multiples split one chart into a grid of little charts, one per group, all drawn on the same scales so you can compare them at a glance. A scatter-plot matrix does the same for several measurements at once: it plots every pair of them against each other. Official name Facets and scatter-plot matrices Turned on On request Signal strength Strong Works with Every SVG chart type, named data sources, linked selection, and figure zoom Good for Comparing the same picture across groups, and spotting how several measurements relate"
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2,
+          "text": "Site Adults per week Children per week Library 83–169 37–82 Museum 169–278 100–181 Gardens 67–121 33–54 Illustrative weekly visitors at three sites over ten weeks. Every panel uses the same axes, so a taller line really is more visitors. Try it Move along any panel: a cursor shows the same week in all three. Drag across one panel to narrow the weeks, and the other two follow; Reset range brings them back. Then click the Children chip to hide that line everywhere at once."
+        },
+        {
+          "id": "same-scales",
+          "title": "Same scales, fair comparison",
+          "level": 2,
+          "text": "Small multiples only work when every panel is measured the same way. OffPrint looks at the data of all the panels together and gives them one shared x axis and one shared y axis. A busy site and a quiet one then sit on the same ruler, and the difference between them is visible instead of hidden by each panel stretching to fit. Sometimes the shapes matter more than the sizes, for example when one group is ten times larger than the rest. Then ask for a free y axis: the x axis stays shared and each panel scales its own values. Say so in the caption, because readers will assume the scales match. You can split by any field your points carry, such as site, region, or experiment, or simply give each series its own panel. Panels can be any chart type, including bar charts, heatmaps, and histograms, in two to four columns."
+        },
+        {
+          "id": "matrix",
+          "title": "Every pair at once",
+          "level": 2,
+          "text": "Variety Leaf length (cm) Leaf width (cm) Stem height (cm) Flowers Alpine 3.7–5.0 1.4–2.0 12–22 3–7 Meadow 4.5–6.5 2.0–2.9 22–36 6–12 Shore 6.1–7.1 1.8–2.4 17–29 12–18 Illustrative measurements of 36 plants of three varieties. Each small plot pairs two measurements; the diagonal shows how each one is spread out. Try it Drag a rectangle around the tallest plants in any plot. Every other plot dims the plants outside it, so you can see where the same plants sit on the other measurements. Clear brush removes it. Click a single dot to select that plant, and it lights up in all twelve plots."
+        },
+        {
+          "id": "read-the-matrix",
+          "title": "Read the matrix",
+          "level": 2,
+          "text": "Each row shares one measurement on its vertical axis and each column shares one on its horizontal axis, so the plot in row 3, column 1 shows stem height against leaf length. The plots above and below the diagonal are mirror images. The diagonal itself names each measurement with its range, and can show a small histogram of it, counted straight from the data. Up to four measurements fit in the page with full axes. With five or six, the plots inside the page drop their tick labels to stay readable; open the figure in the zoom view to see every axis in full."
+        },
+        {
+          "id": "data-sources",
+          "title": "From a data file",
+          "level": 2,
+          "text": "Both layouts can read a named data source. For small multiples, map the columns as you would for a single chart and name the column to split by; each panel gets its own rows. For a matrix, list the columns to compare, the column that names each record, and optionally a column that colours records by group. When the source changes, the panels redraw together."
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2,
+          "text": "Use small multiples when one chart would need too many crossing lines, or when the question is “is this pattern the same everywhere?”. Use a scatter-plot matrix early in an analysis, to spot which measurements move together, or in a report to show the relationships behind a conclusion. Both are strong signals and take space, so keep the panels few, and point out in the text the panel or pair that matters."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2,
+          "text": "Each panel reads its values with the arrow keys, like any OffPrint chart, and keyed points can be selected with Enter. Escape clears a matrix brush, and the status line says how many records it holds. Choose Table to list every value: small multiples show each panel’s table, and a matrix shows one table of records with a column marking the brushed ones. With scripts off, the written summary table stays readable."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "SVG charts Histograms Figure zoom and zoom tools Named data sources Feature directory"
+        }
+      ],
+      "terms": [
+        {
+          "text": "Small multiples",
+          "term": "small multiples",
+          "section": ""
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": ""
+        },
+        {
+          "text": "scatter-plot matrix",
+          "term": "scatter plot matrix",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        },
+        {
+          "text": "Small multiples",
+          "term": "small multiples",
+          "section": "same-scales"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "same-scales"
+        },
+        {
+          "text": "caption",
+          "term": "caption",
+          "section": "same-scales"
+        },
+        {
+          "text": "field",
+          "term": "field",
+          "section": "same-scales"
+        },
+        {
+          "text": "series",
+          "term": "series",
+          "section": "same-scales"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "same-scales"
+        },
+        {
+          "text": "axis",
+          "term": "axis",
+          "section": "read-the-matrix"
+        },
+        {
+          "text": "histogram",
+          "term": "histogram",
+          "section": "read-the-matrix"
+        },
+        {
+          "text": "small multiples",
+          "term": "small multiples",
+          "section": "data-sources"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "data-sources"
+        },
+        {
+          "text": "matrix",
+          "term": "matrix",
+          "section": "data-sources"
+        },
+        {
+          "text": "record",
+          "term": "record",
+          "section": "data-sources"
+        },
+        {
+          "text": "small multiples",
+          "term": "small multiples",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "when-to-use"
+        },
+        {
+          "text": "scatter-plot matrix",
+          "term": "scatter plot matrix",
+          "section": "when-to-use"
+        },
+        {
+          "text": "chart",
+          "term": "chart",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "matrix",
+          "term": "matrix",
+          "section": "for-every-reader"
+        },
+        {
+          "text": "small multiples",
+          "term": "small multiples",
+          "section": "for-every-reader"
+        }
+      ],
+      "outline": [
+        {
+          "id": "small-multiples-and-scatter-plot-matrices",
+          "title": "Small multiples and scatter-plot matrices",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See it",
+          "level": 2
+        },
+        {
+          "id": "same-scales",
+          "title": "Same scales, fair comparison",
+          "level": 2
+        },
+        {
+          "id": "matrix",
+          "title": "Every pair at once",
+          "level": 2
+        },
+        {
+          "id": "read-the-matrix",
+          "title": "Read the matrix",
+          "level": 2
+        },
+        {
+          "id": "data-sources",
+          "title": "From a data file",
+          "level": 2
+        },
+        {
+          "id": "when-to-use",
+          "title": "When to reach for it",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "For every reader",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
       "path": "../pages/data/playback.html",
       "title": "Guided chart playback",
       "sections": [
@@ -10905,7 +11146,7 @@ window.OffPrintSearch = {
           "id": "show-data",
           "title": "Show data",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Small multiples and scatter-plot matrices On request Strong SVG charts; Histograms for histogram diagonals Split one chart into panels on shared scales, or plot every pair of measurements and brush a group of records. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
         },
         {
           "id": "reference",

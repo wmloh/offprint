@@ -49,6 +49,8 @@
     // Layer add-ons draw over every chart type from the spec field named after the layer, in declaration order.
     'chart-fits': { needs: ['chart'], css: ['chart-fits'], script: 'chart-fits', chartLayers: ['fits', 'residuals'] },
     'chart-annotations': { needs: ['chart'], css: ['chart-annotations'], script: 'chart-annotations', chartLayers: ['annotations'] },
+    // Facets mount their own hosts of panel charts and keep matrix brushing in a layer.
+    'chart-facets': { needs: ['chart'], css: ['chart-facets'], script: 'chart-facets', chartLayers: ['facets-brush'] },
     results: { needs: ['base', 'choices'], css: ['results'], script: 'results', api: '_results' },
     matrix: { needs: ['base', 'data', 'choices'], css: ['matrix'], script: 'matrix', api: '_matrix' },
     scenarios: { needs: ['chart'], css: ['scenarios'], script: 'scenarios' },

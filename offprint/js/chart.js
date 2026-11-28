@@ -3989,6 +3989,13 @@
   chart.logTicks = logTicks;
   chart.logTickFormat = logTickFormat;
   chart.validate = function (spec) { return layerModel(normalize(spec), spec).errors.slice(); };
+  // The normalized model of a spec with its layers, for features such as facets that compare panel extents.
+  chart.specModel = function (spec) { return layerModel(normalize(spec), spec); };
+  // Named-source records mapped to a chart spec as a mounted named chart would map them.
+  chart._mapRecords = function (records, mapping, base, maxRows) {
+    return mappedSpec(records, mapping, base, maxRows || Infinity, null, false).spec;
+  };
+  chart.paint = paint;
   chart.nearest = nearest;
   chart.normalize = normalize;
   chart.fromTable = fromTable;

@@ -181,6 +181,10 @@ window.OffPrintSite = {
           "path": "../pages/data/fits.html"
         },
         {
+          "title": "Small multiples and scatter-plot matrices",
+          "path": "../pages/data/facets.html"
+        },
+        {
           "title": "Guided chart playback",
           "path": "../pages/data/playback.html"
         },
@@ -552,6 +556,8 @@ window.OffPrintSite = {
         },
         "fit curve": { "tags": ["Data and charts"], "text": "A line drawn from a model that was fitted to the data elsewhere, such as a straight-line trend. The page draws the points it is given; it does not work out the fit itself." },
         "residual": { "tags": ["Data and charts"], "text": "How far an observation sits from its fitted value: the observed value minus the fitted one. Residuals scattered evenly around zero suggest the fit suits the data." },
+        "small multiples": { "tags": ["Data and charts"], "text": "A grid of small charts of the same kind, one per group, drawn on the same scales so they can be compared at a glance." },
+        "scatter-plot matrix": { "tags": ["Data and charts"], "text": "A grid of scatter charts that plots every pair of several measurements against each other, with each measurement on the diagonal." },
         "combo chart": { "tags": ["Data and charts"], "text": "A chart that draws some series as bars and others as a line over the same categories or dates, optionally with a second value axis at the right for a different measure." },
         "stacked bar": { "tags": ["Data and charts"], "text": "A bar built from several coloured segments, one per series, so its length shows their total. A percent bar stretches every total to 100% to compare shares." },
         "state checkpoint": { "tags": ["Data and charts"], "text": "A playback stop that sets what a chart shows, such as its visible series, highlighted item, or a linked choice, instead of growing a line." },

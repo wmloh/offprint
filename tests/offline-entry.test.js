@@ -481,7 +481,7 @@ test('Interactive cards restore nested tabs, filters, and a paused SVG position 
 test('Interactive charts restore linked playback, filters, and nested chart controls offline', async () => {
   const config = { profile: 'none', features: { data: true, selection: true, parameters: true,
     'chart-intervals': true, 'chart-histogram': true, 'chart-heatmap': true, 'chart-combo': true, 'chart-fits': true,
-    'chart-playback': true, 'zoom-tools': true },
+    'chart-facets': true, 'chart-playback': true, 'zoom-tools': true },
     options: { chart: { instances: { trace: { mapping: {
       x: 'x', series: [{ field: 'y', key: 'observed' }], pointKey: 'key'
     } } } } },
@@ -497,7 +497,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const traceText = 'x,y,key\n0,0,start\n5,2,mid\n10,3,end';
   const original = shared.push({ type: 'csv', text: traceText }) - 1;
   const revised = shared.push({ type: 'csv', text: traceText.replace('5,2', '5,9') }) - 1;
-  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'tour', 'state-tour']
+  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'tour', 'state-tour', 'facets', 'splom']
     .map(id => ({ key: ['id', id], stamp: id }));
   const payload = { url: 'file:///original/charts.html', siteURL: 'file:///original/site.js', entryURL: entryURL.href,
     site: manifest, profile: null, features: plan.features, styles: plan.styles, identities,
@@ -560,6 +560,21 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
       'data-op-state': '{"params":{"direction":"horizontal"}}' });
     stateNote.textContent = 'Sideways bars';
     stateTour.querySelectorAll = selector => selector === ':scope > li' ? [stateNote] : [];
+    const facetSpecs = [
+      ['', { type: 'line', brush: true, toggles: true, series: [
+        { key: 'a', data: [{ x: 0, y: 1, site: 'P' }, { x: 10, y: 3, site: 'P' }, { x: 0, y: 2, site: 'Q' }, { x: 10, y: 6, site: 'Q' }] },
+        { key: 'b', data: [{ x: 0, y: 4, site: 'P' }, { x: 10, y: 5, site: 'Q' }] }], facet: { field: 'site' } }],
+      ['matrix', { fields: ['a', 'b', 'c'], key: 'id', data: [{ id: 'r1', a: 1, b: 2, c: 3 }, { id: 'r2', a: 4, b: 8, c: 1 },
+        { id: 'r3', a: 6, b: 5, c: 9 }] }]
+    ];
+    const facetHosts = facetSpecs.map(([layout, spec], i) => {
+      const host = add(detail, 'div', { id: ['facets', 'splom'][i], 'data-op-facets': layout,
+        'data-op-export-identity': charts.length + 2 + i });
+      const definition = add(host, 'script', { type: 'application/json' });
+      definition.textContent = JSON.stringify(spec);
+      host.querySelector = selector => selector === ':scope > script[type="application/json"]' ? definition : null;
+      return host;
+    });
     if (hideHeatmap) {
       // A chart inside a hidden card detail has no rendered plot when its state replays.
       const create = p.document.createElement;
@@ -572,12 +587,13 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
     p.body.querySelectorAll = selector => ({
       '[data-op-chart]': charts, 'ol[data-op-chart-playback]': [tour, stateTour],
       '[data-op-x-group]': [charts[0], charts[1], tour],
-      '[data-op-parameter]': [bins], '[data-op-export-identity]': [...charts, tour, stateTour]
+      '[data-op-parameter]': [bins], '[data-op-export-identity]': [...charts, tour, stateTour, ...facetHosts],
+      '[data-op-facets]': facetHosts
     })[selector] || [];
     const dataEntries = source === null ? [] : [['trace', source]];
     const runtime = await p.hydrate({ ...payload, data: dataEntries }, shared, new AbortController().signal, saved);
     assert.deepEqual(p.loads, []);
-    return { runtime, charts, tour, stops, stateTour, stateNote, bins, frames };
+    return { runtime, charts, tour, stops, stateTour, stateNote, bins, frames, facetHosts };
   }
 
   const first = await visit();
@@ -613,6 +629,14 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const fits = first.charts[9];
   assert.equal(control(fits, 'op-chart-residual').getAttribute('class'), 'op-chart-residual');
   assert.equal(first.runtime._chartFits.visible(fits, 'trend', false), true);
+  const facets = first.runtime._chartFacets.get(first.facetHosts[0]);
+  assert.equal(facets.panels().length, 2);
+  assert.equal(facets.setSeriesVisible('b', false), true);
+  assert.equal(facets.setRange([2, 6]), true);
+  const splom = first.runtime._chartFacets.get(first.facetHosts[1]);
+  assert.equal(splom.panels().length, 6, 'a three-field matrix has six scatter panels and three range diagonals');
+  assert.equal(splom.brush({ x: { field: 'a', range: [0, 5] }, y: { field: 'b', range: [0, 9] } }), true);
+  assert.deepEqual(Array.from(splom.brush().keys), ['r1', 'r2']);
   key(heatmap, 'PageDown');
   assert.equal(first.runtime._chart._heatmap.contours(heatmap, false), true);
   control(heatmap, 'op-chart-toggle').click();
@@ -639,6 +663,14 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   assert.equal(getChart(8).visible('rate'), false);
   assert.deepEqual(Array.from(getChart(8).range()), comboRange);
   assert.equal(restored.runtime._chartFits.visible(restored.charts[9], 'trend'), false);
+  const restoredFacets = restored.runtime._chartFacets.get(restored.facetHosts[0]);
+  assert.deepEqual(Array.from(restoredFacets.range()), [2, 6]);
+  for (const panel of restoredFacets.panels()) {
+    assert.equal(restored.runtime._chart.get(panel).visible('b'), false, 'every panel restores the shared legend state');
+    assert.deepEqual(Array.from(restored.runtime._chart.get(panel).range()), [2, 6]);
+  }
+  const matrixBrush = restored.runtime._chartFacets.get(restored.facetHosts[1]).brush();
+  assert.deepEqual([matrixBrush.x.field, Array.from(matrixBrush.x.range), Array.from(matrixBrush.keys)], ['a', [0, 5], ['r1', 'r2']]);
   assert.equal(control(restored.charts[9], 'op-chart-fit-curve'), undefined);
   assert.ok(control(restored.charts[9], 'op-chart-residual-zero'), 'the residual panel is restored');
   assert.equal(control(restored.charts[7], 'op-chart-toggle').getAttribute('aria-pressed'), 'true');

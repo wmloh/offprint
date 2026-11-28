@@ -103,7 +103,9 @@ Take the first rung that works. Moving down a rung requires that every rung abov
 
 ### Visual composition
 
-- Keep pages minimalist and deliberate. Start with OffPrint’s reading styles and customize where it helps the subject or the reader’s task. Decide what should stand out on each page based on that task. Use typography, spacing, and grouping to keep supporting elements quiet.
+- Start with OffPrint’s reading styles. Decide what readers should notice first, then give that content the strongest emphasis. Use short, descriptive headings and lead each section with its main point so readers can scan for what they need.
+- Let heading size show the structure. Use bold for key words or action labels, and keep secondary labels subdued but readable. Keep labels and captions close to what they describe, give related items a consistent look, and leave more space between topics than within them.
+- Keep section backgrounds neutral so accent colours can draw attention to specific content. Let OffPrint’s headings and section lines mark section boundaries. Reserve tinted backgrounds for small elements such as callouts and tags.
 - When a diagram, chart, or example makes a long explanation easier to grasp, lead with it and state the takeaway briefly. Keep essential context and caveats visible beside the visual. Put optional depth in [peek bubbles](reading/peek-bubbles.md) or [sidenotes](reading/sidenotes.md).
 - Use an interactive view when readers benefit from comparing cases, exploring data, or working through a process. Use a static visual when the point is visible at a glance. Give readers enough context to know what to look for or try.
 - Use motion to explain a change, show a sequence, or provide feedback after an action. Keep nearby elements quiet so the motion is easy to follow.

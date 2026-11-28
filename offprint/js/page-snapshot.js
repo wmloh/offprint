@@ -387,7 +387,24 @@
       if (!body.contains(copy)) return;
       if (copy.classList.contains('op-chart')) {
         var frame = runtime?._chart?.snapshotFrame(node);
-        if (frame) copy.querySelector('.op-chart-plot > svg')?.replaceWith(output.importNode(frame, true));
+        var oldFrame = frame && copy.querySelector('.op-chart-plot > svg');
+        if (oldFrame) {
+          var nextFrame = output.importNode(frame, true);
+          // A settled chart frame has the final geometry but predates the Reader's reveal tracks.
+          var revealItems = new Map();
+          oldFrame.querySelectorAll('[data-op-reveal-step]').forEach(function (item) {
+            if (markers.get(item)?.has(stepAttributes[1])) revealItems.set(item.getAttribute('data-op-reveal-step'), item);
+          });
+          nextFrame.querySelectorAll('[data-op-reveal-step]').forEach(function (item) {
+            var previous = revealItems.get(item.getAttribute('data-op-reveal-step'));
+            if (!previous) return;
+            item.setAttribute(stepAttributes[1], previous.getAttribute(stepAttributes[1]));
+            item.style.setProperty('opacity', previous.style.getPropertyValue('opacity'));
+            item.style.setProperty('visibility', previous.style.getPropertyValue('visibility'));
+            markers.set(item, new Set([stepAttributes[1]]));
+          });
+          oldFrame.replaceWith(nextFrame);
+        }
       }
       if (copy.localName.includes('-') && copy.namespaceURI === 'http://www.w3.org/1999/xhtml') {
         issue(issues, 'custom-element', node, 'Custom content uses its available static markup.');

@@ -2738,9 +2738,9 @@
     return { max: max, total: total };
   }
 
-  function buildTable(model, collectRow) {
+  function buildTable(model, collectRow, chart) {
     var def = addonOf(model);
-    if (def && def.table) return def.table(model, kit);
+    if (def && def.table) return def.table(model, kit, chart);
     var table = document.createElement('table');
     var head = html('tr', '', html('thead', '', table));
     var body = html('tbody', '', table);
@@ -2913,9 +2913,10 @@
     chart.box.classList[chart.model.brush ? 'add' : 'remove']('is-brushable');
   }
 
-  function tableView(view) {
+  function tableView(chart) {
+    var view = chart.view;
     if (view.noMatches) return html('p', 'op-chart-empty-note', null, EMPTY_FILTER);
-    return view.series.length ? buildTable(view) : html('p', 'op-chart-empty-note', null,
+    return view.series.length ? buildTable(view, null, chart) : html('p', 'op-chart-empty-note', null,
       view.type === 'pie' ? (view.hiddenCount ? HIDDEN_PIE : EMPTY_PIE) : EMPTY_SERIES);
   }
 
@@ -2929,7 +2930,7 @@
       var table = !chart.view.noMatches && chart.view.series.length ? buildTable(chart.view, function (entry) {
         entry.row.remove();
         rows.push(entry);
-      }) : tableView(chart.view);
+      }, chart) : tableView(chart);
       chart.table.appendChild(table);
       layerTables(chart);
       chart.revealTable = revealInOrder(rows, function (entry) {
@@ -2938,7 +2939,7 @@
       }, function (entry) { entry.row.remove(); });
       chart.revealTable(chart.playhead);
     } else if (sourceShown(chart)) chart.table.appendChild(chart.sourceTable);
-    else if (chart.plot.hidden) chart.table.appendChild(tableView(chart.view));
+    else if (chart.plot.hidden) chart.table.appendChild(tableView(chart));
     if (chart.table.firstChild) layerTables(chart);
   }
 

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Venn diagrams · OffPrint</title>
+  <link rel="stylesheet" href="../../../offprint/offprint.css">
+  <script src="../../assets/site.js" data-op-site></script>
+  <script type="application/json" data-op-page>
+    {
+      "features": {"chart-venn": true, "selection": true, "stepper": true, "data": true},
+      "options": {"chart": {"instances": {"survey-overlap": {
+        "mapping": {"sets": "Groups", "count": "Count"}
+      }}}}
+    }
+  </script>
+  <script src="../../../offprint/offprint.js"></script>
+</head>
+<body>
+  <nav class="op-sidebar" aria-label="Site navigation">
+    <div data-op-nav></div>
+  </nav>
+
+  <main class="op-page">
+    <header>
+      <p class="op-eyebrow">Show data</p>
+      <h1>Venn diagrams</h1>
+      <p>A <span data-op-term="Venn diagram">Venn diagram</span> shows which items belong to two or three groups. Each number counts the items in just that region, and circle size is schematic.</p>
+      <dl class="op-fields">
+        <dt>Turned on</dt><dd><span class="op-tag" data-op-role="on-request">On request</span></dd>
+        <dt>Signal strength</dt><dd><a href="../hierarchy/signal-ladder.html#strong">Strong</a></dd>
+        <dt>Works with</dt><dd>Named data sources, linked selection, reveal steps, and table view</dd>
+      </dl>
+    </header>
+
+    <h2 id="see-it">See a subset and a separate group</h2>
+    <p>All reviewed samples came from the current collection, so their circle sits inside it. The reference samples came from a separate collection. When two groups contain the same members, their labels share one circle.</p>
+
+    <ol id="sample-steps" data-op-stepper>
+      <li data-op-key="collection" data-op-initial><strong data-op-step-label>Collections</strong> Start with current and reference samples.</li>
+      <li data-op-key="review"><strong data-op-step-label>Review</strong> Reveal the count of reviewed samples inside the current collection.</li>
+    </ol>
+
+    <figure>
+      <div data-op-chart="venn" data-op-selection-group="sample-regions" data-op-reveal-sequence="sample-steps">
+        <script type="application/json">
+          {
+            "sets": [
+              {"key": "current", "label": "Current", "color": "blue", "members": ["S01", "S02", "S03", "S04", "S05"]},
+              {"key": "reviewed", "label": "Reviewed", "color": "green", "members": ["S02", "S04"]},
+              {"key": "reference", "label": "Reference", "color": "orange", "members": ["R01", "R02", "R03", "R04"]}
+            ],
+            "regionOptions": [{"sets": ["current", "reviewed"], "key": "reviewed", "revealStep": "review"}]
+          }
+        </script>
+        <table>
+          <thead><tr><th scope="col">Region</th><th scope="col">Count</th><th scope="col">Samples</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Current only</th><td>3</td><td>S01, S03, S05</td></tr>
+            <tr><th scope="row">Current and reviewed only</th><td>2</td><td>S02, S04</td></tr>
+            <tr><th scope="row">Reference only</th><td>4</td><td>R01, R02, R03, R04</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative sample membership. The layout comes from the sample IDs.</figcaption>
+    </figure>
+
+    <p class="op-eyebrow" data-op-role="try">Try it</p>
+    <p>Advance to <strong>Review</strong>, point at the count inside the green circle, and select it. Open <strong>Table</strong> to find the same highlighted row.</p>
+
+    <h2 id="named-source">Draw from counts</h2>
+    <p>This <a href="sources.html">named data source</a> has one row per populated region. In this survey, the joint session consists of exactly the people who attended both workshops. That overlap has a lens shape. The diagram uses a familiar three-circle layout with hatched regions wherever the count is zero.</p>
+
+    <script type="text/csv" data-op-source="Survey overlap">Groups,Count
+morning,20
+afternoon,12
+morning|afternoon|joint,7
+    </script>
+
+    <figure>
+      <div id="survey-overlap" data-op-chart="venn" data-op-source="Survey overlap">
+        <script type="application/json">
+          {"sets": [
+            {"key": "morning", "label": "Morning"},
+            {"key": "afternoon", "label": "Afternoon"},
+            {"key": "joint", "label": "Joint session"}
+          ]}
+        </script>
+        <table>
+          <thead><tr><th scope="col">Region</th><th scope="col">Count</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Morning only</th><td>20</td></tr>
+            <tr><th scope="row">Afternoon only</th><td>12</td></tr>
+            <tr><th scope="row">Morning, afternoon, and joint session</th><td>7</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>Illustrative survey counts. Unlisted combinations have zero members.</figcaption>
+    </figure>
+
+    <h2 id="for-every-reader">Read by keyboard or table</h2>
+    <p>Tab to a plot and use the arrow keys to read its regions. Press <kbd>Enter</kbd> or <kbd>Space</kbd> to select a region in the sample example. Table view includes zero counts. Reader export keeps the reveal steps in the current view, and Interactive export restores the selected region.</p>
+
+    <h2 id="related">Related</h2>
+    <ul>
+      <li><a href="charts.html">SVG charts</a></li>
+      <li><a href="../explain/steppers.html">Worked examples and steppers</a></li>
+      <li><a href="../explain/selection.html">Linked selection</a></li>
+    </ul>
+  </main>
+</body>
+</html>

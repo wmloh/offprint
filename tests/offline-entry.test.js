@@ -52,7 +52,9 @@ function element(tag) {
     querySelector(selector) {
       return selector === '.op-progress-bar' && this.innerHTML?.includes('op-progress-bar') ? element('circle') : null;
     },
-    querySelectorAll() { return []; },
+    querySelectorAll(selector) {
+      return selector === '[data-op-reveal-step]' ? descendants(this).filter(node => node.hasAttribute(selector.slice(1, -1))) : [];
+    },
     matches(selector) { return selector === tag || selector === '.' + this.className; },
     closest() { return null; },
     contains(child) { return this === child || this.childNodes.some(node => node.contains?.(child)); },
@@ -74,6 +76,7 @@ function element(tag) {
     },
     removeChild(child) { this.childNodes.splice(this.childNodes.indexOf(child), 1); child.parentNode = null; },
     remove() { this.parentNode?.removeChild(this); },
+    replaceWith(node) { this.parentNode?.replaceChild(node, this); },
     replaceChildren(...children) {
       while (this.firstChild) this.removeChild(this.firstChild);
       this.append(...children);
@@ -82,6 +85,10 @@ function element(tag) {
     cloneNode(deep) {
       const copy = element(tag);
       for (const [name, value] of attrs) copy.setAttribute(name, value);
+      for (const [name, value] of properties) copy.style.setProperty(name, value);
+      copy.classList.add(...classes);
+      copy.className = this.className;
+      copy.hidden = this.hidden;
       copy.textContent = text;
       if (deep) this.childNodes.forEach(child => copy.appendChild(child.cloneNode?.(true) || { ...child }));
       return copy;
@@ -525,10 +532,40 @@ test('Sankey charts mount named sources and preserve the fallback when flows con
   assert.ok(warnings.some(message => /Sankey cycle: "A" → "B" → "A"/.test(message)));
 });
 
+test('Venn diagrams mount named counts and hatch empty regions in an impossible layout', async () => {
+  const config = { profile: 'none', features: { 'chart-venn': true, data: true },
+    options: { chart: { instances: { overlap: { mapping: { sets: 'Groups', count: 'Count' } } } } } };
+  const warnings = [];
+  const p = page({ config, globals: { console: { warn: message => warnings.push(message) } } });
+  const source = p.body.appendChild(p.document.createElement('script'));
+  source.setAttribute('data-op-source', 'Survey');
+  source.setAttribute('type', 'text/csv');
+  source.textContent = 'Groups,Count\nA,20\nB,12\nA|B|C,7';
+  const host = p.body.appendChild(p.document.createElement('div'));
+  host.id = 'overlap';
+  host.setAttribute('data-op-source', 'Survey');
+  host.setAttribute('data-op-chart', 'venn');
+  const definition = host.appendChild(p.document.createElement('script'));
+  definition.textContent = JSON.stringify({ sets: ['A', 'B', 'C'].map(key => ({ key })) });
+  host.querySelector = selector => selector === ':scope > script[type="application/json"]' ? definition : null;
+  p.body.querySelectorAll = selector => ({
+    'script[data-op-source], pre[data-op-source]': [source], '[data-op-chart]': [host]
+  })[selector] || [];
+  await p.start();
+  assert.equal(p.OP._chart.get(host).model().venn.layout.fallback, true);
+  const nodes = descendants(host);
+  const pattern = nodes.find(node => node.localName === 'pattern');
+  const hatched = nodes.filter(node => node.getAttribute('fill') === 'url(#' + pattern.id + ')');
+  assert.equal(hatched.length, 4);
+  const labels = nodes.filter(node => node.getAttribute('class') === 'op-venn-count');
+  assert.deepEqual(labels.map(label => label.textContent), ['20', '12', '0', '0', '0', '0', '7']);
+  assert.ok(warnings.some(message => /Hatching marks empty regions/.test(message)));
+});
+
 test('Interactive charts restore linked playback, filters, and nested chart controls offline', async () => {
   const config = { profile: 'none', features: { data: true, selection: true, parameters: true,
     'chart-intervals': true, 'chart-histogram': true, 'chart-heatmap': true, 'chart-combo': true, 'chart-fits': true,
-    'chart-grid': true, 'chart-sankey': true, 'chart-facets': true, 'chart-playback': true, 'zoom-tools': true },
+    'chart-grid': true, 'chart-sankey': true, 'chart-venn': true, 'chart-facets': true, 'chart-playback': true, 'zoom-tools': true },
     options: { chart: { instances: { trace: { mapping: {
       x: 'x', series: [{ field: 'y', key: 'observed' }], pointKey: 'key'
     } } } } },
@@ -544,7 +581,7 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   const traceText = 'x,y,key\n0,0,start\n5,2,mid\n10,3,end';
   const original = shared.push({ type: 'csv', text: traceText }) - 1;
   const revised = shared.push({ type: 'csv', text: traceText.replace('5,2', '5,9') }) - 1;
-  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'grid', 'sankey', 'tour', 'state-tour', 'facets', 'splom']
+  const identities = ['trace', 'linked', 'bars', 'pie', 'interval', 'histogram', 'heatmap', 'brush', 'combo', 'fits', 'grid', 'sankey', 'venn', 'tour', 'state-tour', 'facets', 'splom']
     .map(id => ({ key: ['id', id], stamp: id }));
   const payload = { url: 'file:///original/charts.html', siteURL: 'file:///original/site.js', entryURL: entryURL.href,
     site: manifest, profile: null, features: plan.features, styles: plan.styles, identities,
@@ -589,6 +626,10 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
         links: [{ source: 'Solar', target: 'Storage', value: 42, key: 'solar-storage' },
           { source: 'Grid', target: 'Storage', value: 18, key: 'grid-storage' },
           { source: 'Storage', target: 'Loads', value: 55, key: 'stored-energy' }]
+      }],
+      ['venn', { 'data-op-selection-group': 'cohorts', 'data-op-reveal-sequence': 'tour' }, {
+        sets: [{ key: 'collected', members: ['sample-01', 'sample-02'] }, { key: 'reviewed', members: ['sample-02'] }],
+        regionOptions: [{ sets: ['reviewed', 'collected'], key: 'reviewed-samples', revealStep: 'mid' }]
       }]
     ];
     const charts = specs.map(([type, attrs, spec], i) => {
@@ -609,6 +650,11 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
       return stop;
     });
     tour.querySelectorAll = selector => selector === ':scope > li' ? stops : [];
+    tour.addEventListener('op:step', event => {
+      const bubble = Object.assign(new Event('op:step'), { detail: event.detail });
+      Object.defineProperty(bubble, 'target', { value: tour });
+      p.document.dispatchEvent(bubble);
+    });
     const stateTour = add(detail, 'ol', { id: 'state-tour', 'data-op-chart-playback': 'state',
       'data-op-target': 'bars', 'data-op-export-identity': charts.length + 1 });
     const stateNote = add(stateTour, 'li', { 'data-op-key': 'sideways',
@@ -650,20 +696,39 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
     const dataEntries = source === null ? [] : [['trace', source]];
     const runtime = await p.hydrate({ ...payload, data: dataEntries }, shared, new AbortController().signal, saved);
     assert.deepEqual(p.loads, []);
-    return { runtime, charts, tour, stops, stateTour, stateNote, bins, frames, facetHosts };
+    return { p, runtime, charts, tour, stops, stateTour, stateNote, bins, frames, facetHosts };
   }
 
   const first = await visit();
   const chart = host => first.runtime._chart.get(host);
   for (const host of first.charts) assert.ok(chart(host), host.id);
   assert.deepEqual(first.charts.map(host => chart(host).model().addon ?? chart(host).model().type),
-    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line', 'combo', 'scatter', 'grid', 'sankey']);
+    ['line', 'line', 'bar', 'pie', 'interval', 'histogram', 'heatmap', 'line', 'combo', 'scatter', 'grid', 'sankey', 'venn']);
   const [trace, linked, bars, pie, , , heatmap, brush] = first.charts;
   const control = (host, cls) => descendants(host).find(node => node.className?.split(' ').includes(cls) || node.getAttribute('class') === cls);
   const key = (host, name) => control(host, 'op-chart-plot').dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: name }));
   const playback = first.runtime.sequence.get(first.tour);
   assert.ok(playback, first.runtime.diagnostics.list().map(issue => issue.message).join('\n'));
+  const venn = first.charts[12];
+  const readout = () => control(venn, 'op-chart-tip').textContent;
+  assert.ok(plan.styles.some(path => /chart-venn\.css$/.test(path)));
+  key(venn, 'End');
+  assert.match(readout(), /sample-01/);
   assert.equal(playback.select('mid'), true);
+  key(venn, 'End');
+  assert.match(readout(), /sample-02/);
+  key(venn, 'Enter');
+  assert.equal(first.runtime.selection.group('cohorts').get(), 'reviewed-samples');
+  assert.equal(playback.select('start'), true);
+  assert.equal(control(venn, 'op-chart-tip').hidden, true);
+  control(venn, 'op-chart-toggle').click();
+  const vennRows = descendants(venn).filter(node => node.localName === 'tr').slice(1);
+  assert.equal(vennRows.length, 3);
+  const reviewed = vennRows.find(row => row.getAttribute('data-op-key') === 'reviewed-samples');
+  assert.ok(reviewed.classList.contains('op-reveal-pending'));
+  assert.equal(playback.select('mid'), true);
+  assert.equal(reviewed.classList.contains('op-reveal-pending'), false);
+  assert.ok(reviewed.hasAttribute('data-op-selection-active'));
   key(trace, 'Home');
   assert.equal(control(linked, 'op-chart-x-cursor').getAttribute('display'), 'inline');
   assert.equal(chart(pie).setSeriesVisible(chart(pie).model().series[0].key, false), true);
@@ -746,6 +811,10 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   assert.ok(descendants(restoredSankey).some(node => node.localName === 'tr' && node.hasAttribute('data-op-selection-active')));
   control(restoredSankey, 'op-chart-toggle').click();
   assert.ok(flowMark(restoredSankey, 'stored-energy').hasAttribute('data-op-selection-active'));
+  const restoredVenn = restored.charts[12];
+  assert.equal(restored.runtime.selection.group('cohorts').get(), 'reviewed-samples');
+  assert.equal(control(restoredVenn, 'op-chart-toggle').getAttribute('aria-pressed'), 'true');
+  assert.ok(flowMark(restoredVenn, 'reviewed-samples').hasAttribute('data-op-selection-active'));
   const restoredFlow = getChart(11);
   const oldRibbon = flowMark(restoredSankey, 'stored-energy').getAttribute('d');
   const changed = restoredFlow.spec();
@@ -794,6 +863,60 @@ test('Interactive charts restore linked playback, filters, and nested chart cont
   overlay.dispatchEvent(new Event('transitionend'));
   assert.equal(resumed.next(), true);
   assert.equal(restored.stops[2].hidden, false);
+
+  // Reader capture uses the final SVG from an in-flight tween and the tracks from the live figure.
+  control(restoredVenn, 'op-chart-toggle').click();
+  const overlap = getChart(12).spec();
+  overlap.sets[1].members.push('sample-03');
+  assert.equal(getChart(12).update(overlap), true);
+  const finalFrame = restored.runtime._chart.snapshotFrame(restoredVenn);
+  assert.ok(finalFrame, 'a layout update is still animating');
+  resumed.select('start');
+  const p = restored.p;
+  const closestFrame = '.op-chart-plot > svg';
+  function readable(node, owner) {
+    node.ownerDocument = owner;
+    node.matches = selectors => selectors.split(',').some(selector => {
+      if (selector === '*') return true;
+      if (selector === '[hidden]') return node.hidden;
+      if (/^\[[\w-]+\]$/.test(selector)) return node.hasAttribute(selector.slice(1, -1));
+      if (/^\.[\w-]+$/.test(selector)) return node.classList.contains(selector.slice(1)) ||
+        (node.getAttribute('class') || node.className || '').split(' ').includes(selector.slice(1));
+      return selector === node.localName;
+    });
+    node.querySelectorAll = selectors => descendants(node).filter(child => child.matches(selectors));
+    node.querySelector = selector => selector === closestFrame
+      ? descendants(node).find(child => child.localName === 'svg' && child.parentNode.matches('.op-chart-plot'))
+      : node.querySelectorAll(selector)[0] || null;
+    node.children.forEach(child => readable(child, owner));
+    return node;
+  }
+  const sourceQuery = p.body.querySelectorAll;
+  p.body.querySelectorAll = selector => selector === '*' ? descendants(p.body) : sourceQuery(selector);
+  p.document.implementation = { createHTMLDocument() {
+    const output = {
+      body: element('html').appendChild(element('body')),
+      importNode: (node, deep) => readable(node.cloneNode(deep), output),
+      createElement: tag => readable(element(tag), output)
+    };
+    return output;
+  } };
+  p.runScript(new URL('js/page-snapshot.js', library));
+  const capture = () => restored.runtime._pageSnapshot.capture();
+  const snapshot = await capture();
+  const copiedChart = descendants(snapshot.body).find(node => node.id === 'venn');
+  const track = copiedChart.querySelector('[data-op-reader-step-svg]');
+  const [id, changes] = JSON.parse(track.getAttribute('data-op-reader-step-svg'));
+  assert.deepEqual(changes, [[0, '.opacity', '0'], [0, '.visibility', 'hidden'], [1, '.opacity', '1'], [1, '.visibility', 'visible']]);
+  assert.equal(track.style.getPropertyValue('visibility'), 'hidden');
+  assert.equal(flowMark(copiedChart, 'reviewed-samples').getAttribute('d'), flowMark(finalFrame, 'reviewed-samples').getAttribute('d'));
+  const controls = descendants(snapshot.body).find(node => node.hasAttribute('data-op-reader-steps'));
+  const [controlId, initial, steps] = JSON.parse(controls.getAttribute('data-op-reader-steps'));
+  assert.deepEqual([controlId, initial, steps[1][0]], [id, 0, 'mid']);
+  control(restoredVenn, 'op-chart-toggle').click();
+  const tableSnapshot = await capture();
+  assert.equal(tableSnapshot.body.querySelector('[data-op-reader-step-svg]').localName, 'tr');
+
   const viewOnly = (kind, id) => ({ ...record, views: record.views.filter(([key]) => {
     const [type, [, name]] = JSON.parse(key);
     return type === kind && name === id;

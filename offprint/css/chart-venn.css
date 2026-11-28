@@ -1,0 +1,51 @@
+.op-venn-outlines,
+.op-venn-count {
+  pointer-events: none;
+}
+
+.op-venn-outline {
+  fill: none;
+  stroke: var(--op-series);
+  stroke-width: 1.5;
+}
+
+.op-venn-region:not(.is-empty) {
+  fill: color-mix(in srgb, var(--op-series) var(--op-venn-tint, 18%), transparent);
+}
+
+.op-venn-region[data-op-venn-overlap="2"] { --op-venn-tint: 28%; }
+.op-venn-region[data-op-venn-overlap="3"] { --op-venn-tint: 38%; }
+
+.op-venn-region.is-active,
+.op-venn-region[data-op-selection-active] {
+  --op-venn-tint: 50%;
+  stroke: var(--op-text);
+  stroke-width: 2;
+}
+
+.op-venn-hatch {
+  stroke: var(--op-text-faint);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+
+.op-venn-count {
+  fill: var(--op-text);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-venn-warning {
+  flex-basis: 100%;
+  color: var(--op-text-muted);
+}
+
+.is-venn .op-chart-tip {
+  max-width: min(18rem, 100%);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.op-venn-table td {
+  overflow-wrap: anywhere;
+}

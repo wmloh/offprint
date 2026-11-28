@@ -1595,6 +1595,14 @@ window.OffPrintSearch = {
             "data and charts"
           ]
         },
+        "venn diagram": {
+          "title": "Venn diagram",
+          "text": "A diagram that uses circles to show which items belong to one or more groups.",
+          "more": "",
+          "tags": [
+            "data and charts"
+          ]
+        },
         "viewport": {
           "title": "viewport",
           "text": "The visible part of a web page inside the browser window. Scrolling moves the page under the viewport.",
@@ -1891,6 +1899,12 @@ window.OffPrintSearch = {
         "sha256": "a1a8407138844197dfd2798f4eca733d7d78f6c3058154f50d27238b4588bec2"
       },
       {
+        "file": "pages/data/sets.html",
+        "path": "../pages/data/sets.html",
+        "title": "Venn diagrams",
+        "sha256": "102420fc22313e6f373c1f90aba8de36c86806b40e11ae59dd4c36267d57f43e"
+      },
+      {
         "file": "pages/data/fits.html",
         "path": "../pages/data/fits.html",
         "title": "Fits and residuals",
@@ -1960,7 +1974,7 @@ window.OffPrintSearch = {
         "file": "pages/reference/features.html",
         "path": "../pages/reference/features.html",
         "title": "Feature directory",
-        "sha256": "1b8dd85a7eb95a6f0bf19d9ecfd1f6f22cd14ee31a9b258af0cbfb87d3e178a2"
+        "sha256": "0cc712d0bf7942d0aa409861c30f88df18037c2ba3242bb2087dadd50adf57ba"
       },
       {
         "file": "pages/reference/behind-the-scenes.html",
@@ -9457,6 +9471,81 @@ window.OffPrintSearch = {
       ]
     },
     {
+      "path": "../pages/data/sets.html",
+      "title": "Venn diagrams",
+      "sections": [
+        {
+          "id": "",
+          "title": "Venn diagrams",
+          "level": 1,
+          "text": "Show data A Venn diagram shows which items belong to two or three groups. Each number counts the items in just that region, and circle size is schematic. Turned on On request Signal strength Strong Works with Named data sources, linked selection, reveal steps, and table view"
+        },
+        {
+          "id": "see-it",
+          "title": "See a subset and a separate group",
+          "level": 2,
+          "text": "All reviewed samples came from the current collection, so their circle sits inside it. The reference samples came from a separate collection. When two groups contain the same members, their labels share one circle. Collections Start with current and reference samples. Review Reveal the count of reviewed samples inside the current collection. Region Count Samples Current only 3 S01, S03, S05 Current and reviewed only 2 S02, S04 Reference only 4 R01, R02, R03, R04 Illustrative sample membership. The layout comes from the sample IDs. Try it Advance to Review, point at the count inside the green circle, and select it. Open Table to find the same highlighted row."
+        },
+        {
+          "id": "named-source",
+          "title": "Draw from counts",
+          "level": 2,
+          "text": "This named data source has one row per populated region. In this survey, the joint session consists of exactly the people who attended both workshops. That overlap has a lens shape. The diagram uses a familiar three-circle layout with hatched regions wherever the count is zero. Region Count Morning only 20 Afternoon only 12 Morning, afternoon, and joint session 7 Illustrative survey counts. Unlisted combinations have zero members."
+        },
+        {
+          "id": "for-every-reader",
+          "title": "Read by keyboard or table",
+          "level": 2,
+          "text": "Tab to a plot and use the arrow keys to read its regions. Press Enter or Space to select a region in the sample example. Table view includes zero counts. Reader export keeps the reveal steps in the current view, and Interactive export restores the selected region."
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2,
+          "text": "SVG charts Worked examples and steppers Linked selection"
+        }
+      ],
+      "terms": [
+        {
+          "text": "Venn diagram",
+          "term": "venn diagram",
+          "section": ""
+        },
+        {
+          "text": "On request",
+          "term": "on request",
+          "section": ""
+        }
+      ],
+      "outline": [
+        {
+          "id": "venn-diagrams",
+          "title": "Venn diagrams",
+          "level": 1
+        },
+        {
+          "id": "see-it",
+          "title": "See a subset and a separate group",
+          "level": 2
+        },
+        {
+          "id": "named-source",
+          "title": "Draw from counts",
+          "level": 2
+        },
+        {
+          "id": "for-every-reader",
+          "title": "Read by keyboard or table",
+          "level": 2
+        },
+        {
+          "id": "related",
+          "title": "Related",
+          "level": 2
+        }
+      ]
+    },
+    {
       "path": "../pages/data/fits.html",
       "title": "Fits and residuals",
       "sections": [
@@ -11790,7 +11879,7 @@ window.OffPrintSearch = {
           "id": "show-data",
           "title": "Show data",
           "level": 3,
-          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Risk and confusion grids On request Loud · Strong SVG charts and ordered rows and columns Place risks in coloured zones with trails showing how they moved, or read a confusion matrix with totals, shares, precision, and recall. Sankey diagrams On request Strong SVG charts, linked selection, and named data sources Trace how flows split and merge, and see where incoming and outgoing totals differ. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Small multiples and scatter-plot matrices On request Strong SVG charts; Histograms for histogram diagonals Split one chart into panels on shared scales, or plot every pair of measurements and brush a group of records. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
+          "text": "Feature Availability Signal strength Needs Purpose Concept tables On by default Strong Base layout Compare ideas in a table made for text. Data trees On request Strong Base layout and data arranged in levels Explore data by opening and closing branches. Evaluation matrices On request Strong · Loud Base layout and a named data source Compare results in a grid with a shared colour scale. File dropzones On request Medium Base layout and a data source or view Open local data or temporarily replace data on the page. Guided chart playback On request Strong An SVG line chart with a numbered horizontal scale, or any other SVG chart for state checkpoints Draw a chart gradually, or step it through prepared views, with notes at each stop. Named sources and data views On request Strong Data to read; Base layout for views Share data across a page and show its original values. Results tables On request Strong · Loud Base layout and result rows Sort and filter results or shade cells by value. SVG charts On request Strong Base layout and data to plot Draw data as lines, dots, slices, or bars that stand upright, lie sideways, or stack, with smooth motion when data changes. Dot and interval plots On request Strong SVG charts and categorical data Rank categories and show the range around each estimate. Histograms On request Strong SVG charts; Parameters for a live bin slider See where numeric observations are concentrated. Heatmaps On request Loud · Strong SVG charts and a grid of values Colour a grid by value, filter by value range, and trace contour lines. Risk and confusion grids On request Loud · Strong SVG charts and ordered rows and columns Place risks in coloured zones with trails showing how they moved, or read a confusion matrix with totals, shares, precision, and recall. Sankey diagrams On request Strong SVG charts, linked selection, and named data sources Trace how flows split and merge, and see where incoming and outgoing totals differ. Venn diagrams On request Strong SVG charts, linked selection, reveal steps, and named data sources Show exclusive counts, overlap, subsets, and disjoint groups. Fits and residuals On request Strong Line and scatter charts with fitted values worked out elsewhere Draw a supplied fit curve, its uncertainty band, and its statistics, with a residual panel under the plot. Small multiples and scatter-plot matrices On request Strong SVG charts; Histograms for histogram diagonals Split one chart into panels on shared scales, or plot every pair of measurements and brush a group of records. Chart annotations On request Medium SVG charts with axes Add notes, shaded ranges, and event markers that sit clear of the data and can appear step by step. Combo charts On request Strong SVG charts Draw bars and a line over the same categories or dates, with an optional second axis for a different measure. Scenario comparisons On request Strong SVG charts and outcomes to compare Compare a starting case with changed versions."
         },
         {
           "id": "reference",

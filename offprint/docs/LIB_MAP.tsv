@@ -54,6 +54,7 @@ Histograms	Bin observations with optional log axes, live binning, and stacked ba
 Heatmaps	Colour grids by value and explore ranges and contours	data/chart-heatmap.md
 Categorical grids	Draw risk and confusion matrices with zones, packed items and trails, derived totals, shares, precision, and recall	data/chart-grid.md
 Sankey diagrams	Draw directed flows as ribbons with derived node totals, imbalance readouts, and upstream and downstream tracing	data/chart-sankey.md
+Venn diagrams	Show exclusive counts and member lists for two or three sets with relationship-aware circle layouts	data/chart-venn.md
 Combo charts	Draw bars and lines together on categories or dates, with an opt-in second y axis	data/chart-combo.md
 Supplied fits and residuals	Draw supplied fit curves, uncertainty bands, and statistics on line and scatter charts, with fit chips and a linked residual panel	data/chart-fits.md
 Chart annotations	Mark notes, shaded ranges, and event markers on any chart, placed clear of the data and revealed by steps	data/chart-annotations.md
